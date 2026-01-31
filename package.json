@@ -1,0 +1,50 @@
+{
+  "name": "hallyuhub-v1",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "atualize": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/atualize.ts",
+    "atualize:local": "node scripts/run-atualize.js",
+    "atualize:ai": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/atualize-ai.ts",
+    "ai:stats": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/ai-stats.ts",
+    "update:images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/update-images.ts",
+    "gdrive:auth": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/google-drive-auth.ts",
+    "gdrive:auth:local": "node scripts/run-gdrive-auth.js",
+    "gdrive:upload": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/google-drive-upload.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.1",
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "^5.10.2",
+    "clsx": "^2.1.0",
+    "googleapis": "^171.0.0",
+    "lucide-react": "^0.344.0",
+    "next": "^14.2.35",
+    "open": "^11.0.0",
+    "openai": "^6.17.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.20",
+    "@types/react": "^18.2.58",
+    "@types/react-dom": "^18.2.19",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.1.6",
+    "postcss": "^8.4.35",
+    "prisma": "^5.10.2",
+    "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

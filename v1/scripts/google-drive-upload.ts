@@ -1,5 +1,5 @@
 const { google } = require('googleapis');
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client'
 const fs = require('fs');
 const path = require('path');
 
@@ -43,7 +43,7 @@ async function getAuthClient() {
     return oauth2Client;
 }
 
-async function createFolder(drive, folderName) {
+async function createFolder(drive: any, folderName: any) {
     // Verificar se a pasta já existe
     const response = await drive.files.list({
         q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
@@ -70,7 +70,7 @@ async function createFolder(drive, folderName) {
     return folder.data.id;
 }
 
-async function uploadImage(drive, filePath, fileName, folderId) {
+async function uploadImage(drive: any, filePath: any, fileName: any, folderId: any) {
     const fileMetadata = {
         name: fileName,
         parents: [folderId],
@@ -124,7 +124,7 @@ async function main() {
     const artistUpdates = [];
 
     for (const [filePrefix, artistName] of Object.entries(ARTIST_IMAGES)) {
-        const files = fs.readdirSync(IMAGES_DIR).filter(f =>
+        const files = fs.readdirSync(IMAGES_DIR).filter((f: any) =>
             f.toLowerCase().startsWith(filePrefix) && (f.endsWith('.jpg') || f.endsWith('.png'))
         );
 

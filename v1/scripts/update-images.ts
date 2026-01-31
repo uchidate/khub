@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const fs = require('fs');
 const path = require('path');
 
@@ -21,7 +21,7 @@ async function main() {
 
     // Atualizar artistas
     console.log('\n👤 Atualizando fotos dos artistas...');
-    for (const [artistName, imageUrl] of Object.entries(config.artists)) {
+    for (const [artistName, imageUrl] of Object.entries(config.artists) as [string, any][]) {
         if (imageUrl.includes('COLE_O_FILE_ID_AQUI')) {
             console.log(`⏭️  Pulando ${artistName} (URL não configurada)`);
             continue;
@@ -40,7 +40,7 @@ async function main() {
 
     // Atualizar produções
     console.log('\n🎬 Atualizando pôsteres das produções...');
-    for (const [productionTitle, imageUrl] of Object.entries(config.productions)) {
+    for (const [productionTitle, imageUrl] of Object.entries(config.productions) as [string, any][]) {
         if (imageUrl.includes('COLE_O_FILE_ID_AQUI')) {
             console.log(`⏭️  Pulando "${productionTitle}" (URL não configurada)`);
             continue;

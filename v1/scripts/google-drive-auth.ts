@@ -1,9 +1,9 @@
-const { google } = require('googleapis');
-const fs = require('fs');
-const path = require('path');
+import { google } from 'googleapis';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as http from 'http';
+import * as url from 'url';
 const openPkg = require('open');
-const http = require('http');
-const url = require('url');
 
 // Configuração OAuth
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
@@ -63,7 +63,7 @@ async function authenticate() {
     console.log(authUrl + '\n');
 
     // Criar servidor temporário para receber o callback
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer(async (req: any, res: any) => {
         if (req.url.indexOf('/oauth2callback') > -1) {
             const qs = new url.URL(req.url, REDIRECT_URI).searchParams;
             const code = qs.get('code');
@@ -73,7 +73,7 @@ async function authenticate() {
             server.close();
 
             // Trocar o código pelo token
-            const { tokens } = await oauth2Client.getToken(code);
+            const { tokens } = await (oauth2Client.getToken(code as string) as any);
             oauth2Client.setCredentials(tokens);
 
             // Salvar token
@@ -90,7 +90,7 @@ async function authenticate() {
             if (opener) {
                 const result = opener(authUrl, { wait: false });
                 if (result && typeof result.then === 'function') {
-                    result.then(cp => { if (cp && cp.unref) cp.unref(); }).catch(() => {});
+                    result.then(cp => { if (cp && cp.unref) cp.unref(); }).catch(() => { });
                 } else if (result && typeof result.unref === 'function') {
                     result.unref();
                 }

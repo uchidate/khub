@@ -13,7 +13,7 @@ export default async function AgenciesPage() {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {agencies.map((agency) => (
+                {agencies.map((agency: any) => (
                     <div key={agency.id} className="p-10 bg-zinc-900/50 rounded-3xl border border-white/5 card-hover shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

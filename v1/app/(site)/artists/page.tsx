@@ -13,7 +13,7 @@ export default async function ArtistsPage() {
             </header>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
-                {artists.map((artist) => (
+                {artists.map((artist: any) => (
                     <div key={artist.id} className="group cursor-pointer">
                         <div className="aspect-[2/3] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 card-hover shadow-2xl">
                             {artist.primaryImageUrl ? (

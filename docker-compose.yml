@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  hallyuhub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hallyuhub
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    volumes:
+      - ./prisma:/app/prisma
+      - hallyuhub-data:/app/data
+volumes:
+  hallyuhub-data:

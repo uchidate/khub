@@ -17,7 +17,7 @@ export default async function ProductionsPage() {
             </header>
 
             <div className="space-y-12">
-                {productions.map((prod) => (
+                {productions.map((prod: any) => (
                     <div key={prod.id} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl">
                         {/* Poster / Backdrop */}
                         <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-gradient-to-br from-zinc-800 to-zinc-900 relative overflow-hidden">
@@ -50,7 +50,7 @@ export default async function ProductionsPage() {
                                 <div>
                                     <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Disponível em</h4>
                                     <div className="flex gap-3">
-                                        {prod.streamingPlatforms?.split(',').map(p => (
+                                        {prod.streamingPlatforms?.split(',').map((p: any) => (
                                             <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-1 rounded-sm border border-white/5">
                                                 {p}
                                             </span>
@@ -62,7 +62,7 @@ export default async function ProductionsPage() {
                                     <div>
                                         <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Com a participação de</h4>
                                         <div className="flex gap-2">
-                                            {prod.artists.map(conn => (
+                                            {prod.artists.map((conn: any) => (
                                                 <span key={conn.artistId} className="text-xs font-bold text-purple-400 hover:text-white transition-colors cursor-pointer capitalize">
                                                     {conn.artist.nameRomanized}
                                                 </span>

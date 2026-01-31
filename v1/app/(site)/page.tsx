@@ -56,7 +56,7 @@ export default async function Home() {
                         <Link href="/artists" className="text-xs text-purple-500 hover:text-white transition-colors">Ver todos →</Link>
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {trendingArtists.map((artist) => (
+                        {trendingArtists.map((artist: any) => (
                             <Link key={artist.id} href="/artists" className="card-hover">
                                 <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 shadow-lg border border-white/5">
                                     <img src={artist.primaryImageUrl || "https://placeholder.com/600"} alt={artist.nameRomanized} className="w-full h-full object-cover" />
@@ -76,7 +76,7 @@ export default async function Home() {
                         <Link href="/productions" className="text-xs text-purple-500 hover:text-white transition-colors">Ver todas →</Link>
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {latestProductions.map((prod) => (
+                        {latestProductions.map((prod: any) => (
                             <Link key={prod.id} href="/productions" className="card-hover">
                                 <div className="h-56 rounded-lg overflow-hidden bg-zinc-900 relative shadow-xl group border border-white/5">
                                     <div className="absolute inset-0 bg-purple-900/10 group-hover:bg-transparent transition-colors z-10" />
@@ -98,7 +98,7 @@ export default async function Home() {
                     <div className="flex-1">
                         <h2 className="text-3xl md:text-5xl font-black mb-6 hallyu-gradient-text uppercase">Últimas do HallyuHub</h2>
                         <div className="space-y-6 mb-10">
-                            {topNews.map(item => (
+                            {topNews.map((item: any) => (
                                 <div key={item.id} className="border-l-2 border-purple-600 pl-4 py-1">
                                     <h4 className="font-bold text-lg mb-1">{item.title}</h4>
                                     <p className="text-sm text-zinc-500 line-clamp-1">{item.contentMd}</p>

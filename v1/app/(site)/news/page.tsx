@@ -32,7 +32,7 @@ export default async function NewsPage() {
 
                 {/* Side Column/Grid for others */}
                 <div className="lg:col-span-4 space-y-10">
-                    {news.slice(1, 4).map((item) => (
+                    {news.slice(1, 4).map((item: any) => (
                         <div key={item.id} className="group cursor-pointer">
                             <div className="flex gap-6">
                                 <div className="w-24 h-24 rounded-2xl bg-zinc-900 border border-white/5 flex-shrink-0 relative overflow-hidden">
@@ -40,7 +40,7 @@ export default async function NewsPage() {
                                 </div>
                                 <div>
                                     <div className="flex gap-2 mb-2">
-                                        {item.tags?.split(',').slice(0, 2).map(tag => (
+                                        {item.tags?.split(',').slice(0, 2).map((tag: any) => (
                                             <span key={tag} className="text-[9px] font-black text-purple-600 uppercase tracking-widest">{tag}</span>
                                         ))}
                                     </div>
@@ -54,7 +54,7 @@ export default async function NewsPage() {
 
                 {/* Bottom Grid for the rest */}
                 <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-10 mt-10">
-                    {news.slice(4).map((item) => (
+                    {news.slice(4).map((item: any) => (
                         <div key={item.id} className="group cursor-pointer bg-zinc-900/40 p-6 rounded-3xl border border-white/5 hover:bg-zinc-900 transition-colors">
                             <h3 className="text-xl font-bold mb-4 group-hover:text-purple-500 transition-colors">{item.title}</h3>
                             <p className="text-sm text-zinc-400 line-clamp-3 mb-6 font-medium">{item.contentMd}</p>

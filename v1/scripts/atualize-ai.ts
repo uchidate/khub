@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const { AIOrchestrator } = require('../lib/ai/orchestrator');
 const { NewsGenerator } = require('../lib/ai/generators/news-generator');
 const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
@@ -174,12 +174,13 @@ async function main() {
     console.log(`Total cost: $${stats.totalCost.toFixed(6)}`);
     console.log('\nPer provider:');
     for (const [provider, providerStats] of Object.entries(stats.providerStats)) {
-        if (providerStats.requests > 0) {
+        const stats = providerStats as any;
+        if (stats.requests > 0) {
             console.log(`  ${provider}:`);
-            console.log(`    Requests: ${providerStats.requests}`);
-            console.log(`    Failures: ${providerStats.failures}`);
-            console.log(`    Tokens: ${providerStats.tokensUsed}`);
-            console.log(`    Cost: $${providerStats.cost.toFixed(6)}`);
+            console.log(`    Requests: ${stats.requests}`);
+            console.log(`    Failures: ${stats.failures}`);
+            console.log(`    Tokens: ${stats.tokensUsed}`);
+            console.log(`    Cost: $${stats.cost.toFixed(6)}`);
         }
     }
     console.log('='.repeat(60));

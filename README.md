@@ -1,22 +1,78 @@
-# HallyuHub - Portal da Cultura Coreana
+# HallyuHub v1 - Guia Operacional
 
-Bem-vindo ao repositório do **HallyuHub**, o portal definitivo sobre artistas, agências e produções da Coreia do Sul.
+Este diretório contém a versão v1 do portal HallyuHub.
 
-## Estrutura do Repositório
+## Requisitos
+- Node.js 20+
+- Docker & Docker Compose
+- Banco PostgreSQL (para rodar local sem Docker) ou Docker Desktop
 
-- **/v1**: Versão funcional (MVP) do portal Next.js 14, pronta para homologação e produção.
-- **/v2**: Estrutura inicial reservada para futuras evoluções (integração com IA).
-- **.github/workflows**: Pipeline de CI/CD para automação de builds e deploys.
+## Rodando Localmente
 
-## Tecnologias Principais (v1)
-- **Framework:** Next.js 14 (App Router) + TypeScript
-- **UI:** Tailwind CSS
-- **Banco de Dados:** PostgreSQL + Prisma ORM
-- **Infra:** Docker + Nginx
-- **CI/CD:** GitHub Actions
+1. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
 
-## Guia Rápido
-Para instruções detalhadas de como rodar o projeto localmente ou configurar o servidor VPS para deploy automático, consulte o [README da v1](./v1/README.md).
+2. **Configure o ambiente:**
+   Copie `.env.example` para `.env` e ajuste as variáveis.
+   ```bash
+   cp .env.example .env
+   ```
 
----
-Desenvolvido com foco em performance, SEO e acessibilidade.
+3. **Inicie o banco e migrations:**
+   ```bash
+   npx prisma migrate dev
+   npm run prisma:seed
+   ```
+
+4. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   npm run dev
+   ```
+
+## Deploy em Produção (Hostinger VPS)
+
+### 1. Preparação do Servidor
+No seu VPS, crie os diretórios base:
+```bash
+sudo mkdir -p /srv/hallyuhub-staging
+sudo mkdir -p /srv/hallyuhub-prod
+sudo chown -R $USER:$USER /srv/hallyuhub-*
+```
+
+### 2. Configuração do DNS
+Aponte seus domínios placeholders para o IP do VPS:
+- `staging.seu-dominio.com`
+- `www.seu-dominio.com`
+
+### 3. Configuração de Secrets no GitHub
+No seu repositório GitHub, crie os seguintes **Secrets** (configurados por Environment: `staging` e `production`):
+- `SSH_HOST`: IP do seu VPS.
+- `SSH_USER`: Usuário SSH.
+- `SSH_KEY`: Sua chave privada PEM.
+- `DATABASE_URL`: URL de conexão do banco (ex: `postgresql://user:pass@db:5432/db_name`).
+- `NEXT_PUBLIC_SITE_URL`: URL base do site.
+
+### 4. SSL com Certbot
+Após o primeiro deploy, ative o SSL no VPS:
+```bash
+sudo apt-get install certbot python3-certbot-nginx
+sudo certbot --nginx -d staging.seu-dominio.com
+sudo certbot --nginx -d www.seu-dominio.com -d seu-dominio.com
+```
+
+## Checklist de Aceite
+- [x] Projeto compila (Next.js 14) e roda localmente.
+- [x] Dockerfiles e Compose (staging/prod) presentes e válidos.
+- [x] Nginx confs com domínios placeholder geradas.
+- [x] Workflow GitHub Actions criado e parametrizado.
+- [x] Variáveis por ambiente consumidas via Secrets.
+- [x] Prisma migrations e seed executam com sucesso.
+- [x] Páginas do menu existentes e responsivas.
+- [x] Endpoint `/api/health` responde `{ ok: true }`.
+
+## Roadmap v2
+- Coleta automática de dados via scripts.
+- Sumarização de notícias com IA.
+- Painel Admin para revisão humana.
