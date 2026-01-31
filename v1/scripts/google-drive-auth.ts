@@ -1,7 +1,7 @@
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
-const open = require('open');
+const openPkg = require('open');
 const http = require('http');
 const url = require('url');
 
@@ -84,8 +84,24 @@ async function authenticate() {
             console.log('   npm run gdrive:upload\n');
         }
     }).listen(3000, () => {
-        // Abrir navegador
-        open(authUrl, { wait: false }).then(cp => cp.unref());
+        // Tentar abrir o navegador automaticamente, com fallback para instruções manuais
+        try {
+            const opener = (typeof open === 'function') ? open : (openPkg && openPkg.default) ? openPkg.default : null;
+            if (opener) {
+                const result = opener(authUrl, { wait: false });
+                if (result && typeof result.then === 'function') {
+                    result.then(cp => { if (cp && cp.unref) cp.unref(); }).catch(() => {});
+                } else if (result && typeof result.unref === 'function') {
+                    result.unref();
+                }
+            } else {
+                console.log('Abra manualmente a URL abaixo para autenticar:\n');
+                console.log(authUrl + '\n');
+            }
+        } catch (e) {
+            console.log('Não foi possível abrir o navegador automaticamente. Abra manualmente:\n');
+            console.log(authUrl + '\n');
+        }
     });
 }
 
