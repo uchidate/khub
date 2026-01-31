@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Agency {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  website   String?
+  socials   String? // SQLite doesn't support Json type well, using String for now
+  artists   Artist[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Artist {
+  id               String             @id @default(cuid())
+  nameRomanized    String             @unique
+  nameHangul       String?
+  birthDate        DateTime?
+  stageNames       String? // SQLite doesn't support arrays, using String (comma separated)
+  roles            String? // SQLite doesn't support arrays
+  bio              String?
+  primaryImageUrl  String?
+  socialLinks      String? // SQLite doesn't support Json
+  agency           Agency?            @relation(fields: [agencyId], references: [id])
+  agencyId         String?
+  productions      ArtistProduction[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Production {
+  id                 String             @id @default(cuid())
+  titlePt            String             @unique
+  titleKr            String?
+  type               String
+  year               Int?
+  synopsis           String?
+  streamingPlatforms String? // SQLite doesn't support arrays
+  sourceUrls         String? // SQLite doesn't support arrays
+  tags               String? // SQLite doesn't support arrays
+  artists            ArtistProduction[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model ArtistProduction {
+  artist       Artist     @relation(fields: [artistId], references: [id])
+  artistId     String
+  production   Production @relation(fields: [productionId], references: [id])
+  productionId String
+  role         String?
+
+  @@id([artistId, productionId])
+}
+
+model News {
+  id          String   @id @default(cuid())
+  title       String   @unique
+  contentMd   String
+  sourceUrl   String
+  publishedAt DateTime @default(now())
+  imageUrl    String?
+  tags        String? // SQLite doesn't support arrays
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Image {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  url        String
+  credit     String?
+  license    String?
+  width      Int?
+  height     Int?
+  createdAt  DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("editor") // 'admin' | 'editor'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+  type String
+}
