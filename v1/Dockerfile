@@ -37,5 +37,5 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-# Usamos o prisma fixo para rodar a migração
-CMD ["sh", "-c", "npx prisma@5.22.0 migrate deploy && node server.js"]
+# Usamos o prisma fixo para rodar a sincronização do schema
+CMD ["sh", "-c", "npx prisma@5.22.0 db push --accept-data-loss && node server.js"]

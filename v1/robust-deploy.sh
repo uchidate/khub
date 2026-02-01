@@ -41,6 +41,9 @@ docker run -d \
   -v hallyuhub-data:/app/data \
   -e DATABASE_URL="file:/app/data/prod.db" \
   -e NEXT_TELEMETRY_DISABLED=1 \
+  -e GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
+  -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+  -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
   "$IMAGE_NAME"
 
 echo "✅ Deploy concluído! Verificando logs..."
