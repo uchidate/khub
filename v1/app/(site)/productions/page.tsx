@@ -25,11 +25,11 @@ export default async function ProductionsPage() {
                     <Link key={prod.id} href={`/productions/${prod.id}`} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
                         {/* Poster / Backdrop */}
                         <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-900 relative overflow-hidden">
-                            {prod.artists[0]?.artist?.primaryImageUrl ? (
+                            {prod.imageUrl ? (
                                 <img
-                                    src={prod.artists[0].artist.primaryImageUrl}
+                                    src={prod.imageUrl}
                                     alt={prod.titlePt}
-                                    className="absolute inset-0 w-full h-full object-cover brightness-[0.35] group-hover:brightness-[0.5] transition-all duration-500"
+                                    className="absolute inset-0 w-full h-full object-cover brightness-[0.6] group-hover:brightness-[0.8] transition-all duration-500"
                                 />
                             ) : (
                                 <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />

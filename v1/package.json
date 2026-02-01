@@ -15,6 +15,7 @@
     "atualize:ai": "tsx scripts/atualize-ai.ts",
     "ai:stats": "tsx scripts/ai-stats.ts",
     "update:images": "tsx scripts/update-images.ts",
+    "refresh:productions": "tsx scripts/refresh-productions.ts",
     "gdrive:auth": "tsx scripts/google-drive-auth.ts",
     "gdrive:auth:local": "node scripts/run-gdrive-auth.js",
     "gdrive:upload": "tsx scripts/google-drive-upload.ts",

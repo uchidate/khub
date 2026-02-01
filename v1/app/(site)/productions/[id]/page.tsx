@@ -23,14 +23,13 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
     }
 
     const tags = production.tags?.split(',').map(t => t.trim()) || []
-    const heroImage = production.artists.find(a => a.artist.primaryImageUrl)?.artist.primaryImageUrl
 
     return (
         <div className="min-h-screen">
             {/* Cinematic Hero */}
             <div className="relative h-[50vh] md:h-[60vh] bg-black overflow-hidden">
-                {heroImage ? (
-                    <img src={heroImage} alt={production.titlePt} className="absolute inset-0 w-full h-full object-cover brightness-[0.35]" />
+                {production.imageUrl ? (
+                    <img src={production.imageUrl} alt={production.titlePt} className="absolute inset-0 w-full h-full object-cover brightness-[0.45]" />
                 ) : (
                     <>
                         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />

@@ -87,6 +87,106 @@ export class ImageSearchService {
     }
 
     /**
+     * Find production poster using TMDB movie/TV search
+     */
+    async findProductionImage(titlePt: string, titleKr: string | null, type: string): Promise<ImageSearchResult | null> {
+        const queries = titleKr ? [titleKr, titlePt] : [titlePt];
+
+        // Tier 1: TMDB (purpose-built for movie/TV posters)
+        if (process.env.TMDB_API_KEY) {
+            for (const query of queries) {
+                const result = await this.searchTMDBProduction(query, type);
+                if (result) {
+                    console.log(`✅ Found production poster on TMDB: ${query}`);
+                    return result;
+                }
+            }
+        }
+
+        // Tier 2: Google Custom Search
+        if (process.env.GOOGLE_CUSTOM_SEARCH_KEY && process.env.GOOGLE_CX) {
+            for (const query of queries) {
+                const result = await this.searchGoogleProduction(query);
+                if (result) {
+                    console.log(`✅ Found production poster on Google: ${query}`);
+                    return result;
+                }
+            }
+        }
+
+        console.log(`⚠️  No poster found for: ${titlePt}`);
+        return null;
+    }
+
+    /**
+     * Search TMDB for movie or TV show poster
+     */
+    private async searchTMDBProduction(query: string, type: string): Promise<ImageSearchResult | null> {
+        try {
+            const primaryEndpoint = type.toLowerCase() === 'serie' ? 'tv' : 'movie';
+            const endpoints = [primaryEndpoint, primaryEndpoint === 'tv' ? 'movie' : 'tv'];
+
+            for (const endpoint of endpoints) {
+                const searchUrl = `https://api.themoviedb.org/3/search/${endpoint}?query=${encodeURIComponent(query)}&include_adult=false&page=1`;
+
+                const response = await fetch(searchUrl, {
+                    headers: {
+                        accept: 'application/json',
+                        Authorization: `Bearer ${process.env.TMDB_API_KEY}`
+                    }
+                });
+                if (!response.ok) continue;
+
+                const data = await response.json();
+                const result = data.results?.[0];
+
+                if (result?.poster_path) {
+                    return {
+                        url: `https://image.tmdb.org/t/p/original${result.poster_path}`,
+                        source: 'tmdb',
+                        attribution: 'The Movie Database (TMDB)'
+                    };
+                }
+            }
+            return null;
+        } catch (error) {
+            console.error('TMDB Production Search Error:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Search Google for production poster
+     */
+    private async searchGoogleProduction(query: string): Promise<ImageSearchResult | null> {
+        try {
+            const apiKey = process.env.GOOGLE_CUSTOM_SEARCH_KEY;
+            const cx = process.env.GOOGLE_CX;
+            const q = `${query} korean drama movie poster`;
+
+            const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(q)}&searchType=image&num=1&fileType=jpg&imgSize=large`;
+
+            const response = await fetch(url);
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            const item = data.items?.[0];
+
+            if (item && item.link) {
+                return {
+                    url: item.link,
+                    source: 'google',
+                    attribution: 'Google Search'
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Google Production Search Error:', error);
+            return null;
+        }
+    }
+
+    /**
      * Search TMDB for Person
      */
     private async searchTMDB(query: string): Promise<ImageSearchResult | null> {

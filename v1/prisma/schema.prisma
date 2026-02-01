@@ -45,6 +45,7 @@ model Production {
   type               String
   year               Int?
   synopsis           String?
+  imageUrl           String?
   streamingPlatforms String? // SQLite doesn't support arrays
   sourceUrls         String? // SQLite doesn't support arrays
   tags               String? // SQLite doesn't support arrays
