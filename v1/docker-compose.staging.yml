@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   hallyuhub-staging:
-    image: ghcr.io/uchidate/khub:latest
+    image: ghcr.io/uchidate/khub:staging
     container_name: hallyuhub-staging
     ports:
       - "3001:3000"
