@@ -21,7 +21,7 @@ rm /tmp/hallyuhub-deploy.tar.gz
 # 2. Criar arquivo .env.production
 echo -e "${BLUE}⚙️  Configurando variáveis de ambiente...${NC}"
 cat > .env.production << 'EOF'
-DATABASE_URL="file:./prod.db"
+DATABASE_URL="file:/app/data/prod.db"
 NEXT_PUBLIC_SITE_URL="http://31.97.255.107:3000"
 GEMINI_API_KEY=AIzaSyBrIIHZVv36uAaXSoYL2xl0bJRJG1KMP-E
 OPENAI_API_KEY=

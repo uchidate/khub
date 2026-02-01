@@ -56,28 +56,30 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/hallyuhub
-            
+
+            # Ensure DATABASE_URL points inside the persistent volume
+            sed -i 's|DATABASE_URL=.*|DATABASE_URL="file:/app/data/prod.db"|' .env.production
+
             # Pull latest image
             docker pull ghcr.io/${{ github.repository_owner }}/khub:latest
-            
+
             # Stop and remove old container
             docker-compose stop hallyuhub || true
             docker-compose rm -f hallyuhub || true
-            
+
+            # Run migrations before starting (uses the persistent volume)
+            docker-compose run --rm hallyuhub npx prisma migrate deploy
+
             # Start new container
             docker-compose up -d hallyuhub
-            
+
             # Copy updated scripts and libs
             docker cp /var/www/hallyuhub/lib/. hallyuhub:/app/lib/
             docker cp /var/www/hallyuhub/scripts/. hallyuhub:/app/scripts/
-            
-            # Install AI dependencies if needed
-            docker exec -u root hallyuhub npm list @google/generative-ai || \
-              docker exec -u root hallyuhub npm install @google/generative-ai openai @anthropic-ai/sdk
-            
+
             # Show status
             docker-compose ps hallyuhub
-            
+
             echo "✅ Deployment completed successfully!"
 
       - name: Verify deployment

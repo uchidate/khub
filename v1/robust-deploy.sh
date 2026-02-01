@@ -27,6 +27,15 @@ fi
 
 echo "🚀 Iniciando deploy em ambiente: ${env_type}..."
 
+# Garantir que DATABASE_URL aponta para dentro do volume persistente
+if [ -f "${SCRIPT_DIR}/.env.${env_type}" ]; then
+  if [ "$env_type" = "production" ]; then
+    sed -i 's|DATABASE_URL=.*|DATABASE_URL="file:/app/data/prod.db"|' "${SCRIPT_DIR}/.env.${env_type}"
+  elif [ "$env_type" = "staging" ]; then
+    sed -i 's|DATABASE_URL=.*|DATABASE_URL="file:/app/data/staging.db"|' "${SCRIPT_DIR}/.env.${env_type}"
+  fi
+fi
+
 # 0. Backup automático antes de qualquer alteração (Apenas em Prod se desejar, ou ambos)
 if [ "$env_type" = "production" ]; then
   echo "💾 Criando backup do banco antes do deploy..."
@@ -42,6 +51,10 @@ fi
 # 2. Rodar via Docker Compose específico
 echo "🏃 Atualizando serviço via Docker Compose: $compose_file"
 docker compose -f "$compose_file" pull
+
+# Rodar migrações antes de subir (usa o volume persistente)
+docker compose -f "$compose_file" run --rm hallyuhub npx prisma migrate deploy
+
 docker compose -f "$compose_file" up -d --force-recreate
 
 echo "🧹 Limpando imagens antigas..."
