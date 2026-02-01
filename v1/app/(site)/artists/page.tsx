@@ -1,13 +1,11 @@
 import prisma from "@/lib/prisma"
+import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
 
 export default async function ArtistsPage() {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] --- RENDERING ARTISTS PAGE ---`)
-
-    // Explicitly opt out of static rendering
-    // Explicitly opt out of static rendering
 
     const artists = await prisma.artist.findMany({
         include: { agency: true },
@@ -25,7 +23,7 @@ export default async function ArtistsPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
                 {artists.map((artist: any) => (
-                    <div key={artist.id} className="group cursor-pointer">
+                    <Link key={artist.id} href={`/artists/${artist.id}`} className="group cursor-pointer block">
                         <div className="aspect-[2/3] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 card-hover shadow-2xl">
                             {artist.primaryImageUrl ? (
                                 <img
@@ -54,7 +52,7 @@ export default async function ArtistsPage() {
                             <h4 className="font-bold text-lg">{artist.nameRomanized}</h4>
                             <p className="text-xs text-zinc-500 font-medium">{artist.agency?.name || 'Independente'}</p>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         </div>
