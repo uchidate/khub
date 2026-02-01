@@ -21,33 +21,27 @@ sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 ```
 
-## 2. Preparação dos Arquivos (Local)
-No seu Mac, crie o pacote compactado (excluindo arquivos desnecessários):
+## 2. Abordagem Moderna: GitHub Actions (Automático) ✨
+Com o novo pipeline que criamos, você não precisa mais compactar arquivos manualmente.
 
-```bash
-cd /Users/fabiouchidate/Antigravity/khub/v1
-tar --exclude='node_modules' --exclude='.next' --exclude='.git' -czf hallyuhub-hostinger.tar.gz .
-```
+### Preparação Única no Servidor:
+1.  Crie a pasta do projeto: `mkdir -p /var/www/hallyuhub`.
+2.  Copie o arquivo `robust-deploy.sh` para dentro dessa pasta (pode usar `scp` ou criar o arquivo manualmente via `nano`).
+3.  Dê permissão de execução: `chmod +x /var/www/hallyuhub/robust-deploy.sh`.
 
-## 3. Transferência para Hostinger
-Substitua `[IP_DA_HOSTINGER]` pelo IP do seu servidor:
+### Fluxo de Trabalho:
+1.  Configure as **GitHub Secrets** no seu repositório (IP, Usuário e Chave SSH).
+2.  Faça um `git push` para a branch `main`.
+3.  O GitHub Actions fará o build, o push para o Registry e o deploy automático no seu VPS.
 
-```bash
-scp hallyuhub-hostinger.tar.gz root@[IP_DA_HOSTINGER]:/var/www/
-```
+---
 
-## 4. Deploy no Servidor
-Acesse o servidor via SSH e execute:
+## 3. Abordagem de Backup: SCP Manual (Se necessário)
+Se por algum motivo a automação falhar, você ainda pode usar o método manual:
 
-```bash
-cd /var/www
-mkdir -p hallyuhub && mv hallyuhub-hostinger.tar.gz hallyuhub/
-cd hallyuhub
-tar -xzf hallyuhub-hostinger.tar.gz
-
-# Iniciar o deploy automático
-bash robust-deploy.sh
-```
+1.  **No Mac:** `tar --exclude='node_modules' --exclude='.next' --exclude='.git' -czf hallyuhub.tar.gz .`
+2.  **Enviar:** `scp hallyuhub.tar.gz root@[IP_DA_HOSTINGER]:/var/www/hallyuhub/`
+3.  **No Servidor:** `cd /var/www/hallyuhub && tar -xzf hallyuhub.tar.gz && bash robust-deploy.sh`
 
 ## 5. Configurando o Domínio e SSL (Nginx)
 Para que o site responda pelo seu domínio (ex: `hallyuhub.com.br`) e tenha o cadeado verde (HTTPS), recomendamos usar o Nginx como Proxy Reverso.
