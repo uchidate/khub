@@ -76,3 +76,5 @@ sudo certbot --nginx -d www.seu-dominio.com -d seu-dominio.com
 - Coleta automática de dados via scripts.
 - Sumarização de notícias com IA.
 - Painel Admin para revisão humana.
+
+# Staging verification Sun Feb  1 18:30:33 -03 2026
