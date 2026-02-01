@@ -9,15 +9,15 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
-    "atualize": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/atualize.ts",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "atualize": "tsx scripts/atualize.ts",
     "atualize:local": "node scripts/run-atualize.js",
-    "atualize:ai": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/atualize-ai.ts",
-    "ai:stats": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/ai-stats.ts",
-    "update:images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/update-images.ts",
-    "gdrive:auth": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/google-drive-auth.ts",
+    "atualize:ai": "tsx scripts/atualize-ai.ts",
+    "ai:stats": "tsx scripts/ai-stats.ts",
+    "update:images": "tsx scripts/update-images.ts",
+    "gdrive:auth": "tsx scripts/google-drive-auth.ts",
     "gdrive:auth:local": "node scripts/run-gdrive-auth.js",
-    "gdrive:upload": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/google-drive-upload.ts",
+    "gdrive:upload": "tsx scripts/google-drive-upload.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -33,6 +33,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.2.1",
+    "tsx": "^4.7.0",
     "prisma": "5.22.0"
   },
   "devDependencies": {

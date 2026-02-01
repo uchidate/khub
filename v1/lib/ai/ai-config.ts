@@ -101,7 +101,7 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
     name: 'ollama',
     displayName: 'Local Ollama',
     enabled: true,
-    priority: 0, // Prioritário por ser local e gratuito
+    priority: 4, // Último recurso — sem GPU no VPS, JSON não confiável
     costPer1kTokens: 0,
     rateLimit: {
       requestsPerMinute: 60,

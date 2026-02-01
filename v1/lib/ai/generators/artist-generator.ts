@@ -6,6 +6,7 @@ import { ImageSearchService } from '../../services/image-search-service';
 export interface ArtistData {
     nameRomanized: string;
     nameHangul: string;
+    stageNames?: string;
     birthDate: Date;
     roles: string;
     bio: string;
@@ -43,6 +44,7 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
         const schema = `{
   "nameRomanized": "string (nome romanizado, ex: 'Kim Taehyung')",
   "nameHangul": "string (nome em hangul, ex: '김태형')",
+  "stageNames": "string (nomes artísticos separados por vírgula, ex: 'V, TaeTae')",
   "birthDate": "string (data de nascimento no formato YYYY-MM-DD)",
   "roles": "string (papéis separados por vírgula, ex: 'CANTOR, ATOR, MODELO')",
   "bio": "string (biografia curta em português, 2-3 frases)",
@@ -53,6 +55,7 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
         const result = await this.orchestrator.generateStructured<{
             nameRomanized: string;
             nameHangul: string;
+            stageNames: string;
             birthDate: string;
             roles: string;
             bio: string;
@@ -63,14 +66,20 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
             systemPrompt: SYSTEM_PROMPTS.artist,
         });
 
-        // Search for real artist image
-        console.log(`🔍 Searching for real image of ${result.nameRomanized}...`);
-        const imageResult = await this.imageSearch.findArtistImage(result.nameRomanized);
+        // Search for real artist image using Aliases
+        const aliases = [];
+        if (result.nameHangul) aliases.push(result.nameHangul);
+        if (result.stageNames) {
+            aliases.push(...result.stageNames.split(',').map(s => s.trim()));
+        }
+
+        console.log(`🔍 Searching for real image of ${result.nameRomanized} (Aliases: ${aliases.join(', ')})...`);
+        const imageResult = await this.imageSearch.findArtistImage(result.nameRomanized, aliases);
 
         return {
             ...result,
             birthDate: new Date(result.birthDate),
-            primaryImageUrl: imageResult.url,
+            primaryImageUrl: imageResult?.url || result.primaryImageUrl, // Fallback to AI proposed URL if null (though findArtistImage returns placeholder now)
         };
     }
 

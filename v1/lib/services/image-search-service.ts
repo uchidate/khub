@@ -6,7 +6,7 @@
 
 export interface ImageSearchResult {
     url: string;
-    source: 'wikipedia' | 'unsplash' | 'pexels' | 'placeholder';
+    source: 'wikipedia' | 'unsplash' | 'pexels' | 'placeholder' | 'tmdb' | 'google';
     attribution?: string;
 }
 
@@ -17,23 +17,44 @@ export class ImageSearchService {
     constructor() {
         this.unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY || '';
         this.pexelsApiKey = process.env.PEXELS_API_KEY || '';
+        console.log('ImageSearchService initialized.');
+        console.log('Keys available:');
+        console.log('- Unsplash:', !!this.unsplashAccessKey);
+        console.log('- Google Key:', !!process.env.GOOGLE_CUSTOM_SEARCH_KEY);
+        console.log('- Google CX:', !!process.env.GOOGLE_CX);
+        console.log('- TMDB:', !!process.env.TMDB_API_KEY);
     }
 
     /**
      * Find artist image using multi-tier search
      */
-    async findArtistImage(artistName: string): Promise<ImageSearchResult> {
-        console.log(`🔍 Searching image for: ${artistName}`);
+    async findArtistImage(artistName: string, alternatives: string[] = []): Promise<ImageSearchResult | null> {
+        console.log(`🔍 Searching image for: ${artistName} (alternatives: ${alternatives.join(', ')})`)
 
-        // Tier 1: Wikipedia (Free, Unlimited, Most Authentic)
-        const wikiResult = await this.searchWikipedia(artistName);
-        if (wikiResult) {
-            console.log(`✅ Found on Wikipedia: ${artistName}`);
-            return wikiResult;
+        const queries = [artistName, ...alternatives];
+
+        // Tier 1: TMDB (Best for Actors/Double Threats) - Iterating aliases
+        if (process.env.TMDB_API_KEY) {
+            for (const query of queries) {
+                const tmdbResult = await this.searchTMDB(query);
+                if (tmdbResult) {
+                    console.log(`✅ Found on TMDB: ${query}`);
+                    return tmdbResult;
+                }
+            }
         }
 
-        // Tier 2: Unsplash (Free, 50 req/hour)
-        if (this.unsplashAccessKey) {
+        // Tier 2: Wikipedia (Free, Authentic)
+        for (const query of queries) {
+            const wikiResult = await this.searchWikipedia(query);
+            if (wikiResult) {
+                console.log(`✅ Found on Wikipedia: ${query}`);
+                return wikiResult;
+            }
+        }
+
+        // Tier 3: Unsplash (High Quality, Fallback) - Only check main name (avoid random matches on aliases)
+        if (process.env.UNSPLASH_ACCESS_KEY) {
             const unsplashResult = await this.searchUnsplash(artistName);
             if (unsplashResult) {
                 console.log(`✅ Found on Unsplash: ${artistName}`);
@@ -41,8 +62,19 @@ export class ImageSearchService {
             }
         }
 
-        // Tier 3: Pexels (Free, 200 req/hour)
-        if (this.pexelsApiKey) {
+        // Tier 4: Google Custom Search (The Ultimate Fallback)
+        if (process.env.GOOGLE_CUSTOM_SEARCH_KEY && process.env.GOOGLE_CX) {
+            for (const query of queries) {
+                const googleResult = await this.searchGoogle(query);
+                if (googleResult) {
+                    console.log(`✅ Found on Google: ${query}`);
+                    return googleResult;
+                }
+            }
+        }
+
+        // Tier 5: Pexels (Last Resort)
+        if (process.env.PEXELS_API_KEY) {
             const pexelsResult = await this.searchPexels(artistName);
             if (pexelsResult) {
                 console.log(`✅ Found on Pexels: ${artistName}`);
@@ -50,9 +82,81 @@ export class ImageSearchService {
             }
         }
 
-        // Fallback: Placeholder
-        console.log(`⚠️  No image found, using placeholder for: ${artistName}`);
-        return this.getPlaceholder();
+        console.log(`⚠️  No image found, using placeholder for: ${artistName}`)
+        return this.getPlaceholder()
+    }
+
+    /**
+     * Search TMDB for Person
+     */
+    private async searchTMDB(query: string): Promise<ImageSearchResult | null> {
+        try {
+            const searchUrl = `https://api.themoviedb.org/3/search/person?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
+            const options = {
+                method: 'GET',
+                headers: {
+                    accept: 'application/json',
+                    Authorization: `Bearer ${process.env.TMDB_API_KEY}`
+                }
+            };
+
+            const response = await fetch(searchUrl, options);
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            const person = data.results?.[0]; // Best match
+
+            if (person && person.profile_path) {
+                // Check popularity or known_for to ensure it's K-related? hard to say. 
+                // But usually name match is decent.
+                return {
+                    url: `https://image.tmdb.org/t/p/original${person.profile_path}`,
+                    source: 'tmdb',
+                    attribution: 'The Movie Database (TMDB)'
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('TMDB Search Error:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Search Google Custom Search
+     */
+    private async searchGoogle(query: string): Promise<ImageSearchResult | null> {
+        try {
+            const apiKey = process.env.GOOGLE_CUSTOM_SEARCH_KEY; // Or user's provided key
+            const cx = process.env.GOOGLE_CX;
+            const q = `${query} kpop official profile`; // Refine query
+
+            const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(q)}&searchType=image&num=1&fileType=jpg&imgSize=large`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.warn(`⚠️ Google Search Failed: ${response.status} ${response.statusText}`);
+                const errText = await response.text();
+                console.warn(`   Response: ${errText}`);
+                return null;
+            }
+
+            const data = await response.json();
+            console.log(`   Google Results: ${data.items?.length || 0} items`);
+            const item = data.items?.[0];
+
+            if (item && item.link) {
+                return {
+                    url: item.link,
+                    source: 'google',
+                    attribution: 'Google Search'
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Google Search Error:', error);
+            return null;
+        }
     }
 
     /**
@@ -169,9 +273,23 @@ export class ImageSearchService {
      * Get placeholder image
      */
     private getPlaceholder(): ImageSearchResult {
-        // Generic K-pop placeholder from a reliable source
+        const placeholders = [
+            'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=600&fit=crop', // Default
+            'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=400&h=600&fit=crop', // Neon vibes
+            'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=400&h=600&fit=crop', // Man in blur
+            'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?w=400&h=600&fit=crop', // Stage lights
+            'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=400&h=600&fit=crop', // Party/Stage
+            'https://images.unsplash.com/photo-1459749411177-046f52bbace9?w=400&h=600&fit=crop', // Concert
+            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=600&fit=crop', // Event
+            'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=600&fit=crop', // Crowd
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=600&fit=crop', // Microphone
+            'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400&h=600&fit=crop', // Piano/Mood
+        ];
+
+        const randomUrl = placeholders[Math.floor(Math.random() * placeholders.length)];
+
         return {
-            url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=600&fit=crop',
+            url: randomUrl,
             source: 'placeholder',
             attribution: 'Generic K-pop placeholder',
         };
