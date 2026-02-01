@@ -107,8 +107,8 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
       requestsPerMinute: 60,
     },
     models: {
-      default: 'gemma:2b',
-      alternatives: ['phi3', 'mistral', 'llama3:8b'],
+      default: 'phi3',
+      alternatives: ['gemma:2b', 'mistral', 'llama3:8b'],
     },
   },
 };
