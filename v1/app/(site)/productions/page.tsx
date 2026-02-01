@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export default async function ProductionsPage() {
 
             <div className="space-y-12">
                 {productions.map((prod: any) => (
-                    <div key={prod.id} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl">
+                    <Link key={prod.id} href={`/productions/${prod.id}`} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
                         {/* Poster / Backdrop */}
                         <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-gradient-to-br from-zinc-800 to-zinc-900 relative overflow-hidden">
                             <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
@@ -66,7 +67,7 @@ export default async function ProductionsPage() {
                                         <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Com a participação de</h4>
                                         <div className="flex gap-2">
                                             {prod.artists.map((conn: any) => (
-                                                <span key={conn.artistId} className="text-xs font-bold text-purple-400 hover:text-white transition-colors cursor-pointer capitalize">
+                                                <span key={conn.artistId} className="text-xs font-bold text-purple-400">
                                                     {conn.artist.nameRomanized}
                                                 </span>
                                             ))}
@@ -75,7 +76,7 @@ export default async function ProductionsPage() {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         </div>

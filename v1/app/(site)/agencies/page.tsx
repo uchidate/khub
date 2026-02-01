@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export default async function AgenciesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {agencies.map((agency: any) => (
-                    <div key={agency.id} className="p-10 bg-zinc-900/50 rounded-3xl border border-white/5 card-hover shadow-2xl relative overflow-hidden group">
+                    <Link key={agency.id} href={`/agencies/${agency.id}`} className="p-10 bg-zinc-900/50 rounded-3xl border border-white/5 card-hover shadow-2xl relative overflow-hidden group block">
                         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -31,14 +32,11 @@ export default async function AgenciesPage() {
                             <div className="bg-zinc-800 px-4 py-2 rounded-xl text-zinc-400 font-black text-[10px] uppercase">
                                 {agency._count.artists} Artistas
                             </div>
-                            <a href={agency.website || '#'} target="_blank" className="text-xs font-black text-white hover:text-purple-500 transition-colors flex items-center gap-2">
-                                SITE OFICIAL
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                            </a>
+                            <span className="text-xs font-black text-zinc-500 group-hover:text-purple-500 transition-colors">
+                                VER PERFIL →
+                            </span>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         </div>
