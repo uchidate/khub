@@ -1,5 +1,7 @@
 # GitHub Actions Setup Guide
 
+<!-- Testing CI/CD workflow - 2026-02-01 -->
+
 Este guia mostra como configurar os GitHub Secrets necessários para os workflows funcionarem.
 
 ## Secrets Necessários
