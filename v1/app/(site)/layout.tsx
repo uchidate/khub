@@ -29,7 +29,7 @@ export default function RootLayout({
                     <footer className="bg-black border-t border-zinc-800 py-12">
                         <div className="max-w-7xl mx-auto px-4">
                             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                                <span className="text-2xl font-black text-purple-600 tracking-tighter uppercase">HallyuHub</span>
+                                <span className="text-2xl font-black tracking-tighter uppercase"><span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span></span>
                                 <div className="flex gap-8 text-sm text-zinc-500">
                                     <a href="/about" className="hover:text-white underline-offset-4 hover:underline">Sobre nós</a>
                                     <a href="#" className="hover:text-white underline-offset-4 hover:underline">Privacidade</a>
