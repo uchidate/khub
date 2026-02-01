@@ -129,6 +129,22 @@ async function main() {
             year: 2020,
             synopsis: "Enquanto humanos se transformam em monstros ferozes, um jovem problemático e seus vizinhos de apartamento lutam para sobreviver sem perder a humanidade.",
             streamingPlatforms: "Netflix"
+        },
+        {
+            titlePt: "Blackpink: The Movie",
+            titleKr: "블랙핑크: 더 무비",
+            type: "FILME",
+            year: 2021,
+            synopsis: "Um documentário celebrando o 5º aniversário do grupo feminino de K-pop Blackpink, com performances ao vivo e entrevistas exclusivas.",
+            streamingPlatforms: "Disney+, Netflix"
+        },
+        {
+            titlePt: "Kingdom: Legendary War",
+            titleKr: "킹덤: 레전더리 워",
+            type: "SHOW",
+            year: 2021,
+            synopsis: "Grupos masculinos de K-pop competem entre si em performances espetaculares para conquistar o trono de reis da performance.",
+            streamingPlatforms: "Viki"
         }
     ];
 
@@ -145,8 +161,8 @@ async function main() {
         { artist: "Song Kang", works: ["My Demon", "Sweet Home"] },
         { artist: "Han So-hee", works: ["A Criatura de Gyeongseong", "My Name"] },
         { artist: "Cha Eun-woo", works: ["Wonderful World"] },
-        { artist: "Lisa", works: [] }, // Exemplo sem obras no seed
-        { artist: "Felix", works: [] }
+        { artist: "Lisa", works: ["Blackpink: The Movie"] },
+        { artist: "Felix", works: ["Kingdom: Legendary War"] }
     ];
 
     for (const rel of relations) {
