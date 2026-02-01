@@ -4,8 +4,8 @@ RUN apt-get update && apt-get install -y openssl ca-certificates libssl1.1 && rm
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
-# Forçamos a instalação exata do prisma 5.22.0
-RUN npm install prisma@5.22.0 @prisma/client@5.22.0 && npm install
+# Instalamos tudo para o build
+RUN npm install
 
 # Stage 2: Build
 FROM node:20-bullseye-slim AS builder
@@ -13,34 +13,37 @@ RUN apt-get update && apt-get install -y openssl ca-certificates libssl1.1 && rm
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV DATABASE_URL="file:./build.db"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_BUILD_STATIC_GENERATION=1
-RUN npx prisma@5.22.0 generate
-RUN npx prisma@5.22.0 db push --skip-generate
+# Usamos um DATABASE_URL dummy para o build
+ENV DATABASE_URL="file:./build.db"
+RUN npx prisma generate
 RUN npm run build
 
 # Stage 3: Runner
 FROM node:20-bullseye-slim AS runner
 RUN apt-get update && apt-get install -y openssl ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -m nextjs
-RUN mkdir -p /home/nextjs/.npm && chown -R nextjs:nodejs /home/nextjs
+
+# Copiamos apenas o necessário do standalone
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
-COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
-# Substitui node_modules do standalone pelo completo do builder —
-# necessário para tsx e outros CLIs usados pelos scripts
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# O Standalone já contém seu próprio node_modules otimizado
+
 USER nextjs
+
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-# Aplica migrations pendentes de forma incremental (nunca dropa dados)
-CMD ["sh", "-c", "npx prisma@5.22.0 migrate deploy && node server.js"]
+
+# O server.js do standalone cuida de tudo. 
+# Migrações são rodadas manualmente ou via script de deploy no volume.
+CMD ["node", "server.js"]

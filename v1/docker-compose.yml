@@ -3,7 +3,6 @@ services:
   hallyuhub:
     image: ghcr.io/uchidate/khub:latest
     container_name: hallyuhub
-    user: root
     ports:
       - "3000:3000"
     environment:
@@ -11,7 +10,6 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
     volumes:
       - hallyuhub-data:/app/data
-    command: node server.js
     networks:
       - web
 
