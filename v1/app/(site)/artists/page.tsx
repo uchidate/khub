@@ -1,9 +1,13 @@
 import prisma from "@/lib/prisma"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ArtistsPage() {
+    console.log('--- RENDERING ARTISTS PAGE ---')
     const artists = await prisma.artist.findMany({
         include: { agency: true }
     })
+    console.log('ARTISTS FOUND:', artists.length)
 
     return (
         <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
