@@ -1,0 +1,21 @@
+name: Daily Data Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run every day at UTC 00:00
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute update via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/hallyuhub
+            docker exec hallyuhub npm run atualize
+            echo "✅ Data update triggered successfully inside container."
