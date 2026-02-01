@@ -1,6 +1,9 @@
 import prisma from "@/lib/prisma"
 
+export const dynamic = 'force-dynamic'
+
 export default async function AgenciesPage() {
+    console.log('--- RENDERING AGENCIES PAGE ---')
     const agencies = await prisma.agency.findMany({
         include: { _count: { select: { artists: true } } }
     })

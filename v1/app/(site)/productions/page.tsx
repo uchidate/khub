@@ -1,6 +1,9 @@
 import prisma from "@/lib/prisma"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProductionsPage() {
+    console.log('--- RENDERING PRODUCTIONS PAGE ---')
     const productions = await prisma.production.findMany({
         include: {
             artists: {
