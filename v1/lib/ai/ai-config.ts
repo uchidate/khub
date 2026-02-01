@@ -108,7 +108,7 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
     },
     models: {
       default: 'phi3',
-      alternatives: ['gemma:2b', 'mistral', 'llama3:8b'],
+      alternatives: ['mistral', 'llama3:8b'],
     },
   },
 };
