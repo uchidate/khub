@@ -29,7 +29,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
             <div className="max-w-4xl mx-auto">
                 {/* Voltar */}
                 <Link
-                    href="/news"
+                    href="/v1/news"
                     className="inline-flex items-center gap-2 text-zinc-500 hover:text-white transition-colors mb-8 group"
                 >
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

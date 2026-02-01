@@ -17,7 +17,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
     if (!artist) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Link href="/artists" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Artistas</Link>
+                <Link href="/v1/artists" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Artistas</Link>
                 <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic">Artista não encontrado</h1>
             </div>
         )
@@ -49,7 +49,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                 {/* Back link */}
                 <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20">
-                    <Link href="/artists" className="text-zinc-400 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit">
+                    <Link href="/v1/artists" className="text-zinc-400 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit">
                         ← Artistas
                     </Link>
                 </div>

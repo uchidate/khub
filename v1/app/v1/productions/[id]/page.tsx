@@ -16,7 +16,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
     if (!production) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Link href="/productions" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Filmes & Séries</Link>
+                <Link href="/v1/productions" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Filmes & Séries</Link>
                 <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic">Produção não encontrada</h1>
             </div>
         )
@@ -41,7 +41,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
 
                 {/* Back link */}
                 <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20">
-                    <Link href="/productions" className="text-zinc-400 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit">
+                    <Link href="/v1/productions" className="text-zinc-400 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit">
                         ← Filmes & Séries
                     </Link>
                 </div>
@@ -90,7 +90,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                     {production.artists.map(({ artist, role }) => (
-                                        <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
+                                        <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="group">
                                             <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-colors">
                                                 {artist.primaryImageUrl ? (
                                                     <img src={artist.primaryImageUrl} alt={artist.nameRomanized} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 brightness-[0.7] group-hover:brightness-90" />

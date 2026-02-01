@@ -12,7 +12,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
     if (!agency) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Link href="/agencies" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Agências</Link>
+                <Link href="/v1/agencies" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Agências</Link>
                 <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic">Agência não encontrada</h1>
             </div>
         )
@@ -26,7 +26,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
     return (
         <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             {/* Back */}
-            <Link href="/agencies" className="text-zinc-400 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit mb-12">
+            <Link href="/v1/agencies" className="text-zinc-400 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit mb-12">
                 ← Agências
             </Link>
 
@@ -68,7 +68,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
                 {agency.artists.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8">
                         {agency.artists.map((artist) => (
-                            <Link key={artist.id} href={`/artists/${artist.id}`} className="group cursor-pointer block">
+                            <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="group cursor-pointer block">
                                 <div className="aspect-[2/3] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 card-hover shadow-2xl">
                                     {artist.primaryImageUrl ? (
                                         <img
