@@ -1,6 +1,7 @@
 import { AIOrchestrator } from '../orchestrator';
 import { SYSTEM_PROMPTS } from '../ai-config';
 import type { GenerateOptions } from '../ai-config';
+import { ImageSearchService } from '../../services/image-search-service';
 
 export interface NewsData {
     title: string;
@@ -8,13 +9,18 @@ export interface NewsData {
     sourceUrl: string;
     tags: string;
     publishedAt: Date;
+    imageUrl?: string;
 }
 
 /**
  * Gerador de notícias sobre K-Pop e K-Drama
  */
 export class NewsGenerator {
-    constructor(private orchestrator: AIOrchestrator) { }
+    private imageService: ImageSearchService;
+
+    constructor(private orchestrator: AIOrchestrator) {
+        this.imageService = new ImageSearchService();
+    }
 
     /**
      * Gera uma notícia sobre K-Pop ou K-Drama
@@ -55,9 +61,21 @@ IMPORTANTE: A notícia deve ser baseada em eventos REAIS que aconteceram recente
             systemPrompt: SYSTEM_PROMPTS.news,
         });
 
+        // Buscar imagem
+        let imageUrl: string | undefined;
+        try {
+            const imageResult = await this.imageService.findNewsImage(result.title);
+            if (imageResult) {
+                imageUrl = imageResult.url;
+            }
+        } catch (error) {
+            console.error('Failed to fetch news image:', error);
+        }
+
         return {
             ...result,
             publishedAt: new Date(result.publishedAt),
+            imageUrl,
         };
     }
 

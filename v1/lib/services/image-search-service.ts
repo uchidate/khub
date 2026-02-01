@@ -88,6 +88,34 @@ export class ImageSearchService {
     }
 
     /**
+     * Find news image using contextual search
+     */
+    async findNewsImage(title: string): Promise<ImageSearchResult | null> {
+        console.log(`🔍 Searching news image for: ${title}`);
+
+        // Tier 1: Unsplash (High Quality, General)
+        if (process.env.UNSPLASH_ACCESS_KEY) {
+            const result = await this.searchUnsplash(title);
+            if (result) {
+                console.log(`✅ Found news image on Unsplash: ${title}`);
+                return result;
+            }
+        }
+
+        // Tier 2: Google Custom Search
+        if (process.env.GOOGLE_CUSTOM_SEARCH_KEY && process.env.GOOGLE_CX) {
+            const result = await this.searchGoogle(title);
+            if (result) {
+                console.log(`✅ Found news image on Google: ${title}`);
+                return result;
+            }
+        }
+
+        console.log(`⚠️  No news image found for: ${title}`);
+        return this.getPlaceholder();
+    }
+
+    /**
      * Find production poster using TMDB movie/TV search
      */
     async findProductionImage(titlePt: string, titleKr: string | null, type: string): Promise<ImageSearchResult | null> {
