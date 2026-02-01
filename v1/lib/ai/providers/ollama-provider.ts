@@ -2,7 +2,8 @@ import { BaseAIProvider } from './base-provider';
 import type { GenerateOptions, GenerationResult } from '../ai-config';
 import { PROVIDER_CONFIGS } from '../ai-config';
 
-const OLLAMA_TIMEOUT_MS = 30_000;
+// Timeout alto para inferência em CPU (phi3 no CPU leva ~4 min por resposta)
+const OLLAMA_TIMEOUT_MS = 300_000;
 
 /**
  * Provider para Ollama (modelo local)
@@ -43,7 +44,7 @@ export class OllamaProvider extends BaseAIProvider {
                         stream: false,
                         options: {
                             temperature: options?.temperature ?? 0.7,
-                            num_predict: options?.maxTokens ?? 2000,
+                            num_predict: options?.maxTokens ?? 512,
                         },
                     }),
                 });
