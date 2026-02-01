@@ -4,7 +4,6 @@ import Link from "next/link"
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-    console.log('🚀 Staging Verification Build Triggered: ' + new Date().toISOString());
     console.log('--- RENDERING HOMEPAGE ---')
     const trendingArtists = await prisma.artist.findMany({ take: 6 })
     const latestProductions = await prisma.production.findMany({ take: 6, orderBy: { year: 'desc' } })
