@@ -3,17 +3,24 @@ import prisma from "@/lib/prisma"
 export const dynamic = 'force-dynamic'
 
 export default async function ArtistsPage() {
-    console.log('--- RENDERING ARTISTS PAGE ---')
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] --- RENDERING ARTISTS PAGE ---`)
+
+    // Explicitly opt out of static rendering
+    // Explicitly opt out of static rendering
+
     const artists = await prisma.artist.findMany({
-        include: { agency: true }
+        include: { agency: true },
+        orderBy: { createdAt: 'desc' }
     })
-    console.log('ARTISTS FOUND:', artists.length)
+    console.log(`[${timestamp}] ARTISTS FOUND: ${artists.length}`)
 
     return (
         <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <header className="mb-12">
                 <h1 className="text-4xl md:text-6xl font-black mb-4 hallyu-gradient-text uppercase tracking-tighter italic">Artistas</h1>
-                <p className="text-zinc-500 max-w-xl text-lg font-medium">Os ícones, as vozes e o talento. Explore perfis detalhados das estrelas que definem a cultura coreana.</p>
+                <p className="text-zinc-500 max-w-xl text-lg font-medium mb-2">Os ícones, as vozes e o talento. Explore perfis detalhados das estrelas que definem a cultura coreana.</p>
+                <p className="text-xs text-zinc-400 font-mono">Last updated: {timestamp}</p>
             </header>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
