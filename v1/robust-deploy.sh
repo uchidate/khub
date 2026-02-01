@@ -16,6 +16,11 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+# Carrega variáveis do .env se existir
+if [ -f "${SCRIPT_DIR}/.env" ]; then
+  export $(grep -v '^#' "${SCRIPT_DIR}/.env" | grep '=' | xargs)
+fi
+
 echo "🚀 Iniciando deploy robusto..."
 
 # 0. Backup automático antes de qualquer alteração
@@ -43,13 +48,19 @@ docker run -d \
   --name hallyuhub \
   --restart always \
   --network web \
+  --add-host=host.docker.internal:host-gateway \
   -p 3000:3000 \
   -v hallyuhub-data:/app/data \
   -e DATABASE_URL="file:/app/data/prod.db" \
   -e NEXT_TELEMETRY_DISABLED=1 \
+  -e OLLAMA_BASE_URL="http://host.docker.internal:11434" \
   -e GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
   -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
   -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
+  -e UNSPLASH_ACCESS_KEY="${UNSPLASH_ACCESS_KEY:-}" \
+  -e GOOGLE_CUSTOM_SEARCH_KEY="${GOOGLE_CUSTOM_SEARCH_KEY:-}" \
+  -e GOOGLE_CX="${GOOGLE_CX:-}" \
+  -e TMDB_API_KEY="${TMDB_API_KEY:-}" \
   "$IMAGE_NAME"
 
 echo "✅ Deploy concluído! Verificando logs..."
