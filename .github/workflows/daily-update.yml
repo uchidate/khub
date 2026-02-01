@@ -17,5 +17,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/hallyuhub
-            docker exec hallyuhub npm run atualize
+            docker exec hallyuhub npm run atualize:ai
             echo "✅ Data update triggered successfully inside container."
