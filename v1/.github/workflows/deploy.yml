@@ -73,10 +73,6 @@ jobs:
             # Start new container
             docker-compose up -d hallyuhub
 
-            # Copy updated scripts and libs
-            docker cp /var/www/hallyuhub/lib/. hallyuhub:/app/lib/
-            docker cp /var/www/hallyuhub/scripts/. hallyuhub:/app/scripts/
-
             # Show status
             docker-compose ps hallyuhub
 

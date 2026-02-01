@@ -36,9 +36,11 @@ export class AIOrchestrator {
         if (config.claudeApiKey) {
             this.providers.set('claude', new ClaudeProvider(config.claudeApiKey));
         }
-        // Ollama sempre disponível se a URL base for fornecida (ou usar padrão localhost)
-        const ollamaUrl = config.ollamaBaseUrl || process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-        this.providers.set('ollama', new OllamaProvider(ollamaUrl));
+        // Ollama só ativado se a URL for explicitamente configurada
+        const ollamaUrl = config.ollamaBaseUrl || process.env.OLLAMA_BASE_URL;
+        if (ollamaUrl) {
+            this.providers.set('ollama', new OllamaProvider(ollamaUrl));
+        }
 
         if (config.maxRetries !== undefined) {
             this.maxRetries = config.maxRetries;

@@ -41,6 +41,34 @@ function parseArgs(): CliOptions {
     return options;
 }
 
+function validateNews(news: any): news is { title: string; contentMd: string; sourceUrl: string; tags: string; publishedAt: Date } {
+    if (!news.title || typeof news.title !== 'string' || news.title.trim().length === 0) return false;
+    if (!news.contentMd || typeof news.contentMd !== 'string' || news.contentMd.trim().length < 20) return false;
+    if (!news.sourceUrl || typeof news.sourceUrl !== 'string') return false;
+    return true;
+}
+
+function validateArtist(artist: any): artist is { nameRomanized: string; bio: string; roles: string; primaryImageUrl: string; agencyName: string } {
+    if (!artist.nameRomanized || typeof artist.nameRomanized !== 'string' || artist.nameRomanized.trim().length === 0) return false;
+    if (!artist.bio || typeof artist.bio !== 'string' || artist.bio.trim().length < 10) return false;
+    if (!artist.agencyName || typeof artist.agencyName !== 'string') return false;
+    return true;
+}
+
+function validateAndNormalizeProduction(prod: any): any | null {
+    if (!prod.titlePt || typeof prod.titlePt !== 'string' || prod.titlePt.trim().length === 0) return null;
+    if (!prod.synopsis || typeof prod.synopsis !== 'string' || prod.synopsis.trim().length < 10) return null;
+    // Normalizar type para lowercase (seed usa 'serie'/'filme', AI retorna 'SERIE'/'FILME')
+    if (prod.type && typeof prod.type === 'string') {
+        prod.type = prod.type.toLowerCase();
+    }
+    // Garantir year como number
+    if (prod.year && typeof prod.year === 'string') {
+        prod.year = parseInt(prod.year, 10);
+    }
+    return prod;
+}
+
 async function main() {
     console.log('🤖 HallyuHub AI Data Generator\n');
     console.log('='.repeat(60));
@@ -88,6 +116,10 @@ async function main() {
         if (!options.dryRun) {
             console.log('\n💾 Saving news to database...');
             for (const news of newsItems) {
+                if (!validateNews(news)) {
+                    console.warn(`   ⚠️  Skipped invalid news: "${news.title || '(sem título)'}"`);
+                    continue;
+                }
                 try {
                     await prisma.news.upsert({
                         where: { title: news.title },
@@ -124,6 +156,10 @@ async function main() {
         if (!options.dryRun) {
             console.log('\n💾 Saving artists to database...');
             for (const artist of artists) {
+                if (!validateArtist(artist)) {
+                    console.warn(`   ⚠️  Skipped invalid artist: "${artist.nameRomanized || '(sem nome)'}"`);
+                    continue;
+                }
                 try {
                     // Verificar/criar agência
                     let agency = await prisma.agency.findUnique({
@@ -185,7 +221,12 @@ async function main() {
 
         if (!options.dryRun) {
             console.log('\n💾 Saving productions to database...');
-            for (const production of productions) {
+            for (let production of productions) {
+                production = validateAndNormalizeProduction(production);
+                if (!production) {
+                    console.warn(`   ⚠️  Skipped invalid production`);
+                    continue;
+                }
                 try {
                     await prisma.production.upsert({
                         where: { titlePt: production.titlePt },
