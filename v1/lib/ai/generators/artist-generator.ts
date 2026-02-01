@@ -1,6 +1,7 @@
 import { AIOrchestrator } from '../orchestrator';
 import { SYSTEM_PROMPTS } from '../ai-config';
 import type { GenerateOptions } from '../ai-config';
+import { ImageSearchService } from '../../services/image-search-service';
 
 export interface ArtistData {
     nameRomanized: string;
@@ -16,7 +17,11 @@ export interface ArtistData {
  * Gerador de dados de artistas K-Pop/K-Drama
  */
 export class ArtistGenerator {
-    constructor(private orchestrator: AIOrchestrator) { }
+    private imageSearch: ImageSearchService;
+
+    constructor(private orchestrator: AIOrchestrator) {
+        this.imageSearch = new ImageSearchService();
+    }
 
     /**
      * Gera dados de um artista
@@ -58,9 +63,14 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
             systemPrompt: SYSTEM_PROMPTS.artist,
         });
 
+        // Search for real artist image
+        console.log(`🔍 Searching for real image of ${result.nameRomanized}...`);
+        const imageResult = await this.imageSearch.findArtistImage(result.nameRomanized);
+
         return {
             ...result,
             birthDate: new Date(result.birthDate),
+            primaryImageUrl: imageResult.url,
         };
     }
 
