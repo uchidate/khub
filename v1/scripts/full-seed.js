@@ -120,6 +120,61 @@ async function main() {
         });
     }
 
+    console.log("🎬 Inclusão de Produções Adicionais...");
+    const extraProductions = [
+        {
+            titlePt: "Sweet Home",
+            titleKr: "스위트홈",
+            type: "SERIE",
+            year: 2020,
+            synopsis: "Enquanto humanos se transformam em monstros ferozes, um jovem problemático e seus vizinhos de apartamento lutam para sobreviver sem perder a humanidade.",
+            streamingPlatforms: "Netflix"
+        }
+    ];
+
+    for (const prod of extraProductions) {
+        await prisma.production.upsert({
+            where: { titlePt: prod.titlePt },
+            update: {},
+            create: prod,
+        });
+    }
+
+    console.log("🔗 Vinculando Filmografia...");
+    const relations = [
+        { artist: "Song Kang", works: ["My Demon", "Sweet Home"] },
+        { artist: "Han So-hee", works: ["A Criatura de Gyeongseong", "My Name"] },
+        { artist: "Cha Eun-woo", works: ["Wonderful World"] },
+        { artist: "Lisa", works: [] }, // Exemplo sem obras no seed
+        { artist: "Felix", works: [] }
+    ];
+
+    for (const rel of relations) {
+        const artist = await prisma.artist.findUnique({ where: { nameRomanized: rel.artist } });
+        if (!artist) continue;
+
+        for (const workTitle of rel.works) {
+            const production = await prisma.production.findUnique({ where: { titlePt: workTitle } });
+            if (!production) continue;
+
+            await prisma.artistProduction.upsert({
+                where: {
+                    artistId_productionId: {
+                        artistId: artist.id,
+                        productionId: production.id
+                    }
+                },
+                update: {},
+                create: {
+                    artistId: artist.id,
+                    productionId: production.id,
+                    role: "MAIN" // Default role
+                }
+            });
+            console.log(`   > ${rel.artist} em ${workTitle}`);
+        }
+    }
+
     console.log("✅ Todo o conteúdo foi semeado com sucesso!");
 }
 
