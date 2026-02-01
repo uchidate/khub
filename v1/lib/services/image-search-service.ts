@@ -33,9 +33,10 @@ export class ImageSearchService {
 
         const queries = [artistName, ...alternatives];
 
-        // Tier 1: TMDB (Best for Actors/Double Threats) - Iterating aliases
+        // Tier 1: TMDB - Korean names first (unambiguous), then romanized
         if (process.env.TMDB_API_KEY) {
-            for (const query of queries) {
+            const tmdbQueries = [...alternatives, artistName];
+            for (const query of tmdbQueries) {
                 const tmdbResult = await this.searchTMDB(query);
                 if (tmdbResult) {
                     console.log(`✅ Found on TMDB: ${query}`);
