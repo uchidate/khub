@@ -1,9 +1,6 @@
 name: Daily Content Generation
 
 on:
-  schedule:
-    # Runs every 5 minutes (GitHub Actions minimum interval)
-    - cron: '*/5 * * * *'
   workflow_dispatch: # Allows manual trigger
 
 jobs:
