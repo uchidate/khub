@@ -1,39 +1,23 @@
+version: '3.8'
+
 services:
-  db:
-    image: postgres:15-alpine
-    container_name: hallyuhub_db_prod
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-hallyuhub_prod}
+  hallyuhub-prod:
+    image: ghcr.io/uchidate/khub:latest
+    container_name: hallyuhub
     ports:
-      - "5432:5432"
+      - "3000:3000"
+    env_file:
+      - .env.production
     volumes:
-      - prod_db_data:/var/lib/postgresql/data
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: hallyuhub_web_prod
-    restart: always
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hallyuhub_prod}?schema=public
-      NEXT_PUBLIC_SITE_URL: www.seu-dominio.com
-    depends_on:
-      - db
-
-  nginx:
-    image: nginx:alpine
-    container_name: hallyuhub_nginx_prod
-    restart: always
-    ports:
-      - "80:80"
-    volumes:
-      - ./docker/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
+      - hallyuhub-data:/app/data
+    networks:
       - web
+    restart: always
+
+networks:
+  web:
+    external: true
 
 volumes:
-  prod_db_data:
+  hallyuhub-data:
+    external: true
