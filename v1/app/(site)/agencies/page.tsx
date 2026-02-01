@@ -6,7 +6,11 @@ export const dynamic = 'force-dynamic'
 export default async function AgenciesPage() {
     console.log('--- RENDERING AGENCIES PAGE ---')
     const agencies = await prisma.agency.findMany({
-        include: { _count: { select: { artists: true } } }
+        include: {
+            artists: {
+                select: { id: true, nameRomanized: true, primaryImageUrl: true }
+            }
+        }
     })
 
     return (
@@ -26,11 +30,39 @@ export default async function AgenciesPage() {
                         </div>
 
                         <h3 className="text-2xl font-black mb-1 text-white group-hover:text-purple-500 transition-colors uppercase tracking-tight">{agency.name}</h3>
-                        <p className="text-purple-600 font-bold text-xs mb-6 lowercase tracking-widest opacity-80">{agency.website?.replace('https://', '').replace('http://', '')}</p>
+                        <p className="text-purple-600 font-bold text-xs mb-8 lowercase tracking-widest opacity-80">{agency.website?.replace('https://', '').replace('http://', '')}</p>
 
-                        <div className="flex justify-between items-end mt-10">
+                        {/* Artist avatars + names */}
+                        {agency.artists.length > 0 && (
+                            <div className="mb-8">
+                                <div className="flex -space-x-3 mb-3">
+                                    {agency.artists.slice(0, 5).map((artist: any) => (
+                                        <div key={artist.id} className="w-10 h-10 rounded-full border-2 border-zinc-900 overflow-hidden bg-zinc-800 flex-shrink-0">
+                                            {artist.primaryImageUrl ? (
+                                                <img src={artist.primaryImageUrl} alt={artist.nameRomanized} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-600 font-black text-[10px]">
+                                                    {artist.nameRomanized[0]}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {agency.artists.length > 5 && (
+                                        <div className="w-10 h-10 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-[10px] font-black text-zinc-400">+{agency.artists.length - 5}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-xs text-zinc-500 font-medium leading-relaxed">
+                                    {agency.artists.slice(0, 4).map((a: any) => a.nameRomanized).join(', ')}
+                                    {agency.artists.length > 4 && ` e mais`}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex justify-between items-end">
                             <div className="bg-zinc-800 px-4 py-2 rounded-xl text-zinc-400 font-black text-[10px] uppercase">
-                                {agency._count.artists} Artistas
+                                {agency.artists.length} Artistas
                             </div>
                             <span className="text-xs font-black text-zinc-500 group-hover:text-purple-500 transition-colors">
                                 VER PERFIL →
