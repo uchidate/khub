@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  hallyuhub-prod:
+  hallyuhub:
     image: ghcr.io/uchidate/khub:latest
     container_name: hallyuhub
     ports:
