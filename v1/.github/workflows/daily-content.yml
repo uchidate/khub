@@ -1,0 +1,57 @@
+name: Daily Content Generation
+
+on:
+  schedule:
+    # Runs every day at 3 AM UTC (midnight in Brazil)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  generate-content:
+    name: Generate AI Content
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate content with Ollama
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "🤖 Starting AI content generation..."
+            
+            # Run AI generation using Ollama (free!)
+            docker exec hallyuhub npx ts-node --transpile-only \
+              --compiler-options '{"module":"CommonJS"}' \
+              scripts/atualize-ai.ts \
+              --provider=ollama \
+              --news=5 \
+              --artists=2 \
+              --productions=1
+            
+            if [ $? -eq 0 ]; then
+              echo "✅ Content generation completed successfully!"
+            else
+              echo "❌ Content generation failed, check logs"
+              exit 1
+            fi
+
+      - name: Verify database update
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "📊 Checking database stats..."
+            
+            # Count records in database
+            docker exec hallyuhub sh -c "
+              echo 'Artists:' && \
+              sqlite3 /app/data/prod.db 'SELECT COUNT(*) FROM Artist;' && \
+              echo 'News:' && \
+              sqlite3 /app/data/prod.db 'SELECT COUNT(*) FROM News;' && \
+              echo 'Productions:' && \
+              sqlite3 /app/data/prod.db 'SELECT COUNT(*) FROM Production;'
+            "
