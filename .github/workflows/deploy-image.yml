@@ -2,7 +2,7 @@ name: Build and Deploy Image
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 env:
@@ -36,7 +36,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/develop' }}
             type=sha,value=${{ github.sha }}
 
       - name: Build and push Docker image
@@ -53,6 +54,19 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository (for compose files)
+        uses: actions/checkout@v4
+
+      - name: Copy Docker Compose files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./v1/docker-compose*.yml,./v1/robust-deploy.sh,./v1/.env.*.example"
+          target: "/var/www/hallyuhub"
+          strip_components: 1
+
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -61,5 +75,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/hallyuhub
-            # Use the new pull mode of robust-deploy.sh
-            bash robust-deploy.sh --pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            # Determina o ambiente baseado no commit
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              bash robust-deploy.sh --pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --prod
+            else
+              bash robust-deploy.sh --pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging --staging
+            fi
