@@ -74,8 +74,16 @@ async function main() {
     // Gerar notícias
     if (options.news && options.news > 0) {
         console.log('\n\n📰 GENERATING NEWS\n');
+
+        // Buscar notícias existentes para evitar duplicatas
+        const existingNews = await prisma.news.findMany({ select: { title: true } });
+        const excludeNews = existingNews.map(n => n.title);
+
         const newsGenerator = new NewsGenerator(orchestrator);
-        const newsItems = await newsGenerator.generateMultipleNews(options.news, genOptions);
+        const newsItems = await newsGenerator.generateMultipleNews(options.news, {
+            ...genOptions,
+            excludeList: excludeNews
+        });
 
         if (!options.dryRun) {
             console.log('\n💾 Saving news to database...');
@@ -83,7 +91,12 @@ async function main() {
                 try {
                     await prisma.news.upsert({
                         where: { title: news.title },
-                        update: {},
+                        update: {
+                            contentMd: news.contentMd,
+                            sourceUrl: news.sourceUrl,
+                            tags: news.tags,
+                            publishedAt: news.publishedAt,
+                        },
                         create: news,
                     });
                     console.log(`   ✅ Saved: "${news.title}"`);
@@ -97,8 +110,16 @@ async function main() {
     // Gerar artistas
     if (options.artists && options.artists > 0) {
         console.log('\n\n🎤 GENERATING ARTISTS\n');
+
+        // Buscar artistas existentes para evitar duplicatas
+        const existingArtists = await prisma.artist.findMany({ select: { nameRomanized: true } });
+        const excludeArtists = existingArtists.map(a => a.nameRomanized);
+
         const artistGenerator = new ArtistGenerator(orchestrator);
-        const artists = await artistGenerator.generateMultipleArtists(options.artists, genOptions);
+        const artists = await artistGenerator.generateMultipleArtists(options.artists, {
+            ...genOptions,
+            excludeList: excludeArtists
+        });
 
         if (!options.dryRun) {
             console.log('\n💾 Saving artists to database...');
@@ -122,7 +143,14 @@ async function main() {
 
                     await prisma.artist.upsert({
                         where: { nameRomanized: artist.nameRomanized },
-                        update: {},
+                        update: {
+                            nameHangul: artist.nameHangul,
+                            birthDate: artist.birthDate,
+                            roles: artist.roles,
+                            bio: artist.bio,
+                            primaryImageUrl: artist.primaryImageUrl,
+                            agencyId: agency.id,
+                        },
                         create: {
                             nameRomanized: artist.nameRomanized,
                             nameHangul: artist.nameHangul,
@@ -144,8 +172,16 @@ async function main() {
     // Gerar produções
     if (options.productions && options.productions > 0) {
         console.log('\n\n🎬 GENERATING PRODUCTIONS\n');
+
+        // Buscar produções existentes para evitar duplicatas
+        const existingProductions = await prisma.production.findMany({ select: { titlePt: true } });
+        const excludeProductions = existingProductions.map(p => p.titlePt);
+
         const productionGenerator = new ProductionGenerator(orchestrator);
-        const productions = await productionGenerator.generateMultipleProductions(options.productions, genOptions);
+        const productions = await productionGenerator.generateMultipleProductions(options.productions, {
+            ...genOptions,
+            excludeList: excludeProductions
+        });
 
         if (!options.dryRun) {
             console.log('\n💾 Saving productions to database...');
@@ -153,7 +189,13 @@ async function main() {
                 try {
                     await prisma.production.upsert({
                         where: { titlePt: production.titlePt },
-                        update: {},
+                        update: {
+                            titleKr: production.titleKr,
+                            type: production.type,
+                            year: production.year,
+                            synopsis: production.synopsis,
+                            streamingPlatforms: production.streamingPlatforms,
+                        },
                         create: production,
                     });
                     console.log(`   ✅ Saved: ${production.titlePt}`);

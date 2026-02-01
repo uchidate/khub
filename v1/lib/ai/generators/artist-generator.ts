@@ -22,7 +22,7 @@ export class ArtistGenerator {
      * Gera dados de um artista
      */
     async generateArtist(options?: GenerateOptions): Promise<ArtistData> {
-        const prompt = `Gere informações sobre um artista REAL e ATIVO de K-Pop ou K-Drama.
+        let prompt = `Gere informações sobre um artista REAL e ATIVO de K-Pop ou K-Drama.
 
 O artista deve ser:
 - Alguém que está ativo atualmente (não aposentado)
@@ -30,6 +30,10 @@ O artista deve ser:
 - Pode ser idol, ator/atriz, ou ambos
 
 Escolha artistas variados (diferentes grupos, agências, etc).`;
+
+        if (options?.excludeList && options.excludeList.length > 0) {
+            prompt += `\n\nIMPORTANTE: NÃO gere informações sobre nenhum dos seguintes artistas (já temos na base): ${options.excludeList.join(', ')}. Escolha outro artista relevante.`;
+        }
 
         const schema = `{
   "nameRomanized": "string (nome romanizado, ex: 'Kim Taehyung')",

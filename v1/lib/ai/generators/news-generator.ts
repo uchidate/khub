@@ -20,7 +20,7 @@ export class NewsGenerator {
      * Gera uma notícia sobre K-Pop ou K-Drama
      */
     async generateNews(options?: GenerateOptions): Promise<NewsData> {
-        const prompt = `Gere uma notícia REAL e RECENTE sobre K-Pop ou K-Drama que aconteceu nos últimos 3 meses.
+        let prompt = `Gere uma notícia REAL e RECENTE sobre K-Pop ou K-Drama que aconteceu nos últimos 3 meses.
 
 A notícia deve ser sobre um dos seguintes tópicos:
 - Lançamento de música/álbum
@@ -31,6 +31,10 @@ A notícia deve ser sobre um dos seguintes tópicos:
 - Anúncios de agências
 
 IMPORTANTE: A notícia deve ser baseada em eventos REAIS que aconteceram recentemente.`;
+
+        if (options?.excludeList && options.excludeList.length > 0) {
+            prompt += `\n\nIMPORTANTE: NÃO gere uma notícia sobre os seguintes títulos (já temos na base): ${options.excludeList.join(', ')}. Escolha um evento diferente.`;
+        }
 
         const schema = `{
   "title": "string (título chamativo em português)",

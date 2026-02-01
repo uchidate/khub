@@ -21,7 +21,7 @@ export class ProductionGenerator {
      * Gera dados de uma produção
      */
     async generateProduction(options?: GenerateOptions): Promise<ProductionData> {
-        const prompt = `Gere informações sobre uma produção coreana REAL e RECENTE (últimos 2 anos).
+        let prompt = `Gere informações sobre uma produção coreana REAL e RECENTE (últimos 2 anos).
 
 Pode ser:
 - K-Drama (série)
@@ -29,6 +29,10 @@ Pode ser:
 - Reality show / Programa de variedades
 
 A produção deve estar disponível em alguma plataforma de streaming.`;
+
+        if (options?.excludeList && options.excludeList.length > 0) {
+            prompt += `\n\nIMPORTANTE: NÃO gere informações sobre as seguintes produções (já temos na base): ${options.excludeList.join(', ')}. Escolha uma produção diferente.`;
+        }
 
         const schema = `{
   "titlePt": "string (título em português)",
