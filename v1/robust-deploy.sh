@@ -18,6 +18,12 @@ done
 
 echo "🚀 Iniciando deploy robusto..."
 
+# 0. Backup automático antes de qualquer alteração
+echo "💾 Criando backup do banco antes do deploy..."
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+bash "${SCRIPT_DIR}/scripts/backup-db.sh"
+echo "💾 Backup concluído. Seguindo com o deploy..."
+
 # 1. Limpar containers antigos
 echo "🧹 Limpando ambiente..."
 docker rm -f hallyuhub 2>/dev/null || true

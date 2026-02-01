@@ -1,0 +1,20 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Diário às 03:00 UTC
+  workflow_dispatch:      # Trigger manual
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run database backup via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/hallyuhub
+            bash scripts/backup-db.sh
