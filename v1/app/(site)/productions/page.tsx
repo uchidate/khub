@@ -24,13 +24,23 @@ export default async function ProductionsPage() {
                 {productions.map((prod: any) => (
                     <Link key={prod.id} href={`/productions/${prod.id}`} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
                         {/* Poster / Backdrop */}
-                        <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-gradient-to-br from-zinc-800 to-zinc-900 relative overflow-hidden">
-                            <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-                                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none text-zinc-700 group-hover:text-purple-600 transition-colors">
+                        <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-900 relative overflow-hidden">
+                            {prod.artists[0]?.artist?.primaryImageUrl ? (
+                                <img
+                                    src={prod.artists[0].artist.primaryImageUrl}
+                                    alt={prod.titlePt}
+                                    className="absolute inset-0 w-full h-full object-cover brightness-[0.35] group-hover:brightness-[0.5] transition-all duration-500"
+                                />
+                            ) : (
+                                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                            <div className="absolute inset-0 flex items-end p-6">
+                                <h2 className="text-2xl font-black uppercase tracking-tighter leading-tight text-white group-hover:text-purple-400 transition-colors">
                                     {prod.titlePt}
                                 </h2>
                             </div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/60 hidden md:block" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black hidden md:block" />
                         </div>
 
                         {/* Content */}
