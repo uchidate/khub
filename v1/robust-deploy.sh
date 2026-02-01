@@ -42,7 +42,7 @@ fi
 # 2. Rodar via Docker Compose específico
 echo "🏃 Atualizando serviço via Docker Compose: $compose_file"
 docker compose -f "$compose_file" pull
-docker compose -f "$compose_file" up -d
+docker compose -f "$compose_file" up -d --force-recreate
 
 echo "🧹 Limpando imagens antigas..."
 docker image prune -f
