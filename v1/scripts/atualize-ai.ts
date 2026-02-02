@@ -17,7 +17,7 @@ interface CliOptions {
 function parseArgs(): CliOptions {
     const args = process.argv.slice(2);
     const options: CliOptions = {
-        news: 5,
+        news: 0,
         artists: 3,
         productions: 2,
         dryRun: false,
@@ -48,11 +48,17 @@ function validateNews(news: any): news is { title: string; contentMd: string; so
     return true;
 }
 
-function validateArtist(artist: any): artist is { nameRomanized: string; bio: string; roles: string; primaryImageUrl: string; agencyName: string } {
+function validateArtist(artist: any): boolean {
     if (!artist.nameRomanized || typeof artist.nameRomanized !== 'string' || artist.nameRomanized.trim().length === 0) return false;
-    if (!artist.bio || typeof artist.bio !== 'string' || artist.bio.trim().length < 10) return false;
-    if (!artist.agencyName || typeof artist.agencyName !== 'string') return false;
     return true;
+}
+
+function sanitizeArtist(artist: any): any {
+    // birthDate pode vir como string inválida do AI — setar null se não parsear
+    if (artist.birthDate instanceof Date && isNaN(artist.birthDate.getTime())) {
+        artist.birthDate = null;
+    }
+    return artist;
 }
 
 function validateAndNormalizeProduction(prod: any): any | null {
@@ -155,46 +161,51 @@ async function main() {
 
         if (!options.dryRun) {
             console.log('\n💾 Saving artists to database...');
-            for (const artist of artists) {
+            for (let artist of artists) {
                 if (!validateArtist(artist)) {
                     console.warn(`   ⚠️  Skipped invalid artist: "${artist.nameRomanized || '(sem nome)'}"`);
                     continue;
                 }
+                artist = sanitizeArtist(artist);
                 try {
-                    // Verificar/criar agência
-                    let agency = await prisma.agency.findUnique({
-                        where: { name: artist.agencyName },
-                    });
-
-                    if (!agency) {
-                        agency = await prisma.agency.create({
-                            data: {
-                                name: artist.agencyName,
-                                website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
-                                socials: JSON.stringify({}),
-                            },
+                    // Verificar/criar agência (opcional)
+                    let agencyId: string | null = null;
+                    if (artist.agencyName && typeof artist.agencyName === 'string' && artist.agencyName.trim().length > 0) {
+                        let agency = await prisma.agency.findUnique({
+                            where: { name: artist.agencyName },
                         });
-                        console.log(`   🏢 Created agency: ${artist.agencyName}`);
+
+                        if (!agency) {
+                            agency = await prisma.agency.create({
+                                data: {
+                                    name: artist.agencyName,
+                                    website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
+                                    socials: JSON.stringify({}),
+                                },
+                            });
+                            console.log(`   🏢 Created agency: ${artist.agencyName}`);
+                        }
+                        agencyId = agency.id;
                     }
 
                     await prisma.artist.upsert({
                         where: { nameRomanized: artist.nameRomanized },
                         update: {
-                            nameHangul: artist.nameHangul,
-                            birthDate: artist.birthDate,
-                            roles: artist.roles,
-                            bio: artist.bio,
-                            primaryImageUrl: artist.primaryImageUrl,
-                            agencyId: agency.id,
+                            nameHangul: artist.nameHangul || null,
+                            birthDate: artist.birthDate || null,
+                            roles: artist.roles || null,
+                            bio: artist.bio || null,
+                            primaryImageUrl: artist.primaryImageUrl || null,
+                            agencyId,
                         },
                         create: {
                             nameRomanized: artist.nameRomanized,
-                            nameHangul: artist.nameHangul,
-                            birthDate: artist.birthDate,
-                            roles: artist.roles,
-                            bio: artist.bio,
-                            primaryImageUrl: artist.primaryImageUrl,
-                            agencyId: agency.id,
+                            nameHangul: artist.nameHangul || null,
+                            birthDate: artist.birthDate || null,
+                            roles: artist.roles || null,
+                            bio: artist.bio || null,
+                            primaryImageUrl: artist.primaryImageUrl || null,
+                            agencyId,
                         },
                     });
                     console.log(`   ✅ Saved: ${artist.nameRomanized}`);
