@@ -64,7 +64,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose*.yml,robust-deploy.sh,.env.*.example"
+          source: "docker-compose.staging.yml,docker-compose.prod.yml,robust-deploy.sh,.env.staging.example,.env.production.example"
           target: "/var/www/hallyuhub"
           strip_components: 0
 
