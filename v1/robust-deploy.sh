@@ -9,13 +9,14 @@ image_name="hallyuhub_proc"
 pull_mode=false
 env_type="production" # default
 compose_file="docker-compose.prod.yml"
+service_name="hallyuhub" # default
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --pull) image_name="$2"; pull_mode=true; shift ;;
-        --staging) env_type="staging"; compose_file="docker-compose.staging.yml" ;;
-        --prod) env_type="production"; compose_file="docker-compose.prod.yml" ;;
+        --staging) env_type="staging"; compose_file="docker-compose.staging.yml"; service_name="hallyuhub-staging" ;;
+        --prod) env_type="production"; compose_file="docker-compose.prod.yml"; service_name="hallyuhub" ;;
     esac
     shift
 done
@@ -53,7 +54,7 @@ echo "🏃 Atualizando serviço via Docker Compose: $compose_file"
 docker compose -f "$compose_file" pull
 
 # Rodar migrações antes de subir (usa o volume persistente)
-docker compose -f "$compose_file" run --rm hallyuhub npx prisma migrate deploy
+docker compose -f "$compose_file" run --rm "$service_name" npx prisma migrate deploy
 
 docker compose -f "$compose_file" up -d --force-recreate
 
