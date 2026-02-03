@@ -1,4 +1,22 @@
 services:
+  postgres-production:
+    image: postgres:16-alpine
+    container_name: hallyuhub-postgres-production
+    environment:
+      POSTGRES_USER: hallyuhub
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: hallyuhub_production
+    volumes:
+      - postgres-production-data:/var/lib/postgresql/data
+    networks:
+      - web
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hallyuhub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   hallyuhub:
     image: ghcr.io/uchidate/khub:latest
     container_name: hallyuhub
@@ -13,6 +31,9 @@ services:
     networks:
       - web
     restart: always
+    depends_on:
+      postgres-production:
+        condition: service_healthy
 
 networks:
   web:
@@ -20,4 +41,6 @@ networks:
 
 volumes:
   hallyuhub-data:
+    external: true
+  postgres-production-data:
     external: true

@@ -1,4 +1,22 @@
 services:
+  postgres-staging:
+    image: postgres:16-alpine
+    container_name: hallyuhub-postgres-staging
+    environment:
+      POSTGRES_USER: hallyuhub
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: hallyuhub_staging
+    volumes:
+      - postgres-staging-data:/var/lib/postgresql/data
+    networks:
+      - web
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hallyuhub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   hallyuhub-staging:
     image: ghcr.io/uchidate/khub:staging
     container_name: hallyuhub-staging
@@ -13,6 +31,9 @@ services:
     networks:
       - web
     restart: always
+    depends_on:
+      postgres-staging:
+        condition: service_healthy
 
 networks:
   web:
@@ -20,4 +41,6 @@ networks:
 
 volumes:
   hallyuhub-data:
+    external: true
+  postgres-staging-data:
     external: true

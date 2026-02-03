@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,7 +15,7 @@ model Agency {
   id        String   @id @default(cuid())
   name      String   @unique
   website   String?
-  socials   String? // SQLite doesn't support Json type well, using String for now
+  socials   Json?
   artists   Artist[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -26,11 +26,11 @@ model Artist {
   nameRomanized    String             @unique
   nameHangul       String?
   birthDate        DateTime?
-  stageNames       String? // SQLite doesn't support arrays, using String (comma separated)
-  roles            String? // SQLite doesn't support arrays
+  stageNames       String[]
+  roles            String[]
   bio              String?
   primaryImageUrl  String?
-  socialLinks      String? // SQLite doesn't support Json
+  socialLinks      Json?
   agency           Agency?            @relation(fields: [agencyId], references: [id])
   agencyId         String?
   productions      ArtistProduction[]
@@ -46,9 +46,9 @@ model Production {
   year               Int?
   synopsis           String?
   imageUrl           String?
-  streamingPlatforms String? // SQLite doesn't support arrays
-  sourceUrls         String? // SQLite doesn't support arrays
-  tags               String? // SQLite doesn't support arrays
+  streamingPlatforms String[]
+  sourceUrls         String[]
+  tags               String[]
   artists            ArtistProduction[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -71,7 +71,7 @@ model News {
   sourceUrl   String
   publishedAt DateTime @default(now())
   imageUrl    String?
-  tags        String? // SQLite doesn't support arrays
+  tags        String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

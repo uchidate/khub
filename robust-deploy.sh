@@ -28,14 +28,14 @@ fi
 
 echo "🚀 Iniciando deploy em ambiente: ${env_type}..."
 
-# Garantir que DATABASE_URL aponta para dentro do volume persistente
-if [ -f "${SCRIPT_DIR}/.env.${env_type}" ]; then
-  if [ "$env_type" = "production" ]; then
-    sed -i 's|DATABASE_URL=.*|DATABASE_URL="file:/app/data/prod.db"|' "${SCRIPT_DIR}/.env.${env_type}"
-  elif [ "$env_type" = "staging" ]; then
-    sed -i 's|DATABASE_URL=.*|DATABASE_URL="file:/app/data/staging.db"|' "${SCRIPT_DIR}/.env.${env_type}"
-  fi
+# Criar volumes externos se não existirem
+echo "📦 Verificando volumes Docker..."
+if [ "$env_type" = "production" ]; then
+  docker volume create postgres-production-data 2>/dev/null || true
+elif [ "$env_type" = "staging" ]; then
+  docker volume create postgres-staging-data 2>/dev/null || true
 fi
+docker volume create hallyuhub-data 2>/dev/null || true
 
 # 0. Backup automático antes de qualquer alteração (Apenas em Prod se desejar, ou ambos)
 if [ "$env_type" = "production" ]; then
