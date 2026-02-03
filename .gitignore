@@ -73,3 +73,7 @@ v1/.env
 *.pem
 *.key
 *.p12
+
+# Local files
+.env.postgres
+prisma/migrations.sqlite.backup/
