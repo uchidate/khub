@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  hallyuhub-staging:
+    image: ghcr.io/uchidate/khub:staging
+    container_name: hallyuhub-staging
+    restart: unless-stopped
+
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/staging.db
+      - NEXT_PUBLIC_SITE_URL=http://31.97.255.107:3001
+      - NEXT_TELEMETRY_DISABLED=1
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+
+    volumes:
+      - hallyuhub-staging-data:/app/data
+      - ./prisma:/app/prisma:ro
+
+    networks:
+      - web
+
+    ports:
+      - "3001:3000"
+
+    # Healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  hallyuhub-staging-data:
+    driver: local
+
+networks:
+  web:
+    external: true
