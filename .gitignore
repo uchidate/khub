@@ -60,3 +60,16 @@ id_rsa
 
 # Temporary images folder
 /temp-images
+v1/.env
+
+# Environment files (Security)
+*.env.local
+*.env.*.local
+.env.backup
+
+# API Keys e Secrets
+*-credentials.json
+*-secret.json
+*.pem
+*.key
+*.p12
