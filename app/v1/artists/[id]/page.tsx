@@ -141,8 +141,8 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                             {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2 font-medium">{production.synopsis}</p>}
                                             {production.streamingPlatforms && (
                                                 <div className="flex flex-wrap gap-2 mt-3">
-                                                    {production.streamingPlatforms.split(',').map(p => (
-                                                        <span key={p.trim()} className="text-[10px] font-black text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p.trim()}</span>
+                                                    {production.streamingPlatforms.map(p => (
+                                                        <span key={p} className="text-[10px] font-black text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
                                                     ))}
                                                 </div>
                                             )}
