@@ -36,6 +36,8 @@ next-env.d.ts
 # prisma
 /prisma/dev.db
 /prisma/dev.db-journal
+dev.db
+dev.db-journal
 
 # Google Drive OAuth tokens (SENSITIVE!)
 google-drive-tokens.json
