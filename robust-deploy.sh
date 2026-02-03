@@ -63,4 +63,5 @@ docker image prune -f
 
 echo "✅ Deploy concluído em ${env_type}!"
 sleep 5
-docker ps -a --filter name=hallyuhub
+echo "📋 Status do container ${service_name}:"
+docker ps -a --filter name="${service_name}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
