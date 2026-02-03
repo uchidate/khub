@@ -3,7 +3,7 @@
  * Configurações centralizadas para todos os providers de IA
  */
 
-export type AIProviderType = 'gemini' | 'openai' | 'claude';
+export type AIProviderType = 'gemini' | 'openai' | 'claude' | 'ollama';
 
 export interface AIProviderConfig {
   name: AIProviderType;
@@ -26,6 +26,7 @@ export interface GenerateOptions {
   maxTokens?: number;
   preferredProvider?: AIProviderType;
   systemPrompt?: string;
+  excludeList?: string[];
 }
 
 export interface GenerationResult {
@@ -94,6 +95,20 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
     models: {
       default: 'claude-3-5-haiku-20241022',
       alternatives: ['claude-3-haiku-20240307'],
+    },
+  },
+  ollama: {
+    name: 'ollama',
+    displayName: 'Local Ollama',
+    enabled: true,
+    priority: 0, // Prioritário por ser local e gratuito
+    costPer1kTokens: 0,
+    rateLimit: {
+      requestsPerMinute: 60,
+    },
+    models: {
+      default: 'phi3',
+      alternatives: ['mistral', 'llama3:8b'],
     },
   },
 };

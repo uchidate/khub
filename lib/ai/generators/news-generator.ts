@@ -1,6 +1,7 @@
 import { AIOrchestrator } from '../orchestrator';
 import { SYSTEM_PROMPTS } from '../ai-config';
 import type { GenerateOptions } from '../ai-config';
+import { ImageSearchService } from '../../services/image-search-service';
 
 export interface NewsData {
     title: string;
@@ -8,19 +9,24 @@ export interface NewsData {
     sourceUrl: string;
     tags: string;
     publishedAt: Date;
+    imageUrl?: string;
 }
 
 /**
  * Gerador de notícias sobre K-Pop e K-Drama
  */
 export class NewsGenerator {
-    constructor(private orchestrator: AIOrchestrator) { }
+    private imageService: ImageSearchService;
+
+    constructor(private orchestrator: AIOrchestrator) {
+        this.imageService = new ImageSearchService();
+    }
 
     /**
      * Gera uma notícia sobre K-Pop ou K-Drama
      */
     async generateNews(options?: GenerateOptions): Promise<NewsData> {
-        const prompt = `Gere uma notícia REAL e RECENTE sobre K-Pop ou K-Drama que aconteceu nos últimos 3 meses.
+        let prompt = `Gere uma notícia REAL e RECENTE sobre K-Pop ou K-Drama que aconteceu nos últimos 3 meses.
 
 A notícia deve ser sobre um dos seguintes tópicos:
 - Lançamento de música/álbum
@@ -31,6 +37,10 @@ A notícia deve ser sobre um dos seguintes tópicos:
 - Anúncios de agências
 
 IMPORTANTE: A notícia deve ser baseada em eventos REAIS que aconteceram recentemente.`;
+
+        if (options?.excludeList && options.excludeList.length > 0) {
+            prompt += `\n\nIMPORTANTE: NÃO gere uma notícia sobre os seguintes títulos (já temos na base): ${options.excludeList.join(', ')}. Escolha um evento diferente.`;
+        }
 
         const schema = `{
   "title": "string (título chamativo em português)",
@@ -51,9 +61,21 @@ IMPORTANTE: A notícia deve ser baseada em eventos REAIS que aconteceram recente
             systemPrompt: SYSTEM_PROMPTS.news,
         });
 
+        // Buscar imagem
+        let imageUrl: string | undefined;
+        try {
+            const imageResult = await this.imageService.findNewsImage(result.title);
+            if (imageResult) {
+                imageUrl = imageResult.url;
+            }
+        } catch (error) {
+            console.error('Failed to fetch news image:', error);
+        }
+
         return {
             ...result,
             publishedAt: new Date(result.publishedAt),
+            imageUrl,
         };
     }
 

@@ -43,8 +43,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./v1
-          file: ./v1/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -64,9 +64,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "v1/docker-compose*.yml,v1/robust-deploy.sh,v1/.env.*.example"
+          source: "docker-compose*.yml,robust-deploy.sh,.env.*.example"
           target: "/var/www/hallyuhub"
-          strip_components: 1
+          strip_components: 0
 
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3

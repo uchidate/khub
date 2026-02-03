@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const { AIOrchestrator } = require('../lib/ai/orchestrator');
 const { NewsGenerator } = require('../lib/ai/generators/news-generator');
 const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
@@ -17,7 +17,7 @@ interface CliOptions {
 function parseArgs(): CliOptions {
     const args = process.argv.slice(2);
     const options: CliOptions = {
-        news: 5,
+        news: 0,
         artists: 3,
         productions: 2,
         dryRun: false,
@@ -39,6 +39,40 @@ function parseArgs(): CliOptions {
     }
 
     return options;
+}
+
+function validateNews(news: any): news is { title: string; contentMd: string; sourceUrl: string; tags: string; publishedAt: Date } {
+    if (!news.title || typeof news.title !== 'string' || news.title.trim().length === 0) return false;
+    if (!news.contentMd || typeof news.contentMd !== 'string' || news.contentMd.trim().length < 20) return false;
+    if (!news.sourceUrl || typeof news.sourceUrl !== 'string') return false;
+    return true;
+}
+
+function validateArtist(artist: any): boolean {
+    if (!artist.nameRomanized || typeof artist.nameRomanized !== 'string' || artist.nameRomanized.trim().length === 0) return false;
+    return true;
+}
+
+function sanitizeArtist(artist: any): any {
+    // birthDate pode vir como string inválida do AI — setar null se não parsear
+    if (artist.birthDate instanceof Date && isNaN(artist.birthDate.getTime())) {
+        artist.birthDate = null;
+    }
+    return artist;
+}
+
+function validateAndNormalizeProduction(prod: any): any | null {
+    if (!prod.titlePt || typeof prod.titlePt !== 'string' || prod.titlePt.trim().length === 0) return null;
+    if (!prod.synopsis || typeof prod.synopsis !== 'string' || prod.synopsis.trim().length < 10) return null;
+    // Normalizar type para lowercase (seed usa 'serie'/'filme', AI retorna 'SERIE'/'FILME')
+    if (prod.type && typeof prod.type === 'string') {
+        prod.type = prod.type.toLowerCase();
+    }
+    // Garantir year como number
+    if (prod.year && typeof prod.year === 'string') {
+        prod.year = parseInt(prod.year, 10);
+    }
+    return prod;
 }
 
 async function main() {
@@ -74,16 +108,33 @@ async function main() {
     // Gerar notícias
     if (options.news && options.news > 0) {
         console.log('\n\n📰 GENERATING NEWS\n');
+
+        // Buscar notícias existentes para evitar duplicatas
+        const existingNews = await prisma.news.findMany({ select: { title: true } });
+        const excludeNews = existingNews.map(n => n.title);
+
         const newsGenerator = new NewsGenerator(orchestrator);
-        const newsItems = await newsGenerator.generateMultipleNews(options.news, genOptions);
+        const newsItems = await newsGenerator.generateMultipleNews(options.news, {
+            ...genOptions,
+            excludeList: excludeNews
+        });
 
         if (!options.dryRun) {
             console.log('\n💾 Saving news to database...');
             for (const news of newsItems) {
+                if (!validateNews(news)) {
+                    console.warn(`   ⚠️  Skipped invalid news: "${news.title || '(sem título)'}"`);
+                    continue;
+                }
                 try {
                     await prisma.news.upsert({
                         where: { title: news.title },
-                        update: {},
+                        update: {
+                            contentMd: news.contentMd,
+                            sourceUrl: news.sourceUrl,
+                            tags: news.tags,
+                            publishedAt: news.publishedAt,
+                        },
                         create: news,
                     });
                     console.log(`   ✅ Saved: "${news.title}"`);
@@ -97,40 +148,64 @@ async function main() {
     // Gerar artistas
     if (options.artists && options.artists > 0) {
         console.log('\n\n🎤 GENERATING ARTISTS\n');
+
+        // Buscar artistas existentes para evitar duplicatas
+        const existingArtists = await prisma.artist.findMany({ select: { nameRomanized: true } });
+        const excludeArtists = existingArtists.map(a => a.nameRomanized);
+
         const artistGenerator = new ArtistGenerator(orchestrator);
-        const artists = await artistGenerator.generateMultipleArtists(options.artists, genOptions);
+        const artists = await artistGenerator.generateMultipleArtists(options.artists, {
+            ...genOptions,
+            excludeList: excludeArtists
+        });
 
         if (!options.dryRun) {
             console.log('\n💾 Saving artists to database...');
-            for (const artist of artists) {
+            for (let artist of artists) {
+                if (!validateArtist(artist)) {
+                    console.warn(`   ⚠️  Skipped invalid artist: "${artist.nameRomanized || '(sem nome)'}"`);
+                    continue;
+                }
+                artist = sanitizeArtist(artist);
                 try {
-                    // Verificar/criar agência
-                    let agency = await prisma.agency.findUnique({
-                        where: { name: artist.agencyName },
-                    });
-
-                    if (!agency) {
-                        agency = await prisma.agency.create({
-                            data: {
-                                name: artist.agencyName,
-                                website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
-                                socials: JSON.stringify({}),
-                            },
+                    // Verificar/criar agência (opcional)
+                    let agencyId: string | null = null;
+                    if (artist.agencyName && typeof artist.agencyName === 'string' && artist.agencyName.trim().length > 0) {
+                        let agency = await prisma.agency.findUnique({
+                            where: { name: artist.agencyName },
                         });
-                        console.log(`   🏢 Created agency: ${artist.agencyName}`);
+
+                        if (!agency) {
+                            agency = await prisma.agency.create({
+                                data: {
+                                    name: artist.agencyName,
+                                    website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
+                                    socials: JSON.stringify({}),
+                                },
+                            });
+                            console.log(`   🏢 Created agency: ${artist.agencyName}`);
+                        }
+                        agencyId = agency.id;
                     }
 
                     await prisma.artist.upsert({
                         where: { nameRomanized: artist.nameRomanized },
-                        update: {},
+                        update: {
+                            nameHangul: artist.nameHangul || null,
+                            birthDate: artist.birthDate || null,
+                            roles: artist.roles || null,
+                            bio: artist.bio || null,
+                            primaryImageUrl: artist.primaryImageUrl || null,
+                            agencyId,
+                        },
                         create: {
                             nameRomanized: artist.nameRomanized,
-                            nameHangul: artist.nameHangul,
-                            birthDate: artist.birthDate,
-                            roles: artist.roles,
-                            bio: artist.bio,
-                            primaryImageUrl: artist.primaryImageUrl,
-                            agencyId: agency.id,
+                            nameHangul: artist.nameHangul || null,
+                            birthDate: artist.birthDate || null,
+                            roles: artist.roles || null,
+                            bio: artist.bio || null,
+                            primaryImageUrl: artist.primaryImageUrl || null,
+                            agencyId,
                         },
                     });
                     console.log(`   ✅ Saved: ${artist.nameRomanized}`);
@@ -144,16 +219,35 @@ async function main() {
     // Gerar produções
     if (options.productions && options.productions > 0) {
         console.log('\n\n🎬 GENERATING PRODUCTIONS\n');
+
+        // Buscar produções existentes para evitar duplicatas
+        const existingProductions = await prisma.production.findMany({ select: { titlePt: true } });
+        const excludeProductions = existingProductions.map(p => p.titlePt);
+
         const productionGenerator = new ProductionGenerator(orchestrator);
-        const productions = await productionGenerator.generateMultipleProductions(options.productions, genOptions);
+        const productions = await productionGenerator.generateMultipleProductions(options.productions, {
+            ...genOptions,
+            excludeList: excludeProductions
+        });
 
         if (!options.dryRun) {
             console.log('\n💾 Saving productions to database...');
-            for (const production of productions) {
+            for (let production of productions) {
+                production = validateAndNormalizeProduction(production);
+                if (!production) {
+                    console.warn(`   ⚠️  Skipped invalid production`);
+                    continue;
+                }
                 try {
                     await prisma.production.upsert({
                         where: { titlePt: production.titlePt },
-                        update: {},
+                        update: {
+                            titleKr: production.titleKr,
+                            type: production.type,
+                            year: production.year,
+                            synopsis: production.synopsis,
+                            streamingPlatforms: production.streamingPlatforms,
+                        },
                         create: production,
                     });
                     console.log(`   ✅ Saved: ${production.titlePt}`);

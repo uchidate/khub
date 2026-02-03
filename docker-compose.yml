@@ -1,17 +1,21 @@
-version: '3.8'
 services:
   hallyuhub:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/uchidate/khub:latest
     container_name: hallyuhub
-    restart: unless-stopped
     ports:
       - "3000:3000"
-    env_file:
-      - .env.production
+    environment:
+      - DATABASE_URL=file:/app/data/prod.db
+      - NEXT_TELEMETRY_DISABLED=1
+      - OLLAMA_BASE_URL=http://ollama:11434
     volumes:
-      - ./prisma:/app/prisma
       - hallyuhub-data:/app/data
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+
 volumes:
   hallyuhub-data:
