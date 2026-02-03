@@ -37,10 +37,10 @@ elif [ "$env_type" = "staging" ]; then
 fi
 docker volume create hallyuhub-data 2>/dev/null || true
 
-# 0. Backup automático antes de qualquer alteração (Apenas em Prod se desejar, ou ambos)
+# 0. Backup automático antes de qualquer alteração (Apenas em Prod)
 if [ "$env_type" = "production" ]; then
   echo "💾 Criando backup do banco antes do deploy..."
-  bash "${SCRIPT_DIR}/scripts/backup-db.sh"
+  bash "${SCRIPT_DIR}/scripts/backup-db.sh" --prod --keep 30
 fi
 
 # 1. Limpar e puxar

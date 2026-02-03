@@ -1,68 +1,183 @@
 #!/bin/bash
-# Restaura o banco SQLite do HallyuHub a partir de um backup
-# Uso: bash restore-db.sh [nome_do_arquivo_backup]
+# ============================================================
+# Script de Restauracao PostgreSQL - HallyuHub
+# ============================================================
+# Uso: bash restore-db.sh [--staging|--prod] [arquivo_backup]
 #
-# Se nenhum argumento for passado, restaura o backup mais recente.
-# Exemplo: bash restore-db.sh backup-20260201-030000.db
+# Se nenhum arquivo for especificado, usa o backup mais recente.
+#
+# Opcoes:
+#   --staging   Restaurar no banco de staging
+#   --prod      Restaurar no banco de producao (default)
+#   --force     Pular confirmacao (CUIDADO!)
+#
+# Exemplo:
+#   bash restore-db.sh --prod backup-20260203-030000.sql.gz
+#   bash restore-db.sh --staging  # usa backup mais recente
+# ============================================================
 
 set -e
 
-VOLUME_NAME="hallyuhub-data"
-CONTAINER_NAME="hallyuhub"
-BACKUP_DIR="/var/www/hallyuhub/backups"
+# Configuracoes padrao
+BASE_BACKUP_DIR="/var/www/hallyuhub/backups"
+ENV_TYPE="production"
+FORCE_RESTORE=false
+BACKUP_FILE=""
 
-# Determina qual backup usar
-if [ -n "$1" ]; then
-  BACKUP_FILE="$1"
+# Parse argumentos
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --staging) ENV_TYPE="staging" ;;
+        --prod) ENV_TYPE="production" ;;
+        --force) FORCE_RESTORE=true ;;
+        *)
+            # Se nao e uma flag, assume que e o arquivo de backup
+            if [[ ! "$1" =~ ^-- ]]; then
+                BACKUP_FILE="$1"
+            fi
+            ;;
+    esac
+    shift
+done
+
+# Configuracao baseada no ambiente
+if [ "$ENV_TYPE" = "production" ]; then
+    CONTAINER_NAME="hallyuhub-postgres-production"
+    APP_CONTAINER="hallyuhub"
+    DB_NAME="hallyuhub_production"
+    BACKUP_DIR="${BASE_BACKUP_DIR}/production"
 else
-  BACKUP_FILE=$(ls -t "${BACKUP_DIR}"/backup-*.db 2>/dev/null | head -1 | xargs basename 2>/dev/null)
+    CONTAINER_NAME="hallyuhub-postgres-staging"
+    APP_CONTAINER="hallyuhub-staging"
+    DB_NAME="hallyuhub_staging"
+    BACKUP_DIR="${BASE_BACKUP_DIR}/staging"
 fi
 
-# Valida existência do backup
-if [ -z "$BACKUP_FILE" ] || [ ! -f "${BACKUP_DIR}/${BACKUP_FILE}" ]; then
-  echo "ERRO: Backup não encontrado: ${BACKUP_FILE:-<nenhum>}" >&2
-  echo ""
-  echo "Backups disponíveis:"
-  ls -lt "${BACKUP_DIR}"/backup-*.db 2>/dev/null | awk '{print $6, $7, $8, $9}' || echo "  (nenhum)"
-  exit 1
+DB_USER="hallyuhub"
+
+# Funcao para log com timestamp
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# ============================================================
+# VALIDACOES
+# ============================================================
+
+# Se nenhum arquivo especificado, usa o mais recente
+if [ -z "$BACKUP_FILE" ]; then
+    BACKUP_FILE=$(ls -1t "${BACKUP_DIR}"/backup-*.sql.gz 2>/dev/null | head -1)
+    if [ -z "$BACKUP_FILE" ]; then
+        echo "ERRO: Nenhum backup encontrado em ${BACKUP_DIR}"
+        exit 1
+    fi
+else
+    # Se o arquivo nao tem caminho completo, adiciona o diretorio
+    if [[ ! "$BACKUP_FILE" =~ ^/ ]]; then
+        BACKUP_FILE="${BACKUP_DIR}/${BACKUP_FILE}"
+    fi
 fi
 
-SIZE=$(du -h "${BACKUP_DIR}/${BACKUP_FILE}" | cut -f1)
-echo "========================================="
-echo "  Restauração do banco de dados"
-echo "========================================="
-echo "  Backup:    ${BACKUP_FILE} (${SIZE})"
+# Valida existencia do arquivo
+if [ ! -f "$BACKUP_FILE" ]; then
+    echo "ERRO: Arquivo de backup nao encontrado: ${BACKUP_FILE}"
+    echo ""
+    echo "Backups disponiveis em ${BACKUP_DIR}:"
+    ls -lht "${BACKUP_DIR}"/backup-*.sql.gz 2>/dev/null | awk '{print "  " $9 " (" $5 ", " $6 " " $7 ")"}' || echo "  (nenhum)"
+    exit 1
+fi
+
+BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+BACKUP_NAME=$(basename "$BACKUP_FILE")
+
+# ============================================================
+# CONFIRMACAO
+# ============================================================
+
+echo ""
+echo "=========================================="
+echo "  RESTAURACAO PostgreSQL - HallyuHub"
+echo "=========================================="
+echo "  Ambiente:  ${ENV_TYPE}"
 echo "  Container: ${CONTAINER_NAME}"
-echo "  Volume:    ${VOLUME_NAME}"
-echo "========================================="
+echo "  Database:  ${DB_NAME}"
+echo "  Backup:    ${BACKUP_NAME} (${BACKUP_SIZE})"
+echo "=========================================="
 echo ""
-echo "  ATENÇÃO: isso vai substituir o banco atual."
-echo "  Pressione Ctrl+C para cancelar."
+echo "  ATENCAO: Esta operacao vai SUBSTITUIR todo o banco atual!"
+echo "  A aplicacao sera temporariamente parada durante a restauracao."
 echo ""
-read -r -p "  Confirme digitando 'sim': " confirmation
 
-if [ "$confirmation" != "sim" ]; then
-  echo "Restauração cancelada."
-  exit 0
+if [ "$FORCE_RESTORE" != true ]; then
+    read -r -p "  Digite 'RESTAURAR' para confirmar: " confirmation
+    if [ "$confirmation" != "RESTAURAR" ]; then
+        log "Restauracao cancelada pelo usuario."
+        exit 0
+    fi
 fi
 
 echo ""
-echo "[$(date)] Para o container ${CONTAINER_NAME}..."
-docker stop "$CONTAINER_NAME" 2>/dev/null || true
 
-echo "[$(date)] Restaurando backup via container temporário..."
-docker run --rm \
-  -v "${VOLUME_NAME}:/data" \
-  -v "${BACKUP_DIR}:/backups" \
-  alpine \
-  cp "/backups/${BACKUP_FILE}" /data/prod.db
+# ============================================================
+# RESTAURACAO
+# ============================================================
 
-echo "[$(date)] Backup restaurado com sucesso."
+# 1. Parar a aplicacao (para evitar conexoes ativas)
+log "Parando aplicacao ${APP_CONTAINER}..."
+docker stop "${APP_CONTAINER}" 2>/dev/null || true
 
-echo "[$(date)] Reiniciando container..."
-docker start "$CONTAINER_NAME"
+# 2. Aguardar conexoes fecharem
+sleep 2
+
+# 3. Dropar e recriar o banco
+log "Recriando banco de dados ${DB_NAME}..."
+docker exec "${CONTAINER_NAME}" psql -U "${DB_USER}" -d postgres -c "
+    SELECT pg_terminate_backend(pid)
+    FROM pg_stat_activity
+    WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();
+" 2>/dev/null || true
+
+docker exec "${CONTAINER_NAME}" psql -U "${DB_USER}" -d postgres -c "DROP DATABASE IF EXISTS ${DB_NAME};"
+docker exec "${CONTAINER_NAME}" psql -U "${DB_USER}" -d postgres -c "CREATE DATABASE ${DB_NAME};"
+
+# 4. Restaurar o backup
+log "Restaurando backup ${BACKUP_NAME}..."
+gunzip -c "$BACKUP_FILE" | docker exec -i "${CONTAINER_NAME}" psql -U "${DB_USER}" -d "${DB_NAME}" --quiet
+
+# 5. Reiniciar a aplicacao
+log "Reiniciando aplicacao ${APP_CONTAINER}..."
+docker start "${APP_CONTAINER}"
+
+# 6. Aguardar aplicacao subir
+log "Aguardando aplicacao iniciar..."
+sleep 5
+
+# ============================================================
+# VERIFICACAO
+# ============================================================
 
 echo ""
-echo "[$(date)] Restauração concluída. Aguardando container subir..."
-sleep 3
-docker logs --tail=5 "$CONTAINER_NAME"
+echo "=========================================="
+echo "  RESTAURACAO CONCLUIDA"
+echo "=========================================="
+
+# Verificar status do container
+if docker ps --format '{{.Names}}' | grep -q "^${APP_CONTAINER}$"; then
+    log "Aplicacao rodando normalmente"
+
+    # Mostrar algumas estatisticas do banco
+    echo ""
+    echo "  Estatisticas do banco restaurado:"
+    docker exec "${CONTAINER_NAME}" psql -U "${DB_USER}" -d "${DB_NAME}" -c "
+        SELECT
+            (SELECT COUNT(*) FROM \"Artist\") as artistas,
+            (SELECT COUNT(*) FROM \"Production\") as producoes,
+            (SELECT COUNT(*) FROM \"News\") as noticias;
+    " 2>/dev/null || echo "  (nao foi possivel obter estatisticas)"
+else
+    log "AVISO: Aplicacao pode nao ter iniciado corretamente"
+    docker logs --tail=10 "${APP_CONTAINER}" 2>/dev/null || true
+fi
+
+echo ""
+log "Restauracao finalizada!"

@@ -1,15 +1,46 @@
 name: Database Backup
 
+# ============================================================
+# Workflow de Backup Automatico PostgreSQL
+# ============================================================
+# - Executa diariamente as 03:00 UTC (00:00 Brasilia)
+# - Backup de producao por padrao
+# - Mantem os ultimos 30 backups
+# - Pode ser executado manualmente com opcoes
+# ============================================================
+
 on:
   schedule:
-    - cron: '0 3 * * *'  # Diário às 03:00 UTC
-  workflow_dispatch:      # Trigger manual
+    # Diariamente as 03:00 UTC (00:00 horario de Brasilia)
+    - cron: '0 3 * * *'
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente para backup'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - both
+      keep_backups:
+        description: 'Quantidade de backups a manter'
+        required: false
+        default: '30'
 
 jobs:
-  backup:
+  # ============================================
+  # Backup de Producao
+  # ============================================
+  backup-production:
+    name: Backup Production
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.environment == 'production' || github.event.inputs.environment == 'both'
+
     steps:
-      - name: Run database backup via SSH
+      - name: Run PostgreSQL backup (Production)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
@@ -17,4 +48,65 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/hallyuhub
-            bash scripts/backup-db.sh
+
+            echo "================================================"
+            echo "  BACKUP AUTOMATICO - PRODUCAO"
+            echo "  Data: $(date)"
+            echo "================================================"
+
+            # Executa backup com retencao configurada
+            KEEP="${{ github.event.inputs.keep_backups || '30' }}"
+            bash scripts/backup-db.sh --prod --keep "$KEEP"
+
+            echo ""
+            echo "================================================"
+            echo "  BACKUP CONCLUIDO"
+            echo "================================================"
+
+  # ============================================
+  # Backup de Staging (apenas manual)
+  # ============================================
+  backup-staging:
+    name: Backup Staging
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'both'
+
+    steps:
+      - name: Run PostgreSQL backup (Staging)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/hallyuhub
+
+            echo "================================================"
+            echo "  BACKUP AUTOMATICO - STAGING"
+            echo "  Data: $(date)"
+            echo "================================================"
+
+            # Executa backup com retencao configurada
+            KEEP="${{ github.event.inputs.keep_backups || '30' }}"
+            bash scripts/backup-db.sh --staging --keep "$KEEP"
+
+            echo ""
+            echo "================================================"
+            echo "  BACKUP CONCLUIDO"
+            echo "================================================"
+
+  # ============================================
+  # Notificacao de Falha (opcional)
+  # ============================================
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [backup-production]
+    if: failure()
+
+    steps:
+      - name: Log failure
+        run: |
+          echo "ALERTA: Backup falhou!"
+          echo "Verifique os logs do workflow para mais detalhes."
+          echo "Data: $(date)"
