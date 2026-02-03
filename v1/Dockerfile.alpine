@@ -3,15 +3,19 @@
 # ============================================
 FROM node:20-alpine AS deps
 
-# Install dependencies for native modules
-RUN apk add --no-cache libc6-compat openssl
+# Install dependencies for native modules and healthcheck
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    wget \
+    ca-certificates
 
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
+# Install dependencies (production only for smaller image)
 RUN npm ci --only=production && \
     npm cache clean --force
 
@@ -20,15 +24,20 @@ RUN npm ci --only=production && \
 # ============================================
 FROM node:20-alpine AS builder
 
+# Install build dependencies
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl
+
 WORKDIR /app
 
-# Copy dependencies from deps stage
+# Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy source code
+# Copy all source files
 COPY . .
 
-# Generate Prisma Client
+# Generate Prisma Client (must be before build)
 RUN npx prisma generate
 
 # Build Next.js application
@@ -42,22 +51,38 @@ RUN npm run build
 # ============================================
 FROM node:20-alpine AS runner
 
+# Install runtime dependencies
+RUN apk add --no-cache \
+    wget \
+    ca-certificates \
+    openssl
+
 WORKDIR /app
 
 # Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME="0.0.0.0"
+ENV PORT=3000
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
+# Create data directory for SQLite
+RUN mkdir -p /app/data && \
+    chown -R nextjs:nodejs /app/data
+
 # Copy necessary files from builder
 COPY --from=builder /app/public ./public
+
+# Copy standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy Prisma files
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
 # Switch to non-root user
 USER nextjs
@@ -65,13 +90,9 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Set environment variables
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# Healthcheck
+# Healthcheck using wget (installed in this stage)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+  CMD wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1
 
 # Start application
 CMD ["node", "server.js"]
