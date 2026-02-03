@@ -18,10 +18,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
         )
     }
 
-    let socials: Record<string, string> = {}
-    if (agency.socials) {
-        try { socials = JSON.parse(agency.socials) } catch {}
-    }
+    const socials = (agency.socials as Record<string, string>) || {}
 
     return (
         <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
@@ -86,7 +83,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
                                 </div>
                                 <div className="mt-3 group-hover:opacity-0 transition-opacity">
                                     <h4 className="font-bold text-sm">{artist.nameRomanized}</h4>
-                                    <p className="text-[10px] text-zinc-500 font-medium">{artist.roles?.split(',').slice(0, 2).join(', ')}</p>
+                                    <p className="text-[10px] text-zinc-500 font-medium">{artist.roles?.slice(0, 2).join(', ')}</p>
                                 </div>
                             </Link>
                         ))}

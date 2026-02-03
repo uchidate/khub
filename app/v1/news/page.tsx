@@ -63,7 +63,7 @@ export default async function NewsPage() {
                                 </div>
                                 <div>
                                     <div className="flex gap-2 mb-2">
-                                        {item.tags?.split(',').slice(0, 2).map((tag: any) => (
+                                        {item.tags?.slice(0, 2).map((tag: string) => (
                                             <span key={tag} className="text-[9px] font-black text-purple-600 uppercase tracking-widest">{tag}</span>
                                         ))}
                                     </div>

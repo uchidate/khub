@@ -64,7 +64,7 @@ export default async function ProductionsPage() {
                                 <div>
                                     <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Disponível em</h4>
                                     <div className="flex gap-3">
-                                        {prod.streamingPlatforms?.split(',').map((p: any) => (
+                                        {prod.streamingPlatforms?.map((p: string) => (
                                             <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-1 rounded-sm border border-white/5">
                                                 {p}
                                             </span>

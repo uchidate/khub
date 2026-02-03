@@ -23,13 +23,10 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
         )
     }
 
-    const roles = artist.roles?.split(',').map(r => r.trim()) || []
-    const stageNames = artist.stageNames?.split(',').map(s => s.trim()) || []
+    const roles = artist.roles || []
+    const stageNames = artist.stageNames || []
 
-    let socialLinks: Record<string, string> = {}
-    if (artist.socialLinks) {
-        try { socialLinks = JSON.parse(artist.socialLinks) } catch {}
-    }
+    const socialLinks = (artist.socialLinks as Record<string, string>) || {}
 
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
     const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })

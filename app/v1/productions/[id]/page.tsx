@@ -22,7 +22,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
         )
     }
 
-    const tags = production.tags?.split(',').map(t => t.trim()) || []
+    const tags = production.tags || []
 
     return (
         <div className="min-h-screen">
@@ -52,8 +52,8 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
                         <span className="w-1 h-1 bg-zinc-700 rounded-full" />
                         <span className="uppercase tracking-widest text-[10px] font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
-                        {production.streamingPlatforms && production.streamingPlatforms.split(',').map(p => (
-                            <span key={p.trim()} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p.trim()}</span>
+                        {production.streamingPlatforms && production.streamingPlatforms.map(p => (
+                            <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
                         ))}
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
@@ -127,8 +127,8 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <div className="flex justify-between py-3 border-b border-white/5 items-center">
                                     <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Streaming</span>
                                     <div className="flex flex-wrap gap-1.5 justify-end">
-                                        {production.streamingPlatforms.split(',').map(p => (
-                                            <span key={p.trim()} className="text-[10px] font-black text-white bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p.trim()}</span>
+                                        {production.streamingPlatforms.map(p => (
+                                            <span key={p} className="text-[10px] font-black text-white bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
                                         ))}
                                     </div>
                                 </div>

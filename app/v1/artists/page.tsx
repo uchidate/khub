@@ -40,7 +40,7 @@ export default async function ArtistsPage() {
                                 <h3 className="text-2xl font-black text-white leading-tight mb-1">{artist.nameRomanized}</h3>
                                 <p className="text-sm text-purple-500 font-bold mb-3">{artist.nameHangul}</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {artist.roles?.split(',').map((role: string) => (
+                                    {artist.roles?.map((role: string) => (
                                         <span key={role} className="text-[10px] uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm">
                                             {role}
                                         </span>
