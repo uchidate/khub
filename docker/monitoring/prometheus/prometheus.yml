@@ -1,0 +1,86 @@
+# Prometheus Configuration - HallyuHub
+# =====================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'hallyuhub'
+
+# Alertmanager (opcional - para alertas)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# Regras de alerta (opcional)
+# rule_files:
+#   - "alert_rules.yml"
+
+scrape_configs:
+  # ============================================
+  # Prometheus - Auto-monitoramento
+  # ============================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          environment: 'monitoring'
+
+  # ============================================
+  # Node Exporter - Metricas do Sistema
+  # ============================================
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          environment: 'server'
+
+  # ============================================
+  # cAdvisor - Metricas de Containers
+  # ============================================
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          environment: 'docker'
+
+  # ============================================
+  # HallyuHub - Aplicacao (Production)
+  # ============================================
+  - job_name: 'hallyuhub-production'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['hallyuhub:3000']
+        labels:
+          environment: 'production'
+          app: 'hallyuhub'
+    # Fallback para health check se metrics nao existir
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'production'
+
+  # ============================================
+  # HallyuHub - Aplicacao (Staging)
+  # ============================================
+  - job_name: 'hallyuhub-staging'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['hallyuhub-staging:3000']
+        labels:
+          environment: 'staging'
+          app: 'hallyuhub'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'staging'
+
+  # ============================================
+  # PostgreSQL (se usar postgres_exporter)
+  # ============================================
+  # - job_name: 'postgresql'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #       labels:
+  #         environment: 'database'
