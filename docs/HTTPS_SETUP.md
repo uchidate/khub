@@ -242,7 +242,7 @@ sudo ufw status
 Editar `.env.production`:
 
 ```bash
-NEXT_PUBLIC_SITE_URL="https://hallyuhub.com"
+NEXT_PUBLIC_SITE_URL="https://hallyuhub.com.br"
 ```
 
 Redeployar após mudança:
@@ -259,10 +259,10 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ```bash
 # Verificar se o site está acessível
-curl -I https://hallyuhub.com
+curl -I https://hallyuhub.com.br
 
 # Verificar redirecionamento HTTP → HTTPS
-curl -I http://hallyuhub.com
+curl -I http://hallyuhub.com.br
 ```
 
 ### 2. Teste de Segurança
@@ -282,11 +282,11 @@ Alvo: Score A ou A+
 sudo journalctl -u certbot
 
 # Verificar se a porta 80 está acessível
-curl -I http://hallyuhub.com
+curl -I https://hallyuhub.com.br
 
 # DNS propagado?
-dig hallyuhub.com
-nslookup hallyuhub.com
+dig hallyuhub.com.br
+nslookup hallyuhub.com.br
 ```
 
 ### Caddy não inicia
