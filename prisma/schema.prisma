@@ -19,6 +19,9 @@ model Agency {
   artists   Artist[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([name])
 }
 
 model Artist {
@@ -36,6 +39,11 @@ model Artist {
   productions      ArtistProduction[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+
+  @@index([agencyId])
+  @@index([createdAt])
+  @@index([birthDate])
+  @@index([nameRomanized, createdAt])
 }
 
 model Production {
@@ -52,6 +60,12 @@ model Production {
   artists            ArtistProduction[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+
+  @@index([type])
+  @@index([year])
+  @@index([createdAt])
+  @@index([type, year])
+  @@index([titlePt])
 }
 
 model ArtistProduction {
@@ -74,6 +88,10 @@ model News {
   tags        String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([publishedAt])
+  @@index([createdAt])
+  @@index([title])
 }
 
 model Image {
@@ -86,6 +104,9 @@ model Image {
   width      Int?
   height     Int?
   createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 model User {
@@ -102,4 +123,7 @@ model Tag {
   id   String @id @default(cuid())
   name String @unique
   type String
+
+  @@index([type])
+  @@index([name])
 }
