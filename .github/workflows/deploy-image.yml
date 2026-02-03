@@ -84,7 +84,7 @@ jobs:
         run: npx prisma generate
 
       - name: Run ESLint
-        run: npm run lint
+        run: npx eslint app/ lib/ --max-warnings 10
 
       - name: TypeScript type check
         run: npx tsc --noEmit
