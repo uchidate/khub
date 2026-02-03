@@ -56,6 +56,86 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
+# Funcao para enviar notificacao Slack
+notify_slack() {
+    local status=$1
+    local size=$2
+    local retained=$3
+    local error_msg=$4
+
+    # Verifica se webhook esta configurado
+    if [ -z "$SLACK_WEBHOOK_ALERTS" ]; then
+        return 0
+    fi
+
+    local emoji="💾"
+    local status_label="Concluido"
+    local color="good"
+
+    if [ "$status" = "failed" ]; then
+        emoji="❌"
+        status_label="Falhou"
+        color="danger"
+    fi
+
+    local env_label="PRODUCAO"
+    if [ "$ENV_TYPE" = "staging" ]; then
+        env_label="STAGING"
+    fi
+
+    local payload=$(cat <<EOF
+{
+    "blocks": [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "${emoji} Backup ${env_label} - ${status_label}",
+                "emoji": true
+            }
+        },
+        {
+            "type": "section",
+            "fields": [
+                {"type": "mrkdwn", "text": "*Ambiente:*\n${env_label}"},
+                {"type": "mrkdwn", "text": "*Status:*\n${status_label}"}
+            ]
+        }
+EOF
+)
+
+    if [ -n "$size" ] && [ "$status" = "success" ]; then
+        payload="${payload},
+        {
+            \"type\": \"section\",
+            \"fields\": [
+                {\"type\": \"mrkdwn\", \"text\": \"*Tamanho:*\n${size}\"},
+                {\"type\": \"mrkdwn\", \"text\": \"*Backups Retidos:*\n${retained}\"}
+            ]
+        }"
+    fi
+
+    if [ -n "$error_msg" ]; then
+        payload="${payload},
+        {
+            \"type\": \"section\",
+            \"text\": {
+                \"type\": \"mrkdwn\",
+                \"text\": \"*Erro:*\n\`\`\`${error_msg}\`\`\`\"
+            }
+        }"
+    fi
+
+    payload="${payload}
+    ],
+    \"text\": \"Backup ${env_label} - ${status_label}\"
+}"
+
+    curl -s -X POST "$SLACK_WEBHOOK_ALERTS" \
+        -H "Content-Type: application/json" \
+        -d "$payload" > /dev/null 2>&1 || true
+}
+
 # Funcao para limpar backups antigos
 cleanup_old_backups() {
     local dir=$1
@@ -100,6 +180,7 @@ mkdir -p "${BACKUP_DIR}"
 # Verifica se o container esta rodando
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     log "ERRO: Container ${CONTAINER_NAME} nao esta rodando!"
+    notify_slack "failed" "" "" "Container ${CONTAINER_NAME} nao esta rodando"
     exit 1
 fi
 
@@ -116,6 +197,7 @@ docker exec "${CONTAINER_NAME}" pg_dump \
 # Verifica se o backup foi criado com sucesso
 if [ ! -f "${BACKUP_PATH}" ] || [ ! -s "${BACKUP_PATH}" ]; then
     log "ERRO: Falha ao criar backup!"
+    notify_slack "failed" "" "" "Falha ao criar arquivo de backup"
     exit 1
 fi
 
@@ -125,6 +207,9 @@ log "Backup criado com sucesso: ${BACKUP_FILE} (${BACKUP_SIZE})"
 
 # Limpa backups antigos
 cleanup_old_backups "${BACKUP_DIR}" "${KEEP_BACKUPS}"
+
+# Conta backups retidos
+RETAINED_COUNT=$(ls -1 "${BACKUP_DIR}"/backup-*.sql.gz 2>/dev/null | wc -l | tr -d ' ')
 
 # Upload para Google Drive (se habilitado e configurado)
 if [ "$UPLOAD_GDRIVE" = true ]; then
@@ -152,3 +237,6 @@ ls -lht "${BACKUP_DIR}"/backup-*.sql.gz 2>/dev/null | head -5 | awk '{print "   
 echo "=========================================="
 
 log "Backup finalizado com sucesso!"
+
+# Envia notificacao Slack de sucesso
+notify_slack "success" "${BACKUP_SIZE}" "${RETAINED_COUNT}" ""

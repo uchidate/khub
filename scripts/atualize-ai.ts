@@ -3,8 +3,13 @@ const { AIOrchestrator } = require('../lib/ai/orchestrator');
 const { NewsGenerator } = require('../lib/ai/generators/news-generator');
 const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
 const { ProductionGenerator } = require('../lib/ai/generators/production-generator');
+const { getSlackService } = require('../lib/services/slack-notification-service');
 
 const prisma = new PrismaClient();
+const slackService = getSlackService();
+
+// Track saved content for Slack summary
+const savedCounts = { artists: 0, news: 0, productions: 0 };
 
 interface CliOptions {
     news?: number;
@@ -137,6 +142,7 @@ async function main() {
                         },
                         create: news,
                     });
+                    savedCounts.news++;
                     console.log(`   ✅ Saved: "${news.title}"`);
                 } catch (error: any) {
                     console.error(`   ❌ Failed to save: ${error.message}`);
@@ -208,6 +214,7 @@ async function main() {
                             agencyId,
                         },
                     });
+                    savedCounts.artists++;
                     console.log(`   ✅ Saved: ${artist.nameRomanized}`);
                 } catch (error: any) {
                     console.error(`   ❌ Failed to save: ${error.message}`);
@@ -250,6 +257,7 @@ async function main() {
                         },
                         create: production,
                     });
+                    savedCounts.productions++;
                     console.log(`   ✅ Saved: ${production.titlePt}`);
                 } catch (error: any) {
                     console.error(`   ❌ Failed to save: ${error.message}`);
@@ -278,6 +286,21 @@ async function main() {
         }
     }
     console.log('='.repeat(60));
+
+    // Send Slack summary notification
+    if (!options.dryRun && slackService.isEnabled()) {
+        const totalSaved = savedCounts.artists + savedCounts.news + savedCounts.productions;
+        if (totalSaved > 0) {
+            console.log('\n📤 Sending Slack notification...');
+            await slackService.notifyContentBatchSummary({
+                artists: savedCounts.artists,
+                news: savedCounts.news,
+                productions: savedCounts.productions,
+                provider: orchestrator.getAvailableProviders()[0] || 'unknown',
+            });
+            console.log('   ✅ Slack notification sent');
+        }
+    }
 
     console.log('\n✨ Generation complete!\n');
 }
