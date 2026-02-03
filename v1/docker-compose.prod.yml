@@ -6,6 +6,8 @@ services:
     container_name: hallyuhub
     ports:
       - "3000:3000"
+    environment:
+      - DEPLOY_ENV=production
     env_file:
       - .env.production
     volumes:
