@@ -23,7 +23,7 @@ export default async function ArtistsPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
                 {artists.map((artist: any) => (
-                    <Link key={artist.id} href={`/artists/${artist.id}`} className="group cursor-pointer block">
+                    <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="group cursor-pointer block">
                         <div className="aspect-[2/3] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 card-hover shadow-2xl">
                             {artist.primaryImageUrl ? (
                                 <img
