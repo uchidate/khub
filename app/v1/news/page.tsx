@@ -20,7 +20,7 @@ export default async function NewsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Featured News (First item) */}
                 {news.length > 0 && (
-                    <Link href={`/news/${news[0].id}`} className="lg:col-span-8 group cursor-pointer">
+                    <Link href={`/v1/news/${news[0].id}`} className="lg:col-span-8 group cursor-pointer">
                         <div className="aspect-video rounded-3xl overflow-hidden bg-zinc-900 border border-white/5 relative shadow-2xl mb-6">
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent z-10" />
                             <div className="absolute top-6 left-6 z-20">
@@ -47,7 +47,7 @@ export default async function NewsPage() {
                 {/* Side Column/Grid for others */}
                 <div className="lg:col-span-4 space-y-10">
                     {news.slice(1, 4).map((item: any) => (
-                        <Link href={`/news/${item.id}`} key={item.id} className="group cursor-pointer block">
+                        <Link href={`/v1/news/${item.id}`} key={item.id} className="group cursor-pointer block">
                             <div className="flex gap-6">
                                 <div className="w-24 h-50 rounded-2xl bg-zinc-900 border border-white/5 flex-shrink-0 relative overflow-hidden">
                                     {item.imageUrl ? (
@@ -78,7 +78,7 @@ export default async function NewsPage() {
                 {/* Bottom Grid for the rest */}
                 <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-10 mt-10">
                     {news.slice(4).map((item: any) => (
-                        <Link href={`/news/${item.id}`} key={item.id} className="group cursor-pointer flex flex-col bg-zinc-900/40 p-6 rounded-3xl border border-white/5 hover:bg-zinc-900 transition-colors h-full">
+                        <Link href={`/v1/news/${item.id}`} key={item.id} className="group cursor-pointer flex flex-col bg-zinc-900/40 p-6 rounded-3xl border border-white/5 hover:bg-zinc-900 transition-colors h-full">
                             <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-zinc-800 mb-6 relative">
                                 {item.imageUrl ? (
                                     <Image

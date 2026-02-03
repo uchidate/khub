@@ -22,7 +22,7 @@ export default async function ProductionsPage() {
 
             <div className="space-y-12">
                 {productions.map((prod: any) => (
-                    <Link key={prod.id} href={`/productions/${prod.id}`} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
+                    <Link key={prod.id} href={`/v1/productions/${prod.id}`} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
                         {/* Poster / Backdrop */}
                         <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-900 relative overflow-hidden">
                             {prod.imageUrl ? (
