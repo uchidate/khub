@@ -118,6 +118,7 @@ export class OllamaProvider extends BaseAIProvider {
 
         // Sanitiza caracteres de controle (causa "Bad control character in string literal")
         // Substitui por espaço — não afeta o conteúdo gerado, só quebrava o parse
+        // eslint-disable-next-line no-control-regex
         content = content.replace(/[\x00-\x1f\x7f]/g, ' ');
 
         return content;
