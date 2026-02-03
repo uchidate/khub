@@ -72,7 +72,8 @@ hallyuhub_entities_total{type="agency"} ${agencyCount}
             }
         });
 
-    } catch (error) {
+    } catch (err) {
+        console.error('Metrics collection error:', err);
         // Retorna metricas de erro
         const errorMetrics = `
 # HELP hallyuhub_up Application is up
