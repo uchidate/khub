@@ -1,5 +1,19 @@
 name: Build and Deploy Image
 
+# ╔════════════════════════════════════════════════════════════════╗
+# ║  PROCESSO DE DEPLOY - LEIA ANTES DE MODIFICAR                  ║
+# ║                                                                ║
+# ║  LOCAL → STAGING → PRODUCAO                                    ║
+# ║          (develop)   (main)                                    ║
+# ║                                                                ║
+# ║  1. Desenvolva localmente                                      ║
+# ║  2. Push para develop → Deploy automatico em STAGING (:3001)   ║
+# ║  3. VALIDE EM STAGING antes de mergear para main               ║
+# ║  4. PR develop → main → Deploy em PRODUCAO (:3000)             ║
+# ║                                                                ║
+# ║  Ver: PROCESSO-DEPLOY.md na raiz do projeto                    ║
+# ╚════════════════════════════════════════════════════════════════╝
+
 on:
   push:
     branches: [ main, develop ]
@@ -13,10 +27,44 @@ env:
 
 jobs:
   # ============================================
-  # Job 1: Validação (lint, typecheck, build)
+  # Job 0: Verificar Processo (informativo)
+  # ============================================
+  check-process:
+    name: 📋 Check Deploy Process
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aviso - Push direto para main
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "::warning::ATENCAO: Push direto para main detectado!"
+          echo "::warning::Processo recomendado: develop -> staging -> main"
+          echo "::warning::Certifique-se de ter validado em STAGING primeiro."
+          echo ""
+          echo "Processo correto:"
+          echo "  1. Push para develop"
+          echo "  2. Validar em staging (porta 3001)"
+          echo "  3. Criar PR: develop -> main"
+          echo "  4. Merge apos validacao"
+
+      - name: Info - Deploy para Staging
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          echo "Deploy para STAGING (develop branch)"
+          echo "Apos o deploy, valide em http://servidor:3001"
+          echo "Se OK, crie um PR: develop -> main"
+
+      - name: Info - Pull Request
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Validando Pull Request"
+          echo "Apenas validacao sera executada (sem deploy)"
+
+  # ============================================
+  # Job 1: Validacao (lint, typecheck, build)
   # ============================================
   validate:
     name: 🔍 Validate Code
+    needs: check-process
     runs-on: ubuntu-latest
 
     steps:
@@ -96,20 +144,19 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ============================================
-  # Job 3: Deploy para Servidor
+  # Job 3a: Deploy para STAGING (branch develop)
   # ============================================
-  deploy:
-    name: 🚀 Deploy to Server
+  deploy-staging:
+    name: 🟡 Deploy STAGING (:3001)
     needs: build-and-push
     runs-on: ubuntu-latest
-    # Só faz deploy para main/develop (não para PRs)
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/develop' && github.event_name != 'pull_request'
 
     steps:
-      - name: Checkout repository (for compose files)
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Copy Docker Compose files to server
+      - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
@@ -119,7 +166,7 @@ jobs:
           target: "/var/www/hallyuhub"
           strip_components: 0
 
-      - name: Deploy to VPS via SSH
+      - name: Deploy to STAGING
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
@@ -127,9 +174,49 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/hallyuhub
-            # Determina o ambiente baseado no commit
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              bash robust-deploy.sh --pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --prod
-            else
-              bash robust-deploy.sh --pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging --staging
-            fi
+            echo "========================================"
+            echo "  DEPLOY STAGING - Porta 3001"
+            echo "========================================"
+            bash robust-deploy.sh --pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging --staging
+            echo ""
+            echo "Staging deployado! Valide em http://servidor:3001"
+            echo "Se OK, crie PR: develop -> main"
+
+  # ============================================
+  # Job 3b: Deploy para PRODUCAO (branch main)
+  # ============================================
+  deploy-production:
+    name: 🟢 Deploy PRODUCTION (:3000)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.staging.yml,docker-compose.prod.yml,robust-deploy.sh,.env.staging.example,.env.production.example"
+          target: "/var/www/hallyuhub"
+          strip_components: 0
+
+      - name: Deploy to PRODUCTION
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/hallyuhub
+            echo "========================================"
+            echo "  DEPLOY PRODUCAO - Porta 3000"
+            echo "========================================"
+            echo "IMPORTANTE: Certifique-se de ter validado em STAGING primeiro!"
+            bash robust-deploy.sh --pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --prod
+            echo ""
+            echo "Producao deployada! http://servidor:3000"
