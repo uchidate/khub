@@ -1,4 +1,4 @@
-import NextAuth, { DefaultSession } from "next-auth"
+import { AuthOptions, DefaultSession } from "next-auth"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
@@ -19,12 +19,14 @@ declare module "next-auth" {
   }
 }
 
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut,
-} = NextAuth({
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string
+    role: string
+  }
+}
+
+export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
@@ -107,4 +109,11 @@ export const {
     },
   },
   debug: process.env.NODE_ENV === "development",
-})
+}
+
+// Helper for server components
+import { getServerSession } from "next-auth"
+
+export async function auth() {
+  return await getServerSession(authOptions)
+}
