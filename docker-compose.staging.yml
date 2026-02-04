@@ -17,6 +17,20 @@ services:
       timeout: 5s
       retries: 5
 
+  ollama-staging:
+    image: ollama/ollama:latest
+    container_name: hallyuhub-ollama-staging
+    volumes:
+      - ollama-staging-data:/root/.ollama
+    networks:
+      - web
+    restart: always
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   hallyuhub-staging:
     image: ghcr.io/uchidate/khub:staging
     container_name: hallyuhub-staging
@@ -34,6 +48,8 @@ services:
     depends_on:
       postgres-staging:
         condition: service_healthy
+      ollama-staging:
+        condition: service_started
 
 networks:
   web:
@@ -43,4 +59,6 @@ volumes:
   hallyuhub-data:
     external: true
   postgres-staging-data:
+    external: true
+  ollama-staging-data:
     external: true
