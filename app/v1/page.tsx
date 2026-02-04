@@ -5,7 +5,13 @@ export const dynamic = 'force-dynamic'
 
 export default async function Home() {
     console.log('--- RENDERING HOMEPAGE ---')
-    const trendingArtists = await prisma.artist.findMany({ take: 6 })
+    const trendingArtists = await prisma.artist.findMany({
+        take: 6,
+        orderBy: { trendingScore: 'desc' },
+        include: {
+            agency: { select: { name: true } }
+        }
+    })
     const latestProductions = await prisma.production.findMany({ take: 6, orderBy: { year: 'desc' } })
     const topNews = await prisma.news.findMany({ take: 4, orderBy: { publishedAt: 'desc' } })
     console.log(`Homepage data fetched: ${trendingArtists.length} artists, ${latestProductions.length} productions, ${topNews.length} news`)
@@ -13,7 +19,7 @@ export default async function Home() {
     return (
         <div className="pb-20">
             {/* Hero Section */}
-            <section className="relative h-[85vh] w-full flex items-end pb-24 px-4 sm:px-12 md:px-20 overflow-hidden">
+            <section className="relative h-[60vh] sm:h-[70vh] md:h-[85vh] w-full flex items-end pb-24 px-4 sm:px-12 md:px-20 overflow-hidden">
                 {/* Background Image / Placeholder */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent z-10" />
@@ -26,7 +32,7 @@ export default async function Home() {
                 </div>
 
                 <div className="relative z-20 max-w-2xl">
-                    <span className="inline-block px-3 py-1 bg-purple-600 text-[10px] font-black uppercase tracking-widest rounded-sm mb-4">
+                    <span className="inline-block px-3 py-1 bg-purple-600 text-xs font-black uppercase tracking-widest rounded-sm mb-4">
                         Versão 1.0 Oficial
                     </span>
                     <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tighter">
@@ -61,7 +67,7 @@ export default async function Home() {
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                         {trendingArtists.map((artist: any) => (
-                            <Link key={artist.id} href="/v1/artists" className="card-hover">
+                            <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="card-hover">
                                 <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 shadow-lg border border-white/5">
                                     <img src={artist.primaryImageUrl || "https://placeholder.com/600"} alt={artist.nameRomanized} className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end p-4">
@@ -88,8 +94,8 @@ export default async function Home() {
                                         <span className="text-xl font-black text-center uppercase tracking-tighter">{prod.titlePt}</span>
                                     </div>
                                     <div className="absolute bottom-4 left-4 z-20 flex gap-2">
-                                        <span className="text-[10px] px-2 py-1 bg-white text-black font-bold rounded-sm">{prod.type}</span>
-                                        <span className="text-[10px] px-2 py-1 bg-zinc-800 text-white font-bold rounded-sm">{prod.year}</span>
+                                        <span className="text-xs sm:text-sm px-2 py-1 bg-white text-black font-bold rounded-sm">{prod.type}</span>
+                                        <span className="text-xs sm:text-sm px-2 py-1 bg-zinc-800 text-white font-bold rounded-sm">{prod.year}</span>
                                     </div>
                                 </div>
                             </Link>

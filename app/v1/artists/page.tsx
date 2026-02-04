@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
-import { SkeletonCard } from "@/components/ui/SkeletonCard"
+import { ArtistCardSkeleton } from "@/components/skeletons/ArtistCardSkeleton"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +11,7 @@ function SkeletonGrid() {
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
             {Array.from({ length: 10 }).map((_, i) => (
-                <SkeletonCard key={i} />
+                <ArtistCardSkeleton key={i} />
             ))}
         </div>
     )

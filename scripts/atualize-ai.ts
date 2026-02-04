@@ -356,6 +356,18 @@ async function main() {
         console.log('='.repeat(60));
     }
 
+    // Update trending scores
+    if (options.updateTrending !== false && !options.dryRun) {
+        console.log('\n\n📈 UPDATING TRENDING SCORES\n');
+        console.log('='.repeat(60));
+
+        const { TrendingService } = await import('@/lib/services/trending-service');
+        const trendingService = TrendingService.getInstance();
+        await trendingService.updateAllTrendingScores();
+
+        console.log('='.repeat(60));
+    }
+
     // Exibir estatísticas
     console.log('\n\n📊 STATISTICS\n');
     console.log('='.repeat(60));
