@@ -1,0 +1,103 @@
+name: 📊 Apply Database Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to apply migrations'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  apply-migrations:
+    name: 📊 Apply Migrations to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Apply Migrations via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /var/www/hallyuhub
+
+            if [ "${{ inputs.environment }}" = "staging" ]; then
+              echo "📊 Aplicando migrations no STAGING..."
+              docker-compose -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy
+              echo "✅ Migrations aplicadas no staging!"
+            elif [ "${{ inputs.environment }}" = "production" ]; then
+              echo "📊 Aplicando migrations na PRODUCTION..."
+              docker-compose -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy
+              echo "✅ Migrations aplicadas na production!"
+            fi
+
+      - name: 🔍 Verify Deployment
+        run: |
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            URL="http://31.97.255.107:3001/api/health"
+          else
+            URL="https://www.hallyuhub.com.br/api/health"
+          fi
+
+          echo "Verificando $URL..."
+          if curl -sf "$URL" > /dev/null; then
+            echo "✅ ${{ inputs.environment }} está respondendo corretamente!"
+          else
+            echo "⚠️ Falha ao verificar health endpoint"
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        run: |
+          echo "### ✅ Migrations Aplicadas" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ✅ Sucesso" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📢 Notify Success
+        if: success()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+        run: |
+          curl -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "✅ Migrations aplicadas em ${{ inputs.environment }}",
+              "blocks": [{
+                "type": "header",
+                "text": {"type": "plain_text", "text": "✅ Migrations Aplicadas"}
+              }, {
+                "type": "section",
+                "fields": [
+                  {"type": "mrkdwn", "text": "*Environment:* `${{ inputs.environment }}`"},
+                  {"type": "mrkdwn", "text": "*Status:* ✅ Sucesso"}
+                ]
+              }]
+            }'
+
+      - name: 📢 Notify Failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+        run: |
+          curl -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "❌ Falha ao aplicar migrations em ${{ inputs.environment }}",
+              "blocks": [{
+                "type": "header",
+                "text": {"type": "plain_text", "text": "❌ Falha nas Migrations"}
+              }, {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver logs>"
+                }
+              }]
+            }'
