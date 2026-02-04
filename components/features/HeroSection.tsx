@@ -33,8 +33,8 @@ export function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                    <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-xs font-black uppercase tracking-widest text-neon-pink mb-6">
-                        ✨ O Portal Definitivo
+                    <span className="inline-block text-sm font-bold uppercase tracking-[0.3em] text-neon-pink mb-4 text-shadow-glow">
+                        CULTURA • MÚSICA • DRAMA
                     </span>
                 </motion.div>
 
