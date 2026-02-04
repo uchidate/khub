@@ -1,33 +1,105 @@
+import { PrismaClient } from '@prisma/client';
 import { AIOrchestrator } from '../orchestrator';
 import { SYSTEM_PROMPTS } from '../ai-config';
 import type { GenerateOptions } from '../ai-config';
 import { ImageSearchService } from '../../services/image-search-service';
+import { TMDBArtistService } from '../../services/tmdb-artist-service';
 
 export interface ArtistData {
     nameRomanized: string;
-    nameHangul: string;
+    nameHangul?: string;
     stageNames?: string;
-    birthDate: Date;
-    roles: string;
+    birthDate?: Date;
+    roles: string | string[];
     bio: string;
     primaryImageUrl: string;
-    agencyName: string;
+    agencyName?: string;
+    tmdbId?: number;
 }
 
 /**
  * Gerador de dados de artistas K-Pop/K-Drama
+ * ESTRATÉGIA: Prioriza artistas REAIS do TMDB + Ollama para bio
  */
 export class ArtistGenerator {
     private imageSearch: ImageSearchService;
+    private tmdbService: TMDBArtistService;
 
-    constructor(private orchestrator: AIOrchestrator) {
+    constructor(private orchestrator: AIOrchestrator, prisma?: PrismaClient) {
         this.imageSearch = new ImageSearchService();
+        this.tmdbService = new TMDBArtistService(prisma);
+    }
+
+    /**
+     * Gera biografia em português usando Ollama (ou fallback)
+     */
+    private async generateBioWithOllama(artistName: string, roles: string[], biography?: string): Promise<string> {
+        try {
+            const prompt = `Gere uma biografia curta e envolvente em português brasileiro para o(a) artista ${artistName}.
+
+${biography ? `Informações base (em inglês):\n${biography}\n\n` : ''}
+Roles: ${roles.join(', ')}
+
+Requisitos:
+- 2-3 frases curtas e impactantes
+- Foco em carreira e conquistas recentes
+- Tom profissional mas acessível
+- Mencione K-pop ou K-drama conforme relevante
+- Não invente informações não fornecidas`;
+
+            const bioResult = await this.orchestrator.generateStructured<{ bio: string }>(
+                prompt,
+                '{ "bio": "string (biografia em português, 2-3 frases)" }',
+                {
+                    preferredProvider: 'ollama', // Prioriza Ollama (gratuito)
+                }
+            );
+
+            return bioResult.bio;
+        } catch (error: any) {
+            console.warn(`⚠️  Ollama bio generation failed: ${error.message}`);
+            // Fallback para bio simples
+            return biography
+                ? `${artistName} é um(a) talentoso(a) ${roles.join('/')} da indústria do entretenimento coreano.`
+                : `${artistName} é um(a) artista versátil, atuando como ${roles.join(', ').toLowerCase()}.`;
+        }
     }
 
     /**
      * Gera dados de um artista
+     * NOVA ESTRATÉGIA: Usa TMDB como fonte primária + Ollama para bio
      */
     async generateArtist(options?: GenerateOptions): Promise<ArtistData> {
+        const excludeList = options?.excludeList || [];
+
+        // ESTRATÉGIA 1: Tentar encontrar artista REAL no TMDB (preferencial)
+        console.log('🎯 Strategy: Searching TMDB for real artist...');
+        const realArtist = await this.tmdbService.findRandomRealArtist(excludeList);
+
+        if (realArtist) {
+            console.log(`✅ Found real artist from TMDB: ${realArtist.nameRomanized}`);
+
+            // Gerar bio em português usando Ollama (gratuito)
+            const bio = await this.generateBioWithOllama(
+                realArtist.nameRomanized,
+                realArtist.roles,
+                realArtist.biography
+            );
+
+            return {
+                nameRomanized: realArtist.nameRomanized,
+                nameHangul: realArtist.nameHangul,
+                birthDate: realArtist.birthDate,
+                roles: realArtist.roles.join(', '),
+                bio,
+                primaryImageUrl: realArtist.profileImageUrl,
+                tmdbId: realArtist.tmdbId,
+            };
+        }
+
+        // ESTRATÉGIA 2: Fallback para geração AI (apenas se TMDB falhar)
+        console.warn('⚠️  TMDB search failed, falling back to AI generation (Gemini Free Tier)');
+
         let prompt = `Gere informações sobre um artista REAL e ATIVO de K-Pop ou K-Drama.
 
 O artista deve ser:
@@ -37,8 +109,8 @@ O artista deve ser:
 
 Escolha artistas variados (diferentes grupos, agências, etc).`;
 
-        if (options?.excludeList && options.excludeList.length > 0) {
-            prompt += `\n\nIMPORTANTE: NÃO gere informações sobre nenhum dos seguintes artistas (já temos na base): ${options.excludeList.join(', ')}. Escolha outro artista relevante.`;
+        if (excludeList.length > 0) {
+            prompt += `\n\nIMPORTANTE: NÃO gere informações sobre nenhum dos seguintes artistas (já temos na base): ${excludeList.join(', ')}. Escolha outro artista relevante.`;
         }
 
         const schema = `{
@@ -64,6 +136,7 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
         }>(prompt, schema, {
             ...options,
             systemPrompt: SYSTEM_PROMPTS.artist,
+            preferredProvider: 'gemini', // Usa Gemini Free Tier como fallback
         });
 
         // Search for real artist image using Aliases
@@ -79,7 +152,8 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
         return {
             ...result,
             birthDate: new Date(result.birthDate),
-            primaryImageUrl: imageResult?.url || result.primaryImageUrl, // Fallback to AI proposed URL if null (though findArtistImage returns placeholder now)
+            primaryImageUrl: imageResult?.url || result.primaryImageUrl,
+            agencyName: result.agencyName,
         };
     }
 

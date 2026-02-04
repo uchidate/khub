@@ -6,22 +6,46 @@ Este guia configura um cron job diretamente no servidor para atualizar conteúdo
 
 ## ✅ Vantagens desta Solução
 
-- ✅ **Totalmente gratuito** (Ollama é local)
+- ✅ **Artistas REAIS** - Dados vêm do TMDB (The Movie Database)
+- ✅ **Totalmente gratuito** - TMDB API + Ollama (local)
 - ✅ **Confiável** - Cron nativo do Linux
 - ✅ **Previsível** - Executa exatamente a cada 15 minutos
-- ✅ **Rápido** - Não depende de serviços externos
-- ✅ **Privado** - Dados não saem do servidor
+- ✅ **Rápido** - Não depende de APIs pagas
+- ✅ **Privado** - Ollama roda localmente no servidor
+- ✅ **Sem duplicatas** - Verifica TMDB ID antes de inserir
 
 ---
 
 ## 🚀 Setup Passo a Passo
 
-### 1. Instalar e Configurar Ollama no Servidor
+### 1. Configurar Variáveis de Ambiente
 
 ```bash
 # SSH no servidor
 ssh usuario@seu-servidor
 
+# Adicionar ao .env do projeto
+cd /var/www/hallyuhub
+nano .env
+
+# Adicione estas linhas:
+TMDB_API_KEY=sua-chave-tmdb-aqui          # OBRIGATÓRIO (gratuito!)
+DATABASE_URL=sua-database-url              # OBRIGATÓRIO
+OLLAMA_BASE_URL=http://localhost:11434     # Opcional (default)
+GEMINI_API_KEY=sua-chave-gemini            # Opcional (fallback)
+
+# Salvar e sair (Ctrl+X, Y, Enter)
+```
+
+**Como obter TMDB API Key (GRATUITO)**:
+1. Acesse: https://www.themoviedb.org/signup
+2. Crie conta gratuita
+3. Vá em: Settings → API → Create → Developer
+4. Aceite termos e copie a "API Key (v3 auth)"
+
+### 2. Instalar e Configurar Ollama no Servidor
+
+```bash
 # Instalar Ollama
 curl -fsSL https://ollama.com/install.sh | sh
 
@@ -40,7 +64,7 @@ ollama list
 curl http://localhost:11434/api/tags
 ```
 
-### 2. Testar Geração Manual
+### 3. Testar Geração Manual
 
 ```bash
 # No servidor, vá para o diretório do projeto
@@ -63,7 +87,7 @@ echo $OLLAMA_BASE_URL  # Deve ser http://localhost:11434
 node --version  # Deve ser >= 18
 ```
 
-### 3. Configurar Cron Job
+### 4. Configurar Cron Job
 
 ```bash
 # Abrir crontab
@@ -83,7 +107,7 @@ crontab -e
 - `--artists=2 --news=2` = Gera 2 artistas + 2 notícias
 - `>> /var/log/hallyuhub-cron.log 2>&1` = Salva logs
 
-### 4. Verificar Cron Configurado
+### 5. Verificar Cron Configurado
 
 ```bash
 # Ver crontab atual
@@ -92,7 +116,7 @@ crontab -l
 # Deve mostrar sua linha de cron
 ```
 
-### 5. Criar Arquivo de Log
+### 6. Criar Arquivo de Log
 
 ```bash
 # Criar arquivo de log
@@ -312,14 +336,21 @@ npm run atualize:ai -- --provider=ollama --artists=2 --news=2
 
 Com configuração a cada 15 minutos:
 
-| Período | Artistas | Notícias | Custo |
-|---------|----------|----------|-------|
-| 15 min  | 2        | 2        | $0    |
-| 1 hora  | 8        | 8        | $0    |
-| 1 dia   | ~190     | ~190     | $0    |
-| 1 mês   | ~5,700   | ~5,700   | $0    |
+| Período | Artistas | Notícias | Fonte Dados | Custo |
+|---------|----------|----------|-------------|-------|
+| 15 min  | 2        | 2        | TMDB + Ollama | $0    |
+| 1 hora  | 8        | 8        | TMDB + Ollama | $0    |
+| 1 dia   | ~190     | ~190     | TMDB + Ollama | $0    |
+| 1 mês   | ~5,700   | ~5,700   | TMDB + Ollama | $0    |
 
-**Custo Total**: **GRÁTIS** 🎉 (Ollama é local e open-source)
+**Custo Total**: **GRÁTIS** 🎉
+
+**Fontes de Dados**:
+- ✅ **Artistas**: TMDB API (gratuito, 40 req/10s)
+- ✅ **Fotos**: TMDB Images (gratuito)
+- ✅ **Filmografia**: TMDB Combined Credits (gratuito)
+- ✅ **Bio em Português**: Ollama (local, gratuito)
+- ⚠️  **Fallback**: Gemini Free Tier (se TMDB falhar)
 
 ---
 

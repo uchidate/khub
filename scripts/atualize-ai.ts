@@ -176,11 +176,15 @@ async function main() {
     if (options.artists && options.artists > 0) {
         console.log('\n\n🎤 GENERATING ARTISTS\n');
 
-        // Buscar artistas existentes para evitar duplicatas
-        const existingArtists = await prisma.artist.findMany({ select: { nameRomanized: true } });
+        // Buscar artistas existentes para evitar duplicatas (incluindo tmdbId)
+        const existingArtists = await prisma.artist.findMany({
+            select: { nameRomanized: true, tmdbId: true }
+        });
         const excludeArtists = existingArtists.map(a => a.nameRomanized);
 
-        const artistGenerator = new ArtistGenerator(orchestrator);
+        console.log(`📊 Found ${existingArtists.length} existing artists in database`);
+
+        const artistGenerator = new ArtistGenerator(orchestrator, prisma);
         const artists = await artistGenerator.generateMultipleArtists(options.artists, {
             ...genOptions,
             excludeList: excludeArtists
@@ -193,6 +197,16 @@ async function main() {
                     console.warn(`   ⚠️  Skipped invalid artist: "${artist.nameRomanized || '(sem nome)'}"`);
                     continue;
                 }
+
+                // Verificar duplicata por tmdbId antes de salvar
+                if (artist.tmdbId) {
+                    const existingByTmdbId = existingArtists.find(a => a.tmdbId === String(artist.tmdbId));
+                    if (existingByTmdbId) {
+                        console.warn(`   ⚠️  Skipped duplicate (TMDB ID ${artist.tmdbId}): ${artist.nameRomanized}`);
+                        continue;
+                    }
+                }
+
                 artist = sanitizeArtist(artist);
                 try {
                     // Verificar/criar agência (opcional)
@@ -224,6 +238,11 @@ async function main() {
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
                             agencyId,
+                            ...(artist.tmdbId ? {
+                                tmdbId: String(artist.tmdbId),
+                                tmdbSyncStatus: 'SYNCED',
+                                tmdbLastSync: new Date(),
+                            } : {}),
                         },
                         create: {
                             nameRomanized: artist.nameRomanized,
@@ -233,13 +252,21 @@ async function main() {
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
                             agencyId,
+                            ...(artist.tmdbId ? {
+                                tmdbId: String(artist.tmdbId),
+                                tmdbSyncStatus: 'SYNCED',
+                                tmdbLastSync: new Date(),
+                            } : {}),
                         },
                     });
                     savedCounts.artists++;
-                    console.log(`   ✅ Saved: ${artist.nameRomanized}`);
+
+                    const source = artist.tmdbId ? '(TMDB)' : '(AI)';
+                    console.log(`   ✅ Saved: ${artist.nameRomanized} ${source}`);
 
                     // Auto-fetch filmography for new artist (non-blocking)
-                    if (process.env.FILMOGRAPHY_SYNC_ON_CREATE !== 'false') {
+                    // Pula se já veio do TMDB (já tem filmografia)
+                    if (process.env.FILMOGRAPHY_SYNC_ON_CREATE !== 'false' && !artist.tmdbId) {
                         console.log(`   🎬 Fetching filmography...`);
                         const filmographyService = getFilmographySyncService();
                         filmographyService.syncSingleArtist(savedArtist.id, 'SMART_MERGE')
@@ -253,6 +280,8 @@ async function main() {
                             .catch(err => {
                                 console.error(`   ❌ Filmography sync error: ${err.message}`);
                             });
+                    } else if (artist.tmdbId) {
+                        console.log(`   ✅ Filmography will be synced by periodic refresh (TMDB source)`);
                     }
                 } catch (error: any) {
                     console.error(`   ❌ Failed to save: ${error.message}`);

@@ -1,0 +1,382 @@
+import { PrismaClient } from '@prisma/client';
+
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+
+// Rate limiting configuration
+// TMDB permite 40 req/10s, vamos usar no máximo 20 req/10s para segurança
+const MAX_REQUESTS_PER_10_SECONDS = 20; // Bem abaixo do limite de 40
+const MIN_DELAY_BETWEEN_REQUESTS = 500; // 500ms entre requests (2 req/s)
+const RATE_LIMIT_WINDOW = 10000; // 10 segundos
+
+interface TMDBPerson {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  known_for_department: string;
+  popularity: number;
+  known_for?: any[];
+}
+
+interface TMDBPersonDetails {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  birthday: string | null;
+  place_of_birth: string | null;
+  biography: string;
+  known_for_department: string;
+  popularity: number;
+}
+
+interface RealArtistData {
+  tmdbId: number;
+  nameRomanized: string;
+  nameHangul?: string;
+  birthDate?: Date;
+  profileImageUrl: string;
+  biography?: string;
+  roles: string[];
+  popularity: number;
+}
+
+/**
+ * Service para buscar artistas REAIS do TMDB
+ * Foca em artistas coreanos (K-pop/K-drama)
+ */
+export class TMDBArtistService {
+  private prisma: PrismaClient;
+  private requestTimestamps: number[] = []; // Track request timestamps for rate limiting
+  private lastRequestTime: number = 0;
+
+  // Korean names to search (mix of actors, idols, and popular figures)
+  private readonly KOREAN_ARTIST_NAMES = [
+    // Actors/Actresses
+    'Song Joong-ki', 'Park Seo-joon', 'Lee Min-ho', 'Kim Soo-hyun',
+    'Hyun Bin', 'Lee Jong-suk', 'Ji Chang-wook', 'Nam Joo-hyuk',
+    'Song Kang', 'Ahn Hyo-seop', 'Rowoon', 'Kim Seon-ho',
+    'Lee Do-hyun', 'Byeon Woo-seok', 'Cha Eun-woo', 'Park Bo-gum',
+    'Park Hyung-sik', 'Yoo Seung-ho', 'Im Si-wan', 'Seo In-guk',
+
+    'IU', 'Bae Suzy', 'Jun Ji-hyun', 'Song Hye-kyo', 'Han So-hee',
+    'Kim Go-eun', 'Shin Min-a', 'Park Min-young', 'Kim Ji-won',
+    'Han Hyo-joo', 'Moon Ga-young', 'Kim Se-jeong', 'Park Eun-bin',
+    'Shin Hye-sun', 'Kim Hye-yoon', 'Lee Sung-kyung', 'Im Yoon-ah',
+    'Kim Tae-ri', 'Jung Ho-yeon', 'Go Youn-jung', 'Kim Da-mi',
+
+    // BTS members (actors/variety)
+    'V', 'Jin', 'Jimin', 'Jungkook', 'RM', 'Suga', 'J-Hope',
+
+    // BLACKPINK members (actors/variety)
+    'Jisoo', 'Jennie', 'Rosé', 'Lisa',
+
+    // Other idol-actors
+    'Suho', 'D.O.', 'Kai', 'Sehun',
+    'Jaehyun', 'Doyoung', 'Jeno', 'Jaemin',
+    'Minho', 'Key', 'Taemin',
+    'Seungkwan', 'Mingyu', 'Vernon', 'Joshua',
+    'Hwang In-youp', 'Woo Do-hwan', 'Wi Ha-joon',
+
+    // Supporting actors
+    'Lee El', 'Kim Sung-kyun', 'Lee Sang-yeob', 'Yoon Park',
+    'Jang Ki-yong', 'Kim Young-dae', 'Kang Han-na', 'Han Ji-min',
+  ];
+
+  constructor(prisma?: PrismaClient) {
+    this.prisma = prisma || new PrismaClient();
+  }
+
+  /**
+   * Rate limiting: aguarda se necessário para não ultrapassar limites do TMDB
+   */
+  private async waitForRateLimit(): Promise<void> {
+    const now = Date.now();
+
+    // Limpar timestamps antigos (>10s)
+    this.requestTimestamps = this.requestTimestamps.filter(
+      timestamp => now - timestamp < RATE_LIMIT_WINDOW
+    );
+
+    // Se atingiu o limite de requests na janela, aguardar
+    if (this.requestTimestamps.length >= MAX_REQUESTS_PER_10_SECONDS) {
+      const oldestRequest = this.requestTimestamps[0];
+      const waitTime = RATE_LIMIT_WINDOW - (now - oldestRequest) + 100; // +100ms buffer
+
+      if (waitTime > 0) {
+        console.log(`⏳ Rate limit: aguardando ${(waitTime / 1000).toFixed(1)}s...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+
+    // Garantir delay mínimo entre requests
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    if (timeSinceLastRequest < MIN_DELAY_BETWEEN_REQUESTS) {
+      const delayNeeded = MIN_DELAY_BETWEEN_REQUESTS - timeSinceLastRequest;
+      await new Promise(resolve => setTimeout(resolve, delayNeeded));
+    }
+
+    // Registrar esta request
+    this.lastRequestTime = Date.now();
+    this.requestTimestamps.push(this.lastRequestTime);
+  }
+
+  /**
+   * Obter estatísticas de rate limiting
+   */
+  getRateLimitStats(): { requestsInWindow: number; maxAllowed: number; percentUsed: number } {
+    const now = Date.now();
+    const recentRequests = this.requestTimestamps.filter(
+      timestamp => now - timestamp < RATE_LIMIT_WINDOW
+    );
+
+    return {
+      requestsInWindow: recentRequests.length,
+      maxAllowed: MAX_REQUESTS_PER_10_SECONDS,
+      percentUsed: Math.round((recentRequests.length / MAX_REQUESTS_PER_10_SECONDS) * 100),
+    };
+  }
+
+  /**
+   * Busca artista específico no TMDB
+   */
+  async searchPerson(name: string): Promise<TMDBPerson | null> {
+    if (!TMDB_API_KEY) {
+      throw new Error('TMDB_API_KEY not configured');
+    }
+
+    // Aguardar se necessário para respeitar rate limit
+    await this.waitForRateLimit();
+
+    try {
+      const response = await fetch(
+        `${TMDB_BASE_URL}/search/person?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(name)}&language=pt-BR&include_adult=false`
+      );
+
+      if (!response.ok) {
+        // Check for rate limit error
+        if (response.status === 429) {
+          console.error(`❌ TMDB rate limit exceeded! Aguardando 10s...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          return null;
+        }
+        console.error(`❌ TMDB API error: ${response.status}`);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        // Retorna o primeiro resultado (geralmente o mais relevante)
+        return data.results[0];
+      }
+
+      return null;
+    } catch (error: any) {
+      console.error(`❌ Error searching TMDB: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Busca detalhes completos de uma pessoa no TMDB
+   */
+  async getPersonDetails(tmdbId: number): Promise<TMDBPersonDetails | null> {
+    if (!TMDB_API_KEY) {
+      throw new Error('TMDB_API_KEY not configured');
+    }
+
+    // Aguardar se necessário para respeitar rate limit
+    await this.waitForRateLimit();
+
+    try {
+      const response = await fetch(
+        `${TMDB_BASE_URL}/person/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`
+      );
+
+      if (!response.ok) {
+        // Check for rate limit error
+        if (response.status === 429) {
+          console.error(`❌ TMDB rate limit exceeded! Aguardando 10s...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          return null;
+        }
+        console.error(`❌ TMDB API error: ${response.status}`);
+        return null;
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      console.error(`❌ Error fetching TMDB details: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Converte dados do TMDB para formato do banco
+   */
+  private async convertTMDBToArtistData(person: TMDBPerson, details?: TMDBPersonDetails): Promise<RealArtistData | null> {
+    const fullDetails = details || await this.getPersonDetails(person.id);
+
+    if (!fullDetails) {
+      return null;
+    }
+
+    // Determinar roles baseado em known_for_department
+    const roles: string[] = [];
+    if (fullDetails.known_for_department === 'Acting') {
+      roles.push('ATOR');
+    }
+
+    // Adicionar CANTOR se aparecer em música/K-pop
+    const bio = fullDetails.biography?.toLowerCase() || '';
+    if (bio.includes('singer') || bio.includes('k-pop') || bio.includes('idol') || bio.includes('cantor')) {
+      roles.push('CANTOR');
+    }
+
+    if (bio.includes('model') || bio.includes('modelo')) {
+      roles.push('MODELO');
+    }
+
+    // Se não tiver roles, assumir ator
+    if (roles.length === 0) {
+      roles.push('ATOR');
+    }
+
+    return {
+      tmdbId: fullDetails.id,
+      nameRomanized: fullDetails.name,
+      birthDate: fullDetails.birthday ? new Date(fullDetails.birthday) : undefined,
+      profileImageUrl: fullDetails.profile_path
+        ? `${TMDB_IMAGE_BASE}${fullDetails.profile_path}`
+        : 'https://via.placeholder.com/500x750?text=No+Image',
+      biography: fullDetails.biography || undefined,
+      roles,
+      popularity: fullDetails.popularity,
+    };
+  }
+
+  /**
+   * Verifica se artista já existe no banco
+   */
+  async checkDuplicate(name: string, tmdbId?: number): Promise<boolean> {
+    const existing = await this.prisma.artist.findFirst({
+      where: {
+        OR: [
+          { nameRomanized: { equals: name, mode: 'insensitive' } },
+          ...(tmdbId ? [{ tmdbId: String(tmdbId) }] : []),
+        ],
+      },
+    });
+
+    return !!existing;
+  }
+
+  /**
+   * Busca um artista real aleatório que ainda não está no banco
+   * @param excludeList Lista de nomes já no banco para evitar
+   * @returns Dados do artista real ou null se não encontrar
+   */
+  async findRandomRealArtist(excludeList: string[] = []): Promise<RealArtistData | null> {
+    // Filtrar nomes já excluídos
+    const availableNames = this.KOREAN_ARTIST_NAMES.filter(
+      name => !excludeList.some(excluded =>
+        excluded.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(excluded.toLowerCase())
+      )
+    );
+
+    if (availableNames.length === 0) {
+      console.warn('⚠️  All predefined artists are already in database');
+      return null;
+    }
+
+    // Embaralhar e tentar até 3 artistas
+    const shuffled = availableNames.sort(() => Math.random() - 0.5);
+
+    for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+      const name = shuffled[i];
+      console.log(`🔍 Searching TMDB for: ${name}`);
+
+      // Buscar no TMDB
+      const person = await this.searchPerson(name);
+
+      if (!person) {
+        console.log(`   ⚠️  Not found in TMDB`);
+        continue;
+      }
+
+      // Verificar se já existe no banco
+      const isDuplicate = await this.checkDuplicate(person.name, person.id);
+
+      if (isDuplicate) {
+        console.log(`   ⚠️  Already exists in database: ${person.name}`);
+        continue;
+      }
+
+      // Converter para formato do banco
+      const artistData = await this.convertTMDBToArtistData(person);
+
+      if (artistData) {
+        console.log(`   ✅ Found real artist: ${artistData.nameRomanized} (TMDB ID: ${artistData.tmdbId})`);
+        return artistData;
+      }
+    }
+
+    console.warn('⚠️  Could not find available real artist after 3 attempts');
+    return null;
+  }
+
+  /**
+   * Busca múltiplos artistas reais
+   */
+  async findMultipleRealArtists(count: number, excludeList: string[] = []): Promise<RealArtistData[]> {
+    const artists: RealArtistData[] = [];
+    const currentExcludeList = [...excludeList];
+
+    console.log(`🎤 Finding ${count} real artists from TMDB...`);
+    console.log(`📊 Rate limit: Usando max ${MAX_REQUESTS_PER_10_SECONDS} de 40 req/10s (50% do limite)`);
+
+    for (let i = 0; i < count; i++) {
+      const artist = await this.findRandomRealArtist(currentExcludeList);
+
+      if (artist) {
+        artists.push(artist);
+        currentExcludeList.push(artist.nameRomanized);
+
+        // Mostrar estatísticas de rate limiting
+        const stats = this.getRateLimitStats();
+        console.log(`   📈 Rate limit: ${stats.requestsInWindow}/${stats.maxAllowed} requests (${stats.percentUsed}%)`);
+      } else {
+        console.warn(`⚠️  Could not find artist ${i + 1}/${count}`);
+      }
+    }
+
+    // Estatísticas finais
+    const finalStats = this.getRateLimitStats();
+    console.log(`\n✅ TMDB requests completed: ${finalStats.requestsInWindow} total requests`);
+    console.log(`   📊 Usage: ${finalStats.percentUsed}% of safe limit (${finalStats.maxAllowed}/40 allowed)`);
+
+    return artists;
+  }
+
+  /**
+   * Busca artista por nome específico (para testes)
+   */
+  async findArtistByName(name: string): Promise<RealArtistData | null> {
+    console.log(`🔍 Searching TMDB for: ${name}`);
+
+    const person = await this.searchPerson(name);
+
+    if (!person) {
+      console.log(`   ❌ Not found in TMDB`);
+      return null;
+    }
+
+    return await this.convertTMDBToArtistData(person);
+  }
+}
+
+export function getTMDBArtistService(prisma?: PrismaClient): TMDBArtistService {
+  return new TMDBArtistService(prisma);
+}
