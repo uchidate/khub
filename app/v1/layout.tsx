@@ -1,6 +1,7 @@
 import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { ToastContainer } from "@/components/features/ToastContainer"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
 
 export default function SiteLayout({
     children,
@@ -10,7 +11,9 @@ export default function SiteLayout({
     return (
         <div className="min-h-screen flex flex-col">
             <NavBar />
-            <main className="flex-grow">{children}</main>
+            <ErrorBoundary>
+                <main className="flex-grow">{children}</main>
+            </ErrorBoundary>
             <ToastContainer />
             <PWAInstaller />
             <footer className="bg-black border-t border-zinc-800 py-12">
