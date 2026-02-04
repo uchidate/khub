@@ -8,11 +8,25 @@
  * - #hallyuhub-alerts: Backups, health alerts, errors
  */
 
-export type ContentType = 'artist' | 'news' | 'production' | 'agency';
+export type ContentType = 'artist' | 'news' | 'production' | 'agency' | 'filmography';
 export type DeployEnvironment = 'staging' | 'production';
 export type DeployStatus = 'started' | 'success' | 'failed';
 export type BackupStatus = 'success' | 'failed';
 export type AlertSeverity = 'info' | 'warning' | 'error';
+export type ActionSource = 'admin' | 'cron' | 'api' | 'manual' | 'system';
+
+interface UserContext {
+    name?: string;
+    email?: string;
+    role?: string;
+}
+
+interface ActionContext {
+    source: ActionSource;
+    user?: UserContext;
+    timestamp?: Date;
+    triggeredBy?: string; // Generic field for any trigger description
+}
 
 interface ContentNotification {
     type: ContentType;
@@ -20,6 +34,7 @@ interface ContentNotification {
     details?: Record<string, string | number | null>;
     source?: string;
     url?: string;
+    context?: ActionContext;
 }
 
 interface DeployNotification {
@@ -27,8 +42,12 @@ interface DeployNotification {
     status: DeployStatus;
     branch?: string;
     commit?: string;
+    commitMessage?: string;
     duration?: string;
     error?: string;
+    workflowUrl?: string;
+    repoUrl?: string;
+    context?: ActionContext;
 }
 
 interface BackupNotification {
@@ -37,12 +56,14 @@ interface BackupNotification {
     size?: string;
     retainedCount?: number;
     error?: string;
+    context?: ActionContext;
 }
 
 interface HealthAlertNotification {
     service: string;
     status: 'up' | 'down' | 'degraded';
     message?: string;
+    context?: ActionContext;
 }
 
 interface SlackBlock {
@@ -68,12 +89,14 @@ export class SlackNotificationService {
     private webhookDeploys: string | null;
     private webhookAlerts: string | null;
     private siteUrl: string;
+    private githubRepo: string;
 
     constructor() {
         this.webhookContent = process.env.SLACK_WEBHOOK_CONTENT || null;
         this.webhookDeploys = process.env.SLACK_WEBHOOK_DEPLOYS || null;
         this.webhookAlerts = process.env.SLACK_WEBHOOK_ALERTS || null;
         this.siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+        this.githubRepo = process.env.GITHUB_REPOSITORY || 'uchidate/khub';
 
         if (!this.webhookContent && !this.webhookDeploys && !this.webhookAlerts) {
             console.log('[SlackNotificationService] No webhooks configured - notifications disabled');
@@ -88,7 +111,7 @@ export class SlackNotificationService {
     }
 
     /**
-     * Notify when new content is added (artists, news, productions)
+     * Notify when new content is added (artists, news, productions, filmography)
      */
     async notifyContentAdded(content: ContentNotification): Promise<boolean> {
         if (!this.webhookContent) return false;
@@ -132,25 +155,28 @@ export class SlackNotificationService {
             }
         }
 
-        // Add source info
-        if (content.source) {
-            blocks.push({
-                type: 'context',
-                elements: [
-                    { type: 'mrkdwn', text: `Fonte: ${content.source}` },
-                ],
-            });
+        // Add divider before links/context
+        blocks.push({ type: 'divider' });
+
+        // Build links array
+        const links: Array<{ label: string; url: string }> = [];
+        if (content.url) {
+            links.push({ label: '🌐 Ver no site', url: content.url });
+        }
+        if (content.source && content.source.startsWith('http')) {
+            links.push({ label: '📄 Fonte', url: content.source });
         }
 
-        // Add link to site
-        if (content.url) {
-            blocks.push({
-                type: 'section',
-                text: {
-                    type: 'mrkdwn',
-                    text: `<${content.url}|Ver no site>`,
-                },
-            });
+        // Add links block
+        const linksBlock = this.buildLinksBlock(links);
+        if (linksBlock) {
+            blocks.push(linksBlock);
+        }
+
+        // Add context block (timestamp, user, source)
+        const contextBlock = this.buildContextBlock(content.context);
+        if (contextBlock) {
+            blocks.push(contextBlock);
         }
 
         return this.sendMessage(this.webhookContent, { blocks });
@@ -163,12 +189,14 @@ export class SlackNotificationService {
         artists: number;
         news: number;
         productions: number;
+        filmographies?: number;
         provider: string;
         duration?: string;
+        context?: ActionContext;
     }): Promise<boolean> {
         if (!this.webhookContent) return false;
 
-        const total = summary.artists + summary.news + summary.productions;
+        const total = summary.artists + summary.news + summary.productions + (summary.filmographies || 0);
         if (total === 0) return false;
 
         const blocks: SlackBlock[] = [
@@ -176,28 +204,56 @@ export class SlackNotificationService {
                 type: 'header',
                 text: {
                     type: 'plain_text',
-                    text: '📊 Resumo de Conteudo Gerado',
+                    text: '📊 Resumo de Conteúdo Gerado',
                     emoji: true,
                 },
             },
             {
                 type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: `*Total:* ${total} itens adicionados`
+                }
+            },
+            {
+                type: 'section',
                 fields: [
-                    { type: 'mrkdwn', text: `*Artistas:*\n${summary.artists}` },
-                    { type: 'mrkdwn', text: `*Noticias:*\n${summary.news}` },
-                    { type: 'mrkdwn', text: `*Producoes:*\n${summary.productions}` },
-                    { type: 'mrkdwn', text: `*Provider:*\n${summary.provider}` },
+                    { type: 'mrkdwn', text: `*🎤 Artistas:*\n${summary.artists}` },
+                    { type: 'mrkdwn', text: `*📰 Notícias:*\n${summary.news}` },
+                    { type: 'mrkdwn', text: `*🎬 Produções:*\n${summary.productions}` },
+                    { type: 'mrkdwn', text: `*🤖 Provider:*\n${summary.provider}` },
                 ],
             },
         ];
 
+        // Add filmographies if any
+        if (summary.filmographies && summary.filmographies > 0) {
+            blocks.push({
+                type: 'section',
+                fields: [
+                    { type: 'mrkdwn', text: `*🎞️ Filmografias:*\n${summary.filmographies}` }
+                ]
+            });
+        }
+
+        // Add divider
+        blocks.push({ type: 'divider' });
+
+        // Duration in context
         if (summary.duration) {
             blocks.push({
-                type: 'context',
-                elements: [
-                    { type: 'mrkdwn', text: `Duracao: ${summary.duration}` },
-                ],
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: `⏱️ *Duração:* ${summary.duration}`
+                }
             });
+        }
+
+        // Context block
+        const contextBlock = this.buildContextBlock(summary.context);
+        if (contextBlock) {
+            blocks.push(contextBlock);
         }
 
         return this.sendMessage(this.webhookContent, { blocks });
@@ -213,6 +269,9 @@ export class SlackNotificationService {
         const statusLabel = this.getDeployStatusLabel(deploy.status);
         const envLabel = deploy.environment === 'production' ? 'PRODUCAO' : 'STAGING';
         const envEmoji = deploy.environment === 'production' ? '🟢' : '🟡';
+        const siteUrl = deploy.environment === 'production'
+            ? this.siteUrl
+            : this.siteUrl.replace('www.', 'staging.');
 
         const blocks: SlackBlock[] = [
             {
@@ -232,34 +291,80 @@ export class SlackNotificationService {
             },
         ];
 
+        // Git info with commit message
         if (deploy.branch || deploy.commit) {
             const gitFields = [];
             if (deploy.branch) {
-                gitFields.push({ type: 'mrkdwn', text: `*Branch:*\n${deploy.branch}` });
+                gitFields.push({ type: 'mrkdwn', text: `*Branch:*\n\`${deploy.branch}\`` });
             }
             if (deploy.commit) {
-                gitFields.push({ type: 'mrkdwn', text: `*Commit:*\n\`${deploy.commit.substring(0, 7)}\`` });
+                const shortCommit = deploy.commit.substring(0, 7);
+                gitFields.push({ type: 'mrkdwn', text: `*Commit:*\n\`${shortCommit}\`` });
+            }
+            if (deploy.duration) {
+                gitFields.push({ type: 'mrkdwn', text: `*Duração:*\n${deploy.duration}` });
             }
             blocks.push({ type: 'section', fields: gitFields });
         }
 
-        if (deploy.duration) {
+        // Commit message (if provided)
+        if (deploy.commitMessage) {
             blocks.push({
-                type: 'context',
-                elements: [
-                    { type: 'mrkdwn', text: `Duracao: ${deploy.duration}` },
-                ],
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: `*Mensagem:*\n> ${deploy.commitMessage.split('\n')[0]}`
+                }
             });
         }
 
+        // Error section
         if (deploy.error) {
             blocks.push({
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `*Erro:*\n\`\`\`${deploy.error}\`\`\``,
+                    text: `*Erro:*\n\`\`\`${deploy.error.substring(0, 500)}\`\`\``,
                 },
             });
+        }
+
+        // Add divider before links
+        blocks.push({ type: 'divider' });
+
+        // Build links
+        const links: Array<{ label: string; url: string }> = [];
+
+        // Site link (only for successful deploys)
+        if (deploy.status === 'success') {
+            links.push({ label: '🌐 Ver Site', url: siteUrl });
+        }
+
+        // GitHub commit link
+        if (deploy.commit) {
+            const commitUrl = `https://github.com/${this.githubRepo}/commit/${deploy.commit}`;
+            links.push({ label: '📝 Ver Commit', url: commitUrl });
+        }
+
+        // Workflow run link
+        if (deploy.workflowUrl) {
+            links.push({ label: '⚙️ Ver Workflow', url: deploy.workflowUrl });
+        }
+
+        // Repository link
+        if (deploy.repoUrl) {
+            links.push({ label: '📦 Repositório', url: deploy.repoUrl });
+        }
+
+        const linksBlock = this.buildLinksBlock(links);
+        if (linksBlock) {
+            blocks.push(linksBlock);
+        }
+
+        // Context block
+        const contextBlock = this.buildContextBlock(deploy.context);
+        if (contextBlock) {
+            blocks.push(contextBlock);
         }
 
         return this.sendMessage(this.webhookDeploys, { blocks });
@@ -272,8 +377,8 @@ export class SlackNotificationService {
         if (!this.webhookAlerts) return false;
 
         const emoji = backup.status === 'success' ? '💾' : '❌';
-        const statusLabel = backup.status === 'success' ? 'Concluido' : 'Falhou';
-        const envLabel = backup.environment === 'production' ? 'PRODUCAO' : 'STAGING';
+        const statusLabel = backup.status === 'success' ? 'Concluído' : 'Falhou';
+        const envLabel = backup.environment === 'production' ? 'PRODUÇÃO' : 'STAGING';
 
         const blocks: SlackBlock[] = [
             {
@@ -309,9 +414,18 @@ export class SlackNotificationService {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `*Erro:*\n\`\`\`${backup.error}\`\`\``,
+                    text: `*Erro:*\n\`\`\`${backup.error.substring(0, 500)}\`\`\``,
                 },
             });
+        }
+
+        // Add divider before context
+        blocks.push({ type: 'divider' });
+
+        // Context block
+        const contextBlock = this.buildContextBlock(backup.context);
+        if (contextBlock) {
+            blocks.push(contextBlock);
         }
 
         return this.sendMessage(this.webhookAlerts, { blocks });
@@ -331,14 +445,14 @@ export class SlackNotificationService {
                 type: 'header',
                 text: {
                     type: 'plain_text',
-                    text: `${emoji} Alerta de Saude - ${alert.service}`,
+                    text: `${emoji} Alerta de Saúde - ${alert.service}`,
                     emoji: true,
                 },
             },
             {
                 type: 'section',
                 fields: [
-                    { type: 'mrkdwn', text: `*Servico:*\n${alert.service}` },
+                    { type: 'mrkdwn', text: `*Serviço:*\n${alert.service}` },
                     { type: 'mrkdwn', text: `*Status:*\n${statusLabel}` },
                 ],
             },
@@ -354,13 +468,27 @@ export class SlackNotificationService {
             });
         }
 
+        // Add divider before context
+        blocks.push({ type: 'divider' });
+
+        // Context block
+        const contextBlock = this.buildContextBlock(alert.context);
+        if (contextBlock) {
+            blocks.push(contextBlock);
+        }
+
         return this.sendMessage(this.webhookAlerts, { blocks });
     }
 
     /**
-     * Send generic alert
+     * Send generic alert with optional context
      */
-    async notifyAlert(severity: AlertSeverity, title: string, message: string): Promise<boolean> {
+    async notifyAlert(
+        severity: AlertSeverity,
+        title: string,
+        message: string,
+        context?: ActionContext
+    ): Promise<boolean> {
         if (!this.webhookAlerts) return false;
 
         const emoji = severity === 'error' ? '🚨' : severity === 'warning' ? '⚠️' : 'ℹ️';
@@ -382,6 +510,15 @@ export class SlackNotificationService {
                 },
             },
         ];
+
+        // Add divider before context if provided
+        if (context) {
+            blocks.push({ type: 'divider' });
+            const contextBlock = this.buildContextBlock(context);
+            if (contextBlock) {
+                blocks.push(contextBlock);
+            }
+        }
 
         return this.sendMessage(this.webhookAlerts, { blocks });
     }
@@ -418,6 +555,7 @@ export class SlackNotificationService {
             news: '📰',
             production: '🎬',
             agency: '🏢',
+            filmography: '🎞️'
         };
         return emojis[type] || '📝';
     }
@@ -425,9 +563,10 @@ export class SlackNotificationService {
     private getContentTypeLabel(type: ContentType): string {
         const labels: Record<ContentType, string> = {
             artist: 'Artista',
-            news: 'Noticia',
-            production: 'Producao',
-            agency: 'Agencia',
+            news: 'Notícia',
+            production: 'Produção',
+            agency: 'Agência',
+            filmography: 'Filmografia'
         };
         return labels[type] || type;
     }
@@ -448,6 +587,117 @@ export class SlackNotificationService {
             failed: 'Falhou',
         };
         return labels[status];
+    }
+
+    /**
+     * Format timestamp to relative + absolute time
+     */
+    private formatTimestamp(date?: Date): string {
+        const timestamp = date || new Date();
+        const now = new Date();
+        const diffMs = now.getTime() - timestamp.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+
+        let relative = '';
+        if (diffMins < 1) {
+            relative = 'agora';
+        } else if (diffMins === 1) {
+            relative = 'há 1 minuto';
+        } else if (diffMins < 60) {
+            relative = `há ${diffMins} minutos`;
+        } else if (diffHours === 1) {
+            relative = 'há 1 hora';
+        } else if (diffHours < 24) {
+            relative = `há ${diffHours} horas`;
+        } else {
+            const diffDays = Math.floor(diffHours / 24);
+            relative = diffDays === 1 ? 'há 1 dia' : `há ${diffDays} dias`;
+        }
+
+        // Format absolute time: "14:35 · 04/02/2026"
+        const hours = timestamp.getHours().toString().padStart(2, '0');
+        const mins = timestamp.getMinutes().toString().padStart(2, '0');
+        const day = timestamp.getDate().toString().padStart(2, '0');
+        const month = (timestamp.getMonth() + 1).toString().padStart(2, '0');
+        const year = timestamp.getFullYear();
+        const absolute = `${hours}:${mins} · ${day}/${month}/${year}`;
+
+        return `${relative} (${absolute})`;
+    }
+
+    /**
+     * Build context block with user info, timestamp, and source
+     */
+    private buildContextBlock(context?: ActionContext): SlackBlock | null {
+        if (!context) return null;
+
+        const elements: Array<{ type: string; text: string }> = [];
+
+        // Timestamp
+        const timestamp = this.formatTimestamp(context.timestamp);
+        elements.push({ type: 'mrkdwn', text: `🕐 ${timestamp}` });
+
+        // User info
+        if (context.user) {
+            const userName = context.user.name || context.user.email || 'Usuário';
+            const userRole = context.user.role ? ` (${context.user.role})` : '';
+            elements.push({ type: 'mrkdwn', text: `👤 ${userName}${userRole}` });
+        }
+
+        // Source
+        const sourceEmoji = this.getSourceEmoji(context.source);
+        const sourceLabel = this.getSourceLabel(context.source);
+        elements.push({ type: 'mrkdwn', text: `${sourceEmoji} ${sourceLabel}` });
+
+        // Triggered by (if different from source)
+        if (context.triggeredBy) {
+            elements.push({ type: 'mrkdwn', text: `⚡ ${context.triggeredBy}` });
+        }
+
+        return {
+            type: 'context',
+            elements
+        };
+    }
+
+    /**
+     * Build links block for quick access
+     */
+    private buildLinksBlock(links: Array<{ label: string; url: string }>): SlackBlock | null {
+        if (links.length === 0) return null;
+
+        const linkTexts = links.map(link => `<${link.url}|${link.label}>`).join(' · ');
+
+        return {
+            type: 'section',
+            text: {
+                type: 'mrkdwn',
+                text: `🔗 ${linkTexts}`
+            }
+        };
+    }
+
+    private getSourceEmoji(source: ActionSource): string {
+        const emojis: Record<ActionSource, string> = {
+            admin: '⚙️',
+            cron: '⏰',
+            api: '🔌',
+            manual: '✋',
+            system: '🤖'
+        };
+        return emojis[source] || '📌';
+    }
+
+    private getSourceLabel(source: ActionSource): string {
+        const labels: Record<ActionSource, string> = {
+            admin: 'Admin Panel',
+            cron: 'Cron Job',
+            api: 'API',
+            manual: 'Manual',
+            system: 'Sistema'
+        };
+        return labels[source] || source;
     }
 }
 

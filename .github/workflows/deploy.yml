@@ -204,22 +204,48 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -X POST "$SLACK_WEBHOOK" \
             -H 'Content-Type: application/json' \
-            -d '{
-              "text": "🟡 Deploy STAGING iniciado",
-              "blocks": [{
-                "type": "header",
-                "text": {"type": "plain_text", "text": "🟡 Deploy STAGING Iniciado"}
+            -d "{
+              \"text\": \"🚀 Deploy STAGING iniciado\",
+              \"blocks\": [{
+                \"type\": \"header\",
+                \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy STAGING Iniciado\"}
               }, {
-                "type": "section",
-                "fields": [
-                  {"type": "mrkdwn", "text": "*Branch:* `develop`"},
-                  {"type": "mrkdwn", "text": "*Commit:* `${{ github.sha }}`"},
-                  {"type": "mrkdwn", "text": "*Autor:* ${{ github.actor }}"}
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Ambiente:*\\n🟡 STAGING\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Status:*\\nIniciado\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`develop\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"
+                }
+              }, {
+                \"type\": \"divider\"
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🔗 <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver Workflow>\"
+                }
+              }, {
+                \"type\": \"context\",
+                \"elements\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"👤 ${{ github.actor }}\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"⚙️ GitHub Actions\"}
                 ]
               }]
-            }'
+            }"
 
       - name: Copy Files to Server
         uses: appleboy/scp-action@v0.1.7
@@ -294,48 +320,109 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -X POST "$SLACK_WEBHOOK" \
             -H 'Content-Type: application/json' \
-            -d '{
-              "text": "✅ Deploy STAGING concluído",
-              "blocks": [{
-                "type": "header",
-                "text": {"type": "plain_text", "text": "✅ Deploy STAGING Concluído"}
+            -d "{
+              \"text\": \"✅ Deploy STAGING concluído\",
+              \"blocks\": [{
+                \"type\": \"header\",
+                \"text\": {\"type\": \"plain_text\", \"text\": \"✅ Deploy STAGING Concluído\"}
               }, {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "🎯 *Próximos passos:*\n1. Validar em staging\n2. Criar PR: `develop` → `main`"
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Ambiente:*\\n🟡 STAGING\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Status:*\\nSucesso\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`develop\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"
                 }
               }, {
-                "type": "section",
-                "fields": [
-                  {"type": "mrkdwn", "text": "*URL:* http://31.97.255.107:3001"},
-                  {"type": "mrkdwn", "text": "*Health:* ✅ OK"}
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🎯 *Próximos passos:*\\n1. Validar funcionalidades em staging\\n2. Criar PR: \`develop\` → \`main\`\"
+                }
+              }, {
+                \"type\": \"divider\"
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🔗 <http://staging.hallyuhub.com.br|🌐 Ver Site> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Workflow>\"
+                }
+              }, {
+                \"type\": \"context\",
+                \"elements\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"👤 ${{ github.actor }}\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"⚙️ GitHub Actions\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"✅ Health: OK\"}
                 ]
               }]
-            }'
+            }"
 
       - name: 📢 Notify Failure
         if: failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -X POST "$SLACK_WEBHOOK" \
             -H 'Content-Type: application/json' \
-            -d '{
-              "text": "❌ Deploy STAGING falhou",
-              "blocks": [{
-                "type": "header",
-                "text": {"type": "plain_text", "text": "❌ Deploy STAGING Falhou"}
+            -d "{
+              \"text\": \"❌ Deploy STAGING falhou\",
+              \"blocks\": [{
+                \"type\": \"header\",
+                \"text\": {\"type\": \"plain_text\", \"text\": \"❌ Deploy STAGING Falhou\"}
               }, {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "⚠️ Verifique os logs: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow>"
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Ambiente:*\\n🟡 STAGING\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Status:*\\nFalhou\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`develop\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"
                 }
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"⚠️ *ATENÇÃO: Deploy em staging falhou!*\\nVerifique os logs imediatamente.\"
+                }
+              }, {
+                \"type\": \"divider\"
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Logs do Workflow> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit>\"
+                }
+              }, {
+                \"type\": \"context\",
+                \"elements\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"👤 ${{ github.actor }}\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"⚙️ GitHub Actions\"}
+                ]
               }]
-            }'
+            }"
 
   # ════════════════════════════════════════════════════════════════
   # 🟢 FASE 3b: Deploy PRODUCTION
@@ -360,22 +447,48 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -X POST "$SLACK_WEBHOOK" \
             -H 'Content-Type: application/json' \
-            -d '{
-              "text": "🟢 Deploy PRODUCTION iniciado",
-              "blocks": [{
-                "type": "header",
-                "text": {"type": "plain_text", "text": "🟢 Deploy PRODUCTION Iniciado"}
+            -d "{
+              \"text\": \"🚀 Deploy PRODUCTION iniciado\",
+              \"blocks\": [{
+                \"type\": \"header\",
+                \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy PRODUCTION Iniciado\"}
               }, {
-                "type": "section",
-                "fields": [
-                  {"type": "mrkdwn", "text": "*Branch:* `main`"},
-                  {"type": "mrkdwn", "text": "*Commit:* `${{ github.sha }}`"},
-                  {"type": "mrkdwn", "text": "*Autor:* ${{ github.actor }}"}
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Ambiente:*\\n🟢 PRODUCTION\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Status:*\\nIniciado\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`main\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"
+                }
+              }, {
+                \"type\": \"divider\"
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🔗 <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver Workflow>\"
+                }
+              }, {
+                \"type\": \"context\",
+                \"elements\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"👤 ${{ github.actor }}\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"⚙️ GitHub Actions\"}
                 ]
               }]
-            }'
+            }"
 
       - name: Copy Files to Server
         uses: appleboy/scp-action@v0.1.7
@@ -471,52 +584,107 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -X POST "$SLACK_WEBHOOK" \
             -H 'Content-Type: application/json' \
-            -d '{
-              "text": "✅ Deploy PRODUCTION concluído",
-              "blocks": [{
-                "type": "header",
-                "text": {"type": "plain_text", "text": "✅ Deploy PRODUCTION Concluído"}
+            -d "{
+              \"text\": \"✅ Deploy PRODUCTION concluído\",
+              \"blocks\": [{
+                \"type\": \"header\",
+                \"text\": {\"type\": \"plain_text\", \"text\": \"✅ Deploy PRODUCTION Concluído\"}
               }, {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "🎉 *Aplicação em produção atualizada!*"
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Ambiente:*\\n🟢 PRODUCTION\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Status:*\\nSucesso\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`main\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"
                 }
               }, {
-                "type": "section",
-                "fields": [
-                  {"type": "mrkdwn", "text": "*URL:* https://www.hallyuhub.com.br"},
-                  {"type": "mrkdwn", "text": "*Health:* ✅ OK"},
-                  {"type": "mrkdwn", "text": "*SSL:* ✅ Válido"}
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🎉 *Aplicação em produção atualizada com sucesso!*\"
+                }
+              }, {
+                \"type\": \"divider\"
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🔗 <https://www.hallyuhub.com.br|🌐 Ver Site> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Workflow>\"
+                }
+              }, {
+                \"type\": \"context\",
+                \"elements\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"👤 ${{ github.actor }}\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"⚙️ GitHub Actions\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"✅ Health: OK\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"✅ SSL: Válido\"}
                 ]
               }]
-            }'
+            }"
 
       - name: 📢 Notify Failure
         if: failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -X POST "$SLACK_WEBHOOK" \
             -H 'Content-Type: application/json' \
-            -d '{
-              "text": "❌ Deploy PRODUCTION falhou",
-              "blocks": [{
-                "type": "header",
-                "text": {"type": "plain_text", "text": "❌ Deploy PRODUCTION Falhou"}
+            -d "{
+              \"text\": \"❌ Deploy PRODUCTION falhou\",
+              \"blocks\": [{
+                \"type\": \"header\",
+                \"text\": {\"type\": \"plain_text\", \"text\": \"❌ Deploy PRODUCTION Falhou\"}
               }, {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "🚨 *ATENÇÃO: Deploy em produção falhou!*\nVerifique os logs imediatamente."
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Ambiente:*\\n🟢 PRODUCTION\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Status:*\\nFalhou\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"fields\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`main\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
+                ]
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"
                 }
               }, {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver logs do workflow>"
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🚨 *ATENÇÃO: Deploy em produção falhou!*\\nVerifique os logs imediatamente e considere rollback se necessário.\"
                 }
+              }, {
+                \"type\": \"divider\"
+              }, {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Logs do Workflow> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit>\"
+                }
+              }, {
+                \"type\": \"context\",
+                \"elements\": [
+                  {\"type\": \"mrkdwn\", \"text\": \"👤 ${{ github.actor }}\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"⚙️ GitHub Actions\"}
+                ]
               }]
-            }'
+            }"
