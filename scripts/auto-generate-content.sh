@@ -58,17 +58,30 @@ fi
 # Executar script de atualização
 log "Executando atualize-ai.ts..."
 
-# Verificar se está rodando em ambiente com Docker
-if command -v docker &> /dev/null; then
+# Verificar se está rodando em ambiente com Docker e se o container existe
+CONTAINER_NAME="hallyuhub"
+if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     # Executar dentro do container Docker
-    log "Executando via Docker container..."
-    docker exec hallyuhub npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+    log "Executando via Docker container (${CONTAINER_NAME})..."
+    # Usamos npx tsx diretamente para garantir, mas npm run deve funcionar com o package.json copiado
+    docker exec "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+    EXIT_CODE=$?
+elif docker ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; then
+    # Fallback para nome alternativo
+    CONTAINER_NAME="hallyuhub-production"
+    log "Executando via Docker container (${CONTAINER_NAME})..."
+    docker exec "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
 else
-    # Executar localmente (ambiente de desenvolvimento)
-    log "Executando via npm local..."
-    npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
-    EXIT_CODE=$?
+    # Fallback: Executar localmente (ambiente de desenvolvimento ou container não encontrado)
+    if command -v npm &> /dev/null; then
+        log "Container Docker não encontrado. Executando via npm local..."
+        npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+        EXIT_CODE=$?
+    else
+        log "ERRO: Docker e npm não encontrados ou container '${CONTAINER_NAME}' offline."
+        EXIT_CODE=1
+    fi
 fi
 
 if [ $EXIT_CODE -eq 0 ]; then

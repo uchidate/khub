@@ -41,6 +41,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/package.json ./package.json
 # node_modules completo para cobrir dependências dos scripts (AI providers etc.)
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
