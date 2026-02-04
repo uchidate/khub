@@ -19,7 +19,6 @@ export const metadata: Metadata = {
     },
     description: "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
     manifest: "/manifest.json",
-    themeColor: "#a855f7",
     appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
@@ -30,6 +29,10 @@ export const metadata: Metadata = {
         description: "Cultura coreana em um só lugar.",
         images: [{ url: "https://staging.seu-dominio.com/og-image.jpg" }],
     },
+}
+
+export const viewport = {
+    themeColor: "#a855f7",
 }
 
 export default function RootLayout({
