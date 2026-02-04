@@ -6,6 +6,46 @@ Este documento define o processo obrigatório para desenvolvimento para **preven
 
 ---
 
+## 🚨 FLUXO OBRIGATÓRIO DE BRANCHES
+
+**LEIA PRIMEIRO:** [DEPLOY_WORKFLOW.md](DEPLOY_WORKFLOW.md)
+
+### ❌ NUNCA FAÇA:
+```bash
+# Push direto para main
+git checkout main
+git commit -m "fix"
+git push origin main  # ❌ ERRADO!
+```
+
+### ✅ SEMPRE FAÇA:
+```bash
+# 1. Trabalhar em develop ou feature branch
+git checkout develop
+git commit -m "fix"
+git push origin develop  # ✅ Push para develop
+
+# 2. Aguardar deploy staging completar
+# Ver: https://github.com/uchidate/khub/actions
+
+# 3. Testar em staging
+curl http://31.97.255.107:3001/api/health
+open http://31.97.255.107:3001
+
+# 4. Só depois de VALIDAR em staging:
+git checkout main
+git merge develop  # ✅ Merge validado
+git push origin main  # ✅ Deploy production
+```
+
+**Resumo**: `develop` → `staging (teste)` → `main` → `production`
+
+---
+
+Este documento define o processo obrigatório para desenvolvimento para **prevenir erros em produção**.
+
+---
+
 ## 🔒 Git Hooks Configurados
 
 ### Pre-Commit (Rápido - ~10s)
