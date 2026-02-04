@@ -15,9 +15,7 @@ export function FavoriteButton({ id, className = '', itemName, itemType }: Favor
   const { isFavorite, toggle, isLoaded } = useFavorites()
   const { addToast } = useToast()
 
-  if (!isLoaded) return null
-
-  const favorited = isFavorite(id)
+  const favorited = isLoaded ? isFavorite(id) : false
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -41,11 +39,13 @@ export function FavoriteButton({ id, className = '', itemName, itemType }: Favor
   return (
     <button
       onClick={handleToggle}
+      disabled={!isLoaded}
       className={`
         p-2 rounded-full
         transition-all duration-200
         hover:scale-110 active:scale-95
         ${favorited ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}
+        ${!isLoaded ? 'opacity-50 cursor-wait' : ''}
         ${className}
       `}
       aria-label={favorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
