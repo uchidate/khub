@@ -55,7 +55,9 @@ export default function LoginPage() {
 
       router.push('/')
       router.refresh()
-    } catch (error) {
+      router.push('/')
+      router.refresh()
+    } catch {
       setError('Erro ao fazer login. Tente novamente.')
     } finally {
       setIsLoading(false)
@@ -66,7 +68,7 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       await signIn('google', { callbackUrl: '/' })
-    } catch (error) {
+    } catch {
       setError('Erro ao fazer login com Google')
       setIsLoading(false)
     }

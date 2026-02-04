@@ -1,11 +1,6 @@
 import prisma from '@/lib/prisma'
 
-interface TrendingFactors {
-  viewCount: number        // Peso: 0.3
-  favoriteCount: number    // Peso: 0.4
-  recentActivity: number   // Peso: 0.2 (novos na última semana)
-  completeness: number     // Peso: 0.1 (tem bio, imagem, filmografia)
-}
+
 
 export class TrendingService {
   private static instance: TrendingService

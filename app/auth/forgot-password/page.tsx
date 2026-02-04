@@ -38,8 +38,8 @@ export default function ForgotPasswordPage() {
       if (data.resetUrl) {
         setResetUrl(data.resetUrl)
       }
-    } catch (error) {
-      setError('Erro ao processar solicitação. Tente novamente.')
+    } catch {
+      setError('Erro ao enviar email. Tente novamente.')
     } finally {
       setIsLoading(false)
     }

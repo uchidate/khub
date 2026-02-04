@@ -2,19 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
-  --accent-purple: 147, 51, 234;
-  --accent-pink: 236, 72, 153;
+@layer base {
+  :root {
+    /* Light Mode Defaults */
+    --foreground-rgb: 23, 23, 23;
+    /* Zinc 900 */
+    --background-start-rgb: 255, 255, 255;
+    --background-end-rgb: 240, 240, 240;
+
+    /* Vibrant Palette (Light Mode - slightly darker for contrast) */
+    --cyber-purple: 168, 85, 247;
+    /* Purple 500 */
+    --neon-pink: 236, 72, 153;
+    /* Pink 500 */
+    --electric-cyan: 6, 182, 212;
+    /* Cyan 500 */
+    --matrix-green: 21, 128, 61;
+    /* Green 700 */
+
+    /* Semantic */
+    --accent-primary: var(--cyber-purple);
+    --accent-secondary: var(--neon-pink);
+  }
+
+  /* Dark Mode Overrides */
+  .dark {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 10, 10, 12;
+
+    --cyber-purple: 188, 19, 254;
+    /* #bc13fe */
+    --neon-pink: 255, 0, 255;
+    /* #ff00ff */
+    --electric-cyan: 0, 243, 255;
+    /* #00f3ff */
+    --matrix-green: 57, 255, 20;
+    /* #39ff14 */
+  }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: black;
+  background: white;
+  /* Fallback */
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.dark body {
+  background: radial-gradient(circle at top center, #1a0b2e 0%, #000000 40%);
 }
 
 /* Focus states for accessibility */
@@ -35,15 +73,19 @@ body {
   }
 
   .glass-card {
-    @apply bg-zinc-900/40 backdrop-blur-md border border-white/10 rounded-xl hover:border-purple-500/50 transition-all duration-300 shadow-xl;
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl hover:border-white/20 transition-all duration-500 shadow-glass;
+  }
+
+  .glass-card-hover {
+    @apply hover:shadow-neon-hover hover:border-purple-500/50 hover:-translate-y-1;
   }
 
   .btn-primary {
-    @apply relative overflow-hidden px-8 py-3 bg-white text-black font-bold rounded-lg transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black hover:shadow-[0_0_20px_rgba(255,255,255,0.3)];
+    @apply relative overflow-hidden px-8 py-3.5 bg-white text-black font-black tracking-wide rounded-full transition-all active:scale-95 hover:bg-zinc-200 hover:shadow-glow-white disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply px-8 py-3 bg-white/5 text-white font-bold rounded-lg hover:bg-white/10 transition-all active:scale-95 backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black border border-white/10;
+    @apply px-8 py-3.5 bg-white/5 text-white font-bold tracking-wide rounded-full hover:bg-white/10 transition-all active:scale-95 backdrop-blur-md border border-white/10 hover:border-white/20 disabled:opacity-50;
   }
 
   .hero-gradient {
@@ -70,9 +112,17 @@ body {
 }
 
 @keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .animate-gradient {
@@ -102,6 +152,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -112,6 +163,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -123,6 +175,7 @@ body {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -134,6 +187,7 @@ body {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -144,6 +198,7 @@ body {
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -167,12 +222,10 @@ body {
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(255, 255, 255, 0.05) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 100%);
   background-size: 1000px 100%;
 }
 
@@ -182,6 +235,7 @@ body {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;

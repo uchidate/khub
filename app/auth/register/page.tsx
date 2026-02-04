@@ -78,7 +78,7 @@ export default function RegisterPage() {
         router.push('/')
         router.refresh()
       }, 2000)
-    } catch (error) {
+    } catch {
       setError('Erro ao criar conta. Tente novamente.')
       setIsLoading(false)
     }
@@ -88,7 +88,7 @@ export default function RegisterPage() {
     setIsLoading(true)
     try {
       await signIn('google', { callbackUrl: '/' })
-    } catch (error) {
+    } catch {
       setError('Erro ao fazer login com Google')
       setIsLoading(false)
     }

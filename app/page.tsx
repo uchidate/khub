@@ -3,132 +3,150 @@ import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
 import { HeroSection } from "@/components/features/HeroSection"
+import { MediaCard } from "@/components/ui/MediaCard"
+import { ArrowRight, TrendingUp, Film, Newspaper } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
     title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
-    description: 'Explore os perfis mais detalhados de artistas, agências e as melhores produções da Coreia do Sul. O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.',
-    keywords: ['hallyu', 'kpop', 'kdrama', 'cultura coreana', 'artistas coreanos', 'k-pop brasil', 'dramas coreanos'],
-    openGraph: {
-        title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
-        description: 'O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil',
-        type: 'website',
-        locale: 'pt_BR'
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
-        description: 'O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil'
-    }
+    description: 'Explore os perfis mais detalhados de artistas, agências e as melhores produções da Coreia do Sul.',
 }
 
 export default async function Home() {
-    console.log('--- RENDERING HOMEPAGE ---')
     const trendingArtists = await prisma.artist.findMany({
-        take: 6,
+        take: 5,
         orderBy: { trendingScore: 'desc' },
-        include: {
-            agency: { select: { name: true } }
-        }
+        include: { agency: { select: { name: true } } }
     })
-    const latestProductions = await prisma.production.findMany({ take: 6, orderBy: { year: 'desc' } })
-    const topNews = await prisma.news.findMany({ take: 4, orderBy: { publishedAt: 'desc' } })
-    console.log(`Homepage data fetched: ${trendingArtists.length} artists, ${latestProductions.length} productions, ${topNews.length} news`)
+    const latestProductions = await prisma.production.findMany({ take: 3, orderBy: { year: 'desc' } })
+    const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
     return (
-        <div className="pb-20">
+        <div className="bg-black min-h-screen pb-20 overflow-x-hidden">
             <HeroSection />
 
-            {/* Rows of Content */}
-            <div className="px-4 sm:px-12 md:px-20 space-y-16 -mt-12 relative z-30">
+            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 -mt-20 space-y-24">
 
-                {/* Row: Trending Artists */}
+                {/* Section: Trending Artists (Bento Grid) */}
                 <section>
-                    <h2 className="text-xl md:text-2xl font-bold mb-6 text-zinc-100 flex items-center justify-between">
-                        Artistas em Destaque
-                        <Link href="/artists" className="text-xs text-purple-500 hover:text-white transition-colors">Ver todos →</Link>
-                    </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {trendingArtists.map((artist: any) => (
-                            <Link key={artist.id} href={`/artists/${artist.id}`} className="card-hover group">
-                                <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 shadow-lg border border-white/5 relative">
-                                    <Image
-                                        src={artist.primaryImageUrl || "https://placeholder.com/600"}
-                                        alt={artist.nameRomanized}
-                                        fill
-                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-                                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                                    />
+                    <div className="flex items-end justify-between mb-8">
+                        <h2 className="text-2xl md:text-4xl font-display font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
+                            <TrendingUp className="text-neon-pink" size={32} />
+                            Trending Now
+                        </h2>
+                        <Link href="/artists" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
+                            Ver Todos <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                    </div>
 
-                                    {/* Trending Badge */}
-                                    {artist.trendingScore > 0.5 && (
-                                        <div className="absolute top-2 right-2 bg-gradient-to-r from-purple-600 to-pink-500 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                            🔥 TRENDING
-                                        </div>
-                                    )}
-
-                                    {/* Enhanced Hover Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 gap-1">
-                                        <span className="text-sm font-bold">{artist.nameRomanized}</span>
-                                        {artist.agency && (
-                                            <span className="text-xs text-zinc-400">{artist.agency.name}</span>
-                                        )}
-                                        {artist.roles && artist.roles.length > 0 && (
-                                            <div className="flex gap-1 flex-wrap mt-1">
-                                                {artist.roles.slice(0, 2).map((role: string) => (
-                                                    <span key={role} className="text-xs px-2 py-0.5 bg-purple-600 rounded-full">
-                                                        {role}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </Link>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:auto-rows-[300px]">
+                        {/* Hero Item (First Artist) */}
+                        {trendingArtists[0] && (
+                            <div className="md:col-span-2 md:row-span-2">
+                                <MediaCard
+                                    key={trendingArtists[0].id}
+                                    id={trendingArtists[0].id}
+                                    title={trendingArtists[0].nameRomanized}
+                                    subtitle={trendingArtists[0].agency?.name || 'Artista'}
+                                    imageUrl={trendingArtists[0].primaryImageUrl}
+                                    type="artist"
+                                    href={`/artists/${trendingArtists[0].id}`}
+                                    aspectRatio="square"
+                                    badges={['🔥 #1 Trending']}
+                                />
+                            </div>
+                        )}
+                        {/* Secondary Items */}
+                        {trendingArtists.slice(1).map((artist: any) => (
+                            <div key={artist.id} className="md:col-span-1 md:row-span-1">
+                                <MediaCard
+                                    id={artist.id}
+                                    title={artist.nameRomanized}
+                                    imageUrl={artist.primaryImageUrl}
+                                    type="artist"
+                                    href={`/artists/${artist.id}`}
+                                    aspectRatio="square"
+                                />
+                            </div>
                         ))}
                     </div>
                 </section>
 
-                {/* Row: Latest Productions */}
+                {/* Section: Latest Productions */}
                 <section>
-                    <h2 className="text-xl md:text-2xl font-bold mb-6 text-zinc-100 flex items-center justify-between">
-                        Produções Recentes
-                        <Link href="/productions" className="text-xs text-purple-500 hover:text-white transition-colors">Ver todas →</Link>
-                    </h2>
+                    <div className="flex items-end justify-between mb-8">
+                        <h2 className="text-2xl md:text-4xl font-display font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
+                            <Film className="text-electric-cyan" size={32} />
+                            Em Alta
+                        </h2>
+                        <Link href="/productions" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
+                            Ver Todas <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {latestProductions.map((prod: any) => (
-                            <Link key={prod.id} href={`/productions/${prod.id}`} className="card-hover">
-                                <div className="h-56 rounded-lg overflow-hidden bg-zinc-900 relative shadow-xl group border border-white/5">
-                                    <div className="absolute inset-0 bg-purple-900/10 group-hover:bg-transparent transition-colors z-10" />
-                                    <div className="absolute inset-0 flex items-center justify-center p-8 bg-gradient-to-tr from-purple-900/40 to-black/20">
-                                        <span className="text-xl font-black text-center uppercase tracking-tighter">{prod.titlePt}</span>
-                                    </div>
-                                    <div className="absolute bottom-4 left-4 z-20 flex gap-2">
-                                        <span className="text-xs sm:text-sm px-2 py-1 bg-white text-black font-bold rounded-sm">{prod.type}</span>
-                                        <span className="text-xs sm:text-sm px-2 py-1 bg-zinc-800 text-white font-bold rounded-sm">{prod.year}</span>
-                                    </div>
-                                </div>
-                            </Link>
+                            <MediaCard
+                                key={prod.id}
+                                id={prod.id}
+                                title={prod.titlePt}
+                                subtitle={`${prod.type} • ${prod.year}`}
+                                imageUrl={prod.imageUrl}
+                                type="production"
+                                href={`/productions/${prod.id}`}
+                                aspectRatio="video"
+                            />
                         ))}
                     </div>
                 </section>
 
-                {/* Big News CTA */}
-                <section className="bg-gradient-to-br from-zinc-900 to-black p-8 md:p-12 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center gap-10">
-                    <div className="flex-1">
-                        <h2 className="text-3xl md:text-5xl font-black mb-6 hallyu-gradient-text uppercase">Últimas do HallyuHub</h2>
-                        <div className="space-y-6 mb-10">
-                            {topNews.map((item: any) => (
-                                <div key={item.id} className="border-l-2 border-purple-600 pl-4 py-1">
-                                    <h4 className="font-bold text-lg mb-1">{item.title}</h4>
-                                    <p className="text-sm text-zinc-500 line-clamp-1">{item.contentMd}</p>
+                {/* Section: Latest News (Glass List) */}
+                <section className="relative">
+                    <div className="absolute -inset-10 bg-cyber-purple/10 blur-[100px] rounded-full z-0 pointer-events-none" />
+                    <div className="relative z-10 glass-card p-8 md:p-12 border-white/10 bg-black/60">
+                        <div className="flex flex-col md:flex-row gap-12">
+                            <div className="md:w-1/3">
+                                <div className="flex items-center gap-2 text-neon-pink font-black uppercase tracking-widest text-xs mb-4">
+                                    <Newspaper size={14} /> News Feed
                                 </div>
-                            ))}
+                                <h2 className="text-4xl md:text-6xl font-display font-black text-white italic tracking-tighter leading-none mb-6">
+                                    ÚLTIMAS<br />
+                                    DO HALLYU
+                                </h2>
+                                <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+                                    Fique por dentro dos comebacks, lançamentos de dramas e notícias exclusivas da indústria.
+                                </p>
+                                <Link href="/news" className="btn-primary text-xs uppercase tracking-widest">
+                                    Ler Todas
+                                </Link>
+                            </div>
+
+                            <div className="md:w-2/3 grid gap-4">
+                                {topNews.map((item: any) => (
+                                    <Link key={item.id} href={`/news/${item.id}`} className="group flex flex-col md:flex-row gap-6 p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all">
+                                        <div className="relative w-full md:w-32 aspect-video rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
+                                            {item.imageUrl ? (
+                                                <Image src={item.imageUrl} alt={item.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            ) : (
+                                                <div className="w-full h-full bg-zinc-800" />
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col justify-center">
+                                            <span className="text-[10px] text-cyber-purple font-black uppercase tracking-widest mb-2">
+                                                {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
+                                            </span>
+                                            <h3 className="text-lg font-bold text-white group-hover:text-neon-pink transition-colors leading-tight mb-2">
+                                                {item.title}
+                                            </h3>
+                                            <p className="text-xs text-zinc-500 line-clamp-2 md:line-clamp-1">
+                                                {item.contentMd}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
                         </div>
-                        <Link href="/news" className="btn-primary">Ver Todas as Notícias</Link>
                     </div>
-                    <div className="w-full md:w-1/3 aspect-square rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 blur-3xl opacity-20 animate-pulse pointer-events-none" />
                 </section>
             </div>
         </div>

@@ -14,6 +14,9 @@ const NavBar = () => {
     const [isScrolled, setIsScrolled] = useState(false)
     const [showSearch, setShowSearch] = useState(false)
 
+    // Hide NavBar on auth pages
+    if (pathname?.startsWith('/auth')) return null
+
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 0)
@@ -23,7 +26,7 @@ const NavBar = () => {
     }, [])
 
     const navLinks = [
-        { label: "Início", href: "" },
+        { label: "Início", href: "/" },
         { label: "Artistas", href: "/artists" },
         { label: "Agências", href: "/agencies" },
         { label: "Filmes & Séries", href: "/productions" },
@@ -37,7 +40,7 @@ const NavBar = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16 md:h-20">
                     <div className="flex items-center gap-10">
-                        <Link href="" className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
+                        <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
                             <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
                         </Link>
                         <div className="hidden md:flex space-x-6">

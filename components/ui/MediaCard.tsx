@@ -14,7 +14,7 @@ interface MediaCardProps {
     type: 'artist' | 'production' | 'news'
     href: string
     badges?: string[]
-    aspectRatio?: 'poster' | 'video' // poster = 2:3, video = 16:9
+    aspectRatio?: 'poster' | 'video' | 'square' // poster = 2:3, video = 16:9, square = 1:1
 }
 
 export function MediaCard({
@@ -27,8 +27,7 @@ export function MediaCard({
     badges = [],
     aspectRatio = 'poster'
 }: MediaCardProps) {
-    const isPoster = aspectRatio === 'poster'
-    const aspectClass = isPoster ? 'aspect-[2/3]' : 'aspect-video'
+    const aspectClass = aspectRatio === 'poster' ? 'aspect-[2/3]' : aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
 
     // 3D Tilt Logic
     const ref = useRef<HTMLDivElement>(null)
@@ -91,7 +90,7 @@ export function MediaCard({
                         transform: "translateZ(75px)",
                         transformStyle: "preserve-3d",
                     }}
-                    className={`${aspectClass} relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 shadow-xl transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-purple-500/20`}
+                    className={`${aspectClass} relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 shadow-xl transition-all duration-500 group-hover:shadow-[0_0_30px_-5px_var(--neon-pink)] group-hover:border-white/20`}
                 >
                     {/* Image Layer */}
                     <div className="absolute inset-0 z-0">
@@ -101,14 +100,14 @@ export function MediaCard({
                                 alt={title}
                                 fill
                                 sizes="(max-width: 768px) 50vw, 33vw"
-                                className="object-cover transition-transform duration-700 group-hover:scale-110 brightness-[0.8] group-hover:brightness-100"
+                                className="object-cover transition-transform duration-700 group-hover:scale-110 brightness-[0.7] group-hover:brightness-100 grayscale-[20%] group-hover:grayscale-0"
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full bg-zinc-900 text-zinc-700 italic font-black uppercase">
+                            <div className="flex items-center justify-center h-full bg-zinc-900 text-zinc-700 italic font-black uppercase tracking-widest">
                                 No Image
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
                     </div>
 
                     {/* Content Layer (Floating) */}
@@ -121,19 +120,19 @@ export function MediaCard({
                             whileHover={{ y: -5 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <h3 className="text-xl md:text-2xl font-black text-white leading-tight mb-1 drop-shadow-md">
+                            <h3 className="text-xl md:text-2xl font-display font-black text-white leading-[0.9] mb-1 drop-shadow-lg uppercase italic tracking-tighter">
                                 {title}
                             </h3>
                             {subtitle && (
-                                <p className="text-sm text-purple-400 font-bold mb-3 drop-shadow-md">
+                                <p className="text-sm text-neon-pink font-bold mb-3 drop-shadow-md tracking-wider uppercase">
                                     {subtitle}
                                 </p>
                             )}
 
                             {/* Badges container */}
-                            <div className="flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
+                            <div className="flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
                                 {badges.slice(0, 3).map((badge) => (
-                                    <span key={badge} className="text-[10px] uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm shadow-sm">
+                                    <span key={badge} className="text-[9px] uppercase font-black px-2 py-1 bg-white text-black rounded-sm shadow-lg tracking-widest">
                                         {badge}
                                     </span>
                                 ))}

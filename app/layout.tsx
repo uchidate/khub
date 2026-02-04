@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Outfit } from "next/font/google"
+import { Outfit, Inter } from "next/font/google"
 import "../styles/globals.css"
 import "../styles/nprogress.css"
 import { GoogleAnalytics } from '@next/third-parties/google'
@@ -10,7 +10,8 @@ import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { ToastContainer } from "@/components/features/ToastContainer"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 
-const outfit = Outfit({ subsets: ["latin"] })
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
     title: {
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-    themeColor: "#a855f7",
+    themeColor: "#bc13fe",
 }
 
 export default function RootLayout({
@@ -41,8 +42,8 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="pt-BR">
-            <body className={`${outfit.className} bg-white dark:bg-black text-zinc-900 dark:text-white selection:bg-purple-500 selection:text-white transition-colors duration-300`}>
+        <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
+            <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
                 <GoogleAnalytics gaId="G-XXXXXXXXXX" />
                 <SessionProvider>
                     <NavigationProgress />

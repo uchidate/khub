@@ -33,7 +33,7 @@ export function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                    <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-sm font-medium mb-6 text-purple-300">
+                    <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-xs font-black uppercase tracking-widest text-neon-pink mb-6">
                         ✨ O Portal Definitivo
                     </span>
                 </motion.div>
@@ -42,9 +42,9 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
-                    className="text-6xl md:text-8xl font-black mb-6 tracking-tight leading-none"
+                    className="text-6xl md:text-9xl font-display font-black mb-6 tracking-tighter leading-[0.9] italic"
                 >
-                    A ONDA <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 animate-gradient bg-[length:200%_auto]">HALLYU</span><br />
+                    A ONDA <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-electric-cyan animate-gradient bg-[length:200%_auto]">HALLYU</span><br />
                     NO SEU RITMO.
                 </motion.h1>
 
