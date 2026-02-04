@@ -241,11 +241,18 @@ jobs:
             cd /var/www/hallyuhub
 
             echo "🟡 Deploying STAGING..."
+
+            # Pull nova imagem
             docker-compose -f docker-compose.staging.yml pull hallyuhub-staging
-            docker-compose -f docker-compose.staging.yml up -d hallyuhub-staging
+
+            # Down para evitar ContainerConfig error
+            docker-compose -f docker-compose.staging.yml down || true
+
+            # Up com containers frescos
+            docker-compose -f docker-compose.staging.yml up -d
 
             echo "⏳ Aguardando containers ficarem saudáveis..."
-            sleep 10
+            sleep 15
 
             echo "✅ Staging deployado!"
 
@@ -387,11 +394,18 @@ jobs:
             cd /var/www/hallyuhub
 
             echo "🟢 Deploying PRODUCTION..."
+
+            # Pull nova imagem
             docker-compose -f docker-compose.prod.yml pull hallyuhub
-            docker-compose -f docker-compose.prod.yml up -d hallyuhub
+
+            # Down para evitar ContainerConfig error
+            docker-compose -f docker-compose.prod.yml down || true
+
+            # Up com containers frescos
+            docker-compose -f docker-compose.prod.yml up -d
 
             echo "⏳ Aguardando containers ficarem saudáveis..."
-            sleep 15
+            sleep 20
 
             echo "✅ Production deployada!"
 
