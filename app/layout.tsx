@@ -28,12 +28,20 @@ export const metadata: Metadata = {
     openGraph: {
         title: "HallyuHub",
         description: "Cultura coreana em um só lugar.",
-        images: [{ url: "https://staging.seu-dominio.com/og-image.jpg" }],
+        images: [{ url: "https://hallyuhub.com.br/og-image.jpg" }],
+        siteName: 'HallyuHub',
+        locale: 'pt_BR',
+        type: 'website',
+    },
+    verification: {
+        google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
     },
 }
 
 export const viewport = {
     themeColor: "#bc13fe",
+    width: 'device-width',
+    initialScale: 1,
 }
 
 export default function RootLayout({
@@ -44,7 +52,9 @@ export default function RootLayout({
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
             <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
-                <GoogleAnalytics gaId="G-XXXXXXXXXX" />
+                {process.env.NEXT_PUBLIC_GA_ID && (
+                    <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+                )}
                 <SessionProvider>
                     <NavigationProgress />
                     <div className="min-h-screen flex flex-col">
