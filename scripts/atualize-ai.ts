@@ -5,6 +5,7 @@ const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
 const { ProductionGenerator } = require('../lib/ai/generators/production-generator');
 const { getSlackService } = require('../lib/services/slack-notification-service');
 const { getFilmographySyncService } = require('../lib/services/filmography-sync-service');
+const { TrendingService } = require('../lib/services/trending-service');
 
 const prisma = new PrismaClient();
 const slackService = getSlackService();
@@ -19,6 +20,7 @@ interface CliOptions {
     provider?: 'gemini' | 'openai' | 'claude' | 'ollama';
     dryRun?: boolean;
     refreshFilmography?: boolean;
+    updateTrending?: boolean;
 }
 
 function parseArgs(): CliOptions {
@@ -29,6 +31,7 @@ function parseArgs(): CliOptions {
         productions: 2,
         dryRun: false,
         refreshFilmography: true, // Default to true
+        updateTrending: true, // Default to true
     };
 
     for (let i = 0; i < args.length; i++) {
@@ -45,6 +48,8 @@ function parseArgs(): CliOptions {
             options.dryRun = true;
         } else if (arg.startsWith('--refresh-filmography=')) {
             options.refreshFilmography = arg.split('=')[1] === 'true';
+        } else if (arg.startsWith('--update-trending=')) {
+            options.updateTrending = arg.split('=')[1] === 'true';
         }
     }
 
@@ -116,6 +121,8 @@ async function main() {
     console.log(`   News to generate: ${options.news}`);
     console.log(`   Artists to generate: ${options.artists}`);
     console.log(`   Productions to generate: ${options.productions}`);
+    console.log(`   Refresh filmography: ${options.refreshFilmography ? 'Yes' : 'No'}`);
+    console.log(`   Update trending scores: ${options.updateTrending ? 'Yes' : 'No'}`);
     if (options.provider) {
         console.log(`   Preferred provider: ${options.provider}`);
     }
@@ -362,7 +369,6 @@ async function main() {
         console.log('\n\n📈 UPDATING TRENDING SCORES\n');
         console.log('='.repeat(60));
 
-        const { TrendingService } = await import('@/lib/services/trending-service');
         const trendingService = TrendingService.getInstance();
         await trendingService.updateAllTrendingScores();
 
