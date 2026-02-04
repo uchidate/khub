@@ -4,6 +4,7 @@ const { NewsGenerator } = require('../lib/ai/generators/news-generator');
 const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
 const { ProductionGenerator } = require('../lib/ai/generators/production-generator');
 const { getSlackService } = require('../lib/services/slack-notification-service');
+const { getFilmographySyncService } = require('../lib/services/filmography-sync-service');
 
 const prisma = new PrismaClient();
 const slackService = getSlackService();
@@ -17,6 +18,7 @@ interface CliOptions {
     productions?: number;
     provider?: 'gemini' | 'openai' | 'claude';
     dryRun?: boolean;
+    refreshFilmography?: boolean;
 }
 
 function parseArgs(): CliOptions {
@@ -26,6 +28,7 @@ function parseArgs(): CliOptions {
         artists: 3,
         productions: 2,
         dryRun: false,
+        refreshFilmography: true, // Default to true
     };
 
     for (let i = 0; i < args.length; i++) {
@@ -40,6 +43,8 @@ function parseArgs(): CliOptions {
             options.provider = arg.split('=')[1] as any;
         } else if (arg === '--dry-run') {
             options.dryRun = true;
+        } else if (arg.startsWith('--refresh-filmography=')) {
+            options.refreshFilmography = arg.split('=')[1] === 'true';
         }
     }
 
@@ -202,7 +207,7 @@ async function main() {
                         agencyId = agency.id;
                     }
 
-                    await prisma.artist.upsert({
+                    const savedArtist = await prisma.artist.upsert({
                         where: { nameRomanized: artist.nameRomanized },
                         update: {
                             nameHangul: artist.nameHangul || null,
@@ -224,6 +229,23 @@ async function main() {
                     });
                     savedCounts.artists++;
                     console.log(`   ✅ Saved: ${artist.nameRomanized}`);
+
+                    // Auto-fetch filmography for new artist (non-blocking)
+                    if (process.env.FILMOGRAPHY_SYNC_ON_CREATE !== 'false') {
+                        console.log(`   🎬 Fetching filmography...`);
+                        const filmographyService = getFilmographySyncService();
+                        filmographyService.syncSingleArtist(savedArtist.id, 'SMART_MERGE')
+                            .then(result => {
+                                if (result.success) {
+                                    console.log(`   ✅ Filmography: ${result.addedCount} added, ${result.updatedCount} updated`);
+                                } else {
+                                    console.log(`   ⚠️ Filmography sync failed: ${result.errors.join(', ')}`);
+                                }
+                            })
+                            .catch(err => {
+                                console.error(`   ❌ Filmography sync error: ${err.message}`);
+                            });
+                    }
                 } catch (error: any) {
                     console.error(`   ❌ Failed to save: ${error.message}`);
                 }
@@ -272,6 +294,66 @@ async function main() {
                 }
             }
         }
+    }
+
+    // Periodic filmography refresh
+    if (options.refreshFilmography && !options.dryRun) {
+        console.log('\n\n🎬 REFRESHING FILMOGRAPHIES\n');
+        console.log('='.repeat(60));
+
+        const filmographyService = getFilmographySyncService();
+
+        // Strategy: Update 10 artists per run
+        // Priority: artists without filmography or outdated (>7 days)
+        const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+        const artistsToUpdate = await prisma.artist.findMany({
+            where: {
+                OR: [
+                    { tmdbLastSync: { lt: cutoffDate } },
+                    { tmdbLastSync: null, tmdbSyncStatus: { not: 'NOT_FOUND' } },
+                    { productions: { none: {} } }
+                ]
+            },
+            take: 10,
+            orderBy: [
+                { tmdbLastSync: { sort: 'asc', nulls: 'first' } }
+            ],
+            select: { id: true, nameRomanized: true }
+        });
+
+        if (artistsToUpdate.length === 0) {
+            console.log('✅ All filmographies are up to date!');
+        } else {
+            console.log(`Found ${artistsToUpdate.length} artists needing update:`);
+            artistsToUpdate.forEach((a, i) => {
+                console.log(`  ${i + 1}. ${a.nameRomanized}`);
+            });
+
+            console.log('\nSyncing filmographies (3 concurrent workers)...');
+
+            const result = await filmographyService.syncMultipleArtists(
+                artistsToUpdate.map(a => a.id),
+                3, // concurrency
+                'INCREMENTAL' // Only add new productions
+            );
+
+            console.log(`\n✅ Filmography refresh complete:`);
+            console.log(`   Success: ${result.successCount}/${result.total}`);
+            console.log(`   Failures: ${result.failureCount}`);
+            console.log(`   Duration: ${(result.duration / 1000).toFixed(1)}s`);
+
+            const totalAdded = result.results.reduce((sum, r) => sum + r.addedCount, 0);
+            const totalUpdated = result.results.reduce((sum, r) => sum + r.updatedCount, 0);
+            console.log(`   Productions added: ${totalAdded}`);
+            console.log(`   Productions updated: ${totalUpdated}`);
+
+            // Send Slack notification if significant updates
+            if (slackService.isEnabled() && (totalAdded > 0 || totalUpdated > 0)) {
+                await filmographyService.notifyBatchSyncComplete(result);
+            }
+        }
+        console.log('='.repeat(60));
     }
 
     // Exibir estatísticas

@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, Users, Database, Activity, FileText, Settings } from 'lucide-react'
+import { Shield, Users, Database, Activity, FileText, Settings, Film } from 'lucide-react'
 import NavBar from '@/components/NavBar'
 
 export default async function AdminPage() {
@@ -29,6 +29,13 @@ export default async function AdminPage() {
       icon: FileText,
       href: '/admin/content',
       color: 'pink',
+    },
+    {
+      title: 'Filmografias',
+      description: 'Atualizar filmografias de artistas via TMDB',
+      icon: Film,
+      href: '/admin/filmography',
+      color: 'cyan',
     },
     {
       title: 'Banco de Dados',

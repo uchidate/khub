@@ -37,6 +37,11 @@ model Artist {
   agency           Agency?            @relation(fields: [agencyId], references: [id])
   agencyId         String?
   productions      ArtistProduction[]
+  // TMDB sync tracking
+  tmdbId           String?            // TMDB person ID
+  tmdbSyncStatus   String?            // 'SYNCED', 'NOT_FOUND', 'ERROR'
+  tmdbLastSync     DateTime?          // Last successful sync
+  tmdbLastAttempt  DateTime?          // Last attempt (even if failed)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
@@ -44,6 +49,8 @@ model Artist {
   @@index([createdAt])
   @@index([birthDate])
   @@index([nameRomanized, createdAt])
+  @@index([tmdbSyncStatus])
+  @@index([tmdbLastSync])
 }
 
 model Production {
@@ -58,6 +65,12 @@ model Production {
   sourceUrls         String[]
   tags               String[]
   artists            ArtistProduction[]
+  // TMDB metadata
+  tmdbId             String?            // TMDB movie/TV ID
+  tmdbType           String?            // 'movie' or 'tv'
+  releaseDate        DateTime?          // Precise release date
+  runtime            Int?               // Minutes
+  voteAverage        Float?             // TMDB rating
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -66,6 +79,8 @@ model Production {
   @@index([createdAt])
   @@index([type, year])
   @@index([titlePt])
+  @@index([tmdbId])
+  @@index([releaseDate])
 }
 
 model ArtistProduction {
