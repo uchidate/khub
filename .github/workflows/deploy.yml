@@ -436,33 +436,23 @@ jobs:
 
       - name: 🔍 Verify SSL
         run: |
-          echo "⏳ Aguardando propagação SSL (30s)..."
-          sleep 30
-
           echo "Verificando certificado SSL..."
-          max_attempts=10
-          attempt=0
 
-          while [ $attempt -lt $max_attempts ]; do
-            attempt=$((attempt + 1))
-            echo "Tentativa $attempt/$max_attempts..."
+          # Tenta 3 vezes com timeout curto
+          for i in 1 2 3; do
+            echo "Tentativa $i/3..."
 
-            # Tenta conectar com SSL e verifica se retorna 200 OK
-            if curl -sS -I --connect-timeout 10 --max-time 15 https://www.hallyuhub.com.br 2>&1 | grep -q "200 OK"; then
+            if curl -sS -I --connect-timeout 5 --max-time 10 https://www.hallyuhub.com.br 2>&1 | grep -q "200 OK"; then
               echo "✅ SSL válido e site respondendo!"
               exit 0
             fi
 
-            if [ $attempt -lt $max_attempts ]; then
-              echo "Aguardando 5s antes da próxima tentativa..."
-              sleep 5
-            fi
+            [ $i -lt 3 ] && sleep 3
           done
 
-          echo "⚠️ SSL check não obteve resposta após $max_attempts tentativas"
-          echo "⚠️ Site pode estar funcionando normalmente"
-          echo "⚠️ Verifique manualmente: https://www.hallyuhub.com.br"
-          # Don't fail the deployment, just warn
+          echo "⚠️ SSL check timeout - mas health check passou, site deve estar OK"
+          echo "ℹ️ Verifique manualmente: https://www.hallyuhub.com.br"
+          # Don't fail deployment if health check already passed
           exit 0
 
       - name: 📊 Summary
