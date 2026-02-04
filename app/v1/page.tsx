@@ -67,11 +67,36 @@ export default async function Home() {
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                         {trendingArtists.map((artist: any) => (
-                            <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="card-hover">
-                                <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 shadow-lg border border-white/5">
-                                    <img src={artist.primaryImageUrl || "https://placeholder.com/600"} alt={artist.nameRomanized} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end p-4">
+                            <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="card-hover group">
+                                <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 shadow-lg border border-white/5 relative">
+                                    <img
+                                        src={artist.primaryImageUrl || "https://placeholder.com/600"}
+                                        alt={artist.nameRomanized}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+
+                                    {/* Trending Badge */}
+                                    {artist.trendingScore > 0.5 && (
+                                        <div className="absolute top-2 right-2 bg-gradient-to-r from-purple-600 to-pink-500 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                            🔥 TRENDING
+                                        </div>
+                                    )}
+
+                                    {/* Enhanced Hover Overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 gap-1">
                                         <span className="text-sm font-bold">{artist.nameRomanized}</span>
+                                        {artist.agency && (
+                                            <span className="text-xs text-zinc-400">{artist.agency.name}</span>
+                                        )}
+                                        {artist.roles && artist.roles.length > 0 && (
+                                            <div className="flex gap-1 flex-wrap mt-1">
+                                                {artist.roles.slice(0, 2).map((role: string) => (
+                                                    <span key={role} className="text-xs px-2 py-0.5 bg-purple-600 rounded-full">
+                                                        {role}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </Link>

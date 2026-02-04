@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import { ViewTracker } from "@/components/features/ViewTracker"
+import { ErrorMessage } from "@/components/ui/ErrorMessage"
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +20,12 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
                 <Link href="/v1/artists" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Artistas</Link>
-                <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic">Artista não encontrado</h1>
+                <ErrorMessage
+                    title="Artista não encontrado"
+                    message="Este artista pode ter sido removido ou o link está incorreto."
+                    retry={() => window.location.reload()}
+                    showSupport={true}
+                />
             </div>
         )
     }
@@ -34,6 +41,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
     return (
         <div className="min-h-screen">
+            <ViewTracker artistId={artist.id} />
             {/* Hero */}
             <div className="relative h-[65vh] md:h-[75vh]">
                 {artist.primaryImageUrl ? (
