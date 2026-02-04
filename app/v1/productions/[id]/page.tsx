@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -89,11 +90,17 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
 
                 {/* Breadcrumbs */}
-                <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20">
+                <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[
                         { label: 'Filmes & Séries', href: '/v1/productions' },
                         { label: production.titlePt }
                     ]} />
+                    <FavoriteButton
+                        id={production.id}
+                        itemName={production.titlePt}
+                        itemType="produção"
+                        className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                    />
                 </div>
 
                 {/* Hero content */}

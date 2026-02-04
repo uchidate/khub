@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import Image from "next/image"
 import { Calendar, ExternalLink } from "lucide-react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -68,11 +69,17 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
         <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
             <div className="max-w-4xl mx-auto">
                 {/* Breadcrumbs */}
-                <div className="mb-8">
+                <div className="mb-8 flex justify-between items-start">
                     <Breadcrumbs items={[
                         { label: 'Notícias', href: '/v1/news' },
                         { label: news.title }
                     ]} />
+                    <FavoriteButton
+                        id={news.id}
+                        itemName={news.title}
+                        itemType="notícia"
+                        className="bg-zinc-900/50 backdrop-blur-sm hover:bg-zinc-900/70"
+                    />
                 </div>
 
                 {/* Hero Section */}

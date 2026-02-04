@@ -3,9 +3,21 @@ import Image from "next/image"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import { FavoriteButton } from "@/components/ui/FavoriteButton"
+import { Instagram, Twitter, Youtube, Music, Globe } from "lucide-react"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
+
+// Helper function to get social media icon
+function getSocialIcon(name: string) {
+    const lowerName = name.toLowerCase()
+    if (lowerName.includes('instagram')) return Instagram
+    if (lowerName.includes('twitter') || lowerName.includes('x.com')) return Twitter
+    if (lowerName.includes('youtube')) return Youtube
+    if (lowerName.includes('spotify') || lowerName.includes('music')) return Music
+    return Globe
+}
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
     const artist = await prisma.artist.findUnique({
@@ -93,11 +105,17 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
 
                 {/* Breadcrumbs */}
-                <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20">
+                <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[
                         { label: 'Artistas', href: '/v1/artists' },
                         { label: artist.nameRomanized }
                     ]} />
+                    <FavoriteButton
+                        id={artist.id}
+                        itemName={artist.nameRomanized}
+                        itemType="artista"
+                        className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                    />
                 </div>
 
                 {/* Hero content */}
@@ -158,12 +176,16 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             <div>
                                 <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Redes Sociais</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {Object.entries(socialLinks).map(([name, url]) => (
-                                        <a key={name} href={url} target="_blank" rel="noopener noreferrer"
-                                            className="text-xs font-bold text-white bg-zinc-800 px-3 py-1.5 rounded-sm border border-white/5 hover:border-purple-500 transition-colors">
-                                            {name}
-                                        </a>
-                                    ))}
+                                    {Object.entries(socialLinks).map(([name, url]) => {
+                                        const Icon = getSocialIcon(name)
+                                        return (
+                                            <a key={name} href={url} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-2 text-xs font-bold text-white bg-zinc-800 px-3 py-1.5 rounded-sm border border-white/5 hover:border-purple-500 hover:bg-zinc-700 transition-colors group">
+                                                <Icon className="w-3.5 h-3.5 group-hover:text-purple-400 transition-colors" />
+                                                <span>{name}</span>
+                                            </a>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
