@@ -11,9 +11,9 @@
  * - Progress tracking
  */
 
-import prisma from '@/lib/prisma'
+import prisma from '../prisma'
 import { getTMDBFilmographyService, NotFoundError } from './tmdb-filmography-service'
-import { TMDBProductionData } from '@/lib/types/tmdb'
+import { TMDBProductionData } from '../types/tmdb'
 import { getSlackService } from './slack-notification-service'
 
 export type SyncStrategy = 'FULL_REPLACE' | 'INCREMENTAL' | 'SMART_MERGE'
