@@ -1,4 +1,5 @@
 import NavBar from "@/components/NavBar"
+import { PWAInstaller } from "@/components/features/PWAInstaller"
 
 export default function SiteLayout({
     children,
@@ -9,6 +10,7 @@ export default function SiteLayout({
         <div className="min-h-screen flex flex-col">
             <NavBar />
             <main className="flex-grow">{children}</main>
+            <PWAInstaller />
             <footer className="bg-black border-t border-zinc-800 py-12">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-6">

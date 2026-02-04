@@ -7,6 +7,13 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
     title: "HallyuHub - O Portal da Onda Coreana",
     description: "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+    manifest: "/manifest.json",
+    themeColor: "#a855f7",
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "black-translucent",
+        title: "HallyuHub",
+    },
     openGraph: {
         title: "HallyuHub",
         description: "Cultura coreana em um só lugar.",
@@ -21,7 +28,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="pt-BR">
-            <body className={`${inter.className} bg-black text-white selection:bg-purple-500 selection:text-white`}>
+            <body className={`${inter.className} bg-white dark:bg-black text-zinc-900 dark:text-white selection:bg-purple-500 selection:text-white transition-colors duration-300`}>
                 {children}
             </body>
         </html>
