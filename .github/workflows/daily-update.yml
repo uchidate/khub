@@ -17,5 +17,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/hallyuhub
-            docker exec hallyuhub npm run atualize:ai
-            echo "✅ Data update triggered successfully inside container."
+            # Use Ollama (free, local) instead of Gemini
+            docker exec hallyuhub sh -c "npm run atualize:ai -- --provider=ollama"
+            echo "✅ Data update triggered successfully inside container with Ollama."
