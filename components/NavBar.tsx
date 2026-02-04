@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Search, X } from "lucide-react"
 import { SearchBar } from "@/components/features/SearchBar"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 
 const NavBar = () => {
     const pathname = usePathname()
@@ -51,6 +52,9 @@ const NavBar = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        {/* Theme toggle */}
+                        <ThemeToggle />
+
                         {/* Search button and expanded search */}
                         <div className="relative">
                             {!showSearch ? (
