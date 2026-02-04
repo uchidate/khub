@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma"
-import Link from "next/link"
 import Image from "next/image"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"

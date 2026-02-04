@@ -1,8 +1,7 @@
 import prisma from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import Link from "next/link"
-import { ArrowLeft, Calendar, ExternalLink } from "lucide-react"
+import { Calendar, ExternalLink } from "lucide-react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import type { Metadata } from "next"
 
@@ -27,11 +26,6 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
     }
 
     const description = news.contentMd ? news.contentMd.slice(0, 160) : news.title
-    const publishedDate = new Date(news.publishedAt).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    })
 
     return {
         title: `${news.title} - HallyuHub`,
