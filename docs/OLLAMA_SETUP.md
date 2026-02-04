@@ -126,7 +126,7 @@ Teste o endpoint de health da aplicação:
 curl http://localhost:3001/api/health
 
 # Produção (via Nginx)
-curl https://www.hollyuhub.com.br/api/health
+curl https://www.hallyuhub.com.br/api/health
 ```
 
 Procure por:
