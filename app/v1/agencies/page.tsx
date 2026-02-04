@@ -1,10 +1,48 @@
+import { Suspense } from 'react'
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 
 export const dynamic = 'force-dynamic'
 
-export default async function AgenciesPage() {
+function AgencySkeleton() {
+    return (
+        <div className="p-10 bg-zinc-900/50 rounded-3xl border border-white/5 relative overflow-hidden animate-pulse">
+            <div className="h-8 w-3/4 bg-zinc-800 rounded mb-2" />
+            <div className="h-4 w-1/2 bg-zinc-800 rounded mb-8" />
+
+            <div className="mb-8">
+                <div className="flex -space-x-3 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                        <div key={i} className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-900 flex-shrink-0" />
+                    ))}
+                </div>
+                <div className="h-4 w-full bg-zinc-800 rounded" />
+            </div>
+
+            <div className="h-4 w-1/3 bg-zinc-800 rounded" />
+        </div>
+    )
+}
+
+function AgenciesGridSkeleton() {
+    return (
+        <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+            <header className="mb-12">
+                <h1 className="text-4xl md:text-6xl font-black mb-4 hallyu-gradient-text uppercase tracking-tighter italic">Agências</h1>
+                <p className="text-zinc-500 max-w-xl text-lg font-medium">Os arquitetos do sucesso. Conheça as empresas que moldam o futuro do entretenimento global.</p>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                    <AgencySkeleton key={i} />
+                ))}
+            </div>
+        </div>
+    )
+}
+
+async function AgenciesGrid() {
     console.log('--- RENDERING AGENCIES PAGE ---')
     const agencies = await prisma.agency.findMany({
         include: {
@@ -73,5 +111,13 @@ export default async function AgenciesPage() {
                 ))}
             </div>
         </div>
+    )
+}
+
+export default function AgenciesPage() {
+    return (
+        <Suspense fallback={<AgenciesGridSkeleton />}>
+            <AgenciesGrid />
+        </Suspense>
     )
 }
