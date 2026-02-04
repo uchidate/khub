@@ -1,10 +1,51 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import Image from "next/image"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+    const artist = await prisma.artist.findUnique({
+        where: { id: params.id },
+        include: { agency: true }
+    })
+
+    if (!artist) {
+        return {
+            title: 'Artista não encontrado - HallyuHub',
+            description: 'Este artista não foi encontrado em nossa base de dados.'
+        }
+    }
+
+    const roles = artist.roles || []
+    const description = artist.bio || `${artist.nameRomanized} (${artist.nameHangul}) - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
+
+    return {
+        title: `${artist.nameRomanized} (${artist.nameHangul}) - HallyuHub`,
+        description: description.slice(0, 160),
+        openGraph: {
+            title: `${artist.nameRomanized} - HallyuHub`,
+            description: description.slice(0, 160),
+            images: artist.primaryImageUrl ? [{
+                url: artist.primaryImageUrl,
+                width: 1200,
+                height: 630,
+                alt: artist.nameRomanized
+            }] : [],
+            type: 'profile'
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${artist.nameRomanized} - HallyuHub`,
+            description: description.slice(0, 160),
+            images: artist.primaryImageUrl ? [artist.primaryImageUrl] : []
+        }
+    }
+}
 
 export default async function ArtistDetailPage({ params }: { params: { id: string } }) {
     const artist = await prisma.artist.findUnique({
@@ -46,7 +87,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
             {/* Hero */}
             <div className="relative h-[65vh] md:h-[75vh]">
                 {artist.primaryImageUrl ? (
-                    <img src={artist.primaryImageUrl} alt={artist.nameRomanized} className="w-full h-full object-cover" />
+                    <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill priority sizes="100vw" className="object-cover" />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900" />
                 )}

@@ -4,12 +4,57 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, Calendar, ExternalLink } from "lucide-react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
 
 interface NewsDetailPageProps {
     params: {
         id: string
+    }
+}
+
+export async function generateMetadata({ params }: NewsDetailPageProps): Promise<Metadata> {
+    const news = await prisma.news.findUnique({
+        where: { id: params.id }
+    })
+
+    if (!news) {
+        return {
+            title: 'Notícia não encontrada - HallyuHub',
+            description: 'Esta notícia não foi encontrada em nossa base de dados.'
+        }
+    }
+
+    const description = news.contentMd ? news.contentMd.slice(0, 160) : news.title
+    const publishedDate = new Date(news.publishedAt).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    })
+
+    return {
+        title: `${news.title} - HallyuHub`,
+        description: description,
+        openGraph: {
+            title: news.title,
+            description: description,
+            images: news.imageUrl ? [{
+                url: news.imageUrl,
+                width: 1200,
+                height: 630,
+                alt: news.title
+            }] : [],
+            type: 'article',
+            publishedTime: news.publishedAt.toISOString(),
+            authors: ['HallyuHub']
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: news.title,
+            description: description,
+            images: news.imageUrl ? [news.imageUrl] : []
+        }
     }
 }
 
