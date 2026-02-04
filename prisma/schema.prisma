@@ -49,6 +49,7 @@ model Artist {
   trendingScore      Float              @default(0.0)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+  userFavorites      Favorite[]
 
   @@index([agencyId])
   @@index([createdAt])
@@ -79,6 +80,7 @@ model Production {
   voteAverage        Float?             // TMDB rating
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+  userFavorites      Favorite[]
 
   @@index([type])
   @@index([year])
@@ -109,6 +111,7 @@ model News {
   tags        String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  userFavorites Favorite[]
 
   @@index([publishedAt])
   @@index([createdAt])
@@ -142,6 +145,8 @@ model User {
   sessions      Session[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  favorites     Favorite[]
+  activities    Activity[]
 
   @@index([email])
 }
@@ -201,4 +206,39 @@ model Tag {
 
   @@index([type])
   @@index([name])
+}
+
+model Favorite {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artistId     String?
+  artist       Artist?    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  productionId String?
+  production   Production? @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  newsId       String?
+  news         News?      @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@index([userId])
+  @@index([artistId])
+  @@index([productionId])
+  @@index([newsId])
+  @@unique([userId, artistId])
+  @@unique([userId, productionId])
+  @@unique([userId, newsId])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // 'VIEW', 'LIKE', 'LOGIN', 'SEARCH'
+  entityId  String?  // Artist ID, Production ID, or News ID
+  entityType String? // 'ARTIST', 'PRODUCTION', 'NEWS'
+  metadata  Json?    // Additional context
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }

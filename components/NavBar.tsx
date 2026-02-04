@@ -28,6 +28,7 @@ const NavBar = () => {
         { label: "Agências", href: "/agencies" },
         { label: "Filmes & Séries", href: "/productions" },
         { label: "Notícias", href: "/news" },
+        { label: "Premium", href: "/premium" },
         { label: "Sobre", href: "/about" },
     ]
 
