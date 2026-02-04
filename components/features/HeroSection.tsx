@@ -17,11 +17,11 @@ export function HeroSection() {
                     className="relative w-full h-full"
                 >
                     <Image
-                        src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000"
-                        alt="Hero Background"
+                        src="https://images.unsplash.com/photo-1574169208507-84376144848b?q=80&w=2000"
+                        alt="Hallyu Wave Background"
                         fill
                         priority
-                        className="object-cover"
+                        className="object-cover opacity-60"
                     />
                 </motion.div>
             </div>
