@@ -1,7 +1,9 @@
-name: Daily Content Generation
+name: Content Generation (Production)
 
 on:
-  workflow_dispatch: # Allows manual trigger
+  schedule:
+    - cron: '*/15 * * * *'  # Every 15 minutes (production)
+  workflow_dispatch:        # Allows manual trigger
 
 jobs:
   generate-content:
@@ -9,46 +11,44 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Generate content with Ollama
+      - name: 🤖 Generate content with Ollama (Production)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "🤖 Starting AI content generation..."
-            
-            # Run AI generation using Ollama (free!)
-            docker exec hallyuhub npx ts-node --transpile-only \
-              --compiler-options '{"module":"CommonJS"}' \
-              scripts/atualize-ai.ts \
-              --provider=ollama \
-              --news=5 \
-              --artists=2 \
-              --productions=1
-            
+            cd /var/www/hallyuhub
+
+            echo "🤖 Starting content generation in PRODUCTION..."
+            echo "📅 $(date)"
+            echo ""
+
+            # Generate content using Ollama (free, local AI)
+            # 2 artists + 1 production every 15 minutes
+            docker exec hallyuhub sh -c "npm run atualize:ai -- --provider=ollama --artists=2 --productions=1 --news=0"
+
             if [ $? -eq 0 ]; then
+              echo ""
               echo "✅ Content generation completed successfully!"
             else
+              echo ""
               echo "❌ Content generation failed, check logs"
               exit 1
             fi
 
-      - name: Verify database update
+      - name: 📊 Verify database stats
+        if: success()
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "📊 Checking database stats..."
-            
-            # Count records in database
-            docker exec hallyuhub sh -c "
-              echo 'Artists:' && \
-              sqlite3 /app/data/prod.db 'SELECT COUNT(*) FROM Artist;' && \
-              echo 'News:' && \
-              sqlite3 /app/data/prod.db 'SELECT COUNT(*) FROM News;' && \
-              echo 'Productions:' && \
-              sqlite3 /app/data/prod.db 'SELECT COUNT(*) FROM Production;'
-            "
+            echo "📊 Current database stats (PostgreSQL):"
+            docker exec hallyuhub npx prisma db execute --stdin <<'EOF'
+              SELECT
+                (SELECT COUNT(*) FROM "Artist") as artists,
+                (SELECT COUNT(*) FROM "Production") as productions,
+                (SELECT COUNT(*) FROM "News") as news;
+            EOF
