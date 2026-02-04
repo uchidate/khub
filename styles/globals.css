@@ -17,17 +17,29 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Focus states for accessibility */
+*:focus-visible {
+  outline: 2px solid rgb(var(--accent-purple));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove default outline but keep focus-visible */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
 @layer components {
   .glass-nav {
     @apply bg-black/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-50;
   }
 
   .btn-primary {
-    @apply px-8 py-3 bg-white text-black font-bold rounded-md hover:bg-zinc-200 transition-all active:scale-95;
+    @apply px-8 py-3 bg-white text-black font-bold rounded-md hover:bg-zinc-200 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
   }
 
   .btn-secondary {
-    @apply px-8 py-3 bg-zinc-600/50 text-white font-bold rounded-md hover:bg-zinc-600/80 transition-all active:scale-95 backdrop-blur-sm;
+    @apply px-8 py-3 bg-zinc-600/50 text-white font-bold rounded-md hover:bg-zinc-600/80 transition-all active:scale-95 backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
   }
 
   .hero-gradient {
@@ -40,6 +52,16 @@ body {
 
   .hallyu-gradient-text {
     @apply bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent;
+  }
+
+  /* Input focus states */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black transition-shadow;
   }
 }
 
