@@ -442,7 +442,8 @@ jobs:
           for i in 1 2 3; do
             echo "Tentativa $i/3..."
 
-            if curl -sS -I --connect-timeout 5 --max-time 10 https://www.hallyuhub.com.br 2>&1 | grep -q "200 OK"; then
+            # Aceita 200 OK ou 307 Redirect (Next.js redirect é normal)
+            if curl -sS -I -L --connect-timeout 5 --max-time 10 https://www.hallyuhub.com.br 2>&1 | grep -qE "(200 OK|307 Temporary Redirect)"; then
               echo "✅ SSL válido e site respondendo!"
               exit 0
             fi
