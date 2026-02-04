@@ -51,7 +51,7 @@ async function ArtistsGrid() {
                                 <p className="text-sm text-purple-500 font-bold mb-3">{artist.nameHangul}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {artist.roles?.map((role: string) => (
-                                        <span key={role} className="text-[10px] uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm">
+                                        <span key={role} className="text-xs uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm">
                                             {role}
                                         </span>
                                     ))}

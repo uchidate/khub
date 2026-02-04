@@ -106,7 +106,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-12 md:px-20 pb-10 md:pb-16">
                     <div className="flex flex-wrap gap-1.5 mb-4">
                         {roles.map(role => (
-                            <span key={role} className="text-[10px] uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm">{role}</span>
+                            <span key={role} className="text-xs uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm">{role}</span>
                         ))}
                     </div>
                     <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter">{artist.nameRomanized}</h1>
@@ -124,7 +124,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                     <div className="space-y-8">
                         {artist.bio && (
                             <div>
-                                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Sobre</h3>
+                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Sobre</h3>
                                 <p className="text-zinc-400 leading-relaxed font-medium">{artist.bio}</p>
                             </div>
                         )}
@@ -132,19 +132,19 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                         <div>
                             {birthDateFormatted && (
                                 <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Nascimento</span>
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nascimento</span>
                                     <span className="text-sm font-bold text-zinc-300">{birthDateFormatted}</span>
                                 </div>
                             )}
                             {age !== null && (
                                 <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Idade</span>
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Idade</span>
                                     <span className="text-sm font-bold text-zinc-300">{age} anos</span>
                                 </div>
                             )}
                             {artist.agency && (
                                 <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Agência</span>
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Agência</span>
                                     {artist.agency.website ? (
                                         <a href={artist.agency.website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-purple-500 hover:text-purple-400 transition-colors">
                                             {artist.agency.name}
@@ -158,7 +158,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                         {Object.keys(socialLinks).length > 0 && (
                             <div>
-                                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Redes Sociais</h3>
+                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Redes Sociais</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {Object.entries(socialLinks).map(([name, url]) => (
                                         <a key={name} href={url} target="_blank" rel="noopener noreferrer"
@@ -173,13 +173,13 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                     {/* Main: filmography */}
                     <div className="md:col-span-2">
-                        <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Filmografia</h3>
+                        <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Filmografia</h3>
                         {artist.productions.length > 0 ? (
                             <div className="space-y-4">
                                 {artist.productions.map(({ production }) => (
                                     <div key={production.id} className="group flex bg-zinc-900 rounded-lg border border-white/5 overflow-hidden hover:border-purple-500/30 transition-colors">
                                         <div className="w-20 md:w-28 flex-shrink-0 bg-gradient-to-b from-zinc-800 to-zinc-900 flex items-center justify-center">
-                                            <span className="text-[10px] font-black text-zinc-700 uppercase group-hover:text-purple-500 transition-colors text-center px-2 leading-tight">
+                                            <span className="text-xs font-black text-zinc-700 uppercase group-hover:text-purple-500 transition-colors text-center px-2 leading-tight">
                                                 {production.type}
                                             </span>
                                         </div>
@@ -193,7 +193,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                             {production.streamingPlatforms && (
                                                 <div className="flex flex-wrap gap-2 mt-3">
                                                     {production.streamingPlatforms.map(p => (
-                                                        <span key={p} className="text-[10px] font-black text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
+                                                        <span key={p} className="text-xs font-black text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
                                                     ))}
                                                 </div>
                                             )}

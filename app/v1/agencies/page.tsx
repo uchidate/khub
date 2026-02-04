@@ -41,7 +41,7 @@ export default async function AgenciesPage() {
                                             {artist.primaryImageUrl ? (
                                                 <img src={artist.primaryImageUrl} alt={artist.nameRomanized} className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-zinc-600 font-black text-[10px]">
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-600 font-black text-xs">
                                                     {artist.nameRomanized[0]}
                                                 </div>
                                             )}
@@ -49,7 +49,7 @@ export default async function AgenciesPage() {
                                     ))}
                                     {agency.artists.length > 5 && (
                                         <div className="w-10 h-10 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-[10px] font-black text-zinc-400">+{agency.artists.length - 5}</span>
+                                            <span className="text-xs font-black text-zinc-400">+{agency.artists.length - 5}</span>
                                         </div>
                                     )}
                                 </div>
@@ -61,7 +61,7 @@ export default async function AgenciesPage() {
                         )}
 
                         <div className="flex justify-between items-end">
-                            <div className="bg-zinc-800 px-4 py-2 rounded-xl text-zinc-400 font-black text-[10px] uppercase">
+                            <div className="bg-zinc-800 px-4 py-2 rounded-xl text-zinc-400 font-black text-xs uppercase">
                                 {agency.artists.length} Artistas
                             </div>
                             <span className="text-xs font-black text-zinc-500 group-hover:text-purple-500 transition-colors">

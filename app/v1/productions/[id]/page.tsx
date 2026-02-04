@@ -101,7 +101,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                     <div className="flex flex-wrap items-center gap-3 mb-4">
                         {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
                         <span className="w-1 h-1 bg-zinc-700 rounded-full" />
-                        <span className="uppercase tracking-widest text-[10px] font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
+                        <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
                         {production.streamingPlatforms && production.streamingPlatforms.map(p => (
                             <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
                         ))}
@@ -118,14 +118,14 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                     <div className="md:col-span-2 space-y-10">
                         {production.synopsis && (
                             <div>
-                                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Sinopse</h3>
+                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Sinopse</h3>
                                 <p className="text-zinc-400 leading-relaxed font-medium text-lg">{production.synopsis}</p>
                             </div>
                         )}
 
                         {tags.length > 0 && (
                             <div>
-                                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Tags</h3>
+                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Tags</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {tags.map(tag => (
                                         <span key={tag} className="text-xs font-bold text-zinc-400 bg-zinc-900 px-3 py-1.5 rounded-sm border border-white/5">{tag}</span>
@@ -137,7 +137,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         {/* Cast */}
                         {production.artists.length > 0 && (
                             <div>
-                                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h3>
+                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                     {production.artists.map(({ artist, role }) => (
                                         <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="group">
@@ -150,7 +150,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                 <div className="absolute bottom-0 left-0 right-0 p-3">
                                                     <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
-                                                    {role && <p className="text-[10px] text-purple-500 font-bold">{role}</p>}
+                                                    {role && <p className="text-xs text-purple-500 font-bold">{role}</p>}
                                                 </div>
                                             </div>
                                         </Link>
@@ -165,26 +165,26 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         <div className="bg-zinc-900 rounded-lg border border-white/5 p-6 sticky top-24">
                             {production.year && (
                                 <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Ano</span>
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Ano</span>
                                     <span className="text-sm font-bold text-zinc-300">{production.year}</span>
                                 </div>
                             )}
                             <div className="flex justify-between py-3 border-b border-white/5">
-                                <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Tipo</span>
+                                <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Tipo</span>
                                 <span className="text-sm font-bold text-zinc-300 uppercase">{production.type}</span>
                             </div>
                             {production.streamingPlatforms && (
                                 <div className="flex justify-between py-3 border-b border-white/5 items-center">
-                                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Streaming</span>
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Streaming</span>
                                     <div className="flex flex-wrap gap-1.5 justify-end">
                                         {production.streamingPlatforms.map(p => (
-                                            <span key={p} className="text-[10px] font-black text-white bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
+                                            <span key={p} className="text-xs font-black text-white bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
                                         ))}
                                     </div>
                                 </div>
                             )}
                             <div className="flex justify-between py-3">
-                                <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Elenco</span>
+                                <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Elenco</span>
                                 <span className="text-sm font-bold text-zinc-300">{production.artists.length} artistas</span>
                             </div>
                         </div>

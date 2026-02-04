@@ -85,7 +85,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 <header className="mb-12">
                     <div className="flex flex-wrap gap-2 mb-6">
                         {tags.map((tag) => (
-                            <span key={tag} className="px-3 py-1 bg-purple-600/20 text-purple-400 border border-purple-500/20 text-[10px] font-black uppercase tracking-widest rounded-full">
+                            <span key={tag} className="px-3 py-1 bg-purple-600/20 text-purple-400 border border-purple-500/20 text-xs font-black uppercase tracking-widest rounded-full">
                                 {tag}
                             </span>
                         ))}

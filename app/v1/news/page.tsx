@@ -55,7 +55,7 @@ async function NewsGrid() {
                         <div className="aspect-video rounded-3xl overflow-hidden bg-zinc-900 border border-white/5 relative shadow-2xl mb-6">
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent z-10" />
                             <div className="absolute top-6 left-6 z-20">
-                                <span className="px-3 py-1 bg-purple-600 text-white font-black text-[10px] uppercase tracking-widest rounded-sm">DESTAQUE</span>
+                                <span className="px-3 py-1 bg-purple-600 text-white font-black text-xs uppercase tracking-widest rounded-sm">DESTAQUE</span>
                             </div>
                             <div className="absolute bottom-10 left-10 right-10 z-20">
                                 <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight group-hover:text-purple-400 transition-colors">{news[0].title}</h2>
@@ -102,7 +102,7 @@ async function NewsGrid() {
                                 <div className="flex-1 pr-8">
                                     <div className="flex gap-2 mb-2">
                                         {item.tags?.slice(0, 2).map((tag: string) => (
-                                            <span key={tag} className="text-[9px] font-black text-purple-600 uppercase tracking-widest">{tag}</span>
+                                            <span key={tag} className="text-xs font-black text-purple-600 uppercase tracking-widest">{tag}</span>
                                         ))}
                                     </div>
                                     <h3 className="font-bold text-lg mb-2 group-hover:text-purple-500 transition-colors leading-snug">{item.title}</h3>
@@ -138,8 +138,8 @@ async function NewsGrid() {
                             <h3 className="text-xl font-bold mb-4 group-hover:text-purple-500 transition-colors">{item.title}</h3>
                             <p className="text-sm text-zinc-400 line-clamp-3 mb-6 font-medium">{item.contentMd}</p>
                             <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-4">
-                                <span className="text-[10px] font-black text-zinc-600">{new Date(item.publishedAt).toLocaleDateString('pt-BR')}</span>
-                                <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest group-hover:translate-x-1 transition-transform inline-block">Ler mais →</span>
+                                <span className="text-xs font-black text-zinc-600">{new Date(item.publishedAt).toLocaleDateString('pt-BR')}</span>
+                                <span className="text-xs font-black text-purple-600 uppercase tracking-widest group-hover:translate-x-1 transition-transform inline-block">Ler mais →</span>
                             </div>
                         </Link>
                         <div className="absolute top-8 right-8 z-10">
