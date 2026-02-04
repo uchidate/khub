@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { Search, X } from "lucide-react"
 import { SearchBar } from "@/components/features/SearchBar"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
+import { UserMenu } from "@/components/features/UserMenu"
 
 const NavBar = () => {
     const pathname = usePathname()
@@ -78,7 +79,9 @@ const NavBar = () => {
                                 </div>
                             )}
                         </div>
-                        <div className="w-8 h-8 rounded bg-gradient-to-tr from-purple-600 to-pink-500 cursor-pointer"></div>
+
+                        {/* User menu */}
+                        <UserMenu />
                     </div>
                 </div>
             </div>
