@@ -50,6 +50,7 @@ model Artist {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
+  albums             Album[]
 
   @@index([agencyId])
   @@index([createdAt])
@@ -58,6 +59,28 @@ model Artist {
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
   @@index([trendingScore])
+}
+
+model Album {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   // 'ALBUM', 'EP', 'SINGLE'
+  releaseDate DateTime?
+  coverUrl    String?
+  
+  // Streaming Links
+  spotifyUrl    String?
+  appleMusicUrl String?
+  youtubeUrl    String?
+
+  artistId    String
+  artist      Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([artistId])
+  @@index([releaseDate])
 }
 
 model Production {

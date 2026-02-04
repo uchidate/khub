@@ -63,6 +63,9 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
         where: { id: params.id },
         include: {
             agency: true,
+            albums: {
+                orderBy: { releaseDate: 'desc' }
+            },
             productions: {
                 include: { production: true }
             }
@@ -191,51 +194,113 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                         )}
                     </div>
 
-                    {/* Main: filmography */}
-                    <div className="md:col-span-2">
-                        <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Filmografia</h3>
-                        {artist.productions.length > 0 ? (
-                            <div className="space-y-4">
-                                {artist.productions.map(({ production }) => (
-                                    <div key={production.id} className="group flex bg-zinc-900 rounded-lg border border-white/5 overflow-hidden hover:border-purple-500/30 transition-colors">
-                                        <div className="w-20 md:w-28 flex-shrink-0 bg-gradient-to-b from-zinc-800 to-zinc-900 flex items-center justify-center">
-                                            <span className="text-xs font-black text-zinc-700 uppercase group-hover:text-purple-500 transition-colors text-center px-2 leading-tight">
-                                                {production.type}
-                                            </span>
-                                        </div>
-                                        <div className="flex-1 p-5">
-                                            <div className="flex flex-wrap items-center gap-3 mb-1">
-                                                <h4 className="text-lg font-black text-white">{production.titlePt}</h4>
-                                                {production.year && <span className="text-xs font-bold text-purple-500">{production.year}</span>}
-                                            </div>
-                                            {production.titleKr && <p className="text-xs text-zinc-600 font-medium mb-2">{production.titleKr}</p>}
-                                            {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2 font-medium">{production.synopsis}</p>}
-                                            {production.streamingPlatforms && (
-                                                <div className="flex flex-wrap gap-2 mt-3">
-                                                    {production.streamingPlatforms.map(p => (
-                                                        <span key={p} className="text-xs font-black text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
-                                                    ))}
+                    {/* Main Content Column */}
+                    <div className="md:col-span-2 space-y-16">
+
+                        {/* Discography Section */}
+                        {artist.albums && artist.albums.length > 0 && (
+                            <div>
+                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <Music className="w-4 h-4" />
+                                    Discografia Digital
+                                </h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {artist.albums.map((album) => (
+                                        <div key={album.id} className="group relative bg-zinc-900 rounded-lg border border-white/5 overflow-hidden hover:border-purple-500/50 transition-all hover:-translate-y-1">
+                                            {/* Cover */}
+                                            <div className="aspect-square relative bg-zinc-800">
+                                                {album.coverUrl ? (
+                                                    <Image src={album.coverUrl} alt={album.title} fill className="object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-zinc-700">
+                                                        <Music className="w-8 h-8 opacity-20" />
+                                                    </div>
+                                                )}
+                                                {/* Overlay Actions */}
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
+                                                    {album.spotifyUrl && (
+                                                        <a href={album.spotifyUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-green-500 rounded-full hover:scale-110 transition-transform text-black" title="Ouvir no Spotify">
+                                                            <Globe className="w-4 h-4" />
+                                                        </a>
+                                                    )}
+                                                    {album.youtubeUrl && (
+                                                        <a href={album.youtubeUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-red-600 rounded-full hover:scale-110 transition-transform text-white" title="Ver no YouTube">
+                                                            <Youtube className="w-4 h-4" />
+                                                        </a>
+                                                    )}
+                                                    {album.appleMusicUrl && (
+                                                        <a href={album.appleMusicUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-pink-500 rounded-full hover:scale-110 transition-transform text-white" title="Ouvir no Apple Music">
+                                                            <Music className="w-4 h-4" />
+                                                        </a>
+                                                    )}
                                                 </div>
-                                            )}
+                                            </div>
+                                            {/* Info */}
+                                            <div className="p-3">
+                                                <h4 className="font-bold text-white text-sm line-clamp-1" title={album.title}>{album.title}</h4>
+                                                <div className="flex justify-between items-center mt-1">
+                                                    <span className="text-[10px] uppercase font-black text-neon-pink bg-neon-pink/10 px-1.5 py-0.5 rounded-sm">
+                                                        {album.type}
+                                                    </span>
+                                                    {album.releaseDate && (
+                                                        <span className="text-[10px] font-bold text-zinc-500">
+                                                            {new Date(album.releaseDate).getFullYear()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="bg-zinc-900 rounded-lg border border-white/5 p-12 text-center">
-                                <div className="flex flex-col items-center gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-zinc-400 font-bold mb-1">Nenhuma produção registrada</p>
-                                        <p className="text-zinc-600 text-sm font-medium">A filmografia deste artista será atualizada em breve</p>
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
+
+                        {/* Filmography Section */}
+                        <div>
+                            <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Filmografia</h3>
+                            {artist.productions.length > 0 ? (
+                                <div className="space-y-4">
+                                    {artist.productions.map(({ production }) => (
+                                        <div key={production.id} className="group flex bg-zinc-900 rounded-lg border border-white/5 overflow-hidden hover:border-purple-500/30 transition-colors">
+                                            <div className="w-20 md:w-28 flex-shrink-0 bg-gradient-to-b from-zinc-800 to-zinc-900 flex items-center justify-center">
+                                                <span className="text-xs font-black text-zinc-700 uppercase group-hover:text-purple-500 transition-colors text-center px-2 leading-tight">
+                                                    {production.type}
+                                                </span>
+                                            </div>
+                                            <div className="flex-1 p-5">
+                                                <div className="flex flex-wrap items-center gap-3 mb-1">
+                                                    <h4 className="text-lg font-black text-white">{production.titlePt}</h4>
+                                                    {production.year && <span className="text-xs font-bold text-purple-500">{production.year}</span>}
+                                                </div>
+                                                {production.titleKr && <p className="text-xs text-zinc-600 font-medium mb-2">{production.titleKr}</p>}
+                                                {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2 font-medium">{production.synopsis}</p>}
+                                                {production.streamingPlatforms && (
+                                                    <div className="flex flex-wrap gap-2 mt-3">
+                                                        {production.streamingPlatforms.map(p => (
+                                                            <span key={p} className="text-xs font-black text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="bg-zinc-900 rounded-lg border border-white/5 p-12 text-center">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-zinc-400 font-bold mb-1">Nenhuma produção registrada</p>
+                                            <p className="text-zinc-600 text-sm font-medium">A filmografia deste artista será atualizada em breve</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
