@@ -126,8 +126,15 @@ async function main() {
     if (options.provider) {
         console.log(`   Preferred provider: ${options.provider}`);
     }
-    console.log(`   Available providers: ${orchestrator.getAvailableProviders().join(', ')}`);
+    const availableProviders = orchestrator.getAvailableProviders();
+    console.log(`   Available providers: ${availableProviders.join(', ')}`);
     console.log('='.repeat(60));
+
+    if (availableProviders.length === 0) {
+        console.error('\n❌ ERROR: No AI providers configured.');
+        console.error('   Please set at least one of: GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL');
+        process.exit(1);
+    }
 
     const genOptions = options.provider ? { preferredProvider: options.provider } : undefined;
 

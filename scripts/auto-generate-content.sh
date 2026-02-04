@@ -63,14 +63,31 @@ CONTAINER_NAME="hallyuhub"
 if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     # Executar dentro do container Docker
     log "Executando via Docker container (${CONTAINER_NAME})..."
-    # Usamos npx tsx diretamente para garantir, mas npm run deve funcionar com o package.json copiado
-    docker exec "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+    
+    # Passar variáveis de ambiente explicitamente para garantir que sejam vistas pelo script
+    docker exec \
+        -e GEMINI_API_KEY="$GEMINI_API_KEY" \
+        -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+        -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+        -e OLLAMA_BASE_URL="$OLLAMA_BASE_URL" \
+        -e SLACK_WEBHOOK_CONTENT="$SLACK_WEBHOOK_CONTENT" \
+        -e SLACK_WEBHOOK_DEPLOYS="$SLACK_WEBHOOK_DEPLOYS" \
+        -e SLACK_WEBHOOK_ALERTS="$SLACK_WEBHOOK_ALERTS" \
+        "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
 elif docker ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; then
     # Fallback para nome alternativo
     CONTAINER_NAME="hallyuhub-production"
     log "Executando via Docker container (${CONTAINER_NAME})..."
-    docker exec "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+    docker exec \
+        -e GEMINI_API_KEY="$GEMINI_API_KEY" \
+        -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+        -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+        -e OLLAMA_BASE_URL="$OLLAMA_BASE_URL" \
+        -e SLACK_WEBHOOK_CONTENT="$SLACK_WEBHOOK_CONTENT" \
+        -e SLACK_WEBHOOK_DEPLOYS="$SLACK_WEBHOOK_DEPLOYS" \
+        -e SLACK_WEBHOOK_ALERTS="$SLACK_WEBHOOK_ALERTS" \
+        "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
 else
     # Fallback: Executar localmente (ambiente de desenvolvimento ou container não encontrado)
