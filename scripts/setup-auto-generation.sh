@@ -81,7 +81,7 @@ if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
         fi
     fi
     # Remover entrada antiga
-    (crontab -l | grep -v "auto-generate-content.sh") | crontab -
+    (crontab -l | grep -v "auto-generate-content.sh" || true) | crontab -
 fi
 
 # Adicionar nova entrada ao crontab
@@ -114,7 +114,7 @@ echo ""
 echo "=========================================="
 echo "  SETUP CONCLUÍDO"
 echo "=========================================="
-echo "  O script será executado a cada 15 minutos"
+echo "  O script será executado a cada 5 minutos"
 echo "  Logs: ${PROJECT_DIR}/logs/auto-generate-*.log"
 echo ""
 echo "  Comandos úteis:"
