@@ -71,7 +71,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 {/* Breadcrumbs */}
                 <div className="mb-8 flex justify-between items-start">
                     <Breadcrumbs items={[
-                        { label: 'Notícias', href: '/v1/news' },
+                        { label: 'Notícias', href: '/news' },
                         { label: news.title }
                     ]} />
                     <FavoriteButton

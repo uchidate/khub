@@ -52,13 +52,13 @@ export default function FavoritesPage() {
                             </p>
                         </div>
                         <div className="flex gap-3 mt-4">
-                            <Link href="/v1/artists" className="px-6 py-3 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 transition-colors">
+                            <Link href="/artists" className="px-6 py-3 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 transition-colors">
                                 Ver Artistas
                             </Link>
-                            <Link href="/v1/productions" className="px-6 py-3 bg-zinc-800 text-white rounded-lg font-bold text-sm hover:bg-zinc-700 transition-colors">
+                            <Link href="/productions" className="px-6 py-3 bg-zinc-800 text-white rounded-lg font-bold text-sm hover:bg-zinc-700 transition-colors">
                                 Ver Produções
                             </Link>
-                            <Link href="/v1/news" className="px-6 py-3 bg-zinc-800 text-white rounded-lg font-bold text-sm hover:bg-zinc-700 transition-colors">
+                            <Link href="/news" className="px-6 py-3 bg-zinc-800 text-white rounded-lg font-bold text-sm hover:bg-zinc-700 transition-colors">
                                 Ver Notícias
                             </Link>
                         </div>
@@ -81,7 +81,7 @@ export default function FavoritesPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <Link
-                            href="/v1/artists"
+                            href="/artists"
                             className="bg-zinc-900/50 rounded-xl border border-white/5 p-8 hover:border-purple-500/30 transition-colors group"
                         >
                             <div className="flex items-center justify-between mb-4">
@@ -98,7 +98,7 @@ export default function FavoritesPage() {
                         </Link>
 
                         <Link
-                            href="/v1/productions"
+                            href="/productions"
                             className="bg-zinc-900/50 rounded-xl border border-white/5 p-8 hover:border-purple-500/30 transition-colors group"
                         >
                             <div className="flex items-center justify-between mb-4">
@@ -115,7 +115,7 @@ export default function FavoritesPage() {
                         </Link>
 
                         <Link
-                            href="/v1/news"
+                            href="/news"
                             className="bg-zinc-900/50 rounded-xl border border-white/5 p-8 hover:border-purple-500/30 transition-colors group"
                         >
                             <div className="flex items-center justify-between mb-4">

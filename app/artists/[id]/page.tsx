@@ -72,7 +72,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
     if (!artist) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Breadcrumbs items={[{ label: 'Artistas', href: '/v1/artists' }, { label: 'Não Encontrado' }]} />
+                <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: 'Não Encontrado' }]} />
                 <ErrorMessage
                     title="Artista não encontrado"
                     message="Este artista pode ter sido removido ou o link está incorreto."
@@ -107,7 +107,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 {/* Breadcrumbs */}
                 <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[
-                        { label: 'Artistas', href: '/v1/artists' },
+                        { label: 'Artistas', href: '/artists' },
                         { label: artist.nameRomanized }
                     ]} />
                     <FavoriteButton

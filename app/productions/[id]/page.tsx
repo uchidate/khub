@@ -66,7 +66,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
     if (!production) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Breadcrumbs items={[{ label: 'Filmes & Séries', href: '/v1/productions' }, { label: 'Não Encontrado' }]} />
+                <Breadcrumbs items={[{ label: 'Filmes & Séries', href: '/productions' }, { label: 'Não Encontrado' }]} />
                 <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic mt-8">Produção não encontrada</h1>
             </div>
         )
@@ -92,7 +92,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                 {/* Breadcrumbs */}
                 <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[
-                        { label: 'Filmes & Séries', href: '/v1/productions' },
+                        { label: 'Filmes & Séries', href: '/productions' },
                         { label: production.titlePt }
                     ]} />
                     <FavoriteButton
@@ -147,7 +147,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                     {production.artists.map(({ artist, role }) => (
-                                        <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="group">
+                                        <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
                                             <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-colors">
                                                 {artist.primaryImageUrl ? (
                                                     <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.7] group-hover:brightness-90" />

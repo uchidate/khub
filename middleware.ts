@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages
   if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL('/v1', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   // Redirect unauthenticated users from protected routes
@@ -58,7 +58,7 @@ export async function middleware(request: NextRequest) {
 
   // Check admin routes
   if (isAdminRoute && !isAdmin) {
-    return NextResponse.redirect(new URL('/v1', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return NextResponse.next()

@@ -128,7 +128,7 @@ export default async function ProfilePage() {
               ← Voltar ao Dashboard
             </Link>
             <Link
-              href="/v1"
+              href=""
               className="text-purple-500 hover:text-purple-400 transition-colors"
             >
               ← Voltar ao Início

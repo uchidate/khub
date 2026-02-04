@@ -23,20 +23,20 @@ const NavBar = () => {
     }, [])
 
     const navLinks = [
-        { label: "Início", href: "/v1" },
-        { label: "Artistas", href: "/v1/artists" },
-        { label: "Agências", href: "/v1/agencies" },
-        { label: "Filmes & Séries", href: "/v1/productions" },
-        { label: "Notícias", href: "/v1/news" },
-        { label: "Sobre", href: "/v1/about" },
+        { label: "Início", href: "" },
+        { label: "Artistas", href: "/artists" },
+        { label: "Agências", href: "/agencies" },
+        { label: "Filmes & Séries", href: "/productions" },
+        { label: "Notícias", href: "/news" },
+        { label: "Sobre", href: "/about" },
     ]
 
     return (
-        <nav className={`fixed top-0 w-full z-50 transition-colors duration-300 ${isScrolled ? 'bg-black' : 'bg-transparent bg-gradient-to-b from-black/80 to-transparent'}`}>
+        <nav className={`w-full z-50 transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'fixed top-0 bg-transparent bg-gradient-to-b from-black/80 to-transparent py-6'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16 md:h-20">
                     <div className="flex items-center gap-10">
-                        <Link href="/v1" className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
+                        <Link href="" className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
                             <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
                         </Link>
                         <div className="hidden md:flex space-x-6">

@@ -51,7 +51,7 @@ async function ProductionsGrid() {
         <div className="space-y-12">
             {productions.map((prod: any) => (
                 <div key={prod.id} className="group relative">
-                    <Link href={`/v1/productions/${prod.id}`} className="relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-64 lg:h-80 card-hover shadow-2xl block">
+                    <Link href={`/productions/${prod.id}`} className="relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-64 lg:h-80 card-hover shadow-2xl block">
                         {/* Poster / Backdrop */}
                         <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-900 relative overflow-hidden">
                             {prod.imageUrl ? (
@@ -110,7 +110,7 @@ async function ProductionsGrid() {
                                             {prod.artists.slice(0, 4).map((conn: any) => (
                                                 <Link
                                                     key={conn.artistId}
-                                                    href={`/v1/artists/${conn.artistId}`}
+                                                    href={`/artists/${conn.artistId}`}
                                                     onClick={(e) => e.stopPropagation()}
                                                     className="text-xs font-bold text-purple-400 hover:text-purple-300 hover:underline transition-colors"
                                                 >

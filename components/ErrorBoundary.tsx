@@ -90,7 +90,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Tentar Novamente
               </Button>
 
-              <Link href="/v1">
+              <Link href="">
                 <Button
                   variant="secondary"
                   className="flex items-center justify-center gap-2 w-full"

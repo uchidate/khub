@@ -220,11 +220,11 @@ export function SearchBar() {
 function getResultUrl(result: SearchResult): string {
   switch (result.type) {
     case 'artist':
-      return `/v1/artists/${result.id}`
+      return `/artists/${result.id}`
     case 'production':
-      return `/v1/productions/${result.id}`
+      return `/productions/${result.id}`
     case 'news':
-      return `/v1/news/${result.id}`
+      return `/news/${result.id}`
     default:
       return '/'
   }

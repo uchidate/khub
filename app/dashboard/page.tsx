@@ -98,7 +98,7 @@ export default async function DashboardPage() {
 
           {/* Back to Home */}
           <Link
-            href="/v1"
+            href=""
             className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors"
           >
             ← Voltar para o início

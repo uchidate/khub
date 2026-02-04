@@ -2,10 +2,16 @@ import { Suspense } from 'react'
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
+import type { Metadata } from "next"
 import { ArtistCardSkeleton } from "@/components/skeletons/ArtistCardSkeleton"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+    title: 'Artistas',
+    description: 'Explore perfis detalhados de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.',
+}
 
 function SkeletonGrid() {
     return (
@@ -31,7 +37,7 @@ async function ArtistsGrid() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
             {artists.map((artist: any) => (
                 <div key={artist.id} className="group cursor-pointer block relative">
-                    <Link href={`/v1/artists/${artist.id}`}>
+                    <Link href={`/artists/${artist.id}`}>
                         <div className="aspect-[2/3] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 card-hover shadow-2xl">
                             {artist.primaryImageUrl ? (
                                 <Image

@@ -26,7 +26,7 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
         {/* Home */}
         <li>
           <Link
-            href="/v1"
+            href=""
             className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
           >
             <Home size={16} />

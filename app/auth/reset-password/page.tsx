@@ -103,7 +103,7 @@ export default function ResetPasswordPage() {
       <div className="max-w-md w-full space-y-8 animate-fade-in">
         {/* Header */}
         <div className="text-center">
-          <Link href="/v1" className="inline-block mb-6">
+          <Link href="" className="inline-block mb-6">
             <h1 className="text-4xl font-black tracking-tighter uppercase">
               <span className="text-purple-500">HALLYU</span>
               <span className="text-pink-500">HUB</span>
