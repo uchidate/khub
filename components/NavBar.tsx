@@ -67,7 +67,7 @@ const NavBar = () => {
                                 </button>
                             ) : (
                                 <div className="flex items-center gap-2">
-                                    <div className="w-64 md:w-80">
+                                    <div className="w-48 md:w-64">
                                         <SearchBar />
                                     </div>
                                     <button

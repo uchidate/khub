@@ -8,17 +8,17 @@ export const dynamic = 'force-dynamic'
 
 function SkeletonProduction() {
     return (
-        <div className="animate-pulse bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80">
+        <div className="animate-pulse bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-64 lg:h-80">
             <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-800" />
-            <div className="flex-1 p-8 md:p-10">
+            <div className="flex-1 p-8 md:p-10 flex flex-col">
                 <div className="h-8 bg-zinc-800 rounded w-3/4 mb-4" />
                 <div className="h-4 bg-zinc-800 rounded w-1/4 mb-6" />
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2 mb-6 flex-grow">
                     <div className="h-3 bg-zinc-800 rounded" />
                     <div className="h-3 bg-zinc-800 rounded" />
                     <div className="h-3 bg-zinc-800 rounded w-5/6" />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-auto">
                     <div className="h-6 bg-zinc-800 rounded w-20" />
                     <div className="h-6 bg-zinc-800 rounded w-20" />
                 </div>
@@ -51,7 +51,7 @@ async function ProductionsGrid() {
         <div className="space-y-12">
             {productions.map((prod: any) => (
                 <div key={prod.id} className="group relative">
-                    <Link href={`/v1/productions/${prod.id}`} className="relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
+                    <Link href={`/v1/productions/${prod.id}`} className="relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-64 lg:h-80 card-hover shadow-2xl block">
                         {/* Poster / Backdrop */}
                         <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-900 relative overflow-hidden">
                             {prod.imageUrl ? (

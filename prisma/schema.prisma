@@ -41,9 +41,14 @@ model Artist {
   tmdbId           String?            // TMDB person ID
   tmdbSyncStatus   String?            // 'SYNCED', 'NOT_FOUND', 'ERROR'
   tmdbLastSync     DateTime?          // Last successful sync
-  tmdbLastAttempt  DateTime?          // Last attempt (even if failed)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  tmdbLastAttempt    DateTime?          // Last attempt (even if failed)
+  // Trending metrics
+  viewCount          Int                @default(0)
+  favoriteCount      Int                @default(0)
+  lastTrendingUpdate DateTime?
+  trendingScore      Float              @default(0.0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([agencyId])
   @@index([createdAt])
@@ -51,6 +56,7 @@ model Artist {
   @@index([nameRomanized, createdAt])
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
+  @@index([trendingScore])
 }
 
 model Production {

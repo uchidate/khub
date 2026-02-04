@@ -1,5 +1,6 @@
 import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
+import { ToastContainer } from "@/components/features/ToastContainer"
 
 export default function SiteLayout({
     children,
@@ -10,6 +11,7 @@ export default function SiteLayout({
         <div className="min-h-screen flex flex-col">
             <NavBar />
             <main className="flex-grow">{children}</main>
+            <ToastContainer />
             <PWAInstaller />
             <footer className="bg-black border-t border-zinc-800 py-12">
                 <div className="max-w-7xl mx-auto px-4">
