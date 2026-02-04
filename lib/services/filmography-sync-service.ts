@@ -467,8 +467,8 @@ export class FilmographySyncService {
 
     try {
       await this.slackService.notifyContentAdded({
-        type: 'filmography',
-        name: result.artistName,
+        type: 'production',
+        name: `Filmografia: ${result.artistName}`,
         details: {
           '✅ Adicionadas': `${result.addedCount} produções`,
           '🔄 Atualizadas': `${result.updatedCount} produções`,
@@ -490,18 +490,19 @@ export class FilmographySyncService {
       const totalAdded = result.results.reduce((sum, r) => sum + r.addedCount, 0)
       const totalUpdated = result.results.reduce((sum, r) => sum + r.updatedCount, 0)
 
-      await this.slackService.sendAlert({
-        title: '📊 Atualização em Lote - Filmografias',
-        details: {
-          'Total Artistas': `${result.total}`,
-          '✅ Sucesso': `${result.successCount}`,
-          '❌ Falhas': `${result.failureCount}`,
-          '➕ Produções Adicionadas': `${totalAdded}`,
-          '🔄 Produções Atualizadas': `${totalUpdated}`,
-          '⏱️ Duração': `${Math.floor(result.duration / 60000)}m ${Math.floor((result.duration % 60000) / 1000)}s`,
-        },
-        severity: result.failureCount > 0 ? 'warning' : 'success',
-      })
+      const severity = result.failureCount > 0 ? 'warning' : 'info'
+      const message = `**Total Artistas:** ${result.total}\n` +
+        `**✅ Sucesso:** ${result.successCount}\n` +
+        `**❌ Falhas:** ${result.failureCount}\n` +
+        `**➕ Produções Adicionadas:** ${totalAdded}\n` +
+        `**🔄 Produções Atualizadas:** ${totalUpdated}\n` +
+        `**⏱️ Duração:** ${Math.floor(result.duration / 60000)}m ${Math.floor((result.duration % 60000) / 1000)}s`
+
+      await this.slackService.notifyAlert(
+        severity,
+        '📊 Atualização em Lote - Filmografias',
+        message
+      )
     } catch (error) {
       console.error('Failed to send batch Slack notification:', error)
     }

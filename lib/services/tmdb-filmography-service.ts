@@ -367,58 +367,76 @@ export class TMDBFilmographyService {
     const tmdbType = isMovie ? 'movie' : 'tv'
 
     try {
-      // Fetch detailed information
-      const details = isMovie
-        ? await this.getMovieDetails(id)
-        : await this.getTVShowDetails(id)
+      if (isMovie) {
+        // Handle movie
+        const details = await this.getMovieDetails(id)
+        const translations = await this.getMovieTranslations(id)
+        const ptTranslation = translations.translations.find(t => t.iso_639_1 === 'pt')
+        const titlePt = ptTranslation?.data?.title || details.title
 
-      // Get Portuguese translation
-      const translations = isMovie
-        ? await this.getMovieTranslations(id)
-        : await this.getTVShowTranslations(id)
-
-      const ptTranslation = translations.translations.find(t => t.iso_639_1 === 'pt')
-      const titlePt = ptTranslation?.data?.title || ptTranslation?.data?.name ||
-                     (isMovie ? details.title : (details as TMDBTVShow).name)
-
-      // Get streaming providers (Brazil only)
-      let streamingPlatforms: string[] = []
-      try {
-        const watchProviders = isMovie
-          ? await this.getMovieWatchProviders(id)
-          : await this.getTVShowWatchProviders(id)
-
-        const brProviders = watchProviders.results['BR']
-        if (brProviders?.flatrate) {
-          streamingPlatforms = brProviders.flatrate.map(p => p.provider_name)
+        // Get streaming providers (Brazil only)
+        let streamingPlatforms: string[] = []
+        try {
+          const watchProviders = await this.getMovieWatchProviders(id)
+          const brProviders = watchProviders.results['BR']
+          if (brProviders?.flatrate) {
+            streamingPlatforms = brProviders.flatrate.map(p => p.provider_name)
+          }
+        } catch (error) {
+          // Watch providers might not be available, that's okay
         }
-      } catch (error) {
-        // Watch providers might not be available, that's okay
-      }
 
-      const year = isMovie
-        ? (details.release_date ? new Date(details.release_date).getFullYear() : null)
-        : ((details as TMDBTVShow).first_air_date ? new Date((details as TMDBTVShow).first_air_date).getFullYear() : null)
+        const year = details.release_date ? new Date(details.release_date).getFullYear() : null
 
-      return {
-        tmdbId: id,
-        tmdbType,
-        title: titlePt,
-        titleKr: isMovie ? details.original_title : (details as TMDBTVShow).original_name,
-        year,
-        synopsis: details.overview || null,
-        imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE_URL}${details.poster_path}` : null,
-        releaseDate: isMovie && details.release_date
-          ? new Date(details.release_date)
-          : (details as TMDBTVShow).first_air_date
-          ? new Date((details as TMDBTVShow).first_air_date)
-          : null,
-        runtime: isMovie
-          ? (details as TMDBMovie).runtime
-          : (details as TMDBTVShow).episode_run_time[0] || null,
-        voteAverage: details.vote_average,
-        streamingPlatforms,
-        role,
+        return {
+          tmdbId: id,
+          tmdbType: 'movie',
+          title: titlePt,
+          titleKr: details.original_title,
+          year,
+          synopsis: details.overview || null,
+          imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE_URL}${details.poster_path}` : null,
+          releaseDate: details.release_date ? new Date(details.release_date) : null,
+          runtime: details.runtime,
+          voteAverage: details.vote_average,
+          streamingPlatforms,
+          role,
+        }
+      } else {
+        // Handle TV show
+        const details = await this.getTVShowDetails(id)
+        const translations = await this.getTVShowTranslations(id)
+        const ptTranslation = translations.translations.find(t => t.iso_639_1 === 'pt')
+        const titlePt = ptTranslation?.data?.name || details.name
+
+        // Get streaming providers (Brazil only)
+        let streamingPlatforms: string[] = []
+        try {
+          const watchProviders = await this.getTVShowWatchProviders(id)
+          const brProviders = watchProviders.results['BR']
+          if (brProviders?.flatrate) {
+            streamingPlatforms = brProviders.flatrate.map(p => p.provider_name)
+          }
+        } catch (error) {
+          // Watch providers might not be available, that's okay
+        }
+
+        const year = details.first_air_date ? new Date(details.first_air_date).getFullYear() : null
+
+        return {
+          tmdbId: id,
+          tmdbType: 'tv',
+          title: titlePt,
+          titleKr: details.original_name,
+          year,
+          synopsis: details.overview || null,
+          imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE_URL}${details.poster_path}` : null,
+          releaseDate: details.first_air_date ? new Date(details.first_air_date) : null,
+          runtime: details.episode_run_time[0] || null,
+          voteAverage: details.vote_average,
+          streamingPlatforms,
+          role,
+        }
       }
     } catch (error) {
       console.error(`Failed to get details for ${tmdbType} ${id}:`, error)
