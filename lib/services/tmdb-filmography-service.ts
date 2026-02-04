@@ -382,7 +382,7 @@ export class TMDBFilmographyService {
           if (brProviders?.flatrate) {
             streamingPlatforms = brProviders.flatrate.map(p => p.provider_name)
           }
-        } catch (error) {
+        } catch {
           // Watch providers might not be available, that's okay
         }
 
@@ -417,7 +417,7 @@ export class TMDBFilmographyService {
           if (brProviders?.flatrate) {
             streamingPlatforms = brProviders.flatrate.map(p => p.provider_name)
           }
-        } catch (error) {
+        } catch {
           // Watch providers might not be available, that's okay
         }
 
