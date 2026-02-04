@@ -194,6 +194,87 @@ Isso vai baixar o modelo phi3 (~2.2GB). Aguarde a conclusão.
 
 ---
 
+## 🧪 Ambiente de Staging (Opcional)
+
+O ambiente de staging permite testar mudanças antes de ir para produção. Roda na porta 3001.
+
+### 1. Criar .env.staging
+
+```bash
+cat > /var/www/hallyuhub/.env.staging << 'EOF'
+# PostgreSQL Configuration
+POSTGRES_PASSWORD=SENHA_SEGURA_AQUI
+DATABASE_URL="postgresql://hallyuhub:SENHA_SEGURA_AQUI@postgres-staging:5432/hallyuhub_staging"
+
+# App Configuration
+NEXT_PUBLIC_SITE_URL="http://IP_DO_SERVIDOR:3001"
+NEXT_TELEMETRY_DISABLED=1
+NODE_ENV=staging
+
+# AI Providers
+OLLAMA_BASE_URL="http://ollama-staging:11434"
+GEMINI_API_KEY="SUA_KEY_AQUI"
+OPENAI_API_KEY=""
+ANTHROPIC_API_KEY=""
+
+# Slack Notifications
+SLACK_WEBHOOK_CONTENT="https://hooks.slack.com/services/..."
+SLACK_WEBHOOK_DEPLOYS="https://hooks.slack.com/services/..."
+SLACK_WEBHOOK_ALERTS="https://hooks.slack.com/services/..."
+EOF
+```
+
+**Substituir:**
+- `SENHA_SEGURA_AQUI` por uma senha forte
+- `IP_DO_SERVIDOR` pelo IP do servidor (ex: 31.97.255.107)
+- API keys e webhooks conforme necessário
+
+### 2. Criar Volumes Staging
+
+```bash
+docker volume create postgres-staging-data
+docker volume create ollama-staging-data
+```
+
+### 3. Subir Containers Staging
+
+```bash
+cd /var/www/hallyuhub
+docker-compose -f docker-compose.staging.yml up -d
+```
+
+### 4. Configurar Senha PostgreSQL Staging
+
+```bash
+docker exec hallyuhub-postgres-staging psql -U hallyuhub -d postgres \
+  -c "ALTER USER hallyuhub WITH PASSWORD 'SENHA_SEGURA_AQUI';"
+```
+
+**IMPORTANTE**: Usar a MESMA senha do .env.staging
+
+### 5. Configurar Ollama Staging
+
+```bash
+./scripts/setup-ollama-docker.sh staging
+```
+
+### 6. Verificar Staging
+
+```bash
+# Containers rodando
+docker ps | grep staging
+
+# Health endpoint
+curl http://localhost:3001/api/health | jq .
+
+# Teste externo
+curl http://IP_DO_SERVIDOR:3001/api/health | jq .
+```
+
+**Staging estará disponível em**: `http://IP_DO_SERVIDOR:3001`
+
+---
+
 ## ✅ Verificação Pós-Setup
 
 Execute este script para verificar se tudo está OK:
