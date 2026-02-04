@@ -82,7 +82,7 @@ async function ProductionsGrid() {
                                     <div className="flex gap-4 items-center text-zinc-500 text-sm font-bold">
                                         <span className="text-purple-500">{prod.year}</span>
                                         <span className="w-1 h-1 bg-zinc-700 rounded-full" />
-                                        <span className="uppercase tracking-widest text-[10px] px-2 py-0.5 border border-zinc-700 rounded-sm">{prod.type}</span>
+                                        <span className="uppercase tracking-widest text-xs px-2 py-0.5 border border-zinc-700 rounded-sm">{prod.type}</span>
                                     </div>
                                 </div>
                             </div>
@@ -93,7 +93,7 @@ async function ProductionsGrid() {
 
                             <div className="flex flex-col sm:flex-row gap-8 mt-auto">
                                 <div>
-                                    <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Disponível em</h4>
+                                    <h4 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Disponível em</h4>
                                     <div className="flex gap-3">
                                         {prod.streamingPlatforms?.map((p: string) => (
                                             <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-1 rounded-sm border border-white/5">
@@ -105,13 +105,23 @@ async function ProductionsGrid() {
 
                                 {prod.artists.length > 0 && (
                                     <div>
-                                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Com a participação de</h4>
-                                        <div className="flex gap-2">
-                                            {prod.artists.map((conn: any) => (
-                                                <span key={conn.artistId} className="text-xs font-bold text-purple-400">
+                                        <h4 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Com a participação de</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {prod.artists.slice(0, 4).map((conn: any) => (
+                                                <Link
+                                                    key={conn.artistId}
+                                                    href={`/v1/artists/${conn.artistId}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-xs font-bold text-purple-400 hover:text-purple-300 hover:underline transition-colors"
+                                                >
                                                     {conn.artist.nameRomanized}
-                                                </span>
+                                                </Link>
                                             ))}
+                                            {prod.artists.length > 4 && (
+                                                <span className="text-xs font-bold text-zinc-500">
+                                                    +{prod.artists.length - 4}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -121,7 +131,12 @@ async function ProductionsGrid() {
 
                     {/* Favorite Button */}
                     <div className="absolute top-4 right-4 z-30">
-                        <FavoriteButton id={prod.id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                        <FavoriteButton
+                            id={prod.id}
+                            itemName={prod.titlePt}
+                            itemType="produção"
+                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                        />
                     </div>
                 </div>
             ))}

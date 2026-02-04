@@ -51,7 +51,7 @@ async function ArtistsGrid() {
                                 <p className="text-sm text-purple-500 font-bold mb-3">{artist.nameHangul}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {artist.roles?.map((role: string) => (
-                                        <span key={role} className="text-[10px] uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm">
+                                        <span key={role} className="text-xs uppercase font-black px-2 py-0.5 bg-white text-black rounded-sm">
                                             {role}
                                         </span>
                                     ))}
@@ -66,7 +66,12 @@ async function ArtistsGrid() {
 
                     {/* Favorite Button */}
                     <div className="absolute top-2 right-2 z-10">
-                        <FavoriteButton id={artist.id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                        <FavoriteButton
+                            id={artist.id}
+                            itemName={artist.nameRomanized}
+                            itemType="artista"
+                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                        />
                     </div>
                 </div>
             ))}

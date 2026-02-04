@@ -1,7 +1,26 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import Image from "next/image"
+import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+    title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
+    description: 'Explore os perfis mais detalhados de artistas, agências e as melhores produções da Coreia do Sul. O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.',
+    keywords: ['hallyu', 'kpop', 'kdrama', 'cultura coreana', 'artistas coreanos', 'k-pop brasil', 'dramas coreanos'],
+    openGraph: {
+        title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
+        description: 'O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil',
+        type: 'website',
+        locale: 'pt_BR'
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
+        description: 'O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil'
+    }
+}
 
 export default async function Home() {
     console.log('--- RENDERING HOMEPAGE ---')
@@ -24,10 +43,13 @@ export default async function Home() {
                 <div className="absolute inset-0 z-0">
                     <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent z-10" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
-                    <img
+                    <Image
                         src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000"
                         alt="Hero Background"
-                        className="w-full h-full object-cover brightness-[0.7]"
+                        fill
+                        priority
+                        sizes="100vw"
+                        className="object-cover brightness-[0.7]"
                     />
                 </div>
 
@@ -69,10 +91,12 @@ export default async function Home() {
                         {trendingArtists.map((artist: any) => (
                             <Link key={artist.id} href={`/v1/artists/${artist.id}`} className="card-hover group">
                                 <div className="aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 shadow-lg border border-white/5 relative">
-                                    <img
+                                    <Image
                                         src={artist.primaryImageUrl || "https://placeholder.com/600"}
                                         alt={artist.nameRomanized}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        fill
+                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                                        className="object-cover group-hover:scale-110 transition-transform duration-500"
                                     />
 
                                     {/* Trending Badge */}
@@ -112,7 +136,7 @@ export default async function Home() {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {latestProductions.map((prod: any) => (
-                            <Link key={prod.id} href="/v1/productions" className="card-hover">
+                            <Link key={prod.id} href={`/v1/productions/${prod.id}`} className="card-hover">
                                 <div className="h-56 rounded-lg overflow-hidden bg-zinc-900 relative shadow-xl group border border-white/5">
                                     <div className="absolute inset-0 bg-purple-900/10 group-hover:bg-transparent transition-colors z-10" />
                                     <div className="absolute inset-0 flex items-center justify-center p-8 bg-gradient-to-tr from-purple-900/40 to-black/20">

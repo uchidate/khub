@@ -44,7 +44,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
                 <div className="flex items-end gap-4">
                     <div className="bg-zinc-900 border border-white/5 rounded-lg px-6 py-4 text-center">
                         <p className="text-3xl font-black text-white">{agency.artists.length}</p>
-                        <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-1">Artistas</p>
+                        <p className="text-xs font-black text-zinc-600 uppercase tracking-widest mt-1">Artistas</p>
                     </div>
                     {Object.keys(socials).length > 0 && (
                         <div className="flex gap-2">
@@ -61,7 +61,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
 
             {/* Artist Roster */}
             <div>
-                <h2 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h2>
+                <h2 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h2>
                 {agency.artists.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8">
                         {agency.artists.map((artist) => (
@@ -83,7 +83,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
                                 </div>
                                 <div className="mt-3 group-hover:opacity-0 transition-opacity">
                                     <h4 className="font-bold text-sm">{artist.nameRomanized}</h4>
-                                    <p className="text-[10px] text-zinc-500 font-medium">{artist.roles?.slice(0, 2).join(', ')}</p>
+                                    <p className="text-xs text-zinc-500 font-medium">{artist.roles?.slice(0, 2).join(', ')}</p>
                                 </div>
                             </Link>
                         ))}

@@ -7,6 +7,7 @@ import { Search, X } from "lucide-react"
 import { SearchBar } from "@/components/features/SearchBar"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { UserMenu } from "@/components/features/UserMenu"
+import { MobileMenu } from "@/components/features/MobileMenu"
 
 const NavBar = () => {
     const pathname = usePathname()
@@ -43,7 +44,7 @@ const NavBar = () => {
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`text-sm font-medium hover:text-zinc-300 transition-colors ${pathname === link.href ? "text-white" : "text-zinc-400"
+                                    className={`text-sm font-medium hover:text-zinc-300 transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4 ${pathname === link.href ? "text-white" : "text-zinc-400"
                                         }`}
                                 >
                                     {link.label}
@@ -53,6 +54,9 @@ const NavBar = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        {/* Mobile menu - Only visible on mobile */}
+                        <MobileMenu links={navLinks} />
+
                         {/* Theme toggle */}
                         <ThemeToggle />
 
