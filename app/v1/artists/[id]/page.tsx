@@ -65,7 +65,6 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 <ErrorMessage
                     title="Artista não encontrado"
                     message="Este artista pode ter sido removido ou o link está incorreto."
-                    retry={() => window.location.reload()}
                     showSupport={true}
                 />
             </div>
@@ -202,8 +201,18 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-zinc-900 rounded-lg border border-white/5 p-10 text-center">
-                                <p className="text-zinc-600 font-medium">Nenhuma produção registrada ainda.</p>
+                            <div className="bg-zinc-900 rounded-lg border border-white/5 p-12 text-center">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-zinc-400 font-bold mb-1">Nenhuma produção registrada</p>
+                                        <p className="text-zinc-600 text-sm font-medium">A filmografia deste artista será atualizada em breve</p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

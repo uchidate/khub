@@ -19,11 +19,13 @@ export function SearchBar() {
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
+  const [error, setError] = useState<string | null>(null)
   const debouncedQuery = useDebounce(query, 300)
 
   useEffect(() => {
     if (debouncedQuery.length >= 2) {
       setIsLoading(true)
+      setError(null)
       fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`)
         .then(res => res.json())
         .then(data => {
@@ -32,10 +34,12 @@ export function SearchBar() {
         })
         .catch(err => {
           console.error('Search error:', err)
+          setError('Erro ao buscar. Tente novamente.')
           setIsLoading(false)
         })
     } else {
       setResults([])
+      setError(null)
       setIsLoading(false)
     }
   }, [debouncedQuery])
@@ -43,6 +47,7 @@ export function SearchBar() {
   const handleClear = () => {
     setQuery('')
     setResults([])
+    setError(null)
     setIsOpen(false)
     setSelectedIndex(-1)
   }
@@ -184,7 +189,7 @@ export function SearchBar() {
       )}
 
       {/* No Results */}
-      {isOpen && query.length >= 2 && results.length === 0 && !isLoading && (
+      {isOpen && query.length >= 2 && results.length === 0 && !isLoading && !error && (
         <div className="
           absolute top-full mt-2 w-full
           bg-zinc-900 border border-zinc-800
@@ -193,6 +198,19 @@ export function SearchBar() {
           z-50
         ">
           Nenhum resultado encontrado para "{query}"
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && isOpen && (
+        <div className="
+          absolute top-full mt-2 w-full
+          bg-red-900/20 border border-red-700
+          rounded-lg shadow-2xl
+          p-6 text-center text-red-400
+          z-50
+        ">
+          {error}
         </div>
       )}
     </div>

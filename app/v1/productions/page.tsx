@@ -106,12 +106,22 @@ async function ProductionsGrid() {
                                 {prod.artists.length > 0 && (
                                     <div>
                                         <h4 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Com a participação de</h4>
-                                        <div className="flex gap-2">
-                                            {prod.artists.map((conn: any) => (
-                                                <span key={conn.artistId} className="text-xs font-bold text-purple-400">
+                                        <div className="flex flex-wrap gap-2">
+                                            {prod.artists.slice(0, 4).map((conn: any) => (
+                                                <Link
+                                                    key={conn.artistId}
+                                                    href={`/v1/artists/${conn.artistId}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-xs font-bold text-purple-400 hover:text-purple-300 hover:underline transition-colors"
+                                                >
                                                     {conn.artist.nameRomanized}
-                                                </span>
+                                                </Link>
                                             ))}
+                                            {prod.artists.length > 4 && (
+                                                <span className="text-xs font-bold text-zinc-500">
+                                                    +{prod.artists.length - 4}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 )}

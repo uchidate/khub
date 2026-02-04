@@ -136,7 +136,7 @@ export default async function Home() {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {latestProductions.map((prod: any) => (
-                            <Link key={prod.id} href="/v1/productions" className="card-hover">
+                            <Link key={prod.id} href={`/v1/productions/${prod.id}`} className="card-hover">
                                 <div className="h-56 rounded-lg overflow-hidden bg-zinc-900 relative shadow-xl group border border-white/5">
                                     <div className="absolute inset-0 bg-purple-900/10 group-hover:bg-transparent transition-colors z-10" />
                                     <div className="absolute inset-0 flex items-center justify-center p-8 bg-gradient-to-tr from-purple-900/40 to-black/20">

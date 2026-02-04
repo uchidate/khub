@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import Image from "next/image"
 
 export const dynamic = 'force-dynamic'
 
@@ -37,9 +38,9 @@ export default async function AgenciesPage() {
                             <div className="mb-8">
                                 <div className="flex -space-x-3 mb-3">
                                     {agency.artists.slice(0, 5).map((artist: any) => (
-                                        <div key={artist.id} className="w-10 h-10 rounded-full border-2 border-zinc-900 overflow-hidden bg-zinc-800 flex-shrink-0">
+                                        <div key={artist.id} className="w-10 h-10 rounded-full border-2 border-zinc-900 overflow-hidden bg-zinc-800 flex-shrink-0 relative">
                                             {artist.primaryImageUrl ? (
-                                                <img src={artist.primaryImageUrl} alt={artist.nameRomanized} className="w-full h-full object-cover" />
+                                                <Image src={artist.primaryImageUrl} alt="" fill sizes="40px" className="object-cover" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-zinc-600 font-black text-xs">
                                                     {artist.nameRomanized[0]}
