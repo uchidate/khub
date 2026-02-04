@@ -55,8 +55,6 @@ export default function LoginPage() {
 
       router.push('/')
       router.refresh()
-      router.push('/')
-      router.refresh()
     } catch {
       setError('Erro ao fazer login. Tente novamente.')
     } finally {
