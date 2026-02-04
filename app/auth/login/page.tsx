@@ -6,26 +6,46 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
+import { useForm, ValidationRules } from '@/hooks/useForm'
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/v1'
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  const form = useForm(
+    { email: '', password: '' },
+    {
+      email: [
+        ValidationRules.required('Email é obrigatório'),
+        ValidationRules.email('Email inválido'),
+      ],
+      password: [
+        ValidationRules.required('Senha é obrigatória'),
+        ValidationRules.minLength(6, 'Senha deve ter no mínimo 6 caracteres'),
+      ],
+    }
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Validate all fields
+    if (!form.validateAll()) {
+      return
+    }
+
     setIsLoading(true)
 
     try {
       const result = await signIn('credentials', {
-        email,
-        password,
+        email: form.values.email,
+        password: form.values.password,
         redirect: false,
       })
 
@@ -79,42 +99,32 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-11 pr-4 py-3 bg-black border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
-                  placeholder="seu@email.com"
-                />
-              </div>
-            </div>
+            <Input
+              label="Email"
+              type="email"
+              value={form.values.email}
+              onChange={(e) => form.handleChange('email', e.target.value)}
+              onBlur={() => form.handleBlur('email')}
+              error={form.touched.email ? form.errors.email : undefined}
+              placeholder="seu@email.com"
+              icon={<Mail size={20} />}
+              required
+              disabled={isLoading}
+            />
 
             {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">
-                Senha
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full pl-11 pr-4 py-3 bg-black border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
+            <Input
+              label="Senha"
+              type="password"
+              value={form.values.password}
+              onChange={(e) => form.handleChange('password', e.target.value)}
+              onBlur={() => form.handleBlur('password')}
+              error={form.touched.password ? form.errors.password : undefined}
+              placeholder="••••••••"
+              icon={<Lock size={20} />}
+              required
+              disabled={isLoading}
+            />
 
             {/* Forgot Password */}
             <div className="text-right">
