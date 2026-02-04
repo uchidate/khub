@@ -268,6 +268,12 @@ jobs:
 
             echo "🟡 Deploying STAGING..."
 
+            # Cleanup: Remove old Docker images (keep last 3)
+            echo "🧹 Limpando imagens antigas..."
+            docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
+              tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
+              echo "Nenhuma imagem antiga para remover"
+
             # Pull nova imagem
             docker-compose -f docker-compose.staging.yml pull hallyuhub-staging
 
@@ -510,6 +516,12 @@ jobs:
             cd /var/www/hallyuhub
 
             echo "🟢 Deploying PRODUCTION..."
+
+            # Cleanup: Remove old Docker images (keep last 3)
+            echo "🧹 Limpando imagens antigas..."
+            docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
+              tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
+              echo "Nenhuma imagem antiga para remover"
 
             # Pull nova imagem
             docker-compose -f docker-compose.prod.yml pull hallyuhub
