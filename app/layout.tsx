@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Outfit } from "next/font/google"
 import "../styles/globals.css"
 import "../styles/nprogress.css"
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { SessionProvider } from "@/components/features/SessionProvider"
 import { NavigationProgress } from "@/components/features/NavigationProgress"
 import NavBar from "@/components/NavBar"
@@ -39,6 +40,7 @@ export default function RootLayout({
     return (
         <html lang="pt-BR">
             <body className={`${outfit.className} bg-white dark:bg-black text-zinc-900 dark:text-white selection:bg-purple-500 selection:text-white transition-colors duration-300`}>
+                <GoogleAnalytics gaId="G-XXXXXXXXXX" />
                 <SessionProvider>
                     <NavigationProgress />
                     <div className="min-h-screen flex flex-col">

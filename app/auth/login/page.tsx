@@ -1,6 +1,5 @@
 'use client'
 
-
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -8,6 +7,7 @@ import Link from 'next/link'
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { useForm, ValidationRules } from '@/hooks/useForm'
+import { motion } from 'framer-motion'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -35,7 +35,6 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
 
-    // Validate all fields
     if (!form.validateAll()) {
       return
     }
@@ -74,31 +73,57 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black px-4">
-      <div className="max-w-md w-full space-y-8 animate-fade-in">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-black">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?q=80&w=2670&auto=format&fit=crop')] bg-cover bg-center opacity-40 blur-sm scale-110 animate-pulse-slow" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-md w-full px-4 relative z-10"
+      >
         {/* Header */}
-        <div className="text-center">
-          <Link href="" className="inline-block mb-6">
-            <h1 className="text-4xl font-black tracking-tighter uppercase">
-              <span className="text-purple-500">HALLYU</span>
-              <span className="text-pink-500">HUB</span>
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block mb-4 group relative">
+            <h1 className="text-5xl font-black tracking-tighter uppercase italic select-none">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">HALLYU</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-pink-700 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">HUB</span>
             </h1>
           </Link>
-          <h2 className="text-3xl font-bold text-white mb-2">Bem-vindo de volta!</h2>
-          <p className="text-zinc-400">Entre para continuar sua jornada</p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-zinc-300 font-medium text-lg"
+          >
+            Sua jornada pelo K-Universe começa aqui.
+          </motion.p>
         </div>
 
-        {/* Form */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl">
-          {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-500 animate-slide-down">
-              <AlertCircle size={20} />
-              <p className="text-sm">{error}</p>
+        {/* Card */}
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl shadow-purple-500/10">
+          <div className="mb-6 flex justify-center">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center border border-purple-500/30 text-purple-400">
+              <LogIn size={24} />
             </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-white text-center mb-6">Bem-vindo de volta!</h2>
+
+          {error && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400"
+            >
+              <AlertCircle size={20} className="shrink-0" />
+              <p className="text-sm font-medium">{error}</p>
+            </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Input
               label="Email"
               type="email"
@@ -107,12 +132,12 @@ export default function LoginPage() {
               onBlur={() => form.handleBlur('email')}
               error={form.touched.email ? form.errors.email : undefined}
               placeholder="seu@email.com"
-              icon={<Mail size={20} />}
+              icon={<Mail size={18} />}
               required
               disabled={isLoading}
+              className="bg-black/50 border-white/10 focus:border-purple-500/50"
             />
 
-            {/* Password */}
             <Input
               label="Senha"
               type="password"
@@ -121,55 +146,49 @@ export default function LoginPage() {
               onBlur={() => form.handleBlur('password')}
               error={form.touched.password ? form.errors.password : undefined}
               placeholder="••••••••"
-              icon={<Lock size={20} />}
+              icon={<Lock size={18} />}
               required
               disabled={isLoading}
+              className="bg-black/50 border-white/10 focus:border-purple-500/50"
             />
 
-            {/* Forgot Password */}
             <div className="text-right">
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-purple-500 hover:text-purple-400 transition-colors"
+                className="text-xs text-zinc-400 hover:text-white transition-colors hover:underline underline-offset-4"
               >
-                Esqueceu sua senha?
+                Esqueceu a senha?
               </Link>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-pink-500 focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <>
-                  <LogIn size={20} />
-                  Entrar
-                </>
+                'Entrar'
               )}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-700" />
+              <div className="w-full border-t border-white/5" />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-zinc-900 text-zinc-500">Ou continue com</span>
+            <div className="relative flex justify-center text-xs uppercase tracking-widest">
+              <span className="px-4 bg-transparent text-zinc-500 font-bold backdrop-blur-xl">Ou continue com</span>
             </div>
           </div>
 
-          {/* Google Sign In */}
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3 group"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -187,18 +206,21 @@ export default function LoginPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continuar com Google
+            Google
           </button>
 
-          {/* Sign Up Link */}
-          <p className="mt-6 text-center text-sm text-zinc-400">
-            Não tem uma conta?{' '}
-            <Link href="/auth/register" className="text-purple-500 hover:text-purple-400 font-medium transition-colors">
-              Cadastre-se
+          <p className="mt-8 text-center text-sm text-zinc-400">
+            Ainda não é membro?{' '}
+            <Link href="/auth/register" className="text-white hover:text-purple-400 font-bold transition-colors underline underline-offset-4">
+              Criar conta gratuita
             </Link>
           </p>
         </div>
-      </div>
+
+        <p className="mt-8 text-center text-xs text-zinc-600 font-mono">
+          © {new Date().getFullYear()} HallyuHub. Protegido por reCAPTCHA.
+        </p>
+      </motion.div>
     </div>
   )
 }
