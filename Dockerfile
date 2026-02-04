@@ -16,8 +16,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_BUILD_STATIC_GENERATION=1
-# Usamos um DATABASE_URL dummy para o build
-ENV DATABASE_URL="file:./build.db"
+# Usamos um DATABASE_URL dummy para o build (validação apenas)
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/hallyuhub_build"
 RUN npx prisma generate
 RUN npm run build
 

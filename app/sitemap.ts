@@ -21,6 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 1,
         }))
 
+        // Skip DB queries during build
+        if (process.env.SKIP_BUILD_STATIC_GENERATION) {
+            return routes
+        }
+
         // 2. Dynamic Artists
         const artists = await prisma.artist.findMany({
             select: { id: true, updatedAt: true },

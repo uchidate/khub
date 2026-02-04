@@ -69,7 +69,7 @@ jobs:
       - name: 🏗️ Test Build
         env:
           SKIP_BUILD_STATIC_GENERATION: "1"
-          DATABASE_URL: "file:./build.db"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/hallyuhub_build"
         run: npm run build
 
       - name: 📊 Summary
