@@ -7,6 +7,7 @@ import { Search, X } from "lucide-react"
 import { SearchBar } from "@/components/features/SearchBar"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { UserMenu } from "@/components/features/UserMenu"
+import { MobileMenu } from "@/components/features/MobileMenu"
 
 const NavBar = () => {
     const pathname = usePathname()
@@ -53,6 +54,9 @@ const NavBar = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        {/* Mobile menu - Only visible on mobile */}
+                        <MobileMenu links={navLinks} />
+
                         {/* Theme toggle */}
                         <ThemeToggle />
 
