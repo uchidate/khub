@@ -57,9 +57,9 @@ warn() {
 
 echo "📦 CONTAINERS"
 echo "----------------------------------------"
-check "Container hallyuhub" "docker ps | grep -q 'hallyuhub.*Up'"
-check "Container postgres-production" "docker ps | grep -q 'hallyuhub-postgres-production.*Up'"
-check "Container ollama-production" "docker ps | grep -q 'hallyuhub-ollama-production.*Up'"
+check "Container hallyuhub" "docker ps | grep -q 'hallyuhub$' && docker ps | grep 'hallyuhub$' | grep -q 'Up'"
+check "Container postgres-production" "docker ps | grep -q 'hallyuhub-postgres-production' && docker ps | grep 'hallyuhub-postgres-production' | grep -q 'Up'"
+check "Container ollama-production" "docker ps | grep -q 'hallyuhub-ollama-production' && docker ps | grep 'hallyuhub-ollama-production' | grep -q 'Up'"
 echo ""
 
 echo "🗄️  VOLUMES DOCKER"
