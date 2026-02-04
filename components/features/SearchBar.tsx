@@ -18,6 +18,7 @@ export function SearchBar() {
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const debouncedQuery = useDebounce(query, 300)
 
   useEffect(() => {
@@ -43,7 +44,40 @@ export function SearchBar() {
     setQuery('')
     setResults([])
     setIsOpen(false)
+    setSelectedIndex(-1)
   }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen || results.length === 0) return
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1))
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (selectedIndex >= 0 && selectedIndex < results.length) {
+          const selected = results[selectedIndex]
+          window.location.href = getResultUrl(selected)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setIsOpen(false)
+        setSelectedIndex(-1)
+        break
+    }
+  }
+
+  // Reset selected index when results change
+  useEffect(() => {
+    setSelectedIndex(-1)
+  }, [results])
 
   return (
     <div className="relative w-full max-w-2xl">
@@ -62,6 +96,7 @@ export function SearchBar() {
             setIsOpen(true)
           }}
           onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
           placeholder="Buscar artistas, k-dramas, notícias..."
           className="
             w-full pl-10 pr-10 py-3
@@ -71,6 +106,10 @@ export function SearchBar() {
             focus:outline-none focus:ring-2 focus:ring-purple-500
             placeholder:text-zinc-500
           "
+          aria-label="Buscar conteúdo"
+          aria-autocomplete="list"
+          aria-controls="search-results"
+          aria-expanded={isOpen}
         />
 
         {query && (
@@ -92,24 +131,30 @@ export function SearchBar() {
 
       {/* Results Dropdown */}
       {isOpen && query.length >= 2 && results.length > 0 && (
-        <div className="
-          absolute top-full mt-2 w-full
-          bg-zinc-900 border border-zinc-800
-          rounded-lg shadow-2xl
-          max-h-96 overflow-y-auto
-          z-50
-        ">
-          {results.map((result) => (
+        <div
+          id="search-results"
+          role="listbox"
+          className="
+            absolute top-full mt-2 w-full
+            bg-zinc-900 border border-zinc-800
+            rounded-lg shadow-2xl
+            max-h-96 overflow-y-auto
+            z-50
+          "
+        >
+          {results.map((result, index) => (
             <Link
               key={`${result.type}-${result.id}`}
               href={getResultUrl(result)}
               onClick={() => setIsOpen(false)}
-              className="
+              role="option"
+              aria-selected={selectedIndex === index}
+              className={`
                 flex items-center gap-3 p-3
-                hover:bg-zinc-800
                 border-b border-zinc-800 last:border-b-0
                 transition-colors
-              "
+                ${selectedIndex === index ? 'bg-purple-500/20 ring-2 ring-purple-500' : 'hover:bg-zinc-800'}
+              `}
             >
               {result.imageUrl && (
                 <img
