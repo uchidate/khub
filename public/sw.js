@@ -1,10 +1,10 @@
 const CACHE_NAME = 'hallyuhub-v1';
 const urlsToCache = [
-  '/v1',
-  '/v1/artists',
-  '/v1/productions',
-  '/v1/news',
-  '/v1/agencies',
+  '/',
+  '/artists',
+  '/productions',
+  '/news',
+  '/agencies',
 ];
 
 // Install event

@@ -12,7 +12,7 @@ import { motion } from 'framer-motion'
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/v1'
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
 
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -53,7 +53,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push(callbackUrl)
+      router.push('/')
       router.refresh()
     } catch (error) {
       setError('Erro ao fazer login. Tente novamente.')
@@ -65,7 +65,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signIn('google', { callbackUrl })
+      await signIn('google', { callbackUrl: '/' })
     } catch (error) {
       setError('Erro ao fazer login com Google')
       setIsLoading(false)

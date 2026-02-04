@@ -75,7 +75,7 @@ export default function RegisterPage() {
           password: formData.password,
           redirect: false,
         })
-        router.push('/v1')
+        router.push('/')
         router.refresh()
       }, 2000)
     } catch (error) {
@@ -87,7 +87,7 @@ export default function RegisterPage() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signIn('google', { callbackUrl: '/v1' })
+      await signIn('google', { callbackUrl: '/' })
     } catch (error) {
       setError('Erro ao fazer login com Google')
       setIsLoading(false)

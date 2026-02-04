@@ -68,7 +68,7 @@ function generateBreadcrumbs(pathname: string): Breadcrumb[] {
   const breadcrumbs: Breadcrumb[] = []
 
   // Skip v1 prefix
-  const startIndex = segments[0] === 'v1' ? 1 : 0
+  const startIndex = 0
 
   for (let i = startIndex; i < segments.length; i++) {
     const segment = segments[i]

@@ -121,7 +121,7 @@ export function UserMenu() {
             <div className="p-2 border-t border-zinc-800">
               <button
                 onClick={() => {
-                  signOut({ callbackUrl: '/v1' })
+                  signOut({ callbackUrl: '/' })
                   setIsOpen(false)
                 }}
                 className="flex items-center gap-3 px-4 py-2 w-full text-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 rounded-lg transition-colors"

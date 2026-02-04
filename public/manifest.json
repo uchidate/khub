@@ -2,7 +2,7 @@
   "name": "HallyuHub - Portal da Onda Coreana",
   "short_name": "HallyuHub",
   "description": "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil",
-  "start_url": "/v1",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#a855f7",
@@ -21,7 +21,11 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["entertainment", "music", "lifestyle"],
+  "categories": [
+    "entertainment",
+    "music",
+    "lifestyle"
+  ],
   "lang": "pt-BR",
   "dir": "ltr",
   "scope": "/",
