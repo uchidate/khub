@@ -63,6 +63,10 @@ function sanitizeArtist(artist: any): any {
     if (artist.birthDate instanceof Date && isNaN(artist.birthDate.getTime())) {
         artist.birthDate = null;
     }
+    // roles pode vir como string separado por vírgula — converter para array
+    if (artist.roles && typeof artist.roles === 'string') {
+        artist.roles = artist.roles.split(',').map((r: string) => r.trim()).filter((r: string) => r.length > 0);
+    }
     return artist;
 }
 
@@ -76,6 +80,10 @@ function validateAndNormalizeProduction(prod: any): any | null {
     // Garantir year como number
     if (prod.year && typeof prod.year === 'string') {
         prod.year = parseInt(prod.year, 10);
+    }
+    // streamingPlatforms pode vir como string separado por vírgula — converter para array
+    if (prod.streamingPlatforms && typeof prod.streamingPlatforms === 'string') {
+        prod.streamingPlatforms = prod.streamingPlatforms.split(',').map((p: string) => p.trim()).filter((p: string) => p.length > 0);
     }
     return prod;
 }
