@@ -67,7 +67,7 @@ if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
     echo "⚠️  Já existe uma entrada no crontab para auto-generate-content.sh"
     echo ""
     echo "Entrada atual:"
-    crontab -l | grep "auto-generate-content.sh"
+    crontab -l 2>/dev/null | grep "auto-generate-content.sh"
     echo ""
     
     if [ "$FORCE" = true ]; then
@@ -81,7 +81,8 @@ if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
         fi
     fi
     # Remover entrada antiga
-    (crontab -l | grep -v "auto-generate-content.sh" || true) | crontab -
+    # Remover entrada antiga
+    (crontab -l 2>/dev/null | grep -v "auto-generate-content.sh" || true) | crontab -
 fi
 
 # Adicionar nova entrada ao crontab
@@ -94,7 +95,7 @@ echo "Adicionando entrada ao crontab (a cada 5 minutos)..."
 echo "✅ Crontab configurado com sucesso!"
 echo ""
 echo "Configuração atual:"
-crontab -l | grep -A 1 "HallyuHub"
+crontab -l 2>/dev/null | grep -A 1 "HallyuHub"
 echo ""
 
 # Testar execução manual
