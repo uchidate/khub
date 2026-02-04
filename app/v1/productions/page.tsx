@@ -1,9 +1,43 @@
+import { Suspense } from 'react'
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import Image from "next/image"
+import { FavoriteButton } from "@/components/ui/FavoriteButton"
 
 export const dynamic = 'force-dynamic'
 
-export default async function ProductionsPage() {
+function SkeletonProduction() {
+    return (
+        <div className="animate-pulse bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80">
+            <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-800" />
+            <div className="flex-1 p-8 md:p-10">
+                <div className="h-8 bg-zinc-800 rounded w-3/4 mb-4" />
+                <div className="h-4 bg-zinc-800 rounded w-1/4 mb-6" />
+                <div className="space-y-2 mb-6">
+                    <div className="h-3 bg-zinc-800 rounded" />
+                    <div className="h-3 bg-zinc-800 rounded" />
+                    <div className="h-3 bg-zinc-800 rounded w-5/6" />
+                </div>
+                <div className="flex gap-2">
+                    <div className="h-6 bg-zinc-800 rounded w-20" />
+                    <div className="h-6 bg-zinc-800 rounded w-20" />
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function SkeletonGrid() {
+    return (
+        <div className="space-y-12">
+            {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonProduction key={i} />
+            ))}
+        </div>
+    )
+}
+
+async function ProductionsGrid() {
     console.log('--- RENDERING PRODUCTIONS PAGE ---')
     const productions = await prisma.production.findMany({
         include: {
@@ -14,22 +48,19 @@ export default async function ProductionsPage() {
     })
 
     return (
-        <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-            <header className="mb-12">
-                <h1 className="text-4xl md:text-6xl font-black mb-4 hallyu-gradient-text uppercase tracking-tighter italic">Filmes & Séries</h1>
-                <p className="text-zinc-500 max-w-xl text-lg font-medium">De romances épicos a thrillers de tirar o fôlego. O melhor do entretenimento coreano selecionado para você.</p>
-            </header>
-
-            <div className="space-y-12">
-                {productions.map((prod: any) => (
-                    <Link key={prod.id} href={`/v1/productions/${prod.id}`} className="group relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
+        <div className="space-y-12">
+            {productions.map((prod: any) => (
+                <div key={prod.id} className="group relative">
+                    <Link href={`/v1/productions/${prod.id}`} className="relative bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 flex flex-col md:flex-row h-auto md:h-80 card-hover shadow-2xl block">
                         {/* Poster / Backdrop */}
                         <div className="w-full md:w-1/3 aspect-video md:aspect-auto bg-zinc-900 relative overflow-hidden">
                             {prod.imageUrl ? (
-                                <img
+                                <Image
                                     src={prod.imageUrl}
                                     alt={prod.titlePt}
-                                    className="absolute inset-0 w-full h-full object-cover brightness-[0.6] group-hover:brightness-[0.8] transition-all duration-500"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 33vw"
+                                    className="object-cover brightness-[0.6] group-hover:brightness-[0.8] transition-all duration-500"
                                 />
                             ) : (
                                 <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
@@ -87,8 +118,28 @@ export default async function ProductionsPage() {
                             </div>
                         </div>
                     </Link>
-                ))}
-            </div>
+
+                    {/* Favorite Button */}
+                    <div className="absolute top-4 right-4 z-30">
+                        <FavoriteButton id={prod.id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+export default async function ProductionsPage() {
+    return (
+        <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+            <header className="mb-12">
+                <h1 className="text-4xl md:text-6xl font-black mb-4 hallyu-gradient-text uppercase tracking-tighter italic">Filmes & Séries</h1>
+                <p className="text-zinc-500 max-w-xl text-lg font-medium">De romances épicos a thrillers de tirar o fôlego. O melhor do entretenimento coreano selecionado para você.</p>
+            </header>
+
+            <Suspense fallback={<SkeletonGrid />}>
+                <ProductionsGrid />
+            </Suspense>
         </div>
     )
 }
