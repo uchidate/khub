@@ -66,7 +66,12 @@ async function ArtistsGrid() {
 
                     {/* Favorite Button */}
                     <div className="absolute top-2 right-2 z-10">
-                        <FavoriteButton id={artist.id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                        <FavoriteButton
+                            id={artist.id}
+                            itemName={artist.nameRomanized}
+                            itemType="artista"
+                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                        />
                     </div>
                 </div>
             ))}

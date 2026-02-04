@@ -131,7 +131,12 @@ async function ProductionsGrid() {
 
                     {/* Favorite Button */}
                     <div className="absolute top-4 right-4 z-30">
-                        <FavoriteButton id={prod.id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                        <FavoriteButton
+                            id={prod.id}
+                            itemName={prod.titlePt}
+                            itemType="produção"
+                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                        />
                     </div>
                 </div>
             ))}

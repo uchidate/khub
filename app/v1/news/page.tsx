@@ -75,7 +75,12 @@ async function NewsGrid() {
                         </div>
                     </Link>
                     <div className="absolute top-4 right-4 z-30">
-                        <FavoriteButton id={news[0].id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                        <FavoriteButton
+                            id={news[0].id}
+                            itemName={news[0].title}
+                            itemType="notícia"
+                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                        />
                     </div>
                 </div>
             )}
@@ -111,7 +116,12 @@ async function NewsGrid() {
                             </div>
                         </Link>
                         <div className="absolute top-0 right-0 z-10">
-                            <FavoriteButton id={item.id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                            <FavoriteButton
+                                id={item.id}
+                                itemName={item.title}
+                                itemType="notícia"
+                                className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                            />
                         </div>
                     </div>
                 ))}
@@ -143,7 +153,12 @@ async function NewsGrid() {
                             </div>
                         </Link>
                         <div className="absolute top-8 right-8 z-10">
-                            <FavoriteButton id={item.id} className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                            <FavoriteButton
+                                id={item.id}
+                                itemName={item.title}
+                                itemType="notícia"
+                                className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                            />
                         </div>
                     </div>
                 ))}
