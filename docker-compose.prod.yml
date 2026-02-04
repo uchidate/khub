@@ -45,6 +45,17 @@ services:
     networks:
       - web
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hallyuhub.rule=Host(`hallyuhub.com.br`) || Host(`www.hallyuhub.com.br`)"
+      - "traefik.http.routers.hallyuhub.entrypoints=websecure"
+      - "traefik.http.routers.hallyuhub.tls.certresolver=letsencrypt"
+      - "traefik.http.services.hallyuhub.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.hallyuhub-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.hallyuhub-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.hallyuhub-http.rule=Host(`hallyuhub.com.br`) || Host(`www.hallyuhub.com.br`)"
+      - "traefik.http.routers.hallyuhub-http.entrypoints=web"
+      - "traefik.http.routers.hallyuhub-http.middlewares=hallyuhub-redirect"
     depends_on:
       postgres-production:
         condition: service_healthy
