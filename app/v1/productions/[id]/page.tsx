@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 
 export const dynamic = 'force-dynamic'
 
@@ -16,8 +17,8 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
     if (!production) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Link href="/v1/productions" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold mb-8 inline-block">← Filmes & Séries</Link>
-                <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic">Produção não encontrada</h1>
+                <Breadcrumbs items={[{ label: 'Filmes & Séries', href: '/v1/productions' }, { label: 'Não Encontrado' }]} />
+                <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic mt-8">Produção não encontrada</h1>
             </div>
         )
     }
@@ -39,11 +40,12 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                 <div className="absolute inset-0 hero-gradient" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
 
-                {/* Back link */}
+                {/* Breadcrumbs */}
                 <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20">
-                    <Link href="/v1/productions" className="text-zinc-400 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit">
-                        ← Filmes & Séries
-                    </Link>
+                    <Breadcrumbs items={[
+                        { label: 'Filmes & Séries', href: '/v1/productions' },
+                        { label: production.titlePt }
+                    ]} />
                 </div>
 
                 {/* Hero content */}
