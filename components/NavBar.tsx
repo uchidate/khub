@@ -3,10 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
+import { Search, X } from "lucide-react"
+import { SearchBar } from "@/components/features/SearchBar"
 
 const NavBar = () => {
     const pathname = usePathname()
     const [isScrolled, setIsScrolled] = useState(false)
+    const [showSearch, setShowSearch] = useState(false)
 
     useEffect(() => {
         const handleScroll = () => {
@@ -48,11 +51,29 @@ const NavBar = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className="text-zinc-400 hover:text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </button>
+                        {/* Search button and expanded search */}
+                        <div className="relative">
+                            {!showSearch ? (
+                                <button
+                                    onClick={() => setShowSearch(true)}
+                                    className="text-zinc-400 hover:text-white transition-colors"
+                                >
+                                    <Search className="h-6 w-6" />
+                                </button>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-64 md:w-80">
+                                        <SearchBar />
+                                    </div>
+                                    <button
+                                        onClick={() => setShowSearch(false)}
+                                        className="text-zinc-400 hover:text-white transition-colors"
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                         <div className="w-8 h-8 rounded bg-gradient-to-tr from-purple-600 to-pink-500 cursor-pointer"></div>
                     </div>
                 </div>
