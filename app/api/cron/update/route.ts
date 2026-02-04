@@ -57,12 +57,17 @@ export async function GET(request: NextRequest) {
                 geminiApiKey: process.env.GEMINI_API_KEY,
                 openaiApiKey: process.env.OPENAI_API_KEY,
                 claudeApiKey: process.env.ANTHROPIC_API_KEY,
+                ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
                 maxRetries: 2,
             });
 
             if (orchestrator.getAvailableProviders().length === 0) {
                 throw new Error('No AI providers available');
             }
+
+            // Preferir Ollama se disponível (gratuito)
+            const preferredProvider = process.env.CRON_AI_PROVIDER ||
+                                    (orchestrator.getAvailableProviders().includes('ollama') ? 'ollama' : undefined);
 
             const artistGenerator = new ArtistGenerator(orchestrator);
             const existingArtists = await prisma.artist.findMany({
@@ -72,7 +77,8 @@ export async function GET(request: NextRequest) {
 
             // Gerar 1-2 artistas por execução (para cron de 15min, isso dá ~6-8 artistas/hora)
             const artists = await artistGenerator.generateMultipleArtists(2, {
-                excludeList: excludeArtists
+                excludeList: excludeArtists,
+                preferredProvider
             });
 
             for (const artist of artists) {
@@ -151,8 +157,12 @@ export async function GET(request: NextRequest) {
                 geminiApiKey: process.env.GEMINI_API_KEY,
                 openaiApiKey: process.env.OPENAI_API_KEY,
                 claudeApiKey: process.env.ANTHROPIC_API_KEY,
+                ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
                 maxRetries: 2,
             });
+
+            const preferredProvider = process.env.CRON_AI_PROVIDER ||
+                                    (orchestrator.getAvailableProviders().includes('ollama') ? 'ollama' : undefined);
 
             const newsGenerator = new NewsGenerator(orchestrator);
             const existingNews = await prisma.news.findMany({
@@ -162,7 +172,8 @@ export async function GET(request: NextRequest) {
 
             // Gerar 1-2 notícias por execução
             const newsItems = await newsGenerator.generateMultipleNews(2, {
-                excludeList: excludeNews
+                excludeList: excludeNews,
+                preferredProvider
             });
 
             for (const news of newsItems) {
