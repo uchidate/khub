@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "../styles/globals.css"
+import "../styles/nprogress.css"
 import { SessionProvider } from "@/components/features/SessionProvider"
+import { NavigationProgress } from "@/components/features/NavigationProgress"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -31,6 +33,7 @@ export default function RootLayout({
         <html lang="pt-BR">
             <body className={`${inter.className} bg-white dark:bg-black text-zinc-900 dark:text-white selection:bg-purple-500 selection:text-white transition-colors duration-300`}>
                 <SessionProvider>
+                    <NavigationProgress />
                     {children}
                 </SessionProvider>
             </body>
