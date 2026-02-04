@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { User, LogOut, Settings, LogIn, UserPlus } from 'lucide-react'
+import { User, LogOut, Settings, LogIn, UserPlus, LayoutDashboard, Zap } from 'lucide-react'
 
 export function UserMenu() {
   const { data: session, status } = useSession()
@@ -87,6 +87,24 @@ export function UserMenu() {
 
             {/* Menu Items */}
             <div className="p-2">
+              <Link
+                onClick={() => setIsOpen(false)}
+                href="/dashboard"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <LayoutDashboard size={16} />
+                Dashboard
+              </Link>
+
+              <Link
+                onClick={() => setIsOpen(false)}
+                href="/premium"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-yellow-500 hover:text-yellow-400 hover:bg-zinc-800 rounded-lg transition-colors font-bold"
+              >
+                <Zap size={16} />
+                Hallyu Premium
+              </Link>
+
               <Link
                 href="/profile"
                 onClick={() => setIsOpen(false)}
