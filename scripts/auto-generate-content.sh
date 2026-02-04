@@ -29,9 +29,23 @@ log "=========================================="
 # Navegar para o diretório do projeto
 cd "${PROJECT_DIR}"
 
-# Carregar variáveis de ambiente
-if [ -f ".env" ]; then
-    export $(cat .env | grep -v '^#' | grep -v '^\s*$' | xargs)
+# Carregar variáveis de ambiente (prioridade: .env.production > .env.staging > .env)
+ENV_FILE=""
+if [ -f ".env.production" ]; then
+    ENV_FILE=".env.production"
+    log "Carregando .env.production"
+elif [ -f ".env.staging" ]; then
+    ENV_FILE=".env.staging"
+    log "Carregando .env.staging"
+elif [ -f ".env" ]; then
+    ENV_FILE=".env"
+    log "Carregando .env"
+fi
+
+if [ -n "$ENV_FILE" ]; then
+    export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^\s*$' | xargs)
+else
+    log "AVISO: Nenhum arquivo .env encontrado"
 fi
 
 # Verificar se algum provider de AI está configurado
@@ -44,10 +58,18 @@ fi
 # Executar script de atualização
 log "Executando atualize-ai.ts..."
 
-# Gerar 1 notícia e 1 artista por execução (evita sobrecarga)
-npm run atualize:ai -- --news 1 --artists 1 >> "${LOG_FILE}" 2>&1
-
-EXIT_CODE=$?
+# Verificar se está rodando em ambiente com Docker
+if command -v docker &> /dev/null; then
+    # Executar dentro do container Docker
+    log "Executando via Docker container..."
+    docker exec hallyuhub npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+    EXIT_CODE=$?
+else
+    # Executar localmente (ambiente de desenvolvimento)
+    log "Executando via npm local..."
+    npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+    EXIT_CODE=$?
+fi
 
 if [ $EXIT_CODE -eq 0 ]; then
     log "✅ Geração concluída com sucesso"
