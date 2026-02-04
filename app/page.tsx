@@ -26,7 +26,7 @@ export default async function Home() {
         <div className="bg-black min-h-screen pb-20 overflow-x-hidden">
             <HeroSection />
 
-            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 -mt-10 space-y-24">
+            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-0 space-y-24">
 
                 {/* Section: Trending Artists (Bento Grid) */}
                 <section>
