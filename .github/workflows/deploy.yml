@@ -538,6 +538,10 @@ jobs:
             echo "📊 Aplicando migrations..."
             docker-compose -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy
 
+            echo "⏰ Configurando Cron (Automação)..."
+            chmod +x scripts/setup-auto-generation.sh
+            ./scripts/setup-auto-generation.sh -f --no-test
+
             echo "✅ Production deployada!"
 
       - name: 🔍 Health Check

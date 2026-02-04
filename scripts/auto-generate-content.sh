@@ -3,7 +3,7 @@
 # Auto Generate Content - HallyuHub
 # ============================================================
 # Script executado pelo cron para gerar conteúdo automaticamente
-# Executa a cada 15 minutos
+# Executa a cada 5 minutos
 # ============================================================
 
 set -e

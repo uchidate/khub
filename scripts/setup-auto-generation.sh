@@ -47,6 +47,21 @@ chmod +x "${PROJECT_DIR}/scripts/auto-generate-content.sh"
 # Criar diretório de logs
 mkdir -p "${PROJECT_DIR}/logs"
 
+# Argumentos
+FORCE=false
+NO_TEST=false
+
+for arg in "$@"; do
+    case $arg in
+        -f|--force)
+            FORCE=true
+            ;;
+        --no-test)
+            NO_TEST=true
+            ;;
+    esac
+done
+
 # Verificar se já existe entrada no crontab
 if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
     echo "⚠️  Já existe uma entrada no crontab para auto-generate-content.sh"
@@ -54,22 +69,27 @@ if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
     echo "Entrada atual:"
     crontab -l | grep "auto-generate-content.sh"
     echo ""
-    read -p "Deseja substituir? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Mantendo configuração atual."
-        exit 0
+    
+    if [ "$FORCE" = true ]; then
+        echo "Forçando substituição..."
+    else
+        read -p "Deseja substituir? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Mantendo configuração atual."
+            exit 0
+        fi
     fi
     # Remover entrada antiga
     (crontab -l | grep -v "auto-generate-content.sh") | crontab -
 fi
 
 # Adicionar nova entrada ao crontab
-echo "Adicionando entrada ao crontab (a cada 15 minutos)..."
+echo "Adicionando entrada ao crontab (a cada 5 minutos)..."
 
 (crontab -l 2>/dev/null || echo ""; \
- echo "# HallyuHub - Auto generate content every 15 minutes"; \
- echo "*/15 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh") | crontab -
+ echo "# HallyuHub - Auto generate content every 5 minutes"; \
+ echo "*/5 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh") | crontab -
 
 echo "✅ Crontab configurado com sucesso!"
 echo ""
@@ -78,12 +98,16 @@ crontab -l | grep -A 1 "HallyuHub"
 echo ""
 
 # Testar execução manual
-echo "Deseja testar a execução agora? (y/N) "
-read -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Executando teste..."
-    "${PROJECT_DIR}/scripts/auto-generate-content.sh"
+if [ "$NO_TEST" = true ]; then
+    echo "Pulo teste de execução (--no-test)."
+else
+    echo "Deseja testar a execução agora? (y/N) "
+    read -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Executando teste..."
+        "${PROJECT_DIR}/scripts/auto-generate-content.sh"
+    fi
 fi
 
 echo ""
