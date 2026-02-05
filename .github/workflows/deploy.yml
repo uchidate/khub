@@ -588,22 +588,49 @@ jobs:
             fi
 
             echo "📊 Aplicando migrations (Prisma)..."
-            # Loop de retry para migration caso o DB ainda não esteja aceitando conexões
+            
+            # Diagnóstico de Conexão DB
+            echo "🔍 Verificando configuração do Banco de Dados..."
+            if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub printenv DATABASE_URL > /dev/null; then
+               DB_HOST=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub sh -c 'echo $DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
+               echo "ℹ️  DATABASE_URL está definida. Host detectado: $DB_HOST"
+               if [ "$DB_HOST" = "localhost" ] || [ "$DB_HOST" = "127.0.0.1" ]; then
+                 echo "⚠️  AVISO CRÍTICO: DATABASE_URL aponta para localhost dentro do Docker! Isso geralmente falha."
+                 echo "   Deveria apontar para 'postgres-production' ou 'hallyuhub-postgres-production'."
+               fi
+            else
+               echo "❌ Erro: DATABASE_URL não está definida no container!"
+            fi
+
+            # Loop de retry para migration
             migrate_success=false
-            for i in {1..5}; do
-              echo "Tentativa de migration $i/5..."
-              if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
-                migrate_success=true
-                break
+            for i in {1..10}; do
+              echo "Tentativa de migration $i/10..."
+              
+              # Verificar se container ainda está rodando (pode estar em restart loop)
+              CONTAINER_STATE=$(docker inspect -f '{{.State.Status}}' hallyuhub 2>/dev/null || echo "not-found")
+              if [ "$CONTAINER_STATE" != "running" ]; then
+                 echo "⚠️  Container hallyuhub não está rodando (Status: $CONTAINER_STATE). Aguardando..."
+                 $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=20 hallyuhub
+              else
+                 if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
+                   migrate_success=true
+                   echo "✅ Migrations aplicadas com sucesso!"
+                   break
+                 fi
+                 echo "⚠️  Falha ao executar migrate deploy."
               fi
-              echo "Aguardando DB estar pronto (10s)..."
-              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=10 postgres-production
+              
+              echo "Aguardando 10s..."
               sleep 10
             done
 
             if [ "$migrate_success" = false ]; then
-              echo "❌ Erro: Falha ao aplicar migrations após 5 tentativas."
-              $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
+              echo "❌ Erro: Falha ao aplicar migrations após 10 tentativas."
+              echo "🔍 Logs do Banco de Dados:"
+              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 postgres-production
+              echo "🔍 Logs da Aplicação:"
+              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 hallyuhub
               exit 1
             fi
 
