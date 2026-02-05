@@ -1,0 +1,42 @@
+name: 🤖 Run Content Automation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-automation:
+    name: 🤖 Run Generation Script
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Execute on Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "🚀 Iniciando automação manual..."
+            cd /var/www/hallyuhub
+            
+            # Garantir permissões
+            chmod +x scripts/auto-generate-content.sh
+            
+            # Executar script
+            export NODE_ENV=production
+            ./scripts/auto-generate-content.sh
+            
+            # Mostrar o log gerado para confirmação visual
+            TODAY=$(date +%Y-%m)
+            LOG_FILE="logs/auto-generate-$TODAY.log"
+            
+            echo "📄 Conteúdo do log ($LOG_FILE):"
+            echo "---------------------------------------------------"
+            if [ -f "$LOG_FILE" ]; then
+              cat "$LOG_FILE"
+            else
+              echo "❌ Log file not found: $LOG_FILE"
+            fi
+            echo "---------------------------------------------------"
+            
+            echo "✅ Execução finalizada."
