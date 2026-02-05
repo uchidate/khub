@@ -33,7 +33,7 @@ export function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                    <span className="inline-block text-sm font-bold uppercase tracking-[0.3em] text-neon-pink mb-4 text-shadow-glow">
+                    <span className="inline-block text-sm font-bold uppercase tracking-[0.3em] text-neon-pink mb-6 text-shadow-glow">
                         CULTURA • MÚSICA • DRAMA
                     </span>
                 </motion.div>
@@ -42,7 +42,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
-                    className="text-6xl md:text-9xl font-display font-black mb-6 tracking-tighter leading-[0.9] italic"
+                    className="text-6xl md:text-9xl font-display font-black mb-6 tracking-tighter leading-tight italic"
                 >
                     A ONDA <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-electric-cyan animate-gradient bg-[length:200%_auto]">HALLYU</span><br />
                     NO SEU RITMO.
