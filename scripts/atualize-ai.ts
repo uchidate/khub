@@ -437,11 +437,15 @@ async function main() {
         const totalSaved = savedCounts.artists + savedCounts.news + savedCounts.productions;
         if (totalSaved > 0) {
             console.log('\n📤 Sending Slack notification...');
+            // Fetch total count for richer notification
+            const totalArtists = await prisma.artist.count();
+
             await slackService.notifyContentBatchSummary({
                 artists: savedCounts.artists,
                 news: savedCounts.news,
                 productions: savedCounts.productions,
                 provider: orchestrator.getAvailableProviders()[0] || 'unknown',
+                totalArtists: totalArtists,
             });
             console.log('   ✅ Slack notification sent');
         }
