@@ -289,6 +289,10 @@ jobs:
             echo "📊 Aplicando migrations..."
             docker-compose -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy
 
+            echo "⏰ Configurando Cron (Automação)..."
+            chmod +x scripts/setup-auto-generation.sh
+            NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test
+
             echo "✅ Staging deployado!"
 
       - name: 🔍 Health Check
@@ -636,7 +640,7 @@ jobs:
 
             echo "⏰ Configurando Cron (Automação)..."
             chmod +x scripts/setup-auto-generation.sh
-            ./scripts/setup-auto-generation.sh -f --no-test
+            NODE_ENV=production ./scripts/setup-auto-generation.sh -f --no-test
 
             echo "✅ Production deployada!"
 
