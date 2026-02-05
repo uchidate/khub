@@ -86,6 +86,9 @@ if $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
         -e GEMINI_API_KEY="$GEMINI_API_KEY" \
         -e OPENAI_API_KEY="$OPENAI_API_KEY" \
         -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+        -e TMDB_API_KEY="$TMDB_API_KEY" \
+        -e GOOGLE_SEARCH_API_KEY="$GOOGLE_SEARCH_API_KEY" \
+        -e GOOGLE_CX="$GOOGLE_CX" \
         -e OLLAMA_BASE_URL="$OLLAMA_BASE_URL" \
         -e SLACK_WEBHOOK_CONTENT="$SLACK_WEBHOOK_CONTENT" \
         -e SLACK_WEBHOOK_DEPLOYS="$SLACK_WEBHOOK_DEPLOYS" \
@@ -99,6 +102,9 @@ elif $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; th
         -e GEMINI_API_KEY="$GEMINI_API_KEY" \
         -e OPENAI_API_KEY="$OPENAI_API_KEY" \
         -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+        -e TMDB_API_KEY="$TMDB_API_KEY" \
+        -e GOOGLE_SEARCH_API_KEY="$GOOGLE_SEARCH_API_KEY" \
+        -e GOOGLE_CX="$GOOGLE_CX" \
         -e OLLAMA_BASE_URL="$OLLAMA_BASE_URL" \
         -e SLACK_WEBHOOK_CONTENT="$SLACK_WEBHOOK_CONTENT" \
         -e SLACK_WEBHOOK_DEPLOYS="$SLACK_WEBHOOK_DEPLOYS" \
