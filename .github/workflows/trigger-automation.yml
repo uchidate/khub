@@ -27,7 +27,7 @@ jobs:
             ./scripts/auto-generate-content.sh
             
             # Mostrar o log gerado para confirmação visual
-            TODAY=$(date +%Y-%m-%d)
+            TODAY=$(date +%Y-%m)
             LOG_FILE="logs/auto-generate-$TODAY.log"
             
             echo "📄 Conteúdo do log ($LOG_FILE):"
