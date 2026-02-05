@@ -108,7 +108,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
 
                 {/* Breadcrumbs */}
-                <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
+                <div className="absolute top-24 md:top-32 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[
                         { label: 'Artistas', href: '/artists' },
                         { label: artist.nameRomanized }
