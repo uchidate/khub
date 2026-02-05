@@ -12,7 +12,7 @@ FROM node:20-bullseye-slim AS builder
 RUN apt-get update && apt-get install -y openssl ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-# Force rebuild: updated 2026-02-04
+# Force rebuild: updated 2026-02-05 03:08
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_BUILD_STATIC_GENERATION=1
