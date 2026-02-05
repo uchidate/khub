@@ -35,6 +35,7 @@ interface ContentNotification {
     source?: string;
     url?: string;
     context?: ActionContext;
+    totalCount?: number; // Optional total count in database
 }
 
 interface DeployNotification {
@@ -193,6 +194,7 @@ export class SlackNotificationService {
         provider: string;
         duration?: string;
         context?: ActionContext;
+        totalArtists?: number;
     }): Promise<boolean> {
         if (!this.webhookContent) return false;
 
@@ -212,7 +214,7 @@ export class SlackNotificationService {
                 type: 'section',
                 text: {
                     type: 'mrkdwn',
-                    text: `*Total:* ${total} itens adicionados`
+                    text: `*Total:* ${total} itens adicionados${summary.totalArtists ? ` (Total no Hub: ${summary.totalArtists})` : ''}`
                 }
             },
             {
