@@ -2,6 +2,11 @@ name: 🔍 Debug Env
 
 on:
   workflow_dispatch:
+    inputs:
+      command:
+        description: 'Specific command to run (replaces default)'
+        required: false
+        default: ''
 
 jobs:
   debug:
@@ -15,17 +20,16 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/hallyuhub
-            echo "📂 Listing files:"
-            ls -la
-            echo "--------------------------------"
-            echo "❓ Checking .env.production keys:"
-            grep -o '^[^=]*' .env.production || echo "Grep failed or file empty"
-            echo "--------------------------------"
-            echo "❓ Checking DATABASE_URL value (masked):"
-            grep "DATABASE_URL" .env.production | sed 's/DATABASE_URL=.*/DATABASE_URL=******/' || echo "DATABASE_URL not found"
-            echo "--------------------------------"
-            echo "❓ Checking DATABASE_URL raw length:"
-            grep "DATABASE_URL" .env.production | awk -F= '{print length($2)}' || echo "0"
-            echo "--------------------------------"
-            echo "❓ Checking .env.production.bak:"
-            ls -la .env.production.bak 2>/dev/null || echo "No backup found"
+            if [ -n "${{ github.event.inputs.command }}" ]; then
+              echo "🚀 Running custom command: ${{ github.event.inputs.command }}"
+              ${{ github.event.inputs.command }}
+            else
+              echo "📂 Listing files:"
+              ls -la
+              echo "--------------------------------"
+              echo "❓ Checking .env.production keys:"
+              grep -o '^[^=]*' .env.production || echo "Grep failed or file empty"
+              echo "--------------------------------"
+              echo "❓ Checking DATABASE_URL value (masked):"
+              grep "DATABASE_URL" .env.production | sed 's/DATABASE_URL=.*/DATABASE_URL=******/' || echo "DATABASE_URL not found"
+            fi
