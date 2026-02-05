@@ -532,11 +532,41 @@ jobs:
             # Up com containers frescos
             docker-compose -f docker-compose.prod.yml up -d
 
-            echo "⏳ Aguardando containers ficarem saudáveis..."
-            sleep 20
+            echo "📊 Status dos containers:"
+            docker-compose -f docker-compose.prod.yml ps
 
-            echo "📊 Aplicando migrations..."
-            docker-compose -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy
+            echo "⏳ Aguardando container 'hallyuhub' ficar operacional..."
+            max_retries=12
+            count=0
+            until [ "$(docker inspect -f '{{.State.Running}}' hallyuhub 2>/dev/null)" == "true" ] || [ $count -eq $max_retries ]; do
+              echo "Aguardando container iniciar... ($((count+1))/$max_retries)"
+              sleep 5
+              count=$((count+1))
+            done
+
+            if [ $count -eq $max_retries ]; then
+              echo "❌ Erro: Container hallyuhub não iniciou a tempo."
+              docker-compose -f docker-compose.prod.yml logs hallyuhub | tail -n 20
+              exit 1
+            fi
+
+            echo "📊 Aplicando migrations (Prisma)..."
+            # Loop de retry para migration caso o DB ainda não esteja aceitando conexões
+            migrate_success=false
+            for i in {1..5}; do
+              if docker-compose -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
+                migrate_success=true
+                break
+              fi
+              echo "Tentativa de migration $i/5 falhou, aguardando 10s..."
+              sleep 10
+            done
+
+            if [ "$migrate_success" = false ]; then
+              echo "❌ Erro: Falha ao aplicar migrations após 5 tentativas."
+              docker-compose -f docker-compose.prod.yml logs hallyuhub | tail -n 50
+              exit 1
+            fi
 
             echo "⏰ Configurando Cron (Automação)..."
             chmod +x scripts/setup-auto-generation.sh
@@ -547,7 +577,7 @@ jobs:
       - name: 🔍 Health Check
         run: |
           echo "Verificando health endpoint..."
-          max_attempts=10
+          max_attempts=20
           attempt=0
 
           while [ $attempt -lt $max_attempts ]; do
@@ -557,7 +587,7 @@ jobs:
             fi
             attempt=$((attempt + 1))
             echo "Tentativa $attempt/$max_attempts falhou, aguardando..."
-            sleep 5
+            sleep 10
           done
 
           echo "❌ Health check falhou após $max_attempts tentativas"
