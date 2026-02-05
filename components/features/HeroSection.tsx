@@ -6,7 +6,7 @@ import Image from 'next/image'
 
 export function HeroSection() {
     return (
-        <section className="relative h-[80vh] w-full flex items-center justify-center overflow-hidden">
+        <section className="relative min-h-[80vh] w-full flex items-center justify-center overflow-hidden">
             {/* Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black z-10" />
@@ -27,7 +27,7 @@ export function HeroSection() {
             </div>
 
             {/* Content */}
-            <div className="relative z-30 container mx-auto px-4 text-center">
+            <div className="relative z-30 container mx-auto px-4 text-center pt-24 md:pt-0">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
