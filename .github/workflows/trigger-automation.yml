@@ -1,0 +1,30 @@
+name: 🤖 Run Content Automation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-automation:
+    name: 🤖 Run Generation Script
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Execute on Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "🚀 Iniciando automação manual..."
+            cd /var/www/hallyuhub
+            
+            # Garantir permissões
+            chmod +x scripts/auto-generate-content.sh
+            
+            # Executar script e mostrar output em tempo real
+            # NODE_ENV=production para garantir que tudo rode como esperado
+            export NODE_ENV=production
+            ./scripts/auto-generate-content.sh
+            
+            echo "✅ Execução finalizada."
