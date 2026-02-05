@@ -1,42 +1,31 @@
-name: 🤖 Run Content Automation
+name: 🔍 Debug Env
 
 on:
   workflow_dispatch:
 
 jobs:
-  trigger-automation:
-    name: 🤖 Run Generation Script
+  debug:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Execute on Server via SSH
+      - name: Debug Env File
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "🚀 Iniciando automação manual..."
             cd /var/www/hallyuhub
-            
-            # Garantir permissões
-            chmod +x scripts/auto-generate-content.sh
-            
-            # Executar script
-            export NODE_ENV=production
-            ./scripts/auto-generate-content.sh
-            
-            # Mostrar o log gerado para confirmação visual
-            TODAY=$(date +%Y-%m)
-            LOG_FILE="logs/auto-generate-$TODAY.log"
-            
-            echo "📄 Conteúdo do log ($LOG_FILE):"
-            echo "---------------------------------------------------"
-            if [ -f "$LOG_FILE" ]; then
-              cat "$LOG_FILE"
-            else
-              echo "❌ Log file not found: $LOG_FILE"
-            fi
-            echo "---------------------------------------------------"
-            
-            echo "✅ Execução finalizada."
+            echo "📂 Listing files:"
+            ls -la
+            echo "--------------------------------"
+            echo "❓ Checking .env.production keys:"
+            grep -o '^[^=]*' .env.production || echo "Grep failed or file empty"
+            echo "--------------------------------"
+            echo "❓ Checking DATABASE_URL value (masked):"
+            grep "DATABASE_URL" .env.production | sed 's/DATABASE_URL=.*/DATABASE_URL=******/' || echo "DATABASE_URL not found"
+            echo "--------------------------------"
+            echo "❓ Checking DATABASE_URL raw length:"
+            grep "DATABASE_URL" .env.production | awk -F= '{print length($2)}' || echo "0"
+            echo "--------------------------------"
+            echo "❓ Checking .env.production.bak:"
+            ls -la .env.production.bak 2>/dev/null || echo "No backup found"
