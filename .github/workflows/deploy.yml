@@ -515,6 +515,11 @@ jobs:
             set -e
             cd /var/www/hallyuhub
 
+            # Diagnóstico inicial
+            echo "📊 Verificando ambiente..."
+            df -h / | grep / || true
+            docker network ls | grep web || echo "⚠️ Network 'web' não encontrada!"
+
             echo "🟢 Deploying PRODUCTION..."
 
             # Cleanup: Remove old Docker images (keep last 3)
@@ -523,20 +528,30 @@ jobs:
               tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
               echo "Nenhuma imagem antiga para remover"
 
-            # Pull nova imagem
-            docker-compose -f docker-compose.prod.yml pull hallyuhub
+            # Pull nova imagem com log de erro
+            echo "📥 Pulling images..."
+            if ! docker-compose -f docker-compose.prod.yml pull hallyuhub; then
+              echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
+              exit 1
+            fi
 
             # Down para evitar ContainerConfig error
+            echo "🛑 Parando containers antigos..."
             docker-compose -f docker-compose.prod.yml down || true
 
             # Up com containers frescos
-            docker-compose -f docker-compose.prod.yml up -d
+            echo "🚀 Iniciando containers..."
+            if ! docker-compose -f docker-compose.prod.yml up -d; then
+              echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
+              docker-compose -f docker-compose.prod.yml logs --tail=50
+              exit 1
+            fi
 
             echo "📊 Status dos containers:"
             docker-compose -f docker-compose.prod.yml ps
 
             echo "⏳ Aguardando container 'hallyuhub' ficar operacional..."
-            max_retries=12
+            max_retries=15
             count=0
             until [ "$(docker inspect -f '{{.State.Running}}' hallyuhub 2>/dev/null)" == "true" ] || [ $count -eq $max_retries ]; do
               echo "Aguardando container iniciar... ($((count+1))/$max_retries)"
@@ -546,7 +561,7 @@ jobs:
 
             if [ $count -eq $max_retries ]; then
               echo "❌ Erro: Container hallyuhub não iniciou a tempo."
-              docker-compose -f docker-compose.prod.yml logs hallyuhub | tail -n 20
+              docker-compose -f docker-compose.prod.yml logs hallyuhub | tail -n 50
               exit 1
             fi
 
@@ -554,11 +569,13 @@ jobs:
             # Loop de retry para migration caso o DB ainda não esteja aceitando conexões
             migrate_success=false
             for i in {1..5}; do
+              echo "Tentativa de migration $i/5..."
               if docker-compose -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
                 migrate_success=true
                 break
               fi
-              echo "Tentativa de migration $i/5 falhou, aguardando 10s..."
+              echo "Aguardando DB estar pronto (10s)..."
+              docker-compose -f docker-compose.prod.yml logs --tail=10 postgres-production
               sleep 10
             done
 
