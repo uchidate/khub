@@ -83,6 +83,8 @@ CONTAINER_NAME="hallyuhub"
 if $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     log "Executando via Docker container (${CONTAINER_NAME})..."
     $DOCKER_BIN exec \
+        -e DATABASE_URL="$DATABASE_URL" \
+        -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
         -e GEMINI_API_KEY="$GEMINI_API_KEY" \
         -e OPENAI_API_KEY="$OPENAI_API_KEY" \
         -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
@@ -99,6 +101,8 @@ elif $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; th
     CONTAINER_NAME="hallyuhub-production"
     log "Executando via Docker container (${CONTAINER_NAME})..."
     $DOCKER_BIN exec \
+        -e DATABASE_URL="$DATABASE_URL" \
+        -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
         -e GEMINI_API_KEY="$GEMINI_API_KEY" \
         -e OPENAI_API_KEY="$OPENAI_API_KEY" \
         -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
