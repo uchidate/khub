@@ -527,10 +527,12 @@ jobs:
 
             # Determinar comando docker-compose (v1 vs v2)
             if docker compose version >/dev/null 2>&1; then
-              shopt -s expand_aliases
-              alias docker-compose='docker compose'
+              COMPOSE_CMD="docker compose"
               echo "✅ Usando 'docker compose' (V2)"
-            elif ! command -v docker-compose >/dev/null 2>&1; then
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE_CMD="docker-compose"
+              echo "✅ Usando 'docker-compose' (V1)"
+            else
               echo "❌ Erro: docker-compose não encontrado!"
               exit 1
             fi
@@ -550,25 +552,25 @@ jobs:
 
             # Pull nova imagem com log de erro
             echo "📥 Pulling images..."
-            if ! docker-compose -f docker-compose.prod.yml pull hallyuhub; then
+            if ! $COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub; then
               echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
               exit 1
             fi
 
             # Down para evitar ContainerConfig error
             echo "🛑 Parando containers antigos..."
-            docker-compose -f docker-compose.prod.yml down || true
+            $COMPOSE_CMD -f docker-compose.prod.yml down || true
 
             # Up com containers frescos
             echo "🚀 Iniciando containers..."
-            if ! docker-compose -f docker-compose.prod.yml up -d; then
+            if ! $COMPOSE_CMD -f docker-compose.prod.yml up -d; then
               echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
-              docker-compose -f docker-compose.prod.yml logs --tail=50
+              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50
               exit 1
             fi
 
             echo "📊 Status dos containers:"
-            docker-compose -f docker-compose.prod.yml ps
+            $COMPOSE_CMD -f docker-compose.prod.yml ps
 
             echo "⏳ Aguardando container 'hallyuhub' ficar operacional..."
             max_retries=15
@@ -581,7 +583,7 @@ jobs:
 
             if [ $count -eq $max_retries ]; then
               echo "❌ Erro: Container hallyuhub não iniciou a tempo."
-              docker-compose -f docker-compose.prod.yml logs hallyuhub | tail -n 50
+              $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
               exit 1
             fi
 
@@ -590,18 +592,18 @@ jobs:
             migrate_success=false
             for i in {1..5}; do
               echo "Tentativa de migration $i/5..."
-              if docker-compose -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
+              if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
                 migrate_success=true
                 break
               fi
               echo "Aguardando DB estar pronto (10s)..."
-              docker-compose -f docker-compose.prod.yml logs --tail=10 postgres-production
+              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=10 postgres-production
               sleep 10
             done
 
             if [ "$migrate_success" = false ]; then
               echo "❌ Erro: Falha ao aplicar migrations após 5 tentativas."
-              docker-compose -f docker-compose.prod.yml logs hallyuhub | tail -n 50
+              $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
               exit 1
             fi
 
