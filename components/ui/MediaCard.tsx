@@ -100,7 +100,7 @@ export function MediaCard({
                                 alt={title}
                                 fill
                                 sizes="(max-width: 768px) 50vw, 33vw"
-                                className="object-cover transition-transform duration-700 group-hover:scale-110 brightness-[0.7] group-hover:brightness-100 grayscale-[20%] group-hover:grayscale-0"
+                                className="object-cover transition-transform duration-700 group-hover:scale-110 group-hover:brightness-110 grayscale-[20%] group-hover:grayscale-0"
                             />
                         ) : (
                             <div className="flex items-center justify-center h-full bg-zinc-900 text-zinc-700 italic font-black uppercase tracking-widest">
