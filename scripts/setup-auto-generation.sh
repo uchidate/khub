@@ -94,12 +94,13 @@ echo "Adicionando entrada ao crontab (a cada 5 minutos)..."
 
 (crontab -l 2>/dev/null || echo ""; \
  echo "# HallyuHub - Auto generate content every 5 minutes"; \
- echo "*/5 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh") | crontab -
+ echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; \
+ echo "*/5 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh >> ${PROJECT_DIR}/logs/cron-direct.log 2>&1") | crontab -
 
 echo "✅ Crontab configurado com sucesso!"
 echo ""
 echo "Configuração atual:"
-crontab -l 2>/dev/null | grep -A 1 "HallyuHub" || echo "Aviso: Não foi possível verificar a entrada (grep falhou)"
+crontab -l 2>/dev/null | grep -A 2 "HallyuHub" || echo "Aviso: Não foi possível verificar a entrada (grep falhou)"
 echo ""
 
 # Testar execução manual

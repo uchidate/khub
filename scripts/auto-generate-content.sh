@@ -8,13 +8,37 @@
 
 set -e
 
-# Diretório do projeto (ajustar conforme ambiente)
-PROJECT_DIR="${PROJECT_DIR:-/var/www/hallyuhub}"
+# Diretório do projeto (auto-detectar baseado na localização do script)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 LOG_DIR="${PROJECT_DIR}/logs"
 LOG_FILE="${LOG_DIR}/auto-generate-$(date +%Y-%m).log"
 
 # Criar diretório de logs se não existir
 mkdir -p "${LOG_DIR}"
+
+# Busca exaustiva por binários (cron tem PATH limitado)
+find_bin() {
+    local name=$1
+    local common_paths=("/usr/local/bin/$name" "/usr/bin/$name" "/bin/$name" "/usr/sbin/$name")
+    for path in "${common_paths[@]}"; do
+        if [ -x "$path" ]; then
+            echo "$path"
+            return 0
+        fi
+    done
+    command -v "$name" || echo "$name"
+}
+
+DOCKER_BIN=$(find_bin docker)
+NPM_BIN=$(find_bin npm)
+
+# Detectar se usa 'docker compose' (v2) ou 'docker-compose' (v1)
+if $DOCKER_BIN compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE="$DOCKER_BIN compose"
+else
+    DOCKER_COMPOSE=$(find_bin docker-compose)
+fi
 
 # Função para log com timestamp
 log() {
@@ -29,43 +53,36 @@ log "=========================================="
 # Navegar para o diretório do projeto
 cd "${PROJECT_DIR}"
 
-# Carregar variáveis de ambiente (prioridade: .env.production > .env.staging > .env)
+# Carregar variáveis de ambiente
 ENV_FILE=""
 if [ -f ".env.production" ]; then
     ENV_FILE=".env.production"
-    log "Carregando .env.production"
 elif [ -f ".env.staging" ]; then
     ENV_FILE=".env.staging"
-    log "Carregando .env.staging"
 elif [ -f ".env" ]; then
     ENV_FILE=".env"
-    log "Carregando .env"
 fi
 
 if [ -n "$ENV_FILE" ]; then
-    export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^\s*$' | xargs)
+    log "Carregando $ENV_FILE"
+    # Carregar variáveis ignorando comentários e lidando com espaços
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ ! "$line" =~ ^# ]] && [[ -n "$line" ]]; then
+            export "$line"
+        fi
+    done < "$ENV_FILE"
 else
     log "AVISO: Nenhum arquivo .env encontrado"
-fi
-
-# Verificar se algum provider de AI está configurado
-if [ -z "$GEMINI_API_KEY" ] && [ -z "$OPENAI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$OLLAMA_BASE_URL" ]; then
-    log "ERRO: Nenhum provider de AI configurado!"
-    log "Configure pelo menos uma das variáveis: GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_BASE_URL"
-    exit 1
 fi
 
 # Executar script de atualização
 log "Executando atualize-ai.ts..."
 
-# Verificar se está rodando em ambiente com Docker e se o container existe
+# Verificar se algum container está rodando
 CONTAINER_NAME="hallyuhub"
-if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    # Executar dentro do container Docker
+if $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     log "Executando via Docker container (${CONTAINER_NAME})..."
-    
-    # Passar variáveis de ambiente explicitamente para garantir que sejam vistas pelo script
-    docker exec \
+    $DOCKER_BIN exec \
         -e GEMINI_API_KEY="$GEMINI_API_KEY" \
         -e OPENAI_API_KEY="$OPENAI_API_KEY" \
         -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
@@ -75,11 +92,10 @@ if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
         -e SLACK_WEBHOOK_ALERTS="$SLACK_WEBHOOK_ALERTS" \
         "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
-elif docker ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; then
-    # Fallback para nome alternativo
+elif $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; then
     CONTAINER_NAME="hallyuhub-production"
     log "Executando via Docker container (${CONTAINER_NAME})..."
-    docker exec \
+    $DOCKER_BIN exec \
         -e GEMINI_API_KEY="$GEMINI_API_KEY" \
         -e OPENAI_API_KEY="$OPENAI_API_KEY" \
         -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
@@ -90,10 +106,9 @@ elif docker ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; then
         "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
 else
-    # Fallback: Executar localmente (ambiente de desenvolvimento ou container não encontrado)
-    if command -v npm &> /dev/null; then
-        log "Container Docker não encontrado. Executando via npm local..."
-        npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+    if [ -x "$NPM_BIN" ]; then
+        log "Container Docker não encontrado. Executando via npm local ($NPM_BIN)..."
+        "$NPM_BIN" run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
         EXIT_CODE=$?
     else
         log "ERRO: Docker e npm não encontrados ou container '${CONTAINER_NAME}' offline."

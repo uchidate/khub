@@ -496,6 +496,16 @@ jobs:
               }]
             }"
 
+      - name: Prepare Server Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo mkdir -p /var/www/hallyuhub
+            sudo chown -R ${{ secrets.USER }}:${{ secrets.USER }} /var/www/hallyuhub
+
       - name: Copy Files to Server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -514,6 +524,16 @@ jobs:
           script: |
             set -e
             cd /var/www/hallyuhub
+
+            # Determinar comando docker-compose (v1 vs v2)
+            if docker compose version >/dev/null 2>&1; then
+              shopt -s expand_aliases
+              alias docker-compose='docker compose'
+              echo "✅ Usando 'docker compose' (V2)"
+            elif ! command -v docker-compose >/dev/null 2>&1; then
+              echo "❌ Erro: docker-compose não encontrado!"
+              exit 1
+            fi
 
             # Diagnóstico inicial
             echo "📊 Verificando ambiente..."
