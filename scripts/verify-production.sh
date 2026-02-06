@@ -77,10 +77,17 @@ echo ""
 echo "📝 ARQUIVOS DE CONFIGURAÇÃO"
 echo "----------------------------------------"
 check "Arquivo .env.production" "test -f /var/www/hallyuhub/.env.production"
-check "DATABASE_URL configurada" "grep -q \"^DATABASE_URL=\" /var/www/hallyuhub/.env.production"
-check "NEXT_PUBLIC_SITE_URL configurada" "grep -q \"^NEXT_PUBLIC_SITE_URL=\" /var/www/hallyuhub/.env.production"
-check "GEMINI_API_KEY configurada" "grep -q \"^GEMINI_API_KEY=\" /var/www/hallyuhub/.env.production"
-check "OLLAMA_BASE_URL configurada" "grep -q \"^OLLAMA_BASE_URL=\" /var/www/hallyuhub/.env.production"
+
+# Função para verificar variável no .env
+check_env() {
+    local key=$1
+    check "$key configurada" "grep -q \"^$key=\" /var/www/hallyuhub/.env.production"
+}
+
+check_env "DATABASE_URL"
+check_env "NEXT_PUBLIC_SITE_URL"
+check_env "GEMINI_API_KEY"
+check_env "OLLAMA_BASE_URL"
 check "Nginx config" "test -f /etc/nginx/sites-enabled/hallyuhub"
 echo ""
 
