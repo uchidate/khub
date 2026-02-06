@@ -500,47 +500,55 @@ jobs:
               }]
             }"
 
-      - name: Prepare Server Directory
+      - name: 🏷️ Prepare Environment
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          sync: true
+          command_timeout: 10m
           script: |
+            set -e
+            echo "📁 Base directory prep..."
             sudo mkdir -p /var/www/hallyuhub
             sudo chown -R ${{ secrets.USER }}:${{ secrets.USER }} /var/www/hallyuhub
-
-      - name: Update Production Env File
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+            
             cd /var/www/hallyuhub
             
-            # Backup do .env atual
+            # Initialize .env.production if it doesn't exist
+            if [ ! -f .env.production ]; then
+              echo "⚠️ .env.production not found! Creating from backup or empty..."
+              if [ -f .env.production.bak ]; then
+                cp .env.production.bak .env.production
+              else
+                touch .env.production
+              fi
+            fi
+
+            # Backup
             cp .env.production .env.production.bak
             
-            # Função para garantir que uma chave existe
             update_env() {
               key=$1
               val=$2
+              if [ -z "$val" ]; then
+                echo "⚠️ Skip $key (empty value)"
+                return
+              fi
               if grep -q "^$key=" .env.production; then
-                # Se existe, substitui (usando sed seguro com delimitador |)
                 sed -i "s|^$key=.*|$key=$val|" .env.production
               else
-                # Se não existe, adiciona no final
                 echo "$key=$val" >> .env.production
               fi
             }
             
-            # Atualizar apenas as chaves que temos confirmação no GitHub
-            echo "🔧 Atualizando chaves específicas no .env..."
+            echo "🔧 Updating sensitive keys..."
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             
             chmod 600 .env.production
+            echo "✅ Env prep complete."
 
       - name: Copy Files to Server
         uses: appleboy/scp-action@v0.1.7
@@ -670,11 +678,16 @@ jobs:
               exit 1
             fi
 
-            echo "⏰ Configurando Cron (Automação)..."
-            chmod +x scripts/setup-auto-generation.sh
-            NODE_ENV=production ./scripts/setup-auto-generation.sh -f --no-test
+            echo "✅ Production containers up and healthy!"
 
-            echo "✅ Production deployada!"
+            echo "📊 Running Production Verification Script..."
+            chmod +x scripts/verify-production.sh
+            if ! ./scripts/verify-production.sh; then
+              echo "❌ CRITICAL: Production verification failed!"
+              exit 1
+            fi
+
+            echo "✅ Production verified and operational!"
 
       - name: 🔍 Health Check
         run: |
