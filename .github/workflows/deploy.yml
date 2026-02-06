@@ -248,7 +248,7 @@ jobs:
             }"
 
       - name: 🏷️ Prepare Environment & Directory
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
@@ -301,7 +301,7 @@ jobs:
           target: "/var/www/hallyuhub"
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
@@ -572,7 +572,7 @@ jobs:
             }"
 
       - name: 🏷️ Prepare Environment & Directory
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
@@ -636,7 +636,7 @@ jobs:
           target: "/var/www/hallyuhub"
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}

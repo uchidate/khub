@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Run PostgreSQL backup (Production)
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
@@ -73,7 +73,7 @@ jobs:
 
     steps:
       - name: Run PostgreSQL backup (Staging)
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
