@@ -247,6 +247,38 @@ jobs:
               }]
             }"
 
+      - name: 🏷️ Prepare Environment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          sync: true
+          command_timeout: 10m
+          script: |
+            set -e
+            cd /var/www/hallyuhub
+            
+            if [ ! -f .env.staging ]; then
+              touch .env.staging
+            fi
+
+            cp .env.staging .env.staging.bak
+            
+            update_env() {
+              key=$1
+              val=$2
+              if [ -z "$val" ]; then return; fi
+              if grep -q "^$key=" .env.staging; then
+                sed -i "s|^$key=.*|$key=$val|" .env.staging
+              else
+                echo "$key=$val" >> .env.staging
+              fi
+            }
+            
+            update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
+            chmod 600 .env.staging
+
       - name: Copy Files to Server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -546,6 +578,7 @@ jobs:
             echo "🔧 Updating sensitive keys..."
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
+            update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
             
             chmod 600 .env.production
             echo "✅ Env prep complete."
