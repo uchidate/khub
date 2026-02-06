@@ -19,7 +19,7 @@ import {
   TMDBProductionData,
   TMDBTranslations,
   TMDBWatchProviders,
-} from '@/lib/types/tmdb'
+} from '../types/tmdb'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'

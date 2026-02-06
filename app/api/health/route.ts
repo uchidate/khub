@@ -23,11 +23,7 @@ async function checkTMDB(): Promise<boolean> {
     if (!apiKey) return false;
 
     try {
-        const response = await fetch('https://api.themoviedb.org/3/configuration', {
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Accept': 'application/json'
-            },
+        const response = await fetch(`https://api.themoviedb.org/3/configuration?api_key=${apiKey}`, {
             signal: AbortSignal.timeout(3000),
         });
         return response.ok;

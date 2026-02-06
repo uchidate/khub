@@ -15,6 +15,7 @@ import prisma from '../prisma'
 import { getTMDBFilmographyService, NotFoundError } from './tmdb-filmography-service'
 import { TMDBProductionData } from '../types/tmdb'
 import { getSlackService } from './slack-notification-service'
+import { AIOrchestrator } from '../ai/orchestrator'
 
 export type SyncStrategy = 'FULL_REPLACE' | 'INCREMENTAL' | 'SMART_MERGE'
 
@@ -127,15 +128,8 @@ export class FilmographySyncService {
       )
 
       if (!tmdbPerson) {
-        result.errors.push('Person not found on TMDB')
-        await prisma.artist.update({
-          where: { id: artistId },
-          data: {
-            tmdbSyncStatus: 'NOT_FOUND',
-            tmdbLastAttempt: new Date(),
-          },
-        })
-        return result
+        console.log(`⚠️ Artist ${artist.nameRomanized} not found on TMDB. Attempting AI fallback...`)
+        return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
 
       result.tmdbId = tmdbPerson.id
@@ -145,6 +139,12 @@ export class FilmographySyncService {
       const productions = await this.tmdbService.transformCreditsToProductions(credits)
 
       console.log(`Found ${productions.length} productions for ${artist.nameRomanized}`)
+
+      // If no productions found on TMDB even after finding person, try AI as fallback
+      if (productions.length === 0) {
+        console.log(`⚠️  No productions found on TMDB for ${artist.nameRomanized}. Attempting AI fallback...`)
+        return await this.syncArtistFilmographyWithAI(artistId, strategy)
+      }
 
       // Handle different sync strategies
       if (strategy === 'FULL_REPLACE') {
@@ -191,12 +191,146 @@ export class FilmographySyncService {
           where: { id: artistId },
           data: { tmdbSyncStatus: 'NOT_FOUND' },
         })
-      } else {
         await prisma.artist.update({
           where: { id: artistId },
           data: { tmdbSyncStatus: 'ERROR' },
         })
+
+        // Try AI fallback even on error
+        console.log(`⚠️ TMDB error for ${artistId}. Attempting AI fallback...`)
+        return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
+    } finally {
+      result.duration = Date.now() - startTime
+    }
+
+    return result
+  }
+
+  /**
+   * AI Fallback: Sync filmography using AI when TMDB fails
+   */
+  async syncArtistFilmographyWithAI(
+    artistId: string,
+    strategy: SyncStrategy = 'SMART_MERGE'
+  ): Promise<SyncResult> {
+    const startTime = Date.now()
+    const result: SyncResult = {
+      success: false,
+      artistId,
+      artistName: '',
+      tmdbId: null,
+      addedCount: 0,
+      updatedCount: 0,
+      skippedCount: 0,
+      errors: [],
+      duration: 0,
+    }
+
+    try {
+      const artist = await prisma.artist.findUnique({
+        where: { id: artistId },
+      })
+
+      if (!artist) throw new Error(`Artist not found: ${artistId}`)
+      result.artistName = artist.nameRomanized
+
+      const orchestrator = new AIOrchestrator({
+        geminiApiKey: process.env.GEMINI_API_KEY,
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        ollamaBaseUrl: process.env.OLLAMA_BASE_URL,
+      })
+
+      const prompt = `Gere uma lista da filmografia oficial (Dramas, Filmes, Programas de Variedades) do artista coreano "${artist.nameRomanized}" (${artist.nameHangul || ''}).
+      
+      Forneça para cada item:
+      - title: Título da obra
+      - titleKr: Título original (Hangul)
+      - type: "SERIE", "FILME" ou "PROGRAMA"
+      - year: Ano de lançamento (number)
+      - synopsis: Sinopse curta em português
+      - streamingPlatforms: Onde assistir (Netflix, Viki, Disney+, etc) - array de strings
+
+      Foque nos trabalhos mais relevantes e recentes.`
+
+      const schema = `{
+        "productions": [
+          {
+            "title": "string",
+            "titleKr": "string",
+            "type": "SERIE | FILME | PROGRAMA",
+            "year": "number",
+            "synopsis": "string",
+            "streamingPlatforms": ["string"]
+          }
+        ]
+      }`
+
+      const aiResult = await orchestrator.generateStructured<{ productions: any[] }>(
+        prompt,
+        schema,
+        { preferredProvider: 'gemini' }
+      )
+
+      if (!aiResult.productions || aiResult.productions.length === 0) {
+        result.success = true
+        return result
+      }
+
+      for (const prodData of aiResult.productions) {
+        try {
+          // Check for existing production to avoid duplicates
+          let production = await prisma.production.findFirst({
+            where: {
+              OR: [
+                { titlePt: { equals: prodData.title, mode: 'insensitive' } },
+                { titleKr: { equals: prodData.titleKr, mode: 'insensitive' } }
+              ]
+            }
+          })
+
+          if (!production) {
+            production = await prisma.production.create({
+              data: {
+                titlePt: prodData.title,
+                titleKr: prodData.titleKr,
+                type: prodData.type,
+                year: prodData.year,
+                synopsis: prodData.synopsis,
+                streamingPlatforms: prodData.streamingPlatforms || [],
+              }
+            })
+          }
+
+          // Check relationship
+          const existingRelation = await prisma.artistProduction.findUnique({
+            where: {
+              artistId_productionId: {
+                artistId,
+                productionId: production.id,
+              },
+            },
+          })
+
+          if (!existingRelation) {
+            await prisma.artistProduction.create({
+              data: {
+                artistId,
+                productionId: production.id,
+              },
+            })
+            result.addedCount++
+          } else {
+            result.skippedCount++
+          }
+        } catch (e: any) {
+          result.errors.push(e.message)
+        }
+      }
+
+      result.success = true
+    } catch (error: any) {
+      result.errors.push(error.message)
     } finally {
       result.duration = Date.now() - startTime
     }
