@@ -14,6 +14,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "atualize:ai": "tsx scripts/atualize-ai.ts",
+    "monitor:health": "tsx scripts/monitor-health.ts",
     "ai:stats": "tsx scripts/ai-stats.ts",
     "test:slack": "tsx scripts/test-slack-notifications.ts",
     "refresh:productions": "tsx scripts/refresh-productions.ts",

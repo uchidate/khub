@@ -18,6 +18,24 @@ async function checkOllama(): Promise<boolean> {
     }
 }
 
+async function checkTMDB(): Promise<boolean> {
+    const apiKey = process.env.TMDB_API_KEY;
+    if (!apiKey) return false;
+
+    try {
+        const response = await fetch('https://api.themoviedb.org/3/configuration', {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Accept': 'application/json'
+            },
+            signal: AbortSignal.timeout(3000),
+        });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
 export async function GET() {
     const ollamaOk = await checkOllama();
 
@@ -40,6 +58,20 @@ export async function GET() {
 
     const hasAnyProvider = Object.values(aiProviders).some(p => p.configured);
 
+    const tmdbOk = await checkTMDB();
+
+    const monitoring = {
+        slack: {
+            content: !!process.env.SLACK_WEBHOOK_CONTENT,
+            alerts: !!process.env.SLACK_WEBHOOK_ALERTS,
+            deploys: !!process.env.SLACK_WEBHOOK_DEPLOYS,
+        },
+        tmdb: {
+            configured: !!process.env.TMDB_API_KEY,
+            available: tmdbOk,
+        }
+    };
+
     return NextResponse.json({
         ok: true,
         ts: new Date().toISOString(),
@@ -49,5 +81,6 @@ export async function GET() {
             hasProvider: hasAnyProvider,
             providers: aiProviders,
         },
+        monitoring,
     });
 }
