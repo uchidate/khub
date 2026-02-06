@@ -5,7 +5,7 @@
 # Verifica se TODAS as configurações estão corretas
 # ============================================================
 
-set -e
+# set -e (Desativado para permitir coleta de todos os erros/avisos)
 
 ERRORS=0
 WARNINGS=0
@@ -51,7 +51,7 @@ warn() {
     else
         echo -e "${YELLOW}⚠${NC}"
         ((WARNINGS++))
-        return 1
+        return 0
     fi
 }
 
