@@ -93,7 +93,8 @@ if $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
         -e SLACK_WEBHOOK_CONTENT="$SLACK_WEBHOOK_CONTENT" \
         -e SLACK_WEBHOOK_DEPLOYS="$SLACK_WEBHOOK_DEPLOYS" \
         -e SLACK_WEBHOOK_ALERTS="$SLACK_WEBHOOK_ALERTS" \
-        "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+        -e DATABASE_URL="$DATABASE_URL" \
+        "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 --refresh-discography=true --refresh-filmography=true >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
 elif $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; then
     CONTAINER_NAME="hallyuhub-production"
@@ -109,7 +110,8 @@ elif $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; th
         -e SLACK_WEBHOOK_CONTENT="$SLACK_WEBHOOK_CONTENT" \
         -e SLACK_WEBHOOK_DEPLOYS="$SLACK_WEBHOOK_DEPLOYS" \
         -e SLACK_WEBHOOK_ALERTS="$SLACK_WEBHOOK_ALERTS" \
-        "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 >> "${LOG_FILE}" 2>&1
+        -e DATABASE_URL="$DATABASE_URL" \
+        "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=1 --productions=0 --refresh-discography=true --refresh-filmography=true >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
 else
     if [ -x "$NPM_BIN" ]; then

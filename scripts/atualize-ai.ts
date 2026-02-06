@@ -5,6 +5,7 @@ const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
 const { ProductionGenerator } = require('../lib/ai/generators/production-generator');
 const { getSlackService } = require('../lib/services/slack-notification-service');
 const { getFilmographySyncService } = require('../lib/services/filmography-sync-service');
+const { getDiscographySyncService } = require('../lib/services/discography-sync-service');
 const { TrendingService } = require('../lib/services/trending-service');
 
 const prisma = new PrismaClient();
@@ -20,6 +21,7 @@ interface CliOptions {
     provider?: 'gemini' | 'openai' | 'claude' | 'ollama';
     dryRun?: boolean;
     refreshFilmography?: boolean;
+    refreshDiscography?: boolean;
     updateTrending?: boolean;
 }
 
@@ -31,6 +33,7 @@ function parseArgs(): CliOptions {
         productions: 2,
         dryRun: false,
         refreshFilmography: true, // Default to true
+        refreshDiscography: true, // Default to true
         updateTrending: true, // Default to true
     };
 
@@ -48,6 +51,8 @@ function parseArgs(): CliOptions {
             options.dryRun = true;
         } else if (arg.startsWith('--refresh-filmography=')) {
             options.refreshFilmography = arg.split('=')[1] === 'true';
+        } else if (arg.startsWith('--refresh-discography=')) {
+            options.refreshDiscography = arg.split('=')[1] === 'true';
         } else if (arg.startsWith('--update-trending=')) {
             options.updateTrending = arg.split('=')[1] === 'true';
         }
@@ -130,6 +135,7 @@ async function main() {
     console.log(`   Artists to generate: ${options.artists}`);
     console.log(`   Productions to generate: ${options.productions}`);
     console.log(`   Refresh filmography: ${options.refreshFilmography ? 'Yes' : 'No'}`);
+    console.log(`   Refresh discography: ${options.refreshDiscography ? 'Yes' : 'No'}`);
     console.log(`   Update trending scores: ${options.updateTrending ? 'Yes' : 'No'}`);
     if (options.provider) {
         console.log(`   Preferred provider: ${options.provider}`);
@@ -294,15 +300,28 @@ async function main() {
                         console.log(`   🎬 Fetching filmography...`);
                         const filmographyService = getFilmographySyncService();
                         filmographyService.syncSingleArtist(savedArtist.id, 'SMART_MERGE')
-                            .then(result => {
+                            .then((result: any) => {
                                 if (result.success) {
                                     console.log(`   ✅ Filmography: ${result.addedCount} added, ${result.updatedCount} updated`);
                                 } else {
                                     console.log(`   ⚠️ Filmography sync failed: ${result.errors.join(', ')}`);
                                 }
                             })
-                            .catch(err => {
+                            .catch((err: Error) => {
                                 console.error(`   ❌ Filmography sync error: ${err.message}`);
+                            });
+
+                        // Auto-fetch discography for new artist
+                        console.log(`   🎵 Fetching discography...`);
+                        const discographyService = getDiscographySyncService();
+                        discographyService.syncArtistDiscography(savedArtist.id)
+                            .then((result: any) => {
+                                if (result.success) {
+                                    console.log(`   ✅ Discography: ${result.addedCount} albums added`);
+                                }
+                            })
+                            .catch((err: Error) => {
+                                console.error(`   ❌ Discography sync error: ${err.message}`);
                             });
                     } else if (artist.tmdbId) {
                         console.log(`   ✅ Filmography will be synced by periodic refresh (TMDB source)`);
@@ -388,7 +407,7 @@ async function main() {
             console.log('✅ All filmographies are up to date!');
         } else {
             console.log(`Found ${artistsToUpdate.length} artists needing update:`);
-            artistsToUpdate.forEach((a, i) => {
+            artistsToUpdate.forEach((a: any, i: number) => {
                 console.log(`  ${i + 1}. ${a.nameRomanized}`);
             });
 
@@ -405,14 +424,45 @@ async function main() {
             console.log(`   Failures: ${result.failureCount}`);
             console.log(`   Duration: ${(result.duration / 1000).toFixed(1)}s`);
 
-            const totalAdded = result.results.reduce((sum, r) => sum + r.addedCount, 0);
-            const totalUpdated = result.results.reduce((sum, r) => sum + r.updatedCount, 0);
+            const totalAdded = result.results.reduce((sum: number, r: any) => sum + r.addedCount, 0);
+            const totalUpdated = result.results.reduce((sum: number, r: any) => sum + r.updatedCount, 0);
             console.log(`   Productions added: ${totalAdded}`);
             console.log(`   Productions updated: ${totalUpdated}`);
 
             // Send Slack notification if significant updates
             if (slackService.isEnabled() && (totalAdded > 0 || totalUpdated > 0)) {
                 await filmographyService.notifyBatchSyncComplete(result);
+            }
+        }
+        console.log('='.repeat(60));
+    }
+
+    // Periodic discography refresh
+    if (options.refreshDiscography && !options.dryRun) {
+        console.log('\n\n🎵 REFRESHING DISCOGRAPHIES\n');
+        console.log('='.repeat(60));
+
+        const discographyService = getDiscographySyncService();
+
+        // Strategy: Update artists without albums first
+        const artistsToUpdate = await prisma.artist.findMany({
+            where: {
+                albums: { none: {} }
+            },
+            take: 10,
+            select: { id: true, nameRomanized: true }
+        });
+
+        if (artistsToUpdate.length === 0) {
+            console.log('✅ All artists have discography data!');
+        } else {
+            console.log(`Found ${artistsToUpdate.length} artists needing discography:`);
+            for (const a of artistsToUpdate) {
+                console.log(`   🎵 Syncing ${a.nameRomanized}...`);
+                const result = await discographyService.syncArtistDiscography(a.id);
+                if (result.success) {
+                    console.log(`   ✅ Added ${result.addedCount} albums`);
+                }
             }
         }
         console.log('='.repeat(60));
