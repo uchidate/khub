@@ -277,6 +277,8 @@ jobs:
             }
             
             update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
+            update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
+            update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
             chmod 600 .env.staging
 
       - name: Copy Files to Server
@@ -579,6 +581,8 @@ jobs:
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
+            update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
+            update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
             
             chmod 600 .env.production
             echo "✅ Env prep complete."

@@ -41,8 +41,9 @@ if [ ! -f "${PROJECT_DIR}/scripts/auto-generate-content.sh" ]; then
     exit 1
 fi
 
-# Garantir que o script é executável
+# Garantir que os scripts são executáveis
 chmod +x "${PROJECT_DIR}/scripts/auto-generate-content.sh"
+chmod +x "${PROJECT_DIR}/scripts/monitor-health.sh"
 
 # Criar diretório de logs
 mkdir -p "${PROJECT_DIR}/logs"
@@ -95,9 +96,12 @@ echo "Adicionando entrada ao crontab (a cada 5 minutos)..."
 (crontab -l 2>/dev/null || echo ""; \
  echo "# HallyuHub - Auto generate content every 5 minutes"; \
  echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; \
- echo "*/5 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh >> ${PROJECT_DIR}/logs/cron-direct.log 2>&1") | crontab -
+echo "*/5 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh >> ${PROJECT_DIR}/logs/cron-direct.log 2>&1"
+ echo ""
+ echo "# HallyuHub - Health Monitor every 30 minutes"
+ echo "*/30 * * * * ${PROJECT_DIR}/scripts/monitor-health.sh >> ${PROJECT_DIR}/logs/health-monitor.log 2>&1") | crontab -
 
-echo "✅ Crontab configurado com sucesso!"
+echo "✅ Crontab configurado com sucesso (Conteúdo + Saúde)!"
 echo ""
 echo "Configuração atual:"
 crontab -l 2>/dev/null | grep -A 2 "HallyuHub" || echo "Aviso: Não foi possível verificar a entrada (grep falhou)"
