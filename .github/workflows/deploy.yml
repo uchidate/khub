@@ -355,6 +355,33 @@ jobs:
           echo "**URL:** http://31.97.255.107:3001" >> $GITHUB_STEP_SUMMARY
           echo "**Health:** ✅ OK" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Fetch recent health status
+          HEALTH_JSON=$(curl -s http://31.97.255.107:3001/api/health)
+          
+          echo "#### 🏥 System Health (Live)" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status | Configured |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|------------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse AI
+          OLLAMA_STATUS=$(echo $HEALTH_JSON | jq -r '.ai.providers.ollama.available')
+          OLLAMA_CONFIG=$(echo $HEALTH_JSON | jq -r '.ai.providers.ollama.configured')
+          [ "$OLLAMA_STATUS" == "true" ] && O_EMOJI="✅" || O_EMOJI="🔴"
+          [ "$OLLAMA_CONFIG" == "true" ] && OC_EMOJI="✅" || OC_EMOJI="❌"
+          echo "| Ollama | $O_EMOJI | $OC_EMOJI |" >> $GITHUB_STEP_SUMMARY
+          
+          GEMINI_CONFIG=$(echo $HEALTH_JSON | jq -r '.ai.providers.gemini.configured')
+          [ "$GEMINI_CONFIG" == "true" ] && GC_EMOJI="✅" || GC_EMOJI="❌"
+          echo "| Gemini | - | $GC_EMOJI |" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse External
+          TMDB_STATUS=$(echo $HEALTH_JSON | jq -r '.monitoring.tmdb.available')
+          TMDB_CONFIG=$(echo $HEALTH_JSON | jq -r '.monitoring.tmdb.configured')
+          [ "$TMDB_STATUS" == "true" ] && T_EMOJI="✅" || T_EMOJI="🔴"
+          [ "$TMDB_CONFIG" == "true" ] && TC_EMOJI="✅" || TC_EMOJI="❌"
+          echo "| TMDB API | $T_EMOJI | $TC_EMOJI |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Próximos passos:**" >> $GITHUB_STEP_SUMMARY
           echo "1. Validar funcionalidades em staging" >> $GITHUB_STEP_SUMMARY
           echo "2. Criar PR: \`develop\` → \`main\`" >> $GITHUB_STEP_SUMMARY
@@ -774,6 +801,33 @@ jobs:
           echo "**URL:** https://www.hallyuhub.com.br" >> $GITHUB_STEP_SUMMARY
           echo "**Health:** ✅ OK" >> $GITHUB_STEP_SUMMARY
           echo "**SSL:** ✅ Válido" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Fetch recent health status
+          HEALTH_JSON=$(curl -s https://www.hallyuhub.com.br/api/health)
+          
+          echo "#### 🏥 System Health (Live)" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status | Configured |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|------------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse AI
+          OLLAMA_STATUS=$(echo $HEALTH_JSON | jq -r '.ai.providers.ollama.available')
+          OLLAMA_CONFIG=$(echo $HEALTH_JSON | jq -r '.ai.providers.ollama.configured')
+          [ "$OLLAMA_STATUS" == "true" ] && O_EMOJI="✅" || O_EMOJI="🔴"
+          [ "$OLLAMA_CONFIG" == "true" ] && OC_EMOJI="✅" || OC_EMOJI="❌"
+          echo "| Ollama | $O_EMOJI | $OC_EMOJI |" >> $GITHUB_STEP_SUMMARY
+          
+          GEMINI_CONFIG=$(echo $HEALTH_JSON | jq -r '.ai.providers.gemini.configured')
+          [ "$GEMINI_CONFIG" == "true" ] && GC_EMOJI="✅" || GC_EMOJI="❌"
+          echo "| Gemini | - | $GC_EMOJI |" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse External
+          TMDB_STATUS=$(echo $HEALTH_JSON | jq -r '.monitoring.tmdb.available')
+          TMDB_CONFIG=$(echo $HEALTH_JSON | jq -r '.monitoring.tmdb.configured')
+          [ "$TMDB_STATUS" == "true" ] && T_EMOJI="✅" || T_EMOJI="🔴"
+          [ "$TMDB_CONFIG" == "true" ] && TC_EMOJI="✅" || TC_EMOJI="❌"
+          echo "| TMDB API | $T_EMOJI | $TC_EMOJI |" >> $GITHUB_STEP_SUMMARY
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🎉 **Aplicação em produção atualizada!**" >> $GITHUB_STEP_SUMMARY
 
