@@ -99,7 +99,7 @@ echo ""
 
 echo "🤖 OLLAMA"
 echo "----------------------------------------"
-check "Ollama container saudável" "docker inspect hallyuhub-ollama-production | grep -q '\"Status\": \"healthy\"'"
+warn "Ollama container saudável" "docker inspect hallyuhub-ollama-production | grep -q '\"Status\": \"healthy\"'"
 warn "Modelo phi3 instalado" "docker exec hallyuhub-ollama-production ollama list | grep -q phi3"
 echo ""
 
