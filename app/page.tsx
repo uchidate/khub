@@ -4,7 +4,7 @@ import Image from "next/image"
 import type { Metadata } from "next"
 import { HeroSection } from "@/components/features/HeroSection"
 import { MediaCard } from "@/components/ui/MediaCard"
-import { ArrowRight, TrendingUp, Film, Newspaper } from 'lucide-react'
+import { ArrowRight, Film, Newspaper } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,14 +29,16 @@ export default async function Home() {
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-0 space-y-24">
 
                 {/* Section: Trending Artists (Bento Grid) */}
-                <section>
-                    <div className="flex items-end justify-between mb-8">
-                        <h2 className="text-2xl md:text-4xl font-display font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
-                            <TrendingUp className="text-neon-pink" size={32} />
-                            Trending Now
-                        </h2>
+                <section className="scroll-mt-32">
+                    <div className="flex items-end justify-between mb-10">
+                        <div className="space-y-2">
+                            <span className="text-xs font-black uppercase tracking-[0.3em] text-neon-pink">Top 🔥 Semanal</span>
+                            <h2 className="text-4xl md:text-6xl font-display font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
+                                Em Alta
+                            </h2>
+                        </div>
                         <Link href="/artists" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
-                            Ver Todos <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                            Explorar Tudo <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
 

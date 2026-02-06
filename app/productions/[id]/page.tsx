@@ -3,6 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
+import { TrailerModal } from "@/components/features/TrailerModal"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -114,7 +115,13 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         ))}
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
-                    {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1">{production.titleKr}</p>}
+                    {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1 mb-8">{production.titleKr}</p>}
+
+                    {production.trailerUrl && (
+                        <div className="mt-8">
+                            <TrailerModal trailerUrl={production.trailerUrl} title={production.titlePt} />
+                        </div>
+                    )}
                 </div>
             </div>
 

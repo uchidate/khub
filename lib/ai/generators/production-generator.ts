@@ -9,6 +9,7 @@ export interface ProductionData {
     year: number;
     synopsis: string;
     streamingPlatforms: string;
+    trailerUrl?: string;
 }
 
 /**
@@ -40,7 +41,8 @@ A produção deve estar disponível em alguma plataforma de streaming.`;
   "type": "string (SERIE, FILME ou PROGRAMA)",
   "year": "number (ano de lançamento, 2023 ou 2024)",
   "synopsis": "string (sinopse em português, 2-3 frases, sem spoilers)",
-  "streamingPlatforms": "string (plataformas separadas por vírgula, ex: 'Netflix, Viki')"
+  "streamingPlatforms": "string (plataformas separadas por vírgula, ex: 'Netflix, Viki')",
+  "trailerUrl": "string (URL real do trailer no YouTube, ex: 'https://www.youtube.com/watch?v=...') "
 }`;
 
         const result = await this.orchestrator.generateStructured<ProductionData>(

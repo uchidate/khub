@@ -28,17 +28,22 @@ interface TMDBPersonDetails {
   biography: string;
   known_for_department: string;
   popularity: number;
+  also_known_as?: string[];
 }
 
 interface RealArtistData {
   tmdbId: number;
   nameRomanized: string;
   nameHangul?: string;
+  birthName?: string;
   birthDate?: Date;
   profileImageUrl: string;
   biography?: string;
   roles: string[];
   popularity: number;
+  height?: string;
+  bloodType?: string;
+  zodiacSign?: string;
 }
 
 /**
@@ -212,9 +217,6 @@ export class TMDBArtistService {
     }
   }
 
-  /**
-   * Converte dados do TMDB para formato do banco
-   */
   private async convertTMDBToArtistData(person: TMDBPerson, details?: TMDBPersonDetails): Promise<RealArtistData | null> {
     const fullDetails = details || await this.getPersonDetails(person.id);
 
@@ -243,9 +245,17 @@ export class TMDBArtistService {
       roles.push('ATOR');
     }
 
+    // Tentar encontrar nome em Hangul em also_known_as
+    let nameHangul = undefined;
+    if (fullDetails.also_known_as && fullDetails.also_known_as.length > 0) {
+      // Procura por string que contenha caracteres coreanos
+      nameHangul = fullDetails.also_known_as.find(n => /[\u3131-\uD79D]/.test(n));
+    }
+
     return {
       tmdbId: fullDetails.id,
       nameRomanized: fullDetails.name,
+      nameHangul: nameHangul,
       birthDate: fullDetails.birthday ? new Date(fullDetails.birthday) : undefined,
       profileImageUrl: fullDetails.profile_path
         ? `${TMDB_IMAGE_BASE}${fullDetails.profile_path}`
@@ -253,6 +263,11 @@ export class TMDBArtistService {
       biography: fullDetails.biography || undefined,
       roles,
       popularity: fullDetails.popularity,
+      // Wiki fields initialized as undefined, enriched later
+      birthName: undefined,
+      height: undefined,
+      bloodType: undefined,
+      zodiacSign: undefined,
     };
   }
 

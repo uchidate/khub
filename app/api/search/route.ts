@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const searchTerm = `%${query}%`
 
     // Search artists
     const artists = await prisma.artist.findMany({
@@ -72,27 +71,27 @@ export async function GET(request: NextRequest) {
       ...artists.map(a => ({
         id: a.id,
         type: 'artist' as const,
-        name: a.nameRomanized,
+        title: a.nameRomanized,
         subtitle: a.agency?.name || a.nameHangul,
         imageUrl: a.primaryImageUrl,
       })),
       ...productions.map(p => ({
         id: p.id,
         type: 'production' as const,
-        name: p.titlePt,
+        title: p.titlePt,
         subtitle: `${p.type} • ${p.year}`,
         imageUrl: p.imageUrl,
       })),
       ...news.map(n => ({
         id: n.id,
         type: 'news' as const,
-        name: n.title,
+        title: n.title,
         subtitle: new Date(n.publishedAt).toLocaleDateString('pt-BR'),
         imageUrl: n.imageUrl,
       })),
     ]
 
-    return NextResponse.json({ results })
+    return NextResponse.json(results)
   } catch (error) {
     console.error('Search error:', error)
     return NextResponse.json(

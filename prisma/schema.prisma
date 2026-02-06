@@ -29,8 +29,12 @@ model Artist {
   nameRomanized    String             @unique
   nameHangul       String?
   birthDate        DateTime?
+  birthName        String?
   stageNames       String[]
   roles            String[]
+  height           String?
+  bloodType        String?
+  zodiacSign       String?
   bio              String?
   primaryImageUrl  String?
   socialLinks      Json?
@@ -101,6 +105,7 @@ model Production {
   releaseDate        DateTime?          // Precise release date
   runtime            Int?               // Minutes
   voteAverage        Float?             // TMDB rating
+  trailerUrl         String?            // YouTube trailer URL
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]

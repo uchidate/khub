@@ -7,6 +7,7 @@ import { SessionProvider } from "@/components/features/SessionProvider"
 import { NavigationProgress } from "@/components/features/NavigationProgress"
 import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
+import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 
@@ -62,6 +63,7 @@ export default function RootLayout({
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>
+                        <QuickSearch />
                         <ToastContainer />
                         <PWAInstaller />
                         <footer className="bg-black border-t border-zinc-800 py-12">
