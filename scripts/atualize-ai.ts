@@ -56,11 +56,19 @@ function parseArgs(): CliOptions {
     return options;
 }
 
-function validateNews(news: any): news is { title: string; contentMd: string; sourceUrl: string; tags: string; publishedAt: Date } {
+function validateNews(news: any): news is { title: string; contentMd: string; sourceUrl: string; tags: string[]; publishedAt: Date } {
     if (!news.title || typeof news.title !== 'string' || news.title.trim().length === 0) return false;
     if (!news.contentMd || typeof news.contentMd !== 'string' || news.contentMd.trim().length < 20) return false;
     if (!news.sourceUrl || typeof news.sourceUrl !== 'string') return false;
     return true;
+}
+
+function sanitizeNews(news: any): any {
+    // tags pode vir como string separado por vírgula — converter para array
+    if (news.tags && typeof news.tags === 'string') {
+        news.tags = news.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0);
+    }
+    return news;
 }
 
 function validateArtist(artist: any): boolean {
@@ -154,7 +162,8 @@ async function main() {
 
         if (!options.dryRun) {
             console.log('\n💾 Saving news to database...');
-            for (const news of newsItems) {
+            for (let news of newsItems) {
+                news = sanitizeNews(news);
                 if (!validateNews(news)) {
                     console.warn(`   ⚠️  Skipped invalid news: "${news.title || '(sem título)'}"`);
                     continue;
@@ -240,11 +249,15 @@ async function main() {
                         where: { nameRomanized: artist.nameRomanized },
                         update: {
                             nameHangul: artist.nameHangul || null,
+                            birthName: artist.birthName || null,
                             birthDate: artist.birthDate || null,
                             roles: artist.roles || null,
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
                             agencyId,
+                            height: artist.height || null,
+                            bloodType: artist.bloodType || null,
+                            zodiacSign: artist.zodiacSign || null,
                             ...(artist.tmdbId ? {
                                 tmdbId: String(artist.tmdbId),
                                 tmdbSyncStatus: 'SYNCED',
@@ -254,11 +267,15 @@ async function main() {
                         create: {
                             nameRomanized: artist.nameRomanized,
                             nameHangul: artist.nameHangul || null,
+                            birthName: artist.birthName || null,
                             birthDate: artist.birthDate || null,
                             roles: artist.roles || null,
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
                             agencyId,
+                            height: artist.height || null,
+                            bloodType: artist.bloodType || null,
+                            zodiacSign: artist.zodiacSign || null,
                             ...(artist.tmdbId ? {
                                 tmdbId: String(artist.tmdbId),
                                 tmdbSyncStatus: 'SYNCED',
@@ -328,6 +345,7 @@ async function main() {
                             year: production.year,
                             synopsis: production.synopsis,
                             streamingPlatforms: production.streamingPlatforms,
+                            trailerUrl: production.trailerUrl,
                         },
                         create: production,
                     });

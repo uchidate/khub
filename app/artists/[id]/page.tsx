@@ -4,7 +4,7 @@ import { ViewTracker } from "@/components/features/ViewTracker"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
-import { Instagram, Twitter, Youtube, Music, Globe } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles } from "lucide-react"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -148,22 +148,66 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             </div>
                         )}
 
-                        <div>
+                            {artist.birthName && (
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <User className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nome Real</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-zinc-300">{artist.birthName}</span>
+                                </div>
+                            )}
                             {birthDateFormatted && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nascimento</span>
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nascimento</span>
+                                    </div>
                                     <span className="text-sm font-bold text-zinc-300">{birthDateFormatted}</span>
                                 </div>
                             )}
                             {age !== null && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Idade</span>
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3.5 h-3.5 flex items-center justify-center text-[10px] font-black text-zinc-600 group-hover:text-purple-500 transition-colors">#</div>
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Idade</span>
+                                    </div>
                                     <span className="text-sm font-bold text-zinc-300">{age} anos</span>
                                 </div>
                             )}
+                            {artist.height && (
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <Ruler className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Altura</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-zinc-300">{artist.height}</span>
+                                </div>
+                            )}
+                            {artist.bloodType && (
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <Droplet className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Tipo Sanguíneo</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-zinc-300">{artist.bloodType}</span>
+                                </div>
+                            )}
+                            {artist.zodiacSign && (
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Signo</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-zinc-300">{artist.zodiacSign}</span>
+                                </div>
+                            )}
                             {artist.agency && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Agência</span>
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <Globe className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Agência</span>
+                                    </div>
                                     {artist.agency.website ? (
                                         <a href={artist.agency.website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-purple-500 hover:text-purple-400 transition-colors">
                                             {artist.agency.name}
@@ -173,7 +217,6 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                     )}
                                 </div>
                             )}
-                        </div>
 
                         {Object.keys(socialLinks).length > 0 && (
                             <div>

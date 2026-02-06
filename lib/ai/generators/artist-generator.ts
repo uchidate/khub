@@ -8,6 +8,7 @@ import { TMDBArtistService } from '../../services/tmdb-artist-service';
 export interface ArtistData {
     nameRomanized: string;
     nameHangul?: string;
+    birthName?: string;
     stageNames?: string;
     birthDate?: Date;
     roles: string | string[];
@@ -15,6 +16,9 @@ export interface ArtistData {
     primaryImageUrl: string;
     agencyName?: string;
     tmdbId?: number;
+    height?: string;
+    bloodType?: string;
+    zodiacSign?: string;
 }
 
 /**
@@ -66,8 +70,51 @@ Requisitos:
     }
 
     /**
+     * Enriquecimento de dados biográficos via Gemini
+     */
+    private async enrichArtistMetaWithGemini(artistName: string, biography?: string): Promise<{
+        birthName?: string;
+        height?: string;
+        bloodType?: string;
+        zodiacSign?: string;
+    }> {
+        if (!biography) return {};
+
+        try {
+            const prompt = `Com base na biografia abaixo do artista ${artistName}, extraia as seguintes informações no formato JSON.
+            
+Biografia:
+${biography}
+
+Campos necessários:
+- birthName: Nome real/nascimento (ex: 'Kim Seok-jin')
+- height: Altura (ex: '179 cm')
+- bloodType: Tipo sanguíneo (ex: 'O', 'A', 'B', 'AB')
+- zodiacSign: Signo do zodíaco ou chinês (ex: 'Sagitário')
+
+Se a informação não estiver na biografia, use seu conhecimento geral para preencher. Se for impossível determinar, deixe nulo.`;
+
+            const result = await this.orchestrator.generateStructured<{
+                birthName?: string;
+                height?: string;
+                bloodType?: string;
+                zodiacSign?: string;
+            }>(
+                prompt,
+                '{ "birthName": "string", "height": "string", "bloodType": "string", "zodiacSign": "string" }',
+                { preferredProvider: 'gemini' }
+            );
+
+            return result;
+        } catch (error: any) {
+            console.warn(`⚠️  Gemini meta enrichment failed for ${artistName}: ${error.message}`);
+            return {};
+        }
+    }
+
+    /**
      * Gera dados de um artista
-     * NOVA ESTRATÉGIA: Usa TMDB como fonte primária + Ollama para bio
+     * NOVA ESTRATÉGIA: Usa TMDB como fonte primária + Ollama para bio + Gemini para Wiki Data
      */
     async generateArtist(options?: GenerateOptions): Promise<ArtistData> {
         const excludeList = options?.excludeList || [];
@@ -79,6 +126,12 @@ Requisitos:
         if (realArtist) {
             console.log(`✅ Found real artist from TMDB: ${realArtist.nameRomanized}`);
 
+            // Enriquecer dados Wiki via Gemini
+            const wikiData = await this.enrichArtistMetaWithGemini(
+                realArtist.nameRomanized,
+                realArtist.biography
+            );
+
             // Gerar bio em português usando Ollama (gratuito)
             const bio = await this.generateBioWithOllama(
                 realArtist.nameRomanized,
@@ -89,11 +142,15 @@ Requisitos:
             return {
                 nameRomanized: realArtist.nameRomanized,
                 nameHangul: realArtist.nameHangul,
+                birthName: wikiData.birthName || realArtist.birthName,
                 birthDate: realArtist.birthDate,
                 roles: realArtist.roles.join(', '),
                 bio,
                 primaryImageUrl: realArtist.profileImageUrl,
                 tmdbId: realArtist.tmdbId,
+                height: wikiData.height,
+                bloodType: wikiData.bloodType,
+                zodiacSign: wikiData.zodiacSign,
             };
         }
 
@@ -116,23 +173,31 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
         const schema = `{
   "nameRomanized": "string (nome romanizado, ex: 'Kim Taehyung')",
   "nameHangul": "string (nome em hangul, ex: '김태형')",
+  "birthName": "string (nome real completo)",
   "stageNames": "string (nomes artísticos separados por vírgula, ex: 'V, TaeTae')",
   "birthDate": "string (data de nascimento no formato YYYY-MM-DD)",
   "roles": "string (papéis separados por vírgula, ex: 'CANTOR, ATOR, MODELO')",
   "bio": "string (biografia curta em português, 2-3 frases)",
   "primaryImageUrl": "string (URL de imagem do Unsplash relacionada a K-Pop/celebridade)",
-  "agencyName": "string (nome da agência, ex: 'HYBE', 'SM Entertainment', 'YG Entertainment')"
+  "agencyName": "string (nome da agência, ex: 'HYBE', 'SM Entertainment', 'YG Entertainment')",
+  "height": "string (ex: '178 cm')",
+  "bloodType": "string (ex: 'AB')",
+  "zodiacSign": "string (ex: 'Capricórnio')"
 }`;
 
         const result = await this.orchestrator.generateStructured<{
             nameRomanized: string;
             nameHangul: string;
+            birthName?: string;
             stageNames: string;
             birthDate: string;
             roles: string;
             bio: string;
             primaryImageUrl: string;
             agencyName: string;
+            height?: string;
+            bloodType?: string;
+            zodiacSign?: string;
         }>(prompt, schema, {
             ...options,
             systemPrompt: SYSTEM_PROMPTS.artist,
