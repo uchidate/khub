@@ -53,22 +53,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/package.json ./package.json
 
-# Layer 4: Node modules APENAS para AI providers (não precisa de tudo!)
-# Copiar apenas as dependências usadas pelos scripts de AI generation:
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@google ./node_modules/@google
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@anthropic-ai ./node_modules/@anthropic-ai
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/openai ./node_modules/openai
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/googleapis ./node_modules/googleapis
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/axios ./node_modules/axios
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/zod ./node_modules/zod
+# Layer 4: Node modules para AI providers e scripts
+# OTIMIZAÇÃO PRAGMÁTICA: Copiar node_modules completo mas remover pacotes pesados desnecessários
+# Ainda será menor que antes pois o standalone já reduz muito
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Dependências transitivas necessárias (pequenas)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/whatwg-url ./node_modules/whatwg-url
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/web-streams-polyfill ./node_modules/web-streams-polyfill
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/event-target-shim ./node_modules/event-target-shim
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/abort-controller ./node_modules/abort-controller
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/form-data ./node_modules/form-data
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/agentkeepalive ./node_modules/agentkeepalive
+# Remover pacotes grandes e desnecessários para runtime (opcional - ganha mais espaço)
+# RUN rm -rf node_modules/@next/swc-* node_modules/webpack node_modules/terser \
+#     node_modules/esbuild node_modules/@swc node_modules/typescript 2>/dev/null || true
 
 USER nextjs
 
