@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
-import { getEmailService } from '@/lib/services/email-service'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -44,39 +43,21 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Send password reset email
-    try {
-      const emailService = getEmailService()
+    // TODO: Send email with reset link
+    // For now, we'll just log it (in production, use a service like SendGrid, Resend, etc.)
+    const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password?token=${resetToken}`
 
-      if (emailService.isEnabled()) {
-        await emailService.sendPasswordResetEmail(
-          user.email,
-          resetToken,
-          user.name || undefined
-        )
-        console.log(`✅ Password reset email sent to: ${user.email}`)
-      } else {
-        console.warn('⚠️  Email service disabled, reset link not sent')
-
-        // In development, log the reset URL
-        if (process.env.NODE_ENV === 'development') {
-          const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password?token=${resetToken}`
-          console.log('🔗 Reset password URL:', resetUrl)
-        }
-      }
-    } catch (emailError) {
-      console.error('❌ Failed to send password reset email:', emailError)
-
-      // In development, still log the URL even if email fails
-      if (process.env.NODE_ENV === 'development') {
-        const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password?token=${resetToken}`
-        console.log('🔗 Reset password URL (email failed):', resetUrl)
-      }
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔗 Reset password URL:', resetUrl)
     }
+
+    // In production, send email here:
+    // await sendPasswordResetEmail(user.email, resetUrl)
 
     return NextResponse.json({
       success: true,
       message: 'Se o email existir, você receberá um link de recuperação.',
+      ...(process.env.NODE_ENV === 'development' && { resetUrl }), // Only in dev
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
