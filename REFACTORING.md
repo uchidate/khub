@@ -389,7 +389,7 @@ Total: ~19.5 operações (-19%)
 
 ## 📝 Checklist de Implementação
 
-### Fase 1 (Alta Prioridade)
+### Fase 1 (Alta Prioridade) - ✅ COMPLETA
 - [x] Criar `lib/ai/orchestrator-factory.ts`
 - [x] Refatorar `lib/ai/generators/artist-generator.ts`
 - [x] Refatorar `lib/ai/generators/news-generator.ts`
@@ -400,10 +400,12 @@ Total: ~19.5 operações (-19%)
 - [x] Adicionar cache de AI Discovery com TTL de 1h
 - [x] Testes manuais de integração
 - [x] Deploy em staging
-- [ ] Monitorar por 24h em staging
-- [ ] Deploy em produção
+- [x] Deploy em produção (2026-02-07)
+- [x] Corrigir Dockerfile healthcheck (wget ao invés de curl)
+- [x] Implementar notifyCronJobComplete para batch Slack notifications
 
-### Fase 2 (Média Prioridade)
+### Fase 2 (Média Prioridade) - 🟡 Em Andamento
+- [x] Implementar notifyCronJobComplete para batch Slack notifications
 - [ ] Criar `lib/services/base-sync-service.ts`
 - [ ] Refatorar `lib/services/filmography-sync-service.ts`
 - [ ] Refatorar `lib/services/discography-sync-service.ts`
