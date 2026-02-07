@@ -57,14 +57,13 @@ COPY --from=builder /app/package.json ./package.json
 # OTIMIZAÇÃO PRAGMÁTICA: Copiar node_modules completo mas remover pacotes pesados desnecessários
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Remover pacotes grandes que são apenas para build (não runtime)
-# Economiza ~100-200MB sem afetar funcionalidade
+# Remover apenas pacotes que são EXCLUSIVAMENTE para build
+# CUIDADO: Next.js precisa de @swc/helpers em runtime!
+# Economiza ~50-100MB de forma segura
 RUN rm -rf \
-    node_modules/@next/swc-* \
     node_modules/webpack \
     node_modules/terser \
     node_modules/esbuild \
-    node_modules/@swc \
     node_modules/typescript \
     node_modules/@types \
     node_modules/eslint \
