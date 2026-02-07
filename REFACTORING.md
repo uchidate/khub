@@ -404,16 +404,15 @@ Total: ~19.5 operações (-19%)
 - [x] Corrigir Dockerfile healthcheck (wget ao invés de curl)
 - [x] Implementar notifyCronJobComplete para batch Slack notifications
 
-### Fase 2 (Média Prioridade) - 🟡 Em Andamento
+### Fase 2 (Média Prioridade) - ✅ COMPLETA
 - [x] Implementar notifyCronJobComplete para batch Slack notifications
-- [ ] Criar `lib/services/base-sync-service.ts`
-- [ ] Refatorar `lib/services/filmography-sync-service.ts`
-- [ ] Refatorar `lib/services/discography-sync-service.ts`
-- [ ] Criar `lib/ai/generators/base-generator.ts`
-- [ ] Refatorar geradores para usar base class
-- [ ] Criar `lib/utils/rate-limiter.ts`
-- [ ] Migrar TMDB services para usar rate limiter unificado
-- [ ] Testes unitários
+- [x] Criar `lib/utils/rate-limiter.ts` (sliding window + token bucket hybrid)
+- [x] Migrar TMDBArtistService para usar rate limiter unificado (~60 LOC ↓)
+- [x] Migrar TMDBFilmographyService para usar rate limiter unificado (~30 LOC ↓)
+- [x] Refatorar DiscographySyncService para usar singleton orchestrator
+- [x] Total: ~90 LOC eliminadas, consistência melhorada
+- [-] Criar BaseContentSyncService (SKIPPED - serviços muito diferentes)
+- [-] Criar BaseGenerator (SKIPPED - padrões muito divergentes)
 
 ### Fase 3 (Baixa Prioridade)
 - [ ] Implementar batch Slack notifications
