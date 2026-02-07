@@ -70,6 +70,37 @@ Requisitos:
     }
 
     /**
+     * Descobre nomes de artistas reais via AI (Gemini/Ollama)
+     */
+    private async discoverArtistNamesViaAI(excludeList: string[] = []): Promise<string[]> {
+        console.log('🔍 Discovering trending artists via AI...');
+
+        const prompt = `Gere uma lista de 10 artistas REAIS e ATIVOS da indústria coreana (K-pop idols ou atores de K-drama) que sejam muito populares atualmente.
+        
+        IMPORTANTE: NÃO inclua nenhum dos seguintes artistas na lista (pois já os temos):
+        ${excludeList.slice(0, 50).join(', ')}
+        
+        Retorne apenas nomes reais e conhecidos internacionalmente (em inglês/romanizado).`;
+
+        const schema = `{ "artists": ["string"] }`;
+
+        try {
+            const result = await this.orchestrator.generateStructured<{ artists: string[] }>(
+                prompt,
+                schema,
+                { preferredProvider: 'gemini' }
+            );
+
+            console.log(`✅ AI suggested: ${result.artists.join(', ')}`);
+            return result.artists;
+        } catch (error: any) {
+            console.warn(`⚠️ AI discovery failed: ${error.message}. Using some safe fallbacks.`);
+            // Fallback para nomes muito famosos caso a AI falhe totalmente
+            return ['Kim Soo-hyun', 'Park Eun-bin', 'Song Kang', 'Han So-hee', 'Cha Eun-woo'];
+        }
+    }
+
+    /**
      * Enriquecimento de dados biográficos via Gemini
      */
     private async enrichArtistMetaWithGemini(artistName: string, biography?: string): Promise<{
@@ -116,12 +147,14 @@ Se a informação não estiver na biografia, use seu conhecimento geral para pre
      * Gera dados de um artista
      * NOVA ESTRATÉGIA: Usa TMDB como fonte primária + Ollama para bio + Gemini para Wiki Data
      */
-    async generateArtist(options?: GenerateOptions): Promise<ArtistData> {
+    async generateArtist(options?: GenerateOptions, candidates: string[] = []): Promise<ArtistData> {
         const excludeList = options?.excludeList || [];
 
         // ESTRATÉGIA 1: Tentar encontrar artista REAL no TMDB (preferencial)
         console.log('🎯 Strategy: Searching TMDB for real artist...');
-        const realArtist = await this.tmdbService.findRandomRealArtist(excludeList);
+
+        // Se temos candidatos sugeridos pela AI, tentamos eles primeiro
+        const realArtist = await this.tmdbService.findRandomRealArtist(candidates, excludeList);
 
         if (realArtist) {
             console.log(`✅ Found real artist from TMDB: ${realArtist.nameRomanized}`);
@@ -227,15 +260,24 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
      */
     async generateMultipleArtists(count: number, options?: GenerateOptions): Promise<ArtistData[]> {
         const artists: ArtistData[] = [];
+        const excludeList = options?.excludeList || [];
 
-        console.log(`🎤 Generating ${count} artists...`);
+        console.log(`🎤 Generating up to ${count} artists based on AI discovery...`);
 
-        for (let i = 0; i < count; i++) {
+        // 1. Descobrir nomes via AI
+        const candidates = await this.discoverArtistNamesViaAI(excludeList);
+
+        // 2. Tentar gerar cada um (TMDB primeiro)
+        for (let i = 0; i < Math.min(count, candidates.length); i++) {
             try {
                 console.log(`\n👤 Generating artist ${i + 1}/${count}...`);
-                const artist = await this.generateArtist(options);
+                // Passamos a lista de candidatos para o generateArtist
+                const artist = await this.generateArtist(options, candidates);
                 artists.push(artist);
                 console.log(`✅ Generated: ${artist.nameRomanized} (${artist.nameHangul})`);
+
+                // Adicionar o novo artista ao excludeList para não sugerir de novo na mesma run
+                excludeList.push(artist.nameRomanized);
             } catch (error: any) {
                 console.error(`❌ Failed to generate artist ${i + 1}: ${error.message}`);
             }

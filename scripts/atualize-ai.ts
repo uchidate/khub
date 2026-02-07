@@ -25,16 +25,20 @@ interface CliOptions {
     updateTrending?: boolean;
 }
 
+const defaultOptions: CliOptions = {
+    news: 0,
+    artists: 3,
+    productions: 2,
+    dryRun: false,
+    refreshFilmography: true,
+    refreshDiscography: true,
+    updateTrending: true,
+};
+
 function parseArgs(): CliOptions {
     const args = process.argv.slice(2);
     const options: CliOptions = {
-        news: 0,
-        artists: 3,
-        productions: 2,
-        dryRun: false,
-        refreshFilmography: true, // Default to true
-        refreshDiscography: true, // Default to true
-        updateTrending: true, // Default to true
+        ...defaultOptions,
     };
 
     for (let i = 0; i < args.length; i++) {
@@ -290,9 +294,23 @@ async function main() {
                         },
                     });
                     savedCounts.artists++;
-
                     const source = artist.tmdbId ? '(TMDB)' : '(AI)';
                     console.log(`   ✅ Saved: ${artist.nameRomanized} ${source}`);
+
+                    // Send individual notification
+                    if (slackService.isEnabled()) {
+                        await slackService.notifyContentAdded({
+                            type: 'artist',
+                            name: savedArtist.nameRomanized,
+                            details: {
+                                'Papéis': savedArtist.roles || 'N/A',
+                                'Nascimento': savedArtist.birthDate ? new Date(savedArtist.birthDate).toLocaleDateString('pt-BR') : 'N/A',
+                                'Fonte': source
+                            },
+                            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/artists/${savedArtist.id}`,
+                            context: { source: 'cron' }
+                        });
+                    }
 
                     // Auto-fetch filmography for new artist (non-blocking)
                     // Pula se já veio do TMDB (já tem filmografia)
@@ -370,6 +388,21 @@ async function main() {
                     });
                     savedCounts.productions++;
                     console.log(`   ✅ Saved: ${production.titlePt}`);
+
+                    // Send individual notification
+                    if (slackService.isEnabled()) {
+                        await slackService.notifyContentAdded({
+                            type: 'production',
+                            name: production.titlePt,
+                            details: {
+                                'Título Original': production.titleKr || 'N/A',
+                                'Ano': production.year || 0,
+                                'Tipo': production.type || 'N/A'
+                            },
+                            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/productions`,
+                            context: { source: 'cron' }
+                        });
+                    }
                 } catch (error: any) {
                     console.error(`   ❌ Failed to save: ${error.message}`);
                 }
