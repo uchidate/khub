@@ -20,14 +20,13 @@ import {
   TMDBTranslations,
   TMDBWatchProviders,
 } from '../types/tmdb'
+import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
 
-// Rate limiting configuration
-const MAX_TOKENS = 40
-const REFILL_RATE = 4 // tokens per second
+// Retry configuration
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 2000 // ms
 
@@ -55,37 +54,14 @@ export class NotFoundError extends Error {
 }
 
 export class TMDBFilmographyService {
-  private tokens: number = MAX_TOKENS
-  private lastRefill: number = Date.now()
+  private rateLimiter: RateLimiter
   private cache = new Map<string, CacheEntry<any>>()
 
   constructor() {
     if (!TMDB_API_KEY) {
       throw new Error('TMDB_API_KEY is not configured')
     }
-  }
-
-  // ============================================================================
-  // RATE LIMITING
-  // ============================================================================
-
-  private async refillTokens(): Promise<void> {
-    const now = Date.now()
-    const elapsed = (now - this.lastRefill) / 1000
-    this.tokens = Math.min(MAX_TOKENS, this.tokens + elapsed * REFILL_RATE)
-    this.lastRefill = now
-  }
-
-  private async acquireToken(count: number = 1): Promise<void> {
-    await this.refillTokens()
-
-    while (this.tokens < count) {
-      const waitTime = ((count - this.tokens) / REFILL_RATE) * 1000
-      await this.sleep(waitTime)
-      await this.refillTokens()
-    }
-
-    this.tokens -= count
+    this.rateLimiter = new RateLimiter(RateLimiterPresets.TMDB)
   }
 
   private async sleep(ms: number): Promise<void> {
@@ -125,7 +101,7 @@ export class TMDBFilmographyService {
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        await this.acquireToken()
+        await this.rateLimiter.acquire()
 
         const response = await fetch(url, {
           ...options,

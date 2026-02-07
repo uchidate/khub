@@ -1,5 +1,5 @@
 import prisma from '../prisma'
-import { AIOrchestrator } from '../ai/orchestrator';
+import { getOrchestrator } from '../ai/orchestrator-factory';
 
 export interface AlbumData {
     title: string;
@@ -11,16 +11,16 @@ export interface AlbumData {
     youtubeUrl?: string;
 }
 
+/**
+ * Discography Sync Service
+ * OTIMIZAÇÕES: Usa singleton AIOrchestrator (via factory)
+ */
 export class DiscographySyncService {
-    private orchestrator: AIOrchestrator;
-
-    constructor() {
-        this.orchestrator = new AIOrchestrator({
-            geminiApiKey: process.env.GEMINI_API_KEY,
-            openaiApiKey: process.env.OPENAI_API_KEY,
-            claudeApiKey: process.env.ANTHROPIC_API_KEY,
-            ollamaBaseUrl: process.env.OLLAMA_BASE_URL,
-        });
+    /**
+     * Retorna o orchestrator singleton
+     */
+    private getOrchestrator() {
+        return getOrchestrator();
     }
 
     /**
@@ -66,7 +66,7 @@ export class DiscographySyncService {
         ]
       }`;
 
-            const aiResult = await this.orchestrator.generateStructured<{ albums: AlbumData[] }>(
+            const aiResult = await this.getOrchestrator().generateStructured<{ albums: AlbumData[] }>(
                 prompt,
                 schema,
                 { preferredProvider: 'gemini' }

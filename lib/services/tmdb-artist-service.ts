@@ -1,14 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-
-// Rate limiting configuration
-// TMDB permite 40 req/10s, vamos usar no máximo 20 req/10s para segurança
-const MAX_REQUESTS_PER_10_SECONDS = 20; // Bem abaixo do limite de 40
-const MIN_DELAY_BETWEEN_REQUESTS = 500; // 500ms entre requests (2 req/s)
-const RATE_LIMIT_WINDOW = 10000; // 10 segundos
 
 interface TMDBPerson {
   id: number;
@@ -52,61 +47,22 @@ interface RealArtistData {
  */
 export class TMDBArtistService {
   private prisma: PrismaClient;
-  private requestTimestamps: number[] = []; // Track request timestamps for rate limiting
-  private lastRequestTime: number = 0;
-
+  private rateLimiter: RateLimiter;
 
   constructor(prisma?: PrismaClient) {
     this.prisma = prisma || new PrismaClient();
-  }
-
-  /**
-   * Rate limiting: aguarda se necessário para não ultrapassar limites do TMDB
-   */
-  private async waitForRateLimit(): Promise<void> {
-    const now = Date.now();
-
-    // Limpar timestamps antigos (>10s)
-    this.requestTimestamps = this.requestTimestamps.filter(
-      timestamp => now - timestamp < RATE_LIMIT_WINDOW
-    );
-
-    // Se atingiu o limite de requests na janela, aguardar
-    if (this.requestTimestamps.length >= MAX_REQUESTS_PER_10_SECONDS) {
-      const oldestRequest = this.requestTimestamps[0];
-      const waitTime = RATE_LIMIT_WINDOW - (now - oldestRequest) + 100; // +100ms buffer
-
-      if (waitTime > 0) {
-        console.log(`⏳ Rate limit: aguardando ${(waitTime / 1000).toFixed(1)}s...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-      }
-    }
-
-    // Garantir delay mínimo entre requests
-    const timeSinceLastRequest = now - this.lastRequestTime;
-    if (timeSinceLastRequest < MIN_DELAY_BETWEEN_REQUESTS) {
-      const delayNeeded = MIN_DELAY_BETWEEN_REQUESTS - timeSinceLastRequest;
-      await new Promise(resolve => setTimeout(resolve, delayNeeded));
-    }
-
-    // Registrar esta request
-    this.lastRequestTime = Date.now();
-    this.requestTimestamps.push(this.lastRequestTime);
+    this.rateLimiter = new RateLimiter(RateLimiterPresets.TMDB);
   }
 
   /**
    * Obter estatísticas de rate limiting
    */
   getRateLimitStats(): { requestsInWindow: number; maxAllowed: number; percentUsed: number } {
-    const now = Date.now();
-    const recentRequests = this.requestTimestamps.filter(
-      timestamp => now - timestamp < RATE_LIMIT_WINDOW
-    );
-
+    const stats = this.rateLimiter.getStats();
     return {
-      requestsInWindow: recentRequests.length,
-      maxAllowed: MAX_REQUESTS_PER_10_SECONDS,
-      percentUsed: Math.round((recentRequests.length / MAX_REQUESTS_PER_10_SECONDS) * 100),
+      requestsInWindow: stats.requestsInWindow,
+      maxAllowed: stats.maxAllowed,
+      percentUsed: Math.round(stats.percentUsed),
     };
   }
 
@@ -119,7 +75,7 @@ export class TMDBArtistService {
     }
 
     // Aguardar se necessário para respeitar rate limit
-    await this.waitForRateLimit();
+    await this.rateLimiter.acquire();
 
     try {
       const response = await fetch(
@@ -160,7 +116,7 @@ export class TMDBArtistService {
     }
 
     // Aguardar se necessário para respeitar rate limit
-    await this.waitForRateLimit();
+    await this.rateLimiter.acquire();
 
     try {
       const response = await fetch(
@@ -340,7 +296,8 @@ export class TMDBArtistService {
     const currentCandidates = [...candidates];
 
     console.log(`🎤 Finding up to ${count} real artists from TMDB using ${candidates.length} candidates...`);
-    console.log(`📊 Rate limit: Usando max ${MAX_REQUESTS_PER_10_SECONDS} de 40 req/10s (50% do limite)`);
+    const stats = this.getRateLimitStats();
+    console.log(`📊 Rate limit: ${stats.requestsInWindow}/${stats.maxAllowed} requests (${stats.percentUsed}% usado)`);
 
     for (let i = 0; i < count; i++) {
       const artist = await this.findRandomRealArtist(currentCandidates, currentExcludeList);
