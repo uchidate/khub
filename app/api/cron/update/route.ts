@@ -117,8 +117,9 @@ export async function GET(request: NextRequest) {
             });
             const excludeNews = existingNews.map(n => n.title);
 
-            // Buscar 2 notícias reais por execução (cron 15min = ~8 notícias/hora)
-            const newsItems = await newsGenerator.generateMultipleNews(2, {
+            // Buscar 5 notícias reais por execução (cron 15min = ~40 notícias/hora)
+            // RSS feeds são gratuitos, sem limitação de taxa
+            const newsItems = await newsGenerator.generateMultipleNews(5, {
                 excludeList: excludeNews
             });
 
