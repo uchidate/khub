@@ -262,6 +262,107 @@ export class SlackNotificationService {
     }
 
     /**
+     * Notify cron job completion with summary
+     */
+    async notifyCronJobComplete(job: {
+        duration: number;
+        updates: number;
+        errors: number;
+        details: {
+            artists: { updated: number; errors: string[] };
+            news: { updated: number; errors: string[] };
+            filmography: { synced: number; errors: string[] };
+            trending: { updated: number; errors: string[] };
+        };
+    }): Promise<boolean> {
+        if (!this.webhookContent) return false;
+
+        // Don't notify if nothing happened
+        if (job.updates === 0 && job.errors === 0) return false;
+
+        const emoji = job.errors > 0 ? '⚠️' : '✅';
+        const durationStr = (job.duration / 1000).toFixed(1) + 's';
+
+        const blocks: SlackBlock[] = [
+            {
+                type: 'header',
+                text: {
+                    type: 'plain_text',
+                    text: `${emoji} Cron Job Completo`,
+                    emoji: true,
+                },
+            },
+            {
+                type: 'section',
+                fields: [
+                    { type: 'mrkdwn', text: `*⏱️ Duração:*\n${durationStr}` },
+                    { type: 'mrkdwn', text: `*✅ Updates:*\n${job.updates}` },
+                    { type: 'mrkdwn', text: `*❌ Erros:*\n${job.errors}` },
+                ],
+            },
+        ];
+
+        // Add details
+        if (job.details) {
+            const detailFields = [];
+            if (job.details.artists.updated > 0) {
+                detailFields.push({ type: 'mrkdwn', text: `*🎤 Artistas:*\n${job.details.artists.updated}` });
+            }
+            if (job.details.news.updated > 0) {
+                detailFields.push({ type: 'mrkdwn', text: `*📰 Notícias:*\n${job.details.news.updated}` });
+            }
+            if (job.details.filmography.synced > 0) {
+                detailFields.push({ type: 'mrkdwn', text: `*🎞️ Filmografias:*\n${job.details.filmography.synced}` });
+            }
+            if (job.details.trending.updated > 0) {
+                detailFields.push({ type: 'mrkdwn', text: `*📊 Trending:*\nAtualizado` });
+            }
+
+            if (detailFields.length > 0) {
+                blocks.push({
+                    type: 'section',
+                    fields: detailFields,
+                });
+            }
+        }
+
+        // Add errors if any
+        if (job.errors > 0 && job.details) {
+            blocks.push({ type: 'divider' });
+            const allErrors = [
+                ...job.details.artists.errors,
+                ...job.details.news.errors,
+                ...job.details.filmography.errors,
+                ...job.details.trending.errors,
+            ];
+
+            if (allErrors.length > 0) {
+                const errorText = allErrors.slice(0, 3).map(e => `• ${e}`).join('\n');
+                const moreErrors = allErrors.length > 3 ? `\n_... e mais ${allErrors.length - 3} erros_` : '';
+                blocks.push({
+                    type: 'section',
+                    text: {
+                        type: 'mrkdwn',
+                        text: `*Erros:*\n${errorText}${moreErrors}`,
+                    },
+                });
+            }
+        }
+
+        // Context
+        blocks.push({ type: 'divider' });
+        const contextBlock = this.buildContextBlock({
+            source: 'cron',
+            timestamp: new Date(),
+        });
+        if (contextBlock) {
+            blocks.push(contextBlock);
+        }
+
+        return this.sendMessage(this.webhookContent, { blocks });
+    }
+
+    /**
      * Notify deploy status
      */
     async notifyDeploy(deploy: DeployNotification): Promise<boolean> {
