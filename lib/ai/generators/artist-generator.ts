@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { AIOrchestrator } from '../orchestrator';
 import { SYSTEM_PROMPTS } from '../ai-config';
 import type { GenerateOptions } from '../ai-config';
 import { ImageSearchService } from '../../services/image-search-service';
 import { TMDBArtistService } from '../../services/tmdb-artist-service';
+import { getOrchestrator } from '../orchestrator-factory';
 
 export interface ArtistData {
     nameRomanized: string;
@@ -21,17 +21,37 @@ export interface ArtistData {
     zodiacSign?: string;
 }
 
+// Cache de AI Discovery (1 hora de TTL = 4 execuções do cron)
+interface CachedDiscovery {
+    artists: string[];
+    timestamp: number;
+}
+
+let _aiDiscoveryCache: CachedDiscovery | null = null;
+const AI_DISCOVERY_CACHE_TTL = 3600000; // 1 hora em ms
+
 /**
  * Gerador de dados de artistas K-Pop/K-Drama
  * ESTRATÉGIA: Prioriza artistas REAIS do TMDB + Ollama para bio
+ *
+ * OTIMIZAÇÕES:
+ * - Usa singleton AIOrchestrator (via factory)
+ * - Cache de AI Discovery (1h TTL) - economiza 3 chamadas Gemini/hora
  */
 export class ArtistGenerator {
     private imageSearch: ImageSearchService;
     private tmdbService: TMDBArtistService;
 
-    constructor(private orchestrator: AIOrchestrator, prisma?: PrismaClient) {
+    constructor(prisma?: PrismaClient) {
         this.imageSearch = new ImageSearchService();
         this.tmdbService = new TMDBArtistService(prisma);
+    }
+
+    /**
+     * Retorna o orchestrator singleton
+     */
+    private getOrchestrator() {
+        return getOrchestrator();
     }
 
     /**
@@ -51,7 +71,7 @@ Requisitos:
 - Mencione K-pop ou K-drama conforme relevante
 - Não invente informações não fornecidas`;
 
-            const bioResult = await this.orchestrator.generateStructured<{ bio: string }>(
+            const bioResult = await this.getOrchestrator().generateStructured<{ bio: string }>(
                 prompt,
                 '{ "bio": "string (biografia em português, 2-3 frases)" }',
                 {
@@ -71,32 +91,58 @@ Requisitos:
 
     /**
      * Descobre nomes de artistas reais via AI (Gemini/Ollama)
+     * CACHE: 1 hora de TTL - economiza 3 chamadas Gemini/hora (75% das execuções)
      */
     private async discoverArtistNamesViaAI(excludeList: string[] = []): Promise<string[]> {
-        console.log('🔍 Discovering trending artists via AI...');
+        const now = Date.now();
+
+        // Verifica cache
+        if (_aiDiscoveryCache && (now - _aiDiscoveryCache.timestamp) < AI_DISCOVERY_CACHE_TTL) {
+            const cacheAge = Math.round((now - _aiDiscoveryCache.timestamp) / 60000);
+            console.log(`♻️  Using cached AI discovery (${cacheAge} min old)`);
+            return _aiDiscoveryCache.artists;
+        }
+
+        console.log('🔍 Discovering trending artists via AI (cache miss)...');
 
         const prompt = `Gere uma lista de 10 artistas REAIS e ATIVOS da indústria coreana (K-pop idols ou atores de K-drama) que sejam muito populares atualmente.
-        
+
         IMPORTANTE: NÃO inclua nenhum dos seguintes artistas na lista (pois já os temos):
         ${excludeList.slice(0, 50).join(', ')}
-        
+
         Retorne apenas nomes reais e conhecidos internacionalmente (em inglês/romanizado).`;
 
         const schema = `{ "artists": ["string"] }`;
 
         try {
-            const result = await this.orchestrator.generateStructured<{ artists: string[] }>(
+            const result = await this.getOrchestrator().generateStructured<{ artists: string[] }>(
                 prompt,
                 schema,
                 { preferredProvider: 'gemini' }
             );
 
             console.log(`✅ AI suggested: ${result.artists.join(', ')}`);
+
+            // Atualiza cache
+            _aiDiscoveryCache = {
+                artists: result.artists,
+                timestamp: now
+            };
+            console.log(`💾 Cached AI discovery (TTL: 1h)`);
+
             return result.artists;
         } catch (error: any) {
-            console.warn(`⚠️ AI discovery failed: ${error.message}. Using some safe fallbacks.`);
+            console.warn(`⚠️ AI discovery failed: ${error.message}. Using safe fallbacks.`);
             // Fallback para nomes muito famosos caso a AI falhe totalmente
-            return ['Kim Soo-hyun', 'Park Eun-bin', 'Song Kang', 'Han So-hee', 'Cha Eun-woo'];
+            const fallback = ['Kim Soo-hyun', 'Park Eun-bin', 'Song Kang', 'Han So-hee', 'Cha Eun-woo'];
+
+            // Cache fallback também (para não ficar chamando AI se está falhando)
+            _aiDiscoveryCache = {
+                artists: fallback,
+                timestamp: now
+            };
+
+            return fallback;
         }
     }
 
@@ -113,7 +159,7 @@ Requisitos:
 
         try {
             const prompt = `Com base na biografia abaixo do artista ${artistName}, extraia as seguintes informações no formato JSON.
-            
+
 Biografia:
 ${biography}
 
@@ -125,7 +171,7 @@ Campos necessários:
 
 Se a informação não estiver na biografia, use seu conhecimento geral para preencher. Se for impossível determinar, deixe nulo.`;
 
-            const result = await this.orchestrator.generateStructured<{
+            const result = await this.getOrchestrator().generateStructured<{
                 birthName?: string;
                 height?: string;
                 bloodType?: string;
@@ -218,7 +264,7 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
   "zodiacSign": "string (ex: 'Capricórnio')"
 }`;
 
-        const result = await this.orchestrator.generateStructured<{
+        const result = await this.getOrchestrator().generateStructured<{
             nameRomanized: string;
             nameHangul: string;
             birthName?: string;

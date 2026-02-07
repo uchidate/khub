@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-const { AIOrchestrator } = require('../lib/ai/orchestrator');
+const { getOrchestrator } = require('../lib/ai/orchestrator-factory');
 const { NewsGenerator } = require('../lib/ai/generators/news-generator');
 const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
 const { ProductionGenerator } = require('../lib/ai/generators/production-generator');
@@ -126,13 +126,7 @@ async function main() {
     }
 
     // Inicializar orquestrador
-    const orchestrator = new AIOrchestrator({
-        geminiApiKey: process.env.GEMINI_API_KEY,
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        claudeApiKey: process.env.ANTHROPIC_API_KEY,
-        ollamaBaseUrl: process.env.OLLAMA_BASE_URL,
-        maxRetries: 3,
-    });
+    const orchestrator = getOrchestrator();
 
     console.log(`\n📊 Configuration:`);
     console.log(`   News to generate: ${options.news}`);
@@ -164,7 +158,7 @@ async function main() {
         const existingNews = await prisma.news.findMany({ select: { title: true } });
         const excludeNews = existingNews.map(n => n.title);
 
-        const newsGenerator = new NewsGenerator(orchestrator);
+        const newsGenerator = new NewsGenerator();
         const newsItems = await newsGenerator.generateMultipleNews(options.news, {
             ...genOptions,
             excludeList: excludeNews
@@ -210,7 +204,7 @@ async function main() {
 
         console.log(`📊 Found ${existingArtists.length} existing artists in database`);
 
-        const artistGenerator = new ArtistGenerator(orchestrator, prisma);
+        const artistGenerator = new ArtistGenerator(prisma);
         const artists = await artistGenerator.generateMultipleArtists(options.artists, {
             ...genOptions,
             excludeList: excludeArtists
@@ -235,27 +229,29 @@ async function main() {
 
                 artist = sanitizeArtist(artist);
                 try {
-                    // Verificar/criar agência (opcional)
-                    let agencyId: string | null = null;
-                    if (artist.agencyName && typeof artist.agencyName === 'string' && artist.agencyName.trim().length > 0) {
-                        let agency = await prisma.agency.findUnique({
-                            where: { name: artist.agencyName },
-                        });
-
-                        if (!agency) {
-                            agency = await prisma.agency.create({
-                                data: {
-                                    name: artist.agencyName,
-                                    website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
-                                    socials: JSON.stringify({}),
-                                },
+                    // OTIMIZAÇÃO: Usar transação para prevenir dados órfãos
+                    const savedArtist = await prisma.$transaction(async (tx) => {
+                        // Verificar/criar agência (opcional)
+                        let agencyId: string | null = null;
+                        if (artist.agencyName && typeof artist.agencyName === 'string' && artist.agencyName.trim().length > 0) {
+                            let agency = await tx.agency.findUnique({
+                                where: { name: artist.agencyName },
                             });
-                            console.log(`   🏢 Created agency: ${artist.agencyName}`);
-                        }
-                        agencyId = agency.id;
-                    }
 
-                    const savedArtist = await prisma.artist.upsert({
+                            if (!agency) {
+                                agency = await tx.agency.create({
+                                    data: {
+                                        name: artist.agencyName,
+                                        website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
+                                        socials: JSON.stringify({}),
+                                    },
+                                });
+                                console.log(`   🏢 Created agency: ${artist.agencyName}`);
+                            }
+                            agencyId = agency.id;
+                        }
+
+                        return await tx.artist.upsert({
                         where: { nameRomanized: artist.nameRomanized },
                         update: {
                             nameHangul: artist.nameHangul || null,
@@ -292,7 +288,9 @@ async function main() {
                                 tmdbLastSync: new Date(),
                             } : {}),
                         },
-                    });
+                        });
+                    }); // Fim da transação
+
                     savedCounts.artists++;
                     const source = artist.tmdbId ? '(TMDB)' : '(AI)';
                     console.log(`   ✅ Saved: ${artist.nameRomanized} ${source}`);

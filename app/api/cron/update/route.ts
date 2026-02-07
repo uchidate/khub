@@ -50,16 +50,11 @@ export async function GET(request: NextRequest) {
         // 2.1. Gerar novos artistas (quantidade reduzida para cron frequente)
         try {
             console.log('[CRON] Generating artists...');
-            const { AIOrchestrator } = require('@/lib/ai/orchestrator');
+            const { getOrchestrator } = require('@/lib/ai/orchestrator-factory');
             const { ArtistGenerator } = require('@/lib/ai/generators/artist-generator');
 
-            const orchestrator = new AIOrchestrator({
-                geminiApiKey: process.env.GEMINI_API_KEY,
-                openaiApiKey: process.env.OPENAI_API_KEY,
-                claudeApiKey: process.env.ANTHROPIC_API_KEY,
-                ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-                maxRetries: 2,
-            });
+            // OTIMIZAÇÃO: Usar singleton orchestrator (via factory)
+            const orchestrator = getOrchestrator();
 
             if (orchestrator.getAvailableProviders().length === 0) {
                 throw new Error('No AI providers available');
@@ -69,7 +64,8 @@ export async function GET(request: NextRequest) {
             const preferredProvider = process.env.CRON_AI_PROVIDER ||
                                     (orchestrator.getAvailableProviders().includes('ollama') ? 'ollama' : undefined);
 
-            const artistGenerator = new ArtistGenerator(orchestrator);
+            // OTIMIZAÇÃO: ArtistGenerator agora usa singleton internamente
+            const artistGenerator = new ArtistGenerator(prisma);
             const existingArtists = await prisma.artist.findMany({
                 select: { nameRomanized: true }
             });
@@ -95,44 +91,49 @@ export async function GET(request: NextRequest) {
                             .filter((r: string) => r.length > 0);
                     }
 
-                    // Criar/encontrar agência
-                    let agencyId: string | null = null;
-                    if (artist.agencyName && typeof artist.agencyName === 'string' && artist.agencyName.trim().length > 0) {
-                        let agency = await prisma.agency.findUnique({
-                            where: { name: artist.agencyName },
-                        });
-
-                        if (!agency) {
-                            agency = await prisma.agency.create({
-                                data: {
-                                    name: artist.agencyName,
-                                    website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
-                                    socials: {},
-                                },
+                    // OTIMIZAÇÃO: Usar transação para prevenir dados órfãos
+                    await prisma.$transaction(async (tx) => {
+                        // Criar/encontrar agência
+                        let agencyId: string | null = null;
+                        if (artist.agencyName && typeof artist.agencyName === 'string' && artist.agencyName.trim().length > 0) {
+                            let agency = await tx.agency.findUnique({
+                                where: { name: artist.agencyName },
                             });
-                        }
-                        agencyId = agency.id;
-                    }
 
-                    await prisma.artist.upsert({
-                        where: { nameRomanized: artist.nameRomanized },
-                        update: {
-                            nameHangul: artist.nameHangul || null,
-                            birthDate: artist.birthDate || null,
-                            roles: artist.roles || null,
-                            bio: artist.bio || null,
-                            primaryImageUrl: artist.primaryImageUrl || null,
-                            agencyId,
-                        },
-                        create: {
-                            nameRomanized: artist.nameRomanized,
-                            nameHangul: artist.nameHangul || null,
-                            birthDate: artist.birthDate || null,
-                            roles: artist.roles || null,
-                            bio: artist.bio || null,
-                            primaryImageUrl: artist.primaryImageUrl || null,
-                            agencyId,
-                        },
+                            if (!agency) {
+                                agency = await tx.agency.create({
+                                    data: {
+                                        name: artist.agencyName,
+                                        website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
+                                        socials: {},
+                                    },
+                                });
+                            }
+                            agencyId = agency.id;
+                        }
+
+                        await tx.artist.upsert({
+                            where: { nameRomanized: artist.nameRomanized },
+                            update: {
+                                nameHangul: artist.nameHangul || null,
+                                birthDate: artist.birthDate || null,
+                                roles: artist.roles || null,
+                                bio: artist.bio || null,
+                                primaryImageUrl: artist.primaryImageUrl || null,
+                                agencyId,
+                                tmdbId: artist.tmdbId ? String(artist.tmdbId) : null,
+                            },
+                            create: {
+                                nameRomanized: artist.nameRomanized,
+                                nameHangul: artist.nameHangul || null,
+                                birthDate: artist.birthDate || null,
+                                roles: artist.roles || null,
+                                bio: artist.bio || null,
+                                primaryImageUrl: artist.primaryImageUrl || null,
+                                agencyId,
+                                tmdbId: artist.tmdbId ? String(artist.tmdbId) : null,
+                            },
+                        });
                     });
 
                     results.artists.updated++;
@@ -150,21 +151,17 @@ export async function GET(request: NextRequest) {
         // 2.2. Gerar notícias
         try {
             console.log('[CRON] Generating news...');
-            const { AIOrchestrator } = require('@/lib/ai/orchestrator');
+            const { getOrchestrator } = require('@/lib/ai/orchestrator-factory');
             const { NewsGenerator } = require('@/lib/ai/generators/news-generator');
 
-            const orchestrator = new AIOrchestrator({
-                geminiApiKey: process.env.GEMINI_API_KEY,
-                openaiApiKey: process.env.OPENAI_API_KEY,
-                claudeApiKey: process.env.ANTHROPIC_API_KEY,
-                ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-                maxRetries: 2,
-            });
+            // OTIMIZAÇÃO: Reutilizar singleton orchestrator
+            const orchestrator = getOrchestrator();
 
             const preferredProvider = process.env.CRON_AI_PROVIDER ||
                                     (orchestrator.getAvailableProviders().includes('ollama') ? 'ollama' : undefined);
 
-            const newsGenerator = new NewsGenerator(orchestrator);
+            // OTIMIZAÇÃO: NewsGenerator agora usa singleton internamente
+            const newsGenerator = new NewsGenerator();
             const existingNews = await prisma.news.findMany({
                 select: { title: true }
             });

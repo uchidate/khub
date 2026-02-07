@@ -1,4 +1,4 @@
-import { AIOrchestrator } from '../orchestrator';
+import { getOrchestrator } from '../orchestrator-factory';
 import { SYSTEM_PROMPTS } from '../ai-config';
 import type { GenerateOptions } from '../ai-config';
 
@@ -14,9 +14,17 @@ export interface ProductionData {
 
 /**
  * Gerador de dados de produções (K-Dramas, filmes, programas)
+ * OTIMIZAÇÕES: Usa singleton AIOrchestrator (via factory)
  */
 export class ProductionGenerator {
-    constructor(private orchestrator: AIOrchestrator) { }
+    constructor() { }
+
+    /**
+     * Retorna o orchestrator singleton
+     */
+    private getOrchestrator() {
+        return getOrchestrator();
+    }
 
     /**
      * Gera dados de uma produção
@@ -45,7 +53,7 @@ A produção deve estar disponível em alguma plataforma de streaming.`;
   "trailerUrl": "string (URL real do trailer no YouTube, ex: 'https://www.youtube.com/watch?v=...') "
 }`;
 
-        const result = await this.orchestrator.generateStructured<ProductionData>(
+        const result = await this.getOrchestrator().generateStructured<ProductionData>(
             prompt,
             schema,
             {

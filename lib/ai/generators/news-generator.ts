@@ -1,7 +1,7 @@
-import { AIOrchestrator } from '../orchestrator';
 import { SYSTEM_PROMPTS } from '../ai-config';
 import type { GenerateOptions } from '../ai-config';
 import { ImageSearchService } from '../../services/image-search-service';
+import { getOrchestrator } from '../orchestrator-factory';
 
 export interface NewsData {
     title: string;
@@ -14,12 +14,20 @@ export interface NewsData {
 
 /**
  * Gerador de notícias sobre K-Pop e K-Drama
+ * OTIMIZAÇÕES: Usa singleton AIOrchestrator (via factory)
  */
 export class NewsGenerator {
     private imageService: ImageSearchService;
 
-    constructor(private orchestrator: AIOrchestrator) {
+    constructor() {
         this.imageService = new ImageSearchService();
+    }
+
+    /**
+     * Retorna o orchestrator singleton
+     */
+    private getOrchestrator() {
+        return getOrchestrator();
     }
 
     /**
@@ -50,7 +58,7 @@ IMPORTANTE: A notícia deve ser baseada em eventos REAIS que aconteceram recente
   "publishedAt": "string (data no formato ISO 8601, deve ser recente)"
 }`;
 
-        const result = await this.orchestrator.generateStructured<{
+        const result = await this.getOrchestrator().generateStructured<{
             title: string;
             contentMd: string;
             sourceUrl: string;
