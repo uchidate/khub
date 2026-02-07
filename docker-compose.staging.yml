@@ -10,7 +10,12 @@ services:
       - postgres-staging-data:/var/lib/postgresql/data
     networks:
       - web
-    restart: always
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hallyuhub"]
       interval: 10s
@@ -24,7 +29,12 @@ services:
       - ollama-staging-data:/root/.ollama
     networks:
       - web
-    restart: always
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
@@ -44,7 +54,17 @@ services:
       - hallyuhub-data:/app/data
     networks:
       - web
-    restart: always
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 2
     depends_on:
       postgres-staging:
         condition: service_healthy

@@ -55,38 +55,6 @@ export class TMDBArtistService {
   private requestTimestamps: number[] = []; // Track request timestamps for rate limiting
   private lastRequestTime: number = 0;
 
-  // Korean names to search (mix of actors, idols, and popular figures)
-  private readonly KOREAN_ARTIST_NAMES = [
-    // Actors/Actresses
-    'Song Joong-ki', 'Park Seo-joon', 'Lee Min-ho', 'Kim Soo-hyun',
-    'Hyun Bin', 'Lee Jong-suk', 'Ji Chang-wook', 'Nam Joo-hyuk',
-    'Song Kang', 'Ahn Hyo-seop', 'Rowoon', 'Kim Seon-ho',
-    'Lee Do-hyun', 'Byeon Woo-seok', 'Cha Eun-woo', 'Park Bo-gum',
-    'Park Hyung-sik', 'Yoo Seung-ho', 'Im Si-wan', 'Seo In-guk',
-
-    'IU', 'Bae Suzy', 'Jun Ji-hyun', 'Song Hye-kyo', 'Han So-hee',
-    'Kim Go-eun', 'Shin Min-a', 'Park Min-young', 'Kim Ji-won',
-    'Han Hyo-joo', 'Moon Ga-young', 'Kim Se-jeong', 'Park Eun-bin',
-    'Shin Hye-sun', 'Kim Hye-yoon', 'Lee Sung-kyung', 'Im Yoon-ah',
-    'Kim Tae-ri', 'Jung Ho-yeon', 'Go Youn-jung', 'Kim Da-mi',
-
-    // BTS members (actors/variety)
-    'V', 'Jin', 'Jimin', 'Jungkook', 'RM', 'Suga', 'J-Hope',
-
-    // BLACKPINK members (actors/variety)
-    'Jisoo', 'Jennie', 'Rosé', 'Lisa',
-
-    // Other idol-actors
-    'Suho', 'D.O.', 'Kai', 'Sehun',
-    'Jaehyun', 'Doyoung', 'Jeno', 'Jaemin',
-    'Minho', 'Key', 'Taemin',
-    'Seungkwan', 'Mingyu', 'Vernon', 'Joshua',
-    'Hwang In-youp', 'Woo Do-hwan', 'Wi Ha-joon',
-
-    // Supporting actors
-    'Lee El', 'Kim Sung-kyun', 'Lee Sang-yeob', 'Yoon Park',
-    'Jang Ki-yong', 'Kim Young-dae', 'Kang Han-na', 'Han Ji-min',
-  ];
 
   constructor(prisma?: PrismaClient) {
     this.prisma = prisma || new PrismaClient();
@@ -274,13 +242,22 @@ export class TMDBArtistService {
   /**
    * Verifica se artista já existe no banco
    */
-  async checkDuplicate(name: string, tmdbId?: number): Promise<boolean> {
+  async checkDuplicate(name: string, tmdbId?: number, nameHangul?: string): Promise<boolean> {
+    const filters: any[] = [
+      { nameRomanized: { equals: name, mode: 'insensitive' } }
+    ];
+
+    if (tmdbId) {
+      filters.push({ tmdbId: String(tmdbId) });
+    }
+
+    if (nameHangul) {
+      filters.push({ nameHangul: { equals: nameHangul } });
+    }
+
     const existing = await this.prisma.artist.findFirst({
       where: {
-        OR: [
-          { nameRomanized: { equals: name, mode: 'insensitive' } },
-          ...(tmdbId ? [{ tmdbId: String(tmdbId) }] : []),
-        ],
+        OR: filters
       },
     });
 
@@ -289,12 +266,18 @@ export class TMDBArtistService {
 
   /**
    * Busca um artista real aleatório que ainda não está no banco
+   * @param candidates Lista de nomes sugeridos para busca (ex: via AI)
    * @param excludeList Lista de nomes já no banco para evitar
    * @returns Dados do artista real ou null se não encontrar
    */
-  async findRandomRealArtist(excludeList: string[] = []): Promise<RealArtistData | null> {
+  async findRandomRealArtist(candidates: string[] = [], excludeList: string[] = []): Promise<RealArtistData | null> {
+    if (candidates.length === 0) {
+      console.warn('⚠️ No candidates provided for TMDB search');
+      return null;
+    }
+
     // Filtrar nomes já excluídos
-    const availableNames = this.KOREAN_ARTIST_NAMES.filter(
+    const availableNames = candidates.filter(
       name => !excludeList.some(excluded =>
         excluded.toLowerCase().includes(name.toLowerCase()) ||
         name.toLowerCase().includes(excluded.toLowerCase())
@@ -302,7 +285,7 @@ export class TMDBArtistService {
     );
 
     if (availableNames.length === 0) {
-      console.warn('⚠️  All predefined artists are already in database');
+      console.warn('⚠️ All provided candidates are already in database');
       return null;
     }
 
@@ -321,16 +304,22 @@ export class TMDBArtistService {
         continue;
       }
 
-      // Verificar se já existe no banco
-      const isDuplicate = await this.checkDuplicate(person.name, person.id);
+      // Converter para formato do banco (para pegar o nome em hangul se disponível)
+      const artistData = await this.convertTMDBToArtistData(person);
+
+      if (!artistData) continue;
+
+      // Verificar duplicata de forma mais robusta
+      const isDuplicate = await this.checkDuplicate(
+        artistData.nameRomanized,
+        artistData.tmdbId,
+        artistData.nameHangul
+      );
 
       if (isDuplicate) {
-        console.log(`   ⚠️  Already exists in database: ${person.name}`);
+        console.log(`   ⚠️  Already exists in database: ${artistData.nameRomanized} (${artistData.nameHangul || ''})`);
         continue;
       }
-
-      // Converter para formato do banco
-      const artistData = await this.convertTMDBToArtistData(person);
 
       if (artistData) {
         console.log(`   ✅ Found real artist: ${artistData.nameRomanized} (TMDB ID: ${artistData.tmdbId})`);
@@ -345,25 +334,30 @@ export class TMDBArtistService {
   /**
    * Busca múltiplos artistas reais
    */
-  async findMultipleRealArtists(count: number, excludeList: string[] = []): Promise<RealArtistData[]> {
+  async findMultipleRealArtists(count: number, candidates: string[] = [], excludeList: string[] = []): Promise<RealArtistData[]> {
     const artists: RealArtistData[] = [];
     const currentExcludeList = [...excludeList];
+    const currentCandidates = [...candidates];
 
-    console.log(`🎤 Finding ${count} real artists from TMDB...`);
+    console.log(`🎤 Finding up to ${count} real artists from TMDB using ${candidates.length} candidates...`);
     console.log(`📊 Rate limit: Usando max ${MAX_REQUESTS_PER_10_SECONDS} de 40 req/10s (50% do limite)`);
 
     for (let i = 0; i < count; i++) {
-      const artist = await this.findRandomRealArtist(currentExcludeList);
+      const artist = await this.findRandomRealArtist(currentCandidates, currentExcludeList);
 
       if (artist) {
         artists.push(artist);
         currentExcludeList.push(artist.nameRomanized);
+        // Remover o candidato já usado para não repetir
+        const index = currentCandidates.indexOf(artist.nameRomanized);
+        if (index > -1) currentCandidates.splice(index, 1);
 
         // Mostrar estatísticas de rate limiting
         const stats = this.getRateLimitStats();
         console.log(`   📈 Rate limit: ${stats.requestsInWindow}/${stats.maxAllowed} requests (${stats.percentUsed}%)`);
       } else {
-        console.warn(`⚠️  Could not find artist ${i + 1}/${count}`);
+        console.warn(`⚠️  Could not find more artists (${i}/${count} found)`);
+        break;
       }
     }
 
