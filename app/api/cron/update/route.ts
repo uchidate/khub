@@ -48,96 +48,53 @@ export async function GET(request: NextRequest) {
         };
 
         // 2.1. Gerar novos artistas (quantidade reduzida para cron frequente)
+        // NOVA ESTRATÉGIA: Dados 100% reais do TMDB
         try {
-            console.log('[CRON] Generating artists...');
-            const { getOrchestrator } = require('@/lib/ai/orchestrator-factory');
-            const { ArtistGenerator } = require('@/lib/ai/generators/artist-generator');
+            console.log('[CRON] Discovering real artists from TMDB...');
+            const { ArtistGeneratorV2 } = require('@/lib/ai/generators/artist-generator-v2');
 
-            // OTIMIZAÇÃO: Usar singleton orchestrator (via factory)
-            const orchestrator = getOrchestrator();
-
-            if (orchestrator.getAvailableProviders().length === 0) {
-                throw new Error('No AI providers available');
-            }
-
-            // Preferir Ollama se disponível (gratuito)
-            const preferredProvider = process.env.CRON_AI_PROVIDER ||
-                                    (orchestrator.getAvailableProviders().includes('ollama') ? 'ollama' : undefined);
-
-            // OTIMIZAÇÃO: ArtistGenerator agora usa singleton internamente
-            const artistGenerator = new ArtistGenerator(prisma);
+            const artistGenerator = new ArtistGeneratorV2(prisma);
             const existingArtists = await prisma.artist.findMany({
                 select: { nameRomanized: true }
             });
             const excludeArtists = existingArtists.map(a => a.nameRomanized);
 
-            // Gerar 1-2 artistas por execução (para cron de 15min, isso dá ~6-8 artistas/hora)
+            // Gerar 2 artistas reais do TMDB por execução (cron 15min = ~8 artistas/hora)
             const artists = await artistGenerator.generateMultipleArtists(2, {
-                excludeList: excludeArtists,
-                preferredProvider
+                excludeList: excludeArtists
             });
 
             for (const artist of artists) {
                 try {
-                    // Validar e sanitizar
+                    // Validar dados básicos
                     if (!artist.nameRomanized || artist.nameRomanized.trim().length === 0) {
                         continue;
                     }
 
-                    // Converter roles string para array se necessário
-                    if (artist.roles && typeof artist.roles === 'string') {
-                        artist.roles = artist.roles.split(',')
-                            .map((r: string) => r.trim())
-                            .filter((r: string) => r.length > 0);
-                    }
-
-                    // OTIMIZAÇÃO: Usar transação para prevenir dados órfãos
-                    await prisma.$transaction(async (tx) => {
-                        // Criar/encontrar agência
-                        let agencyId: string | null = null;
-                        if (artist.agencyName && typeof artist.agencyName === 'string' && artist.agencyName.trim().length > 0) {
-                            let agency = await tx.agency.findUnique({
-                                where: { name: artist.agencyName },
-                            });
-
-                            if (!agency) {
-                                agency = await tx.agency.create({
-                                    data: {
-                                        name: artist.agencyName,
-                                        website: `https://${artist.agencyName.toLowerCase().replace(/\s+/g, '')}.com`,
-                                        socials: {},
-                                    },
-                                });
-                            }
-                            agencyId = agency.id;
-                        }
-
-                        await tx.artist.upsert({
-                            where: { nameRomanized: artist.nameRomanized },
-                            update: {
-                                nameHangul: artist.nameHangul || null,
-                                birthDate: artist.birthDate || null,
-                                roles: artist.roles || null,
-                                bio: artist.bio || null,
-                                primaryImageUrl: artist.primaryImageUrl || null,
-                                agencyId,
-                                tmdbId: artist.tmdbId ? String(artist.tmdbId) : null,
-                            },
-                            create: {
-                                nameRomanized: artist.nameRomanized,
-                                nameHangul: artist.nameHangul || null,
-                                birthDate: artist.birthDate || null,
-                                roles: artist.roles || null,
-                                bio: artist.bio || null,
-                                primaryImageUrl: artist.primaryImageUrl || null,
-                                agencyId,
-                                tmdbId: artist.tmdbId ? String(artist.tmdbId) : null,
-                            },
-                        });
+                    // Salvar artista real do TMDB
+                    await prisma.artist.upsert({
+                        where: { nameRomanized: artist.nameRomanized },
+                        update: {
+                            nameHangul: artist.nameHangul || null,
+                            birthDate: artist.birthDate || null,
+                            roles: artist.roles || null,
+                            bio: artist.bio || null,
+                            primaryImageUrl: artist.primaryImageUrl || null,
+                            tmdbId: String(artist.tmdbId),
+                        },
+                        create: {
+                            nameRomanized: artist.nameRomanized,
+                            nameHangul: artist.nameHangul || null,
+                            birthDate: artist.birthDate || null,
+                            roles: artist.roles || null,
+                            bio: artist.bio || null,
+                            primaryImageUrl: artist.primaryImageUrl || null,
+                            tmdbId: String(artist.tmdbId),
+                        },
                     });
 
                     results.artists.updated++;
-                    console.log(`[CRON] ✅ Saved artist: ${artist.nameRomanized}`);
+                    console.log(`[CRON] ✅ Saved real artist: ${artist.nameRomanized} (TMDB:${artist.tmdbId})`);
                 } catch (error: any) {
                     console.error(`[CRON] ❌ Failed to save artist: ${error.message}`);
                     results.artists.errors.push(error.message);
@@ -149,28 +106,20 @@ export async function GET(request: NextRequest) {
         }
 
         // 2.2. Gerar notícias
+        // NOVA ESTRATÉGIA: Notícias 100% reais de RSS feeds (AllKpop, Soompi, Koreaboo)
         try {
-            console.log('[CRON] Generating news...');
-            const { getOrchestrator } = require('@/lib/ai/orchestrator-factory');
-            const { NewsGenerator } = require('@/lib/ai/generators/news-generator');
+            console.log('[CRON] Fetching real news from RSS feeds...');
+            const { NewsGeneratorV2 } = require('@/lib/ai/generators/news-generator-v2');
 
-            // OTIMIZAÇÃO: Reutilizar singleton orchestrator
-            const orchestrator = getOrchestrator();
-
-            const preferredProvider = process.env.CRON_AI_PROVIDER ||
-                                    (orchestrator.getAvailableProviders().includes('ollama') ? 'ollama' : undefined);
-
-            // OTIMIZAÇÃO: NewsGenerator agora usa singleton internamente
-            const newsGenerator = new NewsGenerator();
+            const newsGenerator = new NewsGeneratorV2();
             const existingNews = await prisma.news.findMany({
                 select: { title: true }
             });
             const excludeNews = existingNews.map(n => n.title);
 
-            // Gerar 1-2 notícias por execução
+            // Buscar 2 notícias reais por execução (cron 15min = ~8 notícias/hora)
             const newsItems = await newsGenerator.generateMultipleNews(2, {
-                excludeList: excludeNews,
-                preferredProvider
+                excludeList: excludeNews
             });
 
             for (const news of newsItems) {
@@ -185,14 +134,22 @@ export async function GET(request: NextRequest) {
                         update: {
                             contentMd: news.contentMd,
                             sourceUrl: news.sourceUrl,
-                            tags: news.tags,
+                            imageUrl: news.imageUrl || null,
+                            tags: news.tags || null,
                             publishedAt: news.publishedAt,
                         },
-                        create: news,
+                        create: {
+                            title: news.title,
+                            contentMd: news.contentMd,
+                            sourceUrl: news.sourceUrl,
+                            imageUrl: news.imageUrl || null,
+                            tags: news.tags || null,
+                            publishedAt: news.publishedAt,
+                        },
                     });
 
                     results.news.updated++;
-                    console.log(`[CRON] ✅ Saved news: ${news.title}`);
+                    console.log(`[CRON] ✅ Saved real news: ${news.title}`);
                 } catch (error: any) {
                     console.error(`[CRON] ❌ Failed to save news: ${error.message}`);
                     results.news.errors.push(error.message);
