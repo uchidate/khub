@@ -55,12 +55,21 @@ COPY --from=builder /app/package.json ./package.json
 
 # Layer 4: Node modules para AI providers e scripts
 # OTIMIZAÇÃO PRAGMÁTICA: Copiar node_modules completo mas remover pacotes pesados desnecessários
-# Ainda será menor que antes pois o standalone já reduz muito
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Remover pacotes grandes e desnecessários para runtime (opcional - ganha mais espaço)
-# RUN rm -rf node_modules/@next/swc-* node_modules/webpack node_modules/terser \
-#     node_modules/esbuild node_modules/@swc node_modules/typescript 2>/dev/null || true
+# Remover pacotes grandes que são apenas para build (não runtime)
+# Economiza ~100-200MB sem afetar funcionalidade
+RUN rm -rf \
+    node_modules/@next/swc-* \
+    node_modules/webpack \
+    node_modules/terser \
+    node_modules/esbuild \
+    node_modules/@swc \
+    node_modules/typescript \
+    node_modules/@types \
+    node_modules/eslint \
+    node_modules/prettier \
+    2>/dev/null || true
 
 USER nextjs
 

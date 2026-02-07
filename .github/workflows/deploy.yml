@@ -707,10 +707,20 @@ jobs:
               exit 1
             fi
 
-            echo "📊 Aplicando migrations (Prisma)..."
-            
-            # Diagnóstico de Conexão DB
-            echo "🔍 Verificando configuração do Banco de Dados..."
+            echo "📊 Verificando migrations (Prisma)..."
+
+            # OTIMIZAÇÃO: Verificar se há migrations pendentes antes de aplicar
+            # Economiza 5-10s quando não há migrations
+            echo "🔍 Checking for pending migrations..."
+            PENDING_MIGRATIONS=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 | grep -i "pending\|unapplied" || echo "")
+
+            if [ -z "$PENDING_MIGRATIONS" ]; then
+              echo "✅ No pending migrations - skipping migrate deploy"
+            else
+              echo "🔄 Pending migrations detected - applying..."
+
+              # Diagnóstico de Conexão DB
+              echo "🔍 Verificando configuração do Banco de Dados..."
             if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub printenv DATABASE_URL > /dev/null; then
                DB_HOST=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub sh -c 'echo $DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
                echo "ℹ️  DATABASE_URL está definida. Host detectado: $DB_HOST"
@@ -753,6 +763,7 @@ jobs:
               $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 hallyuhub
               exit 1
             fi
+            fi # Fim do bloco if de pending migrations
 
             echo "✅ Production containers up and healthy!"
 
