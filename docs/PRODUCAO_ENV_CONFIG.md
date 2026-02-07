@@ -23,7 +23,10 @@ DATABASE_URL="postgresql://hallyuhub:YOUR_POSTGRES_PASSWORD@postgres-production:
 POSTGRES_PASSWORD=YOUR_POSTGRES_PASSWORD
 ```
 
-**⚠️ IMPORTANTE:** O nome do banco DEVE ser `hallyuhub_production` (não `hallyuhub`)
+**⚠️ IMPORTANTE:**
+- O nome do banco DEVE ser `hallyuhub_production` (não `hallyuhub`)
+- A senha NÃO pode conter `@` (use outro caractere como `X` ou `-`)
+- Senhas com `@` causam erro de parsing na DATABASE_URL
 
 ### 3. Email SMTP (Já configurado)
 
@@ -55,6 +58,34 @@ OLLAMA_BASE_URL=http://ollama-production:11434
 # Slack
 SLACK_WEBHOOK_DEPLOYS=YOUR_SLACK_WEBHOOK_URL
 ```
+
+---
+
+---
+
+## ⚠️ Armadilhas Conhecidas
+
+### Senha com Caractere `@`
+
+**Problema:** PostgreSQL com senha contendo `@` causa erro no Prisma.
+
+**Exemplo que NÃO funciona:**
+```
+Password: OldPassword@WithAtSign
+DATABASE_URL: postgresql://user:OldPassword@WithAtSign@host:5432/db
+                                              ↑ Parser confunde com separador de host
+```
+
+**Solução:** Trocar `@` por outro caractere (X, -, _)
+```bash
+# No servidor PostgreSQL
+ALTER USER hallyuhub PASSWORD 'NewPasswordWithoutAtSign';
+
+# No .env
+DATABASE_URL=postgresql://hallyuhub:NewPasswordWithoutAtSign@postgres-production:5432/hallyuhub_production
+```
+
+**Lição aprendida:** Evite `@`, `:`, `/`, `?`, `#` em senhas de banco de dados.
 
 ---
 
