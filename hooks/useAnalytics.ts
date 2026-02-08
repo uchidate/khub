@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 interface EventProps {
   action: string
@@ -12,13 +12,11 @@ interface EventProps {
 
 export function useAnalytics() {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
 
-  // Track pageviews
+  // Track pageviews (pathname only to avoid Suspense requirement)
   useEffect(() => {
-    const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '')
-    trackPageView(url)
-  }, [pathname, searchParams])
+    trackPageView(pathname)
+  }, [pathname])
 
   const trackPageView = (url: string) => {
     // Google Analytics 4
