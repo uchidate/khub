@@ -29,7 +29,7 @@ export default async function DashboardPage() {
   const quickLinks = [
     { title: 'Perfil', description: 'Editar Informações', href: '/profile', icon: User },
     { title: 'Configurações', description: 'Privacidade', href: '/settings', icon: Settings },
-    ...(session.user.role === 'admin' ? [{ title: 'Admin', description: 'Painel', href: '/admin', icon: Shield }] : []),
+    ...(session.user.role?.toLowerCase() === 'admin' ? [{ title: 'Admin', description: 'Painel', href: '/admin', icon: Shield }] : []),
   ]
 
   return (

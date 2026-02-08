@@ -12,7 +12,7 @@ export default async function AdminPage() {
     redirect('/auth/login?callbackUrl=/admin')
   }
 
-  if (session.user.role !== 'admin') {
+  if (session.user.role?.toLowerCase() !== 'admin') {
     redirect('/dashboard')
   }
 

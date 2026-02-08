@@ -52,7 +52,7 @@ export default async function ProfilePage() {
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                   <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-purple-500/10 text-purple-500 border border-purple-500/20">
                     <Shield size={16} />
-                    {session.user.role === 'admin' ? 'Administrador' : session.user.role === 'editor' ? 'Editor' : 'Usuário'}
+                    {session.user.role?.toLowerCase() === 'admin' ? 'Administrador' : session.user.role?.toLowerCase() === 'editor' ? 'Editor' : 'Usuário'}
                   </span>
                 </div>
               </div>
@@ -89,7 +89,7 @@ export default async function ProfilePage() {
                     Função
                   </label>
                   <div className="bg-black border border-zinc-700 rounded-lg px-4 py-3 text-white">
-                    {session.user.role === 'admin' ? 'Administrador' : session.user.role === 'editor' ? 'Editor' : 'Usuário'}
+                    {session.user.role?.toLowerCase() === 'admin' ? 'Administrador' : session.user.role?.toLowerCase() === 'editor' ? 'Editor' : 'Usuário'}
                   </div>
                 </div>
 
