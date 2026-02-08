@@ -22,6 +22,7 @@ export function UserMenu() {
       <div className="flex items-center gap-3">
         <Link
           href="/auth/login"
+          prefetch={false}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
         >
           <LogIn size={16} />
@@ -29,6 +30,7 @@ export function UserMenu() {
         </Link>
         <Link
           href="/auth/register"
+          prefetch={false}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg transition-colors"
         >
           <UserPlus size={16} />
