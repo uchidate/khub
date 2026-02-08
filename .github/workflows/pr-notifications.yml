@@ -1,0 +1,159 @@
+name: 🔔 PR Notifications
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches:
+      - main
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  notify:
+    name: Send Slack Notification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📝 Get PR info
+        id: pr
+        run: |
+          echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+          echo "author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "url=${{ github.event.pull_request.html_url }}" >> $GITHUB_OUTPUT
+
+      - name: 🔔 Notify - New PR
+        if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review'
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "🚀 Novo PR aguardando aprovação",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 Novo Pull Request",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR:*\n<${{ steps.pr.outputs.url }}|#${{ steps.pr.outputs.number }} - ${{ steps.pr.outputs.title }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Autor:*\n${{ steps.pr.outputs.author }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.head_ref }} → main"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n⏳ Aguardando aprovação de @fbchdt"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Ver PR no GitHub",
+                        "emoji": true
+                      },
+                      "url": "${{ steps.pr.outputs.url }}",
+                      "style": "primary"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: ✅ Notify - PR Approved
+        if: github.event.review.state == 'approved'
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "✅ PR aprovado",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ PR Aprovado",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR:*\n<${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Aprovado por:*\n${{ github.event.review.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n✅ Pronto para merge"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: ❌ Notify - Changes Requested
+        if: github.event.review.state == 'changes_requested'
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "❌ Mudanças solicitadas no PR",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "❌ Mudanças Solicitadas",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR:*\n<${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Reviewer:*\n${{ github.event.review.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n⚠️ Ajustes necessários"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
