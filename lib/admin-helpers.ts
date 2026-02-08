@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma'
  */
 export async function requireAdmin() {
   const session = await auth()
-  if (!session || session.user.role !== 'admin') {
+  if (!session || session.user.role?.toLowerCase() !== 'admin') {
     return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), session: null }
   }
   return { error: null, session }
