@@ -1,0 +1,58 @@
+name: 🔄 Cron Job - Auto Update Content
+
+on:
+  schedule:
+    # Runs every 30 minutes (GitHub Actions minimum is 5 minutes)
+    # Format: minute hour day month day-of-week
+    - cron: '*/30 * * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-content:
+    name: Update Artists & News
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📋 Call Cron Endpoint
+        run: |
+          echo "🚀 Calling cron endpoint..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://www.hallyuhub.com.br/api/cron/update?token=${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "📊 Response Code: $HTTP_CODE"
+          echo "📄 Response Body:"
+          echo "$BODY" | jq '.' || echo "$BODY"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Cron job completed successfully"
+
+            # Parse and display results
+            ARTISTS=$(echo "$BODY" | jq -r '.results.artists.updated // 0')
+            NEWS=$(echo "$BODY" | jq -r '.results.news.updated // 0')
+            FILMOGRAPHY=$(echo "$BODY" | jq -r '.results.filmography.synced // 0')
+
+            echo "📈 Results:"
+            echo "  - Artists: $ARTISTS"
+            echo "  - News: $NEWS"
+            echo "  - Filmography: $FILMOGRAPHY"
+          else
+            echo "❌ Cron job failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🔄 Cron Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Endpoint**: https://www.hallyuhub.com.br/api/cron/update" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
