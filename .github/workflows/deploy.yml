@@ -3,7 +3,7 @@ name: 🚀 Build and Deploy
 # ╔════════════════════════════════════════════════════════════════╗
 # ║  FLUXO DE DEPLOY OTIMIZADO                                     ║
 # ║                                                                ║
-# ║  develop → STAGING (auto) → validar → main → PRODUCTION       ║
+# ║  staging → STAGING (auto) → validar → main → PRODUCTION       ║
 # ║                                                                ║
 # ║  • Builds paralelos quando possível                            ║
 # ║  • Cache otimizado para builds rápidos                         ║
@@ -16,7 +16,7 @@ name: 🚀 Build and Deploy
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, staging]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -89,17 +89,17 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "push" ]]; then
             echo "::warning::⚠️ Push direto para main detectado!"
-            echo "::warning::Processo recomendado: develop → staging → PR → main"
+            echo "::warning::Processo recomendado: staging → STAGING → PR → main"
 
             echo "### ⚠️ Push Direto para Main" >> $GITHUB_STEP_SUMMARY
             echo "**Processo recomendado:**" >> $GITHUB_STEP_SUMMARY
-            echo "1. Push para \`develop\`" >> $GITHUB_STEP_SUMMARY
-            echo "2. Validar em staging" >> $GITHUB_STEP_SUMMARY
-            echo "3. Criar PR: develop → main" >> $GITHUB_STEP_SUMMARY
+            echo "1. Push para \`staging\`" >> $GITHUB_STEP_SUMMARY
+            echo "2. Validar em ambiente staging" >> $GITHUB_STEP_SUMMARY
+            echo "3. Criar PR: staging → main" >> $GITHUB_STEP_SUMMARY
             echo "4. Merge após validação" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             echo "### 🟡 Deploy para Staging" >> $GITHUB_STEP_SUMMARY
             echo "Após deploy, valide em: http://31.97.255.107:3001" >> $GITHUB_STEP_SUMMARY
           fi
@@ -150,7 +150,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/develop' }}
+            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/staging' }}
             type=sha,prefix={{branch}}-
           labels: |
             org.opencontainers.image.title=HallyuHub
@@ -190,7 +190,7 @@ jobs:
     needs: build-image
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/staging'
 
     environment:
       name: staging
@@ -221,7 +221,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`develop\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`staging\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -418,7 +418,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`develop\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`staging\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -431,7 +431,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🎯 *Próximos passos:*\\n1. Validar funcionalidades em staging\\n2. Criar PR: \`develop\` → \`main\`\"
+                  \"text\": \"🎯 *Próximos passos:*\\n1. Validar funcionalidades em staging\\n2. Criar PR: \`staging\` → \`main\`\"
                 }
               }, {
                 \"type\": \"divider\"
@@ -473,7 +473,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`develop\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`staging\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {

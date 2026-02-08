@@ -68,7 +68,7 @@ POSTGRES_PASSWORD=<nova-senha>
 ### Produção (2026-02-07)
 - ✅ Healthcheck: https://www.hallyuhub.com.br/api/health → OK
 - ✅ Registro de usuário: POST /api/auth/register → Sucesso
-- ✅ Email de boas-vindas enviado para: fabio.uchidate@gmail.com
+- ✅ Email de boas-vindas enviado para: fabiouchidate@gmail.com
 - ✅ Conexão com banco de dados: Funcionando
 - ✅ Containers: Todos UP e healthy
 
