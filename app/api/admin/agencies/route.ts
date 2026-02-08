@@ -3,6 +3,10 @@ import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 
+// Force dynamic rendering (uses auth/headers)
+export const dynamic = 'force-dynamic'
+
+
 const agencySchema = z.object({
   name: z.string().min(1),
   website: z.string().url().optional().nullable(),
