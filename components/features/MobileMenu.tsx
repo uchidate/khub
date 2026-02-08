@@ -4,12 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { X, Menu } from "lucide-react"
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 
 interface MobileMenuProps {
   links: Array<{ label: string; href: string }>
 }
 
 export const MobileMenu = ({ links }: MobileMenuProps) => {
+  const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
@@ -47,13 +49,13 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] md:hidden animate-fade-in"
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
 
           {/* Menu Panel */}
-          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-zinc-900 z-50 md:hidden animate-slide-in-right">
+          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-zinc-900 z-[120] md:hidden animate-slide-in-right">
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-zinc-800">
@@ -79,11 +81,10 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                       <li key={link.href}>
                         <Link
                           href={link.href}
-                          className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                            isActive
-                              ? "bg-purple-500/10 text-purple-400"
-                              : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                          }`}
+                          className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive
+                            ? "bg-purple-500/10 text-purple-400"
+                            : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                            }`}
                         >
                           {link.label}
                         </Link>
@@ -91,6 +92,24 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                     )
                   })}
                 </ul>
+
+                {/* Mobile Auth Buttons */}
+                {!session && (
+                  <div className="mt-6 pt-6 border-t border-zinc-800 space-y-3">
+                    <Link
+                      href="/auth/login"
+                      className="flex w-full items-center justify-center gap-2 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl transition-colors"
+                    >
+                      Entrar
+                    </Link>
+                    <Link
+                      href="/auth/register"
+                      className="flex w-full items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-transform active:scale-95"
+                    >
+                      Cadastrar
+                    </Link>
+                  </div>
+                )}
               </nav>
 
               {/* Footer */}

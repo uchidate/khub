@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Shield, Users, Database, Activity, FileText, Settings, Film } from 'lucide-react'
 import NavBar from '@/components/NavBar'
+import prisma from '@/lib/prisma'
 
 export default async function AdminPage() {
   const session = await auth()
@@ -60,12 +61,72 @@ export default async function AdminPage() {
     },
   ]
 
+  // Fetch real stats directly from database
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const [
+    totalUsers,
+    totalArtists,
+    totalProductions,
+    totalNews,
+    newUsersCount,
+    newArtistsCount,
+    newProductionsCount,
+    newNewsCount,
+    recentUsers,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.artist.count(),
+    prisma.production.count(),
+    prisma.news.count(),
+    prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+    prisma.artist.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+    prisma.production.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+    prisma.news.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+    prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { email: true, createdAt: true },
+    }),
+  ])
+
+  const calculateGrowth = (current: number, newCount: number) => {
+    const previous = current - newCount
+    if (previous === 0) return '+100'
+    const percentage = ((newCount / previous) * 100).toFixed(0)
+    return `+${percentage}`
+  }
+
   const stats = [
-    { label: 'Total de Usuários', value: '1,234', change: '+12%' },
-    { label: 'Artistas Cadastrados', value: '567', change: '+8%' },
-    { label: 'Produções', value: '890', change: '+15%' },
-    { label: 'Notícias Publicadas', value: '345', change: '+23%' },
+    { label: 'Total de Usuários', value: totalUsers.toLocaleString(), change: `${calculateGrowth(totalUsers, newUsersCount)}%` },
+    { label: 'Artistas Cadastrados', value: totalArtists.toLocaleString(), change: `${calculateGrowth(totalArtists, newArtistsCount)}%` },
+    { label: 'Produções', value: totalProductions.toLocaleString(), change: `${calculateGrowth(totalProductions, newProductionsCount)}%` },
+    { label: 'Notícias Publicadas', value: totalNews.toLocaleString(), change: `${calculateGrowth(totalNews, newNewsCount)}%` },
   ]
+
+  const recentActivity = recentUsers.map((user) => {
+    const date = new Date(user.createdAt)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+
+    let timeAgo = ''
+    if (diffInMinutes < 60) {
+      timeAgo = `${diffInMinutes} minuto${diffInMinutes !== 1 ? 's' : ''} atrás`
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60)
+      timeAgo = `${hours} hora${hours !== 1 ? 's' : ''} atrás`
+    } else {
+      const days = Math.floor(diffInMinutes / 1440)
+      timeAgo = `${days} dia${days !== 1 ? 's' : ''} atrás`
+    }
+
+    return {
+      action: 'Novo usuário registrado',
+      user: user.email || 'Sem email',
+      time: timeAgo,
+    }
+  })
 
   return (
     <>
@@ -123,23 +184,22 @@ export default async function AdminPage() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-8 animate-slide-up">
             <h2 className="text-2xl font-bold text-white mb-6">Atividade Recente</h2>
             <div className="space-y-4">
-              {[
-                { action: 'Novo usuário registrado', user: 'maria@email.com', time: '5 minutos atrás' },
-                { action: 'Artista atualizado', user: 'admin@hallyuhub.com', time: '1 hora atrás' },
-                { action: 'Notícia publicada', user: 'editor@hallyuhub.com', time: '2 horas atrás' },
-                { action: 'Produção adicionada', user: 'admin@hallyuhub.com', time: '3 horas atrás' },
-              ].map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between py-3 border-t border-zinc-800 first:border-t-0"
-                >
-                  <div>
-                    <p className="text-white font-medium">{activity.action}</p>
-                    <p className="text-sm text-zinc-500">{activity.user}</p>
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between py-3 border-t border-zinc-800 first:border-t-0"
+                  >
+                    <div>
+                      <p className="text-white font-medium">{activity.action}</p>
+                      <p className="text-sm text-zinc-500">{activity.user}</p>
+                    </div>
+                    <p className="text-sm text-zinc-500">{activity.time}</p>
                   </div>
-                  <p className="text-sm text-zinc-500">{activity.time}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-center text-zinc-500 py-4">Nenhuma atividade recente</p>
+              )}
             </div>
           </div>
 
