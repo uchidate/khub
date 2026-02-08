@@ -1,7 +1,7 @@
 'use client'
 
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react'
@@ -209,9 +209,5 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black" />}>
-      <ResetPasswordForm />
-    </Suspense>
-  )
+  return <ResetPasswordForm />
 }

@@ -1,21 +1,19 @@
 'use client'
 
-import { ReadonlyURLSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 /**
- * Safe wrapper for useSearchParams that works without Suspense
- * Returns search params from window.location instead of using useSearchParams hook
- * This avoids React error #300 (Suspense requirement)
+ * Safe hook to get URL search params without Suspense
+ * Uses window.location and updates on mount
  */
-export function useSafeSearchParams(): ReadonlyURLSearchParams | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
+export function useSafeSearchParams() {
+  const [params, setParams] = useState<URLSearchParams | null>(null)
 
-  try {
-    return new URLSearchParams(window.location.search) as ReadonlyURLSearchParams
-  } catch (error) {
-    console.warn('[useSafeSearchParams] Failed to parse search params:', error)
-    return null
-  }
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setParams(new URLSearchParams(window.location.search))
+    }
+  }, [])
+
+  return params
 }
