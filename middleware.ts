@@ -30,8 +30,8 @@ export async function middleware(request: NextRequest) {
   })
 
   const isAuthenticated = !!token
-  const isAdmin = token?.role === 'admin'
-  const isEditor = token?.role === 'editor'
+  const isAdmin = token?.role?.toUpperCase() === 'ADMIN'
+  const isEditor = token?.role?.toUpperCase() === 'EDITOR'
 
   // Check if route is protected
   const isProtectedRoute = protectedRoutes.some((route) =>
