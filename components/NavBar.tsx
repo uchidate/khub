@@ -14,9 +14,6 @@ const NavBar = () => {
     const [isScrolled, setIsScrolled] = useState(false)
     const [showSearch, setShowSearch] = useState(false)
 
-    // Hide NavBar on auth pages
-    if (pathname?.startsWith('/auth')) return null
-
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 0)
@@ -24,6 +21,9 @@ const NavBar = () => {
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
+
+    // Hide NavBar on auth pages - AFTER all hooks
+    if (pathname?.startsWith('/auth')) return null
 
     const navLinks = [
         { label: "Início", href: "/" },
@@ -36,7 +36,7 @@ const NavBar = () => {
     ]
 
     return (
-        <nav className={`w-full z-50 transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'fixed top-0 bg-transparent bg-gradient-to-b from-black/80 to-transparent py-6'}`}>
+        <nav className={`w-full z-[100] transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'fixed top-0 bg-transparent bg-gradient-to-b from-black/80 to-transparent py-6'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16 md:h-20">
                     <div className="flex items-center gap-10">
