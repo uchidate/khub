@@ -2,14 +2,15 @@
 
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react'
+import { useSafeSearchParams } from '@/hooks/useSafeSearchParams'
 
 function ResetPasswordForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get('token')
+  const searchParams = useSafeSearchParams()
+  const token = searchParams?.get('token')
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')

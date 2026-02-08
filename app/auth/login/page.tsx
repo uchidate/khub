@@ -2,17 +2,18 @@
 
 import { useState, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { useForm, ValidationRules } from '@/hooks/useForm'
 import { motion } from 'framer-motion'
+import { useSafeSearchParams } from '@/hooks/useSafeSearchParams'
 
 function LoginForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const searchParams = useSafeSearchParams()
+  const callbackUrl = searchParams?.get('callbackUrl') || '/'
 
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
