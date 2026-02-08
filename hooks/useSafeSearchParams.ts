@@ -1,19 +1,21 @@
 'use client'
 
-import { useSearchParams as useNextSearchParams } from 'next/navigation'
+import { ReadonlyURLSearchParams } from 'next/navigation'
 
 /**
- * Safe wrapper for useSearchParams that handles Suspense requirement gracefully
- * Use this instead of useSearchParams directly to avoid React error #300
+ * Safe wrapper for useSearchParams that works without Suspense
+ * Returns search params from window.location instead of using useSearchParams hook
+ * This avoids React error #300 (Suspense requirement)
  */
-export function useSafeSearchParams() {
+export function useSafeSearchParams(): ReadonlyURLSearchParams | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
   try {
-    return useNextSearchParams()
+    return new URLSearchParams(window.location.search) as ReadonlyURLSearchParams
   } catch (error) {
-    // If not wrapped in Suspense, return null instead of throwing
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[useSafeSearchParams] Not wrapped in Suspense, returning null')
-    }
+    console.warn('[useSafeSearchParams] Failed to parse search params:', error)
     return null
   }
 }
