@@ -79,3 +79,7 @@ v1/.env
 # Local files
 .env.postgres
 prisma/migrations.sqlite.backup/
+
+# Server secrets documentation (DO NOT COMMIT)
+docs/SETUP_SERVIDOR_SECRETS.md
+*_SECRETS.md
