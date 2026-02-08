@@ -302,16 +302,18 @@ O GitHub vai executar automaticamente graças às proteções já configuradas:
    └─ Build Next.js
 
 ✅ Branch Protection Rules (Já Ativas)
-   ├─ Require 1 approval
+   ├─ Require 1 approval by @fbchdt
    ├─ Require conversation resolution
    └─ Require status checks to pass
 ```
 
 **Resultado:** Seu PR **NÃO poderá** ser mergeado até que todas essas condições sejam atendidas.
 
+**⚠️ IMPORTANTE:** Todos os PRs para `main` devem ser aprovados pelo [@fbchdt](https://github.com/fbchdt) antes do merge.
+
 ### 3.3 Revisão de Código
 
-**Reviewer deve verificar:**
+**Reviewer (@fbchdt) deve verificar:**
 
 - [ ] Código segue padrões do projeto
 - [ ] Sem vulnerabilidades de segurança
@@ -320,14 +322,15 @@ O GitHub vai executar automaticamente graças às proteções já configuradas:
 - [ ] Testes cobrem casos importantes
 - [ ] Commits bem descritos
 
-**Aprovar o PR:**
+**Aprovar o PR (realizado por @fbchdt):**
 
 ```bash
-# Via CLI
+# Via CLI (logado como @fbchdt)
 gh pr review 24 --approve --body "LGTM! ✅"
 
-# Ou via GitHub UI
-# Clicar em "Approve" na página do PR
+# Ou via GitHub UI (logado como @fbchdt)
+# Acessar: https://github.com/uchidate/khub/pulls
+# Clicar no PR → "Files changed" → "Review changes" → "Approve" → "Submit review"
 ```
 
 ### 3.4 Merge para Main
@@ -444,7 +447,7 @@ git log --oneline
 ```yaml
 Proteções:
   required_status_checks: ["Validate Code"]
-  required_approvals: 1
+  required_approvals: 1 (por @fbchdt)
   require_conversation_resolution: true
   enforce_admins: true
   allow_force_pushes: false
@@ -567,9 +570,9 @@ alias khub-prod="ssh root@31.97.255.107 'docker-compose -f docker-compose.prod.y
 ┌──────────────────────────────────────────────────────────┐
 │  3. PULL REQUEST                                          │
 │     - Validações automáticas (TypeScript, ESLint, Build) │
-│     - Aguardar 1 aprovação                                │
+│     - Aguardar 1 aprovação (@fbchdt)                      │
 │     - Resolver conversas                                  │
-│     ✅ Aprovado? → Merge para main                        │
+│     ✅ Aprovado por @fbchdt? → Merge para main            │
 └──────────────────────────────────────────────────────────┘
                            │
                            ↓
