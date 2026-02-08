@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Config
-SERVER_HOST="165.227.200.98"
+SERVER_HOST="31.97.255.107"
 SERVER_USER="root"
 REPO_PATH="/var/www/hallyuhub"
 
