@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { requireAdmin, getDashboardStats } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 
+// Force dynamic rendering (uses auth/headers)
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/admin/stats
  * Get dashboard statistics
