@@ -1,28 +1,31 @@
 'use client'
 
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react'
-import { useSafeSearchParams } from '@/hooks/useSafeSearchParams'
 
 function ResetPasswordForm() {
   const router = useRouter()
-  const searchParams = useSafeSearchParams()
-  const token = searchParams?.get('token')
-
+  const [token, setToken] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Get token from URL on mount (client-side only)
   useEffect(() => {
-    if (!token) {
-      setError('Token inválido ou ausente')
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const urlToken = params.get('token')
+      if (!urlToken) {
+        setError('Token inválido ou ausente')
+      } else {
+        setToken(urlToken)
+      }
     }
-  }, [token])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
