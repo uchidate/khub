@@ -125,7 +125,7 @@ export function UserMenu() {
                 Configurações
               </Link>
 
-              {(session.user.role === 'admin' || session.user.role === 'editor') && (
+              {(session.user.role?.toLowerCase() === 'admin' || session.user.role?.toLowerCase() === 'editor') && (
                 <Link
                   href="/admin"
                   onClick={() => setIsOpen(false)}
