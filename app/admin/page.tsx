@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, Users, Database, Activity, FileText, Settings, Film } from 'lucide-react'
+import { Shield, Users, Database, Activity, FileText, Settings, Film, Clock } from 'lucide-react'
 import NavBar from '@/components/NavBar'
 import prisma from '@/lib/prisma'
 
@@ -51,6 +51,13 @@ export default async function AdminPage() {
       icon: Activity,
       href: '/admin/activity',
       color: 'green',
+    },
+    {
+      title: 'Cron Jobs',
+      description: 'Monitorar execuções e logs de tarefas agendadas',
+      icon: Clock,
+      href: '/admin/cron',
+      color: 'indigo',
     },
     {
       title: 'Configurações',
