@@ -29,17 +29,18 @@ services:
       - ollama-staging-data:/root/.ollama
     networks:
       - web
-    restart: on-failure
+    restart: "no"  # Não reinicia automaticamente - economiza recursos quando não está em uso
     deploy:
       resources:
         limits:
           cpus: '0.5'
-          memory: 1G
+          memory: 4G  # Mesmo que produção - phi3:latest requer 3.5GB quando ativo
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
 
   hallyuhub-staging:
     image: ghcr.io/uchidate/khub:staging
