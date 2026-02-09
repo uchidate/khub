@@ -14,7 +14,8 @@ set -e
 
 # Configurações
 COMPOSE_FILE="docker-compose.staging.yml"
-OLLAMA_CONTAINER="hallyuhub-ollama-staging"
+OLLAMA_SERVICE="ollama-staging"  # Nome do serviço no docker-compose
+OLLAMA_CONTAINER="hallyuhub-ollama-staging"  # Nome do container
 OLLAMA_STARTUP_TIMEOUT=30
 API_ENDPOINT="http://localhost:3001/api/cron/update"
 LOG_DIR="/var/www/hallyuhub/logs"
@@ -44,7 +45,7 @@ if docker ps --format '{{.Names}}' | grep -q "^${OLLAMA_CONTAINER}$"; then
 else
     log "🔄 Iniciando Ollama container..."
     cd /var/www/hallyuhub
-    docker-compose -f ${COMPOSE_FILE} up -d ${OLLAMA_CONTAINER}
+    docker-compose -f ${COMPOSE_FILE} up -d ${OLLAMA_SERVICE}
 
     # Aguardar Ollama ficar pronto
     log "⏳ Aguardando Ollama inicializar (timeout: ${OLLAMA_STARTUP_TIMEOUT}s)..."
@@ -98,7 +99,7 @@ fi
 # 3. Parar Ollama para economizar recursos
 log "💤 Parando Ollama container (economia de ~4GB RAM)..."
 cd /var/www/hallyuhub
-docker-compose -f ${COMPOSE_FILE} stop ${OLLAMA_CONTAINER}
+docker-compose -f ${COMPOSE_FILE} stop ${OLLAMA_SERVICE}
 
 if docker ps --format '{{.Names}}' | grep -q "^${OLLAMA_CONTAINER}$"; then
     log "⚠️  Ollama ainda está rodando, forçando parada..."
