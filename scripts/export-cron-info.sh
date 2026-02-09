@@ -39,6 +39,10 @@ crontab -l 2>/dev/null | grep -v "^#" | grep -v "^$" | while IFS= read -r line; 
     NAME="Health Monitor"
     DESC="Monitora saúde dos containers e serviços"
     FREQ="A cada 30 minutos"
+  elif [[ "$COMMAND" == *"cleanup-cron"* ]]; then
+    NAME="Server Cleanup"
+    DESC="Limpa logs, imagens Docker e cache antigos automaticamente"
+    FREQ="Diariamente às 3h da manhã"
   elif [[ "$COMMAND" == *"ollama"* ]] && [[ "$COMMAND" == *"stop"* ]]; then
     NAME="Ollama Sleep"
     DESC="Para Ollama à meia-noite para economizar recursos"

@@ -44,6 +44,7 @@ fi
 # Garantir que os scripts são executáveis
 chmod +x "${PROJECT_DIR}/scripts/auto-generate-content.sh"
 chmod +x "${PROJECT_DIR}/scripts/monitor-health.sh"
+chmod +x "${PROJECT_DIR}/scripts/cleanup-cron.sh"
 
 # Criar diretório de logs
 mkdir -p "${PROJECT_DIR}/logs"
@@ -102,10 +103,13 @@ echo "Adicionando entrada ao crontab..."
  echo "*/30 * * * * ${PROJECT_DIR}/scripts/monitor-health.sh >> ${PROJECT_DIR}/logs/health-monitor.log 2>&1"
  echo ""
  echo "# HallyuHub - Auto sleep staging at midnight to save CPU"
- echo "0 0 * * * ${PROJECT_DIR}/scripts/manage-staging.sh sleep >> ${PROJECT_DIR}/logs/staging-management.log 2>&1") | crontab -
+ echo "0 0 * * * ${PROJECT_DIR}/scripts/manage-staging.sh sleep >> ${PROJECT_DIR}/logs/staging-management.log 2>&1"
+ echo ""
+ echo "# HallyuHub - Server Cleanup (daily at 3AM)"
+ echo "0 3 * * * SLACK_WEBHOOK_ALERTS=\${SLACK_WEBHOOK_ALERTS} ${PROJECT_DIR}/scripts/cleanup-cron.sh >> ${PROJECT_DIR}/logs/cleanup-cron.log 2>&1") | crontab -
 
 chmod +x "${PROJECT_DIR}/scripts/manage-staging.sh"
-echo "✅ Crontab configurado com sucesso (Conteúdo + Saúde + Auto-Sleep Staging)!"
+echo "✅ Crontab configurado com sucesso (Conteúdo + Saúde + Auto-Sleep + Cleanup)!"
 echo ""
 echo "Configuração atual:"
 crontab -l 2>/dev/null | grep -A 2 "HallyuHub" || echo "Aviso: Não foi possível verificar a entrada (grep falhou)"

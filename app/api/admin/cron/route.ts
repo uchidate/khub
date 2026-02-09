@@ -161,6 +161,14 @@ function loadCronJobs(env: string): Array<{name: string; schedule: string; descr
       script: '/var/www/hallyuhub/scripts/health-monitor.sh',
       nextRun: getNextCronRun('*/30 * * * *'),
     },
+    {
+      name: 'Server Cleanup',
+      schedule: '0 3 * * *',
+      description: 'Limpa logs, imagens Docker e cache antigos automaticamente',
+      frequency: 'Diariamente às 3h da manhã',
+      script: '/var/www/hallyuhub/scripts/cleanup-cron.sh',
+      nextRun: getNextCronRun('0 3 * * *'),
+    },
   ] : [
     {
       name: 'Staging Content Generation',
@@ -169,6 +177,14 @@ function loadCronJobs(env: string): Array<{name: string; schedule: string; descr
       frequency: 'A cada 15 minutos',
       script: '/var/www/hallyuhub/scripts/staging-cron.sh',
       nextRun: getNextCronRun('*/15 * * * *'),
+    },
+    {
+      name: 'Server Cleanup',
+      schedule: '0 3 * * *',
+      description: 'Limpa logs, imagens Docker e cache antigos automaticamente',
+      frequency: 'Diariamente às 3h da manhã',
+      script: '/var/www/hallyuhub/scripts/cleanup-cron.sh',
+      nextRun: getNextCronRun('0 3 * * *'),
     },
     {
       name: 'Ollama Sleep',
@@ -211,6 +227,17 @@ function getNextCronRun(schedule: string): string {
     // Meia-noite UTC
     const next = new Date(now);
     next.setUTCHours(24, 0, 0, 0);
+    return next.toLocaleString('pt-BR', { timeZone: 'UTC' }) + ' (UTC)';
+  }
+
+  if (schedule === '0 3 * * *') {
+    // 3h da manhã UTC
+    const next = new Date(now);
+    if (now.getUTCHours() >= 3) {
+      // Já passou das 3h hoje, agendar para amanhã
+      next.setUTCDate(next.getUTCDate() + 1);
+    }
+    next.setUTCHours(3, 0, 0, 0);
     return next.toLocaleString('pt-BR', { timeZone: 'UTC' }) + ' (UTC)';
   }
 
