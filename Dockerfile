@@ -58,13 +58,12 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Remover apenas pacotes que são EXCLUSIVAMENTE para build
+# IMPORTANTE: Mantemos esbuild e tsx porque são necessários para cron jobs executarem scripts TypeScript
 # CUIDADO: Next.js precisa de @swc/helpers em runtime!
-# Economiza ~50-100MB de forma segura
+# Economiza ~30-50MB de forma segura
 RUN rm -rf \
     node_modules/webpack \
     node_modules/terser \
-    node_modules/esbuild \
-    node_modules/typescript \
     node_modules/@types \
     node_modules/eslint \
     node_modules/prettier \
