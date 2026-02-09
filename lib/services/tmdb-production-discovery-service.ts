@@ -64,6 +64,8 @@ export interface DiscoveredProduction {
   titleKr: string | null
   synopsis: string
   imageUrl: string | null
+  backdropUrl: string | null
+  galleryUrls: string[]
   releaseDate: Date | null
   runtime: number | null
   voteAverage: number
@@ -240,6 +242,12 @@ export class TMDBProductionDiscoveryService {
       tags.push(...details.genres.map((g) => g.name))
     }
 
+    // Extract images
+    const galleryUrls: string[] = []
+    if (details.backdrop_path) {
+      galleryUrls.push(`${TMDB_IMAGE_BASE}${details.backdrop_path}`)
+    }
+
     return {
       tmdbId: details.id,
       tmdbType: 'tv',
@@ -247,6 +255,8 @@ export class TMDBProductionDiscoveryService {
       titleKr: koreanTitle,
       synopsis: details.overview || 'Sem sinopse disponível.',
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
+      backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
+      galleryUrls,
       releaseDate: details.first_air_date ? new Date(details.first_air_date) : null,
       runtime: details.episode_run_time?.[0] || null,
       voteAverage: details.vote_average,
@@ -282,6 +292,12 @@ export class TMDBProductionDiscoveryService {
       tags.push(...details.genres.map((g) => g.name))
     }
 
+    // Extract images
+    const galleryUrls: string[] = []
+    if (details.backdrop_path) {
+      galleryUrls.push(`${TMDB_IMAGE_BASE}${details.backdrop_path}`)
+    }
+
     return {
       tmdbId: details.id,
       tmdbType: 'movie',
@@ -289,6 +305,8 @@ export class TMDBProductionDiscoveryService {
       titleKr: koreanTitle,
       synopsis: details.overview || 'Sem sinopse disponível.',
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
+      backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
+      galleryUrls,
       releaseDate: details.release_date ? new Date(details.release_date) : null,
       runtime: details.runtime || null,
       voteAverage: details.vote_average,

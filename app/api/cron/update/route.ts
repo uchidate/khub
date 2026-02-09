@@ -200,6 +200,8 @@ export async function GET(request: NextRequest) {
                             year: production.releaseDate ? production.releaseDate.getFullYear() : null,
                             synopsis: production.synopsis,
                             imageUrl: production.imageUrl,
+                            backdropUrl: production.backdropUrl,
+                            galleryUrls: production.galleryUrls,
                             tmdbId: String(production.tmdbId),
                             tmdbType: production.tmdbType,
                             releaseDate: production.releaseDate,
