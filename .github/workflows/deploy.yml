@@ -284,6 +284,7 @@ jobs:
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
+            update_env "OLLAMA_MODEL" "tinyllama"
             update_env "NEXT_PUBLIC_SITE_URL" "http://31.97.255.107:3001"
             update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
             update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
@@ -618,11 +619,12 @@ jobs:
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
+            update_env "OLLAMA_MODEL" "phi3:mini"
             update_env "NEXT_PUBLIC_SITE_URL" "https://www.hallyuhub.com.br"
             update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
             update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
             update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
-            
+
             chmod 600 .env.production
             echo "✅ Env prep complete."
 

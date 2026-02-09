@@ -107,8 +107,11 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
       requestsPerMinute: 60,
     },
     models: {
-      default: 'phi3',
-      alternatives: ['mistral', 'llama3:8b'],
+      // Permite configurar modelo por ambiente via OLLAMA_MODEL
+      // Production: phi3 (melhor qualidade)
+      // Staging: tinyllama (mais rápido)
+      default: process.env.OLLAMA_MODEL || 'phi3',
+      alternatives: ['mistral', 'llama3:8b', 'tinyllama'],
     },
   },
 };
