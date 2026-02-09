@@ -97,7 +97,7 @@ export class RSSNewsService {
 
       // RSS 2.0 format
       if (parsed.rss?.channel?.[0]?.item) {
-        return this.parseRSS2Items(parsed.rss.channel[0].item, feed, maxItems);
+        return await this.parseRSS2Items(parsed.rss.channel[0].item, feed, maxItems);
       }
 
       // Atom format
@@ -114,7 +114,7 @@ export class RSSNewsService {
   /**
    * Parse RSS 2.0 items
    */
-  private parseRSS2Items(items: any[], feed: RSSFeed, maxItems: number): RSSNewsItem[] {
+  private async parseRSS2Items(items: any[], feed: RSSFeed, maxItems: number): Promise<RSSNewsItem[]> {
     const newsItems: RSSNewsItem[] = [];
 
     for (const item of items.slice(0, maxItems)) {
@@ -142,11 +142,17 @@ export class RSSNewsService {
         );
 
         // Imagem (tentar múltiplos campos)
-        const imageUrl =
+        let imageUrl =
           this.extractImageUrl(item.enclosure) ||
           this.extractImageUrl(item['media:content']) ||
           this.extractImageUrl(item['media:thumbnail']) ||
           this.extractImageFromContent(content || description);
+
+        // Se ainda não tem imagem, tentar buscar da página (fallback assíncrono)
+        // Nota: Isso vai tornar o parsing mais lento, mas melhora a qualidade
+        if (!imageUrl && link) {
+          imageUrl = await this.fetchImageFromArticle(link);
+        }
 
         // Categorias
         const categories = this.extractCategories(item.category);
@@ -254,8 +260,42 @@ export class RSSNewsService {
    * Extrai primeira imagem do conteúdo HTML
    */
   private extractImageFromContent(html: string): string | undefined {
+    // Tentar encontrar og:image primeiro (melhor qualidade)
+    const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+    if (ogImageMatch) return ogImageMatch[1];
+
+    // Tentar twitter:image
+    const twitterImageMatch = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
+    if (twitterImageMatch) return twitterImageMatch[1];
+
+    // Fallback: primeira tag img
     const imgMatch = html.match(/<img[^>]+src="([^">]+)"/);
     return imgMatch ? imgMatch[1] : undefined;
+  }
+
+  /**
+   * Busca imagem diretamente da página do artigo (fallback)
+   */
+  private async fetchImageFromArticle(articleUrl: string): Promise<string | undefined> {
+    try {
+      // Tentar buscar a página do artigo
+      const response = await fetch(articleUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)',
+        },
+        signal: AbortSignal.timeout(5000), // 5s timeout
+      });
+
+      if (!response.ok) return undefined;
+
+      const html = await response.text();
+
+      // Tentar extrair imagem do HTML da página
+      return this.extractImageFromContent(html);
+    } catch (error) {
+      console.warn(`Failed to fetch image from article: ${error}`);
+      return undefined;
+    }
   }
 
   /**
