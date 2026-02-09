@@ -118,9 +118,15 @@ export async function GET(request: NextRequest) {
             });
             const excludeNews = existingNews.map(n => n.title);
 
-            // Buscar 5 notícias reais por execução (cron 15min = ~40 notícias/hora)
-            // RSS feeds são gratuitos, sem limitação de taxa
-            const newsItems = await newsGenerator.generateMultipleNews(5, {
+            // Quantidade de notícias por ambiente
+            // Staging: 2 notícias (testes rápidos)
+            // Production: 5 notícias (cron 15min = ~20 notícias/hora)
+            const isStaging = process.env.DEPLOY_ENV === 'staging';
+            const newsCount = isStaging ? 2 : 5;
+
+            console.log(`[CRON] Fetching ${newsCount} news items (env: ${process.env.DEPLOY_ENV || 'production'})`);
+
+            const newsItems = await newsGenerator.generateMultipleNews(newsCount, {
                 excludeList: excludeNews
             });
 

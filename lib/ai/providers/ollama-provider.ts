@@ -78,6 +78,7 @@ export class OllamaProvider extends BaseAIProvider {
      *   - caracteres de controle literais dentro de strings (quebra JSON.parse)
      *   - texto extra antes/depois do objeto JSON
      *   - markdown code blocks (```json ... ```)
+     *   - strings não terminadas, vírgulas faltando, aspas quebradas
      */
     async generateStructured<T>(
         prompt: string,
@@ -89,15 +90,80 @@ export class OllamaProvider extends BaseAIProvider {
         const result = await this.generate(structuredPrompt, options);
         const raw = result.content;
 
+        // Tentativa 1: Parse direto após sanitização
         try {
-            return JSON.parse(this.extractAndSanitizeJson(raw)) as T;
-        } catch (error) {
-            throw new Error(`Failed to parse JSON response from ollama: ${error}`);
+            const sanitized = this.extractAndSanitizeJson(raw);
+            return JSON.parse(sanitized) as T;
+        } catch (firstError: any) {
+            // Tentativa 2: Aplicar correções agressivas
+            try {
+                const aggressiveClean = this.aggressiveJsonFix(raw);
+                return JSON.parse(aggressiveClean) as T;
+            } catch (secondError: any) {
+                // Log detalhado para debug
+                console.error('[Ollama] Failed to parse JSON after all corrections');
+                console.error('[Ollama] Original response length:', raw.length);
+                console.error('[Ollama] First 200 chars:', raw.substring(0, 200));
+                console.error('[Ollama] Parse errors:', {
+                    first: firstError.message,
+                    second: secondError.message
+                });
+
+                throw new Error(`Failed to parse JSON response from ollama after all corrections: ${secondError.message}`);
+            }
         }
     }
 
     /**
+     * Correções agressivas para JSON muito mal formatado.
+     * Usa estratégias mais drásticas que podem alterar conteúdo, mas melhoram parsing.
+     */
+    private aggressiveJsonFix(text: string): string {
+        let content = this.extractAndSanitizeJson(text);
+
+        // 1. Remove TODOS os caracteres não-ASCII problemáticos
+        // eslint-disable-next-line no-control-regex
+        content = content.replace(/[^\x20-\x7E\n\r]/g, ' ');
+
+        // 2. Fix para aspas duplas dentro de strings (escape incorreto)
+        // Padrão: "text "word" more" → "text \"word\" more"
+        content = content.replace(/"([^"]*)"([^"]*)"([^"]*?)"/g, (match, p1, p2, p3) => {
+            if (p2.includes(':')) {
+                // É uma nova propriedade, não deve ser escapada
+                return match;
+            }
+            return `"${p1}\\"${p2}\\"${p3}"`;
+        });
+
+        // 3. Trunca strings muito longas (>2000 chars) que podem ter problemas
+        content = content.replace(/"([^"]{2000,})"/g, (match, longString) => {
+            return `"${longString.substring(0, 1500)}... (truncated)"`;
+        });
+
+        // 4. Remove propriedades com valores vazios ou inválidos
+        content = content.replace(/"([^"]+)":\s*""\s*,?/g, '');
+        content = content.replace(/"([^"]+)":\s*null\s*,?/g, '');
+
+        // 5. Garante que o JSON começa com { e termina com }
+        if (!content.startsWith('{')) {
+            content = '{' + content;
+        }
+        if (!content.endsWith('}')) {
+            content = content + '}';
+        }
+
+        // 6. Remove múltiplas vírgulas consecutivas
+        content = content.replace(/,+/g, ',');
+
+        // 7. Remove vírgula antes de }
+        content = content.replace(/,(\s*)\}/g, '$1}');
+
+        return content;
+    }
+
+    /**
      * Extrai o objeto JSON do texto e sanitiza caracteres de controle.
+     * Também tenta corrigir JSON mal formatado gerado por modelos locais.
      */
     private extractAndSanitizeJson(text: string): string {
         let content = text.trim();
@@ -120,6 +186,42 @@ export class OllamaProvider extends BaseAIProvider {
         // Substitui por espaço — não afeta o conteúdo gerado, só quebrava o parse
         // eslint-disable-next-line no-control-regex
         content = content.replace(/[\x00-\x1f\x7f]/g, ' ');
+
+        // CORREÇÕES ADICIONAIS para JSON mal formatado por modelos locais (gemma:2b, tinyllama)
+
+        // 1. Fix strings não terminadas (falta aspas no final)
+        // Detecta padrão: "key": "value sem aspas final,
+        content = content.replace(/"([^"]+)":\s*"([^"]*?)(\n|,|\})/g, (match, key, value, terminator) => {
+            // Se o valor não termina com aspas, adiciona
+            if (!match.includes(`"${value}"`)) {
+                return `"${key}": "${value}"${terminator}`;
+            }
+            return match;
+        });
+
+        // 2. Fix vírgulas faltando entre propriedades
+        // Padrão: }"key": deve ser },"key":
+        content = content.replace(/\}(\s*)"(\w+)":/g, '},$1"$2":');
+        // Padrão: "value""key": deve ser "value","key":
+        content = content.replace(/"(\s*)"(\w+)":/g, '",$1"$2":');
+
+        // 3. Remove vírgulas extras antes de }
+        content = content.replace(/,(\s*)\}/g, '$1}');
+
+        // 4. Fix quebras de linha dentro de strings (substitui por \n)
+        content = content.replace(/"([^"]*)\n([^"]*?)"/g, (match, before, after) => {
+            return `"${before}\\n${after}"`;
+        });
+
+        // 5. Decodifica HTML entities que possam ter vindo do RSS
+        content = content.replace(/&quot;/g, '\\"');
+        content = content.replace(/&amp;/g, '&');
+        content = content.replace(/&lt;/g, '<');
+        content = content.replace(/&gt;/g, '>');
+        content = content.replace(/&#8217;/g, "'");
+        content = content.replace(/&#8216;/g, "'");
+        content = content.replace(/&#8230;/g, '...');
+        content = content.replace(/&hellip;/g, '...');
 
         return content;
     }

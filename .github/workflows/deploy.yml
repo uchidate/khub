@@ -284,7 +284,7 @@ jobs:
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
-            update_env "OLLAMA_MODEL" "tinyllama"
+            update_env "OLLAMA_MODEL" "gemma:2b"
             update_env "NEXT_PUBLIC_SITE_URL" "http://31.97.255.107:3001"
             update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
             update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
@@ -337,6 +337,10 @@ jobs:
             echo "⏰ Configurando Cron (Automação)..."
             chmod +x scripts/setup-auto-generation.sh
             NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test
+
+            echo "📝 Exportando informações dos cron jobs..."
+            chmod +x scripts/export-cron-info.sh
+            ./scripts/export-cron-info.sh staging
 
             echo "✅ Staging deployado!"
 
@@ -768,6 +772,10 @@ jobs:
             fi # Fim do bloco if de pending migrations
 
             echo "✅ Production containers up and healthy!"
+
+            echo "📝 Exportando informações dos cron jobs..."
+            chmod +x scripts/export-cron-info.sh
+            ./scripts/export-cron-info.sh production
 
             echo "📊 Running Production Verification Script..."
             chmod +x scripts/verify-production.sh
