@@ -24,6 +24,15 @@ interface CronConfig {
   expectedFrequency: string
 }
 
+interface CronJob {
+  name: string
+  schedule: string
+  description: string
+  frequency: string
+  script: string
+  nextRun: string
+}
+
 interface RecentNews {
   id: string
   title: string
@@ -32,6 +41,7 @@ interface RecentNews {
 
 interface CronData {
   config: CronConfig
+  cronJobs: CronJob[]
   stats: CronStats
   recentNews: RecentNews[]
   logs: string[]
@@ -157,6 +167,40 @@ export default function AdminCronPage() {
           <span className="text-sm text-gray-600">
             Modelo: <strong>{config.ollamaModel}</strong> | Frequência: <strong>{config.expectedFrequency}</strong> | Notícias/run: <strong>{config.newsPerRun}</strong>
           </span>
+        </div>
+
+        {/* Cron Jobs Schedule */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">📅 Cron Jobs Agendados</h2>
+          <div className="space-y-4">
+            {data!.cronJobs.map((job, idx) => (
+              <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">{job.name}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{job.description}</p>
+                  </div>
+                  <span className="ml-4 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-mono rounded">
+                    {job.schedule}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100">
+                  <div>
+                    <p className="text-xs text-gray-500">Periodicidade</p>
+                    <p className="text-sm font-medium text-gray-900">{job.frequency}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Próxima Execução</p>
+                    <p className="text-sm font-medium text-gray-900">{job.nextRun}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Script</p>
+                    <p className="text-sm font-mono text-gray-700 truncate">{job.script}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Stats Grid - Database Statistics */}

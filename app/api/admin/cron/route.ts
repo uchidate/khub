@@ -79,6 +79,43 @@ export async function GET(request: NextRequest) {
       expectedFrequency: '15 minutos',
     };
 
+    // Cron jobs configurados (informações do servidor)
+    const cronJobs = isProduction ? [
+      {
+        name: 'Auto-generate Content',
+        schedule: '*/15 * * * *',
+        description: 'Gera notícias, artistas e produções automaticamente',
+        frequency: 'A cada 15 minutos',
+        script: '/var/www/hallyuhub/scripts/cron-direct.sh',
+        nextRun: getNextCronRun('*/15 * * * *'),
+      },
+      {
+        name: 'Health Monitor',
+        schedule: '*/30 * * * *',
+        description: 'Monitora saúde dos containers e serviços',
+        frequency: 'A cada 30 minutos',
+        script: '/var/www/hallyuhub/scripts/health-monitor.sh',
+        nextRun: getNextCronRun('*/30 * * * *'),
+      },
+    ] : [
+      {
+        name: 'Staging Content Generation',
+        schedule: '*/15 * * * *',
+        description: 'Gera 2 notícias para testes (staging)',
+        frequency: 'A cada 15 minutos',
+        script: '/var/www/hallyuhub/scripts/staging-cron.sh',
+        nextRun: getNextCronRun('*/15 * * * *'),
+      },
+      {
+        name: 'Ollama Sleep',
+        schedule: '0 0 * * *',
+        description: 'Para Ollama à meia-noite para economizar recursos',
+        frequency: 'Diariamente à meia-noite',
+        script: 'inline (docker-compose stop)',
+        nextRun: getNextCronRun('0 0 * * *'),
+      },
+    ];
+
     // Estatísticas calculadas
     const stats = {
       totalNews,
@@ -97,6 +134,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       config: cronConfig,
+      cronJobs,
       stats,
       recentNews,
       logs,
@@ -111,6 +149,42 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Calcula próxima execução de um cron job
+ * Simplificado - apenas para crons comuns (* /N minutos, horários específicos)
+ */
+function getNextCronRun(schedule: string): string {
+  const now = new Date();
+
+  // Parse simples para crons comuns
+  if (schedule === '*/15 * * * *') {
+    // A cada 15 minutos
+    const nextMinute = Math.ceil(now.getMinutes() / 15) * 15;
+    const next = new Date(now);
+    next.setMinutes(nextMinute, 0, 0);
+    if (next <= now) next.setMinutes(next.getMinutes() + 15);
+    return next.toLocaleString('pt-BR', { timeZone: 'UTC' }) + ' (UTC)';
+  }
+
+  if (schedule === '*/30 * * * *') {
+    // A cada 30 minutos
+    const nextMinute = Math.ceil(now.getMinutes() / 30) * 30;
+    const next = new Date(now);
+    next.setMinutes(nextMinute, 0, 0);
+    if (next <= now) next.setMinutes(next.getMinutes() + 30);
+    return next.toLocaleString('pt-BR', { timeZone: 'UTC' }) + ' (UTC)';
+  }
+
+  if (schedule === '0 0 * * *') {
+    // Meia-noite UTC
+    const next = new Date(now);
+    next.setUTCHours(24, 0, 0, 0);
+    return next.toLocaleString('pt-BR', { timeZone: 'UTC' }) + ' (UTC)';
+  }
+
+  return 'N/A';
 }
 
 /**
