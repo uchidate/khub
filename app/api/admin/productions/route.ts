@@ -3,6 +3,10 @@ import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 
+// Force dynamic rendering (uses auth/headers)
+export const dynamic = 'force-dynamic'
+
+
 const productionSchema = z.object({
   titlePt: z.string().min(1),
   titleKr: z.string().optional().nullable(),

@@ -3,6 +3,9 @@ import { auth } from '@/lib/auth'
 import { getFilmographySyncService, SyncStrategy } from '@/lib/services/filmography-sync-service'
 import { z } from 'zod'
 
+// Force dynamic rendering (uses auth/headers)
+export const dynamic = 'force-dynamic'
+
 const syncSchema = z.object({
   artistIds: z.array(z.string()).optional(),
   strategy: z.enum(['FULL_REPLACE', 'INCREMENTAL', 'SMART_MERGE']).optional().default('SMART_MERGE'),
