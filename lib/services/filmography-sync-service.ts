@@ -212,7 +212,7 @@ export class FilmographySyncService {
    */
   async syncArtistFilmographyWithAI(
     artistId: string,
-    strategy: SyncStrategy = 'SMART_MERGE'
+    _strategy: SyncStrategy = 'SMART_MERGE'
   ): Promise<SyncResult> {
     const startTime = Date.now()
     const result: SyncResult = {
