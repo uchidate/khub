@@ -338,6 +338,10 @@ jobs:
             chmod +x scripts/setup-auto-generation.sh
             NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test
 
+            echo "📝 Exportando informações dos cron jobs..."
+            chmod +x scripts/export-cron-info.sh
+            ./scripts/export-cron-info.sh staging
+
             echo "✅ Staging deployado!"
 
       - name: 🔍 Health Check
@@ -768,6 +772,10 @@ jobs:
             fi # Fim do bloco if de pending migrations
 
             echo "✅ Production containers up and healthy!"
+
+            echo "📝 Exportando informações dos cron jobs..."
+            chmod +x scripts/export-cron-info.sh
+            ./scripts/export-cron-info.sh production
 
             echo "📊 Running Production Verification Script..."
             chmod +x scripts/verify-production.sh

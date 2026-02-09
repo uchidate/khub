@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Admin endpoint para visualizar informações de cron jobs
@@ -79,42 +81,8 @@ export async function GET(request: NextRequest) {
       expectedFrequency: '15 minutos',
     };
 
-    // Cron jobs configurados (informações do servidor)
-    const cronJobs = isProduction ? [
-      {
-        name: 'Auto-generate Content',
-        schedule: '*/15 * * * *',
-        description: 'Gera notícias, artistas e produções automaticamente',
-        frequency: 'A cada 15 minutos',
-        script: '/var/www/hallyuhub/scripts/cron-direct.sh',
-        nextRun: getNextCronRun('*/15 * * * *'),
-      },
-      {
-        name: 'Health Monitor',
-        schedule: '*/30 * * * *',
-        description: 'Monitora saúde dos containers e serviços',
-        frequency: 'A cada 30 minutos',
-        script: '/var/www/hallyuhub/scripts/health-monitor.sh',
-        nextRun: getNextCronRun('*/30 * * * *'),
-      },
-    ] : [
-      {
-        name: 'Staging Content Generation',
-        schedule: '*/15 * * * *',
-        description: 'Gera 2 notícias para testes (staging)',
-        frequency: 'A cada 15 minutos',
-        script: '/var/www/hallyuhub/scripts/staging-cron.sh',
-        nextRun: getNextCronRun('*/15 * * * *'),
-      },
-      {
-        name: 'Ollama Sleep',
-        schedule: '0 0 * * *',
-        description: 'Para Ollama à meia-noite para economizar recursos',
-        frequency: 'Diariamente à meia-noite',
-        script: 'inline (docker-compose stop)',
-        nextRun: getNextCronRun('0 0 * * *'),
-      },
-    ];
+    // Cron jobs configurados (lê do arquivo gerado durante o deploy)
+    const cronJobs = loadCronJobs(env);
 
     // Estatísticas calculadas
     const stats = {
@@ -149,6 +117,68 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Carrega configuração dos cron jobs do arquivo gerado durante o deploy
+ * Fallback para valores hardcoded se arquivo não existir
+ */
+function loadCronJobs(env: string): Array<{name: string; schedule: string; description: string; frequency: string; script: string; nextRun: string}> {
+  const configFile = `/var/www/hallyuhub/cron-config-${env}.json`;
+
+  try {
+    // Tentar ler do arquivo gerado durante deploy
+    if (fs.existsSync(configFile)) {
+      const fileContent = fs.readFileSync(configFile, 'utf-8');
+      const jobs = JSON.parse(fileContent);
+
+      // Adicionar nextRun para cada job
+      return jobs.map((job: any) => ({
+        ...job,
+        nextRun: getNextCronRun(job.schedule)
+      }));
+    }
+  } catch (error) {
+    console.warn(`[Admin Cron] Could not read ${configFile}, using fallback`);
+  }
+
+  // Fallback: valores hardcoded
+  const isProduction = env === 'production';
+  return isProduction ? [
+    {
+      name: 'Auto-generate Content',
+      schedule: '*/15 * * * *',
+      description: 'Gera notícias, artistas e produções automaticamente',
+      frequency: 'A cada 15 minutos',
+      script: '/var/www/hallyuhub/scripts/cron-direct.sh',
+      nextRun: getNextCronRun('*/15 * * * *'),
+    },
+    {
+      name: 'Health Monitor',
+      schedule: '*/30 * * * *',
+      description: 'Monitora saúde dos containers e serviços',
+      frequency: 'A cada 30 minutos',
+      script: '/var/www/hallyuhub/scripts/health-monitor.sh',
+      nextRun: getNextCronRun('*/30 * * * *'),
+    },
+  ] : [
+    {
+      name: 'Staging Content Generation',
+      schedule: '*/15 * * * *',
+      description: 'Gera 2 notícias para testes (staging)',
+      frequency: 'A cada 15 minutos',
+      script: '/var/www/hallyuhub/scripts/staging-cron.sh',
+      nextRun: getNextCronRun('*/15 * * * *'),
+    },
+    {
+      name: 'Ollama Sleep',
+      schedule: '0 0 * * *',
+      description: 'Para Ollama à meia-noite para economizar recursos',
+      frequency: 'Diariamente à meia-noite',
+      script: 'inline (docker-compose stop)',
+      nextRun: getNextCronRun('0 0 * * *'),
+    },
+  ];
 }
 
 /**
