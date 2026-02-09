@@ -31,11 +31,6 @@ export interface RSSNewsItem {
 
 const RSS_FEEDS: RSSFeed[] = [
   {
-    name: 'AllKpop',
-    url: 'https://www.allkpop.com/rss',
-    language: 'en',
-  },
-  {
     name: 'Soompi',
     url: 'https://www.soompi.com/feed',
     language: 'en',
@@ -45,6 +40,17 @@ const RSS_FEEDS: RSSFeed[] = [
     url: 'https://www.koreaboo.com/feed/',
     language: 'en',
   },
+  {
+    name: 'KpopStarz',
+    url: 'https://www.kpopstarz.com/rss',
+    language: 'en',
+  },
+  // AllKpop removido temporariamente (retorna 404)
+  // {
+  //   name: 'AllKpop',
+  //   url: 'https://www.allkpop.com/rss',
+  //   language: 'en',
+  // },
 ];
 
 /**
