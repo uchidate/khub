@@ -5,21 +5,38 @@ import { ArrowLeft, RefreshCw, Clock, CheckCircle2, XCircle, Activity, Terminal 
 import Link from 'next/link'
 
 interface CronStats {
-  totalRuns: number
-  successRuns: number
-  failedRuns: number
-  lastRun: string | null
-  averageDuration: number | null
+  totalNews: number
+  newsLast24h: number
+  newsLast7days: number
+  totalArtists: number
+  artistsLast24h: number
+  totalProductions: number
+  productionsLast24h: number
+  averageNewsPerDay: string
+  lastNewsCreated: string | null
+}
+
+interface CronConfig {
+  environment: string
+  ollamaModel: string
+  ollamaBaseUrl: string
+  newsPerRun: number
+  expectedFrequency: string
+}
+
+interface RecentNews {
+  id: string
+  title: string
+  createdAt: string
 }
 
 interface CronData {
-  environment: string
-  cronSchedule: string
-  lastCronResult: any
-  ollamaStatus: string
-  logs: string[]
+  config: CronConfig
   stats: CronStats
+  recentNews: RecentNews[]
+  logs: string[]
   timestamp: string
+  note: string
 }
 
 export default function AdminCronPage() {
@@ -86,9 +103,7 @@ export default function AdminCronPage() {
   }
 
   const stats = data!.stats
-  const successRate = stats.totalRuns > 0
-    ? ((stats.successRuns / stats.totalRuns) * 100).toFixed(1)
-    : '0'
+  const config = data!.config
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
@@ -105,7 +120,7 @@ export default function AdminCronPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Cron Jobs</h1>
               <p className="text-gray-600 mt-1">
-                Monitoramento e logs de execução
+                Estatísticas do banco de dados
               </p>
             </div>
           </div>
@@ -131,110 +146,83 @@ export default function AdminCronPage() {
         </div>
 
         {/* Environment Badge */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center gap-3">
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            data!.environment === 'production'
+            config.environment === 'production'
               ? 'bg-green-100 text-green-800'
               : 'bg-yellow-100 text-yellow-800'
           }`}>
-            {data!.environment === 'production' ? '🏭 Production' : '🧪 Staging'}
+            {config.environment === 'production' ? '🏭 Production' : '🧪 Staging'}
+          </span>
+          <span className="text-sm text-gray-600">
+            Modelo: <strong>{config.ollamaModel}</strong> | Frequência: <strong>{config.expectedFrequency}</strong> | Notícias/run: <strong>{config.newsPerRun}</strong>
           </span>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - Database Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Total de Execuções</p>
+              <p className="text-sm text-gray-600">Total de Notícias</p>
               <Activity className="w-5 h-5 text-purple-600" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.totalRuns}</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalNews}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {stats.newsLast24h} nas últimas 24h
+            </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Taxa de Sucesso</p>
+              <p className="text-sm text-gray-600">Total de Artistas</p>
               <CheckCircle2 className="w-5 h-5 text-green-600" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{successRate}%</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalArtists}</p>
             <p className="text-xs text-gray-500 mt-1">
-              {stats.successRuns} / {stats.totalRuns}
+              {stats.artistsLast24h} nas últimas 24h
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Duração Média</p>
+              <p className="text-sm text-gray-600">Total de Produções</p>
               <Clock className="w-5 h-5 text-blue-600" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">
-              {stats.averageDuration ? `${stats.averageDuration.toFixed(1)}s` : 'N/A'}
+            <p className="text-3xl font-bold text-gray-900">{stats.totalProductions}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {stats.productionsLast24h} nas últimas 24h
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Última Execução</p>
+              <p className="text-sm text-gray-600">Média Diária (7d)</p>
               <Clock className="w-5 h-5 text-orange-600" />
             </div>
-            <p className="text-sm font-medium text-gray-900">
-              {stats.lastRun || 'Nenhuma'}
-            </p>
+            <p className="text-3xl font-bold text-gray-900">{stats.averageNewsPerDay}</p>
+            <p className="text-xs text-gray-500 mt-1">notícias por dia</p>
           </div>
         </div>
 
-        {/* Ollama Status */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Status do Ollama</h2>
-          <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${
-              data!.ollamaStatus.includes('Up') ? 'bg-green-500' : 'bg-red-500'
-            }`} />
-            <p className="text-gray-700">{data!.ollamaStatus}</p>
-          </div>
-        </div>
-
-        {/* Cron Schedule */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Agendamento</h2>
-          <pre className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 overflow-x-auto">
-            {data!.cronSchedule}
-          </pre>
-        </div>
-
-        {/* Last Cron Result */}
-        {data!.lastCronResult && (
+        {/* Recent News */}
+        {data!.recentNews.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Último Resultado</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <p className="text-sm text-purple-600 font-medium">Artistas</p>
-                <p className="text-2xl font-bold text-purple-900">
-                  {data!.lastCronResult.results?.artists?.updated || 0}
-                </p>
-              </div>
-              <div className="text-center p-3 bg-pink-50 rounded-lg">
-                <p className="text-sm text-pink-600 font-medium">Notícias</p>
-                <p className="text-2xl font-bold text-pink-900">
-                  {data!.lastCronResult.results?.news?.updated || 0}
-                </p>
-              </div>
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-600 font-medium">Produções</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  {data!.lastCronResult.results?.productions?.updated || 0}
-                </p>
-              </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-600 font-medium">Duração</p>
-                <p className="text-2xl font-bold text-green-900">
-                  {((data!.lastCronResult.duration || 0) / 1000).toFixed(0)}s
-                </p>
-              </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Últimas Notícias Criadas</h2>
+            <div className="space-y-3">
+              {data!.recentNews.map((news, idx) => (
+                <div key={news.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="flex-shrink-0 w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium">
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{news.title}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(news.createdAt).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-gray-500">
-              Executado em: {new Date(data!.lastCronResult.timestamp).toLocaleString('pt-BR')}
-            </p>
           </div>
         )}
 
@@ -252,6 +240,15 @@ export default function AdminCronPage() {
             </pre>
           </div>
         </div>
+
+        {/* Note */}
+        {data!.note && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              <strong>ℹ️ Nota:</strong> {data!.note}
+            </p>
+          </div>
+        )}
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Última atualização: {new Date(data!.timestamp).toLocaleString('pt-BR')}
