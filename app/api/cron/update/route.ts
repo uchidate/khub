@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
         const results = {
             artists: { updated: 0, errors: [] as string[] },
             news: { updated: 0, errors: [] as string[] },
+            productions: { updated: 0, errors: [] as string[] },
             filmography: { synced: 0, errors: [] as string[] },
             trending: { updated: 0, errors: [] as string[] },
         };
@@ -161,7 +162,69 @@ export async function GET(request: NextRequest) {
             results.news.errors.push(error.message);
         }
 
-        // 2.3. Atualizar filmografias (2-3 artistas por execução)
+        // 2.3. Descobrir K-dramas e filmes coreanos do TMDB
+        try {
+            console.log('[CRON] Discovering Korean productions from TMDB...');
+            const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
+
+            const productionDiscovery = getTMDBProductionDiscoveryService();
+
+            // Get existing productions to avoid duplicates
+            const existingProductions = await prisma.production.findMany({
+                where: { tmdbId: { not: null } },
+                select: { tmdbId: true }
+            });
+            const existingTmdbIds = new Set(existingProductions.map(p => p.tmdbId));
+
+            // Discover 2 K-dramas and 1 movie per execution
+            const [kdramas, movies] = await Promise.all([
+                productionDiscovery.discoverKDramas(2),
+                productionDiscovery.discoverKoreanMovies(1)
+            ]);
+
+            const allProductions = [...kdramas, ...movies];
+
+            for (const production of allProductions) {
+                try {
+                    // Skip if already exists
+                    if (existingTmdbIds.has(String(production.tmdbId))) {
+                        continue;
+                    }
+
+                    // Create production
+                    await prisma.production.create({
+                        data: {
+                            titlePt: production.titlePt,
+                            titleKr: production.titleKr,
+                            type: production.tmdbType === 'tv' ? 'K-Drama' : 'Filme',
+                            year: production.releaseDate ? production.releaseDate.getFullYear() : null,
+                            synopsis: production.synopsis,
+                            imageUrl: production.imageUrl,
+                            tmdbId: String(production.tmdbId),
+                            tmdbType: production.tmdbType,
+                            releaseDate: production.releaseDate,
+                            runtime: production.runtime,
+                            voteAverage: production.voteAverage,
+                            trailerUrl: production.trailerUrl,
+                            tags: production.tags,
+                            streamingPlatforms: [], // Can be filled later
+                            sourceUrls: [], // Can be filled later
+                        }
+                    });
+
+                    results.productions.updated++;
+                    console.log(`[CRON] ✅ Saved production: ${production.titlePt} (TMDB:${production.tmdbId})`);
+                } catch (error: any) {
+                    console.error(`[CRON] ❌ Failed to save production: ${error.message}`);
+                    results.productions.errors.push(error.message);
+                }
+            }
+        } catch (error: any) {
+            console.error(`[CRON] ❌ Production discovery failed: ${error.message}`);
+            results.productions.errors.push(error.message);
+        }
+
+        // 2.4. Atualizar filmografias (2-3 artistas por execução)
         try {
             console.log('[CRON] Syncing filmographies...');
             const { getFilmographySyncService } = require('@/lib/services/filmography-sync-service');
@@ -199,7 +262,7 @@ export async function GET(request: NextRequest) {
             results.filmography.errors.push(error.message);
         }
 
-        // 2.4. Atualizar trending scores
+        // 2.5. Atualizar trending scores
         try {
             console.log('[CRON] Updating trending scores...');
             const { TrendingService } = require('@/lib/services/trending-service');
@@ -215,9 +278,9 @@ export async function GET(request: NextRequest) {
 
         // 3. Calcular métricas
         const duration = Date.now() - startTime;
-        const totalUpdates = results.artists.updated + results.news.updated + results.filmography.synced;
+        const totalUpdates = results.artists.updated + results.news.updated + results.productions.updated + results.filmography.synced;
         const totalErrors = results.artists.errors.length + results.news.errors.length +
-                           results.filmography.errors.length + results.trending.errors.length;
+                           results.productions.errors.length + results.filmography.errors.length + results.trending.errors.length;
 
         console.log(`[CRON] ✅ Job completed in ${(duration / 1000).toFixed(1)}s`);
         console.log(`[CRON] Updates: ${totalUpdates}, Errors: ${totalErrors}`);
