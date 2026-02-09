@@ -146,12 +146,12 @@ Retorne apenas a tradução, sem aspas ou formatação extra.`;
         content: string,
         source: string
     ): Promise<string> {
-        // Limitar tamanho do conteúdo (evitar textos muito longos)
-        const maxLength = 1000;
+        // AUMENTADO: Limite expandido para permitir conteúdo mais rico
+        const maxLength = 2500;
         let textToTranslate = content;
 
         if (content.length > maxLength) {
-            // Se muito longo, resumir primeiro
+            // Se muito longo, resumir primeiro (mas mantendo mais conteúdo)
             textToTranslate = await this.summarizeContent(content);
         }
 
@@ -166,10 +166,15 @@ ${textToTranslate}
 Requisitos:
 - Tradução natural e fluente em português brasileiro
 - Manter nomes próprios (artistas, grupos, programas, filmes) no original
-- Formato markdown simples (parágrafos, **negrito** para destaques)
-- 2-4 parágrafos curtos
-- Tom jornalístico mas acessível
-- Incluir ao final: "Fonte: ${source}"`;
+- Formato markdown com parágrafos bem estruturados
+- Use **negrito** para destaques importantes (nomes, títulos, datas)
+- 4-6 parágrafos detalhados e informativos
+- Tom jornalístico mas acessível e envolvente
+- Adicione contexto adicional quando relevante (ex: "o grupo que lançou X em Y")
+- Inclua detalhes específicos: datas, números, citações se disponíveis
+- Ao final adicione: "\n\n---\n\n*Fonte: ${source}*"
+
+Lembre-se: quanto mais detalhado e informativo, melhor!`;
 
             const result = await this.getOrchestrator().generateStructured<{ content: string }>(
                 prompt,
@@ -182,7 +187,7 @@ Requisitos:
             console.warn(`⚠️  Content translation failed: ${error.message}`);
 
             // Fallback: conteúdo mínimo em português
-            return `**${title}**\n\n${textToTranslate.substring(0, 300)}...\n\n*Fonte: ${source}*`;
+            return `**${title}**\n\n${textToTranslate.substring(0, 500)}...\n\n---\n\n*Fonte: ${source}*`;
         }
     }
 
@@ -191,14 +196,19 @@ Requisitos:
      */
     private async summarizeContent(longContent: string): Promise<string> {
         try {
-            // Pegar primeiros 1500 caracteres para resumir
-            const excerpt = longContent.substring(0, 1500);
+            // AUMENTADO: Pegar mais conteúdo para resumir
+            const excerpt = longContent.substring(0, 3000);
 
-            const prompt = `Resuma o seguinte texto sobre K-pop/K-drama em 200-300 palavras, mantendo os pontos principais:
+            const prompt = `Resuma o seguinte texto sobre K-pop/K-drama em 400-600 palavras, mantendo os pontos principais e detalhes importantes:
 
 ${excerpt}
 
-Foque nos fatos mais importantes e mantenha nomes próprios.`;
+Requisitos:
+- Foque nos fatos mais importantes
+- Mantenha nomes próprios, datas, números
+- Preserve citações relevantes se houver
+- Estruture em 4-5 parágrafos claros
+- Seja informativo e completo`;
 
             const result = await this.getOrchestrator().generateStructured<{ summary: string }>(
                 prompt,
@@ -208,8 +218,8 @@ Foque nos fatos mais importantes e mantenha nomes próprios.`;
 
             return result.summary;
         } catch (error) {
-            // Fallback: retornar primeiros 500 chars
-            return longContent.substring(0, 500);
+            // Fallback: retornar primeiros 800 chars
+            return longContent.substring(0, 800);
         }
     }
 
