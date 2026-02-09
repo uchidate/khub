@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import prisma from '@/lib/prisma';
 
 /**
  * Admin endpoint para visualizar informações de cron jobs
  * GET /api/admin/cron
  *
- * Retorna:
- * - Logs de execução recentes
- * - Estatísticas de sucesso/falha
- * - Próxima execução agendada
- * - Status dos containers Ollama
+ * NOTA: Este endpoint roda dentro do container Docker, então não tem acesso
+ * direto aos comandos do host (crontab, docker ps, etc).
+ *
+ * Retorna estatísticas baseadas em:
+ * - Dados do banco de dados (notícias, artistas, produções)
+ * - Variáveis de ambiente
+ * - Informações do sistema disponíveis no container
  */
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -37,65 +37,71 @@ export async function GET(request: NextRequest) {
     const env = process.env.DEPLOY_ENV || 'production';
     const isProduction = env === 'production';
 
-    // Buscar logs de cron (últimas 100 linhas)
-    let cronLogs: string[] = [];
-    const logPath = isProduction
-      ? '/var/www/hallyuhub/logs/cron-direct.log'
-      : '/var/www/hallyuhub/logs/staging-cron-2026-02.log';
+    // Buscar estatísticas do banco de dados
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    try {
-      if (fs.existsSync(logPath)) {
-        const logContent = execSync(`tail -100 ${logPath}`, { encoding: 'utf-8' });
-        cronLogs = logContent.split('\n').filter(line => line.trim());
-      }
-    } catch (error) {
-      console.error('Error reading cron logs:', error);
-    }
+    const [
+      totalNews,
+      newsLast24h,
+      newsLast7days,
+      totalArtists,
+      artistsLast24h,
+      totalProductions,
+      productionsLast24h,
+      recentNews,
+    ] = await Promise.all([
+      prisma.news.count(),
+      prisma.news.count({ where: { createdAt: { gte: oneDayAgo } } }),
+      prisma.news.count({ where: { createdAt: { gte: oneWeekAgo } } }),
+      prisma.artist.count(),
+      prisma.artist.count({ where: { createdAt: { gte: oneDayAgo } } }),
+      prisma.production.count(),
+      prisma.production.count({ where: { createdAt: { gte: oneDayAgo } } }),
+      prisma.news.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
-    // Buscar informações da crontab
-    let cronSchedule = '';
-    try {
-      cronSchedule = execSync('crontab -l 2>/dev/null | grep -E "(auto-generate|staging-cron)" || echo "No cron configured"', {
-        encoding: 'utf-8'
-      }).trim();
-    } catch (error) {
-      cronSchedule = 'Error reading crontab';
-    }
+    // Informações de configuração
+    const cronConfig = {
+      environment: env,
+      ollamaModel: process.env.OLLAMA_MODEL || 'phi3',
+      ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://ollama-production:11434',
+      newsPerRun: env === 'staging' ? 2 : 5,
+      expectedFrequency: '15 minutos',
+    };
 
-    // Buscar último resultado da API de cron
-    let lastCronResult = null;
-    try {
-      if (fs.existsSync('/tmp/cron-response.json')) {
-        const content = fs.readFileSync('/tmp/cron-response.json', 'utf-8');
-        lastCronResult = JSON.parse(content);
-      }
-    } catch (error) {
-      console.error('Error reading last cron result:', error);
-    }
+    // Estatísticas calculadas
+    const stats = {
+      totalNews,
+      newsLast24h,
+      newsLast7days,
+      totalArtists,
+      artistsLast24h,
+      totalProductions,
+      productionsLast24h,
+      averageNewsPerDay: newsLast7days > 0 ? (newsLast7days / 7).toFixed(1) : '0',
+      lastNewsCreated: recentNews.length > 0 ? recentNews[0].createdAt : null,
+    };
 
-    // Buscar status do container Ollama
-    let ollamaStatus = 'unknown';
-    try {
-      const containerName = isProduction ? 'hallyuhub-ollama-production' : 'hallyuhub-ollama-staging';
-      const result = execSync(`docker ps --filter "name=${containerName}" --format "{{.Status}}"`, {
-        encoding: 'utf-8'
-      }).trim();
-      ollamaStatus = result || 'not running';
-    } catch (error) {
-      ollamaStatus = 'error checking status';
-    }
-
-    // Analisar logs para extrair estatísticas
-    const stats = analyzeCronLogs(cronLogs);
+    // Logs simulados baseados em dados reais
+    const logs = generateLogsFromStats(recentNews, env);
 
     return NextResponse.json({
-      environment: env,
-      cronSchedule,
-      lastCronResult,
-      ollamaStatus,
-      logs: cronLogs.slice(-50), // Últimas 50 linhas
+      config: cronConfig,
       stats,
+      recentNews,
+      logs,
       timestamp: new Date().toISOString(),
+      note: 'Estatísticas baseadas em dados do banco. Para logs detalhados do servidor, consulte via SSH.',
     });
 
   } catch (error: any) {
@@ -108,57 +114,34 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Analisa logs de cron para extrair estatísticas
+ * Gera logs informativos baseados em dados reais do banco
  */
-function analyzeCronLogs(logs: string[]): {
-  totalRuns: number;
-  successRuns: number;
-  failedRuns: number;
-  lastRun: string | null;
-  averageDuration: number | null;
-} {
-  let totalRuns = 0;
-  let successRuns = 0;
-  let failedRuns = 0;
-  let lastRun: string | null = null;
-  const durations: number[] = [];
+function generateLogsFromStats(
+  recentNews: Array<{ id: string; title: string; createdAt: Date }>,
+  env: string
+): string[] {
+  const logs: string[] = [];
 
-  for (const log of logs) {
-    // Detectar início de execução
-    if (log.includes('Starting scheduled update') || log.includes('Iniciando cron')) {
-      totalRuns++;
-      const match = log.match(/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/);
-      if (match) {
-        lastRun = match[1];
-      }
-    }
+  logs.push(`=== Cron Jobs - ${env.toUpperCase()} Environment ===`);
+  logs.push('');
+  logs.push('📊 Últimas notícias criadas:');
+  logs.push('');
 
-    // Detectar sucesso
-    if (log.includes('✅ Atualização concluída') || log.includes('Job completed')) {
-      successRuns++;
-    }
-
-    // Detectar falhas
-    if (log.includes('❌ ERRO') || log.includes('ERROR')) {
-      failedRuns++;
-    }
-
-    // Extrair duração
-    const durationMatch = log.match(/completed in (\d+\.?\d*)s/);
-    if (durationMatch) {
-      durations.push(parseFloat(durationMatch[1]));
-    }
+  if (recentNews.length === 0) {
+    logs.push('  ⚠️  Nenhuma notícia criada recentemente');
+  } else {
+    recentNews.forEach((news, idx) => {
+      const date = new Date(news.createdAt).toLocaleString('pt-BR');
+      logs.push(`  ${idx + 1}. [${date}] ${news.title.substring(0, 80)}...`);
+    });
   }
 
-  const averageDuration = durations.length > 0
-    ? durations.reduce((a, b) => a + b, 0) / durations.length
-    : null;
+  logs.push('');
+  logs.push('💡 Para ver logs detalhados do cron job:');
+  logs.push(`   ssh root@31.97.255.107 "tail -100 /var/www/hallyuhub/logs/${env === 'production' ? 'cron-direct' : 'staging-cron-2026-02'}.log"`);
+  logs.push('');
+  logs.push('📌 Este painel mostra estatísticas do banco de dados.');
+  logs.push('   Logs completos estão disponíveis via SSH no servidor.');
 
-  return {
-    totalRuns,
-    successRuns,
-    failedRuns,
-    lastRun,
-    averageDuration,
-  };
+  return logs;
 }
