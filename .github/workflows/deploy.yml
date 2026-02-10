@@ -662,10 +662,10 @@ jobs:
               key=\$1
               val=\$2
               if [ -z "\$val" ]; then return; fi
-              if grep -q "^\$key=" .env.production; then
-                sed -i "s|^\$key=.*|\$key=\$val|" .env.production
+              if grep -q "^${key}=" .env.production; then
+                sed -i "s|^${key}=.*|${key}=${val}|" .env.production
               else
-                echo "\$key=\$val" >> .env.production
+                echo "${key}=${val}" >> .env.production
               fi
             }
 
