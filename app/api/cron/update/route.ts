@@ -114,9 +114,9 @@ export async function GET(request: NextRequest) {
 
             const newsGenerator = new NewsGeneratorV2();
             const existingNews = await prisma.news.findMany({
-                select: { title: true }
+                select: { sourceUrl: true }
             });
-            const excludeNews = existingNews.map(n => n.title);
+            const excludeNews = existingNews.map(n => n.sourceUrl);
 
             // Quantidade de notícias por ambiente
             // Staging: 2 notícias (testes rápidos)
@@ -138,18 +138,18 @@ export async function GET(request: NextRequest) {
                     }
 
                     await prisma.news.upsert({
-                        where: { title: news.title },
+                        where: { sourceUrl: news.sourceUrl },
                         update: {
+                            title: news.title,
                             contentMd: news.contentMd,
-                            sourceUrl: news.sourceUrl,
                             imageUrl: news.imageUrl || null,
                             tags: news.tags || null,
                             publishedAt: news.publishedAt,
                         },
                         create: {
                             title: news.title,
-                            contentMd: news.contentMd,
                             sourceUrl: news.sourceUrl,
+                            contentMd: news.contentMd,
                             imageUrl: news.imageUrl || null,
                             tags: news.tags || null,
                             publishedAt: news.publishedAt,

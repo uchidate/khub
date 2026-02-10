@@ -133,9 +133,9 @@ model ArtistProduction {
 
 model News {
   id            String     @id @default(cuid())
-  title         String     @unique
+  title         String
   contentMd     String
-  sourceUrl     String
+  sourceUrl     String     @unique
   publishedAt   DateTime   @default(now())
   imageUrl      String?
   tags          String[]
@@ -146,6 +146,7 @@ model News {
   @@index([publishedAt])
   @@index([createdAt])
   @@index([title])
+  @@index([sourceUrl])
 }
 
 model Image {

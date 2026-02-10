@@ -48,7 +48,7 @@ export class NewsGeneratorV2 {
         console.log(`📰 Fetching ${count} real news from RSS feeds...`);
 
         const news: NewsData[] = [];
-        const excludeTitles = new Set(options.excludeList || []);
+        const excludeUrls = new Set(options.excludeList || []);
 
         // Buscar notícias recentes de todos os feeds
         const recentNews = await this.rssService.fetchRecentNews(15); // Buscar mais para ter opções
@@ -56,9 +56,9 @@ export class NewsGeneratorV2 {
         console.log(`📊 Found ${recentNews.length} news items, processing...`);
 
         for (const item of recentNews) {
-            // Pular se título já existe
-            if (excludeTitles.has(item.title)) {
-                console.log(`  ⏭️  Skipping "${item.title}" (already exists)`);
+            // Pular se URL já existe
+            if (excludeUrls.has(item.link)) {
+                console.log(`  ⏭️  Skipping "${item.title}" (URL already exists: ${item.link})`);
                 continue;
             }
 
