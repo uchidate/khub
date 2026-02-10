@@ -291,6 +291,7 @@ jobs:
             
             echo "🔧 Updating environment variables..."
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
+            update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
             update_env "OLLAMA_MODEL" "gemma:2b"
@@ -646,6 +647,7 @@ jobs:
 
             echo "🔧 Updating sensitive keys..."
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
+            update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
             update_env "OLLAMA_MODEL" "gemma:2b"
