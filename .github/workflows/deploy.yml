@@ -255,40 +255,51 @@ jobs:
               }]
             }"
 
-      - name: 🏷️ Prepare Environment & Directory
-        uses: appleboy/ssh-action@v1.0.3
+      - name: 🏷️ Prepare Environment & Directory (with retry)
+        uses: nick-fields/retry@v3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          sync: true
-          command_timeout: 15m
-          timeout: 90s
-          script: |
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_wait_seconds: 15
+          shell: bash
+          command: |
+            set -e
+
+            # Setup SSH key
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+
+            # SSH with retry
+            ssh -o StrictHostKeyChecking=no \
+                -o ConnectTimeout=90 \
+                -o ServerAliveInterval=30 \
+                -i ~/.ssh/deploy_key \
+                ${{ secrets.USER }}@${{ secrets.HOST }} << 'ENDSSH'
             set -e
             echo "📁 Ensuring base directory exists..."
             sudo mkdir -p /var/www/hallyuhub
             sudo chown -R ${{ secrets.USER }}:${{ secrets.USER }} /var/www/hallyuhub
-            
+
             cd /var/www/hallyuhub
-            
+
             if [ ! -f .env.staging ]; then
               touch .env.staging
             fi
 
             cp .env.staging .env.staging.bak
-            
+
             update_env() {
-              key=$1
-              val=$2
-              if [ -z "$val" ]; then return; fi
-              if grep -q "^$key=" .env.staging; then
-                sed -i "s|^$key=.*|$key=$val|" .env.staging
+              key=\$1
+              val=\$2
+              if [ -z "\$val" ]; then return; fi
+              if grep -q "^\$key=" .env.staging; then
+                sed -i "s|^\$key=.*|\$key=\$val|" .env.staging
               else
-                echo "$key=$val" >> .env.staging
+                echo "\$key=\$val" >> .env.staging
               fi
             }
-            
+
             echo "🔧 Updating environment variables..."
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
@@ -301,6 +312,7 @@ jobs:
             update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
             chmod 600 .env.staging
             echo "✅ Setup complete."
+            ENDSSH
 
       - name: Copy Files to Server
         uses: appleboy/scp-action@v0.1.7
@@ -311,13 +323,27 @@ jobs:
           source: "docker-compose.staging.yml,scripts/*"
           target: "/var/www/hallyuhub"
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy via SSH (with retry)
+        uses: nick-fields/retry@v3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_wait_seconds: 15
+          shell: bash
+          command: |
+            set -e
+
+            # Setup SSH key
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+
+            # SSH with retry
+            ssh -o StrictHostKeyChecking=no \
+                -o ConnectTimeout=90 \
+                -o ServerAliveInterval=30 \
+                -i ~/.ssh/deploy_key \
+                ${{ secrets.USER }}@${{ secrets.HOST }} << 'ENDSSH'
             set -e
             cd /var/www/hallyuhub
 
@@ -326,7 +352,7 @@ jobs:
             # Cleanup: Remove old Docker images (keep last 3)
             echo "🧹 Limpando imagens antigas..."
             docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
-              tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
+              tail -n +4 | awk '{print \$1}' | xargs -r docker rmi -f 2>/dev/null || \
               echo "Nenhuma imagem antiga para remover"
 
             # Pull nova imagem
@@ -353,6 +379,7 @@ jobs:
             ./scripts/export-cron-info.sh staging
 
             echo "✅ Staging deployado!"
+            ENDSSH
 
       - name: 🔍 Health Check
         run: |
@@ -669,13 +696,27 @@ jobs:
           source: "docker-compose.prod.yml,scripts/*"
           target: "/var/www/hallyuhub"
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy via SSH (with retry)
+        uses: nick-fields/retry@v3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+          timeout_minutes: 25
+          max_attempts: 3
+          retry_wait_seconds: 15
+          shell: bash
+          command: |
+            set -e
+
+            # Setup SSH key
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+
+            # SSH with retry
+            ssh -o StrictHostKeyChecking=no \
+                -o ConnectTimeout=90 \
+                -o ServerAliveInterval=30 \
+                -i ~/.ssh/deploy_key \
+                ${{ secrets.USER }}@${{ secrets.HOST }} << 'ENDSSH'
             set -e
             cd /var/www/hallyuhub
 
@@ -701,43 +742,43 @@ jobs:
             # Cleanup: Remove old Docker images (keep last 3)
             echo "🧹 Limpando imagens antigas..."
             docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
-              tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
+              tail -n +4 | awk '{print \$1}' | xargs -r docker rmi -f 2>/dev/null || \
               echo "Nenhuma imagem antiga para remover"
 
             # Pull nova imagem com log de erro
             echo "📥 Pulling images..."
-            if ! $COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub; then
+            if ! \$COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub; then
               echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
               exit 1
             fi
 
             # Down para evitar ContainerConfig error
             echo "🛑 Parando containers antigos..."
-            $COMPOSE_CMD -f docker-compose.prod.yml down || true
+            \$COMPOSE_CMD -f docker-compose.prod.yml down || true
 
             # Up com containers frescos
             echo "🚀 Iniciando containers..."
-            if ! $COMPOSE_CMD -f docker-compose.prod.yml up -d; then
+            if ! \$COMPOSE_CMD -f docker-compose.prod.yml up -d; then
               echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
-              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50
+              \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50
               exit 1
             fi
 
             echo "📊 Status dos containers:"
-            $COMPOSE_CMD -f docker-compose.prod.yml ps
+            \$COMPOSE_CMD -f docker-compose.prod.yml ps
 
             echo "⏳ Aguardando container 'hallyuhub' ficar operacional..."
             max_retries=15
             count=0
-            until [ "$(docker inspect -f '{{.State.Running}}' hallyuhub 2>/dev/null)" == "true" ] || [ $count -eq $max_retries ]; do
-              echo "Aguardando container iniciar... ($((count+1))/$max_retries)"
+            until [ "\$(docker inspect -f '{{.State.Running}}' hallyuhub 2>/dev/null)" == "true" ] || [ \$count -eq \$max_retries ]; do
+              echo "Aguardando container iniciar... (\$((count+1))/\$max_retries)"
               sleep 5
-              count=$((count+1))
+              count=\$((count+1))
             done
 
-            if [ $count -eq $max_retries ]; then
+            if [ \$count -eq \$max_retries ]; then
               echo "❌ Erro: Container hallyuhub não iniciou a tempo."
-              $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
+              \$COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
               exit 1
             fi
 
@@ -746,19 +787,19 @@ jobs:
             # OTIMIZAÇÃO: Verificar se há migrations pendentes antes de aplicar
             # Economiza 5-10s quando não há migrations
             echo "🔍 Checking for pending migrations..."
-            PENDING_MIGRATIONS=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 | grep -i "pending\|unapplied" || echo "")
+            PENDING_MIGRATIONS=\$(\$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 | grep -i "pending\|unapplied" || echo "")
 
-            if [ -z "$PENDING_MIGRATIONS" ]; then
+            if [ -z "\$PENDING_MIGRATIONS" ]; then
               echo "✅ No pending migrations - skipping migrate deploy"
             else
               echo "🔄 Pending migrations detected - applying..."
 
               # Diagnóstico de Conexão DB
               echo "🔍 Verificando configuração do Banco de Dados..."
-            if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub printenv DATABASE_URL > /dev/null; then
-               DB_HOST=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub sh -c 'echo $DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
-               echo "ℹ️  DATABASE_URL está definida. Host detectado: $DB_HOST"
-               if [ "$DB_HOST" = "localhost" ] || [ "$DB_HOST" = "127.0.0.1" ]; then
+            if \$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub printenv DATABASE_URL > /dev/null; then
+               DB_HOST=\$(\$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub sh -c 'echo \$DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
+               echo "ℹ️  DATABASE_URL está definida. Host detectado: \$DB_HOST"
+               if [ "\$DB_HOST" = "localhost" ] || [ "\$DB_HOST" = "127.0.0.1" ]; then
                  echo "⚠️  AVISO CRÍTICO: DATABASE_URL aponta para localhost dentro do Docker! Isso geralmente falha."
                  echo "   Deveria apontar para 'postgres-production' ou 'hallyuhub-postgres-production'."
                fi
@@ -769,32 +810,32 @@ jobs:
             # Loop de retry para migration
             migrate_success=false
             for i in {1..10}; do
-              echo "Tentativa de migration $i/10..."
-              
+              echo "Tentativa de migration \$i/10..."
+
               # Verificar se container ainda está rodando (pode estar em restart loop)
-              CONTAINER_STATE=$(docker inspect -f '{{.State.Status}}' hallyuhub 2>/dev/null || echo "not-found")
-              if [ "$CONTAINER_STATE" != "running" ]; then
-                 echo "⚠️  Container hallyuhub não está rodando (Status: $CONTAINER_STATE). Aguardando..."
-                 $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=20 hallyuhub
+              CONTAINER_STATE=\$(docker inspect -f '{{.State.Status}}' hallyuhub 2>/dev/null || echo "not-found")
+              if [ "\$CONTAINER_STATE" != "running" ]; then
+                 echo "⚠️  Container hallyuhub não está rodando (Status: \$CONTAINER_STATE). Aguardando..."
+                 \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=20 hallyuhub
               else
-                 if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
+                 if \$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
                    migrate_success=true
                    echo "✅ Migrations aplicadas com sucesso!"
                    break
                  fi
                  echo "⚠️  Falha ao executar migrate deploy."
               fi
-              
+
               echo "Aguardando 10s..."
               sleep 10
             done
 
-            if [ "$migrate_success" = false ]; then
+            if [ "\$migrate_success" = false ]; then
               echo "❌ Erro: Falha ao aplicar migrations após 10 tentativas."
               echo "🔍 Logs do Banco de Dados:"
-              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 postgres-production
+              \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 postgres-production
               echo "🔍 Logs da Aplicação:"
-              $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 hallyuhub
+              \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 hallyuhub
               exit 1
             fi
             fi # Fim do bloco if de pending migrations
@@ -813,6 +854,7 @@ jobs:
             fi
 
             echo "✅ Production verified and operational!"
+            ENDSSH
 
       - name: 🔍 Health Check
         run: |
