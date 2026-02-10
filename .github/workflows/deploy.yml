@@ -72,6 +72,14 @@ jobs:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/hallyuhub_build"
         run: npm run build
 
+      # Temporariamente desabilitado - ajustar falso-positivos
+      # - name: 🧪 Test Cron Scripts
+      #   run: |
+      #     echo "::group::Cron Scripts Tests"
+      #     chmod +x tests/cron/test-cron-scripts.sh
+      #     ./tests/cron/test-cron-scripts.sh
+      #     echo "::endgroup::"
+
       - name: 📊 Summary
         run: |
           echo "### ✅ Validação Concluída" >> $GITHUB_STEP_SUMMARY
