@@ -72,12 +72,20 @@ jobs:
           DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/hallyuhub_build"
         run: npm run build
 
+      - name: 🧪 Test Cron Scripts
+        run: |
+          echo "::group::Cron Scripts Tests"
+          chmod +x tests/cron/test-cron-scripts.sh
+          ./tests/cron/test-cron-scripts.sh
+          echo "::endgroup::"
+
       - name: 📊 Summary
         run: |
           echo "### ✅ Validação Concluída" >> $GITHUB_STEP_SUMMARY
           echo "- ✓ ESLint passou" >> $GITHUB_STEP_SUMMARY
           echo "- ✓ TypeScript type-check passou" >> $GITHUB_STEP_SUMMARY
           echo "- ✓ Build Next.js passou" >> $GITHUB_STEP_SUMMARY
+          echo "- ✓ Cron scripts tests passou" >> $GITHUB_STEP_SUMMARY
 
   check-deploy-process:
     name: 📋 Check Deploy Process
