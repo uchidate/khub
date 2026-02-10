@@ -4,6 +4,8 @@
 # Uso: ./export-cron-info.sh [production|staging]
 # ============================================================
 
+set -e
+
 ENV=${1:-production}
 OUTPUT_FILE="/var/www/hallyuhub/cron-config-${ENV}.json"
 
