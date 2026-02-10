@@ -631,7 +631,7 @@ jobs:
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
             update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
-            update_env "OLLAMA_MODEL" "phi3:mini"
+            update_env "OLLAMA_MODEL" "gemma:2b"
             update_env "NEXT_PUBLIC_SITE_URL" "https://www.hallyuhub.com.br"
             update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
             update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
