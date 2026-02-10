@@ -117,6 +117,25 @@ elif $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^hallyuhub-production$"; th
         -e DATABASE_URL="$DATABASE_URL" \
         "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=3 --productions=0 --refresh-discography=true --refresh-filmography=true >> "${LOG_FILE}" 2>&1
     EXIT_CODE=$?
+elif $DOCKER_BIN ps --format '{{.Names}}' | grep -q "^hallyuhub-staging$"; then
+    CONTAINER_NAME="hallyuhub-staging"
+    log "Executando via Docker container (${CONTAINER_NAME})..."
+    $DOCKER_BIN exec \
+        -e DATABASE_URL="$DATABASE_URL" \
+        -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+        -e GEMINI_API_KEY="$GEMINI_API_KEY" \
+        -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+        -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+        -e TMDB_API_KEY="$TMDB_API_KEY" \
+        -e GOOGLE_SEARCH_API_KEY="$GOOGLE_SEARCH_API_KEY" \
+        -e GOOGLE_CX="$GOOGLE_CX" \
+        -e OLLAMA_BASE_URL="$OLLAMA_BASE_URL" \
+        -e SLACK_WEBHOOK_CONTENT="$SLACK_WEBHOOK_CONTENT" \
+        -e SLACK_WEBHOOK_DEPLOYS="$SLACK_WEBHOOK_DEPLOYS" \
+        -e SLACK_WEBHOOK_ALERTS="$SLACK_WEBHOOK_ALERTS" \
+        -e DATABASE_URL="$DATABASE_URL" \
+        "${CONTAINER_NAME}" npm run atualize:ai -- --news=0 --artists=3 --productions=0 --refresh-discography=true --refresh-filmography=true >> "${LOG_FILE}" 2>&1
+    EXIT_CODE=$?
 else
     if [ -x "$NPM_BIN" ]; then
         log "Container Docker não encontrado. Executando via npm local ($NPM_BIN)..."
