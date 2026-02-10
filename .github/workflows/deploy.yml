@@ -263,6 +263,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           sync: true
           command_timeout: 15m
+          timeout: 90s
           script: |
             set -e
             echo "📁 Ensuring base directory exists..."
@@ -592,6 +593,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           sync: true
           command_timeout: 15m
+          timeout: 90s
           script: |
             set -e
             echo "📁 Ensuring base directory exists..."
