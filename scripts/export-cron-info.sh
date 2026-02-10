@@ -66,7 +66,8 @@ crontab -l 2>/dev/null | grep -v "^#" | grep -v "^$" | while IFS= read -r line; 
     "description": "$DESC",
     "frequency": "$FREQ",
     "script": "$COMMAND"
-  }EOF
+  }
+EOF
 done
 
 # Fechar array JSON
