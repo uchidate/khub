@@ -2,10 +2,6 @@ name: 🔍 Staging/Production Parity Check
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/deploy.yml'
-      - 'docker-compose.*.yml'
-      - '.env.*.example'
   workflow_dispatch:
 
 jobs:
