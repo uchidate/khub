@@ -426,12 +426,12 @@ jobs:
 
             echo "📊 Verificando migrations (Prisma)..."
 
-            # OTIMIZAÇÃO: Verificar se há migrations pendentes antes de aplicar
-            # Economiza 5-10s quando não há migrations
+            # OTIMIZAÇÃO: Verificar se DB já está atualizado antes de aplicar
+            # Prisma 5 output: "up to date" quando não há nada pendente
             echo "🔍 Checking for pending migrations..."
-            PENDING_MIGRATIONS=\$(\$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate status 2>&1 | grep -i "pending\|unapplied" || echo "")
+            MIGRATE_STATUS=\$(\$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate status 2>&1 || echo "status_failed")
 
-            if [ -z "\$PENDING_MIGRATIONS" ]; then
+            if echo "\$MIGRATE_STATUS" | grep -qi "up to date"; then
               echo "✅ No pending migrations - skipping migrate deploy"
             else
               echo "🔄 Pending migrations detected - applying..."
@@ -918,12 +918,12 @@ jobs:
 
             echo "📊 Verificando migrations (Prisma)..."
 
-            # OTIMIZAÇÃO: Verificar se há migrations pendentes antes de aplicar
-            # Economiza 5-10s quando não há migrations
+            # OTIMIZAÇÃO: Verificar se DB já está atualizado antes de aplicar
+            # Prisma 5 output: "up to date" quando não há nada pendente
             echo "🔍 Checking for pending migrations..."
-            PENDING_MIGRATIONS=\$(\$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 | grep -i "pending\|unapplied" || echo "")
+            MIGRATE_STATUS=\$(\$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 || echo "status_failed")
 
-            if [ -z "\$PENDING_MIGRATIONS" ]; then
+            if echo "\$MIGRATE_STATUS" | grep -qi "up to date"; then
               echo "✅ No pending migrations - skipping migrate deploy"
             else
               echo "🔄 Pending migrations detected - applying..."
