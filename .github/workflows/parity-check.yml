@@ -51,6 +51,8 @@ jobs:
             "refs/heads/staging|refs/heads/main"
 
             # 5. Nomes de containers específicos
+            # 5a. Padrões compostos ANTES dos simples (hallyuhub-postgres-X contém postgres-X)
+            "hallyuhub-postgres-staging|hallyuhub-postgres-production"
             "hallyuhub-staging|hallyuhub"
             "postgres-staging|postgres-production"
             "ollama-staging|ollama-production"
