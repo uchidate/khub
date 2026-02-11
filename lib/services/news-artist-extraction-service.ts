@@ -23,8 +23,8 @@ export interface ArtistMention {
 export class NewsArtistExtractionService {
     private prisma: PrismaClient;
 
-    // Cache: nome normalizado → artistId
-    private nameCache: Map<string, string> = new Map();
+    // Cache: nome normalizado → array de artistIds (suporta múltiplos artistas com mesmo nome/grupo)
+    private nameCache: Map<string, string[]> = new Map();
     private cacheLoadedAt: Date | null = null;
     private readonly CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
 
@@ -70,23 +70,29 @@ export class NewsArtistExtractionService {
 
         for (const artist of artists) {
             // Indexar nome romanizado
-            this.nameCache.set(this.normalize(artist.nameRomanized), artist.id);
+            const normalizedName = this.normalize(artist.nameRomanized);
+            const existingIds = this.nameCache.get(normalizedName) || [];
+            this.nameCache.set(normalizedName, [...existingIds, artist.id]);
 
-            // Indexar stage names
+            // Indexar stage names (grupos)
             for (const stageName of artist.stageNames) {
                 if (stageName.trim().length >= 2) {
-                    this.nameCache.set(this.normalize(stageName), artist.id);
+                    const normalizedStageName = this.normalize(stageName);
+                    const existingStageIds = this.nameCache.get(normalizedStageName) || [];
+                    this.nameCache.set(normalizedStageName, [...existingStageIds, artist.id]);
                 }
             }
         }
 
         this.cacheLoadedAt = now;
-        console.log(`  📚 Artist cache refreshed: ${artists.length} artists, ${this.nameCache.size} name variants`);
+        const totalVariants = Array.from(this.nameCache.values()).reduce((sum, ids) => sum + ids.length, 0);
+        console.log(`  📚 Artist cache refreshed: ${artists.length} artists, ${this.nameCache.size} name variants (${totalVariants} total associations)`);
     }
 
     /**
      * Busca exact matches de nomes de artistas no texto
      * Usa word boundary matching para evitar falsos positivos
+     * Retorna TODOS os artistas que compartilham um nome/grupo (ex: todos os membros do BTS)
      */
     private findExactMatches(text: string): ArtistMention[] {
         const foundArtistIds = new Set<string>();
@@ -100,27 +106,30 @@ export class NewsArtistExtractionService {
 
         const normalizedText = this.normalize(text);
 
-        for (const [normalizedName, artistId] of sortedEntries) {
+        for (const [normalizedName, artistIds] of sortedEntries) {
             // Pular nomes muito curtos (menos de 2 chars) - muitos falsos positivos
             if (normalizedName.length < 2) continue;
-
-            // Já encontrou este artista
-            if (foundArtistIds.has(artistId)) continue;
 
             // Buscar com separadores de palavras (espaço, pontuação, início/fim)
             const escaped = normalizedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const pattern = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`, 'i');
 
             if (pattern.test(normalizedText)) {
-                foundArtistIds.add(artistId);
+                // Adicionar TODOS os artistas que compartilham este nome/grupo
+                for (const artistId of artistIds) {
+                    // Evitar duplicatas (artista pode ter múltiplos nomes que fazem match)
+                    if (foundArtistIds.has(artistId)) continue;
 
-                // Buscar nome original para exibição
-                const displayName = this.getDisplayName(normalizedName);
-                mentions.push({
-                    artistId,
-                    name: displayName,
-                    confidence: 0.95, // Exact match tem alta confiança
-                });
+                    foundArtistIds.add(artistId);
+
+                    // Buscar nome original para exibição
+                    const displayName = this.getDisplayName(normalizedName);
+                    mentions.push({
+                        artistId,
+                        name: displayName,
+                        confidence: 0.95, // Exact match tem alta confiança
+                    });
+                }
             }
         }
 
