@@ -263,7 +263,11 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
+            # Usar GitHub Action inline
             set -e
+
+            # Install SSH if not available
+            which ssh || (apt-get update && apt-get install -y openssh-client)
 
             # Setup SSH key
             mkdir -p ~/.ssh
@@ -283,20 +287,27 @@ jobs:
 
             cd /var/www/hallyuhub
 
+            # Initialize .env.staging if it doesn't exist
             if [ ! -f .env.staging ]; then
-              touch .env.staging
+              echo "⚠️ .env.staging not found! Creating from backup or empty..."
+              if [ -f .env.staging.bak ]; then
+                cp .env.staging.bak .env.staging
+              else
+                touch .env.staging
+              fi
             fi
 
+            # Backup
             cp .env.staging .env.staging.bak
 
             update_env() {
               key=\$1
               val=\$2
               if [ -z "\$val" ]; then return; fi
-              if grep -q "^\$key=" .env.staging; then
-                sed -i "s|^\$key=.*|\$key=\$val|" .env.staging
+              if grep -q "^${key}=" .env.staging; then
+                sed -i "s|^${key}=.*|${key}=${val}|" .env.staging
               else
-                echo "\$key=\$val" >> .env.staging
+                echo "${key}=${val}" >> .env.staging
               fi
             }
 
@@ -310,6 +321,7 @@ jobs:
             update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
             update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
             update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
+
             chmod 600 .env.staging
             echo "✅ Setup complete."
             ENDSSH
@@ -347,6 +359,23 @@ jobs:
             set -e
             cd /var/www/hallyuhub
 
+            # Determinar comando docker-compose (v1 vs v2)
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE_CMD="docker compose"
+              echo "✅ Usando 'docker compose' (V2)"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE_CMD="docker-compose"
+              echo "✅ Usando 'docker-compose' (V1)"
+            else
+              echo "❌ Erro: docker-compose não encontrado!"
+              exit 1
+            fi
+
+            # Diagnóstico inicial
+            echo "📊 Verificando ambiente..."
+            df -h / | grep / || true
+            docker network ls | grep web || echo "⚠️ Network 'web' não encontrada!"
+
             echo "🟡 Deploying STAGING..."
 
             # Cleanup: Remove old Docker images (keep last 3)
@@ -355,20 +384,100 @@ jobs:
               tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
               echo "Nenhuma imagem antiga para remover"
 
-            # Pull nova imagem
-            docker-compose -f docker-compose.staging.yml pull hallyuhub-staging
+            # Pull nova imagem com log de erro
+            echo "📥 Pulling images..."
+            if ! \$COMPOSE_CMD -f docker-compose.staging.yml pull hallyuhub-staging; then
+              echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
+              exit 1
+            fi
 
             # Down para evitar ContainerConfig error
-            docker-compose -f docker-compose.staging.yml down || true
+            echo "🛑 Parando containers antigos..."
+            \$COMPOSE_CMD -f docker-compose.staging.yml down || true
 
             # Up com containers frescos
-            docker-compose -f docker-compose.staging.yml up -d
+            echo "🚀 Iniciando containers..."
+            if ! \$COMPOSE_CMD -f docker-compose.staging.yml up -d; then
+              echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
+              \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50
+              exit 1
+            fi
 
-            echo "⏳ Aguardando containers ficarem saudáveis..."
-            sleep 15
+            echo "📊 Status dos containers:"
+            \$COMPOSE_CMD -f docker-compose.staging.yml ps
 
-            echo "📊 Aplicando migrations..."
-            docker-compose -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy
+            echo "⏳ Aguardando container 'hallyuhub-staging' ficar operacional..."
+            max_retries=10
+            count=0
+            until [ "\$(docker inspect -f '{{.State.Running}}' hallyuhub-staging 2>/dev/null)" == "true" ] || [ \$count -eq \$max_retries ]; do
+              echo "Aguardando container iniciar... (\$((count+1))/\$max_retries)"
+              sleep 5
+              count=\$((count+1))
+            done
+
+            if [ \$count -eq \$max_retries ]; then
+              echo "❌ Erro: Container hallyuhub-staging não iniciou a tempo."
+              \$COMPOSE_CMD -f docker-compose.staging.yml logs hallyuhub-staging | tail -n 50
+              exit 1
+            fi
+
+            echo "📊 Verificando migrations (Prisma)..."
+
+            # OTIMIZAÇÃO: Verificar se há migrations pendentes antes de aplicar
+            # Economiza 5-10s quando não há migrations
+            echo "🔍 Checking for pending migrations..."
+            PENDING_MIGRATIONS=\$(\$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate status 2>&1 | grep -i "pending\|unapplied" || echo "")
+
+            if [ -z "\$PENDING_MIGRATIONS" ]; then
+              echo "✅ No pending migrations - skipping migrate deploy"
+            else
+              echo "🔄 Pending migrations detected - applying..."
+
+              # Diagnóstico de Conexão DB
+              echo "🔍 Verificando configuração do Banco de Dados..."
+            if \$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging printenv DATABASE_URL > /dev/null; then
+               DB_HOST=\$(\$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging sh -c 'echo \$DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
+               echo "ℹ️  DATABASE_URL está definida. Host detectado: \$DB_HOST"
+               if [ "\$DB_HOST" = "localhost" ] || [ "\$DB_HOST" = "127.0.0.1" ]; then
+                 echo "⚠️  AVISO CRÍTICO: DATABASE_URL aponta para localhost dentro do Docker! Isso geralmente falha."
+                 echo "   Deveria apontar para 'postgres-staging' ou 'hallyuhub-postgres-staging'."
+               fi
+            else
+               echo "❌ Erro: DATABASE_URL não está definida no container!"
+            fi
+
+            # Loop de retry para migration
+            migrate_success=false
+            for i in {1..10}; do
+              echo "Tentativa de migration \$i/10..."
+
+              # Verificar se container ainda está rodando (pode estar em restart loop)
+              CONTAINER_STATE=\$(docker inspect -f '{{.State.Status}}' hallyuhub-staging 2>/dev/null || echo "not-found")
+              if [ "\$CONTAINER_STATE" != "running" ]; then
+                 echo "⚠️  Container hallyuhub-staging não está rodando (Status: \$CONTAINER_STATE). Aguardando..."
+                 \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=20 hallyuhub-staging
+              else
+                 if \$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy; then
+                   migrate_success=true
+                   echo "✅ Migrations aplicadas com sucesso!"
+                   break
+                 fi
+                 echo "⚠️  Falha ao executar migrate deploy."
+              fi
+
+              echo "Aguardando 10s..."
+              sleep 10
+            done
+
+            if [ "\$migrate_success" = false ]; then
+              echo "❌ Erro: Falha ao aplicar migrations após 10 tentativas."
+              echo "🔍 Logs do Banco de Dados:"
+              \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50 postgres-staging
+              echo "🔍 Logs da Aplicação:"
+              \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50 hallyuhub-staging
+              exit 1
+            fi
+            fi # Fim do bloco if de pending migrations
 
             echo "⏰ Configurando Cron (Automação)..."
             chmod +x scripts/setup-auto-generation.sh
@@ -378,7 +487,7 @@ jobs:
             chmod +x scripts/export-cron-info.sh
             ./scripts/export-cron-info.sh staging
 
-            echo "✅ Staging deployado!"
+            echo "✅ Staging containers up and healthy!"
             ENDSSH
 
       - name: 🔍 Health Check
@@ -661,18 +770,15 @@ jobs:
             update_env() {
               key=\$1
               val=\$2
-              if [ -z "\$val" ]; then
-                echo "⚠️ Skip \$key (empty value)"
-                return
-              fi
-              if grep -q "^\$key=" .env.production; then
-                sed -i "s|^\$key=.*|\$key=\$val|" .env.production
+              if [ -z "\$val" ]; then return; fi
+              if grep -q "^${key}=" .env.production; then
+                sed -i "s|^${key}=.*|${key}=${val}|" .env.production
               else
-                echo "\$key=\$val" >> .env.production
+                echo "${key}=${val}" >> .env.production
               fi
             }
 
-            echo "🔧 Updating sensitive keys..."
+            echo "🔧 Updating environment variables..."
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
@@ -684,7 +790,7 @@ jobs:
             update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
 
             chmod 600 .env.production
-            echo "✅ Env prep complete."
+            echo "✅ Setup complete."
             ENDSSH
 
       - name: Copy Files to Server
