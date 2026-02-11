@@ -431,6 +431,8 @@ jobs:
             # Prisma 5 output: "up to date" quando não há nada pendente
             echo "🔍 Checking for pending migrations..."
             MIGRATE_STATUS=\$(\$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate status 2>&1 || echo "status_failed")
+            echo "📋 Migrate status output:"
+            echo "\$MIGRATE_STATUS"
 
             if echo "\$MIGRATE_STATUS" | grep -qi "up to date"; then
               echo "✅ No pending migrations - skipping migrate deploy"
@@ -924,6 +926,8 @@ jobs:
             # Prisma 5 output: "up to date" quando não há nada pendente
             echo "🔍 Checking for pending migrations..."
             MIGRATE_STATUS=\$(\$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 || echo "status_failed")
+            echo "📋 Migrate status output:"
+            echo "\$MIGRATE_STATUS"
 
             if echo "\$MIGRATE_STATUS" | grep -qi "up to date"; then
               echo "✅ No pending migrations - skipping migrate deploy"
