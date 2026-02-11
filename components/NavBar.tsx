@@ -3,8 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Search, X } from "lucide-react"
-import { SearchBar } from "@/components/features/SearchBar"
+import { GlobalSearch } from "@/components/ui/GlobalSearch"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
@@ -12,7 +11,6 @@ import { MobileMenu } from "@/components/features/MobileMenu"
 const NavBar = () => {
     const pathname = usePathname()
     const [isScrolled, setIsScrolled] = useState(false)
-    const [showSearch, setShowSearch] = useState(false)
 
     useEffect(() => {
         const handleScroll = () => {
@@ -61,32 +59,13 @@ const NavBar = () => {
                         {/* Mobile menu - Only visible on mobile */}
                         <MobileMenu links={navLinks} />
 
+                        {/* Global Search - Hidden on mobile */}
+                        <div className="hidden md:block flex-1 max-w-md">
+                            <GlobalSearch />
+                        </div>
+
                         {/* Theme toggle */}
                         <ThemeToggle />
-
-                        {/* Search button and expanded search */}
-                        <div className="relative">
-                            {!showSearch ? (
-                                <button
-                                    onClick={() => setShowSearch(true)}
-                                    className="text-zinc-400 hover:text-white transition-colors"
-                                >
-                                    <Search className="h-6 w-6" />
-                                </button>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-48 md:w-64">
-                                        <SearchBar />
-                                    </div>
-                                    <button
-                                        onClick={() => setShowSearch(false)}
-                                        className="text-zinc-400 hover:text-white transition-colors"
-                                    >
-                                        <X className="h-6 w-6" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
 
                         {/* User menu */}
                         <UserMenu />
