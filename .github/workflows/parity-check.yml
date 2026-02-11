@@ -97,6 +97,10 @@ jobs:
             sed -i "s|$production_val|NORMALIZED|g" /tmp/production-normalized.yml
           done
 
+          # Remover trailing whitespace e linhas em branco no final (diferenças cosméticas)
+          sed -i 's/[[:space:]]*$//' /tmp/staging-normalized.yml
+          sed -i 's/[[:space:]]*$//' /tmp/production-normalized.yml
+
           # Comparar versões normalizadas
           echo "📊 Comparando staging e production (após normalização)..."
           echo ""
