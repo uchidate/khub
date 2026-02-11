@@ -410,16 +410,17 @@ jobs:
             \$COMPOSE_CMD -f docker-compose.staging.yml ps
 
             echo "⏳ Aguardando container 'hallyuhub-staging' ficar operacional..."
-            max_retries=10
+            max_retries=20
             count=0
-            until [ "\$(docker inspect -f '{{.State.Running}}' hallyuhub-staging 2>/dev/null)" == "true" ] || [ \$count -eq \$max_retries ]; do
-              echo "Aguardando container iniciar... (\$((count+1))/\$max_retries)"
+            until [ "\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null)" == "healthy" ] || [ \$count -eq \$max_retries ]; do
+              health_status=\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null || echo "unknown")
+              echo "Aguardando container ficar healthy... (Status: \$health_status, \$((count+1))/\$max_retries)"
               sleep 5
               count=\$((count+1))
             done
 
             if [ \$count -eq \$max_retries ]; then
-              echo "❌ Erro: Container hallyuhub-staging não iniciou a tempo."
+              echo "❌ Erro: Container hallyuhub-staging não ficou healthy a tempo."
               \$COMPOSE_CMD -f docker-compose.staging.yml logs hallyuhub-staging | tail -n 50
               exit 1
             fi
@@ -902,16 +903,17 @@ jobs:
             \$COMPOSE_CMD -f docker-compose.prod.yml ps
 
             echo "⏳ Aguardando container 'hallyuhub' ficar operacional..."
-            max_retries=15
+            max_retries=25
             count=0
-            until [ "\$(docker inspect -f '{{.State.Running}}' hallyuhub 2>/dev/null)" == "true" ] || [ \$count -eq \$max_retries ]; do
-              echo "Aguardando container iniciar... (\$((count+1))/\$max_retries)"
+            until [ "\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null)" == "healthy" ] || [ \$count -eq \$max_retries ]; do
+              health_status=\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null || echo "unknown")
+              echo "Aguardando container ficar healthy... (Status: \$health_status, \$((count+1))/\$max_retries)"
               sleep 5
               count=\$((count+1))
             done
 
             if [ \$count -eq \$max_retries ]; then
-              echo "❌ Erro: Container hallyuhub não iniciou a tempo."
+              echo "❌ Erro: Container hallyuhub não ficou healthy a tempo."
               \$COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
               exit 1
             fi
