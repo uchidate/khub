@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus } from 'lucide-react'
+import { Plus, FlaskConical, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 
 interface News {
@@ -95,11 +95,20 @@ const formFields: FormField[] = [
   { key: 'tags', label: 'Tags', type: 'tags', placeholder: 'Separar por vírgula (ex: k-drama, k-pop)' },
 ]
 
+interface GenerateResult {
+  success: boolean
+  news?: { title: string; artistsCount: number; artists: { name: string }[] }
+  error?: string
+  duration?: number
+}
+
 export default function NewsAdminPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editingNews, setEditingNews] = useState<News | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [generating, setGenerating] = useState(false)
+  const [generateResult, setGenerateResult] = useState<GenerateResult | null>(null)
 
   const handleCreate = () => {
     setEditingNews(null)
@@ -139,6 +148,21 @@ export default function NewsAdminPage() {
     refetchTable()
   }
 
+  const handleGenerateOne = async () => {
+    setGenerating(true)
+    setGenerateResult(null)
+    try {
+      const res = await fetch('/api/admin/news/generate-one', { method: 'POST' })
+      const data = await res.json()
+      setGenerateResult(data)
+      if (data.success) refetchTable()
+    } catch {
+      setGenerateResult({ success: false, error: 'Erro de rede' })
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   const handleDeleteConfirm = async () => {
     const res = await fetch('/api/admin/news', {
       method: 'DELETE',
@@ -159,14 +183,50 @@ export default function NewsAdminPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <p className="text-zinc-400">Gerencie notícias e artigos</p>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
-          >
-            <Plus size={18} />
-            Nova Notícia
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleGenerateOne}
+              disabled={generating}
+              className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 border border-zinc-700 text-white font-bold rounded-lg hover:border-green-500 hover:text-green-400 transition-all disabled:opacity-50"
+            >
+              {generating ? <Loader2 size={18} className="animate-spin" /> : <FlaskConical size={18} />}
+              {generating ? 'Gerando...' : 'Gerar 1 Notícia (Teste)'}
+            </button>
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
+            >
+              <Plus size={18} />
+              Nova Notícia
+            </button>
+          </div>
         </div>
+
+        {generateResult && (
+          <div className={`flex items-start gap-3 p-4 rounded-xl border ${generateResult.success ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+            {generateResult.success
+              ? <CheckCircle size={20} className="text-green-400 mt-0.5 shrink-0" />
+              : <XCircle size={20} className="text-red-400 mt-0.5 shrink-0" />
+            }
+            <div className="text-sm">
+              {generateResult.success && generateResult.news ? (
+                <>
+                  <p className="font-bold text-white">{generateResult.news.title}</p>
+                  <p className="text-zinc-400 mt-1">
+                    {generateResult.news.artistsCount > 0
+                      ? `Artistas: ${generateResult.news.artists.map(a => a.name).join(', ')}`
+                      : 'Nenhum artista identificado'
+                    }
+                    {generateResult.duration && ` · ${(generateResult.duration / 1000).toFixed(1)}s`}
+                  </p>
+                </>
+              ) : (
+                <p className="text-red-400">{generateResult.error}</p>
+              )}
+            </div>
+            <button onClick={() => setGenerateResult(null)} className="ml-auto text-zinc-500 hover:text-white">✕</button>
+          </div>
+        )}
 
         <DataTable<News>
           columns={columns}
