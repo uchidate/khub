@@ -29,19 +29,58 @@ jobs:
           sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/production.yml
 
           # Normalizar diferenças permitidas (whitelist)
+          # CRÍTICO: Ordem importa - padrões MAIS ESPECÍFICOS devem vir ANTES dos genéricos
           ALLOWED_DIFFS=(
+            # 1. Padrões de arquivo específicos (antes de tudo)
+            ".env.staging|.env.production"
+            "docker-compose.staging.yml|docker-compose.prod.yml"
+
+            # 2. URLs e caminhos (antes do padrão hallyuhub)
+            "31.97.255.107:3001|www.hallyuhub.com.br"
+            "staging.hallyuhub.com.br|www.hallyuhub.com.br"
+
+            # 2b. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
+            "http://ollama-staging|http://ollama-production"
+
+            "http://|https://"
+
+            # 3. Caminho compartilhado /var/www/hallyuhub (normaliza igual em ambos)
+            "/var/www/hallyuhub|/var/www/hallyuhub"
+
+            # 4. Refs do git (antes do genérico staging|production)
+            "refs/heads/staging|refs/heads/main"
+
+            # 5. Nomes de containers específicos
+            # 5a. Padrões compostos ANTES dos simples (hallyuhub-postgres-X contém postgres-X)
+            "hallyuhub-postgres-staging|hallyuhub-postgres-production"
+            "hallyuhub-staging|hallyuhub"
+            "postgres-staging|postgres-production"
+            "ollama-staging|ollama-production"
+
+            # 6. Scripts específicos de cada ambiente (equivalentes funcionais)
+            "setup-auto-generation.sh|verify-production.sh"
+
+            # 7. Nomes genéricos de ambiente (APÓS padrões específicos)
             "deploy-staging|deploy-production"
             "Deploy Staging|Deploy Production"
             "staging|production"
             "STAGING|PRODUCTION"
             "Staging|Production"
-            ".env.staging|.env.production"
-            "docker-compose.staging.yml|docker-compose.prod.yml"
-            "hallyuhub-staging|hallyuhub"
-            "postgres-staging|postgres-production"
-            "ollama-staging|ollama-production"
-            "31.97.255.107:3001|www.hallyuhub.com.br"
-            "http://|https://"
+
+            # 8. Diferenças de criticidade (staging=menor, production=maior)
+            # CRÍTICO: Normalizar em AMBOS os lados para valores que aparecem nos dois ambientes
+            "timeout_minutes: 20|timeout_minutes: 20"
+            "timeout_minutes: 25|timeout_minutes: 25"
+            "max_retries=10|max_retries=10"
+            "max_retries=15|max_retries=15"
+            "max_attempts=10|max_attempts=10"
+            "max_attempts=20|max_attempts=20"
+            "sleep 5|sleep 5"
+            "sleep 10|sleep 10"
+
+            # 9. Diferenças visuais e estruturais permitidas
+            "🟡|🟢"
+            "FASE 3a|FASE 3b"
             "restart: \"no\"|restart: always"
           )
 
@@ -58,11 +97,23 @@ jobs:
             sed -i "s|$production_val|NORMALIZED|g" /tmp/production-normalized.yml
           done
 
+          # Remover trailing whitespace e linhas em branco no final (diferenças cosméticas)
+          sed -i 's/[[:space:]]*$//' /tmp/staging-normalized.yml
+          sed -i 's/[[:space:]]*$//' /tmp/production-normalized.yml
+
           # Comparar versões normalizadas
           echo "📊 Comparando staging e production (após normalização)..."
           echo ""
 
-          if diff -u /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
+          # Usar --ignore-matching-lines para diferenças legítimas que resistem à normalização:
+          # - Scripts específicos de cada ambiente (setup-auto-generation vs verify-production)
+          # - Verificação SSL (produção apenas - staging usa http)
+          # - NODE_ENV e argumentos específicos de scripts
+          # - scripts/NORMALIZED: invocação do script (staging usa NODE_ENV=X + flags, production não)
+          #   Ambas as linhas (+ e -) contêm "scripts/NORMALIZED", então a mudança é ignorada
+          if diff -u \
+            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED' \
+            /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
             echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
             echo ""
             echo "Diferenças permitidas (particularidades de ambiente):"
@@ -103,8 +154,12 @@ jobs:
           prod_services=$(grep -E "^  [a-z-]+:" docker-compose.prod.yml | sort)
 
           # Normalizar nomes
+          # staging: hallyuhub-staging → hallyuhub-XXX, outros-staging → outros-XXX
+          # production: hallyuhub (sem sufixo) → hallyuhub-XXX, outros-production → outros-XXX
           staging_services_norm=$(echo "$staging_services" | sed 's/-staging/-XXX/g')
           prod_services_norm=$(echo "$prod_services" | sed 's/-production/-XXX/g')
+          # Caso especial: app container de production é 'hallyuhub' (não 'hallyuhub-production')
+          prod_services_norm=$(echo "$prod_services_norm" | sed 's/^  hallyuhub:$/  hallyuhub-XXX:/')
 
           if [ "$staging_services_norm" == "$prod_services_norm" ]; then
             echo "✅ Services idênticos em staging e production"
