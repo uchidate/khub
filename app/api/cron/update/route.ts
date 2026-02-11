@@ -6,6 +6,48 @@ export const maxDuration = 300; // 5 minutos máximo para o cron
 const prisma = new PrismaClient();
 
 /**
+ * Lock de processo para evitar execuções simultâneas (encavalar).
+ * Como o Next.js roda em processo único no Docker, variáveis de módulo
+ * persistem entre requisições dentro da mesma instância.
+ */
+const CRON_LOCK_TIMEOUT_MS = 25 * 60 * 1000; // 25 minutos (margem para maxDuration)
+
+interface CronLock {
+    startedAt: number;
+    requestId: string;
+}
+
+let activeCronLock: CronLock | null = null;
+
+function acquireCronLock(): string | null {
+    const now = Date.now();
+
+    // Verificar se lock ativo ainda é válido
+    if (activeCronLock) {
+        const elapsed = now - activeCronLock.startedAt;
+        if (elapsed < CRON_LOCK_TIMEOUT_MS) {
+            const elapsedSec = Math.floor(elapsed / 1000);
+            console.warn(`[CRON] ⚠️  Já existe uma execução ativa (${elapsedSec}s atrás, id: ${activeCronLock.requestId}). Pulando.`);
+            return null; // Lock não adquirido
+        }
+        // Lock expirado (processo anterior travou?) — liberar e continuar
+        console.warn(`[CRON] ⚠️  Lock expirado (${Math.floor(elapsed / 60000)}min). Liberando e continuando.`);
+    }
+
+    const requestId = `cron-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    activeCronLock = { startedAt: now, requestId };
+    console.log(`[CRON] 🔒 Lock adquirido: ${requestId}`);
+    return requestId;
+}
+
+function releaseCronLock(requestId: string): void {
+    if (activeCronLock?.requestId === requestId) {
+        activeCronLock = null;
+        console.log(`[CRON] 🔓 Lock liberado: ${requestId}`);
+    }
+}
+
+/**
  * Cron job endpoint para atualização automática de conteúdo
  *
  * Este endpoint deve ser chamado periodicamente (ex: a cada 15 minutos) por:
@@ -41,6 +83,17 @@ export async function GET(request: NextRequest) {
             }, { status: 401 });
         }
 
+        // 1.5. Lock de execução — evita encavalar (duas execuções simultâneas)
+        const lockId = acquireCronLock();
+        if (!lockId) {
+            return NextResponse.json({
+                success: false,
+                skipped: true,
+                reason: 'already_running',
+                message: 'Cron já está em execução. Esta chamada foi ignorada para evitar sobreposição.'
+            }, { status: 409 });
+        }
+
         // 2. Executar atualizações
         const results = {
             artists: { updated: 0, errors: [] as string[] },
@@ -62,8 +115,9 @@ export async function GET(request: NextRequest) {
             });
             const excludeArtists = existingArtists.map(a => a.nameRomanized);
 
-            // Gerar 2 artistas reais do TMDB por execução (cron 15min = ~8 artistas/hora)
-            const artists = await artistGenerator.generateMultipleArtists(2, {
+            // Gerar 1 artista real do TMDB por execução (cron 4h = ~6 artistas/dia)
+            // Calibrado para Ollama gemma:2b no CPU: bio ~60-120s por artista
+            const artists = await artistGenerator.generateMultipleArtists(1, {
                 excludeList: excludeArtists
             });
 
@@ -128,11 +182,13 @@ export async function GET(request: NextRequest) {
             });
             const excludeNews = existingNews.map(n => n.sourceUrl);
 
-            // Quantidade de notícias por ambiente
-            // Staging: 2 notícias (testes rápidos)
-            // Production: 5 notícias (cron 15min = ~20 notícias/hora)
+            // Quantidade de notícias por execução (cron: 0 */4 * * * = 6x/dia)
+            // Calibrado para Ollama gemma:2b no CPU (~60-120s por notícia):
+            // - Staging: 1 notícia (~2-4 min no total, seguro para testes)
+            // - Production: 2 notícias (~4-8 min no total)
+            // Total diário: 12 notícias/dia (production) — suficiente para manter feed atualizado
             const isStaging = process.env.DEPLOY_ENV === 'staging';
-            const newsCount = isStaging ? 2 : 5;
+            const newsCount = isStaging ? 1 : 2;
 
             console.log(`[CRON] Fetching ${newsCount} news items (env: ${process.env.DEPLOY_ENV || 'production'})`);
 
@@ -388,6 +444,11 @@ export async function GET(request: NextRequest) {
         }, { status: 500 });
 
     } finally {
+        // Liberar o lock (se foi adquirido)
+        const currentLock = activeCronLock;
+        if (currentLock) {
+            releaseCronLock(currentLock.requestId);
+        }
         await prisma.$disconnect();
     }
 }

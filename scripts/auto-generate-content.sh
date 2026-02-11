@@ -3,10 +3,22 @@
 # Auto Generate Content - HallyuHub
 # ============================================================
 # Script executado pelo cron para gerar conteúdo automaticamente
-# Executa a cada 5 minutos
+# Executa a cada 4 horas (0 */4 * * *)
+# LOCK: Usa flock para evitar execuções simultâneas (encavalar)
 # ============================================================
 
 set -e
+
+# ── LOCK: impede execuções simultâneas ──────────────────────
+# Se outra instância já está rodando, sair sem erro
+LOCK_FILE="/tmp/hallyuhub-auto-generate.lock"
+exec 200>"${LOCK_FILE}"
+if ! flock -n 200; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  Já existe uma instância em execução (lock ativo). Pulando." >&2
+    exit 0
+fi
+# O lock é liberado automaticamente quando o processo termina
+# ────────────────────────────────────────────────────────────
 
 # Diretório do projeto (auto-detectar baseado na localização do script)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -2,9 +2,10 @@ import { BaseAIProvider } from './base-provider';
 import type { GenerateOptions, GenerationResult } from '../ai-config';
 import { PROVIDER_CONFIGS } from '../ai-config';
 
-// Timeout para inferência local. 45s evita que o cron trave por longos períodos.
-// Se o modelo demorar mais, o orchestrator fará fallback para outro provider.
-const OLLAMA_TIMEOUT_MS = 45_000;
+// Timeout para inferência local com gemma:2b no CPU.
+// gemma:2b: ~30-120s dependendo do hardware. 120s dá margem sem travar muito o cron.
+// Se exceder, o orchestrator fará fallback para outro provider (se configurado).
+const OLLAMA_TIMEOUT_MS = 120_000; // 2 minutos
 
 /**
  * Provider para Ollama (modelo local)
