@@ -263,7 +263,11 @@ jobs:
           retry_wait_seconds: 15
           shell: bash
           command: |
+            # Usar GitHub Action inline
             set -e
+
+            # Install SSH if not available
+            which ssh || (apt-get update && apt-get install -y openssh-client)
 
             # Setup SSH key
             mkdir -p ~/.ssh
@@ -283,10 +287,17 @@ jobs:
 
             cd /var/www/hallyuhub
 
+            # Initialize .env.staging if it doesn't exist
             if [ ! -f .env.staging ]; then
-              touch .env.staging
+              echo "⚠️ .env.staging not found! Creating from backup or empty..."
+              if [ -f .env.staging.bak ]; then
+                cp .env.staging.bak .env.staging
+              else
+                touch .env.staging
+              fi
             fi
 
+            # Backup
             cp .env.staging .env.staging.bak
 
             update_env() {
@@ -347,28 +358,45 @@ jobs:
             set -e
             cd /var/www/hallyuhub
 
+            # Determinar comando docker-compose (v1 vs v2)
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE_CMD="docker compose"
+              echo "✅ Usando 'docker compose' (V2)"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE_CMD="docker-compose"
+              echo "✅ Usando 'docker-compose' (V1)"
+            else
+              echo "❌ Erro: docker-compose não encontrado!"
+              exit 1
+            fi
+
+            # Diagnóstico inicial
+            echo "📊 Verificando ambiente..."
+            df -h / | grep / || true
+            docker network ls | grep web || echo "⚠️ Network 'web' não encontrada!"
+
             echo "🟡 Deploying STAGING..."
 
             # Cleanup: Remove old Docker images (keep last 3)
             echo "🧹 Limpando imagens antigas..."
             docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
-              tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
+              tail -n +4 | awk '{print \$1}' | xargs -r docker rmi -f 2>/dev/null || \
               echo "Nenhuma imagem antiga para remover"
 
             # Pull nova imagem
-            docker-compose -f docker-compose.staging.yml pull hallyuhub-staging
+            \$COMPOSE_CMD -f docker-compose.staging.yml pull hallyuhub-staging
 
             # Down para evitar ContainerConfig error
-            docker-compose -f docker-compose.staging.yml down || true
+            \$COMPOSE_CMD -f docker-compose.staging.yml down || true
 
             # Up com containers frescos
-            docker-compose -f docker-compose.staging.yml up -d
+            \$COMPOSE_CMD -f docker-compose.staging.yml up -d
 
             echo "⏳ Aguardando containers ficarem saudáveis..."
             sleep 15
 
             echo "📊 Aplicando migrations..."
-            docker-compose -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy
+            \$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy
 
             echo "⏰ Configurando Cron (Automação)..."
             chmod +x scripts/setup-auto-generation.sh
@@ -669,7 +697,7 @@ jobs:
               fi
             }
 
-            echo "🔧 Updating sensitive keys..."
+            echo "🔧 Updating environment variables..."
             update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
             update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
             update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
@@ -681,7 +709,7 @@ jobs:
             update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
 
             chmod 600 .env.production
-            echo "✅ Env prep complete."
+            echo "✅ Setup complete."
             ENDSSH
 
       - name: Copy Files to Server
