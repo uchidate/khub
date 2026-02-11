@@ -10,6 +10,8 @@ import { FeaturedCarousel } from "@/components/features/FeaturedCarousel"
 import { TrendingArtists } from "@/components/features/TrendingArtists"
 import { LatestProductions } from "@/components/features/LatestProductions"
 import { RecommendedForYou } from "@/components/features/RecommendedForYou"
+import { ScrollReveal } from "@/components/ui/ScrollReveal"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { Newspaper } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -122,87 +124,102 @@ export default async function Home() {
             <HeroSection />
 
             {/* Stats Section */}
-            <div className="relative z-20 px-4 sm:px-6 lg:px-12 -mt-10">
-                <StatsSection />
-            </div>
+            <ScrollReveal>
+                <div className="relative z-20 px-4 sm:px-6 lg:px-12 -mt-10">
+                    <StatsSection />
+                </div>
+            </ScrollReveal>
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-12 space-y-16">
 
                 {/* Featured News Carousel */}
                 {featuredNews.length > 0 && (
-                    <section>
-                        <FeaturedCarousel news={featuredNews} />
-                    </section>
+                    <ScrollReveal delay={0.1}>
+                        <section>
+                            <FeaturedCarousel news={featuredNews} />
+                        </section>
+                    </ScrollReveal>
                 )}
 
                 {/* Trending Artists */}
                 {trendingArtists.length > 0 && (
-                    <TrendingArtists artists={trendingArtists} />
+                    <ScrollReveal delay={0.2}>
+                        <TrendingArtists artists={trendingArtists} />
+                    </ScrollReveal>
                 )}
 
                 {/* Recommended For You (apenas para usuários autenticados) */}
                 {session && recommendedNewsFormatted.length > 0 && (
-                    <RecommendedForYou
-                        news={recommendedNewsFormatted}
-                        isAuthenticated={!!session}
-                        favoritesCount={favoritesCount}
-                    />
+                    <ScrollReveal delay={0.3}>
+                        <RecommendedForYou
+                            news={recommendedNewsFormatted}
+                            isAuthenticated={!!session}
+                            favoritesCount={favoritesCount}
+                        />
+                    </ScrollReveal>
                 )}
 
                 {/* Latest Productions */}
                 {latestProductions.length > 0 && (
-                    <LatestProductions productions={latestProductions} />
+                    <ScrollReveal delay={0.2}>
+                        <LatestProductions productions={latestProductions} />
+                    </ScrollReveal>
                 )}
 
                 {/* Section: Latest News (Glass List) */}
-                <section className="relative">
-                    <div className="absolute -inset-10 bg-cyber-purple/10 blur-[100px] rounded-full z-0 pointer-events-none" />
-                    <div className="relative z-10 glass-card p-8 md:p-12 border-white/10 bg-black/60">
-                        <div className="flex flex-col md:flex-row gap-12">
-                            <div className="md:w-1/3">
-                                <div className="flex items-center gap-2 text-neon-pink font-black uppercase tracking-widest text-xs mb-4">
-                                    <Newspaper size={14} /> News Feed
-                                </div>
-                                <h2 className="text-4xl md:text-6xl font-display font-black text-white italic tracking-tighter leading-none mb-6">
-                                    ÚLTIMAS<br />
-                                    DO HALLYU
-                                </h2>
-                                <p className="text-zinc-400 text-sm leading-relaxed mb-8">
-                                    Fique por dentro dos comebacks, lançamentos de dramas e notícias exclusivas da indústria.
-                                </p>
-                                <Link href="/news" className="btn-primary text-xs uppercase tracking-widest">
-                                    Ler Todas
-                                </Link>
-                            </div>
-
-                            <div className="md:w-2/3 grid gap-4">
-                                {topNews.map((item: any) => (
-                                    <Link key={item.id} href={`/news/${item.id}`} className="group flex flex-col md:flex-row gap-6 p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all">
-                                        <div className="relative w-full md:w-32 aspect-video rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
-                                            {item.imageUrl ? (
-                                                <Image src={item.imageUrl} alt={item.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                                            ) : (
-                                                <div className="w-full h-full bg-zinc-800" />
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col justify-center">
-                                            <span className="text-[10px] text-cyber-purple font-black uppercase tracking-widest mb-2">
-                                                {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
-                                            </span>
-                                            <h3 className="text-lg font-bold text-white group-hover:text-neon-pink transition-colors leading-tight mb-2">
-                                                {item.title}
-                                            </h3>
-                                            <p className="text-xs text-zinc-500 line-clamp-2 md:line-clamp-1">
-                                                {item.contentMd}
-                                            </p>
-                                        </div>
+                <ScrollReveal delay={0.3}>
+                    <section className="relative">
+                        <div className="absolute -inset-10 bg-cyber-purple/10 blur-[100px] rounded-full z-0 pointer-events-none" />
+                        <div className="relative z-10 glass-card p-8 md:p-12 border-white/10 bg-black/60">
+                            <div className="flex flex-col md:flex-row gap-12">
+                                <div className="md:w-1/3">
+                                    <div className="flex items-center gap-2 text-neon-pink font-black uppercase tracking-widest text-xs mb-4">
+                                        <Newspaper size={14} /> News Feed
+                                    </div>
+                                    <h2 className="text-4xl md:text-6xl font-display font-black text-white italic tracking-tighter leading-none mb-6">
+                                        ÚLTIMAS<br />
+                                        DO HALLYU
+                                    </h2>
+                                    <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+                                        Fique por dentro dos comebacks, lançamentos de dramas e notícias exclusivas da indústria.
+                                    </p>
+                                    <Link href="/news" className="btn-primary text-xs uppercase tracking-widest hover:shadow-2xl hover:shadow-purple-500/50 transition-all hover:scale-105 active:scale-95">
+                                        Ler Todas
                                     </Link>
-                                ))}
+                                </div>
+
+                                <div className="md:w-2/3 grid gap-4">
+                                    {topNews.map((item: any) => (
+                                        <Link key={item.id} href={`/news/${item.id}`} className="group flex flex-col md:flex-row gap-6 p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1">
+                                            <div className="relative w-full md:w-32 aspect-video rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                {item.imageUrl ? (
+                                                    <Image src={item.imageUrl} alt={item.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-zinc-800" />
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col justify-center">
+                                                <span className="text-[10px] text-cyber-purple font-black uppercase tracking-widest mb-2">
+                                                    {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
+                                                </span>
+                                                <h3 className="text-lg font-bold text-white group-hover:text-neon-pink transition-colors leading-tight mb-2">
+                                                    {item.title}
+                                                </h3>
+                                                <p className="text-xs text-zinc-500 line-clamp-2 md:line-clamp-1">
+                                                    {item.contentMd}
+                                                </p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </ScrollReveal>
             </div>
+
+            {/* Scroll to Top Button */}
+            <ScrollToTop />
         </div>
     )
 }
