@@ -244,7 +244,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🔗 <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver Workflow>\"
+                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver Workflow>\"
                 }
               }, {
                 \"type\": \"context\",
@@ -492,10 +492,10 @@ jobs:
             chmod +x scripts/export-cron-info.sh
             ./scripts/export-cron-info.sh staging
 
-            echo "📊 Executando script de configuração de Staging..."
+            echo "📊 Running Staging Verification Script..."
             chmod +x scripts/setup-auto-generation.sh
             if ! NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test; then
-              echo "❌ CRITICAL: Staging setup failed!"
+              echo "❌ CRITICAL: Staging verification failed!"
               exit 1
             fi
 
@@ -602,7 +602,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🔗 <http://staging.hallyuhub.com.br|🌐 Ver Site> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Workflow>\"
+                  \"text\": \"🔗 <http://staging.hallyuhub.com.br|🌐 Ver Site> · <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Workflow>\"
                 }
               }, {
                 \"type\": \"context\",
@@ -657,7 +657,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Logs do Workflow> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit>\"
+                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Logs do Workflow> · <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit>\"
                 }
               }, {
                 \"type\": \"context\",
@@ -723,7 +723,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🔗 <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver Workflow>\"
+                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver Workflow>\"
                 }
               }, {
                 \"type\": \"context\",
@@ -1102,7 +1102,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🔗 <https://www.hallyuhub.com.br|🌐 Ver Site> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Workflow>\"
+                  \"text\": \"🔗 <https://www.hallyuhub.com.br|🌐 Ver Site> · <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit> · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Workflow>\"
                 }
               }, {
                 \"type\": \"context\",
@@ -1158,7 +1158,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Logs do Workflow> · <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit>\"
+                  \"text\": \"🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|⚙️ Ver Logs do Workflow> · <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|📝 Ver Commit>\"
                 }
               }, {
                 \"type\": \"context\",

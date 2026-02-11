@@ -38,6 +38,10 @@ jobs:
             # 2. URLs e caminhos (antes do padrão hallyuhub)
             "31.97.255.107:3001|www.hallyuhub.com.br"
             "staging.hallyuhub.com.br|www.hallyuhub.com.br"
+
+            # 2b. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
+            "http://ollama-staging|http://ollama-production"
+
             "http://|https://"
 
             # 3. Caminho compartilhado /var/www/hallyuhub (normaliza igual em ambos)
@@ -62,10 +66,15 @@ jobs:
             "Staging|Production"
 
             # 8. Diferenças de criticidade (staging=menor, production=maior)
-            "timeout_minutes: 20|timeout_minutes: 25"
-            "max_retries=10|max_retries=15"
-            "max_attempts=10|max_attempts=20"
-            "sleep 5|sleep 10"
+            # CRÍTICO: Normalizar em AMBOS os lados para valores que aparecem nos dois ambientes
+            "timeout_minutes: 20|timeout_minutes: 20"
+            "timeout_minutes: 25|timeout_minutes: 25"
+            "max_retries=10|max_retries=10"
+            "max_retries=15|max_retries=15"
+            "max_attempts=10|max_attempts=10"
+            "max_attempts=20|max_attempts=20"
+            "sleep 5|sleep 5"
+            "sleep 10|sleep 10"
 
             # 9. Diferenças visuais e estruturais permitidas
             "🟡|🟢"
@@ -94,8 +103,10 @@ jobs:
           # - Scripts específicos de cada ambiente (setup-auto-generation vs verify-production)
           # - Verificação SSL (produção apenas - staging usa http)
           # - NODE_ENV e argumentos específicos de scripts
+          # - scripts/NORMALIZED: invocação do script (staging usa NODE_ENV=X + flags, production não)
+          #   Ambas as linhas (+ e -) contêm "scripts/NORMALIZED", então a mudança é ignorada
           if diff -u \
-            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br' \
+            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED' \
             /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
             echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
             echo ""
