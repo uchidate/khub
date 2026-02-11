@@ -49,6 +49,44 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'www.hallyuhub.com.br',
             },
+            // K-pop News Sources - RSS feeds
+            {
+                protocol: 'https',
+                hostname: 'www.soompi.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'soompi.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'www.koreaboo.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'koreaboo.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'www.kpopstarz.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'kpopstarz.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'www.allkpop.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'allkpop.com',
+            },
+            // CDN comum usado por portais de notícias
+            {
+                protocol: 'https',
+                hostname: '*.wp.com',
+            },
         ],
     },
 };
