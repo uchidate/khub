@@ -65,7 +65,7 @@ export class ArtistGeneratorV2 {
         // Normaliza nome para comparação fuzzy: remove parênteses, minúsculo, trim
         // Previne duplicatas como "IU" vs "IU (Lee Ji-eun)" ou "Jungkook" vs "Jung Kook"
         const normalizeForComparison = (name: string) =>
-            name.toLowerCase().replace(/\s*\([^)]*\)\s*/g, '').replace(/[\s\-\.]/g, '').trim();
+            name.toLowerCase().replace(/\s*\([^)]*\)\s*/g, '').replace(/[\s-.]/g, '').trim();
 
         const existingNamesNormalized = new Set(
             existingArtists.map(a => normalizeForComparison(a.nameRomanized))
