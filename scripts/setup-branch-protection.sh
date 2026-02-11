@@ -40,10 +40,10 @@ echo ""
 
 # Verificar se PR #43 foi mergeado
 echo "🔍 Verificando se PR #43 foi mergeado..."
-PR_STATE=$(gh pr view 43 --json state,merged -q '.state')
-PR_MERGED=$(gh pr view 43 --json merged -q '.merged')
+PR_STATE=$(gh pr view 43 --json state,mergedAt -q '.state')
+PR_MERGED=$(gh pr view 43 --json mergedAt -q '.mergedAt // empty')
 
-if [ "$PR_MERGED" != "true" ]; then
+if [ -z "$PR_MERGED" ]; then
     echo "⚠️  AVISO: PR #43 ainda não foi mergeado!"
     echo ""
     echo "Você pode:"
@@ -71,18 +71,29 @@ gh api \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   "/repos/$REPO/branches/main/protection" \
-  -f required_status_checks[strict]=true \
-  -f "required_status_checks[contexts][]=Verificar Paridade Staging/Production" \
-  -f "required_status_checks[contexts][]=Deploy Staging" \
-  -f "required_status_checks[contexts][]=Deploy Production" \
-  -f required_pull_request_reviews[dismiss_stale_reviews]=true \
-  -f required_pull_request_reviews[require_code_owner_reviews]=false \
-  -f required_pull_request_reviews[required_approving_review_count]=1 \
-  -f enforce_admins=false \
-  -f required_linear_history=false \
-  -f allow_force_pushes=false \
-  -f allow_deletions=false \
-  -f required_conversation_resolution=true
+  --input - <<'EOF'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": [
+      "Verificar Paridade Staging/Production",
+      "Deploy Staging",
+      "Deploy Production"
+    ]
+  },
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 1
+  },
+  "enforce_admins": false,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true,
+  "restrictions": null
+}
+EOF
 
 echo ""
 echo "=================================================="
