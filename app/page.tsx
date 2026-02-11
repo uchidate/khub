@@ -10,8 +10,7 @@ import { FeaturedCarousel } from "@/components/features/FeaturedCarousel"
 import { TrendingArtists } from "@/components/features/TrendingArtists"
 import { LatestProductions } from "@/components/features/LatestProductions"
 import { RecommendedForYou } from "@/components/features/RecommendedForYou"
-import { MediaCard } from "@/components/ui/MediaCard"
-import { ArrowRight, Film, Newspaper } from 'lucide-react'
+import { Newspaper } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
