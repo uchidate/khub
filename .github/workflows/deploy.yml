@@ -300,6 +300,9 @@ jobs:
             # Backup
             cp .env.staging .env.staging.bak
 
+            # Sanitize: remove invalid env entries (lines starting with = or empty key)
+            sed -i '/^=/d' .env.staging
+
             update_env() {
               key=\$1
               val=\$2
@@ -766,6 +769,9 @@ jobs:
 
             # Backup
             cp .env.production .env.production.bak
+
+            # Sanitize: remove invalid env entries (lines starting with = or empty key)
+            sed -i '/^=/d' .env.production
 
             update_env() {
               key=\$1
