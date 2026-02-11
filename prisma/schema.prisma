@@ -145,6 +145,7 @@ model News {
   userFavorites       Favorite[]
   artists             NewsArtist[]
   notificationHistory NotificationHistory[]
+  comments            Comment[]
 
   @@index([publishedAt])
   @@index([createdAt])
@@ -198,6 +199,7 @@ model User {
   activities             Activity[]
   notificationSettings   UserNotificationSettings?
   notificationHistory    NotificationHistory[]
+  comments               Comment[]
 
   @@index([email])
 }
@@ -334,4 +336,20 @@ model Activity {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newsId    String
+  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([newsId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([newsId, createdAt])
 }

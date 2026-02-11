@@ -3,6 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
 import { HeroSection } from "@/components/features/HeroSection"
+import { StatsSection } from "@/components/features/StatsSection"
 import { MediaCard } from "@/components/ui/MediaCard"
 import { ArrowRight, Film, Newspaper } from 'lucide-react'
 
@@ -25,6 +26,11 @@ export default async function Home() {
     return (
         <div className="bg-black min-h-screen pb-20 overflow-x-hidden">
             <HeroSection />
+
+            {/* Stats Section */}
+            <div className="relative z-20 px-4 sm:px-6 lg:px-12 -mt-10">
+                <StatsSection />
+            </div>
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-0 space-y-24">
 
