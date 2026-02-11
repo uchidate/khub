@@ -8,6 +8,7 @@ import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { RelatedNews } from "@/components/features/RelatedNews"
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
+import { CommentsSection } from "@/components/features/CommentsSection"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -272,6 +273,9 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                         <ExternalLink className="w-4 h-4" />
                     </a>
                 </footer>
+
+                {/* Seção de Comentários */}
+                <CommentsSection newsId={news.id} />
 
                 {/* Notícias Relacionadas */}
                 <RelatedNews news={relatedNews} />
