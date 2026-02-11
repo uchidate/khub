@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { RelatedNews } from "@/components/features/RelatedNews"
+import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -122,8 +123,10 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     const readingTime = Math.ceil(wordCount / 200)
 
     return (
-        <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
-            <div className="max-w-4xl mx-auto">
+        <>
+            <ReadingProgressBar />
+            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
+                <div className="max-w-4xl mx-auto">
                 {/* Breadcrumbs */}
                 <div className="mb-8 flex justify-between items-start">
                     <Breadcrumbs items={[
@@ -274,5 +277,6 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 <RelatedNews news={relatedNews} />
             </div>
         </div>
+        </>
     )
 }
