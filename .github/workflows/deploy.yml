@@ -486,15 +486,20 @@ jobs:
             fi
             fi # Fim do bloco if de pending migrations
 
-            echo "⏰ Configurando Cron (Automação)..."
-            chmod +x scripts/setup-auto-generation.sh
-            NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test
+            echo "✅ Staging containers up and healthy!"
 
             echo "📝 Exportando informações dos cron jobs..."
             chmod +x scripts/export-cron-info.sh
             ./scripts/export-cron-info.sh staging
 
-            echo "✅ Staging containers up and healthy!"
+            echo "📊 Executando script de configuração de Staging..."
+            chmod +x scripts/setup-auto-generation.sh
+            if ! NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test; then
+              echo "❌ CRITICAL: Staging setup failed!"
+              exit 1
+            fi
+
+            echo "✅ Staging verified and operational!"
             ENDSSH
 
       - name: 🔍 Health Check
