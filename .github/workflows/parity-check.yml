@@ -29,6 +29,7 @@ jobs:
           sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/production.yml
 
           # Normalizar diferenças permitidas (whitelist)
+          # IMPORTANTE: Ordem importa! URL patterns devem vir ANTES de 'hallyuhub' pattern
           ALLOWED_DIFFS=(
             "deploy-staging|deploy-production"
             "Deploy Staging|Deploy Production"
@@ -37,11 +38,14 @@ jobs:
             "Staging|Production"
             ".env.staging|.env.production"
             "docker-compose.staging.yml|docker-compose.prod.yml"
+            "31.97.255.107:3001|www.hallyuhub.com.br"
+            "http://|https://"
             "hallyuhub-staging|hallyuhub"
             "postgres-staging|postgres-production"
             "ollama-staging|ollama-production"
-            "31.97.255.107:3001|www.hallyuhub.com.br"
-            "http://|https://"
+            "🟡|🟢"
+            "FASE 3a|FASE 3b"
+            "refs/heads/staging|refs/heads/main"
             "restart: \"no\"|restart: always"
           )
 

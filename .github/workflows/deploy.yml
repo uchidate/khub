@@ -229,7 +229,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`staging\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -576,7 +576,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`staging\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -631,7 +631,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`staging\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -644,7 +644,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"⚠️ *ATENÇÃO: Deploy em staging falhou!*\\nVerifique os logs imediatamente.\"
+                  \"text\": \"🚨 *ATENÇÃO: Deploy em staging falhou!*\\nVerifique os logs imediatamente e considere rollback se necessário.\"
                 }
               }, {
                 \"type\": \"divider\"
@@ -703,7 +703,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`main\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -1076,7 +1076,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`main\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -1132,7 +1132,7 @@ jobs:
               }, {
                 \"type\": \"section\",
                 \"fields\": [
-                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`main\`\"},
+                  {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"},
                   {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}
                 ]
               }, {
@@ -1145,7 +1145,7 @@ jobs:
                 \"type\": \"section\",
                 \"text\": {
                   \"type\": \"mrkdwn\",
-                  \"text\": \"🚨 *ATENÇÃO: Deploy em produção falhou!*\\nVerifique os logs imediatamente e considere rollback se necessário.\"
+                  \"text\": \"🚨 *ATENÇÃO: Deploy em production falhou!*\\nVerifique os logs imediatamente e considere rollback se necessário.\"
                 }
               }, {
                 \"type\": \"divider\"
