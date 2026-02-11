@@ -2,8 +2,14 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import { HeroSection } from "@/components/features/HeroSection"
 import { StatsSection } from "@/components/features/StatsSection"
+import { FeaturedCarousel } from "@/components/features/FeaturedCarousel"
+import { TrendingArtists } from "@/components/features/TrendingArtists"
+import { LatestProductions } from "@/components/features/LatestProductions"
+import { RecommendedForYou } from "@/components/features/RecommendedForYou"
 import { MediaCard } from "@/components/ui/MediaCard"
 import { ArrowRight, Film, Newspaper } from 'lucide-react'
 
@@ -15,12 +21,101 @@ export const metadata: Metadata = {
 }
 
 export default async function Home() {
-    const trendingArtists = await prisma.artist.findMany({
+    const session = await getServerSession(authOptions)
+
+    // Featured News for Carousel (5 mais recentes com imagem)
+    const featuredNewsRaw = await prisma.news.findMany({
+        where: { imageUrl: { not: null } },
         take: 5,
-        orderBy: { trendingScore: 'desc' },
-        include: { agency: { select: { name: true } } }
+        orderBy: { publishedAt: 'desc' },
+        select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true }
     })
-    const latestProductions = await prisma.production.findMany({ take: 3, orderBy: { year: 'desc' } })
+
+    const featuredNews = featuredNewsRaw.map(news => ({
+        ...news,
+        publishedAt: news.publishedAt.toISOString()
+    }))
+
+    // Trending Artists (6 artistas em alta)
+    const trendingArtists = await prisma.artist.findMany({
+        take: 6,
+        orderBy: { trendingScore: 'desc' },
+        select: {
+            id: true,
+            nameRomanized: true,
+            primaryImageUrl: true,
+            roles: true,
+            trendingScore: true,
+            viewCount: true
+        }
+    })
+
+    // Latest Productions (6 mais recentes)
+    const latestProductionsRaw = await prisma.production.findMany({
+        take: 6,
+        orderBy: { createdAt: 'desc' },
+        select: {
+            id: true,
+            titlePt: true,
+            type: true,
+            year: true,
+            imageUrl: true,
+            voteAverage: true,
+            createdAt: true
+        }
+    })
+
+    const latestProductions = latestProductionsRaw.map(prod => ({
+        ...prod,
+        createdAt: prod.createdAt.toISOString()
+    }))
+
+    // Recommended News (apenas para usuários autenticados)
+    let recommendedNews: any[] = []
+    let favoritesCount = 0
+
+    if (session?.user?.email) {
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            include: {
+                favorites: {
+                    where: { artistId: { not: null } },
+                    select: { artistId: true }
+                }
+            }
+        })
+
+        const favoriteArtistIds = user?.favorites.map(f => f.artistId).filter(Boolean) || []
+        favoritesCount = favoriteArtistIds.length
+
+        if (favoriteArtistIds.length > 0) {
+            recommendedNews = await prisma.news.findMany({
+                where: {
+                    artists: {
+                        some: { artistId: { in: favoriteArtistIds as string[] } }
+                    }
+                },
+                take: 3,
+                orderBy: { publishedAt: 'desc' },
+                select: {
+                    id: true,
+                    title: true,
+                    imageUrl: true,
+                    publishedAt: true,
+                    tags: true,
+                    artists: { select: { artistId: true } }
+                }
+            })
+        }
+    }
+
+    const recommendedNewsFormatted = recommendedNews.map(news => ({
+        ...news,
+        publishedAt: news.publishedAt.toISOString(),
+        artistsCount: news.artists?.length || 0
+    }))
+
+    // Top News para seção de notícias (3 mais recentes)
     const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
     return (
@@ -32,81 +127,33 @@ export default async function Home() {
                 <StatsSection />
             </div>
 
-            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-0 space-y-24">
+            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-12 space-y-16">
 
-                {/* Section: Trending Artists (Bento Grid) */}
-                <section className="scroll-mt-32">
-                    <div className="flex items-end justify-between mb-10">
-                        <div className="space-y-2">
-                            <span className="text-xs font-black uppercase tracking-[0.3em] text-neon-pink">Top 🔥 Semanal</span>
-                            <h2 className="text-4xl md:text-6xl font-display font-black text-white italic tracking-tighter uppercase flex items-center gap-4">
-                                Em Alta
-                            </h2>
-                        </div>
-                        <Link href="/artists" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
-                            Explorar Tudo <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    </div>
+                {/* Featured News Carousel */}
+                {featuredNews.length > 0 && (
+                    <section>
+                        <FeaturedCarousel news={featuredNews} />
+                    </section>
+                )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:auto-rows-[300px]">
-                        {/* Hero Item (First Artist) */}
-                        {trendingArtists[0] && (
-                            <div className="md:col-span-2 md:row-span-2">
-                                <MediaCard
-                                    key={trendingArtists[0].id}
-                                    id={trendingArtists[0].id}
-                                    title={trendingArtists[0].nameRomanized}
-                                    subtitle={trendingArtists[0].agency?.name || 'Artista'}
-                                    imageUrl={trendingArtists[0].primaryImageUrl}
-                                    type="artist"
-                                    href={`/artists/${trendingArtists[0].id}`}
-                                    aspectRatio="square"
-                                    badges={['🔥 #1 Trending']}
-                                />
-                            </div>
-                        )}
-                        {/* Secondary Items */}
-                        {trendingArtists.slice(1).map((artist: any) => (
-                            <div key={artist.id} className="md:col-span-1 md:row-span-1">
-                                <MediaCard
-                                    id={artist.id}
-                                    title={artist.nameRomanized}
-                                    imageUrl={artist.primaryImageUrl}
-                                    type="artist"
-                                    href={`/artists/${artist.id}`}
-                                    aspectRatio="square"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                {/* Trending Artists */}
+                {trendingArtists.length > 0 && (
+                    <TrendingArtists artists={trendingArtists} />
+                )}
 
-                {/* Section: Latest Productions */}
-                <section>
-                    <div className="flex items-end justify-between mb-8">
-                        <h2 className="text-2xl md:text-4xl font-display font-black text-white italic tracking-tighter uppercase flex items-center gap-3">
-                            <Film className="text-electric-cyan" size={32} />
-                            Em Alta
-                        </h2>
-                        <Link href="/productions" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
-                            Ver Todas <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {latestProductions.map((prod: any) => (
-                            <MediaCard
-                                key={prod.id}
-                                id={prod.id}
-                                title={prod.titlePt}
-                                subtitle={`${prod.type} • ${prod.year}`}
-                                imageUrl={prod.imageUrl}
-                                type="production"
-                                href={`/productions/${prod.id}`}
-                                aspectRatio="video"
-                            />
-                        ))}
-                    </div>
-                </section>
+                {/* Recommended For You (apenas para usuários autenticados) */}
+                {session && recommendedNewsFormatted.length > 0 && (
+                    <RecommendedForYou
+                        news={recommendedNewsFormatted}
+                        isAuthenticated={!!session}
+                        favoritesCount={favoritesCount}
+                    />
+                )}
+
+                {/* Latest Productions */}
+                {latestProductions.length > 0 && (
+                    <LatestProductions productions={latestProductions} />
+                )}
 
                 {/* Section: Latest News (Glass List) */}
                 <section className="relative">
