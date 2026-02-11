@@ -73,6 +73,7 @@ jobs:
             "timeout_minutes: 25|timeout_minutes: 25"
             "max_retries=10|max_retries=10"
             "max_retries=15|max_retries=15"
+            "max_retries=20|max_retries=25"
             "max_attempts=10|max_attempts=10"
             "max_attempts=20|max_attempts=20"
             "sleep 5|sleep 5"

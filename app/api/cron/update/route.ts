@@ -111,8 +111,10 @@ export async function GET(request: NextRequest) {
         try {
             console.log('[CRON] Fetching real news from RSS feeds...');
             const { NewsGeneratorV2 } = require('@/lib/ai/generators/news-generator-v2');
+            const { getNewsArtistExtractionService } = require('@/lib/services/news-artist-extraction-service');
 
             const newsGenerator = new NewsGeneratorV2();
+            const extractionService = getNewsArtistExtractionService(prisma);
             const existingNews = await prisma.news.findMany({
                 select: { sourceUrl: true }
             });
@@ -137,7 +139,7 @@ export async function GET(request: NextRequest) {
                         continue;
                     }
 
-                    await prisma.news.upsert({
+                    const savedNews = await prisma.news.upsert({
                         where: { sourceUrl: news.sourceUrl },
                         update: {
                             title: news.title,
@@ -155,6 +157,36 @@ export async function GET(request: NextRequest) {
                             publishedAt: news.publishedAt,
                         },
                     });
+
+                    // Extrair artistas mencionados e criar relações (falha graciosamente)
+                    try {
+                        const artistMentions = await extractionService.extractArtists(
+                            news.title,
+                            news.contentMd
+                        );
+
+                        for (const mention of artistMentions) {
+                            await prisma.newsArtist.upsert({
+                                where: {
+                                    newsId_artistId: {
+                                        newsId: savedNews.id,
+                                        artistId: mention.artistId,
+                                    }
+                                },
+                                update: {},
+                                create: {
+                                    newsId: savedNews.id,
+                                    artistId: mention.artistId,
+                                },
+                            });
+                        }
+
+                        if (artistMentions.length > 0) {
+                            console.log(`[CRON]    Artists linked: ${artistMentions.map((m: { name: string }) => m.name).join(', ')}`);
+                        }
+                    } catch (extractError: any) {
+                        console.warn(`[CRON] ⚠️  Artist extraction failed (non-blocking): ${extractError.message}`);
+                    }
 
                     results.news.updated++;
                     console.log(`[CRON] ✅ Saved real news: ${news.title}`);

@@ -55,6 +55,7 @@ model Artist {
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
   albums             Album[]
+  news               NewsArtist[]
 
   @@index([agencyId])
   @@index([createdAt])
@@ -132,21 +133,37 @@ model ArtistProduction {
 }
 
 model News {
-  id            String     @id @default(cuid())
+  id            String       @id @default(cuid())
   title         String
   contentMd     String
-  sourceUrl     String     @unique
-  publishedAt   DateTime   @default(now())
+  sourceUrl     String       @unique
+  publishedAt   DateTime     @default(now())
   imageUrl      String?
   tags          String[]
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   userFavorites Favorite[]
+  artists       NewsArtist[]
 
   @@index([publishedAt])
   @@index([createdAt])
   @@index([title])
   @@index([sourceUrl])
+}
+
+model NewsArtist {
+  id       String @id @default(cuid())
+  newsId   String
+  artistId String
+
+  news     News   @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([newsId, artistId])
+  @@index([newsId])
+  @@index([artistId])
 }
 
 model Image {

@@ -14,6 +14,7 @@ interface MediaCardProps {
     type: 'artist' | 'production' | 'news'
     href: string
     badges?: string[]
+    artists?: string[] // Artistas mencionados (apenas para type="news")
     aspectRatio?: 'poster' | 'video' | 'square' // poster = 2:3, video = 16:9, square = 1:1
 }
 
@@ -25,6 +26,7 @@ export function MediaCard({
     type,
     href,
     badges = [],
+    artists = [],
     aspectRatio = 'poster'
 }: MediaCardProps) {
     const aspectClass = aspectRatio === 'poster' ? 'aspect-[2/3]' : aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
@@ -137,6 +139,22 @@ export function MediaCard({
                                     </span>
                                 ))}
                             </div>
+
+                            {/* Artists mentioned (news only) */}
+                            {artists.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                                    {artists.slice(0, 3).map((name) => (
+                                        <span key={name} className="text-[9px] uppercase font-black px-2 py-1 bg-neon-pink/80 text-white rounded-sm shadow-lg tracking-widest">
+                                            {name}
+                                        </span>
+                                    ))}
+                                    {artists.length > 3 && (
+                                        <span className="text-[9px] uppercase font-black px-2 py-1 bg-white/20 text-white rounded-sm shadow-lg tracking-widest">
+                                            +{artists.length - 3}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </motion.div>
                     </div>
                 </div>

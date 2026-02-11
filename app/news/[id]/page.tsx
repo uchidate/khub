@@ -131,7 +131,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 {/* Rodapé da Notícia */}
                 <footer className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="text-sm text-zinc-500 font-medium italic">
-                        Fonte original: <span className="text-zinc-300 underline underline-offset-4">{new URL(news.sourceUrl).hostname}</span>
+                        Fonte original: <span className="text-zinc-300 underline underline-offset-4">{(() => { try { return new URL(news.sourceUrl).hostname } catch { return news.sourceUrl } })()}</span>
                     </div>
                     <a
                         href={news.sourceUrl}
