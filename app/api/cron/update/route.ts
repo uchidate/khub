@@ -159,7 +159,12 @@ export async function GET(request: NextRequest) {
                     });
 
                     // Extrair artistas mencionados e criar relações (falha graciosamente)
+                    let isNewNews = false;
                     try {
+                        // Verificar se a notícia foi criada agora (diff < 10s)
+                        const newsAge = Date.now() - new Date(savedNews.createdAt).getTime();
+                        isNewNews = newsAge < 10000; // 10 segundos
+
                         const artistMentions = await extractionService.extractArtists(
                             news.title,
                             news.contentMd
@@ -183,6 +188,17 @@ export async function GET(request: NextRequest) {
 
                         if (artistMentions.length > 0) {
                             console.log(`[CRON]    Artists linked: ${artistMentions.map((m: { name: string }) => m.name).join(', ')}`);
+                        }
+
+                        // Enviar notificações apenas se for notícia nova
+                        if (isNewNews && artistMentions.length > 0) {
+                            try {
+                                const { getNewsNotificationService } = await import('@/lib/services/news-notification-service');
+                                const notificationService = getNewsNotificationService();
+                                await notificationService.notifyUsersAboutNews(savedNews.id);
+                            } catch (notifError: any) {
+                                console.warn(`[CRON] ⚠️  Notification failed (non-blocking): ${notifError.message}`);
+                            }
                         }
                     } catch (extractError: any) {
                         console.warn(`[CRON] ⚠️  Artist extraction failed (non-blocking): ${extractError.message}`);
