@@ -44,6 +44,10 @@ PR_STATE=$(gh pr view 43 --json state,mergedAt -q '.state')
 PR_MERGED=$(gh pr view 43 --json mergedAt -q '.mergedAt // empty')
 
 if [ -z "$PR_MERGED" ]; then
+PR_STATE=$(gh pr view 43 --json state,merged -q '.state')
+PR_MERGED=$(gh pr view 43 --json merged -q '.merged')
+
+if [ "$PR_MERGED" != "true" ]; then
     echo "⚠️  AVISO: PR #43 ainda não foi mergeado!"
     echo ""
     echo "Você pode:"
@@ -94,6 +98,18 @@ gh api \
   "restrictions": null
 }
 EOF
+  -f required_status_checks[strict]=true \
+  -f "required_status_checks[contexts][]=Verificar Paridade Staging/Production" \
+  -f "required_status_checks[contexts][]=Deploy Staging" \
+  -f "required_status_checks[contexts][]=Deploy Production" \
+  -f required_pull_request_reviews[dismiss_stale_reviews]=true \
+  -f required_pull_request_reviews[require_code_owner_reviews]=false \
+  -f required_pull_request_reviews[required_approving_review_count]=1 \
+  -f enforce_admins=false \
+  -f required_linear_history=false \
+  -f allow_force_pushes=false \
+  -f allow_deletions=false \
+  -f required_conversation_resolution=true
 
 echo ""
 echo "=================================================="
