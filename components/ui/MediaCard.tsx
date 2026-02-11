@@ -30,6 +30,10 @@ export function MediaCard({
     aspectRatio = 'poster'
 }: MediaCardProps) {
     const aspectClass = aspectRatio === 'poster' ? 'aspect-[2/3]' : aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
+    const [imgError, setImgError] = useState(false)
+
+    // Placeholder blur data URL (low-quality gradient)
+    const blurDataURL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 600'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2318181b;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='600' fill='url(%23g)' /%3E%3C/svg%3E"
 
     // 3D Tilt Logic
     const ref = useRef<HTMLDivElement>(null)
@@ -96,17 +100,27 @@ export function MediaCard({
                 >
                     {/* Image Layer */}
                     <div className="absolute inset-0 z-0">
-                        {imageUrl ? (
+                        {imageUrl && !imgError ? (
                             <Image
                                 src={imageUrl}
                                 alt={title}
                                 fill
                                 sizes="(max-width: 768px) 50vw, 33vw"
                                 className="object-cover transition-transform duration-700 group-hover:scale-110 group-hover:brightness-110 grayscale-[20%] group-hover:grayscale-0"
+                                placeholder="blur"
+                                blurDataURL={blurDataURL}
+                                onError={() => setImgError(true)}
+                                loading="lazy"
+                                quality={85}
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full bg-zinc-900 text-zinc-700 italic font-black uppercase tracking-widest">
-                                No Image
+                            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-zinc-900 via-zinc-800 to-black text-zinc-600">
+                                <svg className="w-16 h-16 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                    {type === 'news' ? 'Sem Imagem' : 'No Image'}
+                                </span>
                             </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
