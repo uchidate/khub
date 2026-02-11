@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
+export const maxDuration = 300; // 5 minutos máximo para o cron
+
 const prisma = new PrismaClient();
 
 /**
@@ -73,24 +75,30 @@ export async function GET(request: NextRequest) {
                     }
 
                     // Salvar artista real do TMDB
+                    // Preferir tmdbId como chave (mais confiável que nome)
+                    const artistUpsertKey = artist.tmdbId
+                        ? { tmdbId: String(artist.tmdbId) }
+                        : { nameRomanized: artist.nameRomanized };
+
                     await prisma.artist.upsert({
-                        where: { nameRomanized: artist.nameRomanized },
+                        where: artistUpsertKey,
                         update: {
+                            nameRomanized: artist.nameRomanized,
                             nameHangul: artist.nameHangul || null,
                             birthDate: artist.birthDate || null,
-                            roles: artist.roles || null,
+                            roles: artist.roles || [],
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
-                            tmdbId: String(artist.tmdbId),
+                            tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
                         },
                         create: {
                             nameRomanized: artist.nameRomanized,
                             nameHangul: artist.nameHangul || null,
                             birthDate: artist.birthDate || null,
-                            roles: artist.roles || null,
+                            roles: artist.roles || [],
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
-                            tmdbId: String(artist.tmdbId),
+                            tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
                         },
                     });
 

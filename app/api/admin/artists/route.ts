@@ -10,15 +10,16 @@ export const dynamic = 'force-dynamic'
 const artistSchema = z.object({
   nameRomanized: z.string().min(1),
   nameHangul: z.string().optional(),
-  nameKanji: z.string().optional(),
-  nameHiragana: z.string().optional(),
-  stageName: z.string().optional(),
+  birthDate: z.string().optional(),              // ISO date string, camelCase
+  birthName: z.string().optional(),
+  stageNames: z.array(z.string()).optional(),    // array de nomes artísticos
+  roles: z.array(z.string()).optional(),         // ex: ['IDOL', 'ACTOR']
+  height: z.string().optional(),
+  bloodType: z.string().optional(),
+  zodiacSign: z.string().optional(),
   bio: z.string().optional(),
-  birthdate: z.string().optional(), // ISO date string
-  deathdate: z.string().optional(), // ISO date string
-  country: z.string().optional(),
-  imageUrl: z.string().url().optional(),
-  gender: z.enum(['male', 'female', 'non_binary', 'other']).optional(),
+  primaryImageUrl: z.string().url().optional(),  // era: imageUrl
+  socialLinks: z.record(z.string(), z.string()).optional(),  // JSON: { instagram: "...", etc }
   tmdbId: z.string().optional(),
   agencyId: z.string().optional(),
 })
@@ -40,7 +41,6 @@ export async function GET(request: NextRequest) {
           OR: [
             { nameRomanized: { contains: search, mode: 'insensitive' as const } },
             { nameHangul: { contains: search, mode: 'insensitive' as const } },
-            { stageName: { contains: search, mode: 'insensitive' as const } },
           ],
         }
       : {}
@@ -106,11 +106,8 @@ export async function POST(request: NextRequest) {
 
     // Convert date strings to Date objects
     const data: Record<string, unknown> = { ...validated }
-    if (validated.birthdate) {
-      data.birthdate = new Date(validated.birthdate)
-    }
-    if (validated.deathdate) {
-      data.deathdate = new Date(validated.deathdate)
+    if (validated.birthDate) {
+      data.birthDate = new Date(validated.birthDate)
     }
 
     const artist = await prisma.artist.create({
@@ -157,11 +154,8 @@ export async function PATCH(request: NextRequest) {
 
     // Convert date strings to Date objects
     const data: Record<string, unknown> = { ...validated }
-    if (validated.birthdate) {
-      data.birthdate = new Date(validated.birthdate)
-    }
-    if (validated.deathdate) {
-      data.deathdate = new Date(validated.deathdate)
+    if (validated.birthDate) {
+      data.birthDate = new Date(validated.birthDate)
     }
 
     const artist = await prisma.artist.update({

@@ -9,6 +9,7 @@ import { ShareButtons } from "@/components/ui/ShareButtons"
 import { RelatedNews } from "@/components/features/RelatedNews"
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
 import { CommentsSection } from "@/components/features/CommentsSection"
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -244,10 +245,8 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 )}
 
                 {/* Conteúdo */}
-                <article className="prose prose-invert prose-purple max-w-none">
-                    <div className="text-zinc-300 text-lg md:text-xl leading-relaxed whitespace-pre-wrap font-medium">
-                        {news.contentMd}
-                    </div>
+                <article className="prose prose-invert prose-purple max-w-none text-zinc-300 text-lg md:text-xl leading-relaxed">
+                    <MarkdownRenderer content={news.contentMd} />
                 </article>
 
                 {/* Compartilhamento */}
