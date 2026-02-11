@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { X, Menu } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { GlobalSearch } from "@/components/ui/GlobalSearch"
 
 interface MobileMenuProps {
   links: Array<{ label: string; href: string }>
@@ -70,6 +71,11 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                 >
                   <X className="h-6 w-6" />
                 </button>
+              </div>
+
+              {/* Mobile Search */}
+              <div className="p-4 border-b border-zinc-800">
+                <GlobalSearch />
               </div>
 
               {/* Navigation Links */}

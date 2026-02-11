@@ -19,11 +19,12 @@ export function UserMenu() {
   // Not authenticated
   if (!session) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Link
           href="/auth/login"
           prefetch={false}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors hover:bg-zinc-800/50 rounded-lg"
+          title="Entrar"
         >
           <LogIn size={16} />
           <span className="hidden md:inline">Entrar</span>
@@ -31,7 +32,8 @@ export function UserMenu() {
         <Link
           href="/auth/register"
           prefetch={false}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg transition-colors"
+          className="flex items-center gap-2 px-3 md:px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-purple-900/20"
+          title="Cadastrar"
         >
           <UserPlus size={16} />
           <span className="hidden md:inline">Cadastrar</span>
