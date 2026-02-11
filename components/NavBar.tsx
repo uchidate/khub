@@ -34,41 +34,53 @@ const NavBar = () => {
     ]
 
     return (
-        <nav className={`w-full z-[100] transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'fixed top-0 bg-transparent bg-gradient-to-b from-black/80 to-transparent py-6'}`}>
+        <nav className={`w-full z-[100] fixed top-0 transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'bg-transparent bg-gradient-to-b from-black/80 to-transparent py-6'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16 md:h-20">
-                    <div className="flex items-center gap-10">
-                        <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
-                            <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
-                        </Link>
-                        <div className="hidden md:flex space-x-6">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={`text-sm font-medium hover:text-zinc-300 transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4 ${pathname === link.href ? "text-white" : "text-zinc-400"
-                                        }`}
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </div>
+                <div className="flex items-center justify-between gap-4 md:gap-6 h-16 md:h-20">
+                    {/* Logo */}
+                    <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase flex-shrink-0 hover:opacity-80 transition-opacity">
+                        <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
+                    </Link>
+
+                    {/* Desktop Navigation Links */}
+                    <div className="hidden lg:flex items-center space-x-6">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={`text-sm font-medium hover:text-zinc-300 transition-colors whitespace-nowrap ${pathname === link.href ? "text-white" : "text-zinc-400"
+                                    }`}
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        {/* Mobile menu - Only visible on mobile */}
-                        <MobileMenu links={navLinks} />
+                    {/* Global Search - Centered, hidden on mobile */}
+                    <div className="hidden md:flex flex-1 max-w-xl mx-4">
+                        <GlobalSearch />
+                    </div>
 
-                        {/* Global Search - Hidden on mobile */}
-                        <div className="hidden md:block flex-1 max-w-md">
-                            <GlobalSearch />
+                    {/* Right side actions - Grouped */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Desktop actions grouped */}
+                        <div className="hidden md:flex items-center gap-2 pr-3 border-r border-zinc-700/50">
+                            <ThemeToggle />
                         </div>
 
-                        {/* Theme toggle */}
-                        <ThemeToggle />
+                        {/* User menu - Always visible */}
+                        <div className="hidden md:block">
+                            <UserMenu />
+                        </div>
 
-                        {/* User menu */}
-                        <UserMenu />
+                        {/* Mobile actions grouped */}
+                        <div className="flex md:hidden items-center gap-2">
+                            <ThemeToggle />
+                            <UserMenu />
+                            <div className="pl-2 border-l border-zinc-700/50">
+                                <MobileMenu links={navLinks} />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
