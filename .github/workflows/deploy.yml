@@ -307,10 +307,10 @@ jobs:
               key=\$1
               val=\$2
               if [ -z "\$val" ]; then return; fi
-              if grep -q "^${key}=" .env.staging; then
-                sed -i "s|^${key}=.*|${key}=${val}|" .env.staging
+              if grep -q "^\${key}=" .env.staging; then
+                sed -i "s|^\${key}=.*|\${key}=\${val}|" .env.staging
               else
-                echo "${key}=${val}" >> .env.staging
+                echo "\${key}=\${val}" >> .env.staging
               fi
             }
 
@@ -777,10 +777,10 @@ jobs:
               key=\$1
               val=\$2
               if [ -z "\$val" ]; then return; fi
-              if grep -q "^${key}=" .env.production; then
-                sed -i "s|^${key}=.*|${key}=${val}|" .env.production
+              if grep -q "^\${key}=" .env.production; then
+                sed -i "s|^\${key}=.*|\${key}=\${val}|" .env.production
               else
-                echo "${key}=${val}" >> .env.production
+                echo "\${key}=\${val}" >> .env.production
               fi
             }
 
