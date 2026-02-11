@@ -1,0 +1,135 @@
+name: 🔍 Staging/Production Parity Check
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deploy.yml'
+      - 'docker-compose.*.yml'
+      - '.env.*.example'
+  workflow_dispatch:
+
+jobs:
+  check-parity:
+    name: Verificar Paridade Staging/Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🔍 Verificar paridade no deploy.yml
+        run: |
+          echo "=================================================="
+          echo "🔍 VERIFICANDO PARIDADE STAGING/PRODUCTION"
+          echo "=================================================="
+          echo ""
+
+          # Extrair jobs de staging e production
+          sed -n '/^  deploy-staging:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/staging.yml
+          sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/production.yml
+
+          # Normalizar diferenças permitidas (whitelist)
+          ALLOWED_DIFFS=(
+            "deploy-staging|deploy-production"
+            "Deploy Staging|Deploy Production"
+            "staging|production"
+            "STAGING|PRODUCTION"
+            "Staging|Production"
+            ".env.staging|.env.production"
+            "docker-compose.staging.yml|docker-compose.prod.yml"
+            "hallyuhub-staging|hallyuhub"
+            "postgres-staging|postgres-production"
+            "ollama-staging|ollama-production"
+            "31.97.255.107:3001|www.hallyuhub.com.br"
+            "http://|https://"
+            "restart: \"no\"|restart: always"
+          )
+
+          # Criar versões normalizadas
+          cp /tmp/staging.yml /tmp/staging-normalized.yml
+          cp /tmp/production.yml /tmp/production-normalized.yml
+
+          for diff_pattern in "${ALLOWED_DIFFS[@]}"; do
+            staging_val=$(echo "$diff_pattern" | cut -d'|' -f1)
+            production_val=$(echo "$diff_pattern" | cut -d'|' -f2)
+
+            # Normalizar ambos para um valor neutro
+            sed -i "s|$staging_val|NORMALIZED|g" /tmp/staging-normalized.yml
+            sed -i "s|$production_val|NORMALIZED|g" /tmp/production-normalized.yml
+          done
+
+          # Comparar versões normalizadas
+          echo "📊 Comparando staging e production (após normalização)..."
+          echo ""
+
+          if diff -u /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
+            echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
+            echo ""
+            echo "Diferenças permitidas (particularidades de ambiente):"
+            for diff_pattern in "${ALLOWED_DIFFS[@]}"; do
+              echo "  - $diff_pattern"
+            done
+            exit 0
+          else
+            echo "❌ FALHA: Encontradas diferenças NÃO autorizadas!"
+            echo ""
+            echo "=================================================="
+            echo "DIFERENÇAS DETECTADAS:"
+            echo "=================================================="
+            cat /tmp/diff-result.txt
+            echo ""
+            echo "=================================================="
+            echo "REGRA: Staging e Production DEVEM ser espelhos!"
+            echo "=================================================="
+            echo ""
+            echo "Apenas as seguintes diferenças são permitidas:"
+            for diff_pattern in "${ALLOWED_DIFFS[@]}"; do
+              echo "  ✅ $diff_pattern"
+            done
+            echo ""
+            echo "Qualquer outra diferença DEVE ser corrigida antes do merge."
+            exit 1
+          fi
+
+      - name: 🔍 Verificar paridade nos docker-compose
+        run: |
+          echo ""
+          echo "=================================================="
+          echo "🔍 VERIFICANDO DOCKER-COMPOSE FILES"
+          echo "=================================================="
+
+          # Verificar se estrutura de services é idêntica
+          staging_services=$(grep -E "^  [a-z-]+:" docker-compose.staging.yml | sort)
+          prod_services=$(grep -E "^  [a-z-]+:" docker-compose.prod.yml | sort)
+
+          # Normalizar nomes
+          staging_services_norm=$(echo "$staging_services" | sed 's/-staging/-XXX/g')
+          prod_services_norm=$(echo "$prod_services" | sed 's/-production/-XXX/g')
+
+          if [ "$staging_services_norm" == "$prod_services_norm" ]; then
+            echo "✅ Services idênticos em staging e production"
+          else
+            echo "❌ FALHA: Services diferentes entre staging e production!"
+            echo ""
+            echo "Staging services:"
+            echo "$staging_services"
+            echo ""
+            echo "Production services:"
+            echo "$prod_services"
+            exit 1
+          fi
+
+          echo "✅ Paridade de docker-compose validada"
+
+      - name: 📋 Resumo da Verificação
+        if: success()
+        run: |
+          echo ""
+          echo "=================================================="
+          echo "✅ PARIDADE VALIDADA COM SUCESSO!"
+          echo "=================================================="
+          echo ""
+          echo "Staging e Production são espelhos perfeitos."
+          echo "Apenas particularidades de ambiente diferem."
+          echo ""
+          echo "Este PR está aprovado para merge."
