@@ -154,8 +154,12 @@ jobs:
           prod_services=$(grep -E "^  [a-z-]+:" docker-compose.prod.yml | sort)
 
           # Normalizar nomes
+          # staging: hallyuhub-staging → hallyuhub-XXX, outros-staging → outros-XXX
+          # production: hallyuhub (sem sufixo) → hallyuhub-XXX, outros-production → outros-XXX
           staging_services_norm=$(echo "$staging_services" | sed 's/-staging/-XXX/g')
           prod_services_norm=$(echo "$prod_services" | sed 's/-production/-XXX/g')
+          # Caso especial: app container de production é 'hallyuhub' (não 'hallyuhub-production')
+          prod_services_norm=$(echo "$prod_services_norm" | sed 's/^  hallyuhub:$/  hallyuhub-XXX:/')
 
           if [ "$staging_services_norm" == "$prod_services_norm" ]; then
             echo "✅ Services idênticos em staging e production"
