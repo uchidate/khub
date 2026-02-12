@@ -327,7 +327,7 @@ jobs:
     name: 🟢 Deploy to Production
     needs: build-image
     runs-on: [self-hosted, production]
-    timeout-minutes: 8  # Reduzido de 10
+    timeout-minutes: 8  # Reduzido de 10 para 8
     if: github.ref == 'refs/heads/main'
 
     environment:
@@ -343,7 +343,9 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
           COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
-          curl -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' -d "{\"text\": \"🚀 Deploy PRODUCTION iniciado\"}"
+          curl -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\": \"🚀 Deploy PRODUCTION iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy PRODUCTION Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"}}]}"
 
       - name: 🏷️ Prepare Environment
         run: |
