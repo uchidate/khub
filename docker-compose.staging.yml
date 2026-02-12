@@ -37,7 +37,9 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 4G  # Mesmo que produção - phi3:latest requer 3.5GB quando ativo
+          memory: 5G  # Aumentado de 4G para 5G (phi3:mini requer 3.5GB + headroom)
+        reservations:
+          memory: 4G  # Reserva 4GB para garantir memória disponível
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
