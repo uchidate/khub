@@ -290,6 +290,16 @@ export class TMDBDiscoveryService {
   }
 
   /**
+   * Busca a foto de um artista existente pelo tmdbId
+   * Útil para corrigir artistas sem foto no banco
+   */
+  async fetchPersonPhoto(tmdbId: number): Promise<string | null> {
+    const details = await this.getPersonDetails(tmdbId);
+    if (!details?.profile_path) return null;
+    return `${TMDB_IMAGE_BASE}${details.profile_path}`;
+  }
+
+  /**
    * Busca um artista específico por nome
    */
   async searchArtist(name: string): Promise<DiscoveredArtist | null> {

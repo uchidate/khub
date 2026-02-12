@@ -382,7 +382,140 @@ export async function GET(request: NextRequest) {
             results.filmography.errors.push(error.message);
         }
 
-        // 2.5. Atualizar trending scores
+        // 2.5. Normalizar conteúdo existente fora do padrão (1-2 itens por execução)
+        // Prioridade: fotos faltantes (rápido, TMDB) > conteúdo em inglês (lento, Ollama)
+        try {
+            console.log('[CRON] Checking for out-of-standard content...');
+
+            // Heurística simples para detectar conteúdo em inglês:
+            // Texto PT-BR tem ~10-20% de chars acentuados por palavra.
+            // Se menos de 3%, provavelmente está em inglês.
+            const isLikelyEnglish = (text: string): boolean => {
+                if (!text || text.length < 30) return false;
+                const accented = (text.match(/[áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ]/g) || []).length;
+                const words = text.trim().split(/\s+/).length;
+                return words > 8 && accented / words < 0.03;
+            };
+
+            let normalizedCount = 0;
+
+            // Prioridade 1: Artistas sem foto mas com tmdbId (rápido — apenas TMDB, sem AI)
+            const artistWithoutPhoto = await prisma.artist.findFirst({
+                where: {
+                    tmdbId: { not: null },
+                    OR: [{ primaryImageUrl: null }, { primaryImageUrl: '' }]
+                },
+                orderBy: { createdAt: 'asc' }
+            });
+
+            if (artistWithoutPhoto?.tmdbId) {
+                const { getTMDBDiscoveryService } = require('@/lib/services/tmdb-discovery-service');
+                const tmdbService = getTMDBDiscoveryService();
+                const photo = await tmdbService.fetchPersonPhoto(Number(artistWithoutPhoto.tmdbId));
+                if (photo) {
+                    await prisma.artist.update({
+                        where: { id: artistWithoutPhoto.id },
+                        data: { primaryImageUrl: photo }
+                    });
+                    normalizedCount++;
+                    console.log(`[CRON] ✅ Fixed missing photo: ${artistWithoutPhoto.nameRomanized}`);
+                }
+            }
+
+            // Prioridade 2: Produções sem foto mas com tmdbId (rápido — apenas TMDB, sem AI)
+            if (normalizedCount < 2) {
+                const productionWithoutPhoto = await prisma.production.findFirst({
+                    where: {
+                        tmdbId: { not: null },
+                        tmdbType: { not: null },
+                        OR: [{ imageUrl: null }, { imageUrl: '' }]
+                    },
+                    orderBy: { createdAt: 'asc' }
+                });
+
+                if (productionWithoutPhoto?.tmdbId && productionWithoutPhoto?.tmdbType) {
+                    const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
+                    const tmdbService = getTMDBProductionDiscoveryService();
+                    const images = await tmdbService.fetchProductionImages(
+                        Number(productionWithoutPhoto.tmdbId),
+                        productionWithoutPhoto.tmdbType as 'movie' | 'tv'
+                    );
+                    if (images.imageUrl || images.backdropUrl) {
+                        await prisma.production.update({
+                            where: { id: productionWithoutPhoto.id },
+                            data: {
+                                imageUrl: images.imageUrl || undefined,
+                                backdropUrl: images.backdropUrl || undefined,
+                            }
+                        });
+                        normalizedCount++;
+                        console.log(`[CRON] ✅ Fixed missing image: ${productionWithoutPhoto.titlePt}`);
+                    }
+                }
+            }
+
+            // Prioridade 3: Artistas com bio em inglês → traduzir para PT-BR (usa Ollama)
+            if (normalizedCount < 2) {
+                const artistWithEnglishBio = await prisma.artist.findFirst({
+                    where: { bio: { not: null } },
+                    orderBy: { updatedAt: 'asc' }
+                });
+
+                if (artistWithEnglishBio?.bio && isLikelyEnglish(artistWithEnglishBio.bio)) {
+                    const { getOrchestrator: getOrc } = require('@/lib/ai/orchestrator-factory');
+                    const orchestrator = getOrc();
+                    const result: any = await orchestrator.generateStructured(
+                        `Traduza a seguinte biografia para português brasileiro de forma natural e profissional. Mantenha 2-3 frases, tom acessível:\n\n${artistWithEnglishBio.bio}`,
+                        '{ "bio": "string (biografia em português brasileiro)" }',
+                        { preferredProvider: 'ollama', maxTokens: 200 }
+                    );
+                    if (result?.bio && result.bio.length > 20 && !isLikelyEnglish(result.bio)) {
+                        await prisma.artist.update({
+                            where: { id: artistWithEnglishBio.id },
+                            data: { bio: result.bio }
+                        });
+                        normalizedCount++;
+                        console.log(`[CRON] ✅ Fixed English bio: ${artistWithEnglishBio.nameRomanized}`);
+                    }
+                }
+            }
+
+            // Prioridade 4: Produções com synopsis em inglês → traduzir para PT-BR
+            if (normalizedCount < 2) {
+                const productionWithEnglishSynopsis = await prisma.production.findFirst({
+                    where: { synopsis: { not: null } },
+                    orderBy: { updatedAt: 'asc' }
+                });
+
+                if (productionWithEnglishSynopsis?.synopsis && isLikelyEnglish(productionWithEnglishSynopsis.synopsis)) {
+                    const { getOrchestrator: getOrc2 } = require('@/lib/ai/orchestrator-factory');
+                    const orchestrator = getOrc2();
+                    const result: any = await orchestrator.generateStructured(
+                        `Traduza a seguinte sinopse para português brasileiro de forma natural. Mantenha 2-3 frases, sem spoilers:\n\n${productionWithEnglishSynopsis.synopsis}`,
+                        '{ "synopsis": "string (sinopse em português brasileiro)" }',
+                        { preferredProvider: 'ollama', maxTokens: 200 }
+                    );
+                    if (result?.synopsis && result.synopsis.length > 20 && !isLikelyEnglish(result.synopsis)) {
+                        await prisma.production.update({
+                            where: { id: productionWithEnglishSynopsis.id },
+                            data: { synopsis: result.synopsis }
+                        });
+                        normalizedCount++;
+                        console.log(`[CRON] ✅ Fixed English synopsis: ${productionWithEnglishSynopsis.titlePt}`);
+                    }
+                }
+            }
+
+            if (normalizedCount > 0) {
+                console.log(`[CRON] ✅ Normalized ${normalizedCount} out-of-standard items`);
+            } else {
+                console.log('[CRON] ✅ No out-of-standard content found');
+            }
+        } catch (error: any) {
+            console.warn(`[CRON] ⚠️  Normalization failed (non-blocking): ${error.message}`);
+        }
+
+        // 2.6. Atualizar trending scores
         try {
             console.log('[CRON] Updating trending scores...');
             const { TrendingService } = require('@/lib/services/trending-service');
