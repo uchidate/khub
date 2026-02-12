@@ -7,10 +7,8 @@
  *   npx tsx scripts/backfill-news-artists.ts --dry-run    # Simular sem salvar
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { NewsArtistExtractionService } from '../lib/services/news-artist-extraction-service';
-
-const prisma = new PrismaClient();
 
 async function main() {
     const args = process.argv.slice(2);

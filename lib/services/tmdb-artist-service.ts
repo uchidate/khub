@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
@@ -49,8 +50,8 @@ export class TMDBArtistService {
   private prisma: PrismaClient;
   private rateLimiter: RateLimiter;
 
-  constructor(prisma?: PrismaClient) {
-    this.prisma = prisma || new PrismaClient();
+  constructor(prismaInstance?: PrismaClient) {
+    this.prisma = prismaInstance || prisma;
     this.rateLimiter = new RateLimiter(RateLimiterPresets.TMDB);
   }
 

@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 async function checkRecentActivity() {
     console.log('--- Resumo de Atividade Recente (Database) ---');

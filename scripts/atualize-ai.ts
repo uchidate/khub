@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 const { getOrchestrator } = require('../lib/ai/orchestrator-factory');
 const { NewsGenerator } = require('../lib/ai/generators/news-generator');
 const { ArtistGenerator } = require('../lib/ai/generators/artist-generator');
@@ -7,8 +7,6 @@ const { getSlackService } = require('../lib/services/slack-notification-service'
 const { getFilmographySyncService } = require('../lib/services/filmography-sync-service');
 const { getDiscographySyncService } = require('../lib/services/discography-sync-service');
 const { TrendingService } = require('../lib/services/trending-service');
-
-const prisma = new PrismaClient();
 const slackService = getSlackService();
 
 // Track saved content for Slack summary

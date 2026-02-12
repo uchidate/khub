@@ -1,9 +1,7 @@
 import { AIOrchestrator } from '../lib/ai/orchestrator';
 import { ArtistGenerator } from '../lib/ai/generators/artist-generator';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { SlackNotificationService } from '../lib/services/slack-notification-service';
-
-const prisma = new PrismaClient();
 
 async function debugArtistGeneration() {
     console.log('--- Debugging Artist Generation ---');

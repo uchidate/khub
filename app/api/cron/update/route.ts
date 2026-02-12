@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 
 export const maxDuration = 300; // 5 minutos máximo para o cron
-
-const prisma = new PrismaClient();
 
 /**
  * Lock de processo para evitar execuções simultâneas (encavalar).
