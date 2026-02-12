@@ -53,9 +53,9 @@ services:
     environment:
       - DEPLOY_ENV=production
       - TZ=America/Sao_Paulo
-      # Ollama: phi3:mini (3.8B) tem melhor instruction following que gemma:2b (2B)
-      # Melhora significativamente qualidade de traduções PT-BR e structured JSON
-      - OLLAMA_MODEL=phi3:mini
+      # Ollama: gemma:2b (1.7GB RAM) - phi3:mini requer 3.5GB mas servidor só tem 2GB free
+      # TODO: Upgrade para phi3:mini quando servidor tiver mais RAM disponível
+      - OLLAMA_MODEL=gemma:2b
     env_file:
       - .env.production
     volumes:
