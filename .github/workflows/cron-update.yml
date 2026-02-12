@@ -21,7 +21,8 @@ jobs:
           echo "🚀 Calling cron endpoint..."
 
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://www.hallyuhub.com.br/api/cron/update?token=${{ secrets.CRON_SECRET }}" \
+            "https://www.hallyuhub.com.br/api/cron/update" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)

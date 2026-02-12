@@ -83,3 +83,8 @@ prisma/migrations.sqlite.backup/
 # Server secrets documentation (DO NOT COMMIT)
 docs/SETUP_SERVIDOR_SECRETS.md
 *_SECRETS.md
+
+# Database backups (contain production data - NEVER commit)
+*.sql
+backup-*.sql
+pre-upgrade-state.md
