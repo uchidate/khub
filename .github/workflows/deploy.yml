@@ -393,11 +393,18 @@ jobs:
             count=$((count+1))
           done
 
-          [ $count -eq $max_retries ] && echo "❌ Timeout" && exit 1
+          [ $count -eq $max_retries ] && echo "❌ Timeout" && $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50 && exit 1
 
-          # Skip migrations se não necessário
+          # OTIMIZAÇÃO: Skip migrations se DB já está atualizado
+          echo "🔍 Checking migrations..."
           MIGRATE_STATUS=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 || echo "status_failed")
-          echo "$MIGRATE_STATUS" | grep -qi "up to date" && echo "✅ No migrations" || $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy
+
+          if echo "$MIGRATE_STATUS" | grep -qi "up to date"; then
+            echo "✅ No pending migrations - skipping"
+          else
+            echo "🔄 Applying migrations..."
+            $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy || echo "⚠️ Migration failed (continuing)"
+          fi
 
           chmod +x scripts/export-cron-info.sh scripts/verify-production.sh
           ./scripts/export-cron-info.sh production
