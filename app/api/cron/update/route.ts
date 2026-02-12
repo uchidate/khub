@@ -54,9 +54,11 @@ function releaseCronLock(requestId: string): void {
  * - Serviço externo de cron (cron-job.org, etc.)
  *
  * Segurança: Requer token de autenticação via header ou query param
+ *
+ * Resposta: 202 Accepted imediatamente. O processamento continua em background
+ * (Ollama no CPU leva 2-5min por execução, ultrapassando o timeout do nginx de 60s)
  */
 export async function GET(request: NextRequest) {
-    const startTime = Date.now();
     console.log('[CRON] Starting scheduled update job...');
 
     try {
@@ -92,7 +94,40 @@ export async function GET(request: NextRequest) {
             }, { status: 409 });
         }
 
-        // 2. Executar atualizações
+        // 2. Disparar processamento em background (fire-and-forget)
+        // O Node.js standalone mantém o processo vivo, então a Promise executa até o fim
+        runCronProcessing(lockId).catch(err => {
+            console.error('[CRON] ❌ Unhandled error in background processing:', err);
+        });
+
+        // 3. Retornar 202 imediatamente (antes do timeout do nginx de 60s)
+        return NextResponse.json({
+            success: true,
+            status: 'accepted',
+            message: 'Cron job started in background',
+            requestId: lockId,
+            timestamp: new Date().toISOString()
+        }, { status: 202 });
+
+    } catch (error: any) {
+        console.error('[CRON] ❌ Fatal error during cron setup:', error);
+        return NextResponse.json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        }, { status: 500 });
+    }
+}
+
+/**
+ * Processamento assíncrono em background.
+ * Executa todas as atualizações (TMDB, RSS, Ollama, etc.) sem bloquear a resposta HTTP.
+ */
+async function runCronProcessing(lockId: string) {
+    const startTime = Date.now();
+    console.log(`[CRON] Background processing started (${lockId})`);
+
+    try {
         const results = {
             artists: { updated: 0, errors: [] as string[] },
             news: { updated: 0, errors: [] as string[] },
@@ -622,32 +657,11 @@ Requisitos:
             }
         }
 
-        return NextResponse.json({
-            success: true,
-            duration,
-            results,
-            timestamp: new Date().toISOString()
-        });
-
     } catch (error: any) {
         const duration = Date.now() - startTime;
-        console.error('[CRON] ❌ Fatal error:', error);
-
-        return NextResponse.json({
-            success: false,
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-            duration,
-            timestamp: new Date().toISOString()
-        }, { status: 500 });
-
+        console.error(`[CRON] ❌ Fatal error in background processing after ${(duration / 1000).toFixed(1)}s:`, error);
     } finally {
-        // Liberar o lock (se foi adquirido)
-        const currentLock = activeCronLock;
-        if (currentLock) {
-            releaseCronLock(currentLock.requestId);
-        }
-        await prisma.$disconnect();
+        releaseCronLock(lockId);
     }
 }
 

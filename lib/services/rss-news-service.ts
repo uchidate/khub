@@ -353,13 +353,27 @@ export class RSSNewsService {
       html
         // Remove tags HTML
         .replace(/<[^>]*>/g, '')
-        // Decodifica entidades HTML
+        // Decodifica entidades HTML comuns
         .replace(/&nbsp;/g, ' ')
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&#x27;/g, "'")
+        // Smart quotes e ellipsis (muito comuns em feeds RSS)
+        .replace(/&#8217;/g, "'")  // Right single quote
+        .replace(/&#8216;/g, "'")  // Left single quote
+        .replace(/&#8220;/g, '"')  // Left double quote
+        .replace(/&#8221;/g, '"')  // Right double quote
+        .replace(/&#8230;/g, '...') // Horizontal ellipsis
+        .replace(/&hellip;/g, '...')
+        .replace(/&#x2019;/g, "'")  // Right single quote (hex)
+        .replace(/&rsquo;/g, "'")   // Right single quote (named)
+        .replace(/&lsquo;/g, "'")   // Left single quote (named)
+        .replace(/&rdquo;/g, '"')   // Right double quote (named)
+        .replace(/&ldquo;/g, '"')   // Left double quote (named)
         // Remove espaços extras
         .replace(/\s+/g, ' ')
         .trim()
