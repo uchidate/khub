@@ -20,7 +20,9 @@ jobs:
         run: |
           echo "🚀 Calling cron endpoint..."
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+          # O endpoint retorna 202 Accepted imediatamente e processa em background
+          # (Ollama no CPU leva 2-5min, que ultrapassa o timeout do nginx de 60s)
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 -X POST \
             "https://www.hallyuhub.com.br/api/cron/update" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
@@ -33,17 +35,14 @@ jobs:
           echo "$BODY" | jq '.' || echo "$BODY"
 
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "✅ Cron job completed successfully"
+            echo "✅ Cron job accepted (processing in background)"
 
-            # Parse and display results
-            ARTISTS=$(echo "$BODY" | jq -r '.results.artists.updated // 0')
-            NEWS=$(echo "$BODY" | jq -r '.results.news.updated // 0')
-            FILMOGRAPHY=$(echo "$BODY" | jq -r '.results.filmography.synced // 0')
+            # Parse response
+            STATUS=$(echo "$BODY" | jq -r '.status // "unknown"')
+            REQUEST_ID=$(echo "$BODY" | jq -r '.requestId // "unknown"')
 
-            echo "📈 Results:"
-            echo "  - Artists: $ARTISTS"
-            echo "  - News: $NEWS"
-            echo "  - Filmography: $FILMOGRAPHY"
+            echo "📋 Status: $STATUS"
+            echo "📋 Request ID: $REQUEST_ID"
           else
             echo "❌ Cron job failed with status $HTTP_CODE"
             exit 1

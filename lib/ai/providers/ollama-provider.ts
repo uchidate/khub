@@ -119,13 +119,16 @@ export class OllamaProvider extends BaseAIProvider {
     /**
      * Correções agressivas para JSON muito mal formatado.
      * Usa estratégias mais drásticas que podem alterar conteúdo, mas melhoram parsing.
+     * IMPORTANTE: Preserva caracteres acentuados (Latin-1) essenciais para português.
      */
     private aggressiveJsonFix(text: string): string {
         let content = this.extractAndSanitizeJson(text);
 
-        // 1. Remove TODOS os caracteres não-ASCII problemáticos
+        // 1. Remove APENAS caracteres de controle (0x00-0x1f, 0x7f)
+        // PRESERVA acentos Latin-1 (áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ etc.)
+        // Bug anterior: /[^\x20-\x7E\n\r]/g destruía todos os acentos!
         // eslint-disable-next-line no-control-regex
-        content = content.replace(/[^\x20-\x7E\n\r]/g, ' ');
+        content = content.replace(/[\x00-\x1f\x7f]/g, ' ');
 
         // 2. Fix para aspas duplas dentro de strings (escape incorreto)
         // Padrão: "text "word" more" → "text \"word\" more"
