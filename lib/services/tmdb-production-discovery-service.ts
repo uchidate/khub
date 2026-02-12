@@ -267,6 +267,26 @@ export class TMDBProductionDiscoveryService {
   }
 
   /**
+   * Busca imagens de uma produção existente pelo tmdbId
+   * Útil para corrigir produções sem imagem no banco
+   */
+  async fetchProductionImages(tmdbId: number, type: 'movie' | 'tv'): Promise<{
+    imageUrl: string | null;
+    backdropUrl: string | null;
+  }> {
+    const details = type === 'tv'
+      ? await this.getTVDetails(tmdbId)
+      : await this.getMovieDetails(tmdbId);
+
+    if (!details) return { imageUrl: null, backdropUrl: null };
+
+    return {
+      imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
+      backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
+    };
+  }
+
+  /**
    * Map movie to DiscoveredProduction
    */
   private mapMovieToDiscoveredProduction(details: TMDBProductionDetails): DiscoveredProduction {

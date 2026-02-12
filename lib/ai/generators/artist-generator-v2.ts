@@ -62,6 +62,15 @@ export class ArtistGeneratorV2 {
                 .map(a => parseInt(a.tmdbId as string))
         );
 
+        // Normaliza nome para comparação fuzzy: remove parênteses, minúsculo, trim
+        // Previne duplicatas como "IU" vs "IU (Lee Ji-eun)" ou "Jungkook" vs "Jung Kook"
+        const normalizeForComparison = (name: string) =>
+            name.toLowerCase().replace(/\s*\([^)]*\)\s*/g, '').replace(/[\s-.]/g, '').trim();
+
+        const existingNamesNormalized = new Set(
+            existingArtists.map(a => normalizeForComparison(a.nameRomanized))
+        );
+
         const excludeSet = new Set(options.excludeList || []);
         existingArtists.forEach(a => excludeSet.add(a.nameRomanized));
 
@@ -71,13 +80,20 @@ export class ArtistGeneratorV2 {
         console.log(`📊 Found ${discovered.length} Korean artists, filtering...`);
 
         for (const artist of discovered) {
-            // Pular se já existe no DB
+            // Pular se já existe no DB por tmdbId (mais confiável)
             if (existingTmdbIds.has(artist.tmdbId)) {
-                console.log(`  ⏭️  Skipping ${artist.name} (already in DB)`);
+                console.log(`  ⏭️  Skipping ${artist.name} (already in DB by tmdbId)`);
                 continue;
             }
 
-            // Pular se está na lista de exclusão
+            // Pular se nome normalizado coincide (previne duplicatas por variação de nome)
+            const normalizedName = normalizeForComparison(artist.name);
+            if (existingNamesNormalized.has(normalizedName)) {
+                console.log(`  ⏭️  Skipping ${artist.name} (fuzzy name match in DB)`);
+                continue;
+            }
+
+            // Pular se está na lista de exclusão exata
             if (excludeSet.has(artist.name)) {
                 console.log(`  ⏭️  Skipping ${artist.name} (in exclude list)`);
                 continue;

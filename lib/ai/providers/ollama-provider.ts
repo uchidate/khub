@@ -2,8 +2,10 @@ import { BaseAIProvider } from './base-provider';
 import type { GenerateOptions, GenerationResult } from '../ai-config';
 import { PROVIDER_CONFIGS } from '../ai-config';
 
-// Timeout alto para inferência em CPU (phi3 no CPU leva ~4 min por resposta)
-const OLLAMA_TIMEOUT_MS = 300_000;
+// Timeout para inferência local com gemma:2b no CPU.
+// gemma:2b: ~30-120s dependendo do hardware. 120s dá margem sem travar muito o cron.
+// Se exceder, o orchestrator fará fallback para outro provider (se configurado).
+const OLLAMA_TIMEOUT_MS = 120_000; // 2 minutos
 
 /**
  * Provider para Ollama (modelo local)

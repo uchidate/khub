@@ -91,13 +91,13 @@ if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
     fi
 fi
 
-# Adicionar nova entrada ao crontab (Conteúdo: a cada 4 horas | Saúde: a cada 30 min)
+# Adicionar nova entrada ao crontab (Conteúdo: a cada 30 min | Saúde: a cada 30 min)
 echo "Adicionando entrada ao crontab..."
 
 (crontab -l 2>/dev/null || echo ""; \
- echo "# HallyuHub - Auto generate content every 4 hours"; \
+ echo "# HallyuHub - Auto generate content every 30 minutes (1 news + 1 artist per run, lock prevents overlap)"; \
  echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; \
- echo "0 */4 * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh >> ${PROJECT_DIR}/logs/cron-direct.log 2>&1"
+ echo "*/30 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh >> ${PROJECT_DIR}/logs/cron-direct.log 2>&1"
  echo ""
  echo "# HallyuHub - Health Monitor every 30 minutes"
  echo "*/30 * * * * ${PROJECT_DIR}/scripts/monitor-health.sh >> ${PROJECT_DIR}/logs/health-monitor.log 2>&1"
@@ -109,7 +109,7 @@ echo "Adicionando entrada ao crontab..."
  echo "0 3 * * * SLACK_WEBHOOK_ALERTS=\${SLACK_WEBHOOK_ALERTS} ${PROJECT_DIR}/scripts/cleanup-cron.sh >> ${PROJECT_DIR}/logs/cleanup-cron.log 2>&1") | crontab -
 
 chmod +x "${PROJECT_DIR}/scripts/manage-staging.sh"
-echo "✅ Crontab configurado com sucesso (Conteúdo + Saúde + Auto-Sleep + Cleanup)!"
+echo "✅ Crontab configurado com sucesso (Conteúdo a cada 30min + Saúde + Auto-Sleep + Cleanup)!"
 echo ""
 echo "Configuração atual:"
 crontab -l 2>/dev/null | grep -A 2 "HallyuHub" || echo "Aviso: Não foi possível verificar a entrada (grep falhou)"
@@ -132,7 +132,7 @@ echo ""
 echo "=========================================="
 echo "  SETUP CONCLUÍDO"
 echo "=========================================="
-echo "  O script será executado a cada 5 minutos"
+echo "  O script será executado a cada 30 minutos"
 echo "  Logs: ${PROJECT_DIR}/logs/auto-generate-*.log"
 echo ""
 echo "  Comandos úteis:"

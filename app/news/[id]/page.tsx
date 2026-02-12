@@ -9,6 +9,7 @@ import { ShareButtons } from "@/components/ui/ShareButtons"
 import { RelatedNews } from "@/components/features/RelatedNews"
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
 import { CommentsSection } from "@/components/features/CommentsSection"
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -244,10 +245,8 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 )}
 
                 {/* Conteúdo */}
-                <article className="prose prose-invert prose-purple max-w-none">
-                    <div className="text-zinc-300 text-lg md:text-xl leading-relaxed whitespace-pre-wrap font-medium">
-                        {news.contentMd}
-                    </div>
+                <article className="prose prose-invert prose-purple max-w-none text-zinc-300 text-lg md:text-xl leading-relaxed">
+                    <MarkdownRenderer content={news.contentMd} />
                 </article>
 
                 {/* Compartilhamento */}
@@ -269,7 +268,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-bold hover:bg-purple-500 hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl uppercase text-xs tracking-widest"
                     >
-                        Ler notícia completa
+                        Ver fonte original
                         <ExternalLink className="w-4 h-4" />
                     </a>
                 </footer>

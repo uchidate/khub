@@ -89,6 +89,13 @@ export class AIOrchestrator {
             const provider = this.providers.get(providerName);
             if (!provider) continue;
 
+            // Circuit breaker: pular provider temporariamente bloqueado
+            if (provider.isCircuitOpen()) {
+                const remaining = provider.getCircuitCooldownRemaining();
+                console.warn(`⚡ Skipping ${providerName} (circuit open, ${remaining}s remaining)`);
+                continue;
+            }
+
             try {
                 console.log(`🔄 Attempting generation with ${providerName}...`);
                 const result = await provider.generate(prompt, options);
@@ -138,6 +145,13 @@ export class AIOrchestrator {
 
             const provider = this.providers.get(providerName);
             if (!provider) continue;
+
+            // Circuit breaker: pular provider temporariamente bloqueado
+            if (provider.isCircuitOpen()) {
+                const remaining = provider.getCircuitCooldownRemaining();
+                console.warn(`⚡ Skipping ${providerName} (circuit open, ${remaining}s remaining)`);
+                continue;
+            }
 
             try {
                 console.log(`🔄 Attempting structured generation with ${providerName}...`);

@@ -196,7 +196,7 @@ jobs:
   deploy-staging:
     name: 🟡 Deploy to Staging
     needs: build-image
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, staging]
     timeout-minutes: 10
     if: github.ref == 'refs/heads/staging'
 
@@ -255,251 +255,205 @@ jobs:
               }]
             }"
 
-      - name: 🏷️ Prepare Environment & Directory (with retry)
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          retry_wait_seconds: 15
-          shell: bash
-          command: |
-            # Usar GitHub Action inline
-            set -e
+      - name: 🏷️ Prepare Environment & Directory
+        run: |
+          set -e
+          echo "📁 Ensuring base directory exists..."
+          sudo mkdir -p /var/www/hallyuhub
+          sudo chown -R github-runner:github-runner /var/www/hallyuhub
 
-            # Install SSH if not available
-            which ssh || (apt-get update && apt-get install -y openssh-client)
+          cd /var/www/hallyuhub
 
-            # Setup SSH key
-            mkdir -p ~/.ssh
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-
-            # SSH with retry
-            ssh -o StrictHostKeyChecking=no \
-                -o ConnectTimeout=90 \
-                -o ServerAliveInterval=30 \
-                -i ~/.ssh/deploy_key \
-                ${{ secrets.USER }}@${{ secrets.HOST }} << ENDSSH
-            set -e
-            echo "📁 Ensuring base directory exists..."
-            sudo mkdir -p /var/www/hallyuhub
-            sudo chown -R ${{ secrets.USER }}:${{ secrets.USER }} /var/www/hallyuhub
-
-            cd /var/www/hallyuhub
-
-            # Initialize .env.staging if it doesn't exist
-            if [ ! -f .env.staging ]; then
-              echo "⚠️ .env.staging not found! Creating from backup or empty..."
-              if [ -f .env.staging.bak ]; then
-                cp .env.staging.bak .env.staging
-              else
-                touch .env.staging
-              fi
-            fi
-
-            # Backup
-            cp .env.staging .env.staging.bak
-
-            # Sanitize: remove invalid env entries (lines starting with = or empty key)
-            sed -i '/^=/d' .env.staging
-
-            update_env() {
-              key=\$1
-              val=\$2
-              if [ -z "\$val" ]; then return; fi
-              if grep -q "^\${key}=" .env.staging; then
-                sed -i "s|^\${key}=.*|\${key}=\${val}|" .env.staging
-              else
-                echo "\${key}=\${val}" >> .env.staging
-              fi
-            }
-
-            echo "🔧 Updating environment variables..."
-            update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
-            update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
-            update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
-            update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
-            update_env "OLLAMA_MODEL" "gemma:2b"
-            update_env "NEXT_PUBLIC_SITE_URL" "http://31.97.255.107:3001"
-            update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
-            update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
-            update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
-
-            chmod 600 .env.staging
-            echo "✅ Setup complete."
-            ENDSSH
-
-      - name: Copy Files to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.staging.yml,scripts/*"
-          target: "/var/www/hallyuhub"
-
-      - name: Deploy via SSH (with retry)
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          retry_wait_seconds: 15
-          shell: bash
-          command: |
-            set -e
-
-            # Setup SSH key
-            mkdir -p ~/.ssh
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-
-            # SSH with retry
-            ssh -o StrictHostKeyChecking=no \
-                -o ConnectTimeout=90 \
-                -o ServerAliveInterval=30 \
-                -i ~/.ssh/deploy_key \
-                ${{ secrets.USER }}@${{ secrets.HOST }} << ENDSSH
-            set -e
-            cd /var/www/hallyuhub
-
-            # Determinar comando docker-compose (v1 vs v2)
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE_CMD="docker compose"
-              echo "✅ Usando 'docker compose' (V2)"
-            elif command -v docker-compose >/dev/null 2>&1; then
-              COMPOSE_CMD="docker-compose"
-              echo "✅ Usando 'docker-compose' (V1)"
+          # Initialize .env.staging if it doesn't exist
+          if [ ! -f .env.staging ]; then
+            echo "⚠️ .env.staging not found! Creating from backup or empty..."
+            if [ -f .env.staging.bak ]; then
+              cp .env.staging.bak .env.staging
             else
-              echo "❌ Erro: docker-compose não encontrado!"
-              exit 1
+              touch .env.staging
             fi
+          fi
 
-            # Diagnóstico inicial
-            echo "📊 Verificando ambiente..."
-            df -h / | grep / || true
-            docker network ls | grep web || echo "⚠️ Network 'web' não encontrada!"
+          # Backup
+          cp .env.staging .env.staging.bak
 
-            echo "🟡 Deploying STAGING..."
+          # Sanitize: remove invalid env entries (lines starting with = or empty key)
+          sed -i '/^=/d' .env.staging
 
-            # Cleanup: Remove old Docker images (keep last 3)
-            echo "🧹 Limpando imagens antigas..."
-            docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
-              tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
-              echo "Nenhuma imagem antiga para remover"
-
-            # Pull nova imagem com log de erro
-            echo "📥 Pulling images..."
-            if ! \$COMPOSE_CMD -f docker-compose.staging.yml pull hallyuhub-staging; then
-              echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
-              exit 1
-            fi
-
-            # Down para evitar ContainerConfig error
-            echo "🛑 Parando containers antigos..."
-            \$COMPOSE_CMD -f docker-compose.staging.yml down || true
-
-            # Up com containers frescos
-            echo "🚀 Iniciando containers..."
-            if ! \$COMPOSE_CMD -f docker-compose.staging.yml up -d; then
-              echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
-              \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50
-              exit 1
-            fi
-
-            echo "📊 Status dos containers:"
-            \$COMPOSE_CMD -f docker-compose.staging.yml ps
-
-            echo "⏳ Aguardando container 'hallyuhub-staging' ficar operacional..."
-            max_retries=20
-            count=0
-            until [ "\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null)" == "healthy" ] || [ \$count -eq \$max_retries ]; do
-              health_status=\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null || echo "unknown")
-              echo "Aguardando container ficar healthy... (Status: \$health_status, \$((count+1))/\$max_retries)"
-              sleep 5
-              count=\$((count+1))
-            done
-
-            if [ \$count -eq \$max_retries ]; then
-              echo "❌ Erro: Container hallyuhub-staging não ficou healthy a tempo."
-              \$COMPOSE_CMD -f docker-compose.staging.yml logs hallyuhub-staging | tail -n 50
-              exit 1
-            fi
-
-            echo "📊 Verificando migrations (Prisma)..."
-
-            # OTIMIZAÇÃO: Verificar se DB já está atualizado antes de aplicar
-            # Prisma 5 output: "up to date" quando não há nada pendente
-            echo "🔍 Checking for pending migrations..."
-            MIGRATE_STATUS=\$(\$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate status 2>&1 || echo "status_failed")
-            echo "📋 Migrate status output:"
-            echo "\$MIGRATE_STATUS"
-
-            if echo "\$MIGRATE_STATUS" | grep -qi "up to date"; then
-              echo "✅ No pending migrations - skipping migrate deploy"
+          update_env() {
+            key=$1
+            val=$2
+            if [ -z "$val" ]; then return; fi
+            if grep -q "^${key}=" .env.staging; then
+              sed -i "s|^${key}=.*|${key}=${val}|" .env.staging
             else
-              echo "🔄 Pending migrations detected - applying..."
+              echo "${key}=${val}" >> .env.staging
+            fi
+          }
 
-              # Diagnóstico de Conexão DB
-              echo "🔍 Verificando configuração do Banco de Dados..."
-            if \$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging printenv DATABASE_URL > /dev/null; then
-               DB_HOST=\$(\$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging sh -c 'echo \$DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
-               echo "ℹ️  DATABASE_URL está definida. Host detectado: \$DB_HOST"
-               if [ "\$DB_HOST" = "localhost" ] || [ "\$DB_HOST" = "127.0.0.1" ]; then
-                 echo "⚠️  AVISO CRÍTICO: DATABASE_URL aponta para localhost dentro do Docker! Isso geralmente falha."
-                 echo "   Deveria apontar para 'postgres-staging' ou 'hallyuhub-postgres-staging'."
+          echo "🔧 Updating environment variables..."
+          update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
+          update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
+          update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
+          update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
+          update_env "OLLAMA_MODEL" "gemma:2b"
+          update_env "NEXT_PUBLIC_SITE_URL" "http://31.97.255.107:3001"
+          update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
+          update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
+          update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
+
+          chmod 600 .env.staging
+          echo "✅ Setup complete."
+
+      - name: Copy Files to Deploy Directory
+        run: |
+          echo "📦 Copying files to /var/www/hallyuhub..."
+          cp -f docker-compose.staging.yml /var/www/hallyuhub/
+          cp -rf scripts /var/www/hallyuhub/
+          echo "✅ Files copied successfully"
+
+      - name: Deploy to Staging
+        run: |
+          set -e
+          cd /var/www/hallyuhub
+
+          # Determinar comando docker-compose (v1 vs v2)
+          if docker compose version >/dev/null 2>&1; then
+            COMPOSE_CMD="docker compose"
+            echo "✅ Usando 'docker compose' (V2)"
+          elif command -v docker-compose >/dev/null 2>&1; then
+            COMPOSE_CMD="docker-compose"
+            echo "✅ Usando 'docker-compose' (V1)"
+          else
+            echo "❌ Erro: docker-compose não encontrado!"
+            exit 1
+          fi
+
+          # Diagnóstico inicial
+          echo "📊 Verificando ambiente..."
+          df -h / | grep / || true
+          docker network ls | grep web || echo "⚠️ Network 'web' não encontrada!"
+
+          echo "🟡 Deploying STAGING..."
+
+          # Cleanup: Remove old Docker images (keep last 3)
+          echo "🧹 Limpando imagens antigas..."
+          docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
+            tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
+            echo "Nenhuma imagem antiga para remover"
+
+          # Pull nova imagem com log de erro
+          echo "📥 Pulling images..."
+          if ! $COMPOSE_CMD -f docker-compose.staging.yml pull hallyuhub-staging; then
+            echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
+            exit 1
+          fi
+
+          # Down para evitar ContainerConfig error
+          echo "🛑 Parando containers antigos..."
+          $COMPOSE_CMD -f docker-compose.staging.yml down || true
+
+          # Up com containers frescos
+          echo "🚀 Iniciando containers..."
+          if ! $COMPOSE_CMD -f docker-compose.staging.yml up -d; then
+            echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
+            $COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50
+            exit 1
+          fi
+
+          echo "📊 Status dos containers:"
+          $COMPOSE_CMD -f docker-compose.staging.yml ps
+
+          echo "⏳ Aguardando container 'hallyuhub-staging' ficar operacional..."
+          max_retries=20
+          count=0
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null)" == "healthy" ] || [ $count -eq $max_retries ]; do
+            health_status=$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null || echo "unknown")
+            echo "Aguardando container ficar healthy... (Status: $health_status, $((count+1))/$max_retries)"
+            sleep 5
+            count=$((count+1))
+          done
+
+          if [ $count -eq $max_retries ]; then
+            echo "❌ Erro: Container hallyuhub-staging não ficou healthy a tempo."
+            $COMPOSE_CMD -f docker-compose.staging.yml logs hallyuhub-staging | tail -n 50
+            exit 1
+          fi
+
+          echo "📊 Verificando migrations (Prisma)..."
+
+          # OTIMIZAÇÃO: Verificar se DB já está atualizado antes de aplicar
+          # Prisma 5 output: "up to date" quando não há nada pendente
+          echo "🔍 Checking for pending migrations..."
+          MIGRATE_STATUS=$($COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate status 2>&1 || echo "status_failed")
+          echo "📋 Migrate status output:"
+          echo "$MIGRATE_STATUS"
+
+          if echo "$MIGRATE_STATUS" | grep -qi "up to date"; then
+            echo "✅ No pending migrations - skipping migrate deploy"
+          else
+            echo "🔄 Pending migrations detected - applying..."
+
+            # Diagnóstico de Conexão DB
+            echo "🔍 Verificando configuração do Banco de Dados..."
+          if $COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging printenv DATABASE_URL > /dev/null; then
+             DB_HOST=$($COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging sh -c 'echo $DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
+             echo "ℹ️  DATABASE_URL está definida. Host detectado: $DB_HOST"
+             if [ "$DB_HOST" = "localhost" ] || [ "$DB_HOST" = "127.0.0.1" ]; then
+               echo "⚠️  AVISO CRÍTICO: DATABASE_URL aponta para localhost dentro do Docker! Isso geralmente falha."
+               echo "   Deveria apontar para 'postgres-staging' ou 'hallyuhub-postgres-staging'."
+             fi
+          else
+             echo "❌ Erro: DATABASE_URL não está definida no container!"
+          fi
+
+          # Loop de retry para migration
+          migrate_success=false
+          for i in {1..10}; do
+            echo "Tentativa de migration $i/10..."
+
+            # Verificar se container ainda está rodando (pode estar em restart loop)
+            CONTAINER_STATE=$(docker inspect -f '{{.State.Status}}' hallyuhub-staging 2>/dev/null || echo "not-found")
+            if [ "$CONTAINER_STATE" != "running" ]; then
+               echo "⚠️  Container hallyuhub-staging não está rodando (Status: $CONTAINER_STATE). Aguardando..."
+               $COMPOSE_CMD -f docker-compose.staging.yml logs --tail=20 hallyuhub-staging
+            else
+               if $COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy; then
+                 migrate_success=true
+                 echo "✅ Migrations aplicadas com sucesso!"
+                 break
                fi
-            else
-               echo "❌ Erro: DATABASE_URL não está definida no container!"
+               echo "⚠️  Falha ao executar migrate deploy."
             fi
 
-            # Loop de retry para migration
-            migrate_success=false
-            for i in {1..10}; do
-              echo "Tentativa de migration \$i/10..."
+            echo "Aguardando 10s..."
+            sleep 10
+          done
 
-              # Verificar se container ainda está rodando (pode estar em restart loop)
-              CONTAINER_STATE=\$(docker inspect -f '{{.State.Status}}' hallyuhub-staging 2>/dev/null || echo "not-found")
-              if [ "\$CONTAINER_STATE" != "running" ]; then
-                 echo "⚠️  Container hallyuhub-staging não está rodando (Status: \$CONTAINER_STATE). Aguardando..."
-                 \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=20 hallyuhub-staging
-              else
-                 if \$COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy; then
-                   migrate_success=true
-                   echo "✅ Migrations aplicadas com sucesso!"
-                   break
-                 fi
-                 echo "⚠️  Falha ao executar migrate deploy."
-              fi
+          if [ "$migrate_success" = false ]; then
+            echo "❌ Erro: Falha ao aplicar migrations após 10 tentativas."
+            echo "🔍 Logs do Banco de Dados:"
+            $COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50 postgres-staging
+            echo "🔍 Logs da Aplicação:"
+            $COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50 hallyuhub-staging
+            exit 1
+          fi
+          fi # Fim do bloco if de pending migrations
 
-              echo "Aguardando 10s..."
-              sleep 10
-            done
+          echo "✅ Staging containers up and healthy!"
 
-            if [ "\$migrate_success" = false ]; then
-              echo "❌ Erro: Falha ao aplicar migrations após 10 tentativas."
-              echo "🔍 Logs do Banco de Dados:"
-              \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50 postgres-staging
-              echo "🔍 Logs da Aplicação:"
-              \$COMPOSE_CMD -f docker-compose.staging.yml logs --tail=50 hallyuhub-staging
-              exit 1
-            fi
-            fi # Fim do bloco if de pending migrations
+          echo "📝 Exportando informações dos cron jobs..."
+          chmod +x scripts/export-cron-info.sh
+          ./scripts/export-cron-info.sh staging
 
-            echo "✅ Staging containers up and healthy!"
+          echo "📊 Running Staging Verification Script..."
+          chmod +x scripts/setup-auto-generation.sh
+          if ! NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test; then
+            echo "❌ CRITICAL: Staging verification failed!"
+            exit 1
+          fi
 
-            echo "📝 Exportando informações dos cron jobs..."
-            chmod +x scripts/export-cron-info.sh
-            ./scripts/export-cron-info.sh staging
-
-            echo "📊 Running Staging Verification Script..."
-            chmod +x scripts/setup-auto-generation.sh
-            if ! NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test; then
-              echo "❌ CRITICAL: Staging verification failed!"
-              exit 1
-            fi
-
-            echo "✅ Staging verified and operational!"
-            ENDSSH
+          echo "✅ Staging verified and operational!"
 
       - name: 🔍 Health Check
         run: |
@@ -691,7 +645,7 @@ jobs:
   deploy-production:
     name: 🟢 Deploy to Production
     needs: build-image
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, production]
     timeout-minutes: 10
     if: github.ref == 'refs/heads/main'
 
@@ -750,251 +704,205 @@ jobs:
               }]
             }"
 
-      - name: 🏷️ Prepare Environment & Directory (with retry)
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          retry_wait_seconds: 15
-          shell: bash
-          command: |
-            # Usar GitHub Action inline
-            set -e
+      - name: 🏷️ Prepare Environment & Directory
+        run: |
+          set -e
+          echo "📁 Ensuring base directory exists..."
+          sudo mkdir -p /var/www/hallyuhub
+          sudo chown -R github-runner:github-runner /var/www/hallyuhub
 
-            # Install SSH if not available
-            which ssh || (apt-get update && apt-get install -y openssh-client)
+          cd /var/www/hallyuhub
 
-            # Setup SSH key
-            mkdir -p ~/.ssh
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-
-            # SSH with retry
-            ssh -o StrictHostKeyChecking=no \
-                -o ConnectTimeout=90 \
-                -o ServerAliveInterval=30 \
-                -i ~/.ssh/deploy_key \
-                ${{ secrets.USER }}@${{ secrets.HOST }} << ENDSSH
-            set -e
-            echo "📁 Ensuring base directory exists..."
-            sudo mkdir -p /var/www/hallyuhub
-            sudo chown -R ${{ secrets.USER }}:${{ secrets.USER }} /var/www/hallyuhub
-
-            cd /var/www/hallyuhub
-
-            # Initialize .env.production if it doesn't exist
-            if [ ! -f .env.production ]; then
-              echo "⚠️ .env.production not found! Creating from backup or empty..."
-              if [ -f .env.production.bak ]; then
-                cp .env.production.bak .env.production
-              else
-                touch .env.production
-              fi
-            fi
-
-            # Backup
-            cp .env.production .env.production.bak
-
-            # Sanitize: remove invalid env entries (lines starting with = or empty key)
-            sed -i '/^=/d' .env.production
-
-            update_env() {
-              key=\$1
-              val=\$2
-              if [ -z "\$val" ]; then return; fi
-              if grep -q "^\${key}=" .env.production; then
-                sed -i "s|^\${key}=.*|\${key}=\${val}|" .env.production
-              else
-                echo "\${key}=\${val}" >> .env.production
-              fi
-            }
-
-            echo "🔧 Updating environment variables..."
-            update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
-            update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
-            update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
-            update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
-            update_env "OLLAMA_MODEL" "gemma:2b"
-            update_env "NEXT_PUBLIC_SITE_URL" "https://www.hallyuhub.com.br"
-            update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
-            update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
-            update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
-
-            chmod 600 .env.production
-            echo "✅ Setup complete."
-            ENDSSH
-
-      - name: Copy Files to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.prod.yml,scripts/*"
-          target: "/var/www/hallyuhub"
-
-      - name: Deploy via SSH (with retry)
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 25
-          max_attempts: 3
-          retry_wait_seconds: 15
-          shell: bash
-          command: |
-            set -e
-
-            # Setup SSH key
-            mkdir -p ~/.ssh
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-
-            # SSH with retry
-            ssh -o StrictHostKeyChecking=no \
-                -o ConnectTimeout=90 \
-                -o ServerAliveInterval=30 \
-                -i ~/.ssh/deploy_key \
-                ${{ secrets.USER }}@${{ secrets.HOST }} << ENDSSH
-            set -e
-            cd /var/www/hallyuhub
-
-            # Determinar comando docker-compose (v1 vs v2)
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE_CMD="docker compose"
-              echo "✅ Usando 'docker compose' (V2)"
-            elif command -v docker-compose >/dev/null 2>&1; then
-              COMPOSE_CMD="docker-compose"
-              echo "✅ Usando 'docker-compose' (V1)"
+          # Initialize .env.production if it doesn't exist
+          if [ ! -f .env.production ]; then
+            echo "⚠️ .env.production not found! Creating from backup or empty..."
+            if [ -f .env.production.bak ]; then
+              cp .env.production.bak .env.production
             else
-              echo "❌ Erro: docker-compose não encontrado!"
-              exit 1
+              touch .env.production
             fi
+          fi
 
-            # Diagnóstico inicial
-            echo "📊 Verificando ambiente..."
-            df -h / | grep / || true
-            docker network ls | grep web || echo "⚠️ Network 'web' não encontrada!"
+          # Backup
+          cp .env.production .env.production.bak
 
-            echo "🟢 Deploying PRODUCTION..."
+          # Sanitize: remove invalid env entries (lines starting with = or empty key)
+          sed -i '/^=/d' .env.production
 
-            # Cleanup: Remove old Docker images (keep last 3)
-            echo "🧹 Limpando imagens antigas..."
-            docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
-              tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
-              echo "Nenhuma imagem antiga para remover"
-
-            # Pull nova imagem com log de erro
-            echo "📥 Pulling images..."
-            if ! \$COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub; then
-              echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
-              exit 1
-            fi
-
-            # Down para evitar ContainerConfig error
-            echo "🛑 Parando containers antigos..."
-            \$COMPOSE_CMD -f docker-compose.prod.yml down || true
-
-            # Up com containers frescos
-            echo "🚀 Iniciando containers..."
-            if ! \$COMPOSE_CMD -f docker-compose.prod.yml up -d; then
-              echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
-              \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50
-              exit 1
-            fi
-
-            echo "📊 Status dos containers:"
-            \$COMPOSE_CMD -f docker-compose.prod.yml ps
-
-            echo "⏳ Aguardando container 'hallyuhub' ficar operacional..."
-            max_retries=25
-            count=0
-            until [ "\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null)" == "healthy" ] || [ \$count -eq \$max_retries ]; do
-              health_status=\$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null || echo "unknown")
-              echo "Aguardando container ficar healthy... (Status: \$health_status, \$((count+1))/\$max_retries)"
-              sleep 5
-              count=\$((count+1))
-            done
-
-            if [ \$count -eq \$max_retries ]; then
-              echo "❌ Erro: Container hallyuhub não ficou healthy a tempo."
-              \$COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
-              exit 1
-            fi
-
-            echo "📊 Verificando migrations (Prisma)..."
-
-            # OTIMIZAÇÃO: Verificar se DB já está atualizado antes de aplicar
-            # Prisma 5 output: "up to date" quando não há nada pendente
-            echo "🔍 Checking for pending migrations..."
-            MIGRATE_STATUS=\$(\$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 || echo "status_failed")
-            echo "📋 Migrate status output:"
-            echo "\$MIGRATE_STATUS"
-
-            if echo "\$MIGRATE_STATUS" | grep -qi "up to date"; then
-              echo "✅ No pending migrations - skipping migrate deploy"
+          update_env() {
+            key=$1
+            val=$2
+            if [ -z "$val" ]; then return; fi
+            if grep -q "^${key}=" .env.production; then
+              sed -i "s|^${key}=.*|${key}=${val}|" .env.production
             else
-              echo "🔄 Pending migrations detected - applying..."
+              echo "${key}=${val}" >> .env.production
+            fi
+          }
 
-              # Diagnóstico de Conexão DB
-              echo "🔍 Verificando configuração do Banco de Dados..."
-            if \$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub printenv DATABASE_URL > /dev/null; then
-               DB_HOST=\$(\$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub sh -c 'echo \$DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
-               echo "ℹ️  DATABASE_URL está definida. Host detectado: \$DB_HOST"
-               if [ "\$DB_HOST" = "localhost" ] || [ "\$DB_HOST" = "127.0.0.1" ]; then
-                 echo "⚠️  AVISO CRÍTICO: DATABASE_URL aponta para localhost dentro do Docker! Isso geralmente falha."
-                 echo "   Deveria apontar para 'postgres-production' ou 'hallyuhub-postgres-production'."
+          echo "🔧 Updating environment variables..."
+          update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
+          update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
+          update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
+          update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
+          update_env "OLLAMA_MODEL" "gemma:2b"
+          update_env "NEXT_PUBLIC_SITE_URL" "https://www.hallyuhub.com.br"
+          update_env "SLACK_WEBHOOK_CONTENT" "${{ secrets.SLACK_WEBHOOK_CONTENT }}"
+          update_env "SLACK_WEBHOOK_ALERTS" "${{ secrets.SLACK_WEBHOOK_ALERTS }}"
+          update_env "SLACK_WEBHOOK_DEPLOYS" "${{ secrets.SLACK_WEBHOOK_DEPLOYS }}"
+
+          chmod 600 .env.production
+          echo "✅ Setup complete."
+
+      - name: Copy Files to Deploy Directory
+        run: |
+          echo "📦 Copying files to /var/www/hallyuhub..."
+          cp -f docker-compose.prod.yml /var/www/hallyuhub/
+          cp -rf scripts /var/www/hallyuhub/
+          echo "✅ Files copied successfully"
+
+      - name: Deploy to Production
+        run: |
+          set -e
+          cd /var/www/hallyuhub
+
+          # Determinar comando docker-compose (v1 vs v2)
+          if docker compose version >/dev/null 2>&1; then
+            COMPOSE_CMD="docker compose"
+            echo "✅ Usando 'docker compose' (V2)"
+          elif command -v docker-compose >/dev/null 2>&1; then
+            COMPOSE_CMD="docker-compose"
+            echo "✅ Usando 'docker-compose' (V1)"
+          else
+            echo "❌ Erro: docker-compose não encontrado!"
+            exit 1
+          fi
+
+          # Diagnóstico inicial
+          echo "📊 Verificando ambiente..."
+          df -h / | grep / || true
+          docker network ls | grep web || echo "⚠️ Network 'web' não encontrada!"
+
+          echo "🟢 Deploying PRODUCTION..."
+
+          # Cleanup: Remove old Docker images (keep last 3)
+          echo "🧹 Limpando imagens antigas..."
+          docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | \
+            tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || \
+            echo "Nenhuma imagem antiga para remover"
+
+          # Pull nova imagem com log de erro
+          echo "📥 Pulling images..."
+          if ! $COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub; then
+            echo "❌ Erro ao puxar imagem do GHCR. Verifique se o servidor está logado (docker login ghcr.io)."
+            exit 1
+          fi
+
+          # Down para evitar ContainerConfig error
+          echo "🛑 Parando containers antigos..."
+          $COMPOSE_CMD -f docker-compose.prod.yml down || true
+
+          # Up com containers frescos
+          echo "🚀 Iniciando containers..."
+          if ! $COMPOSE_CMD -f docker-compose.prod.yml up -d; then
+            echo "❌ Erro ao subir containers. Verifique a network 'web' ou volumes externos."
+            $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50
+            exit 1
+          fi
+
+          echo "📊 Status dos containers:"
+          $COMPOSE_CMD -f docker-compose.prod.yml ps
+
+          echo "⏳ Aguardando container 'hallyuhub' ficar operacional..."
+          max_retries=25
+          count=0
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null)" == "healthy" ] || [ $count -eq $max_retries ]; do
+            health_status=$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null || echo "unknown")
+            echo "Aguardando container ficar healthy... (Status: $health_status, $((count+1))/$max_retries)"
+            sleep 5
+            count=$((count+1))
+          done
+
+          if [ $count -eq $max_retries ]; then
+            echo "❌ Erro: Container hallyuhub não ficou healthy a tempo."
+            $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50
+            exit 1
+          fi
+
+          echo "📊 Verificando migrations (Prisma)..."
+
+          # OTIMIZAÇÃO: Verificar se DB já está atualizado antes de aplicar
+          # Prisma 5 output: "up to date" quando não há nada pendente
+          echo "🔍 Checking for pending migrations..."
+          MIGRATE_STATUS=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 || echo "status_failed")
+          echo "📋 Migrate status output:"
+          echo "$MIGRATE_STATUS"
+
+          if echo "$MIGRATE_STATUS" | grep -qi "up to date"; then
+            echo "✅ No pending migrations - skipping migrate deploy"
+          else
+            echo "🔄 Pending migrations detected - applying..."
+
+            # Diagnóstico de Conexão DB
+            echo "🔍 Verificando configuração do Banco de Dados..."
+          if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub printenv DATABASE_URL > /dev/null; then
+             DB_HOST=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub sh -c 'echo $DATABASE_URL' | sed -n 's/.*@\([^:]*\):.*/\1/p')
+             echo "ℹ️  DATABASE_URL está definida. Host detectado: $DB_HOST"
+             if [ "$DB_HOST" = "localhost" ] || [ "$DB_HOST" = "127.0.0.1" ]; then
+               echo "⚠️  AVISO CRÍTICO: DATABASE_URL aponta para localhost dentro do Docker! Isso geralmente falha."
+               echo "   Deveria apontar para 'postgres-production' ou 'hallyuhub-postgres-production'."
+             fi
+          else
+             echo "❌ Erro: DATABASE_URL não está definida no container!"
+          fi
+
+          # Loop de retry para migration
+          migrate_success=false
+          for i in {1..10}; do
+            echo "Tentativa de migration $i/10..."
+
+            # Verificar se container ainda está rodando (pode estar em restart loop)
+            CONTAINER_STATE=$(docker inspect -f '{{.State.Status}}' hallyuhub 2>/dev/null || echo "not-found")
+            if [ "$CONTAINER_STATE" != "running" ]; then
+               echo "⚠️  Container hallyuhub não está rodando (Status: $CONTAINER_STATE). Aguardando..."
+               $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=20 hallyuhub
+            else
+               if $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
+                 migrate_success=true
+                 echo "✅ Migrations aplicadas com sucesso!"
+                 break
                fi
-            else
-               echo "❌ Erro: DATABASE_URL não está definida no container!"
+               echo "⚠️  Falha ao executar migrate deploy."
             fi
 
-            # Loop de retry para migration
-            migrate_success=false
-            for i in {1..10}; do
-              echo "Tentativa de migration \$i/10..."
+            echo "Aguardando 10s..."
+            sleep 10
+          done
 
-              # Verificar se container ainda está rodando (pode estar em restart loop)
-              CONTAINER_STATE=\$(docker inspect -f '{{.State.Status}}' hallyuhub 2>/dev/null || echo "not-found")
-              if [ "\$CONTAINER_STATE" != "running" ]; then
-                 echo "⚠️  Container hallyuhub não está rodando (Status: \$CONTAINER_STATE). Aguardando..."
-                 \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=20 hallyuhub
-              else
-                 if \$COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy; then
-                   migrate_success=true
-                   echo "✅ Migrations aplicadas com sucesso!"
-                   break
-                 fi
-                 echo "⚠️  Falha ao executar migrate deploy."
-              fi
+          if [ "$migrate_success" = false ]; then
+            echo "❌ Erro: Falha ao aplicar migrations após 10 tentativas."
+            echo "🔍 Logs do Banco de Dados:"
+            $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 postgres-production
+            echo "🔍 Logs da Aplicação:"
+            $COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 hallyuhub
+            exit 1
+          fi
+          fi # Fim do bloco if de pending migrations
 
-              echo "Aguardando 10s..."
-              sleep 10
-            done
+          echo "✅ Production containers up and healthy!"
 
-            if [ "\$migrate_success" = false ]; then
-              echo "❌ Erro: Falha ao aplicar migrations após 10 tentativas."
-              echo "🔍 Logs do Banco de Dados:"
-              \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 postgres-production
-              echo "🔍 Logs da Aplicação:"
-              \$COMPOSE_CMD -f docker-compose.prod.yml logs --tail=50 hallyuhub
-              exit 1
-            fi
-            fi # Fim do bloco if de pending migrations
+          echo "📝 Exportando informações dos cron jobs..."
+          chmod +x scripts/export-cron-info.sh
+          ./scripts/export-cron-info.sh production
 
-            echo "✅ Production containers up and healthy!"
+          echo "📊 Running Production Verification Script..."
+          chmod +x scripts/verify-production.sh
+          if ! ./scripts/verify-production.sh; then
+            echo "❌ CRITICAL: Production verification failed!"
+            exit 1
+          fi
 
-            echo "📝 Exportando informações dos cron jobs..."
-            chmod +x scripts/export-cron-info.sh
-            ./scripts/export-cron-info.sh production
-
-            echo "📊 Running Production Verification Script..."
-            chmod +x scripts/verify-production.sh
-            if ! ./scripts/verify-production.sh; then
-              echo "❌ CRITICAL: Production verification failed!"
-              exit 1
-            fi
-
-            echo "✅ Production verified and operational!"
-            ENDSSH
+          echo "✅ Production verified and operational!"
 
       - name: 🔍 Health Check
         run: |

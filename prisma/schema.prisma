@@ -42,7 +42,7 @@ model Artist {
   agencyId           String?
   productions        ArtistProduction[]
   // TMDB sync tracking
-  tmdbId             String? // TMDB person ID
+  tmdbId             String? @unique // TMDB person ID
   tmdbSyncStatus     String? // 'SYNCED', 'NOT_FOUND', 'ERROR'
   tmdbLastSync       DateTime? // Last successful sync
   tmdbLastAttempt    DateTime? // Last attempt (even if failed)
