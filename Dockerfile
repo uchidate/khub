@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y openssl ca-certificates libssl1.1 wget 
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 # Instalamos tudo para o build
 RUN npm install
 
@@ -44,6 +45,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Layer 2: Prisma (muda raramente)
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
