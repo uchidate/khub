@@ -347,18 +347,28 @@ jobs:
             -H 'Content-Type: application/json' \
             -d "{\"text\": \"🚀 Deploy PRODUCTION iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy PRODUCTION Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"}}]}"
 
-      - name: 🏷️ Prepare Environment
+      - name: 🏷️ Prepare Environment & Directory
         run: |
           set -e
+          echo "📁 Ensuring base directory exists..."
           sudo mkdir -p /var/www/hallyuhub
           sudo chown -R github-runner:github-runner /var/www/hallyuhub
+
           cd /var/www/hallyuhub
 
-          [ ! -f .env.production ] && ([ -f .env.production.bak ] && cp .env.production.bak .env.production || touch .env.production)
+          if [ ! -f .env.production ]; then
+            echo "⚠️ .env.production not found! Creating..."
+            [ -f .env.production.bak ] && cp .env.production.bak .env.production || touch .env.production
+          fi
+
           cp .env.production .env.production.bak
           sed -i '/^=/d' .env.production
 
-          update_env() { key=$1; val=$2; [ -z "$val" ] && return; grep -q "^${key}=" .env.production && sed -i "s|^${key}=.*|${key}=${val}|" .env.production || echo "${key}=${val}" >> .env.production; }
+          update_env() {
+            key=$1; val=$2
+            [ -z "$val" ] && return
+            grep -q "^${key}=" .env.production && sed -i "s|^${key}=.*|${key}=${val}|" .env.production || echo "${key}=${val}" >> .env.production
+          }
 
           update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
           update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
@@ -366,9 +376,10 @@ jobs:
           update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
           update_env "OLLAMA_MODEL" "phi3:mini"
           update_env "NEXT_PUBLIC_SITE_URL" "https://www.hallyuhub.com.br"
+
           chmod 600 .env.production
 
-      - name: Copy Files
+      - name: Copy Files to Deploy Directory
         run: |
           cp -f docker-compose.prod.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
@@ -380,17 +391,25 @@ jobs:
 
           COMPOSE_CMD=$(docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
+          echo "🧹 Limpando imagens antigas..."
           docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || true
 
+          echo "📥 Pulling images..."
           $COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub
+
+          echo "🛑 Parando containers antigos..."
           $COMPOSE_CMD -f docker-compose.prod.yml down || true
+
+          echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.prod.yml up -d
 
-          # OTIMIZAÇÃO: 2s interval, 18 retries (produção mais conservador que staging)
+          # OTIMIZAÇÃO: Health check mais rápido (2s interval, 18 retries)
+          echo "⏳ Aguardando container ficar healthy..."
           max_retries=18
           count=0
           until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null)" == "healthy" ] || [ $count -eq $max_retries ]; do
-            echo "Aguardando... ($((count+1))/$max_retries)"
+            health_status=$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null || echo "unknown")
+            echo "Aguardando... (Status: $health_status, $((count+1))/$max_retries)"
             sleep 2
             count=$((count+1))
           done
