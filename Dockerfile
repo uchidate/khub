@@ -16,36 +16,37 @@ WORKDIR /app
 # OTIMIZAÇÃO: Copiar package files primeiro para cache de layers
 COPY package.json package-lock.json ./
 
-# OTIMIZAÇÃO: Instalar APENAS production deps (mais rápido)
-RUN npm ci --only=production --ignore-scripts
+# Instalar todas as deps (prisma.config.ts precisa de dotenv)
+RUN npm ci --ignore-scripts
 
 # Copiar prisma para geração do client
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
 
-# OTIMIZAÇÃO: Prisma generate APENAS nas production deps (mais rápido)
+# OTIMIZAÇÃO: Prisma generate UMA vez (deps stage)
+# Antes gerava 2x: deps + builder
 RUN npx prisma generate
 
-# Stage 2: Build deps (separado para cache melhor)
-FROM node:20-bullseye-slim AS build-deps
+# Stage 2: Production deps (apenas runtime)
+FROM node:20-bullseye-slim AS deps-production
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Copiar deps completo e fazer prune
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/package-lock.json ./package-lock.json
 
-# Dev deps apenas para build
-RUN npm ci --ignore-scripts
+# Remover dev dependencies (economiza ~200-300MB)
+RUN npm prune --production
 
 # Stage 3: Builder
 FROM node:20-bullseye-slim AS builder
 RUN apt-get update && apt-get install -y openssl ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
-# OTIMIZAÇÃO: Copiar node_modules completo (dev deps para build)
-COPY --from=build-deps /app/node_modules ./node_modules
-
-# Copiar prisma client já gerado (NÃO regenerar)
-COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
+# OTIMIZAÇÃO: Copiar node_modules completo (com dev deps para build)
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
 
 # Copiar código fonte
 COPY . .
@@ -70,9 +71,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -m nextjs
 
-# OTIMIZAÇÃO: Copiar APENAS node_modules de produção (deps stage)
+# OTIMIZAÇÃO: Copiar APENAS node_modules de produção (deps-production stage)
 # Economiza ~200-300MB e acelera push/pull do registry
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=deps-production --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Next.js standalone
 COPY --from=builder /app/public ./public
