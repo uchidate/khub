@@ -1,10 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import 'dotenv/config';
+import prisma from '../lib/prisma';
 import { ImageSearchService } from '../lib/services/image-search-service';
-import * as dotenv from 'dotenv';
-
-dotenv.config({ path: '.env.staging' }); // Default to staging for safety
-
-const prisma = new PrismaClient();
 const imageService = new ImageSearchService();
 
 async function refreshNewsImages() {

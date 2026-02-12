@@ -1,9 +1,8 @@
+import 'dotenv/config';
 const { google } = require('googleapis');
-import { PrismaClient } from '@prisma/client'
+import prisma from '../lib/prisma';
 const fs = require('fs');
 const path = require('path');
-
-const prisma = new PrismaClient();
 const TOKEN_PATH = path.join(__dirname, '..', 'google-drive-tokens.json');
 const IMAGES_DIR = path.join(__dirname, '..', 'temp-images');
 
