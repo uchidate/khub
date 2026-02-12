@@ -506,6 +506,73 @@ export async function GET(request: NextRequest) {
                 }
             }
 
+            // Prioridade 5: Notícias antigas sem markdown ou em inglês → reformatar e traduzir
+            if (normalizedCount < 2) {
+                // Detectar notícias sem formatação markdown (sem **, ##, -, >)
+                const hasMarkdownFormatting = (text: string): boolean => {
+                    if (!text) return false;
+                    return /(\*\*|##|^- |^> )/m.test(text);
+                };
+
+                const oldNewsWithoutMarkdown = await prisma.news.findFirst({
+                    orderBy: { updatedAt: 'asc' }
+                });
+
+                // Verificar se precisa de normalização (em inglês OU sem markdown)
+                if (oldNewsWithoutMarkdown?.contentMd &&
+                    (isLikelyEnglish(oldNewsWithoutMarkdown.contentMd) ||
+                     !hasMarkdownFormatting(oldNewsWithoutMarkdown.contentMd))) {
+
+                    const { getOrchestrator: getOrc3 } = require('@/lib/ai/orchestrator-factory');
+                    const orchestrator = getOrc3();
+
+                    const prompt = `Reformate e traduza a seguinte notícia sobre K-pop/K-drama para português brasileiro:
+
+Título: ${oldNewsWithoutMarkdown.title}
+
+Conteúdo:
+${oldNewsWithoutMarkdown.contentMd}
+
+Requisitos:
+- Tradução natural e fluente em português brasileiro (se em inglês)
+- Manter nomes próprios (artistas, grupos, programas) no original
+- Formato markdown com parágrafos bem estruturados
+- Use **negrito** para destaques importantes (nomes, títulos, datas)
+- 3-5 parágrafos informativos
+- Tom jornalístico mas acessível
+- Se conteúdo muito curto, expanda com contexto relevante`;
+
+                    const result: any = await orchestrator.generateStructured(
+                        prompt,
+                        '{ "content": "string (notícia em português com markdown)" }',
+                        { preferredProvider: 'ollama', maxTokens: 500 }
+                    );
+
+                    if (result?.content && result.content.length > 50) {
+                        // Extrair tags se não existirem
+                        let tags = oldNewsWithoutMarkdown.tags || [];
+                        if (tags.length === 0) {
+                            const tagResult: any = await orchestrator.generateStructured(
+                                `Extraia 3-5 tags relevantes desta notícia:\n\nTítulo: ${oldNewsWithoutMarkdown.title}\n\nConteúdo: ${result.content}\n\nRetorne tags como array de strings.`,
+                                '{ "tags": ["string"] }',
+                                { preferredProvider: 'ollama', maxTokens: 100 }
+                            );
+                            tags = tagResult?.tags || [];
+                        }
+
+                        await prisma.news.update({
+                            where: { id: oldNewsWithoutMarkdown.id },
+                            data: {
+                                contentMd: result.content,
+                                tags: tags.length > 0 ? tags : undefined,
+                            }
+                        });
+                        normalizedCount++;
+                        console.log(`[CRON] ✅ Fixed old news: ${oldNewsWithoutMarkdown.title}`);
+                    }
+                }
+            }
+
             if (normalizedCount > 0) {
                 console.log(`[CRON] ✅ Normalized ${normalizedCount} out-of-standard items`);
             } else {

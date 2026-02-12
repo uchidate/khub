@@ -268,7 +268,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-bold hover:bg-purple-500 hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl uppercase text-xs tracking-widest"
                     >
-                        Ler notícia completa
+                        Ver fonte original
                         <ExternalLink className="w-4 h-4" />
                     </a>
                 </footer>

@@ -146,12 +146,12 @@ Retorne apenas a tradução, sem aspas ou formatação extra.`;
         content: string,
         source: string
     ): Promise<string> {
-        // AUMENTADO: Limite expandido para permitir conteúdo mais rico
-        const maxLength = 2500;
+        // AUMENTADO: Limite ainda maior para notícias completas (não resumir)
+        const maxLength = 6000;
         let textToTranslate = content;
 
         if (content.length > maxLength) {
-            // Se muito longo, resumir primeiro (mas mantendo mais conteúdo)
+            // Se MUITO longo, resumir primeiro (mas mantendo muito mais conteúdo)
             textToTranslate = await this.summarizeContent(content);
         }
 
@@ -163,23 +163,24 @@ Título: ${title}
 Conteúdo:
 ${textToTranslate}
 
-Requisitos:
-- Tradução natural e fluente em português brasileiro
+Requisitos CRÍTICOS:
+- Tradução COMPLETA e natural em português brasileiro
 - Manter nomes próprios (artistas, grupos, programas, filmes) no original
 - Formato markdown com parágrafos bem estruturados
 - Use **negrito** para destaques importantes (nomes, títulos, datas)
-- 4-6 parágrafos detalhados e informativos
+- MÍNIMO 8-12 parágrafos detalhados e informativos
 - Tom jornalístico mas acessível e envolvente
 - Adicione contexto adicional quando relevante (ex: "o grupo que lançou X em Y")
-- Inclua detalhes específicos: datas, números, citações se disponíveis
+- Inclua TODOS os detalhes: datas, números, citações, contexto, background
+- NÃO omita informações - traduza TUDO
 - Ao final adicione: "\n\n---\n\n*Fonte: ${source}*"
 
-Lembre-se: quanto mais detalhado e informativo, melhor!`;
+IMPORTANTE: A notícia deve ser COMPLETA - não resumir, não omitir detalhes!`;
 
             const result = await this.getOrchestrator().generateStructured<{ content: string }>(
                 prompt,
-                '{ "content": "string (conteúdo em markdown)" }',
-                { preferredProvider: 'ollama' }
+                '{ "content": "string (conteúdo COMPLETO em markdown)" }',
+                { preferredProvider: 'ollama', maxTokens: 1500 }
             );
 
             return result.content;
@@ -196,30 +197,33 @@ Lembre-se: quanto mais detalhado e informativo, melhor!`;
      */
     private async summarizeContent(longContent: string): Promise<string> {
         try {
-            // AUMENTADO: Pegar mais conteúdo para resumir
-            const excerpt = longContent.substring(0, 3000);
+            // AUMENTADO: Pegar muito mais conteúdo para resumir (quase completo)
+            const excerpt = longContent.substring(0, 5000);
 
-            const prompt = `Resuma o seguinte texto sobre K-pop/K-drama em 400-600 palavras, mantendo os pontos principais e detalhes importantes:
+            const prompt = `Resuma o seguinte texto sobre K-pop/K-drama em 1000-1500 palavras, mantendo TODOS os pontos importantes e MÁXIMO de detalhes:
 
 ${excerpt}
 
-Requisitos:
-- Foque nos fatos mais importantes
-- Mantenha nomes próprios, datas, números
-- Preserve citações relevantes se houver
-- Estruture em 4-5 parágrafos claros
-- Seja informativo e completo`;
+Requisitos CRÍTICOS:
+- Foque em TODOS os fatos importantes - não omita nada relevante
+- Mantenha TODOS os nomes próprios, datas, números, citações
+- Preserve contexto e background da notícia
+- Estruture em 8-12 parágrafos detalhados
+- Seja COMPLETO e informativo - não resuma demais
+- Mantenha a essência e profundidade da notícia original
+
+IMPORTANTE: O objetivo é ter notícias COMPLETAS, não resumos curtos!`;
 
             const result = await this.getOrchestrator().generateStructured<{ summary: string }>(
                 prompt,
-                '{ "summary": "string" }',
-                { preferredProvider: 'ollama' }
+                '{ "summary": "string (resumo COMPLETO e detalhado)" }',
+                { preferredProvider: 'ollama', maxTokens: 1500 }
             );
 
             return result.summary;
         } catch (error) {
-            // Fallback: retornar primeiros 800 chars
-            return longContent.substring(0, 800);
+            // Fallback: retornar primeiros 2000 chars (mais que antes)
+            return longContent.substring(0, 2000);
         }
     }
 
