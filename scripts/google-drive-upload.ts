@@ -1,3 +1,4 @@
+import 'dotenv/config';
 const { google } = require('googleapis');
 import prisma from '../lib/prisma';
 const fs = require('fs');

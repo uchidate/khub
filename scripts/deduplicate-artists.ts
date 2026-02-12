@@ -12,6 +12,7 @@
  * Transfere todas as relações (favorites, productions, news) para o que ficará.
  */
 
+import 'dotenv/config';
 import prisma from '../lib/prisma'
 
 const isDryRun = process.argv.includes('--dry-run')

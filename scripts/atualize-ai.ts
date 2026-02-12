@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import prisma from '../lib/prisma';
 const { getOrchestrator } = require('../lib/ai/orchestrator-factory');
 const { NewsGenerator } = require('../lib/ai/generators/news-generator');

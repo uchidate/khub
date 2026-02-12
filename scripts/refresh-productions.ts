@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import prisma from '../lib/prisma';
 import { ImageSearchService } from '../lib/services/image-search-service';
 const imageSearch = new ImageSearchService();

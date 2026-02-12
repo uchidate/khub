@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { AIOrchestrator } from '../lib/ai/orchestrator';
 import { ArtistGenerator } from '../lib/ai/generators/artist-generator';
 import prisma from '../lib/prisma';

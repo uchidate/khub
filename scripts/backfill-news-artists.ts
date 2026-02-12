@@ -7,6 +7,7 @@
  *   npx tsx scripts/backfill-news-artists.ts --dry-run    # Simular sem salvar
  */
 
+import 'dotenv/config';
 import prisma from '../lib/prisma';
 import { NewsArtistExtractionService } from '../lib/services/news-artist-extraction-service';
 
