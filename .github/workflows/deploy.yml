@@ -261,14 +261,14 @@ jobs:
           echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.staging.yml up -d
 
-          # OTIMIZAÇÃO: Health check mais rápido (2s interval, 15 retries)
+          # OTIMIZAÇÃO: Health check mais rápido (2s interval, 18 retries)
           echo "⏳ Aguardando container ficar healthy..."
-          max_retries=15
+          max_retries=18
           count=0
           until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null)" == "healthy" ] || [ $count -eq $max_retries ]; do
             health_status=$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null || echo "unknown")
             echo "Aguardando... (Status: $health_status, $((count+1))/$max_retries)"
-            sleep 2  # OTIMIZADO: 5s → 2s
+            sleep 2
             count=$((count+1))
           done
 
