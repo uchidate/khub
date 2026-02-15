@@ -21,8 +21,9 @@ jobs:
           echo ""
 
           # Extrair jobs de staging e production
-          sed -n '/^  deploy-staging:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/staging.yml
-          sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/production.yml
+          # Para staging: remove linhas do header do próximo bloco (comentários ═══ e linhas vazias finais)
+          sed -n '/^  deploy-staging:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | sed '/^  #.*═══/,$d' | sed -e :a -e '/^\s*$/{ $d; N; ba; }' > /tmp/staging.yml
+          sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | sed -e :a -e '/^\s*$/{ $d; N; ba; }' > /tmp/production.yml
 
           # Normalizar diferenças permitidas (whitelist)
           # CRÍTICO: Ordem importa - padrões MAIS ESPECÍFICOS devem vir ANTES dos genéricos
@@ -63,19 +64,25 @@ jobs:
             "STAGING|PRODUCTION"
             "Staging|Production"
 
-            # 8. Diferenças de criticidade (staging=menor, production=maior)
+            # 8. Modelos de IA (staging=leve, production=qualidade)
+            "gemma:2b|phi3:mini"
+
+            # 9. Diferenças de criticidade (staging=menor, production=maior)
             # CRÍTICO: Normalizar em AMBOS os lados para valores que aparecem nos dois ambientes
             "timeout_minutes: 20|timeout_minutes: 20"
             "timeout_minutes: 25|timeout_minutes: 25"
             "max_retries=10|max_retries=10"
             "max_retries=15|max_retries=15"
+            "max_retries=18|max_retries=18"
             "max_retries=20|max_retries=25"
             "max_attempts=10|max_attempts=10"
+            "max_attempts=12|max_attempts=12"
             "max_attempts=20|max_attempts=20"
+            "sleep 3|sleep 3"
             "sleep 5|sleep 5"
             "sleep 10|sleep 10"
 
-            # 9. Diferenças visuais e estruturais permitidas
+            # 10. Diferenças visuais e estruturais permitidas
             "🟡|🟢"
             "FASE 3a|FASE 3b"
             "restart: \"no\"|restart: always"
