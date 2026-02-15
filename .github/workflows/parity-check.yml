@@ -36,7 +36,10 @@ jobs:
             "31.97.255.107:3001|www.hallyuhub.com.br"
             "staging.hallyuhub.com.br|www.hallyuhub.com.br"
 
-            # 2b. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
+            # 2b. Database URL: normalizar antes do genérico staging|production
+            "hallyuhub_staging|hallyuhub_production"
+
+            # 2c. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
             "http://ollama-staging|http://ollama-production"
 
             "http://|https://"
