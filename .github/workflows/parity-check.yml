@@ -21,8 +21,9 @@ jobs:
           echo ""
 
           # Extrair jobs de staging e production
-          sed -n '/^  deploy-staging:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/staging.yml
-          sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | head -n -1 > /tmp/production.yml
+          # Para staging: remove linhas do header do próximo bloco (comentários ═══ e linhas vazias finais)
+          sed -n '/^  deploy-staging:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | sed '/^  #.*═══/,$d' | sed -e :a -e '/^\s*$/{ $d; N; ba; }' > /tmp/staging.yml
+          sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | sed -e :a -e '/^\s*$/{ $d; N; ba; }' > /tmp/production.yml
 
           # Normalizar diferenças permitidas (whitelist)
           # CRÍTICO: Ordem importa - padrões MAIS ESPECÍFICOS devem vir ANTES dos genéricos
