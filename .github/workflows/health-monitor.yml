@@ -1,0 +1,263 @@
+name: 🏥 Health Monitor
+
+on:
+  schedule:
+    # A cada 5 minutos (mínimo do GitHub Actions)
+    - cron: '*/5 * * * *'
+
+  # Trigger manual para testes
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente para verificar'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - production
+          - staging
+
+jobs:
+  check-production:
+    name: 🔴 Production Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    if: ${{ github.event_name == 'schedule' || github.event.inputs.environment == 'both' || github.event.inputs.environment == 'production' }}
+
+    env:
+      SITE_URL: https://www.hallyuhub.com.br
+      ENV_NAME: production
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+      RESPONSE_TIMEOUT: 10
+      MAX_RESPONSE_TIME_MS: 5000
+
+    steps:
+      - name: 🏥 Check Production
+        id: health_check
+        run: |
+          echo "## Health Check - Production" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          FAILED=0
+          ISSUES=""
+
+          check_endpoint() {
+            local name=$1
+            local url=$2
+            local expected_status=${3:-200}
+            local check_json_key=${4:-""}
+
+            echo "🔍 Checking: $name ($url)"
+
+            local START_MS=$(date +%s%3N)
+            local RESPONSE
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+              --max-time $RESPONSE_TIMEOUT \
+              --connect-timeout 5 \
+              -H "Accept: application/json" \
+              "$url" 2>/dev/null)
+            local CURL_EXIT=$?
+            local END_MS=$(date +%s%3N)
+            local ELAPSED=$((END_MS - START_MS))
+
+            local HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            local BODY=$(echo "$RESPONSE" | sed '$d')
+
+            # Connection failure
+            if [ $CURL_EXIT -ne 0 ]; then
+              echo "  ❌ FAIL: Connection error (curl exit $CURL_EXIT) - ${ELAPSED}ms"
+              ISSUES="${ISSUES}\n• *${name}*: Connection refused/timeout"
+              return 1
+            fi
+
+            # Wrong HTTP status
+            if [ "$HTTP_CODE" != "$expected_status" ]; then
+              echo "  ❌ FAIL: HTTP $HTTP_CODE (expected $expected_status) - ${ELAPSED}ms"
+              ISSUES="${ISSUES}\n• *${name}*: HTTP $HTTP_CODE"
+              return 1
+            fi
+
+            # Check JSON key if specified
+            if [ -n "$check_json_key" ]; then
+              local VALUE
+              VALUE=$(echo "$BODY" | jq -r ".$check_json_key" 2>/dev/null)
+              if [ "$VALUE" != "true" ]; then
+                echo "  ❌ FAIL: .$check_json_key = $VALUE (expected true) - ${ELAPSED}ms"
+                ISSUES="${ISSUES}\n• *${name}*: Campo \`$check_json_key\` = \`$VALUE\`"
+                return 1
+              fi
+            fi
+
+            # Slow response warning (not a failure, just logged)
+            if [ $ELAPSED -gt $MAX_RESPONSE_TIME_MS ]; then
+              echo "  ⚠️  SLOW: ${ELAPSED}ms (threshold: ${MAX_RESPONSE_TIME_MS}ms)"
+              ISSUES="${ISSUES}\n• *${name}*: Lento (${ELAPSED}ms)"
+            else
+              echo "  ✅ OK: HTTP $HTTP_CODE - ${ELAPSED}ms"
+            fi
+
+            echo "  📊 Response: $(echo "$BODY" | jq -c '.' 2>/dev/null || echo "$BODY" | head -c 100)"
+            return 0
+          }
+
+          # --- Checks ---
+          check_endpoint "Homepage" "${SITE_URL}" 200 || FAILED=$((FAILED + 1))
+          check_endpoint "Health API" "${SITE_URL}/api/health" 200 "ok" || FAILED=$((FAILED + 1))
+          check_endpoint "Metrics" "${SITE_URL}/api/metrics" 200 || FAILED=$((FAILED + 1))
+
+          # --- Summary ---
+          echo ""
+          echo "FAILED=$FAILED" >> $GITHUB_ENV
+          echo "ISSUES=$ISSUES" >> $GITHUB_ENV
+
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ $FAILED check(s) failed" | tee -a $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ All checks passed" | tee -a $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔔 Alert Slack - Down
+        if: failure() && env.SLACK_WEBHOOK != ''
+        run: |
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+          ISSUES_TEXT=$(echo -e "$ISSUES")
+
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"🚨 *PRODUCTION DOWN* - $TIMESTAMP\",
+              \"attachments\": [{
+                \"color\": \"danger\",
+                \"title\": \"HallyuHub Production está com problemas\",
+                \"text\": \"${ISSUES_TEXT}\",
+                \"fields\": [
+                  {\"title\": \"Ambiente\", \"value\": \"Production\", \"short\": true},
+                  {\"title\": \"URL\", \"value\": \"${SITE_URL}\", \"short\": true},
+                  {\"title\": \"Checks falharam\", \"value\": \"${FAILED}\", \"short\": true},
+                  {\"title\": \"Run\", \"value\": \"<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver logs>\", \"short\": true}
+                ],
+                \"footer\": \"GitHub Actions Health Monitor\",
+                \"ts\": $(date +%s)
+              }]
+            }"
+
+  check-staging:
+    name: 🟡 Staging Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    if: ${{ github.event_name == 'schedule' || github.event.inputs.environment == 'both' || github.event.inputs.environment == 'staging' }}
+
+    env:
+      SITE_URL: http://31.97.255.107:3001
+      ENV_NAME: staging
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+      RESPONSE_TIMEOUT: 10
+      MAX_RESPONSE_TIME_MS: 8000
+
+    steps:
+      - name: 🏥 Check Staging
+        id: health_check
+        run: |
+          echo "## Health Check - Staging" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          FAILED=0
+          ISSUES=""
+
+          check_endpoint() {
+            local name=$1
+            local url=$2
+            local expected_status=${3:-200}
+            local check_json_key=${4:-""}
+
+            echo "🔍 Checking: $name ($url)"
+
+            local START_MS=$(date +%s%3N)
+            local RESPONSE
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+              --max-time $RESPONSE_TIMEOUT \
+              --connect-timeout 5 \
+              -H "Accept: application/json" \
+              "$url" 2>/dev/null)
+            local CURL_EXIT=$?
+            local END_MS=$(date +%s%3N)
+            local ELAPSED=$((END_MS - START_MS))
+
+            local HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            local BODY=$(echo "$RESPONSE" | sed '$d')
+
+            if [ $CURL_EXIT -ne 0 ]; then
+              echo "  ❌ FAIL: Connection error (curl exit $CURL_EXIT) - ${ELAPSED}ms"
+              ISSUES="${ISSUES}\n• *${name}*: Connection refused/timeout"
+              return 1
+            fi
+
+            if [ "$HTTP_CODE" != "$expected_status" ]; then
+              echo "  ❌ FAIL: HTTP $HTTP_CODE (expected $expected_status) - ${ELAPSED}ms"
+              ISSUES="${ISSUES}\n• *${name}*: HTTP $HTTP_CODE"
+              return 1
+            fi
+
+            if [ -n "$check_json_key" ]; then
+              local VALUE
+              VALUE=$(echo "$BODY" | jq -r ".$check_json_key" 2>/dev/null)
+              if [ "$VALUE" != "true" ]; then
+                echo "  ❌ FAIL: .$check_json_key = $VALUE (expected true) - ${ELAPSED}ms"
+                ISSUES="${ISSUES}\n• *${name}*: Campo \`$check_json_key\` = \`$VALUE\`"
+                return 1
+              fi
+            fi
+
+            if [ $ELAPSED -gt $MAX_RESPONSE_TIME_MS ]; then
+              echo "  ⚠️  SLOW: ${ELAPSED}ms (threshold: ${MAX_RESPONSE_TIME_MS}ms)"
+              ISSUES="${ISSUES}\n• *${name}*: Lento (${ELAPSED}ms)"
+            else
+              echo "  ✅ OK: HTTP $HTTP_CODE - ${ELAPSED}ms"
+            fi
+
+            echo "  📊 Response: $(echo "$BODY" | jq -c '.' 2>/dev/null || echo "$BODY" | head -c 100)"
+            return 0
+          }
+
+          # --- Checks ---
+          check_endpoint "Homepage" "${SITE_URL}" 200 || FAILED=$((FAILED + 1))
+          check_endpoint "Health API" "${SITE_URL}/api/health" 200 "ok" || FAILED=$((FAILED + 1))
+
+          # --- Summary ---
+          echo ""
+          echo "FAILED=$FAILED" >> $GITHUB_ENV
+          echo "ISSUES=$ISSUES" >> $GITHUB_ENV
+
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ $FAILED check(s) failed" | tee -a $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ All checks passed" | tee -a $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔔 Alert Slack - Staging Down
+        if: failure() && env.SLACK_WEBHOOK != ''
+        run: |
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+          ISSUES_TEXT=$(echo -e "$ISSUES")
+
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"⚠️ *STAGING DOWN* - $TIMESTAMP\",
+              \"attachments\": [{
+                \"color\": \"warning\",
+                \"title\": \"HallyuHub Staging está com problemas\",
+                \"text\": \"${ISSUES_TEXT}\",
+                \"fields\": [
+                  {\"title\": \"Ambiente\", \"value\": \"Staging\", \"short\": true},
+                  {\"title\": \"URL\", \"value\": \"${SITE_URL}\", \"short\": true},
+                  {\"title\": \"Checks falharam\", \"value\": \"${FAILED}\", \"short\": true},
+                  {\"title\": \"Run\", \"value\": \"<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver logs>\", \"short\": true}
+                ],
+                \"footer\": \"GitHub Actions Health Monitor\",
+                \"ts\": $(date +%s)
+              }]
+            }"

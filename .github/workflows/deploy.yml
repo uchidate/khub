@@ -247,6 +247,22 @@ jobs:
           cp -f docker-compose.staging.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
 
+      - name: 🔐 Sync DB User Password (Staging)
+        run: |
+          # Sincroniza a senha do user 'hallyuhub' no postgres com o secret POSTGRES_PASSWORD.
+          # Usa conexão local (trust) para alterar a senha via ALTER USER.
+          # POSTGRES_USER=hallyuhub (container não usa user postgres padrão).
+          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
+          if [ -z "$POSTGRES_CONTAINER" ]; then
+            echo "⚠️ Postgres staging container not found, skipping password sync"
+          else
+            echo "🔐 Syncing DB user password in $POSTGRES_CONTAINER..."
+            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_staging -c \
+              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
+              && echo "✅ Password synced" \
+              || echo "⚠️ Password sync failed (non-blocking)"
+          fi
+
       - name: Deploy to Staging
         run: |
           set -e
@@ -386,6 +402,19 @@ jobs:
         run: |
           cp -f docker-compose.prod.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
+
+      - name: 🔐 Sync DB User Password (Production)
+        run: |
+          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
+          if [ -z "$POSTGRES_CONTAINER" ]; then
+            echo "⚠️ Postgres production container not found, skipping password sync"
+          else
+            echo "🔐 Syncing DB user password in $POSTGRES_CONTAINER..."
+            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_production -c \
+              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
+              && echo "✅ Password synced" \
+              || echo "⚠️ Password sync failed (non-blocking)"
+          fi
 
       - name: Deploy to Production
         run: |
