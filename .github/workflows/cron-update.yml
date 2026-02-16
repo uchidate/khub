@@ -2,9 +2,9 @@ name: 🔄 Cron Job - Auto Update Content
 
 on:
   schedule:
-    # Runs every 30 minutes (GitHub Actions minimum is 5 minutes)
+    # Runs every 1 hour at minute 0
     # Format: minute hour day month day-of-week
-    - cron: '*/30 * * * *'
+    - cron: '0 * * * *'
 
   # Allow manual trigger
   workflow_dispatch:

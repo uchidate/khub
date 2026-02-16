@@ -4,8 +4,9 @@ import { PROVIDER_CONFIGS } from '../ai-config';
 
 // Timeout para inferência local com phi3:mini no CPU.
 // phi3:mini (2.2GB): ~60-240s dependendo do hardware/carga.
-// Se exceder, o orchestrator fará fallback para outro provider (se configurado).
-const OLLAMA_TIMEOUT_MS = 240_000; // 4 minutos
+// Baseado em dados reais de produção: timeouts ocorrendo em 240s com carga de 2 notícias.
+// Aumentado para 20min com margem de segurança para evitar falhas durante picos de uso.
+const OLLAMA_TIMEOUT_MS = 1_200_000; // 20 minutos
 
 /**
  * Provider para Ollama (modelo local)

@@ -361,3 +361,17 @@ model CronLock {
 
   @@map("cron_locks")
 }
+
+// Log de descoberta de artistas (evita repetição a curto prazo)
+model ArtistDiscoveryLog {
+  id          String   @id @default(cuid())
+  tmdbId      Int      // TMDB ID do artista tentado
+  wasAdded    Boolean  @default(false) // Se foi adicionado ao banco ou já existia
+  attemptedAt DateTime @default(now())
+  source      String?  // 'popular', 'trending', 'kdrama', 'movie'
+
+  @@index([tmdbId])
+  @@index([attemptedAt])
+  @@index([tmdbId, attemptedAt])
+  @@map("artist_discovery_log")
+}
