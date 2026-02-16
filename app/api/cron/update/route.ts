@@ -3,45 +3,60 @@ import prisma from '@/lib/prisma';
 
 export const maxDuration = 300; // 5 minutos máximo para o cron
 
+const CRON_LOCK_TTL_MS = 30 * 60 * 1000; // 30 minutos TTL para auto-recuperação
+
 /**
- * Lock de processo para evitar execuções simultâneas (encavalar).
- * Como o Next.js roda em processo único no Docker, variáveis de módulo
- * persistem entre requisições dentro da mesma instância.
+ * Adquire lock via banco de dados (sobrevive a reinícios do processo).
+ * Usa upsert atômico com TTL para auto-recuperação se processo morrer.
  */
-const CRON_LOCK_TIMEOUT_MS = 25 * 60 * 1000; // 25 minutos (margem para maxDuration)
-
-interface CronLock {
-    startedAt: number;
-    requestId: string;
-}
-
-let activeCronLock: CronLock | null = null;
-
-function acquireCronLock(): string | null {
-    const now = Date.now();
-
-    // Verificar se lock ativo ainda é válido
-    if (activeCronLock) {
-        const elapsed = now - activeCronLock.startedAt;
-        if (elapsed < CRON_LOCK_TIMEOUT_MS) {
-            const elapsedSec = Math.floor(elapsed / 1000);
-            console.warn(`[CRON] ⚠️  Já existe uma execução ativa (${elapsedSec}s atrás, id: ${activeCronLock.requestId}). Pulando.`);
-            return null; // Lock não adquirido
-        }
-        // Lock expirado (processo anterior travou?) — liberar e continuar
-        console.warn(`[CRON] ⚠️  Lock expirado (${Math.floor(elapsed / 60000)}min). Liberando e continuando.`);
-    }
-
+async function acquireCronLock(): Promise<string | null> {
     const requestId = `cron-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    activeCronLock = { startedAt: now, requestId };
-    console.log(`[CRON] 🔒 Lock adquirido: ${requestId}`);
-    return requestId;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + CRON_LOCK_TTL_MS);
+
+    try {
+        // Tentar criar ou atualizar lock apenas se expirado
+        const existing = await prisma.cronLock.findUnique({
+            where: { id: 'cron-update' }
+        });
+
+        if (existing && existing.expiresAt > now) {
+            const elapsedSec = Math.floor((now.getTime() - existing.lockedAt.getTime()) / 1000);
+            console.warn(`[CRON] ⚠️  Já existe uma execução ativa (${elapsedSec}s atrás, id: ${existing.lockedBy}). Pulando.`);
+            return null;
+        }
+
+        // Lock não existe ou expirou — adquirir
+        if (existing && existing.expiresAt <= now) {
+            console.warn(`[CRON] ⚠️  Lock expirado (processo anterior travou?). Liberando e continuando.`);
+        }
+
+        await prisma.cronLock.upsert({
+            where: { id: 'cron-update' },
+            update: { lockedBy: requestId, lockedAt: now, expiresAt },
+            create: { id: 'cron-update', lockedBy: requestId, lockedAt: now, expiresAt },
+        });
+
+        console.log(`[CRON] 🔒 Lock adquirido: ${requestId}`);
+        return requestId;
+    } catch (error: any) {
+        console.error(`[CRON] ❌ Failed to acquire lock: ${error.message}`);
+        return null;
+    }
 }
 
-function releaseCronLock(requestId: string): void {
-    if (activeCronLock?.requestId === requestId) {
-        activeCronLock = null;
-        console.log(`[CRON] 🔓 Lock liberado: ${requestId}`);
+async function releaseCronLock(requestId: string): Promise<void> {
+    try {
+        // Só libera se o lock pertence a este requestId
+        const lock = await prisma.cronLock.findUnique({
+            where: { id: 'cron-update' }
+        });
+        if (lock?.lockedBy === requestId) {
+            await prisma.cronLock.delete({ where: { id: 'cron-update' } });
+            console.log(`[CRON] 🔓 Lock liberado: ${requestId}`);
+        }
+    } catch (error: any) {
+        console.error(`[CRON] ⚠️  Failed to release lock: ${error.message}`);
     }
 }
 
@@ -84,7 +99,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 1.5. Lock de execução — evita encavalar (duas execuções simultâneas)
-        const lockId = acquireCronLock();
+        const lockId = await acquireCronLock();
         if (!lockId) {
             return NextResponse.json({
                 success: false,
@@ -136,33 +151,30 @@ async function runCronProcessing(lockId: string) {
             trending: { updated: 0, errors: [] as string[] },
         };
 
-        // 2.1. Gerar novos artistas (quantidade reduzida para cron frequente)
-        // NOVA ESTRATÉGIA: Dados 100% reais do TMDB
-        try {
-            console.log('[CRON] Discovering real artists from TMDB...');
-            const { ArtistGeneratorV2 } = require('@/lib/ai/generators/artist-generator-v2');
+        // ================================================================
+        // FASE 1: Etapas independentes em paralelo (artists, news, productions)
+        // ================================================================
+        const [artistsResult, newsResult, productionsResult] = await Promise.allSettled([
+            // 2.1. Gerar novos artistas (TMDB)
+            (async () => {
+                console.log('[CRON] Discovering real artists from TMDB...');
+                const { ArtistGeneratorV2 } = require('@/lib/ai/generators/artist-generator-v2');
 
-            const artistGenerator = new ArtistGeneratorV2(prisma);
-            const existingArtists = await prisma.artist.findMany({
-                select: { nameRomanized: true }
-            });
-            const excludeArtists = existingArtists.map(a => a.nameRomanized);
+                const artistGenerator = new ArtistGeneratorV2(prisma);
+                const existingArtists = await prisma.artist.findMany({
+                    select: { nameRomanized: true }
+                });
+                const excludeArtists = existingArtists.map((a: { nameRomanized: string }) => a.nameRomanized);
 
-            // Gerar 1 artista real do TMDB por execução (cron 4h = ~6 artistas/dia)
-            // Calibrado para Ollama gemma:2b no CPU: bio ~60-120s por artista
-            const artists = await artistGenerator.generateMultipleArtists(1, {
-                excludeList: excludeArtists
-            });
+                const artists = await artistGenerator.generateMultipleArtists(1, {
+                    excludeList: excludeArtists
+                });
 
-            for (const artist of artists) {
-                try {
-                    // Validar dados básicos
+                for (const artist of artists) {
                     if (!artist.nameRomanized || artist.nameRomanized.trim().length === 0) {
                         continue;
                     }
 
-                    // Salvar artista real do TMDB
-                    // Preferir tmdbId como chave (mais confiável que nome)
                     const artistUpsertKey = artist.tmdbId
                         ? { tmdbId: String(artist.tmdbId) }
                         : { nameRomanized: artist.nameRomanized };
@@ -191,47 +203,32 @@ async function runCronProcessing(lockId: string) {
 
                     results.artists.updated++;
                     console.log(`[CRON] ✅ Saved real artist: ${artist.nameRomanized} (TMDB:${artist.tmdbId})`);
-                } catch (error: any) {
-                    console.error(`[CRON] ❌ Failed to save artist: ${error.message}`);
-                    results.artists.errors.push(error.message);
                 }
-            }
-        } catch (error: any) {
-            console.error(`[CRON] ❌ Artist generation failed: ${error.message}`);
-            results.artists.errors.push(error.message);
-        }
+            })(),
 
-        // 2.2. Gerar notícias
-        // NOVA ESTRATÉGIA: Notícias 100% reais de RSS feeds (AllKpop, Soompi, Koreaboo)
-        try {
-            console.log('[CRON] Fetching real news from RSS feeds...');
-            const { NewsGeneratorV2 } = require('@/lib/ai/generators/news-generator-v2');
-            const { getNewsArtistExtractionService } = require('@/lib/services/news-artist-extraction-service');
+            // 2.2. Gerar notícias (RSS feeds)
+            (async () => {
+                console.log('[CRON] Fetching real news from RSS feeds...');
+                const { NewsGeneratorV2 } = require('@/lib/ai/generators/news-generator-v2');
+                const { getNewsArtistExtractionService } = require('@/lib/services/news-artist-extraction-service');
 
-            const newsGenerator = new NewsGeneratorV2();
-            const extractionService = getNewsArtistExtractionService(prisma);
-            const existingNews = await prisma.news.findMany({
-                select: { sourceUrl: true }
-            });
-            const excludeNews = existingNews.map(n => n.sourceUrl);
+                const newsGenerator = new NewsGeneratorV2();
+                const extractionService = getNewsArtistExtractionService(prisma);
+                const existingNews = await prisma.news.findMany({
+                    select: { sourceUrl: true }
+                });
+                const excludeNews = existingNews.map((n: { sourceUrl: string }) => n.sourceUrl);
 
-            // Quantidade de notícias por execução (cron: 0 */4 * * * = 6x/dia)
-            // Calibrado para Ollama gemma:2b no CPU (~60-120s por notícia):
-            // - Staging: 1 notícia (~2-4 min no total, seguro para testes)
-            // - Production: 2 notícias (~4-8 min no total)
-            // Total diário: 12 notícias/dia (production) — suficiente para manter feed atualizado
-            const isStaging = process.env.DEPLOY_ENV === 'staging';
-            const newsCount = isStaging ? 1 : 2;
+                const isStaging = process.env.DEPLOY_ENV === 'staging';
+                const newsCount = isStaging ? 1 : 2;
 
-            console.log(`[CRON] Fetching ${newsCount} news items (env: ${process.env.DEPLOY_ENV || 'production'})`);
+                console.log(`[CRON] Fetching ${newsCount} news items (env: ${process.env.DEPLOY_ENV || 'production'})`);
 
-            const newsItems = await newsGenerator.generateMultipleNews(newsCount, {
-                excludeList: excludeNews
-            });
+                const newsItems = await newsGenerator.generateMultipleNews(newsCount, {
+                    excludeList: excludeNews
+                });
 
-            for (const news of newsItems) {
-                try {
-                    // Validar
+                for (const news of newsItems) {
                     if (!news.title || !news.contentMd || news.contentMd.length < 20) {
                         continue;
                     }
@@ -258,9 +255,8 @@ async function runCronProcessing(lockId: string) {
                     // Extrair artistas mencionados e criar relações (falha graciosamente)
                     let isNewNews = false;
                     try {
-                        // Verificar se a notícia foi criada agora (diff < 10s)
                         const newsAge = Date.now() - new Date(savedNews.createdAt).getTime();
-                        isNewNews = newsAge < 10000; // 10 segundos
+                        isNewNews = newsAge < 10000;
 
                         const artistMentions = await extractionService.extractArtists(
                             news.title,
@@ -287,7 +283,6 @@ async function runCronProcessing(lockId: string) {
                             console.log(`[CRON]    Artists linked: ${artistMentions.map((m: { name: string }) => m.name).join(', ')}`);
                         }
 
-                        // Enviar notificações apenas se for notícia nova
                         if (isNewNews && artistMentions.length > 0) {
                             try {
                                 const { getNewsNotificationService } = await import('@/lib/services/news-notification-service');
@@ -303,46 +298,34 @@ async function runCronProcessing(lockId: string) {
 
                     results.news.updated++;
                     console.log(`[CRON] ✅ Saved real news: ${news.title}`);
-                } catch (error: any) {
-                    console.error(`[CRON] ❌ Failed to save news: ${error.message}`);
-                    results.news.errors.push(error.message);
                 }
-            }
-        } catch (error: any) {
-            console.error(`[CRON] ❌ News generation failed: ${error.message}`);
-            results.news.errors.push(error.message);
-        }
+            })(),
 
-        // 2.3. Descobrir K-dramas e filmes coreanos do TMDB
-        try {
-            console.log('[CRON] Discovering Korean productions from TMDB...');
-            const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
+            // 2.3. Descobrir K-dramas e filmes coreanos do TMDB
+            (async () => {
+                console.log('[CRON] Discovering Korean productions from TMDB...');
+                const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
 
-            const productionDiscovery = getTMDBProductionDiscoveryService();
+                const productionDiscovery = getTMDBProductionDiscoveryService();
 
-            // Get existing productions to avoid duplicates
-            const existingProductions = await prisma.production.findMany({
-                where: { tmdbId: { not: null } },
-                select: { tmdbId: true }
-            });
-            const existingTmdbIds = new Set(existingProductions.map(p => p.tmdbId));
+                const existingProductions = await prisma.production.findMany({
+                    where: { tmdbId: { not: null } },
+                    select: { tmdbId: true }
+                });
+                const existingTmdbIds = new Set(existingProductions.map((p: { tmdbId: string | null }) => p.tmdbId));
 
-            // Discover 2 K-dramas and 1 movie per execution
-            const [kdramas, movies] = await Promise.all([
-                productionDiscovery.discoverKDramas(2),
-                productionDiscovery.discoverKoreanMovies(1)
-            ]);
+                const [kdramas, movies] = await Promise.all([
+                    productionDiscovery.discoverKDramas(2),
+                    productionDiscovery.discoverKoreanMovies(1)
+                ]);
 
-            const allProductions = [...kdramas, ...movies];
+                const allProductions = [...kdramas, ...movies];
 
-            for (const production of allProductions) {
-                try {
-                    // Skip if already exists
+                for (const production of allProductions) {
                     if (existingTmdbIds.has(String(production.tmdbId))) {
                         continue;
                     }
 
-                    // Create production
                     await prisma.production.create({
                         data: {
                             titlePt: production.titlePt,
@@ -360,22 +343,34 @@ async function runCronProcessing(lockId: string) {
                             voteAverage: production.voteAverage,
                             trailerUrl: production.trailerUrl,
                             tags: production.tags,
-                            streamingPlatforms: [], // Can be filled later
-                            sourceUrls: [], // Can be filled later
+                            streamingPlatforms: [],
+                            sourceUrls: [],
                         }
                     });
 
                     results.productions.updated++;
                     console.log(`[CRON] ✅ Saved production: ${production.titlePt} (TMDB:${production.tmdbId})`);
-                } catch (error: any) {
-                    console.error(`[CRON] ❌ Failed to save production: ${error.message}`);
-                    results.productions.errors.push(error.message);
                 }
-            }
-        } catch (error: any) {
-            console.error(`[CRON] ❌ Production discovery failed: ${error.message}`);
-            results.productions.errors.push(error.message);
+            })(),
+        ]);
+
+        // Log resultados da fase paralela
+        if (artistsResult.status === 'rejected') {
+            console.error(`[CRON] ❌ Artist generation failed: ${artistsResult.reason?.message || artistsResult.reason}`);
+            results.artists.errors.push(artistsResult.reason?.message || 'Unknown error');
         }
+        if (newsResult.status === 'rejected') {
+            console.error(`[CRON] ❌ News generation failed: ${newsResult.reason?.message || newsResult.reason}`);
+            results.news.errors.push(newsResult.reason?.message || 'Unknown error');
+        }
+        if (productionsResult.status === 'rejected') {
+            console.error(`[CRON] ❌ Production discovery failed: ${productionsResult.reason?.message || productionsResult.reason}`);
+            results.productions.errors.push(productionsResult.reason?.message || 'Unknown error');
+        }
+
+        // ================================================================
+        // FASE 2: Etapas dependentes (sequencial)
+        // ================================================================
 
         // 2.4. Atualizar filmografias (2-3 artistas por execução)
         try {
@@ -661,7 +656,7 @@ Requisitos:
         const duration = Date.now() - startTime;
         console.error(`[CRON] ❌ Fatal error in background processing after ${(duration / 1000).toFixed(1)}s:`, error);
     } finally {
-        releaseCronLock(lockId);
+        await releaseCronLock(lockId);
     }
 }
 

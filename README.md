@@ -78,3 +78,4 @@ sudo certbot --nginx -d www.seu-dominio.com -d seu-dominio.com
 - Painel Admin para revisão humana.
 
 # Staging verification Sun Feb  1 18:30:33 -03 2026
+\n# Staging verification 02/12/2026 20:46:17
