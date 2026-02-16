@@ -1,64 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
 
 export const maxDuration = 300; // 5 minutos máximo para o cron
-
-const CRON_LOCK_TTL_MS = 30 * 60 * 1000; // 30 minutos TTL para auto-recuperação
-
-/**
- * Adquire lock via banco de dados (sobrevive a reinícios do processo).
- * Usa upsert atômico com TTL para auto-recuperação se processo morrer.
- */
-async function acquireCronLock(): Promise<string | null> {
-    const requestId = `cron-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + CRON_LOCK_TTL_MS);
-
-    try {
-        // Tentar criar ou atualizar lock apenas se expirado
-        const existing = await prisma.cronLock.findUnique({
-            where: { id: 'cron-update' }
-        });
-
-        if (existing && existing.expiresAt > now) {
-            const elapsedSec = Math.floor((now.getTime() - existing.lockedAt.getTime()) / 1000);
-            console.warn(`[CRON] ⚠️  Já existe uma execução ativa (${elapsedSec}s atrás, id: ${existing.lockedBy}). Pulando.`);
-            return null;
-        }
-
-        // Lock não existe ou expirou — adquirir
-        if (existing && existing.expiresAt <= now) {
-            console.warn(`[CRON] ⚠️  Lock expirado (processo anterior travou?). Liberando e continuando.`);
-        }
-
-        await prisma.cronLock.upsert({
-            where: { id: 'cron-update' },
-            update: { lockedBy: requestId, lockedAt: now, expiresAt },
-            create: { id: 'cron-update', lockedBy: requestId, lockedAt: now, expiresAt },
-        });
-
-        console.log(`[CRON] 🔒 Lock adquirido: ${requestId}`);
-        return requestId;
-    } catch (error: any) {
-        console.error(`[CRON] ❌ Failed to acquire lock: ${error.message}`);
-        return null;
-    }
-}
-
-async function releaseCronLock(requestId: string): Promise<void> {
-    try {
-        // Só libera se o lock pertence a este requestId
-        const lock = await prisma.cronLock.findUnique({
-            where: { id: 'cron-update' }
-        });
-        if (lock?.lockedBy === requestId) {
-            await prisma.cronLock.delete({ where: { id: 'cron-update' } });
-            console.log(`[CRON] 🔓 Lock liberado: ${requestId}`);
-        }
-    } catch (error: any) {
-        console.error(`[CRON] ⚠️  Failed to release lock: ${error.message}`);
-    }
-}
 
 /**
  * Cron job endpoint para atualização automática de conteúdo

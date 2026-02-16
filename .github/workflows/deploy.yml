@@ -72,6 +72,9 @@ jobs:
           npx tsc --noEmit
           echo "::endgroup::"
 
+      - name: 🧪 Run Tests
+        run: npx vitest run
+
       # OTIMIZAÇÃO: Build removido! Docker faz o build uma única vez
       # ❌ ANTES: npm run build (2-3min desperdiçados)
       # ✅ DEPOIS: Docker build faz isso de forma otimizada
@@ -81,6 +84,7 @@ jobs:
           echo "### ✅ Validação Concluída" >> $GITHUB_STEP_SUMMARY
           echo "- ✓ ESLint passou" >> $GITHUB_STEP_SUMMARY
           echo "- ✓ TypeScript type-check passou" >> $GITHUB_STEP_SUMMARY
+          echo "- ✓ Vitest testes passaram" >> $GITHUB_STEP_SUMMARY
           echo "- ℹ️  Build será feito no Docker (otimizado)" >> $GITHUB_STEP_SUMMARY
 
   check-deploy-process:
