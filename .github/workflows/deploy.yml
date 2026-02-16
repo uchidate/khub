@@ -266,8 +266,20 @@ jobs:
           echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.staging.yml up -d
 
-          echo "🔐 Syncing DB user password..."
+          echo "⏳ Aguardando postgres aceitar conexões..."
           POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
+          if [ -n "$POSTGRES_CONTAINER" ]; then
+            for i in {1..30}; do
+              if docker exec "$POSTGRES_CONTAINER" pg_isready -U hallyuhub -d hallyuhub_staging >/dev/null 2>&1; then
+                echo "✅ Postgres ready after ${i}s"
+                break
+              fi
+              [ $i -eq 30 ] && echo "⚠️ Postgres timeout, proceeding anyway"
+              sleep 1
+            done
+          fi
+
+          echo "🔐 Syncing DB user password..."
           if [ -z "$POSTGRES_CONTAINER" ]; then
             echo "⚠️ Postgres staging container not found, skipping password sync"
           else
@@ -417,8 +429,20 @@ jobs:
           echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.prod.yml up -d
 
-          echo "🔐 Syncing DB user password..."
+          echo "⏳ Aguardando postgres aceitar conexões..."
           POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
+          if [ -n "$POSTGRES_CONTAINER" ]; then
+            for i in {1..30}; do
+              if docker exec "$POSTGRES_CONTAINER" pg_isready -U hallyuhub -d hallyuhub_production >/dev/null 2>&1; then
+                echo "✅ Postgres ready after ${i}s"
+                break
+              fi
+              [ $i -eq 30 ] && echo "⚠️ Postgres timeout, proceeding anyway"
+              sleep 1
+            done
+          fi
+
+          echo "🔐 Syncing DB user password..."
           if [ -z "$POSTGRES_CONTAINER" ]; then
             echo "⚠️ Postgres production container not found, skipping password sync"
           else

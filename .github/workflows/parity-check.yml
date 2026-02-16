@@ -119,7 +119,7 @@ jobs:
           # - scripts/NORMALIZED: invocação do script (staging usa NODE_ENV=X + flags, production não)
           #   Ambas as linhas (+ e -) contêm "scripts/NORMALIZED", então a mudança é ignorada
           if diff -u \
-            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL\|ALTER USER\|docker exec.*psql' \
+            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL\|ALTER USER\|docker exec.*psql\|pg_isready' \
             /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
             echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
             echo ""
