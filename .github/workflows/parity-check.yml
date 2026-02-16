@@ -36,7 +36,10 @@ jobs:
             "31.97.255.107:3001|www.hallyuhub.com.br"
             "staging.hallyuhub.com.br|www.hallyuhub.com.br"
 
-            # 2b. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
+            # 2b. Database URL: normalizar antes do genérico staging|production
+            "hallyuhub_staging|hallyuhub_production"
+
+            # 2c. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
             "http://ollama-staging|http://ollama-production"
 
             "http://|https://"
@@ -116,7 +119,7 @@ jobs:
           # - scripts/NORMALIZED: invocação do script (staging usa NODE_ENV=X + flags, production não)
           #   Ambas as linhas (+ e -) contêm "scripts/NORMALIZED", então a mudança é ignorada
           if diff -u \
-            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED' \
+            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL' \
             /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
             echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
             echo ""
