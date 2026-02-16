@@ -42,7 +42,7 @@ export interface BatchSyncResult {
 /**
  * Calculate string similarity using Levenshtein distance
  */
-function stringSimilarity(str1: string, str2: string): number {
+export function stringSimilarity(str1: string, str2: string): number {
   const s1 = str1.toLowerCase()
   const s2 = str2.toLowerCase()
 
