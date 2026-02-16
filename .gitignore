@@ -89,3 +89,9 @@ docs/SETUP_SERVIDOR_SECRETS.md
 !prisma/migrations/**/*.sql
 backup-*.sql
 pre-upgrade-state.md
+
+# IDE configs
+.idea/
+
+# Claude Code local files
+.claude/
