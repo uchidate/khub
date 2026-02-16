@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('COMMENTS')
 
 export const dynamic = 'force-dynamic'
 
@@ -38,8 +42,8 @@ export async function GET(
         })
 
         return NextResponse.json({ comments })
-    } catch (error: any) {
-        console.error('Error fetching comments:', error)
+    } catch (error: unknown) {
+        log.error('Error fetching comments', { error: getErrorMessage(error) })
         return NextResponse.json(
             { error: 'Failed to fetch comments' },
             { status: 500 }
@@ -126,8 +130,8 @@ export async function POST(
         })
 
         return NextResponse.json({ comment }, { status: 201 })
-    } catch (error: any) {
-        console.error('Error creating comment:', error)
+    } catch (error: unknown) {
+        log.error('Error creating comment', { error: getErrorMessage(error) })
         return NextResponse.json(
             { error: 'Failed to create comment' },
             { status: 500 }
@@ -194,8 +198,8 @@ export async function DELETE(request: NextRequest) {
         })
 
         return NextResponse.json({ success: true })
-    } catch (error: any) {
-        console.error('Error deleting comment:', error)
+    } catch (error: unknown) {
+        log.error('Error deleting comment', { error: getErrorMessage(error) })
         return NextResponse.json(
             { error: 'Failed to delete comment' },
             { status: 500 }

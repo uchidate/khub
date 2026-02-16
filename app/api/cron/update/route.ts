@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'crypto';
 import prisma from '@/lib/prisma';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
 import { createLogger } from '@/lib/utils/logger';
+import { getErrorMessage } from '@/lib/utils/error';
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter';
 
 const log = createLogger('CRON');
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
         // 2. Disparar processamento em background (fire-and-forget)
         // O Node.js standalone mantém o processo vivo, então a Promise executa até o fim
         runCronProcessing(lockId).catch(err => {
-            log.error(`Unhandled error in background processing: ${err.message}`);
+            log.error('Unhandled error in background processing', { error: getErrorMessage(err) });
         });
 
         // 3. Retornar 202 imediatamente (antes do timeout do nginx de 60s)
@@ -81,11 +82,11 @@ export async function GET(request: NextRequest) {
             timestamp: new Date().toISOString()
         }, { status: 202 });
 
-    } catch (error: any) {
-        log.error(`Fatal error during cron setup: ${error.message}`);
+    } catch (error: unknown) {
+        log.error('Fatal error during cron setup', { error: getErrorMessage(error) });
         return NextResponse.json({
             success: false,
-            error: error.message,
+            error: 'Internal server error',
             timestamp: new Date().toISOString()
         }, { status: 500 });
     }
@@ -362,9 +363,9 @@ async function runCronProcessing(lockId: string) {
                 results.filmography.synced = result.successCount;
                 log.info(`Synced ${result.successCount} filmographies`);
             }
-        } catch (error: any) {
-            log.error(`Filmography sync failed: ${error.message}`);
-            results.filmography.errors.push(error.message);
+        } catch (error: unknown) {
+            log.error('Filmography sync failed', { error: getErrorMessage(error) });
+            results.filmography.errors.push(getErrorMessage(error));
         }
 
         // 2.5. Normalizar conteúdo existente fora do padrão (1-2 itens por execução)
@@ -563,8 +564,8 @@ Requisitos:
             } else {
                 log.debug('No out-of-standard content found');
             }
-        } catch (error: any) {
-            log.warn(`Normalization failed (non-blocking): ${error.message}`);
+        } catch (error: unknown) {
+            log.warn('Normalization failed (non-blocking)', { error: getErrorMessage(error) });
         }
 
         // 2.6. Atualizar trending scores
@@ -576,9 +577,9 @@ Requisitos:
             await trendingService.updateAllTrendingScores();
             results.trending.updated = 1; // Flag de sucesso
             log.info('Trending scores updated');
-        } catch (error: any) {
-            log.error(`Trending update failed: ${error.message}`);
-            results.trending.errors.push(error.message);
+        } catch (error: unknown) {
+            log.error('Trending update failed', { error: getErrorMessage(error) });
+            results.trending.errors.push(getErrorMessage(error));
         }
 
         // 3. Calcular métricas
@@ -603,14 +604,14 @@ Requisitos:
                         details: results
                     });
                 }
-            } catch (error: any) {
-                log.warn(`Slack notification failed: ${error.message}`);
+            } catch (error: unknown) {
+                log.warn('Slack notification failed', { error: getErrorMessage(error) });
             }
         }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         const duration = Date.now() - startTime;
-        log.error(`Fatal error in background processing: ${error.message}`, { duration: Math.round(duration / 1000) });
+        log.error('Fatal error in background processing', { error: getErrorMessage(error), duration: Math.round(duration / 1000) });
     } finally {
         await releaseCronLock(lockId);
     }

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import { getOrchestrator, getOrchestratorStats } from '@/lib/ai/orchestrator-factory'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('ADMIN-AI')
 
 export const dynamic = 'force-dynamic'
 
@@ -98,12 +102,13 @@ export async function GET() {
             latencyMs: Date.now() - testStart,
             success: result.ok === true,
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
+        log.error('AI provider test failed', { error: getErrorMessage(err) })
         testResult = {
             provider: 'none',
             latencyMs: Date.now() - startTime,
             success: false,
-            error: err.message,
+            error: getErrorMessage(err),
         }
     }
 

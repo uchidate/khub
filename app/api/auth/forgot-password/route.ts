@@ -4,6 +4,10 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { getEmailService } from '@/lib/services/email-service'
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('AUTH')
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -58,23 +62,23 @@ export async function POST(request: NextRequest) {
           resetToken,
           user.name || undefined
         )
-        console.log(`✅ Password reset email sent to: ${user.email}`)
+        log.info('Password reset email sent', { email: user.email })
       } else {
-        console.warn('⚠️  Email service disabled, reset link not sent')
+        log.warn('Email service disabled, reset link not sent')
 
         // In development, log the reset URL
         if (process.env.NODE_ENV === 'development') {
           const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password?token=${resetToken}`
-          console.log('🔗 Reset password URL:', resetUrl)
+          log.debug('Reset password URL', { url: resetUrl })
         }
       }
     } catch (emailError) {
-      console.error('❌ Failed to send password reset email:', emailError)
+      log.error('Failed to send password reset email', { error: getErrorMessage(emailError) })
 
       // In development, still log the URL even if email fails
       if (process.env.NODE_ENV === 'development') {
         const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password?token=${resetToken}`
-        console.log('🔗 Reset password URL (email failed):', resetUrl)
+        log.debug('Reset password URL (email failed)', { url: resetUrl })
       }
     }
 
@@ -90,7 +94,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error('Forgot password error:', error)
+    log.error('Forgot password error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Erro ao processar solicitação. Tente novamente.' },
       { status: 500 }

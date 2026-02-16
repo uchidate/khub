@@ -3,6 +3,10 @@ import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import fs from 'fs';
 import path from 'path';
+import { createLogger } from '@/lib/utils/logger';
+import { getErrorMessage } from '@/lib/utils/error';
+
+const log = createLogger('ADMIN-CRON');
 
 /**
  * Admin endpoint para visualizar informações de cron jobs
@@ -110,10 +114,10 @@ export async function GET(request: NextRequest) {
       note: 'Estatísticas baseadas em dados do banco. Para logs detalhados do servidor, consulte via SSH.',
     });
 
-  } catch (error: any) {
-    console.error('[Admin Cron API] Error:', error);
+  } catch (error: unknown) {
+    log.error('Admin Cron API error', { error: getErrorMessage(error) });
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -139,7 +143,7 @@ function loadCronJobs(env: string): Array<{name: string; schedule: string; descr
       }));
     }
   } catch (error) {
-    console.warn(`[Admin Cron] Could not read ${configFile}, using fallback`);
+    log.warn(`Could not read ${configFile}, using fallback`);
   }
 
   // Fallback: valores hardcoded

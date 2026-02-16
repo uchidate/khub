@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('SETTINGS')
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -108,10 +112,10 @@ export async function PUT(request: NextRequest) {
             success: true,
             settings,
         });
-    } catch (error: any) {
-        console.error('Error updating notification settings:', error);
+    } catch (error: unknown) {
+        log.error('Error updating notification settings', { error: getErrorMessage(error) });
         return NextResponse.json(
-            { error: 'Failed to update settings', details: error.message },
+            { error: 'Failed to update settings', details: getErrorMessage(error) },
             { status: 500 }
         );
     }

@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { createLogger } from '@/lib/utils/logger';
+import { getErrorMessage } from '@/lib/utils/error';
+
+const log = createLogger('METRICS');
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -73,7 +77,7 @@ hallyuhub_entities_total{type="agency"} ${agencyCount}
         });
 
     } catch (err) {
-        console.error('Metrics collection error:', err);
+        log.error('Metrics collection error', { error: getErrorMessage(err) });
         // Retorna metricas de erro
         const errorMetrics = `
 # HELP hallyuhub_up Application is up

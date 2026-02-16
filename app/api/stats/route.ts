@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('STATS')
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300 // Cache por 5 minutos
@@ -23,8 +27,8 @@ export async function GET() {
             news: newsCount,
             views: totalViews._sum.viewCount || 0
         })
-    } catch (error: any) {
-        console.error('Error fetching stats:', error)
+    } catch (error: unknown) {
+        log.error('Error fetching stats', { error: getErrorMessage(error) })
         return NextResponse.json(
             {
                 artists: 0,

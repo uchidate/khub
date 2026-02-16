@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('ADMIN-NEWS')
 
 // Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
@@ -54,7 +58,7 @@ export async function GET(request: NextRequest) {
       parseInt(searchParams.get('limit') || '20')
     )
   } catch (error) {
-    console.error('Get news error:', error)
+    log.error('Get news error', { error: getErrorMessage(error) })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
     }
 
-    console.error('Create news error:', error)
+    log.error('Create news error', { error: getErrorMessage(error) })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -128,7 +132,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
     }
 
-    console.error('Update news error:', error)
+    log.error('Update news error', { error: getErrorMessage(error) })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -155,7 +159,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
     }
 
-    console.error('Delete news error:', error)
+    log.error('Delete news error', { error: getErrorMessage(error) })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
