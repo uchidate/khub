@@ -10,7 +10,9 @@ services:
     volumes:
       - postgres-production-data:/var/lib/postgresql/data
     networks:
-      - web
+      web:
+      backend:
+        ipv4_address: 172.19.0.2
     restart: always
     deploy:
       resources:
@@ -31,7 +33,9 @@ services:
     volumes:
       - ollama-production-data:/root/.ollama
     networks:
-      - web
+      web:
+      backend:
+        ipv4_address: 172.19.0.3
     restart: always
     deploy:
       resources:
@@ -64,6 +68,7 @@ services:
       - hallyuhub-data:/app/data
     networks:
       - web
+      - backend
     restart: always
     deploy:
       resources:
@@ -86,6 +91,12 @@ services:
 networks:
   web:
     external: true
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/24
+          gateway: 172.19.0.1
 
 volumes:
   hallyuhub-data:
