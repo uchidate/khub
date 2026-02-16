@@ -249,9 +249,6 @@ jobs:
 
       - name: 🔐 Sync DB User Password (Staging)
         run: |
-          # Sincroniza a senha do user 'hallyuhub' no postgres com o secret POSTGRES_PASSWORD.
-          # Usa conexão local (trust) para alterar a senha via ALTER USER.
-          # POSTGRES_USER=hallyuhub (container não usa user postgres padrão).
           POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
           if [ -z "$POSTGRES_CONTAINER" ]; then
             echo "⚠️ Postgres staging container not found, skipping password sync"

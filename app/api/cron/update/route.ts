@@ -96,9 +96,18 @@ export async function GET(request: NextRequest) {
  * Processamento assíncrono em background.
  * Executa todas as atualizações (TMDB, RSS, Ollama, etc.) sem bloquear a resposta HTTP.
  */
+/** Timer utilitário para medir duração de fases */
+function makeTimer() {
+    const t = Date.now();
+    return () => Date.now() - t;
+}
+
 async function runCronProcessing(lockId: string) {
     const startTime = Date.now();
     log.info('Background processing started', { requestId: lockId });
+
+    // Métricas de performance por fase (ms)
+    const perf: Record<string, number> = {};
 
     try {
         const results = {
@@ -112,9 +121,11 @@ async function runCronProcessing(lockId: string) {
         // ================================================================
         // FASE 1: Etapas independentes em paralelo (artists, news, productions)
         // ================================================================
+        const fase1Timer = makeTimer();
         const [artistsResult, newsResult, productionsResult] = await Promise.allSettled([
             // 2.1. Gerar novos artistas (TMDB)
             (async () => {
+                const t = makeTimer();
                 log.info('Discovering real artists from TMDB...');
                 const { ArtistGeneratorV2 } = require('@/lib/ai/generators/artist-generator-v2');
 
@@ -162,10 +173,12 @@ async function runCronProcessing(lockId: string) {
                     results.artists.updated++;
                     log.info(`Saved real artist: ${artist.nameRomanized}`, { tmdbId: artist.tmdbId });
                 }
+                perf.artists_ms = t();
             })(),
 
             // 2.2. Gerar notícias (RSS feeds)
             (async () => {
+                const t = makeTimer();
                 log.info('Fetching real news from RSS feeds...');
                 const { NewsGeneratorV2 } = require('@/lib/ai/generators/news-generator-v2');
                 const { getNewsArtistExtractionService } = require('@/lib/services/news-artist-extraction-service');
@@ -257,10 +270,12 @@ async function runCronProcessing(lockId: string) {
                     results.news.updated++;
                     log.info(`Saved real news: ${news.title}`);
                 }
+                perf.news_ms = t();
             })(),
 
             // 2.3. Descobrir K-dramas e filmes coreanos do TMDB
             (async () => {
+                const t = makeTimer();
                 log.info('Discovering Korean productions from TMDB...');
                 const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
 
@@ -309,8 +324,10 @@ async function runCronProcessing(lockId: string) {
                     results.productions.updated++;
                     log.info(`Saved production: ${production.titlePt}`, { tmdbId: production.tmdbId });
                 }
+                perf.productions_ms = t();
             })(),
         ]);
+        perf.fase1_parallel_ms = fase1Timer();
 
         // Log resultados da fase paralela
         if (artistsResult.status === 'rejected') {
@@ -331,6 +348,7 @@ async function runCronProcessing(lockId: string) {
         // ================================================================
 
         // 2.4. Atualizar filmografias (2-3 artistas por execução)
+        const filmographyTimer = makeTimer();
         try {
             log.info('Syncing filmographies...');
             const { getFilmographySyncService } = require('@/lib/services/filmography-sync-service');
@@ -367,9 +385,11 @@ async function runCronProcessing(lockId: string) {
             log.error('Filmography sync failed', { error: getErrorMessage(error) });
             results.filmography.errors.push(getErrorMessage(error));
         }
+        perf.filmography_ms = filmographyTimer();
 
         // 2.5. Normalizar conteúdo existente fora do padrão (1-2 itens por execução)
         // Prioridade: fotos faltantes (rápido, TMDB) > conteúdo em inglês (lento, Ollama)
+        const enrichTimer = makeTimer();
         try {
             log.info('Checking for out-of-standard content...');
 
@@ -567,8 +587,10 @@ Requisitos:
         } catch (error: unknown) {
             log.warn('Normalization failed (non-blocking)', { error: getErrorMessage(error) });
         }
+        perf.enrich_ms = enrichTimer();
 
         // 2.6. Atualizar trending scores
+        const trendingTimer = makeTimer();
         try {
             log.info('Updating trending scores...');
             const { TrendingService } = require('@/lib/services/trending-service');
@@ -581,12 +603,25 @@ Requisitos:
             log.error('Trending update failed', { error: getErrorMessage(error) });
             results.trending.errors.push(getErrorMessage(error));
         }
+        perf.trending_ms = trendingTimer();
 
         // 3. Calcular métricas
         const duration = Date.now() - startTime;
         const totalUpdates = results.artists.updated + results.news.updated + results.productions.updated + results.filmography.synced;
         const totalErrors = results.artists.errors.length + results.news.errors.length +
                            results.productions.errors.length + results.filmography.errors.length + results.trending.errors.length;
+
+        // Log de performance por fase (para identificar gargalos)
+        log.info('Performance breakdown', {
+            total_s: Math.round(duration / 1000),
+            fase1_parallel_s: Math.round((perf.fase1_parallel_ms ?? 0) / 1000),
+            artists_s: Math.round((perf.artists_ms ?? 0) / 1000),
+            news_s: Math.round((perf.news_ms ?? 0) / 1000),
+            productions_s: Math.round((perf.productions_ms ?? 0) / 1000),
+            filmography_s: Math.round((perf.filmography_ms ?? 0) / 1000),
+            enrich_ollama_s: Math.round((perf.enrich_ms ?? 0) / 1000),
+            trending_s: Math.round((perf.trending_ms ?? 0) / 1000),
+        });
 
         log.info(`Job completed`, { duration: Math.round(duration / 1000), totalUpdates, totalErrors });
 
