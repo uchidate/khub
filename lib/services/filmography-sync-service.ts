@@ -16,6 +16,9 @@ import { getTMDBFilmographyService, NotFoundError } from './tmdb-filmography-ser
 import { TMDBProductionData } from '../types/tmdb'
 import { getSlackService } from './slack-notification-service'
 import { getOrchestrator } from '../ai/orchestrator-factory'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('FILMOGRAPHY')
 
 export type SyncStrategy = 'FULL_REPLACE' | 'INCREMENTAL' | 'SMART_MERGE'
 
@@ -140,7 +143,7 @@ export class FilmographySyncService {
       )
 
       if (!tmdbPerson) {
-        console.log(`⚠️ Artist ${artist.nameRomanized} not found on TMDB. Attempting AI fallback...`)
+        log.warn(`Artist ${artist.nameRomanized} not found on TMDB. Attempting AI fallback...`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
 
@@ -150,11 +153,11 @@ export class FilmographySyncService {
       const credits = await this.tmdbService.getPersonCredits(tmdbPerson.id)
       const productions = await this.tmdbService.transformCreditsToProductions(credits)
 
-      console.log(`Found ${productions.length} productions for ${artist.nameRomanized}`)
+      log.info(`Found ${productions.length} productions for ${artist.nameRomanized}`)
 
       // If no productions found on TMDB even after finding person, try AI as fallback
       if (productions.length === 0) {
-        console.log(`⚠️  No productions found on TMDB for ${artist.nameRomanized}. Attempting AI fallback...`)
+        log.warn(`No productions found on TMDB for ${artist.nameRomanized}. Attempting AI fallback...`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
 
@@ -205,7 +208,7 @@ export class FilmographySyncService {
         })
 
         // Try AI fallback even on error
-        console.log(`⚠️ TMDB error for ${artistId}. Attempting AI fallback...`)
+        log.warn(`TMDB error for ${artistId}. Attempting AI fallback...`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
     } finally {
@@ -373,9 +376,9 @@ export class FilmographySyncService {
               // Log progress
               const progress = results.length
               const total = artistIds.length
-              console.log(`Progress: ${progress}/${total} (${Math.round((progress / total) * 100)}%)`)
+              log.debug(`Progress: ${progress}/${total} (${Math.round((progress / total) * 100)}%)`)
             } catch (error) {
-              console.error(`Failed to sync artist ${artistId}:`, error)
+              log.error(`Failed to sync artist ${artistId}: ${(error as Error).message}`)
               results.push({
                 success: false,
                 artistId,
@@ -420,7 +423,7 @@ export class FilmographySyncService {
       select: { id: true },
     })
 
-    console.log(`Found ${artists.length} artists without filmography`)
+    log.info(`Found ${artists.length} artists without filmography`)
 
     return await this.syncMultipleArtists(
       artists.map(a => a.id),
@@ -451,7 +454,7 @@ export class FilmographySyncService {
       select: { id: true },
     })
 
-    console.log(`Found ${artists.length} artists with outdated filmographies`)
+    log.info(`Found ${artists.length} artists with outdated filmographies`)
 
     return await this.syncMultipleArtists(
       artists.map(a => a.id),
@@ -616,7 +619,7 @@ export class FilmographySyncService {
         },
       })
     } catch (error) {
-      console.error('Failed to send Slack notification:', error)
+      log.error(`Failed to send Slack notification: ${(error as Error).message}`)
     }
   }
 
@@ -642,7 +645,7 @@ export class FilmographySyncService {
         message
       )
     } catch (error) {
-      console.error('Failed to send batch Slack notification:', error)
+      log.error(`Failed to send batch Slack notification: ${(error as Error).message}`)
     }
   }
 

@@ -1,3 +1,5 @@
+import { createLogger } from './logger'
+
 /**
  * Generic Rate Limiter using Sliding Window + Token Bucket hybrid approach
  *
@@ -65,6 +67,7 @@ export class RateLimiter {
   private totalRequests: number = 0;
   private pendingQueue: Array<() => void> = [];
   private isProcessing: boolean = false;
+  private log;
 
   constructor(config: RateLimiterConfig) {
     this.config = {
@@ -74,6 +77,7 @@ export class RateLimiter {
       bufferMs: config.bufferMs ?? 100,
       name: config.name ?? 'RateLimiter',
     };
+    this.log = createLogger(this.config.name);
   }
 
   /**
@@ -132,9 +136,11 @@ export class RateLimiter {
       const waitTime = this.config.windowMs - (now - oldestRequest) + this.config.bufferMs;
 
       if (waitTime > 0) {
-        console.log(
-          `[${this.config.name}] ⏳ Rate limit reached (${this.requestTimestamps.length}/${this.config.maxRequests}). Waiting ${(waitTime / 1000).toFixed(1)}s...`
-        );
+        this.log.info(`Rate limit reached. Waiting ${(waitTime / 1000).toFixed(1)}s...`, {
+          current: this.requestTimestamps.length,
+          max: this.config.maxRequests,
+          waitMs: waitTime,
+        });
         await this.sleep(waitTime);
       }
     }
