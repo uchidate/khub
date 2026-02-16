@@ -10,7 +10,9 @@ services:
     volumes:
       - postgres-staging-data:/var/lib/postgresql/data
     networks:
-      - web
+      web:
+      backend:
+        ipv4_address: 172.20.0.2
     restart: on-failure
     deploy:
       resources:
@@ -32,6 +34,7 @@ services:
       - ollama-staging-data:/root/.ollama
     networks:
       - web
+      - backend
     restart: "no"  # Não reinicia automaticamente - economiza recursos quando não está em uso
     deploy:
       resources:
@@ -64,6 +67,7 @@ services:
       - hallyuhub-data:/app/data
     networks:
       - web
+      - backend
     restart: on-failure
     deploy:
       resources:
@@ -84,6 +88,12 @@ services:
 networks:
   web:
     external: true
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
 
 volumes:
   hallyuhub-data:
