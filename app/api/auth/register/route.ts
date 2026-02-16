@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { getEmailService } from '@/lib/services/email-service'
+import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -11,6 +12,9 @@ const registerSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  const limited = checkRateLimit(request, RateLimitPresets.AUTH_REGISTER)
+  if (limited) return limited
+
   try {
     const body = await request.json()
 
