@@ -33,8 +33,9 @@ services:
     volumes:
       - ollama-staging-data:/root/.ollama
     networks:
-      - web
-      - backend
+      web:
+      backend:
+        ipv4_address: 172.20.0.3
     restart: "no"  # Não reinicia automaticamente - economiza recursos quando não está em uso
     deploy:
       resources:
