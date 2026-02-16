@@ -61,6 +61,7 @@ model Artist {
   @@index([nameRomanized, createdAt])
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
+  @@index([tmdbSyncStatus, tmdbLastSync])
   @@index([trendingScore])
 }
 
@@ -350,4 +351,13 @@ model Comment {
   @@index([userId])
   @@index([createdAt])
   @@index([newsId, createdAt])
+}
+
+model CronLock {
+  id        String   @id @default("cron-update")
+  lockedBy  String
+  lockedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("cron_locks")
 }
