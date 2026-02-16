@@ -15,7 +15,7 @@ import prisma from '../prisma'
 import { getTMDBFilmographyService, NotFoundError } from './tmdb-filmography-service'
 import { TMDBProductionData } from '../types/tmdb'
 import { getSlackService } from './slack-notification-service'
-import { AIOrchestrator } from '../ai/orchestrator'
+import { getOrchestrator } from '../ai/orchestrator-factory'
 
 export type SyncStrategy = 'FULL_REPLACE' | 'INCREMENTAL' | 'SMART_MERGE'
 
@@ -106,7 +106,19 @@ export class FilmographySyncService {
       // Get artist from database
       const artist = await prisma.artist.findUnique({
         where: { id: artistId },
-        include: { productions: { include: { production: true } } },
+        select: {
+          id: true,
+          nameRomanized: true,
+          nameHangul: true,
+          tmdbId: true,
+          productions: {
+            select: {
+              productionId: true,
+              role: true,
+              production: { select: { id: true, tmdbId: true, titleKr: true, titlePt: true, year: true, type: true } }
+            }
+          }
+        },
       })
 
       if (!artist) {
@@ -191,10 +203,6 @@ export class FilmographySyncService {
           where: { id: artistId },
           data: { tmdbSyncStatus: 'NOT_FOUND' },
         })
-        await prisma.artist.update({
-          where: { id: artistId },
-          data: { tmdbSyncStatus: 'ERROR' },
-        })
 
         // Try AI fallback even on error
         console.log(`⚠️ TMDB error for ${artistId}. Attempting AI fallback...`)
@@ -235,11 +243,7 @@ export class FilmographySyncService {
       if (!artist) throw new Error(`Artist not found: ${artistId}`)
       result.artistName = artist.nameRomanized
 
-      const orchestrator = new AIOrchestrator({
-        geminiApiKey: process.env.GEMINI_API_KEY,
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        ollamaBaseUrl: process.env.OLLAMA_BASE_URL,
-      })
+      const orchestrator = getOrchestrator()
 
       const prompt = `Gere uma lista da filmografia oficial (Dramas, Filmes, Programas de Variedades) do artista coreano "${artist.nameRomanized}" (${artist.nameHangul || ''}).
       
