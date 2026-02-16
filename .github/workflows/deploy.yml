@@ -251,13 +251,13 @@ jobs:
         run: |
           # Sincroniza a senha do user 'hallyuhub' no postgres com o secret POSTGRES_PASSWORD.
           # Usa conexão local (trust) para alterar a senha via ALTER USER.
-          # Necessário quando o secret é atualizado mas o container postgres já existe com senha antiga.
+          # POSTGRES_USER=hallyuhub (container não usa user postgres padrão).
           POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
           if [ -z "$POSTGRES_CONTAINER" ]; then
             echo "⚠️ Postgres staging container not found, skipping password sync"
           else
             echo "🔐 Syncing DB user password in $POSTGRES_CONTAINER..."
-            docker exec "$POSTGRES_CONTAINER" psql -U postgres -c \
+            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_staging -c \
               "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
               && echo "✅ Password synced" \
               || echo "⚠️ Password sync failed (non-blocking)"
@@ -410,7 +410,7 @@ jobs:
             echo "⚠️ Postgres production container not found, skipping password sync"
           else
             echo "🔐 Syncing DB user password in $POSTGRES_CONTAINER..."
-            docker exec "$POSTGRES_CONTAINER" psql -U postgres -c \
+            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_production -c \
               "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
               && echo "✅ Password synced" \
               || echo "⚠️ Password sync failed (non-blocking)"
