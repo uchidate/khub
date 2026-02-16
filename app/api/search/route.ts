@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('SEARCH')
 
 export const dynamic = 'force-dynamic'
 
@@ -97,7 +101,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(results)
   } catch (error) {
-    console.error('Search error:', error)
+    log.error('Search error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Search failed' },
       { status: 500 }

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('AUTH')
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token é obrigatório'),
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error('Reset password error:', error)
+    log.error('Reset password error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Erro ao resetar senha. Tente novamente.' },
       { status: 500 }

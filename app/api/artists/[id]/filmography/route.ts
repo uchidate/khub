@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('ARTISTS')
 
 /**
  * GET /api/artists/[id]/filmography
@@ -90,7 +94,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Get filmography error:', error)
+    log.error('Get filmography error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

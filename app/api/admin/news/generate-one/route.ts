@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { createLogger } from '@/lib/utils/logger';
+import { getErrorMessage } from '@/lib/utils/error';
+
+const log = createLogger('ADMIN-NEWS');
 
 export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -96,10 +100,11 @@ export async function POST(request: NextRequest) {
             },
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        log.error('Generate news error', { error: getErrorMessage(error) })
         return NextResponse.json({
             success: false,
-            error: error.message,
+            error: 'Internal server error',
             duration: Date.now() - startTime,
         }, { status: 500 });
     }

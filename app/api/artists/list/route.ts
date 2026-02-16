@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('ARTISTS')
 
 export const dynamic = 'force-dynamic'
 
@@ -73,8 +77,8 @@ export async function GET(request: NextRequest) {
             },
             filters: { search, role, sortBy },
         })
-    } catch (error: any) {
-        console.error('Error fetching artists:', error)
+    } catch (error: unknown) {
+        log.error('Error fetching artists', { error: getErrorMessage(error) })
         return NextResponse.json(
             { error: 'Failed to fetch artists' },
             { status: 500 }

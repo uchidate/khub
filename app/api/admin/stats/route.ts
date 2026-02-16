@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin, getDashboardStats } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('ADMIN-STATS')
 
 // Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
@@ -71,7 +75,7 @@ export async function GET() {
       })),
     })
   } catch (error) {
-    console.error('Get admin stats error:', error)
+    log.error('Get admin stats error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
