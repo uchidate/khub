@@ -1,7 +1,6 @@
 import prisma from '../prisma'
 
 
-
 export class TrendingService {
   private static instance: TrendingService
 
@@ -44,30 +43,48 @@ export class TrendingService {
     return viewScore + favoriteScore + recentScore + completenessScore
   }
 
+  /**
+   * Batch update de trending scores usando uma única query SQL.
+   * Substitui o loop N+1 anterior (~2N queries) por 1 query.
+   */
   async updateAllTrendingScores(): Promise<void> {
-    console.log('📈 Iniciando atualização de trending scores...')
+    console.log('📈 Iniciando atualização de trending scores (batch SQL)...')
 
-    const artists = await prisma.artist.findMany({ select: { id: true, nameRomanized: true } })
-    console.log(`   Encontrados ${artists.length} artistas`)
+    const count = await prisma.artist.count()
+    console.log(`   Encontrados ${count} artistas`)
 
-    let updated = 0
-    for (const artist of artists) {
-      const score = await this.calculateTrendingScore(artist.id)
-      await prisma.artist.update({
-        where: { id: artist.id },
-        data: {
-          trendingScore: score,
-          lastTrendingUpdate: new Date()
-        }
-      })
-      updated++
+    // Única query que calcula e atualiza todos os scores de uma vez
+    // Fórmula: viewScore(30%) + favoriteScore(40%) + recentScore(20%) + completenessScore(10%)
+    await prisma.$executeRaw`
+      UPDATE "Artist" SET
+        "trendingScore" = (
+          -- View score: min(viewCount/10000, 1) * 0.3
+          LEAST(COALESCE("viewCount", 0)::float / 10000.0, 1.0) * 0.3
+          +
+          -- Favorite score: min(favoriteCount/1000, 1) * 0.4
+          LEAST(COALESCE("favoriteCount", 0)::float / 1000.0, 1.0) * 0.4
+          +
+          -- Recent score: if created < 7 days ago, (1 - days/7) * 0.2
+          CASE
+            WHEN "createdAt" > NOW() - INTERVAL '7 days'
+            THEN (1.0 - EXTRACT(EPOCH FROM (NOW() - "createdAt")) / (7.0 * 86400.0)) * 0.2
+            ELSE 0.0
+          END
+          +
+          -- Completeness score: (hasBio + hasImage + hasFilmography) / 3 * 0.1
+          (
+            (CASE WHEN "bio" IS NOT NULL AND "bio" != '' THEN 1.0 ELSE 0.0 END)
+            + (CASE WHEN "primaryImageUrl" IS NOT NULL AND "primaryImageUrl" != '' THEN 1.0 ELSE 0.0 END)
+            + (CASE WHEN EXISTS (
+                SELECT 1 FROM "ArtistProduction" ap WHERE ap."artistId" = "Artist"."id"
+              ) THEN 1.0 ELSE 0.0 END)
+          ) / 3.0 * 0.1
+        ),
+        "lastTrendingUpdate" = NOW(),
+        "updatedAt" = NOW()
+    `
 
-      if (updated % 10 === 0) {
-        console.log(`   Processados ${updated}/${artists.length} artistas...`)
-      }
-    }
-
-    console.log(`✅ Trending scores atualizados para ${updated} artistas`)
+    console.log(`✅ Trending scores atualizados para ${count} artistas (batch SQL)`)
   }
 
   async getTrendingArtists(limit: number = 6) {
