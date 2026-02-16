@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +52,9 @@ export async function POST(
     request: NextRequest,
     { params }: RouteContext
 ) {
+    const limited = checkRateLimit(request, RateLimitPresets.COMMENTS)
+    if (limited) return limited
+
     try {
         const session = await getServerSession(authOptions)
 

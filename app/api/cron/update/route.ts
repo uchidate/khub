@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import prisma from '@/lib/prisma';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
 import { createLogger } from '@/lib/utils/logger';
+import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter';
 
 const log = createLogger('CRON');
 
@@ -21,6 +23,9 @@ export const maxDuration = 300; // 5 minutos máximo para o cron
  * (Ollama no CPU leva 2-5min por execução, ultrapassando o timeout do nginx de 60s)
  */
 export async function GET(request: NextRequest) {
+    const limited = checkRateLimit(request, RateLimitPresets.CRON);
+    if (limited) return limited;
+
     log.info('Starting scheduled update job...');
 
     try {
@@ -37,7 +42,12 @@ export async function GET(request: NextRequest) {
             }, { status: 500 });
         }
 
-        if (authToken !== expectedToken) {
+        // Timing-safe comparison to prevent timing attacks
+        const tokenValid = authToken !== null
+            && authToken.length === expectedToken.length
+            && timingSafeEqual(Buffer.from(authToken), Buffer.from(expectedToken));
+
+        if (!tokenValid) {
             log.warn('Unauthorized access attempt');
             return NextResponse.json({
                 success: false,

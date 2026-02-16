@@ -3,12 +3,16 @@ import { randomBytes } from 'crypto'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { getEmailService } from '@/lib/services/email-service'
+import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido'),
 })
 
 export async function POST(request: NextRequest) {
+  const limited = checkRateLimit(request, RateLimitPresets.AUTH_FORGOT_PASSWORD)
+  if (limited) return limited
+
   try {
     const body = await request.json()
     const { email } = forgotPasswordSchema.parse(body)

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+    const limited = checkRateLimit(request, RateLimitPresets.SEARCH_GLOBAL)
+    if (limited) return limited
+
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')
     const types = searchParams.get('types')?.split(',') || ['artists', 'news', 'productions']
