@@ -74,6 +74,21 @@ export class ArtistGeneratorV2 {
         const excludeSet = new Set(options.excludeList || []);
         existingArtists.forEach(a => excludeSet.add(a.nameRomanized));
 
+        // OTIMIZAÇÃO: Buscar artistas tentados recentemente (últimos 7 dias)
+        // Evita tentar os mesmos artistas repetidamente se já foram pulados
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const recentAttempts = await this.prisma.artistDiscoveryLog.findMany({
+            where: {
+                attemptedAt: { gte: sevenDaysAgo },
+                wasAdded: false  // Apenas os que foram pulados (não adicionados)
+            },
+            select: { tmdbId: true }
+        });
+
+        const recentlyAttemptedIds = new Set(recentAttempts.map(a => a.tmdbId));
+
+        console.log(`📊 Excluded: ${existingTmdbIds.size} in DB, ${recentlyAttemptedIds.size} recently attempted`);
+
         // Descobrir artistas do TMDB (buscar mais para ter margem)
         const discovered = await this.tmdbDiscovery.discoverKoreanArtists(count * 3);
 
@@ -83,6 +98,20 @@ export class ArtistGeneratorV2 {
             // Pular se já existe no DB por tmdbId (mais confiável)
             if (existingTmdbIds.has(artist.tmdbId)) {
                 console.log(`  ⏭️  Skipping ${artist.name} (already in DB by tmdbId)`);
+                // Registrar tentativa (wasAdded=false)
+                await this.prisma.artistDiscoveryLog.create({
+                    data: {
+                        tmdbId: artist.tmdbId,
+                        wasAdded: false,
+                        source: 'popular'
+                    }
+                }).catch(() => {}); // Ignore errors (non-critical)
+                continue;
+            }
+
+            // OTIMIZAÇÃO: Pular se foi tentado recentemente (últimos 7 dias)
+            if (recentlyAttemptedIds.has(artist.tmdbId)) {
+                console.log(`  ⏭️  Skipping ${artist.name} (attempted in last 7 days)`);
                 continue;
             }
 
@@ -90,6 +119,14 @@ export class ArtistGeneratorV2 {
             const normalizedName = normalizeForComparison(artist.name);
             if (existingNamesNormalized.has(normalizedName)) {
                 console.log(`  ⏭️  Skipping ${artist.name} (fuzzy name match in DB)`);
+                // Registrar tentativa
+                await this.prisma.artistDiscoveryLog.create({
+                    data: {
+                        tmdbId: artist.tmdbId,
+                        wasAdded: false,
+                        source: 'popular'
+                    }
+                }).catch(() => {});
                 continue;
             }
 
@@ -104,9 +141,26 @@ export class ArtistGeneratorV2 {
                 artists.push(artistData);
                 console.log(`  ✅ Processed: ${artistData.nameRomanized}`);
 
+                // Registrar artista adicionado com sucesso
+                await this.prisma.artistDiscoveryLog.create({
+                    data: {
+                        tmdbId: artist.tmdbId,
+                        wasAdded: true,
+                        source: 'popular'
+                    }
+                }).catch(() => {}); // Non-critical
+
                 if (artists.length >= count) break;
             } catch (error: any) {
                 console.error(`  ❌ Failed to process ${artist.name}: ${error.message}`);
+                // Registrar falha ao processar
+                await this.prisma.artistDiscoveryLog.create({
+                    data: {
+                        tmdbId: artist.tmdbId,
+                        wasAdded: false,
+                        source: 'popular'
+                    }
+                }).catch(() => {});
                 continue;
             }
         }

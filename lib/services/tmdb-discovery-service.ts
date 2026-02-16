@@ -115,12 +115,19 @@ export class TMDBDiscoveryService {
 
   /**
    * Busca pessoas populares que trabalharam em produções coreanas
+   * OTIMIZAÇÃO: Rotação de página baseada na hora para evitar sempre os mesmos artistas
    */
   private async getPopularPeopleWithKoreanWorks(count: number): Promise<TMDBPerson[]> {
     await this.rateLimiter.acquire();
 
+    // Rotação de página baseada na hora (muda a cada hora)
+    // 20 páginas = ~400 artistas diferentes ao longo do dia
+    const page = (Math.floor(Date.now() / 3600000) % 20) + 1;
+
+    console.log(`📄 Fetching from TMDB popular page ${page} (rotates hourly)`);
+
     const response = await fetch(
-      `${TMDB_BASE_URL}/person/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`,
+      `${TMDB_BASE_URL}/person/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=${page}`,
       {
         headers: {
           'Accept': 'application/json',
@@ -136,10 +143,15 @@ export class TMDBDiscoveryService {
     const people: TMDBPerson[] = data.results || [];
 
     // Filtrar apenas pessoas que trabalharam em produções coreanas
-    return people.filter(person => {
+    const filtered = people.filter(person => {
       if (!person.known_for) return false;
       return person.known_for.some(work => work.original_language === 'ko');
-    }).slice(0, count);
+    });
+
+    // Randomizar ordem intra-página para mais variedade
+    const shuffled = filtered.sort(() => Math.random() - 0.5);
+
+    return shuffled.slice(0, count);
   }
 
   /**
