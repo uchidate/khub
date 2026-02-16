@@ -247,19 +247,6 @@ jobs:
           cp -f docker-compose.staging.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
 
-      - name: 🔐 Sync DB User Password (Staging)
-        run: |
-          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
-          if [ -z "$POSTGRES_CONTAINER" ]; then
-            echo "⚠️ Postgres staging container not found, skipping password sync"
-          else
-            echo "🔐 Syncing DB user password in $POSTGRES_CONTAINER..."
-            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_staging -c \
-              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
-              && echo "✅ Password synced" \
-              || echo "⚠️ Password sync failed (non-blocking)"
-          fi
-
       - name: Deploy to Staging
         run: |
           set -e
@@ -278,6 +265,17 @@ jobs:
 
           echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.staging.yml up -d
+
+          echo "🔐 Syncing DB user password..."
+          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
+          if [ -z "$POSTGRES_CONTAINER" ]; then
+            echo "⚠️ Postgres staging container not found, skipping password sync"
+          else
+            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_staging -c \
+              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
+              && echo "✅ Password synced" \
+              || echo "⚠️ Password sync failed (non-blocking)"
+          fi
 
           # OTIMIZAÇÃO: Health check mais rápido (2s interval, 18 retries)
           echo "⏳ Aguardando container ficar healthy..."
@@ -400,19 +398,6 @@ jobs:
           cp -f docker-compose.prod.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
 
-      - name: 🔐 Sync DB User Password (Production)
-        run: |
-          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
-          if [ -z "$POSTGRES_CONTAINER" ]; then
-            echo "⚠️ Postgres production container not found, skipping password sync"
-          else
-            echo "🔐 Syncing DB user password in $POSTGRES_CONTAINER..."
-            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_production -c \
-              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
-              && echo "✅ Password synced" \
-              || echo "⚠️ Password sync failed (non-blocking)"
-          fi
-
       - name: Deploy to Production
         run: |
           set -e
@@ -431,6 +416,17 @@ jobs:
 
           echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.prod.yml up -d
+
+          echo "🔐 Syncing DB user password..."
+          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
+          if [ -z "$POSTGRES_CONTAINER" ]; then
+            echo "⚠️ Postgres production container not found, skipping password sync"
+          else
+            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_production -c \
+              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
+              && echo "✅ Password synced" \
+              || echo "⚠️ Password sync failed (non-blocking)"
+          fi
 
           # OTIMIZAÇÃO: Health check mais rápido (2s interval, 18 retries)
           echo "⏳ Aguardando container ficar healthy..."
