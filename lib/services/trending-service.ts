@@ -1,5 +1,7 @@
 import prisma from '../prisma'
+import { createLogger } from '../utils/logger'
 
+const log = createLogger('TRENDING')
 
 export class TrendingService {
   private static instance: TrendingService
@@ -48,10 +50,10 @@ export class TrendingService {
    * Substitui o loop N+1 anterior (~2N queries) por 1 query.
    */
   async updateAllTrendingScores(): Promise<void> {
-    console.log('📈 Iniciando atualização de trending scores (batch SQL)...')
+    log.info('Iniciando atualização de trending scores (batch SQL)...')
 
     const count = await prisma.artist.count()
-    console.log(`   Encontrados ${count} artistas`)
+    log.debug(`Encontrados ${count} artistas`, { count })
 
     // Única query que calcula e atualiza todos os scores de uma vez
     // Fórmula: viewScore(30%) + favoriteScore(40%) + recentScore(20%) + completenessScore(10%)
@@ -84,7 +86,7 @@ export class TrendingService {
         "updatedAt" = NOW()
     `
 
-    console.log(`✅ Trending scores atualizados para ${count} artistas (batch SQL)`)
+    log.info(`Trending scores atualizados para ${count} artistas (batch SQL)`, { count })
   }
 
   async getTrendingArtists(limit: number = 6) {

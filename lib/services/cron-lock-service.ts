@@ -1,5 +1,7 @@
 import prisma from '@/lib/prisma'
+import { createLogger } from '@/lib/utils/logger'
 
+const log = createLogger('CRON')
 const CRON_LOCK_TTL_MS = 30 * 60 * 1000 // 30 minutos TTL para auto-recuperação
 
 /**
@@ -18,12 +20,12 @@ export async function acquireCronLock(): Promise<string | null> {
 
         if (existing && existing.expiresAt > now) {
             const elapsedSec = Math.floor((now.getTime() - existing.lockedAt.getTime()) / 1000)
-            console.warn(`[CRON] ⚠️  Já existe uma execução ativa (${elapsedSec}s atrás, id: ${existing.lockedBy}). Pulando.`)
+            log.warn(`Já existe uma execução ativa (${elapsedSec}s atrás). Pulando.`, { requestId: existing.lockedBy, elapsedSec })
             return null
         }
 
         if (existing && existing.expiresAt <= now) {
-            console.warn(`[CRON] ⚠️  Lock expirado (processo anterior travou?). Liberando e continuando.`)
+            log.warn('Lock expirado (processo anterior travou?). Liberando e continuando.', { requestId: existing.lockedBy })
         }
 
         await prisma.cronLock.upsert({
@@ -32,10 +34,10 @@ export async function acquireCronLock(): Promise<string | null> {
             create: { id: 'cron-update', lockedBy: requestId, lockedAt: now, expiresAt },
         })
 
-        console.log(`[CRON] 🔒 Lock adquirido: ${requestId}`)
+        log.info('Lock adquirido', { requestId })
         return requestId
     } catch (error: any) {
-        console.error(`[CRON] ❌ Failed to acquire lock: ${error.message}`)
+        log.error(`Failed to acquire lock: ${error.message}`)
         return null
     }
 }
@@ -47,9 +49,9 @@ export async function releaseCronLock(requestId: string): Promise<void> {
         })
         if (lock?.lockedBy === requestId) {
             await prisma.cronLock.delete({ where: { id: 'cron-update' } })
-            console.log(`[CRON] 🔓 Lock liberado: ${requestId}`)
+            log.info('Lock liberado', { requestId })
         }
     } catch (error: any) {
-        console.error(`[CRON] ⚠️  Failed to release lock: ${error.message}`)
+        log.error(`Failed to release lock: ${error.message}`, { requestId })
     }
 }

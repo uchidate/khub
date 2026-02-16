@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
+import { createLogger } from '@/lib/utils/logger';
+
+const log = createLogger('CRON');
 
 export const maxDuration = 300; // 5 minutos máximo para o cron
 
@@ -18,7 +21,7 @@ export const maxDuration = 300; // 5 minutos máximo para o cron
  * (Ollama no CPU leva 2-5min por execução, ultrapassando o timeout do nginx de 60s)
  */
 export async function GET(request: NextRequest) {
-    console.log('[CRON] Starting scheduled update job...');
+    log.info('Starting scheduled update job...');
 
     try {
         // 1. Verificar autenticação
@@ -27,7 +30,7 @@ export async function GET(request: NextRequest) {
         const expectedToken = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET;
 
         if (!expectedToken) {
-            console.error('[CRON] ❌ CRON_SECRET not configured');
+            log.error('CRON_SECRET not configured');
             return NextResponse.json({
                 success: false,
                 error: 'Cron secret not configured'
@@ -35,7 +38,7 @@ export async function GET(request: NextRequest) {
         }
 
         if (authToken !== expectedToken) {
-            console.warn('[CRON] ⚠️  Unauthorized access attempt');
+            log.warn('Unauthorized access attempt');
             return NextResponse.json({
                 success: false,
                 error: 'Unauthorized'
@@ -56,7 +59,7 @@ export async function GET(request: NextRequest) {
         // 2. Disparar processamento em background (fire-and-forget)
         // O Node.js standalone mantém o processo vivo, então a Promise executa até o fim
         runCronProcessing(lockId).catch(err => {
-            console.error('[CRON] ❌ Unhandled error in background processing:', err);
+            log.error(`Unhandled error in background processing: ${err.message}`);
         });
 
         // 3. Retornar 202 imediatamente (antes do timeout do nginx de 60s)
@@ -69,7 +72,7 @@ export async function GET(request: NextRequest) {
         }, { status: 202 });
 
     } catch (error: any) {
-        console.error('[CRON] ❌ Fatal error during cron setup:', error);
+        log.error(`Fatal error during cron setup: ${error.message}`);
         return NextResponse.json({
             success: false,
             error: error.message,
@@ -84,7 +87,7 @@ export async function GET(request: NextRequest) {
  */
 async function runCronProcessing(lockId: string) {
     const startTime = Date.now();
-    console.log(`[CRON] Background processing started (${lockId})`);
+    log.info('Background processing started', { requestId: lockId });
 
     try {
         const results = {
@@ -101,7 +104,7 @@ async function runCronProcessing(lockId: string) {
         const [artistsResult, newsResult, productionsResult] = await Promise.allSettled([
             // 2.1. Gerar novos artistas (TMDB)
             (async () => {
-                console.log('[CRON] Discovering real artists from TMDB...');
+                log.info('Discovering real artists from TMDB...');
                 const { ArtistGeneratorV2 } = require('@/lib/ai/generators/artist-generator-v2');
 
                 const artistGenerator = new ArtistGeneratorV2(prisma);
@@ -146,13 +149,13 @@ async function runCronProcessing(lockId: string) {
                     });
 
                     results.artists.updated++;
-                    console.log(`[CRON] ✅ Saved real artist: ${artist.nameRomanized} (TMDB:${artist.tmdbId})`);
+                    log.info(`Saved real artist: ${artist.nameRomanized}`, { tmdbId: artist.tmdbId });
                 }
             })(),
 
             // 2.2. Gerar notícias (RSS feeds)
             (async () => {
-                console.log('[CRON] Fetching real news from RSS feeds...');
+                log.info('Fetching real news from RSS feeds...');
                 const { NewsGeneratorV2 } = require('@/lib/ai/generators/news-generator-v2');
                 const { getNewsArtistExtractionService } = require('@/lib/services/news-artist-extraction-service');
 
@@ -166,7 +169,7 @@ async function runCronProcessing(lockId: string) {
                 const isStaging = process.env.DEPLOY_ENV === 'staging';
                 const newsCount = isStaging ? 1 : 2;
 
-                console.log(`[CRON] Fetching ${newsCount} news items (env: ${process.env.DEPLOY_ENV || 'production'})`);
+                log.info(`Fetching ${newsCount} news items`, { env: process.env.DEPLOY_ENV || 'production' });
 
                 const newsItems = await newsGenerator.generateMultipleNews(newsCount, {
                     excludeList: excludeNews
@@ -224,7 +227,7 @@ async function runCronProcessing(lockId: string) {
                         }
 
                         if (artistMentions.length > 0) {
-                            console.log(`[CRON]    Artists linked: ${artistMentions.map((m: { name: string }) => m.name).join(', ')}`);
+                            log.debug(`Artists linked: ${artistMentions.map((m: { name: string }) => m.name).join(', ')}`);
                         }
 
                         if (isNewNews && artistMentions.length > 0) {
@@ -233,21 +236,21 @@ async function runCronProcessing(lockId: string) {
                                 const notificationService = getNewsNotificationService();
                                 await notificationService.notifyUsersAboutNews(savedNews.id);
                             } catch (notifError: any) {
-                                console.warn(`[CRON] ⚠️  Notification failed (non-blocking): ${notifError.message}`);
+                                log.warn(`Notification failed (non-blocking): ${notifError.message}`);
                             }
                         }
                     } catch (extractError: any) {
-                        console.warn(`[CRON] ⚠️  Artist extraction failed (non-blocking): ${extractError.message}`);
+                        log.warn(`Artist extraction failed (non-blocking): ${extractError.message}`);
                     }
 
                     results.news.updated++;
-                    console.log(`[CRON] ✅ Saved real news: ${news.title}`);
+                    log.info(`Saved real news: ${news.title}`);
                 }
             })(),
 
             // 2.3. Descobrir K-dramas e filmes coreanos do TMDB
             (async () => {
-                console.log('[CRON] Discovering Korean productions from TMDB...');
+                log.info('Discovering Korean productions from TMDB...');
                 const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
 
                 const productionDiscovery = getTMDBProductionDiscoveryService();
@@ -293,22 +296,22 @@ async function runCronProcessing(lockId: string) {
                     });
 
                     results.productions.updated++;
-                    console.log(`[CRON] ✅ Saved production: ${production.titlePt} (TMDB:${production.tmdbId})`);
+                    log.info(`Saved production: ${production.titlePt}`, { tmdbId: production.tmdbId });
                 }
             })(),
         ]);
 
         // Log resultados da fase paralela
         if (artistsResult.status === 'rejected') {
-            console.error(`[CRON] ❌ Artist generation failed: ${artistsResult.reason?.message || artistsResult.reason}`);
+            log.error(`Artist generation failed: ${artistsResult.reason?.message || artistsResult.reason}`);
             results.artists.errors.push(artistsResult.reason?.message || 'Unknown error');
         }
         if (newsResult.status === 'rejected') {
-            console.error(`[CRON] ❌ News generation failed: ${newsResult.reason?.message || newsResult.reason}`);
+            log.error(`News generation failed: ${newsResult.reason?.message || newsResult.reason}`);
             results.news.errors.push(newsResult.reason?.message || 'Unknown error');
         }
         if (productionsResult.status === 'rejected') {
-            console.error(`[CRON] ❌ Production discovery failed: ${productionsResult.reason?.message || productionsResult.reason}`);
+            log.error(`Production discovery failed: ${productionsResult.reason?.message || productionsResult.reason}`);
             results.productions.errors.push(productionsResult.reason?.message || 'Unknown error');
         }
 
@@ -318,7 +321,7 @@ async function runCronProcessing(lockId: string) {
 
         // 2.4. Atualizar filmografias (2-3 artistas por execução)
         try {
-            console.log('[CRON] Syncing filmographies...');
+            log.info('Syncing filmographies...');
             const { getFilmographySyncService } = require('@/lib/services/filmography-sync-service');
             const filmographyService = getFilmographySyncService();
 
@@ -347,17 +350,17 @@ async function runCronProcessing(lockId: string) {
                 );
 
                 results.filmography.synced = result.successCount;
-                console.log(`[CRON] ✅ Synced ${result.successCount} filmographies`);
+                log.info(`Synced ${result.successCount} filmographies`);
             }
         } catch (error: any) {
-            console.error(`[CRON] ❌ Filmography sync failed: ${error.message}`);
+            log.error(`Filmography sync failed: ${error.message}`);
             results.filmography.errors.push(error.message);
         }
 
         // 2.5. Normalizar conteúdo existente fora do padrão (1-2 itens por execução)
         // Prioridade: fotos faltantes (rápido, TMDB) > conteúdo em inglês (lento, Ollama)
         try {
-            console.log('[CRON] Checking for out-of-standard content...');
+            log.info('Checking for out-of-standard content...');
 
             // Heurística simples para detectar conteúdo em inglês:
             // Texto PT-BR tem ~10-20% de chars acentuados por palavra.
@@ -390,7 +393,7 @@ async function runCronProcessing(lockId: string) {
                         data: { primaryImageUrl: photo }
                     });
                     normalizedCount++;
-                    console.log(`[CRON] ✅ Fixed missing photo: ${artistWithoutPhoto.nameRomanized}`);
+                    log.info(`Fixed missing photo: ${artistWithoutPhoto.nameRomanized}`);
                 }
             }
 
@@ -421,7 +424,7 @@ async function runCronProcessing(lockId: string) {
                             }
                         });
                         normalizedCount++;
-                        console.log(`[CRON] ✅ Fixed missing image: ${productionWithoutPhoto.titlePt}`);
+                        log.info(`Fixed missing image: ${productionWithoutPhoto.titlePt}`);
                     }
                 }
             }
@@ -447,7 +450,7 @@ async function runCronProcessing(lockId: string) {
                             data: { bio: result.bio }
                         });
                         normalizedCount++;
-                        console.log(`[CRON] ✅ Fixed English bio: ${artistWithEnglishBio.nameRomanized}`);
+                        log.info(`Fixed English bio: ${artistWithEnglishBio.nameRomanized}`);
                     }
                 }
             }
@@ -473,7 +476,7 @@ async function runCronProcessing(lockId: string) {
                             data: { synopsis: result.synopsis }
                         });
                         normalizedCount++;
-                        console.log(`[CRON] ✅ Fixed English synopsis: ${productionWithEnglishSynopsis.titlePt}`);
+                        log.info(`Fixed English synopsis: ${productionWithEnglishSynopsis.titlePt}`);
                     }
                 }
             }
@@ -540,31 +543,31 @@ Requisitos:
                             }
                         });
                         normalizedCount++;
-                        console.log(`[CRON] ✅ Fixed old news: ${oldNewsWithoutMarkdown.title}`);
+                        log.info(`Fixed old news: ${oldNewsWithoutMarkdown.title}`);
                     }
                 }
             }
 
             if (normalizedCount > 0) {
-                console.log(`[CRON] ✅ Normalized ${normalizedCount} out-of-standard items`);
+                log.info(`Normalized ${normalizedCount} out-of-standard items`);
             } else {
-                console.log('[CRON] ✅ No out-of-standard content found');
+                log.debug('No out-of-standard content found');
             }
         } catch (error: any) {
-            console.warn(`[CRON] ⚠️  Normalization failed (non-blocking): ${error.message}`);
+            log.warn(`Normalization failed (non-blocking): ${error.message}`);
         }
 
         // 2.6. Atualizar trending scores
         try {
-            console.log('[CRON] Updating trending scores...');
+            log.info('Updating trending scores...');
             const { TrendingService } = require('@/lib/services/trending-service');
             const trendingService = TrendingService.getInstance();
 
             await trendingService.updateAllTrendingScores();
             results.trending.updated = 1; // Flag de sucesso
-            console.log('[CRON] ✅ Trending scores updated');
+            log.info('Trending scores updated');
         } catch (error: any) {
-            console.error(`[CRON] ❌ Trending update failed: ${error.message}`);
+            log.error(`Trending update failed: ${error.message}`);
             results.trending.errors.push(error.message);
         }
 
@@ -574,8 +577,7 @@ Requisitos:
         const totalErrors = results.artists.errors.length + results.news.errors.length +
                            results.productions.errors.length + results.filmography.errors.length + results.trending.errors.length;
 
-        console.log(`[CRON] ✅ Job completed in ${(duration / 1000).toFixed(1)}s`);
-        console.log(`[CRON] Updates: ${totalUpdates}, Errors: ${totalErrors}`);
+        log.info(`Job completed`, { duration: Math.round(duration / 1000), totalUpdates, totalErrors });
 
         // 4. Enviar notificação Slack se configurado
         if (totalUpdates > 0 || totalErrors > 0) {
@@ -592,13 +594,13 @@ Requisitos:
                     });
                 }
             } catch (error: any) {
-                console.error(`[CRON] ⚠️  Slack notification failed: ${error.message}`);
+                log.warn(`Slack notification failed: ${error.message}`);
             }
         }
 
     } catch (error: any) {
         const duration = Date.now() - startTime;
-        console.error(`[CRON] ❌ Fatal error in background processing after ${(duration / 1000).toFixed(1)}s:`, error);
+        log.error(`Fatal error in background processing: ${error.message}`, { duration: Math.round(duration / 1000) });
     } finally {
         await releaseCronLock(lockId);
     }
