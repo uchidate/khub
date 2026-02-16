@@ -11,7 +11,7 @@ services:
       - postgres-staging-data:/var/lib/postgresql/data
     networks:
       web:
-      backend:
+      backend-staging:
         ipv4_address: 172.20.0.2
     restart: on-failure
     deploy:
@@ -34,7 +34,7 @@ services:
       - ollama-staging-data:/root/.ollama
     networks:
       web:
-      backend:
+      backend-staging:
         ipv4_address: 172.20.0.3
     restart: "no"  # Não reinicia automaticamente - economiza recursos quando não está em uso
     deploy:
@@ -68,7 +68,7 @@ services:
       - hallyuhub-data:/app/data
     networks:
       - web
-      - backend
+      - backend-staging
     restart: on-failure
     deploy:
       resources:
@@ -89,7 +89,7 @@ services:
 networks:
   web:
     external: true
-  backend:
+  backend-staging:
     driver: bridge
     ipam:
       config:
