@@ -22,8 +22,11 @@ jobs:
 
           # O endpoint retorna 202 Accepted imediatamente e processa em background
           # Timeout aumentado para 60s para evitar falhas em caso de latência
+          # URL-encode token for query parameter (+ → %2B, = → %3D)
+          TOKEN_ENCODED=$(echo "${{ secrets.CRON_SECRET }}" | jq -sRr @uri)
+
           RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
-            "https://www.hallyuhub.com.br/api/cron/update?token=${{ secrets.CRON_SECRET }}" \
+            "https://www.hallyuhub.com.br/api/cron/update?token=${TOKEN_ENCODED}" \
             -H "Content-Type: application/json")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
