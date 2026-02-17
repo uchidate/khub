@@ -59,7 +59,8 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
         where: { id: params.id },
         include: {
             artists: {
-                include: { artist: true }
+                include: { artist: true },
+                orderBy: { role: 'asc' }
             }
         }
     })
@@ -74,13 +75,24 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
     }
 
     const tags = production.tags || []
+    const galleryUrls = (production.galleryUrls as string[] | null) || []
+
+    const heroImageUrl = production.backdropUrl || production.imageUrl
+
+    function formatRuntime(minutes: number | null): string | null {
+        if (!minutes) return null
+        const h = Math.floor(minutes / 60)
+        const m = minutes % 60
+        if (h === 0) return `${m}min`
+        return m === 0 ? `${h}h` : `${h}h ${m}min`
+    }
 
     return (
         <div className="min-h-screen">
             {/* Cinematic Hero */}
             <div className="relative h-[50vh] md:h-[60vh] bg-black overflow-hidden">
-                {production.imageUrl ? (
-                    <Image src={production.imageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover brightness-[0.45]" />
+                {heroImageUrl ? (
+                    <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover brightness-[0.45]" />
                 ) : (
                     <>
                         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
@@ -110,6 +122,18 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
                         <span className="w-1 h-1 bg-zinc-700 rounded-full" />
                         <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
+                        {production.runtime && (
+                            <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.runtime)}</span>
+                        )}
+                        {production.voteAverage && production.voteAverage > 0 && (
+                            <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
+                                production.voteAverage >= 7 ? 'text-green-400 bg-green-950/50 border border-green-800/40' :
+                                production.voteAverage >= 5 ? 'text-yellow-400 bg-yellow-950/50 border border-yellow-800/40' :
+                                'text-red-400 bg-red-950/50 border border-red-800/40'
+                            }`}>
+                                ★ {production.voteAverage.toFixed(1)}
+                            </span>
+                        )}
                         {production.streamingPlatforms && production.streamingPlatforms.map(p => (
                             <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
                         ))}
@@ -172,12 +196,50 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 </div>
                             </div>
                         )}
+
+                        {/* Gallery */}
+                        {galleryUrls.length > 0 && (
+                            <div>
+                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Galeria</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {galleryUrls.map((url, i) => (
+                                        <div key={i} className="aspect-video relative rounded-lg overflow-hidden border border-white/5">
+                                            <Image
+                                                src={url}
+                                                alt={`${production.titlePt} - imagem ${i + 1}`}
+                                                fill
+                                                sizes="(max-width: 640px) 50vw, 33vw"
+                                                className="object-cover hover:scale-105 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Sidebar */}
                     <div>
                         <div className="bg-zinc-900 rounded-lg border border-white/5 p-6 sticky top-24">
-                            {production.year && (
+                            {production.voteAverage && production.voteAverage > 0 && (
+                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nota TMDB</span>
+                                    <span className={`text-sm font-black ${
+                                        production.voteAverage >= 7 ? 'text-green-400' :
+                                        production.voteAverage >= 5 ? 'text-yellow-400' :
+                                        'text-red-400'
+                                    }`}>★ {production.voteAverage.toFixed(1)}<span className="text-zinc-600 font-normal text-xs">/10</span></span>
+                                </div>
+                            )}
+                            {production.releaseDate && (
+                                <div className="flex justify-between py-3 border-b border-white/5">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Estreia</span>
+                                    <span className="text-sm font-bold text-zinc-300">
+                                        {new Date(production.releaseDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </span>
+                                </div>
+                            )}
+                            {!production.releaseDate && production.year && (
                                 <div className="flex justify-between py-3 border-b border-white/5">
                                     <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Ano</span>
                                     <span className="text-sm font-bold text-zinc-300">{production.year}</span>
@@ -187,7 +249,13 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Tipo</span>
                                 <span className="text-sm font-bold text-zinc-300 uppercase">{production.type}</span>
                             </div>
-                            {production.streamingPlatforms && (
+                            {production.runtime && production.runtime > 0 && (
+                                <div className="flex justify-between py-3 border-b border-white/5">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Duração</span>
+                                    <span className="text-sm font-bold text-zinc-300">{formatRuntime(production.runtime)}</span>
+                                </div>
+                            )}
+                            {production.streamingPlatforms && production.streamingPlatforms.length > 0 && (
                                 <div className="flex justify-between py-3 border-b border-white/5 items-center">
                                     <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Streaming</span>
                                     <div className="flex flex-wrap gap-1.5 justify-end">
