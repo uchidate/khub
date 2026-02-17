@@ -1,10 +1,11 @@
 import prisma from "@/lib/prisma"
 import Image from "next/image"
+import Link from "next/link"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
-import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink } from "lucide-react"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -304,16 +305,30 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             {artist.productions.length > 0 ? (
                                 <div className="space-y-4">
                                     {artist.productions.map(({ production }) => (
-                                        <div key={production.id} className="group flex bg-zinc-900 rounded-lg border border-white/5 overflow-hidden hover:border-purple-500/30 transition-colors">
-                                            <div className="w-20 md:w-28 flex-shrink-0 bg-gradient-to-b from-zinc-800 to-zinc-900 flex items-center justify-center">
-                                                <span className="text-xs font-black text-zinc-700 uppercase group-hover:text-purple-500 transition-colors text-center px-2 leading-tight">
-                                                    {production.type}
-                                                </span>
+                                        <Link key={production.id} href={`/productions/${production.id}`} className="group flex bg-zinc-900 rounded-lg border border-white/5 overflow-hidden hover:border-purple-500/30 transition-colors">
+                                            {/* Poster */}
+                                            <div className="w-20 md:w-28 flex-shrink-0 relative bg-zinc-800">
+                                                {production.imageUrl ? (
+                                                    <Image
+                                                        src={production.imageUrl}
+                                                        alt={production.titlePt}
+                                                        fill
+                                                        sizes="112px"
+                                                        className="object-cover brightness-75 group-hover:brightness-90 transition-all"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <span className="text-xs font-black text-zinc-700 uppercase group-hover:text-purple-500 transition-colors text-center px-2 leading-tight">
+                                                            {production.type}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex-1 p-5">
                                                 <div className="flex flex-wrap items-center gap-3 mb-1">
-                                                    <h4 className="text-lg font-black text-white">{production.titlePt}</h4>
+                                                    <h4 className="text-lg font-black text-white group-hover:text-purple-300 transition-colors">{production.titlePt}</h4>
                                                     {production.year && <span className="text-xs font-bold text-purple-500">{production.year}</span>}
+                                                    <ExternalLink className="w-3.5 h-3.5 text-zinc-700 group-hover:text-purple-500 transition-colors ml-auto" />
                                                 </div>
                                                 {production.titleKr && <p className="text-xs text-zinc-600 font-medium mb-2">{production.titleKr}</p>}
                                                 {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2 font-medium">{production.synopsis}</p>}
@@ -325,7 +340,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                     </div>
                                                 )}
                                             </div>
-                                        </div>
+                                        </Link>
                                     ))}
                                 </div>
                             ) : (
