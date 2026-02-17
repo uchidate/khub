@@ -22,7 +22,7 @@ jobs:
   translate-news:
     name: Translate News to Portuguese
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # Ollama pode demorar para processar 10 notícias
+    timeout-minutes: 10 # Endpoint retorna 202 imediatamente; Ollama processa em background
 
     steps:
       - name: 📰 Call News Translation Endpoint
@@ -30,9 +30,9 @@ jobs:
           ACTION="${{ github.event.inputs.action || 'translate' }}"
           echo "🚀 Calling news translation endpoint (action: $ACTION)..."
 
-          # O endpoint processa 10 notícias em batch usando Ollama
-          # Cada notícia requer tradução de título + conteúdo completo
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 600 -X POST \
+          # O endpoint retorna 202 Accepted imediatamente e processa em background
+          # Nginx tem timeout de 60s; Ollama leva >60s para traduzir 10 notícias
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
             "https://www.hallyuhub.com.br/api/cron/translate-news?action=$ACTION" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
@@ -45,27 +45,11 @@ jobs:
           echo "$BODY" | jq '.' || echo "$BODY"
 
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "✅ News translation job completed successfully"
-
-            # Parse results
-            TRANSLATED=$(echo "$BODY" | jq -r '.results.translated // 0')
-            FAILED=$(echo "$BODY" | jq -r '.results.failed // 0')
-            SKIPPED=$(echo "$BODY" | jq -r '.results.skipped // 0')
-
-            # Parse stats
-            PENDING=$(echo "$BODY" | jq -r '.stats.pending // 0')
-            COMPLETED=$(echo "$BODY" | jq -r '.stats.completed // 0')
-            TOTAL=$(echo "$BODY" | jq -r '.stats.total // 0')
-
-            echo "📈 Results:"
-            echo "  - Translated: $TRANSLATED"
-            echo "  - Failed: $FAILED"
-            echo "  - Skipped: $SKIPPED"
-            echo ""
-            echo "📊 Stats:"
-            echo "  - Pending: $PENDING"
-            echo "  - Completed: $COMPLETED"
-            echo "  - Total News: $TOTAL"
+            REQUEST_ID=$(echo "$BODY" | jq -r '.requestId // "unknown"')
+            echo "✅ News translation job accepted (processing in background)"
+            echo "📋 Request ID: $REQUEST_ID"
+            echo "📝 Check server logs for translation results:"
+            echo "   ssh root@31.97.255.107 \"docker logs hallyuhub | grep $REQUEST_ID\""
           else
             echo "❌ News translation job failed with status $HTTP_CODE"
             exit 1
@@ -80,3 +64,4 @@ jobs:
           echo "- **Endpoint**: https://www.hallyuhub.com.br/api/cron/translate-news" >> $GITHUB_STEP_SUMMARY
           echo "- **Action**: ${{ github.event.inputs.action || 'translate' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Translation runs in background. Check server logs for results." >> $GITHUB_STEP_SUMMARY
