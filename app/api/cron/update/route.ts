@@ -5,6 +5,7 @@ import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-servi
 import { createLogger } from '@/lib/utils/logger';
 import { getErrorMessage } from '@/lib/utils/error';
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter';
+import { TrendingService } from '@/lib/services/trending-service';
 
 const log = createLogger('CRON');
 
@@ -593,7 +594,6 @@ Requisitos:
         const trendingTimer = makeTimer();
         try {
             log.info('Updating trending scores...');
-            const { TrendingService } = require('@/lib/services/trending-service');
             const trendingService = TrendingService.getInstance();
 
             await trendingService.updateAllTrendingScores();
