@@ -1,0 +1,82 @@
+name: 📰 Cron Job - Translate News
+
+on:
+  schedule:
+    # Runs every 4 hours (allows Ollama time to process batch of 10 news items)
+    # Format: minute hour day month day-of-week
+    - cron: '0 */4 * * *'
+
+  # Allow manual trigger with optional action parameter
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: false
+        default: 'translate'
+        type: choice
+        options:
+          - translate
+          - retry
+
+jobs:
+  translate-news:
+    name: Translate News to Portuguese
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # Ollama pode demorar para processar 10 notícias
+
+    steps:
+      - name: 📰 Call News Translation Endpoint
+        run: |
+          ACTION="${{ github.event.inputs.action || 'translate' }}"
+          echo "🚀 Calling news translation endpoint (action: $ACTION)..."
+
+          # O endpoint processa 10 notícias em batch usando Ollama
+          # Cada notícia requer tradução de título + conteúdo completo
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 600 -X POST \
+            "https://www.hallyuhub.com.br/api/cron/translate-news?action=$ACTION" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "📊 Response Code: $HTTP_CODE"
+          echo "📄 Response Body:"
+          echo "$BODY" | jq '.' || echo "$BODY"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ News translation job completed successfully"
+
+            # Parse results
+            TRANSLATED=$(echo "$BODY" | jq -r '.results.translated // 0')
+            FAILED=$(echo "$BODY" | jq -r '.results.failed // 0')
+            SKIPPED=$(echo "$BODY" | jq -r '.results.skipped // 0')
+
+            # Parse stats
+            PENDING=$(echo "$BODY" | jq -r '.stats.pending // 0')
+            COMPLETED=$(echo "$BODY" | jq -r '.stats.completed // 0')
+            TOTAL=$(echo "$BODY" | jq -r '.stats.total // 0')
+
+            echo "📈 Results:"
+            echo "  - Translated: $TRANSLATED"
+            echo "  - Failed: $FAILED"
+            echo "  - Skipped: $SKIPPED"
+            echo ""
+            echo "📊 Stats:"
+            echo "  - Pending: $PENDING"
+            echo "  - Completed: $COMPLETED"
+            echo "  - Total News: $TOTAL"
+          else
+            echo "❌ News translation job failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 📰 News Translation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Endpoint**: https://www.hallyuhub.com.br/api/cron/translate-news" >> $GITHUB_STEP_SUMMARY
+          echo "- **Action**: ${{ github.event.inputs.action || 'translate' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

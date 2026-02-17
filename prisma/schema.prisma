@@ -144,6 +144,10 @@ model News {
   publishedAt         DateTime              @default(now())
   imageUrl            String?
   tags                String[]
+  translationStatus   String                @default("pending") // 'pending', 'completed', 'failed'
+  translatedAt        DateTime?
+  originalTitle       String?               // título original EN/KR do RSS
+  originalContent     String?               // conteúdo original EN/KR do RSS
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   userFavorites       Favorite[]
@@ -155,6 +159,8 @@ model News {
   @@index([createdAt])
   @@index([title])
   @@index([sourceUrl])
+  @@index([translationStatus])
+  @@index([translationStatus, createdAt])
 }
 
 model NewsArtist {
