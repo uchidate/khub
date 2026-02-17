@@ -15,8 +15,10 @@ import { getNewsTranslationService } from '@/lib/services/news-translation-servi
  * (Nginx tem timeout de 60s; Ollama pode levar >60s para traduzir 10 notícias)
  *
  * AÇÕES:
- * - POST /api/cron/translate-news         → traduz batch de 10 notícias pending
- * - POST /api/cron/translate-news?action=retry → reprocessa failed (reset → pending → traduz)
+ * - POST /api/cron/translate-news               → traduz batch de 10 notícias pending
+ * - POST /api/cron/translate-news?action=retry  → reprocessa failed (reset → pending → traduz)
+ * - POST /api/cron/translate-news?action=reset-old → reseta notícias antigas (sem originalContent)
+ *                                                     para retradução com conteúdo original preservado
  */
 export async function POST(request: NextRequest) {
     const requestId = `cron-news-translate-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
@@ -107,6 +109,12 @@ async function runTranslationProcessing(
             // Reprocessar notícias com falha
             const retranslated = await translationService.retryFailedTranslations(10);
             result = { translated: retranslated, failed: 0, skipped: 0 };
+        } else if (action === 'reset-old') {
+            // Resetar notícias antigas (sem originalContent) para retradução
+            const resetCount = await translationService.resetOldNewsForRetranslation();
+            // Depois do reset, traduzir o próximo batch
+            result = await translationService.translatePendingNews(10);
+            console.log(`♻️  Reset ${resetCount} old news + translated first batch`);
         } else {
             // Traduzir notícias pendentes
             result = await translationService.translatePendingNews(10);
@@ -131,6 +139,6 @@ async function runTranslationProcessing(
 export async function GET() {
     return NextResponse.json({
         error: 'Method not allowed. Use POST.',
-        hint: 'POST /api/cron/translate-news?action=translate|retry'
+        hint: 'POST /api/cron/translate-news?action=translate|retry|reset-old'
     }, { status: 405 });
 }

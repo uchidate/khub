@@ -17,6 +17,7 @@ on:
         options:
           - translate
           - retry
+          - reset-old
 
 jobs:
   translate-news:

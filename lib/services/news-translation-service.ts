@@ -114,6 +114,57 @@ export class NewsTranslationService {
     }
 
     /**
+     * Reseta notícias antigas (sem originalContent) para retradução.
+     *
+     * Notícias criadas antes da separação discovery/translation (PR#87) têm:
+     * - originalContent = NULL (não foi salvo o EN original)
+     * - contentMd = fallback EN ("**English Title**\n\nEnglish content truncated...")
+     *
+     * Este método:
+     * 1. Copia contentMd → originalContent (preserva EN para retradução futura)
+     * 2. Copia title → originalTitle (preserva título atual)
+     * 3. Reseta translationStatus = 'pending'
+     */
+    async resetOldNewsForRetranslation(): Promise<number> {
+        console.log(`🔄 Resetting old news (no originalContent) for retranslation...`);
+
+        // Buscar notícias antigas que não têm originalContent (criadas antes do PR#87)
+        const oldNews = await this.prisma.news.findMany({
+            where: { originalContent: null, translationStatus: 'completed' },
+            select: { id: true, title: true, contentMd: true },
+            orderBy: { publishedAt: 'desc' },
+        });
+
+        console.log(`📊 Found ${oldNews.length} old news to reset for retranslation`);
+
+        if (oldNews.length === 0) return 0;
+
+        // Atualizar em lotes de 50 para evitar timeout
+        const BATCH = 50;
+        let count = 0;
+
+        for (let i = 0; i < oldNews.length; i += BATCH) {
+            const batch = oldNews.slice(i, i + BATCH);
+            await Promise.all(batch.map(news =>
+                this.prisma.news.update({
+                    where: { id: news.id },
+                    data: {
+                        originalTitle: news.title,
+                        originalContent: news.contentMd,
+                        translationStatus: 'pending',
+                        translatedAt: null,
+                    }
+                })
+            ));
+            count += batch.length;
+            console.log(`  ♻️  Reset ${count}/${oldNews.length}...`);
+        }
+
+        console.log(`✅ Reset ${count} old news to pending for retranslation`);
+        return count;
+    }
+
+    /**
      * Reprocessa notícias com falha
      */
     async retryFailedTranslations(limit: number = 10): Promise<number> {
