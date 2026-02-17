@@ -92,6 +92,11 @@ export class TMDBFilmographyService {
   // HTTP REQUEST WITH RETRY
   // ============================================================================
 
+  private buildUrl(endpoint: string): string {
+    const sep = endpoint.includes('?') ? '&' : '?'
+    return `${endpoint}${sep}api_key=${TMDB_API_KEY}`
+  }
+
   private async fetchWithRetry<T>(
     url: string,
     options: RequestInit = {},
@@ -103,10 +108,9 @@ export class TMDBFilmographyService {
       try {
         await this.rateLimiter.acquire()
 
-        const response = await fetch(url, {
+        const response = await fetch(this.buildUrl(url), {
           ...options,
           headers: {
-            'Authorization': `Bearer ${TMDB_API_KEY}`,
             'Content-Type': 'application/json',
             ...options.headers,
           },

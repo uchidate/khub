@@ -51,6 +51,11 @@ export class SocialLinksSyncService {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
+  private buildUrl(endpoint: string): string {
+    const sep = endpoint.includes('?') ? '&' : '?'
+    return `${endpoint}${sep}api_key=${TMDB_API_KEY}`
+  }
+
   private async fetchWithRetry<T>(url: string, retries: number = MAX_RETRIES): Promise<T | null> {
     let lastError: Error | null = null
 
@@ -58,11 +63,8 @@ export class SocialLinksSyncService {
       try {
         await this.rateLimiter.acquire()
 
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${TMDB_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
+        const response = await fetch(this.buildUrl(url), {
+          headers: { 'Content-Type': 'application/json' },
         })
 
         if (response.status === 429) {
