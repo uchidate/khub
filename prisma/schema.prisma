@@ -52,6 +52,10 @@ model Artist {
   // Translation tracking
   translationStatus  String             @default("pending") // 'pending', 'completed', 'failed'
   translatedAt       DateTime?
+  // Enrichment tracking
+  mbid               String?            // MusicBrainz artist ID (para discografia)
+  discographySyncAt  DateTime?          // última sincronização de discografia
+  socialLinksUpdatedAt DateTime?        // última sincronização de redes sociais
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -68,6 +72,8 @@ model Artist {
   @@index([trendingScore])
   @@index([translationStatus])
   @@index([translationStatus, createdAt])
+  @@index([discographySyncAt])
+  @@index([socialLinksUpdatedAt])
 }
 
 model Album {
@@ -82,6 +88,8 @@ model Album {
   appleMusicUrl String?
   youtubeUrl    String?
 
+  mbid     String? // MusicBrainz release-group ID (deduplicação)
+
   artistId String
   artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
 
@@ -90,6 +98,7 @@ model Album {
 
   @@index([artistId])
   @@index([releaseDate])
+  @@index([mbid])
 }
 
 model Production {
@@ -113,6 +122,8 @@ model Production {
   runtime            Int? // Minutes
   voteAverage        Float? // TMDB rating
   trailerUrl         String? // YouTube trailer URL
+  // Cast sync tracking
+  castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -124,6 +135,7 @@ model Production {
   @@index([titlePt])
   @@index([tmdbId])
   @@index([releaseDate])
+  @@index([castSyncAt])
 }
 
 model ArtistProduction {

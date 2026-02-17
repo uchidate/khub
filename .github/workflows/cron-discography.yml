@@ -1,0 +1,64 @@
+name: 🎵 Cron Job - Sync Artist Discography
+
+on:
+  schedule:
+    # Runs daily at 02:00 UTC — MusicBrainz first, AI fallback
+    # Format: minute hour day month day-of-week
+    - cron: '0 2 * * *'
+
+  # Allow manual trigger with optional limit parameter
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Number of artists to process'
+        required: false
+        default: '5'
+        type: string
+
+jobs:
+  sync-discography:
+    name: Sync Artist Discography (MusicBrainz + AI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # Endpoint retorna 202 imediatamente; processamento em background
+
+    steps:
+      - name: 🎵 Call Discography Sync Endpoint
+        run: |
+          LIMIT="${{ github.event.inputs.limit || '5' }}"
+          echo "🚀 Calling discography sync endpoint (limit: $LIMIT)..."
+
+          # O endpoint retorna 202 Accepted imediatamente e processa em background
+          # MusicBrainz tem rate limit de 1 req/s; 5 artistas pode levar vários minutos
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
+            "https://www.hallyuhub.com.br/api/cron/sync-discography?limit=$LIMIT" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "📊 Response Code: $HTTP_CODE"
+          echo "📄 Response Body:"
+          echo "$BODY" | jq '.' || echo "$BODY"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            REQUEST_ID=$(echo "$BODY" | jq -r '.requestId // "unknown"')
+            echo "✅ Discography sync job accepted (processing in background)"
+            echo "📋 Request ID: $REQUEST_ID"
+            echo "📝 Check server logs for discography sync results:"
+            echo "   ssh root@31.97.255.107 \"docker logs hallyuhub | grep $REQUEST_ID\""
+          else
+            echo "❌ Discography sync job failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🎵 Discography Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Endpoint**: https://www.hallyuhub.com.br/api/cron/sync-discography" >> $GITHUB_STEP_SUMMARY
+          echo "- **Limit**: ${{ github.event.inputs.limit || '5' }} artists" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Uses MusicBrainz (primary) + AI fallback. Runs in background." >> $GITHUB_STEP_SUMMARY

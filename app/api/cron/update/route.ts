@@ -391,6 +391,34 @@ async function runCronProcessing(lockId: string) {
         }
         perf.filmography_ms = filmographyTimer();
 
+        // 2.4b. Sincronizar elenco de produções (2 produções por hora)
+        // Direção: Produção → busca top 5 atores no TMDB → salva como Artist + ArtistProduction
+        const castTimer = makeTimer();
+        try {
+            log.info('Syncing production cast...');
+            const { getProductionCastService } = require('@/lib/services/production-cast-service');
+            const castService = getProductionCastService();
+            const castResult = await castService.syncPendingProductionCasts(2);
+            log.info(`Cast sync: ${castResult.processed} productions, ${castResult.totalSynced} actors synced`);
+        } catch (error: unknown) {
+            log.error('Production cast sync failed', { error: getErrorMessage(error) });
+        }
+        perf.cast_ms = castTimer();
+
+        // 2.4c. Sincronizar redes sociais de artistas (3 artistas por hora)
+        // Busca TMDB /person/{tmdbId}/external_ids → instagram, twitter, facebook, youtube, tiktok
+        const socialLinksTimer = makeTimer();
+        try {
+            log.info('Syncing artist social links...');
+            const { getSocialLinksSyncService } = require('@/lib/services/social-links-sync-service');
+            const socialLinksService = getSocialLinksSyncService();
+            const socialResult = await socialLinksService.syncPendingArtistSocialLinks(3);
+            log.info(`Social links sync: ${socialResult.processed} artists, ${socialResult.withLinks} with links`);
+        } catch (error: unknown) {
+            log.error('Social links sync failed', { error: getErrorMessage(error) });
+        }
+        perf.social_links_ms = socialLinksTimer();
+
         // 2.5. Normalizar conteúdo existente fora do padrão (1-2 itens por execução)
         // Prioridade: fotos faltantes (rápido, TMDB) > conteúdo em inglês (lento, Ollama)
         const enrichTimer = makeTimer();
@@ -622,6 +650,8 @@ Requisitos:
             news_s: Math.round((perf.news_ms ?? 0) / 1000),
             productions_s: Math.round((perf.productions_ms ?? 0) / 1000),
             filmography_s: Math.round((perf.filmography_ms ?? 0) / 1000),
+            cast_s: Math.round((perf.cast_ms ?? 0) / 1000),
+            social_links_s: Math.round((perf.social_links_ms ?? 0) / 1000),
             enrich_ollama_s: Math.round((perf.enrich_ms ?? 0) / 1000),
             trending_s: Math.round((perf.trending_ms ?? 0) / 1000),
         });
