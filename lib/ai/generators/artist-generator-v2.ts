@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { getTMDBDiscoveryService, DiscoveredArtist } from '../../services/tmdb-discovery-service';
-import { getOrchestrator } from '../orchestrator-factory';
 
 export interface ArtistData {
     nameRomanized: string;
@@ -13,17 +12,18 @@ export interface ArtistData {
 }
 
 /**
- * Artist Generator V2 - Dados 100% Reais
+ * Artist Generator V2 - Dados 100% Reais (Discovery Only)
  *
- * NOVA ESTRATÉGIA:
+ * ESTRATÉGIA SEPARADA (Performance):
  * 1. Busca artistas reais do TMDB (via TMDBDiscoveryService)
- * 2. Traduz biografia EN→PT com Ollama/Gemini (apenas se necessário)
- * 3. Zero dados fictícios - apenas artistas reais verificados
+ * 2. Salva dados BRUTOS (sem tradução) com status 'pending'
+ * 3. Tradução é feita POSTERIORMENTE por processo separado
  *
  * BENEFÍCIOS:
- * - Reduz chamadas AI em ~80% (apenas traduções)
- * - Dados 100% reais e verificados
- * - Melhor qualidade de conteúdo
+ * - Discovery RÁPIDO (sem esperar Ollama)
+ * - Tradução batch otimizada em processo separado
+ * - Melhor separação de responsabilidades
+ * - Permite processar mais artistas por vez
  */
 export class ArtistGeneratorV2 {
     private tmdbDiscovery = getTMDBDiscoveryService();
@@ -31,13 +31,6 @@ export class ArtistGeneratorV2 {
 
     constructor(prisma: PrismaClient) {
         this.prisma = prisma;
-    }
-
-    /**
-     * Retorna o orchestrator singleton
-     */
-    private getOrchestrator() {
-        return getOrchestrator();
     }
 
     /**
@@ -171,113 +164,31 @@ export class ArtistGeneratorV2 {
 
     /**
      * Processa um artista descoberto do TMDB
+     * NOTA: Salva dados BRUTOS sem tradução (status='pending')
+     * Tradução será feita posteriormente por processo separado
      */
     private async processDiscoveredArtist(discovered: DiscoveredArtist): Promise<ArtistData> {
-        // Traduzir/melhorar biografia para PT (se em inglês)
-        const bioPT = await this.translateBioToPortuguese(
-            discovered.name,
-            discovered.biography,
-            discovered.department
-        );
-
         // Determinar roles baseado no department
         const roles = this.mapDepartmentToRoles(discovered.department);
+
+        // Criar bio básica se não houver (original do TMDB)
+        let bio = discovered.biography;
+        if (!bio || bio.trim().length === 0) {
+            const rolesPT = this.getDepartmentNamePT(discovered.department);
+            bio = `${discovered.name} é ${rolesPT} conhecido(a) na indústria do entretenimento coreano.`;
+        }
 
         return {
             nameRomanized: discovered.name,
             nameHangul: discovered.koreanName,
             birthDate: discovered.birthDate || undefined,
             roles,
-            bio: bioPT,
+            bio, // Biografia ORIGINAL (EN/KR) - será traduzida depois
             primaryImageUrl: discovered.profileImage || '',
             tmdbId: discovered.tmdbId,
         };
     }
 
-    /**
-     * Traduz biografia para português usando Ollama/Gemini
-     */
-    private async translateBioToPortuguese(
-        artistName: string,
-        biography: string,
-        department: string
-    ): Promise<string> {
-        // Se não tem biografia, criar uma simples
-        if (!biography || biography.trim().length === 0) {
-            const rolesPT = this.getDepartmentNamePT(department);
-            return `${artistName} é ${rolesPT} conhecido(a) na indústria do entretenimento coreano.`;
-        }
-
-        // Se biografia está em coreano ou é muito curta, melhorar com AI
-        const needsTranslation = /[\uAC00-\uD7AF]/.test(biography) || biography.length < 50;
-
-        if (!needsTranslation && biography.length < 200) {
-            // Bio já está boa e em inglês, apenas traduzir
-            return this.translateWithAI(artistName, biography, department);
-        }
-
-        try {
-            const prompt = `Crie uma biografia profissional em português brasileiro para o(a) artista coreano(a) ${artistName}.
-
-Informações disponíveis:
-${biography}
-
-Área de atuação: ${department}
-
-Requisitos:
-- 2-3 frases impactantes em português
-- Foco em carreira e conquistas
-- Tom profissional mas acessível
-- Mencione relevância no K-pop ou K-drama
-- Use apenas informações fornecidas (não invente)`;
-
-            const result = await this.getOrchestrator().generateStructured<{ bio: string }>(
-                prompt,
-                '{ "bio": "string (biografia em português, 2-3 frases)" }',
-                {
-                    preferredProvider: 'ollama', // Gratuito, local
-                }
-            );
-
-            return result.bio;
-        } catch (error: any) {
-            console.warn(`⚠️  Translation failed: ${error.message}`);
-            // Fallback simples
-            const rolesPT = this.getDepartmentNamePT(department);
-            return `${artistName} é ${rolesPT} de destaque na indústria do entretenimento coreano, reconhecido(a) por seu talento e versatilidade.`;
-        }
-    }
-
-    /**
-     * Traduz texto simples com AI
-     */
-    private async translateWithAI(
-        artistName: string,
-        text: string,
-        department: string
-    ): Promise<string> {
-        try {
-            const prompt = `Traduza a seguinte biografia para português brasileiro de forma natural e profissional:
-
-${text}
-
-Artista: ${artistName}
-Área: ${department}
-
-Mantenha 2-3 frases, tom profissional mas acessível.`;
-
-            const result = await this.getOrchestrator().generateStructured<{ translation: string }>(
-                prompt,
-                '{ "translation": "string" }',
-                { preferredProvider: 'ollama' }
-            );
-
-            return result.translation;
-        } catch (error) {
-            // Fallback: retornar texto original
-            return text;
-        }
-    }
 
     /**
      * Mapeia department do TMDB para roles do nosso sistema
