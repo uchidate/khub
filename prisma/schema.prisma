@@ -49,6 +49,9 @@ model Artist {
   favoriteCount      Int                @default(0)
   lastTrendingUpdate DateTime?
   trendingScore      Float              @default(0.0)
+  // Translation tracking
+  translationStatus  String             @default("pending") // 'pending', 'completed', 'failed'
+  translatedAt       DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -63,6 +66,8 @@ model Artist {
   @@index([tmdbLastSync])
   @@index([tmdbSyncStatus, tmdbLastSync])
   @@index([trendingScore])
+  @@index([translationStatus])
+  @@index([translationStatus, createdAt])
 }
 
 model Album {
