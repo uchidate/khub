@@ -275,7 +275,9 @@ export class SlackNotificationService {
             trending: { updated: number; errors: string[] };
         };
     }): Promise<boolean> {
-        if (!this.webhookContent) return false;
+        // Use webhookContent if available, fallback to webhookDeploys
+        const webhook = this.webhookContent || this.webhookDeploys;
+        if (!webhook) return false;
 
         // Don't notify if nothing happened
         if (job.updates === 0 && job.errors === 0) return false;
@@ -359,7 +361,7 @@ export class SlackNotificationService {
             blocks.push(contextBlock);
         }
 
-        return this.sendMessage(this.webhookContent, { blocks });
+        return this.sendMessage(webhook, { blocks });
     }
 
     /**
