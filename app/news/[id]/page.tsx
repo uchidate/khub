@@ -245,9 +245,41 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 )}
 
                 {/* Conteúdo */}
-                <article className="prose prose-invert prose-purple max-w-none text-zinc-300 text-lg md:text-xl leading-relaxed">
+                <article className="max-w-none">
                     <MarkdownRenderer content={news.contentMd} />
                 </article>
+
+                {/* Texto Original (excerpt do RSS) */}
+                {news.originalContent && (
+                    <section className="mt-12 p-6 rounded-2xl bg-zinc-900/40 border border-white/10">
+                        <div className="flex items-center gap-2 mb-4">
+                            <ExternalLink className="w-4 h-4 text-zinc-500" />
+                            <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
+                                Texto original
+                            </span>
+                            <span className="ml-auto text-xs text-zinc-600">
+                                {(() => { try { return new URL(news.sourceUrl).hostname } catch { return '' } })()}
+                            </span>
+                        </div>
+                        {news.originalTitle && news.originalTitle !== news.title && (
+                            <p className="text-sm font-bold text-zinc-400 mb-3 italic">
+                                &ldquo;{news.originalTitle}&rdquo;
+                            </p>
+                        )}
+                        <p className="text-zinc-500 text-sm leading-relaxed line-clamp-6">
+                            {news.originalContent.replace(/\*\*.*?\*\*/g, '').replace(/\n/g, ' ').trim()}
+                        </p>
+                        <a
+                            href={news.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-4 text-xs text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                        >
+                            Ler artigo completo
+                            <ExternalLink className="w-3 h-3" />
+                        </a>
+                    </section>
+                )}
 
                 {/* Compartilhamento */}
                 <div className="mt-12 p-6 rounded-2xl bg-zinc-900/50 border border-white/10">
