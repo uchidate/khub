@@ -135,7 +135,7 @@ async function runCronProcessing(lockId: string) {
                 });
                 const excludeArtists = existingArtists.map((a: { nameRomanized: string }) => a.nameRomanized);
 
-                const artists = await artistGenerator.generateMultipleArtists(1, {
+                const artists = await artistGenerator.generateMultipleArtists(5, {
                     excludeList: excludeArtists
                 });
 
