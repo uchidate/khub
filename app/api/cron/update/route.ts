@@ -201,26 +201,29 @@ async function runCronProcessing(lockId: string) {
                 });
 
                 for (const news of newsItems) {
-                    if (!news.title || !news.contentMd || news.contentMd.length < 20) {
+                    if (!news.title || !news.sourceUrl) {
                         continue;
                     }
 
                     const savedNews = await prisma.news.upsert({
                         where: { sourceUrl: news.sourceUrl },
+                        // Ao atualizar: NÃO sobrescreve title/contentMd/translationStatus
+                        // (a notícia pode já estar traduzida pelo NewsTranslationService)
                         update: {
-                            title: news.title,
-                            contentMd: news.contentMd,
                             imageUrl: news.imageUrl || null,
-                            tags: news.tags || null,
+                            tags: news.tags && news.tags.length > 0 ? news.tags : undefined,
                             publishedAt: news.publishedAt,
                         },
                         create: {
                             title: news.title,
+                            contentMd: news.originalContent || news.contentMd,
                             sourceUrl: news.sourceUrl,
-                            contentMd: news.contentMd,
+                            originalTitle: news.originalTitle,
+                            originalContent: news.originalContent,
                             imageUrl: news.imageUrl || null,
-                            tags: news.tags || null,
+                            tags: news.tags || [],
                             publishedAt: news.publishedAt,
+                            translationStatus: 'pending',
                         },
                     });
 
