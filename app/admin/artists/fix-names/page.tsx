@@ -14,8 +14,6 @@ function parseLine(line: string): LogLine {
         case 'TOTAL':
             return { text: `📋 ${payload} artistas com nome coreano em nameRomanized`, type: 'info' }
         case 'PROGRESS': {
-            const [pos, name] = payload.split('/')
-            const [total, artName] = (pos + '/' + name).split('/:').map(s => s.trim())
             // Format: PROGRESS:i+1/artists.length:nameRomanized
             const parts = payload.split(':')
             return { text: `⏳ [${parts[0]}] ${parts.slice(1).join(':')}`, type: 'progress' }
@@ -63,11 +61,13 @@ export default function FixNamesAdminPage() {
             const reader = res.body.getReader()
             const decoder = new TextDecoder()
             let buffer = ''
+            let done = false
 
-            while (true) {
-                const { done, value } = await reader.read()
+            while (!done) {
+                const result = await reader.read()
+                done = result.done
                 if (done) break
-                buffer += decoder.decode(value, { stream: true })
+                buffer += decoder.decode(result.value, { stream: true })
                 const lines = buffer.split('\n')
                 buffer = lines.pop() || ''
 

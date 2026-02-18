@@ -10,7 +10,6 @@
  * Retorna stream de texto com progresso linha a linha.
  */
 
-import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 
@@ -36,7 +35,7 @@ async function fetchTMDBName(tmdbId: string): Promise<{ name: string; also_known
     }
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
     const { error } = await requireAdmin()
     if (error) return error
 

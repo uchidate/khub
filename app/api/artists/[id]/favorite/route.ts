@@ -11,7 +11,7 @@ const log = createLogger('ARTISTS')
 // - Incrementa favoriteCount no Artist (para trending)
 // - Cria registro em Favorite se autenticado (para perfil)
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -43,7 +43,7 @@ export async function POST(
 // - Decrementa favoriteCount no Artist (para trending)
 // - Remove registro de Favorite se autenticado (para perfil)
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

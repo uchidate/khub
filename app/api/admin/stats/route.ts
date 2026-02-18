@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     // Check authentication
-    const { error, session } = await requireAdmin()
+    const { error } = await requireAdmin()
     if (error) return error
 
     // Get basic counts
