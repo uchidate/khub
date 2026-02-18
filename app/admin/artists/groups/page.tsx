@@ -73,9 +73,18 @@ export default function ArtistGroupsAdminPage() {
     const fetchArtists = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await fetch('/api/admin/artists?limit=1000&offset=0')
-            const data = await res.json()
-            setArtists(data.items || [])
+            const all: Artist[] = []
+            let page = 1
+            let hasMore = true
+            while (hasMore) {
+                const res = await fetch(`/api/admin/artists?limit=100&page=${page}`)
+                const json = await res.json()
+                const items: Artist[] = json.data || []
+                all.push(...items)
+                hasMore = items.length === 100
+                page++
+            }
+            setArtists(all)
         } finally {
             setLoading(false)
         }
