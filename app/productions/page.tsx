@@ -25,21 +25,31 @@ function SkeletonGrid() {
 async function ProductionsGrid() {
     const productions = await prisma.production.findMany({
         orderBy: { year: 'desc' },
-        take: 50
+        take: 50,
+        select: {
+            id: true,
+            titlePt: true,
+            type: true,
+            year: true,
+            imageUrl: true,
+            backdropUrl: true,
+            voteAverage: true,
+            streamingPlatforms: true,
+        }
     })
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 perspective-1000">
-            {productions.map((prod: any) => (
+            {productions.map((prod) => (
                 <MediaCard
                     key={prod.id}
                     id={prod.id}
                     title={prod.titlePt}
                     subtitle={`${prod.year} • ${prod.type?.toUpperCase()}`}
-                    imageUrl={prod.imageUrl}
+                    imageUrl={prod.backdropUrl || prod.imageUrl}
                     type="production"
                     href={`/productions/${prod.id}`}
-                    badges={prod.streamingPlatforms || []}
+                    badges={prod.streamingPlatforms as string[] || []}
                     aspectRatio="video"
                 />
             ))}
