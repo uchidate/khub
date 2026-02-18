@@ -1,0 +1,61 @@
+name: 🔍 Cron Job - Match Productions to TMDB
+
+on:
+  schedule:
+    # Runs daily at 01:00 UTC — searches TMDB for productions without tmdbId
+    - cron: '0 1 * * *'
+
+  # Allow manual trigger with optional limit parameter
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Number of productions to process'
+        required: false
+        default: '10'
+        type: string
+
+jobs:
+  match-productions:
+    name: Match Productions to TMDB
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🔍 Call Match Productions Endpoint
+        run: |
+          LIMIT="${{ github.event.inputs.limit || '10' }}"
+          echo "🚀 Calling match-productions endpoint (limit: $LIMIT)..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
+            "https://www.hallyuhub.com.br/api/cron/match-productions?limit=$LIMIT" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "📊 Response Code: $HTTP_CODE"
+          echo "📄 Response Body:"
+          echo "$BODY" | jq '.' || echo "$BODY"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            REQUEST_ID=$(echo "$BODY" | jq -r '.requestId // "unknown"')
+            echo "✅ Match job accepted (processing in background)"
+            echo "📋 Request ID: $REQUEST_ID"
+            echo "📝 Check server logs for results:"
+            echo "   ssh root@31.97.255.107 \"docker logs hallyuhub | grep $REQUEST_ID\""
+          else
+            echo "❌ Match job failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🔍 Production TMDB Match Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Endpoint**: https://www.hallyuhub.com.br/api/cron/match-productions" >> $GITHUB_STEP_SUMMARY
+          echo "- **Limit**: ${{ github.event.inputs.limit || '10' }} productions" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Match runs in background. Check server logs for results." >> $GITHUB_STEP_SUMMARY
