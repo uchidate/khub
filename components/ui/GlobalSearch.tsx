@@ -83,7 +83,7 @@ export function GlobalSearch() {
                             setIsOpen(true)
                         }}
                         onFocus={() => setIsOpen(true)}
-                        placeholder="Buscar artistas, notícias, produções..."
+                        placeholder="Buscar"
                         className="w-full pl-12 pr-24 py-3 bg-zinc-900/50 border border-white/10 rounded-full text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all hover:border-purple-500/30"
                     />
 
