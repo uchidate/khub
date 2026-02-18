@@ -136,10 +136,10 @@ export default function SocialLinksAdminPage() {
     const fetchArtists = useCallback(async () => {
         setLoading(true)
         try {
-            // Fetch all artists (no pagination limit needed here — we need all for the social links view)
-            const res = await fetch('/api/admin/artists?limit=500')
+            // Dedicated endpoint — returns ALL artists without pagination cap
+            const res = await fetch('/api/admin/artists/social-links')
             const data = await res.json()
-            setArtists(data.data || [])
+            setArtists(data.artists || [])
         } finally {
             setLoading(false)
         }
