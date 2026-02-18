@@ -27,10 +27,17 @@ interface ArtistRow {
     id: string
     nameRomanized: string
     nameHangul: string | null
+    birthName: string | null
+    birthDate: Date | null
+    height: string | null
+    bloodType: string | null
+    bio: string | null
+    primaryImageUrl: string | null
+    stageNames: string[]
     mbid: string | null
     tmdbId: string | null
-    primaryImageUrl: string | null
-    agency: { name: string } | null
+    agency: { id: string; name: string } | null
+    agencyId: string | null
     _count: { productions: number; albums: number }
     musicalGroupName: string | null
 }
@@ -44,10 +51,17 @@ export async function GET() {
             id: true,
             nameRomanized: true,
             nameHangul: true,
+            birthName: true,
+            birthDate: true,
+            height: true,
+            bloodType: true,
+            bio: true,
+            primaryImageUrl: true,
+            stageNames: true,
             mbid: true,
             tmdbId: true,
-            primaryImageUrl: true,
-            agency: { select: { name: true } },
+            agencyId: true,
+            agency: { select: { id: true, name: true } },
             _count: { select: { productions: true, albums: true } },
             memberships: {
                 where: { isActive: true },
@@ -61,9 +75,16 @@ export async function GET() {
         id: a.id,
         nameRomanized: a.nameRomanized,
         nameHangul: a.nameHangul,
+        birthName: a.birthName,
+        birthDate: a.birthDate,
+        height: a.height,
+        bloodType: a.bloodType,
+        bio: a.bio,
+        primaryImageUrl: a.primaryImageUrl,
+        stageNames: a.stageNames,
         mbid: a.mbid,
         tmdbId: a.tmdbId,
-        primaryImageUrl: a.primaryImageUrl,
+        agencyId: a.agencyId,
         agency: a.agency,
         _count: a._count,
         musicalGroupName: a.memberships[0]?.group.name ?? null,

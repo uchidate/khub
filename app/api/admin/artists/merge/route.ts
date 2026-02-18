@@ -12,11 +12,24 @@ const log = createLogger('ADMIN-MERGE')
 const mergeSchema = z.object({
     keepId: z.string().min(1),
     deleteId: z.string().min(1),
+    // Optional field-level overrides from curator (choose A or B per field)
+    fieldOverrides: z.object({
+        nameRomanized: z.string().min(1).optional(),
+        nameHangul: z.string().nullable().optional(),
+        birthName: z.string().nullable().optional(),
+        birthDate: z.string().nullable().optional(), // ISO date string
+        height: z.string().nullable().optional(),
+        bloodType: z.string().nullable().optional(),
+        bio: z.string().nullable().optional(),
+        primaryImageUrl: z.string().nullable().optional(),
+        agencyId: z.string().nullable().optional(),
+    }).optional(),
 })
 
 /**
  * POST /api/admin/artists/merge
  * Merges all relations from deleteId into keepId, then deletes deleteId.
+ * Accepts optional fieldOverrides to allow field-level curation (choose A or B per field).
  */
 export async function POST(request: NextRequest) {
     try {
@@ -24,7 +37,7 @@ export async function POST(request: NextRequest) {
         if (error) return error
 
         const body = await request.json()
-        const { keepId, deleteId } = mergeSchema.parse(body)
+        const { keepId, deleteId, fieldOverrides } = mergeSchema.parse(body)
 
         if (keepId === deleteId) {
             return NextResponse.json({ error: 'keepId e deleteId não podem ser iguais' }, { status: 400 })
@@ -88,33 +101,49 @@ export async function POST(request: NextRequest) {
                 data: { entityId: keepId },
             })
 
-            // 7. Preencher campos faltantes no keeper com dados do deleter
+            // 7. Build final data using fieldOverrides (curator choices) + fill missing fields
+            const overrides = fieldOverrides ?? {}
             const fillData: Record<string, unknown> = {}
-            if (!keeper.nameHangul && deleter.nameHangul) fillData.nameHangul = deleter.nameHangul
-            if (!keeper.primaryImageUrl && deleter.primaryImageUrl) fillData.primaryImageUrl = deleter.primaryImageUrl
-            if (!keeper.bio && deleter.bio) fillData.bio = deleter.bio
+
+            // Apply explicit curator overrides first
+            if (overrides.nameRomanized) fillData.nameRomanized = overrides.nameRomanized
+            if ('nameHangul' in overrides) fillData.nameHangul = overrides.nameHangul
+            if ('birthName' in overrides) fillData.birthName = overrides.birthName
+            if ('birthDate' in overrides) fillData.birthDate = overrides.birthDate ? new Date(overrides.birthDate) : null
+            if ('height' in overrides) fillData.height = overrides.height
+            if ('bloodType' in overrides) fillData.bloodType = overrides.bloodType
+            if ('bio' in overrides) fillData.bio = overrides.bio
+            if ('primaryImageUrl' in overrides) fillData.primaryImageUrl = overrides.primaryImageUrl
+            if ('agencyId' in overrides) fillData.agencyId = overrides.agencyId
+
+            // Fill remaining missing scalar fields from deleter (only if not already overridden)
+            if (!('nameHangul' in overrides) && !keeper.nameHangul && deleter.nameHangul) fillData.nameHangul = deleter.nameHangul
+            if (!('primaryImageUrl' in overrides) && !keeper.primaryImageUrl && deleter.primaryImageUrl) fillData.primaryImageUrl = deleter.primaryImageUrl
+            if (!('bio' in overrides) && !keeper.bio && deleter.bio) fillData.bio = deleter.bio
+            if (!('agencyId' in overrides) && !keeper.agencyId && deleter.agencyId) fillData.agencyId = deleter.agencyId
+            if (!('birthDate' in overrides) && !keeper.birthDate && deleter.birthDate) fillData.birthDate = deleter.birthDate
+            if (!('birthName' in overrides) && !keeper.birthName && deleter.birthName) fillData.birthName = deleter.birthName
+            if (!('height' in overrides) && !keeper.height && deleter.height) fillData.height = deleter.height
+            if (!('bloodType' in overrides) && !keeper.bloodType && deleter.bloodType) fillData.bloodType = deleter.bloodType
+            // Always transfer identifiers if keeper lacks them
             if (!keeper.mbid && deleter.mbid) fillData.mbid = deleter.mbid
             if (!keeper.tmdbId && deleter.tmdbId) fillData.tmdbId = deleter.tmdbId
-            if (!keeper.agencyId && deleter.agencyId) fillData.agencyId = deleter.agencyId
-            if (!keeper.birthDate && deleter.birthDate) fillData.birthDate = deleter.birthDate
-            if (!keeper.birthName && deleter.birthName) fillData.birthName = deleter.birthName
-            if (!keeper.height && deleter.height) fillData.height = deleter.height
-            if (!keeper.bloodType && deleter.bloodType) fillData.bloodType = deleter.bloodType
-            // Somar métricas
+
+            // Sum metrics
             fillData.viewCount = keeper.viewCount + deleter.viewCount
             fillData.favoriteCount = keeper.favoriteCount + deleter.favoriteCount
-            // Mesclar stageNames
-            if (deleter.stageNames?.length) {
-                const merged = Array.from(new Set([...keeper.stageNames, ...deleter.stageNames]))
-                fillData.stageNames = merged
-            }
+
+            // Merge stageNames — also add deleter.nameRomanized as alias to prevent re-creation by sync
+            const allNames = new Set([...keeper.stageNames, ...deleter.stageNames, deleter.nameRomanized])
+            fillData.stageNames = Array.from(allNames)
+
             await tx.artist.update({ where: { id: keepId }, data: fillData })
 
-            // 8. Deletar o duplicado
+            // 8. Delete the duplicate
             await tx.artist.delete({ where: { id: deleteId } })
         }, { timeout: 30000 })
 
-        log.info('Artists merged', { keepId, deleteId, keepName: keeper.nameRomanized, deleteName: deleter.nameRomanized })
+        log.info('Artists merged', { keepId, deleteId, keepName: keeper.nameRomanized, deleteName: deleter.nameRomanized, hasOverrides: !!fieldOverrides })
 
         return NextResponse.json({
             message: 'Artistas mesclados com sucesso',
