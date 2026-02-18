@@ -22,7 +22,7 @@ const artistSchema = z.object({
   bloodType: z.string().optional(),
   zodiacSign: z.string().optional(),
   bio: z.string().optional(),
-  primaryImageUrl: z.string().url().optional(),  // era: imageUrl
+  primaryImageUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
   socialLinks: z.record(z.string(), z.string()).optional(),  // JSON: { instagram: "...", etc }
   tmdbId: z.string().optional(),
   agencyId: z.string().optional(),
@@ -108,10 +108,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = artistSchema.parse(body)
 
-    // Convert date strings to Date objects
+    // Convert date strings to Date objects; empty string → null for nullable fields
     const data: Record<string, unknown> = { ...validated }
     if (validated.birthDate) {
       data.birthDate = new Date(validated.birthDate)
+    }
+    if (validated.primaryImageUrl === '' || validated.primaryImageUrl === null) {
+      data.primaryImageUrl = null
     }
 
     const artist = await prisma.artist.create({
@@ -156,10 +159,13 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
     const validated = artistSchema.partial().parse(body)
 
-    // Convert date strings to Date objects
+    // Convert date strings to Date objects; empty string → null for nullable fields
     const data: Record<string, unknown> = { ...validated }
     if (validated.birthDate) {
       data.birthDate = new Date(validated.birthDate)
+    }
+    if (validated.primaryImageUrl === '' || validated.primaryImageUrl === null) {
+      data.primaryImageUrl = null
     }
 
     const artist = await prisma.artist.update({
