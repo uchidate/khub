@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink } from 'lucide-react'
+import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink, Sparkles, RefreshCw } from 'lucide-react'
 import Image from 'next/image'
 
 interface SocialLinks {
@@ -182,6 +182,83 @@ export default function SocialLinksAdminPage() {
     const missing = artists.filter(a => !countLinks(a.socialLinks)).length
     const complete = artists.filter(a => countLinks(a.socialLinks) > 0).length
 
+    // ── Auto-sync via Wikidata ───────────────────────────────────────────────
+    const [syncing, setSyncing] = useState(false)
+    const [syncLog, setSyncLog] = useState<string[]>([])
+    const [syncLimit, setSyncLimit] = useState(30)
+    const syncLogRef = useRef<HTMLDivElement>(null)
+
+    const startSync = useCallback(async () => {
+        setSyncing(true)
+        setSyncLog(['🚀 Iniciando busca no Wikidata...'])
+
+        try {
+            const res = await fetch('/api/admin/sync-social-links', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: syncLimit, dryRun: false }),
+            })
+
+            if (!res.ok || !res.body) {
+                setSyncLog(prev => [...prev, `❌ Erro HTTP ${res.status}`])
+                return
+            }
+
+            const reader = res.body.getReader()
+            const decoder = new TextDecoder()
+            let buffer = ''
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+                buffer += decoder.decode(value, { stream: true })
+                const lines = buffer.split('\n')
+                buffer = lines.pop() || ''
+
+                for (const line of lines) {
+                    if (!line.trim()) continue
+                    const [type, ...rest] = line.split(':')
+                    const payload = rest.join(':')
+
+                    if (type === 'TOTAL') {
+                        setSyncLog(prev => [...prev, `📋 ${payload} artistas para processar`])
+                    } else if (type === 'PROGRESS') {
+                        const [pos, name] = payload.split(':')
+                        setSyncLog(prev => [...prev, `⏳ [${pos}] ${name}...`])
+                    } else if (type === 'FOUND') {
+                        const [name, platforms] = payload.split(':')
+                        setSyncLog(prev => [...prev, `✅ ${name} → ${platforms}`])
+                    } else if (type === 'NOT_FOUND') {
+                        setSyncLog(prev => [...prev, `➖ ${payload}: não encontrado`])
+                    } else if (type === 'SAVED') {
+                        // Silently mark artist as updated in local state
+                        const id = payload
+                        setArtists(prev => prev.map(a =>
+                            a.id === id ? { ...a, socialLinksUpdatedAt: new Date().toISOString() } as Artist : a
+                        ))
+                    } else if (type === 'ERROR') {
+                        setSyncLog(prev => [...prev, `❌ Erro: ${payload}`])
+                    } else if (type === 'DONE') {
+                        setSyncLog(prev => [...prev, `🎉 Concluído! ${payload}`])
+                        // Refresh artist list
+                        await fetchArtists()
+                    }
+
+                    // Auto-scroll log
+                    setTimeout(() => {
+                        if (syncLogRef.current) {
+                            syncLogRef.current.scrollTop = syncLogRef.current.scrollHeight
+                        }
+                    }, 50)
+                }
+            }
+        } catch (e) {
+            setSyncLog(prev => [...prev, `❌ Erro: ${e}`])
+        } finally {
+            setSyncing(false)
+        }
+    }, [syncLimit, fetchArtists])
+
     return (
         <AdminLayout title="Redes Sociais dos Artistas">
             <div className="space-y-6">
@@ -199,6 +276,60 @@ export default function SocialLinksAdminPage() {
                         <p className="text-2xl font-black text-red-400">{missing}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Sem links</p>
                     </div>
+                </div>
+
+                {/* Auto-sync panel */}
+                <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center gap-3 flex-1">
+                            <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                            <div>
+                                <p className="text-sm font-bold text-white">Busca automática via Wikidata</p>
+                                <p className="text-xs text-zinc-500 mt-0.5">Encontra Instagram, Twitter, YouTube e TikTok para artistas sem links</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-zinc-500 font-medium">Artistas:</span>
+                                <select
+                                    value={syncLimit}
+                                    onChange={e => setSyncLimit(Number(e.target.value))}
+                                    disabled={syncing}
+                                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                                >
+                                    {[10, 20, 30, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+                                </select>
+                            </div>
+                            <button
+                                onClick={startSync}
+                                disabled={syncing}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                            >
+                                {syncing
+                                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Buscando...</>
+                                    : <><Sparkles className="w-4 h-4" /> Buscar agora</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Log output */}
+                    {syncLog.length > 0 && (
+                        <div
+                            ref={syncLogRef}
+                            className="mt-4 bg-black/40 rounded-lg p-4 max-h-48 overflow-y-auto font-mono text-xs space-y-1 border border-white/5"
+                        >
+                            {syncLog.map((line, i) => (
+                                <div key={i} className={
+                                    line.startsWith('✅') ? 'text-green-400' :
+                                    line.startsWith('❌') ? 'text-red-400' :
+                                    line.startsWith('🎉') ? 'text-purple-400 font-bold' :
+                                    line.startsWith('⏳') ? 'text-zinc-500' :
+                                    'text-zinc-300'
+                                }>{line}</div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Filters */}
