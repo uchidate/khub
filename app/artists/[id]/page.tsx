@@ -5,7 +5,7 @@ import { ViewTracker } from "@/components/features/ViewTracker"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
-import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper } from "lucide-react"
 import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
@@ -60,18 +60,26 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function ArtistDetailPage({ params }: { params: { id: string } }) {
-    const artist = await prisma.artist.findUnique({
-        where: { id: params.id },
-        include: {
-            agency: true,
-            albums: {
-                orderBy: { releaseDate: 'desc' }
-            },
-            productions: {
-                include: { production: true }
+    const [artist, artistNews] = await Promise.all([
+        prisma.artist.findUnique({
+            where: { id: params.id },
+            include: {
+                agency: true,
+                albums: {
+                    orderBy: { releaseDate: 'desc' }
+                },
+                productions: {
+                    include: { production: true }
+                }
             }
-        }
-    })
+        }),
+        prisma.news.findMany({
+            where: { artists: { some: { artistId: params.id } } },
+            select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 6,
+        }),
+    ])
 
     if (!artist) {
         return (
@@ -362,6 +370,70 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                     </div>
                 </div>
             </div>
+
+            {/* News Section */}
+            {artistNews.length > 0 && (
+                <div className="px-4 sm:px-12 md:px-20 pb-20 border-t border-white/5 pt-16">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-2">
+                            <Newspaper className="w-4 h-4 text-zinc-500" />
+                            <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest">
+                                Notícias sobre {artist.nameRomanized}
+                            </h3>
+                        </div>
+                        <Link
+                            href={`/news?artistId=${artist.id}`}
+                            className="text-xs font-bold text-purple-500 hover:text-purple-400 transition-colors"
+                        >
+                            Ver todas →
+                        </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {artistNews.map((item) => (
+                            <Link
+                                key={item.id}
+                                href={`/news/${item.id}`}
+                                className="group flex gap-4 p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-purple-500/30 hover:bg-zinc-900 transition-all"
+                            >
+                                {/* Thumbnail */}
+                                <div className="relative w-24 aspect-video flex-shrink-0 rounded-lg overflow-hidden bg-zinc-800">
+                                    {item.imageUrl ? (
+                                        <Image
+                                            src={item.imageUrl}
+                                            alt={item.title}
+                                            fill
+                                            sizes="96px"
+                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <Newspaper className="w-5 h-5 text-zinc-700" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Info */}
+                                <div className="flex flex-col justify-between min-w-0 flex-1">
+                                    <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug">
+                                        {item.title}
+                                    </h4>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-[10px] font-bold text-zinc-600">
+                                            {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
+                                        </span>
+                                        {item.tags?.[0] && (
+                                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-zinc-800 text-zinc-500 rounded-sm">
+                                                {item.tags[0]}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
