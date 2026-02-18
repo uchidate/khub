@@ -19,6 +19,7 @@ import { getNewsTranslationService } from '@/lib/services/news-translation-servi
  * - POST /api/cron/translate-news?action=retry  → reprocessa failed (reset → pending → traduz)
  * - POST /api/cron/translate-news?action=reset-old → reseta notícias antigas (sem originalContent)
  *                                                     para retradução com conteúdo original preservado
+ * - POST /api/cron/translate-news?action=expand → expande artigos com contentMd curto (<600 chars)
  */
 export async function POST(request: NextRequest) {
     const requestId = `cron-news-translate-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
@@ -115,6 +116,10 @@ async function runTranslationProcessing(
             // Depois do reset, traduzir o próximo batch
             result = await translationService.translatePendingNews(10);
             console.log(`♻️  Reset ${resetCount} old news + translated first batch`);
+        } else if (action === 'expand') {
+            // Expandir artigos com conteúdo curto (<600 chars)
+            const expandResult = await translationService.expandShortArticles(10);
+            result = { translated: expandResult.expanded, failed: expandResult.failed, skipped: 0 };
         } else {
             // Traduzir notícias pendentes
             result = await translationService.translatePendingNews(10);

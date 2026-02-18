@@ -165,6 +165,71 @@ export class NewsTranslationService {
     }
 
     /**
+     * Expande artigos existentes com conteúdo curto (<600 chars)
+     * Usa o novo prompt de expansão para enriquecer o contentMd
+     */
+    async expandShortArticles(limit: number = 10): Promise<{ expanded: number; failed: number }> {
+        console.log(`📰 Looking for short articles to expand (limit: ${limit})...`);
+
+        const shortNews = await this.prisma.news.findMany({
+            where: {
+                translationStatus: 'completed',
+                OR: [
+                    // Artigos curtos (menos de 600 chars de conteúdo)
+                    { contentMd: { not: { contains: '\n\n' } } },
+                ],
+            },
+            orderBy: { publishedAt: 'desc' },
+            take: limit * 3, // pega mais para filtrar no código
+            select: {
+                id: true,
+                title: true,
+                contentMd: true,
+                originalContent: true,
+                originalTitle: true,
+            }
+        });
+
+        // Filtrar os genuinamente curtos
+        const toExpand = shortNews
+            .filter(n => n.contentMd.length < 600)
+            .slice(0, limit);
+
+        console.log(`📊 Found ${toExpand.length} short articles to expand`);
+
+        let expanded = 0;
+        let failed = 0;
+
+        for (const news of toExpand) {
+            try {
+                const sourceTitle = news.originalTitle || news.title;
+                const sourceContent = news.originalContent || news.contentMd;
+
+                console.log(`  🔄 Expanding: ${news.title.substring(0, 60)}...`);
+
+                const expandedContent = await this.translateAndFormatContent(sourceTitle, sourceContent);
+
+                if (expandedContent && expandedContent.length > news.contentMd.length + 50) {
+                    await this.prisma.news.update({
+                        where: { id: news.id },
+                        data: { contentMd: expandedContent },
+                    });
+                    console.log(`  ✅ Expanded: ${news.title.substring(0, 60)} (${news.contentMd.length} → ${expandedContent.length} chars)`);
+                    expanded++;
+                } else {
+                    console.log(`  ⏭️  Skipped (no improvement): ${news.title.substring(0, 60)}`);
+                }
+            } catch (error: any) {
+                console.error(`  ❌ Expand failed for "${news.title}": ${error.message}`);
+                failed++;
+            }
+        }
+
+        console.log(`✅ Expand batch complete: ${expanded} expanded, ${failed} failed`);
+        return { expanded, failed };
+    }
+
+    /**
      * Reprocessa notícias com falha
      */
     async retryFailedTranslations(limit: number = 10): Promise<number> {
@@ -248,50 +313,56 @@ Retorne apenas a tradução, sem aspas ou formatação extra.`;
     }
 
     /**
-     * Traduz e formata conteúdo para markdown PT-BR
+     * Traduz e expande conteúdo para markdown PT-BR completo
      */
-    private async translateAndFormatContent(title: string, content: string): Promise<string> {
+    async translateAndFormatContent(title: string, content: string): Promise<string> {
         if (!content || content.trim().length < 20) {
             return `**${title}**\n\n*Conteúdo não disponível.*`;
         }
 
-        const maxLength = 5000;
-        const textToTranslate = content.length > maxLength
+        const maxLength = 8000;
+        const sourceText = content.length > maxLength
             ? content.substring(0, maxLength)
             : content;
 
         try {
-            const prompt = `Traduza a seguinte notícia sobre K-pop/K-drama/cinema coreano para português brasileiro:
+            const prompt = `Você é um jornalista especializado em cultura coreana escrevendo para o portal HallyuHub, maior comunidade brasileira de K-pop e K-drama.
 
-Título: ${title}
+Com base no título e no conteúdo original abaixo, escreva um artigo completo e envolvente em português brasileiro:
 
-Conteúdo:
-${textToTranslate}
+**Título original (EN):** ${title}
 
-Requisitos:
-- Tradução completa e natural em português brasileiro
-- Manter nomes próprios (artistas, grupos, programas, filmes) no original
-- Formato markdown com parágrafos bem estruturados
-- Use **negrito** para destaques importantes (nomes, títulos, datas)
-- Tom jornalístico mas acessível
-- Inclua todos os detalhes importantes: datas, números, citações
-- Ao final adicione: "\\n\\n---\\n\\n*Fonte: Notícia original*"`;
+**Conteúdo original:**
+${sourceText}
+
+**INSTRUÇÕES OBRIGATÓRIAS:**
+- Escreva mínimo 4 parágrafos bem desenvolvidos (objetivo: 350-500 palavras)
+- Traduza o conteúdo original fielmente, depois EXPANDA com contexto relevante:
+  - Histórico do artista/grupo mencionado
+  - Impacto e relevância para os fãs brasileiros
+  - Contexto dentro da indústria K-pop/K-drama
+- Se o conteúdo original for curto, use o que você sabe sobre o assunto para enriquecer
+- Mantenha nomes próprios em inglês/coreano (artistas, grupos, programas, filmes, álbuns)
+- Use **negrito** para nomes de artistas/grupos na primeira menção e datas importantes
+- Tom: jornalístico, apaixonado e acessível para fãs brasileiros
+- Parágrafos separados por linha em branco
+- NÃO adicione título no início (ele já aparece separado)
+- NÃO adicione rodapé de fonte`;
 
             const result = await this.getOrchestrator().generateStructured<{ content: string }>(
                 prompt,
-                '{ "content": "string (conteúdo completo em markdown PT-BR)" }',
-                { preferredProvider: 'ollama', maxTokens: 1500 }
+                '{ "content": "string (artigo completo em markdown PT-BR, mínimo 4 parágrafos)" }',
+                { preferredProvider: 'ollama', maxTokens: 2500 }
             );
 
-            if (!result.content || result.content.length < 50) {
-                throw new Error('Translation too short');
+            if (!result.content || result.content.length < 100) {
+                throw new Error('Content too short');
             }
 
             return result.content;
         } catch (error: any) {
-            console.warn(`⚠️  Content translation failed: ${error.message}`);
-            // Fallback: conteúdo mínimo identificável como necessitando retradução
-            return `**${title}**\n\n${textToTranslate.substring(0, 300)}...\n\n---\n\n*Fonte: Notícia original*`;
+            console.warn(`⚠️  Content generation failed: ${error.message}`);
+            return `${sourceText.substring(0, 500)}`;
         }
     }
 

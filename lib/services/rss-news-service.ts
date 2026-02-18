@@ -154,9 +154,21 @@ export class RSSNewsService {
           this.extractImageUrl(item['media:thumbnail']) ||
           this.extractImageFromContent(content || description);
 
-        // Se ainda não tem imagem, tentar buscar da página (fallback assíncrono)
-        // Nota: Isso vai tornar o parsing mais lento, mas melhora a qualidade
-        if (!imageUrl && link) {
+        // Conteúdo limpo do RSS
+        const cleanContent = content ? this.cleanHtml(content) : '';
+        const cleanDescription = this.cleanHtml(description);
+
+        // Se o conteúdo RSS for curto (<300 chars), tentar scrape do artigo completo
+        // (busca imagem e texto em uma única requisição)
+        let fullContent = cleanContent || cleanDescription;
+        if (fullContent.length < 300 && link) {
+          const articleData = await this.fetchArticleData(link);
+          if (!imageUrl && articleData.imageUrl) imageUrl = articleData.imageUrl;
+          if (articleData.content && articleData.content.length > fullContent.length) {
+            fullContent = articleData.content;
+          }
+        } else if (!imageUrl && link) {
+          // Tem conteúdo mas não tem imagem — buscar só a imagem
           imageUrl = await this.fetchImageFromArticle(link);
         }
 
@@ -166,8 +178,8 @@ export class RSSNewsService {
         newsItems.push({
           title: this.cleanHtml(title),
           link,
-          description: this.cleanHtml(description),
-          content: content ? this.cleanHtml(content) : undefined,
+          description: cleanDescription,
+          content: fullContent || undefined,
           publishedAt: pubDate,
           imageUrl,
           source: feed.name,
@@ -280,28 +292,62 @@ export class RSSNewsService {
   }
 
   /**
-   * Busca imagem diretamente da página do artigo (fallback)
+   * Busca imagem e texto completo do artigo em uma única requisição
    */
-  private async fetchImageFromArticle(articleUrl: string): Promise<string | undefined> {
+  async fetchArticleData(articleUrl: string): Promise<{ imageUrl?: string; content?: string }> {
     try {
-      // Tentar buscar a página do artigo
       const response = await fetch(articleUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)',
-        },
-        signal: AbortSignal.timeout(5000), // 5s timeout
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)' },
+        signal: AbortSignal.timeout(8000),
       });
 
-      if (!response.ok) return undefined;
+      if (!response.ok) return {};
 
       const html = await response.text();
 
-      // Tentar extrair imagem do HTML da página
-      return this.extractImageFromContent(html);
+      return {
+        imageUrl: this.extractImageFromContent(html),
+        content: this.extractArticleText(html),
+      };
     } catch (error) {
-      console.warn(`Failed to fetch image from article: ${error}`);
-      return undefined;
+      console.warn(`Failed to fetch article data: ${error}`);
+      return {};
     }
+  }
+
+  /**
+   * Extrai texto principal do artigo a partir do HTML da página
+   */
+  private extractArticleText(html: string): string {
+    // 1. Tentar tag <article>
+    const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+    if (articleMatch) {
+      const text = this.cleanHtml(articleMatch[1]).trim();
+      if (text.length > 200) return text;
+    }
+
+    // 2. Tentar divs com classes de conteúdo comuns (Soompi, Koreaboo, KpopStarz)
+    const contentClasses = [
+      'entry-content', 'post-content', 'article-content',
+      'article-body', 'story-content', 'td-post-content', 'post__content',
+    ];
+    for (const cls of contentClasses) {
+      const match = html.match(new RegExp(`<div[^>]*class="[^"]*${cls}[^"]*"[^>]*>([\\s\\S]{200,}?)<\\/div>`, 'i'));
+      if (match) {
+        const text = this.cleanHtml(match[1]).trim();
+        if (text.length > 200) return text;
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * @deprecated Usar fetchArticleData
+   */
+  private async fetchImageFromArticle(articleUrl: string): Promise<string | undefined> {
+    const data = await this.fetchArticleData(articleUrl);
+    return data.imageUrl;
   }
 
   /**
