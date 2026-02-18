@@ -54,6 +54,9 @@ model Artist {
   translatedAt       DateTime?
   // Enrichment tracking
   mbid               String?            // MusicBrainz artist ID (para discografia)
+  musicalGroup       String?            // Grupo musical atual (ex: BTS, BLACKPINK)
+  musicalGroupMbid   String?            // MusicBrainz ID do grupo (para deduplicação)
+  groupSyncAt        DateTime?          // última sincronização de grupo musical
   discographySyncAt  DateTime?          // última sincronização de discografia
   socialLinksUpdatedAt DateTime?        // última sincronização de redes sociais
   createdAt          DateTime           @default(now())
