@@ -137,10 +137,12 @@ export async function POST(request: NextRequest) {
             const allNames = new Set([...keeper.stageNames, ...deleter.stageNames, deleter.nameRomanized])
             fillData.stageNames = Array.from(allNames)
 
-            await tx.artist.update({ where: { id: keepId }, data: fillData })
-
-            // 8. Delete the duplicate
+            // 8. Delete the duplicate FIRST — frees unique constraints (nameRomanized, tmdbId, mbid)
+            //    so that the subsequent update of keepId can safely use those values without conflicts.
             await tx.artist.delete({ where: { id: deleteId } })
+
+            // 9. Update keeper with chosen field values (now safe — no unique conflicts from deleted artist)
+            await tx.artist.update({ where: { id: keepId }, data: fillData })
         }, { timeout: 30000 })
 
         log.info('Artists merged', { keepId, deleteId, keepName: keeper.nameRomanized, deleteName: deleter.nameRomanized, hasOverrides: !!fieldOverrides })
