@@ -5,6 +5,13 @@ import { useSession } from 'next-auth/react'
 
 const STORAGE_KEY = 'hallyuhub_favorites'
 
+// Map from FavoriteButton itemType to API endpoint prefix
+const API_ENDPOINTS: Record<string, string> = {
+  'artista': '/api/artists',
+  'produção': '/api/productions',
+  'notícia': '/api/news',
+}
+
 export function useFavorites() {
   const { status } = useSession()
   const [favorites, setFavorites] = useState<string[]>([])
@@ -14,11 +21,11 @@ export function useFavorites() {
     if (status === 'loading') return
 
     if (status === 'authenticated') {
-      // Authenticated: load from DB (source of truth across devices)
+      // Authenticated: load ALL favorites from DB (artists + productions + news)
       fetch('/api/users/favorites')
         .then(r => r.json())
         .then(data => {
-          const dbIds: string[] = data.artistIds || []
+          const dbIds: string[] = data.allIds || data.artistIds || []
           // Merge with localStorage so any offline actions are preserved
           const local = getLocal()
           const merged = Array.from(new Set([...dbIds, ...local]))
@@ -46,10 +53,13 @@ export function useFavorites() {
     setFavorites(updated)
     saveLocal(updated)
 
-    // Update DB counter + Favorite record (if authenticated, handled server-side)
-    if (itemType === 'artista') {
-      fetch(`/api/artists/${id}/favorite`, { method: isFav ? 'DELETE' : 'POST' }).catch(() => {
-        // Falha silenciosa — favorito local já foi salvo
+    // Sync to DB for all supported content types
+    const endpointPrefix = itemType ? API_ENDPOINTS[itemType] : null
+    if (endpointPrefix) {
+      fetch(`${endpointPrefix}/${id}/favorite`, {
+        method: isFav ? 'DELETE' : 'POST',
+      }).catch(() => {
+        // Silent failure — local state already saved
       })
     }
   }
