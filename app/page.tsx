@@ -130,7 +130,7 @@ export default async function Home() {
                 </div>
             </ScrollReveal>
 
-            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-12 space-y-16">
+            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-12">
 
                 {/* Featured News Carousel */}
                 {featuredNews.length > 0 && (
