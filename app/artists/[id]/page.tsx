@@ -10,14 +10,38 @@ import type { Metadata } from "next"
 
 export const dynamic = 'force-dynamic'
 
-// Helper function to get social media icon
-function getSocialIcon(name: string) {
-    const lowerName = name.toLowerCase()
-    if (lowerName.includes('instagram')) return Instagram
-    if (lowerName.includes('twitter') || lowerName.includes('x.com')) return Twitter
-    if (lowerName.includes('youtube')) return Youtube
-    if (lowerName.includes('spotify') || lowerName.includes('music')) return Music
-    return Globe
+interface SocialPlatform {
+    icon: React.ElementType | string
+    label: string
+    action: string
+    color: string
+    bg: string
+}
+
+const SOCIAL_PLATFORMS: Record<string, SocialPlatform> = {
+    instagram:  { icon: Instagram, label: 'Instagram', action: 'Seguir',    color: 'text-pink-400',    bg: 'hover:border-pink-500/50 hover:bg-pink-500/10' },
+    twitter:    { icon: Twitter,   label: 'Twitter / X', action: 'Seguir',  color: 'text-sky-400',     bg: 'hover:border-sky-500/50 hover:bg-sky-500/10' },
+    youtube:    { icon: Youtube,   label: 'YouTube',   action: 'Inscrever', color: 'text-red-400',     bg: 'hover:border-red-500/50 hover:bg-red-500/10' },
+    tiktok:     { icon: '▶',       label: 'TikTok',    action: 'Seguir',    color: 'text-white',       bg: 'hover:border-white/30 hover:bg-white/5' },
+    weverse:    { icon: '⬡',       label: 'Weverse',   action: 'Entrar',    color: 'text-green-400',   bg: 'hover:border-green-500/50 hover:bg-green-500/10' },
+    fancafe:    { icon: '☕',       label: 'Fancafe',   action: 'Entrar',    color: 'text-yellow-400',  bg: 'hover:border-yellow-500/50 hover:bg-yellow-500/10' },
+    naverBlog:  { icon: 'N',       label: 'Naver Blog', action: 'Visitar',  color: 'text-emerald-400', bg: 'hover:border-emerald-500/50 hover:bg-emerald-500/10' },
+    spotify:    { icon: Music,     label: 'Spotify',   action: 'Ouvir',     color: 'text-green-500',   bg: 'hover:border-green-500/50 hover:bg-green-500/10' },
+}
+
+function getSocialPlatform(key: string): SocialPlatform {
+    const lower = key.toLowerCase()
+    if (SOCIAL_PLATFORMS[lower]) return SOCIAL_PLATFORMS[lower]
+    // Fallback by URL keyword detection
+    if (lower.includes('instagram')) return SOCIAL_PLATFORMS.instagram
+    if (lower.includes('twitter') || lower.includes('x.com')) return SOCIAL_PLATFORMS.twitter
+    if (lower.includes('youtube')) return SOCIAL_PLATFORMS.youtube
+    if (lower.includes('tiktok')) return SOCIAL_PLATFORMS.tiktok
+    if (lower.includes('weverse')) return SOCIAL_PLATFORMS.weverse
+    if (lower.includes('cafe.daum') || lower.includes('fancafe')) return SOCIAL_PLATFORMS.fancafe
+    if (lower.includes('naver')) return SOCIAL_PLATFORMS.naverBlog
+    if (lower.includes('spotify')) return SOCIAL_PLATFORMS.spotify
+    return { icon: Globe, label: key, action: 'Visitar', color: 'text-zinc-400', bg: 'hover:border-zinc-500/50 hover:bg-zinc-800' }
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -230,14 +254,22 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                         {Object.keys(socialLinks).length > 0 && (
                             <div>
                                 <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Redes Sociais</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {Object.entries(socialLinks).map(([name, url]) => {
-                                        const Icon = getSocialIcon(name)
+                                <div className="flex flex-col gap-2">
+                                    {Object.entries(socialLinks).map(([key, url]) => {
+                                        const platform = getSocialPlatform(key)
+                                        const Icon = typeof platform.icon === 'string' ? null : platform.icon
                                         return (
-                                            <a key={name} href={url} target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center gap-2 text-xs font-bold text-white bg-zinc-800 px-3 py-1.5 rounded-sm border border-white/5 hover:border-purple-500 hover:bg-zinc-700 transition-colors group">
-                                                <Icon className="w-3.5 h-3.5 group-hover:text-purple-400 transition-colors" />
-                                                <span>{name}</span>
+                                            <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
+                                                className={`group flex items-center justify-between px-4 py-3 rounded-xl bg-zinc-900/50 border border-white/5 transition-all ${platform.bg}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`text-base ${platform.color}`}>
+                                                        {Icon ? <Icon className="w-4 h-4" /> : <span>{platform.icon as string}</span>}
+                                                    </span>
+                                                    <span className="text-sm font-bold text-white">{platform.label}</span>
+                                                </div>
+                                                <span className={`text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity ${platform.color}`}>
+                                                    {platform.action} →
+                                                </span>
                                             </a>
                                         )
                                     })}

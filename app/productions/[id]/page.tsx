@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
+import { notFound } from "next/navigation"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { TrailerModal } from "@/components/features/TrailerModal"
@@ -66,12 +67,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
     })
 
     if (!production) {
-        return (
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Breadcrumbs items={[{ label: 'Filmes & Séries', href: '/productions' }, { label: 'Não Encontrado' }]} />
-                <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic mt-8">Produção não encontrada</h1>
-            </div>
-        )
+        notFound()
     }
 
     const tags = production.tags || []

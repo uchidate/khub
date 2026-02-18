@@ -2,8 +2,16 @@ import { Suspense } from 'react'
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
+import type { Metadata } from "next"
+import { PageTransition } from "@/components/features/PageTransition"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+    title: 'Agências',
+    description: 'Os arquitetos do sucesso. Conheça as empresas que moldam o futuro do entretenimento coreano global.',
+}
 
 function AgencySkeleton() {
     return (
@@ -43,7 +51,6 @@ function AgenciesGridSkeleton() {
 }
 
 async function AgenciesGrid() {
-    console.log('--- RENDERING AGENCIES PAGE ---')
     const agencies = await prisma.agency.findMany({
         include: {
             artists: {
@@ -53,7 +60,7 @@ async function AgenciesGrid() {
     })
 
     return (
-        <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+        <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <header className="mb-12">
                 <h1 className="text-4xl md:text-6xl font-black mb-4 hallyu-gradient-text uppercase tracking-tighter italic">Agências</h1>
                 <p className="text-zinc-500 max-w-xl text-lg font-medium">Os arquitetos do sucesso. Conheça as empresas que moldam o futuro do entretenimento global.</p>
@@ -110,7 +117,8 @@ async function AgenciesGrid() {
                     </Link>
                 ))}
             </div>
-        </div>
+            <ScrollToTop />
+        </PageTransition>
     )
 }
 

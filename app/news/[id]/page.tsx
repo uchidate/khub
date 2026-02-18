@@ -32,7 +32,16 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
         }
     }
 
-    const description = news.contentMd ? news.contentMd.slice(0, 160) : news.title
+    const rawDescription = news.contentMd
+        ? news.contentMd
+            .replace(/#{1,6}\s+/g, '')
+            .replace(/\*\*([^*]+)\*\*/g, '$1')
+            .replace(/\*([^*]+)\*/g, '$1')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            .replace(/\n+/g, ' ')
+            .trim()
+        : news.title
+    const description = rawDescription.slice(0, 160)
 
     return {
         title: `${news.title} - HallyuHub`,
