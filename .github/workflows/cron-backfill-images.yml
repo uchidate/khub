@@ -1,0 +1,61 @@
+name: 🖼️ Cron Job - Backfill News Images
+
+on:
+  schedule:
+    # Runs every 6 hours — fetches og:image for articles without imageUrl
+    - cron: '0 */6 * * *'
+
+  # Allow manual trigger with optional limit parameter
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Number of articles to process'
+        required: false
+        default: '50'
+        type: string
+
+jobs:
+  backfill-images:
+    name: Backfill News Images from Source Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🖼️ Call Backfill Images Endpoint
+        run: |
+          LIMIT="${{ github.event.inputs.limit || '20' }}"
+          echo "🚀 Calling backfill-images endpoint (limit: $LIMIT)..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
+            "https://www.hallyuhub.com.br/api/cron/backfill-images?limit=$LIMIT" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "📊 Response Code: $HTTP_CODE"
+          echo "📄 Response Body:"
+          echo "$BODY" | jq '.' || echo "$BODY"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            REQUEST_ID=$(echo "$BODY" | jq -r '.requestId // "unknown"')
+            echo "✅ Backfill job accepted (processing in background)"
+            echo "📋 Request ID: $REQUEST_ID"
+            echo "📝 Check server logs for results:"
+            echo "   ssh root@31.97.255.107 \"docker logs hallyuhub | grep $REQUEST_ID\""
+          else
+            echo "❌ Backfill job failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🖼️ News Image Backfill Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Endpoint**: https://www.hallyuhub.com.br/api/cron/backfill-images" >> $GITHUB_STEP_SUMMARY
+          echo "- **Limit**: ${{ github.event.inputs.limit || '20' }} articles" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Backfill runs in background. Check server logs for results." >> $GITHUB_STEP_SUMMARY
