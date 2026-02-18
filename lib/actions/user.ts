@@ -60,16 +60,16 @@ export async function getDashboardData() {
 
     const userId = session.user.id
 
-    const [favorites, activities, news, user] = await Promise.all([
+    const [favorites, activities, latestNews, trendingArtists, user] = await Promise.all([
         (prisma as any).favorite.findMany({
             where: { userId },
             include: {
-                artist: true,
-                production: true,
-                news: true
+                artist: { select: { id: true, nameRomanized: true, primaryImageUrl: true } },
+                production: { select: { id: true, titlePt: true, titleOriginal: true, imageUrl: true } },
+                news: { select: { id: true, title: true, imageUrl: true } },
             },
             orderBy: { createdAt: 'desc' },
-            take: 5
+            take: 8
         }),
         (prisma as any).activity.findMany({
             where: { userId },
@@ -78,7 +78,13 @@ export async function getDashboardData() {
         }),
         prisma.news.findMany({
             orderBy: { publishedAt: 'desc' },
-            take: 2
+            take: 4,
+            select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
+        }),
+        prisma.artist.findMany({
+            orderBy: { viewCount: 'desc' },
+            take: 6,
+            select: { id: true, nameRomanized: true, primaryImageUrl: true },
         }),
         prisma.user.findUnique({
             where: { id: userId },
@@ -92,7 +98,7 @@ export async function getDashboardData() {
         joinDate: user?.createdAt
     }
 
-    return { favorites, activities, news, stats }
+    return { favorites, activities, latestNews, trendingArtists, stats }
 }
 
 export async function registerInterest(tierName: string) {

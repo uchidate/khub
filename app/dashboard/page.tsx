@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   LayoutDashboard,
   User,
@@ -11,7 +12,9 @@ import {
   Clock,
   ChevronRight,
   History,
-  Crown
+  Crown,
+  Newspaper,
+  TrendingUp,
 } from 'lucide-react'
 import { PageTransition } from '@/components/features/PageTransition'
 import { getDashboardData } from '@/lib/actions/user'
@@ -24,7 +27,7 @@ export default async function DashboardPage() {
   const data = await getDashboardData()
   if (!data) return null
 
-  const { favorites, activities, stats } = data
+  const { favorites, activities, latestNews, trendingArtists, stats } = data
 
   const quickLinks = [
     { title: 'Perfil', description: 'Editar Informações', href: '/profile', icon: User },
@@ -156,15 +159,41 @@ export default async function DashboardPage() {
             </div>
 
             {favorites.length === 0 ? (
-              <div className="glass-card p-12 text-center border-dashed border-2 border-zinc-800/50 flex flex-col items-center justify-center">
-                <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4">
-                  <Star size={32} className="text-zinc-700" />
+              <div className="space-y-6">
+                {/* Empty state CTA */}
+                <div className="glass-card p-8 text-center border-dashed border-2 border-zinc-800/50 flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4">
+                    <Star size={32} className="text-zinc-700" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">Sua galáxia está vazia</h3>
+                  <p className="text-zinc-500 mb-6 max-w-sm mx-auto text-sm">Comece a explorar e adicione artistas, produções e notícias para construir seu universo pessoal.</p>
+                  <Link href="/artists" className="btn-primary text-xs uppercase tracking-widest">
+                    Explorar Universo
+                  </Link>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Sua galáxia está vazia</h3>
-                <p className="text-zinc-500 mb-6 max-w-sm mx-auto text-sm">Comece a explorar e adicione artistas, produções e notícias para construir seu universo pessoal.</p>
-                <Link href="/artists" className="btn-primary text-xs uppercase tracking-widest">
-                  Explorar Universo
-                </Link>
+
+                {/* Trending artists discovery */}
+                {trendingArtists.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp size={16} className="text-neon-pink" />
+                      <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Em alta agora</h3>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                      {trendingArtists.map((artist: any) => (
+                        <MediaCard
+                          key={artist.id}
+                          id={artist.id}
+                          title={artist.nameRomanized}
+                          imageUrl={artist.primaryImageUrl}
+                          type="artist"
+                          href={`/artists/${artist.id}`}
+                          aspectRatio="square"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -186,6 +215,59 @@ export default async function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* 5. Latest News (Full Width) */}
+          {latestNews.length > 0 && (
+            <div className="md:col-span-4 mt-4">
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <h2 className="text-2xl font-display font-black text-white uppercase italic tracking-tight">Últimas Notícias</h2>
+                  <p className="text-zinc-500 text-sm mt-1">Fique por dentro do universo hallyu</p>
+                </div>
+                <Link href="/news" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
+                  Ver Tudo <ChevronRight size={14} />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {latestNews.map((item: any) => (
+                  <Link
+                    key={item.id}
+                    href={`/news/${item.id}`}
+                    className="glass-card overflow-hidden group hover:scale-[1.02] transition-transform"
+                  >
+                    {item.imageUrl && (
+                      <div className="relative h-40 overflow-hidden">
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.title}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                        <div className="absolute bottom-2 left-3">
+                          {item.tags?.[0] && (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-neon-pink/80 text-white">
+                              {item.tags[0]}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <p className="text-xs text-zinc-500 mb-1 flex items-center gap-1">
+                        <Newspaper size={10} />
+                        {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                      </p>
+                      <h4 className="text-sm font-bold text-white line-clamp-2 group-hover:text-electric-cyan transition-colors">
+                        {item.title}
+                      </h4>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </PageTransition>
