@@ -108,14 +108,14 @@ export function DataTable<T extends { id: string }>({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
           <input
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
             placeholder={searchPlaceholder}
-            className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 text-sm"
+            className="w-full px-4 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 text-sm"
           />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={18} />
         </div>
         <div className="flex items-center gap-3">
           {filters}

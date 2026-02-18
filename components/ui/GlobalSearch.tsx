@@ -72,8 +72,6 @@ export function GlobalSearch() {
             {/* Search Input */}
             <form onSubmit={handleSubmit} className="relative">
                 <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-
                     <input
                         ref={inputRef}
                         type="text"
@@ -84,7 +82,7 @@ export function GlobalSearch() {
                         }}
                         onFocus={() => setIsOpen(true)}
                         placeholder="Buscar"
-                        className="w-full pl-14 pr-24 py-3 bg-zinc-900/50 border border-white/10 rounded-full text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all hover:border-purple-500/30"
+                        className="w-full pl-5 pr-32 py-3 bg-zinc-900/50 border border-white/10 rounded-full text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all hover:border-purple-500/30"
                     />
 
                     {/* Right side icons */}
@@ -104,6 +102,8 @@ export function GlobalSearch() {
                         <div className="hidden md:flex items-center gap-1 px-2 py-1 bg-zinc-800/50 rounded text-xs text-zinc-500 font-mono">
                             <span>⌘K</span>
                         </div>
+
+                        <Search className="w-5 h-5 text-zinc-400" />
                     </div>
                 </div>
             </form>
