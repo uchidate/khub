@@ -114,10 +114,10 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
         fetchNews()
     }, [fetchNews])
 
-    // Handler de mudança de filtros
-    const handleFilterChange = (filters: FilterValues) => {
+    // Handler de mudança de filtros — memoizado para não re-disparar o efeito do NewsFilters
+    const handleFilterChange = useCallback((filters: FilterValues) => {
         updateUrl(filters, 1) // Sempre volta para página 1 quando muda filtros
-    }
+    }, [updateUrl])
 
     // Handler de mudança de página
     const handlePageChange = (newPage: number) => {
