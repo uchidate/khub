@@ -131,11 +131,7 @@ export function MediaCard({
                         style={{ transform: "translateZ(50px)" }}
                         className="absolute inset-0 flex flex-col justify-end p-6 z-20"
                     >
-                        <motion.div
-                            initial={{ y: 0 }}
-                            whileHover={{ y: -5 }}
-                            transition={{ duration: 0.3 }}
-                        >
+                        <div>
                             <h3 className="text-xl md:text-2xl font-display font-black text-white leading-[0.9] mb-1 drop-shadow-lg uppercase italic tracking-tighter">
                                 {title}
                             </h3>
@@ -169,7 +165,7 @@ export function MediaCard({
                                     )}
                                 </div>
                             )}
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
             </Link>
