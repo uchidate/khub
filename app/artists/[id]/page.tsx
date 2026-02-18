@@ -94,7 +94,12 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 },
                 productions: {
                     include: { production: true }
-                }
+                },
+                memberships: {
+                    where: { isActive: true },
+                    include: { group: { select: { id: true, name: true, nameHangul: true } } },
+                    take: 1,
+                },
             }
         }),
         prisma.news.findMany({
@@ -246,13 +251,15 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                     </Link>
                                 </div>
                             )}
-                            {artist.musicalGroup && (
+                            {artist.memberships?.[0] && (
                                 <div className="flex justify-between py-3 border-b border-white/5 group">
                                     <div className="flex items-center gap-2">
                                         <Music className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
                                         <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Grupo</span>
                                     </div>
-                                    <span className="text-sm font-bold text-zinc-300">{artist.musicalGroup}</span>
+                                    <Link href={`/groups/${artist.memberships[0].group.id}`} className="text-sm font-bold text-purple-500 hover:text-purple-400 transition-colors">
+                                        {artist.memberships[0].group.name}
+                                    </Link>
                                 </div>
                             )}
 

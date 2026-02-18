@@ -11,6 +11,7 @@ const navItems = [
   { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
   { href: '/admin/artists/fix-names', label: 'Corrigir Nomes', icon: Languages },
   { href: '/admin/artists/groups', label: 'Grupos Musicais', icon: UsersRound },
+  { href: '/admin/groups', label: 'Gerir Grupos', icon: UsersRound },
   { href: '/admin/agencies', label: 'Agências', icon: Building2 },
   { href: '/admin/productions', label: 'Produções', icon: Film },
   { href: '/admin/news', label: 'Notícias', icon: Newspaper },
