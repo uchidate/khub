@@ -20,7 +20,7 @@ export function FavoriteButton({ id, className = '', itemName, itemType }: Favor
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    toggle(id)
+    toggle(id, itemType)
 
     // Only show toast if itemType is provided
     if (itemType) {
@@ -42,8 +42,7 @@ export function FavoriteButton({ id, className = '', itemName, itemType }: Favor
       disabled={!isLoaded}
       className={`
         p-2 rounded-full
-        transition-all duration-200
-        hover:scale-110 active:scale-95
+        transition-colors duration-200
         ${favorited ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}
         ${!isLoaded ? 'opacity-50 cursor-wait' : ''}
         ${className}
