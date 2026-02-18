@@ -89,8 +89,8 @@ export function SearchBar() {
       {/* Search Input */}
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-          size={20}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
+          size={18}
         />
 
         <input
@@ -102,9 +102,9 @@ export function SearchBar() {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Buscar artistas, k-dramas, notícias..."
+          placeholder="Buscar..."
           className="
-            w-full pl-10 pr-10 py-3
+            w-full pl-11 pr-10 py-3
             bg-zinc-900 text-white
             border border-zinc-800
             rounded-lg

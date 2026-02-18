@@ -60,7 +60,7 @@ export function NewsFilters({ onFilterChange, artists = [], initialFilters = {} 
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                 <input
                     type="text"
-                    placeholder="Buscar notícias por palavra-chave..."
+                    placeholder="Buscar..."
                     value={filters.search || ''}
                     onChange={(e) => updateFilter('search', e.target.value || undefined)}
                     className="w-full pl-12 pr-4 py-4 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
