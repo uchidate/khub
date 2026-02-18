@@ -89,8 +89,7 @@ export function SearchBar() {
       {/* Search Input */}
       <div className="relative">
         <Search
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-          size={18}
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400"
         />
 
         <input
@@ -104,7 +103,7 @@ export function SearchBar() {
           onKeyDown={handleKeyDown}
           placeholder="Buscar"
           className="
-            w-full pl-11 pr-10 py-3
+            w-full pl-12 pr-10 py-3
             bg-zinc-900 text-white
             border border-zinc-800
             rounded-lg

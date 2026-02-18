@@ -6,7 +6,7 @@ import Image from 'next/image'
 
 export function HeroSection() {
     return (
-        <section className="relative min-h-[80vh] w-full flex items-center justify-center overflow-hidden">
+        <section className="relative w-full flex items-center justify-center overflow-hidden pt-32 pb-16 md:pt-40 md:pb-20">
             {/* Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black z-10" />
@@ -27,22 +27,12 @@ export function HeroSection() {
             </div>
 
             {/* Content */}
-            <div className="relative z-30 container mx-auto px-4 text-center pt-24 md:pt-0">
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                >
-                    <span className="inline-block text-sm font-bold uppercase tracking-[0.3em] text-neon-pink mb-6 text-shadow-glow">
-                        CULTURA • MÚSICA • DRAMA
-                    </span>
-                </motion.div>
-
+            <div className="relative z-30 container mx-auto px-4 text-center">
                 <motion.h1
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                    className="text-6xl md:text-9xl font-display font-black mb-6 tracking-tighter leading-tight italic"
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="text-5xl md:text-9xl font-display font-black mb-4 tracking-tighter leading-tight italic"
                 >
                     A ONDA <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-electric-cyan animate-gradient bg-[length:200%_auto]">HALLYU</span><br />
                     NO SEU RITMO.
@@ -51,17 +41,17 @@ export function HeroSection() {
                 <motion.p
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.6 }}
-                    className="text-xl text-zinc-300 mb-10 max-w-2xl mx-auto leading-relaxed"
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                    className="text-base md:text-xl text-zinc-400 mb-8 max-w-xl mx-auto leading-relaxed"
                 >
-                    Explore o universo do K-Pop, K-Dramas e cultura coreana com detalhes impressionantes e design premium.
+                    K-Pop, K-Dramas e cultura coreana com design premium.
                 </motion.p>
 
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.8 }}
-                    className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+                    transition={{ duration: 0.8, delay: 0.6 }}
+                    className="flex flex-row gap-3 justify-center items-center"
                 >
                     <Link href="/artists" className="btn-primary flex items-center gap-2 group">
                         <span>Explorar Artistas</span>
