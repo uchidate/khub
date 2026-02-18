@@ -80,9 +80,9 @@ const columns: Column<Artist>[] = [
 const formFields: FormField[] = [
   { key: 'nameRomanized', label: 'Nome (Romanizado)', type: 'text', placeholder: 'Ex: Kim Soo-hyun', required: true },
   { key: 'nameHangul', label: 'Nome em Hangul', type: 'text', placeholder: 'Ex: 김수현' },
-  { key: 'stageName', label: 'Nome Artístico', type: 'text', placeholder: 'Ex: Suzy' },
+  { key: 'stageNames', label: 'Nomes Artísticos', type: 'text', placeholder: 'Ex: Suzy, Bae (separados por vírgula)' },
   { key: 'bio', label: 'Biografia', type: 'textarea', placeholder: 'Biografia do artista...' },
-  { key: 'birthdate', label: 'Data de Nascimento', type: 'date' },
+  { key: 'birthDate', label: 'Data de Nascimento', type: 'date' },
   { key: 'country', label: 'País', type: 'text', placeholder: 'Ex: South Korea' },
   {
     key: 'gender',
@@ -123,6 +123,17 @@ export default function ArtistsAdminPage() {
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     const url = editingArtist ? `/api/admin/artists?id=${editingArtist.id}` : '/api/admin/artists'
     const method = editingArtist ? 'PATCH' : 'POST'
+
+    // Converter stageNames de string CSV para array
+    if (typeof data.stageNames === 'string') {
+      data.stageNames = data.stageNames
+        ? data.stageNames.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : []
+    }
+    // URL vazia → null para limpar foto
+    if (data.primaryImageUrl === '') {
+      data.primaryImageUrl = null
+    }
 
     const res = await fetch(url, {
       method,
@@ -179,7 +190,12 @@ export default function ArtistsAdminPage() {
       <FormModal
         title={editingArtist ? 'Editar Artista' : 'Novo Artista'}
         fields={formFields}
-        initialData={editingArtist ? (editingArtist as unknown as Record<string, unknown>) : undefined}
+        initialData={editingArtist ? {
+          ...(editingArtist as unknown as Record<string, unknown>),
+          stageNames: Array.isArray((editingArtist as any).stageNames)
+            ? (editingArtist as any).stageNames.join(', ')
+            : '',
+        } : undefined}
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSubmit={handleFormSubmit}

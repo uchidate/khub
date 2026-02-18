@@ -154,6 +154,7 @@ async function runCronProcessing(lockId: string) {
                         update: {
                             nameRomanized: artist.nameRomanized,
                             nameHangul: artist.nameHangul || null,
+                            stageNames: artist.stageNames || [],
                             birthDate: artist.birthDate || null,
                             roles: artist.roles || [],
                             bio: artist.bio || null,
@@ -163,6 +164,7 @@ async function runCronProcessing(lockId: string) {
                         create: {
                             nameRomanized: artist.nameRomanized,
                             nameHangul: artist.nameHangul || null,
+                            stageNames: artist.stageNames || [],
                             birthDate: artist.birthDate || null,
                             roles: artist.roles || [],
                             bio: artist.bio || null,

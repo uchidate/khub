@@ -31,6 +31,7 @@ interface RealArtistData {
   tmdbId: number;
   nameRomanized: string;
   nameHangul?: string;
+  stageNames?: string[];
   birthName?: string;
   birthDate?: Date;
   profileImageUrl: string;
@@ -170,17 +171,32 @@ export class TMDBArtistService {
       roles.push('ATOR');
     }
 
-    // Tentar encontrar nome em Hangul em also_known_as
-    let nameHangul = undefined;
+    // Extrair nameHangul e stageNames do also_known_as
+    let nameHangul: string | undefined = undefined;
+    const stageNames: string[] = [];
+    const isKorean = /[\u3131-\uD79D]/;
+    const isCJK = /[\u3131-\uD79D\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF]/; // coreano, chinês, japonês
+
     if (fullDetails.also_known_as && fullDetails.also_known_as.length > 0) {
-      // Procura por string que contenha caracteres coreanos
-      nameHangul = fullDetails.also_known_as.find(n => /[\u3131-\uD79D]/.test(n));
+      for (const aka of fullDetails.also_known_as) {
+        if (isKorean.test(aka)) {
+          // Nome coreano → nameHangul (pegar o primeiro encontrado)
+          if (!nameHangul) nameHangul = aka;
+        } else if (!isCJK.test(aka) && aka !== fullDetails.name) {
+          // Nome romanizado diferente do nome principal → stage name
+          const trimmed = aka.trim();
+          if (trimmed.length >= 2 && trimmed.length <= 50 && !stageNames.includes(trimmed)) {
+            stageNames.push(trimmed);
+          }
+        }
+      }
     }
 
     return {
       tmdbId: fullDetails.id,
       nameRomanized: fullDetails.name,
       nameHangul: nameHangul,
+      stageNames: stageNames.length > 0 ? stageNames : undefined,
       birthDate: fullDetails.birthday ? new Date(fullDetails.birthday) : undefined,
       profileImageUrl: fullDetails.profile_path
         ? `${TMDB_IMAGE_BASE}${fullDetails.profile_path}`
