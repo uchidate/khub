@@ -241,13 +241,9 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                         <Globe className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
                                         <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Agência</span>
                                     </div>
-                                    {artist.agency.website ? (
-                                        <a href={artist.agency.website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-purple-500 hover:text-purple-400 transition-colors">
-                                            {artist.agency.name}
-                                        </a>
-                                    ) : (
-                                        <span className="text-sm font-bold text-zinc-300">{artist.agency.name}</span>
-                                    )}
+                                    <Link href={`/agencies/${artist.agency.id}`} className="text-sm font-bold text-purple-500 hover:text-purple-400 transition-colors">
+                                        {artist.agency.name}
+                                    </Link>
                                 </div>
                             )}
 
