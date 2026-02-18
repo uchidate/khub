@@ -246,6 +246,15 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                     </Link>
                                 </div>
                             )}
+                            {artist.musicalGroup && (
+                                <div className="flex justify-between py-3 border-b border-white/5 group">
+                                    <div className="flex items-center gap-2">
+                                        <Music className="w-3.5 h-3.5 text-zinc-600 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Grupo</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-zinc-300">{artist.musicalGroup}</span>
+                                </div>
+                            )}
 
                         {Object.keys(socialLinks).length > 0 && (
                             <div>

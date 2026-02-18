@@ -170,6 +170,34 @@ export class MusicBrainzService {
   }
 
   /**
+   * Fetch the musical group an artist is currently a member of.
+   * Uses MusicBrainz artist-rels to find "member of band" relations.
+   * Returns { name, mbid } of the group, or null if not found.
+   */
+  async getArtistGroup(mbid: string): Promise<{ name: string; mbid: string } | null> {
+    const url = `${MB_BASE_URL}/artist/${mbid}?inc=artist-rels&fmt=json`
+    const data = await this.fetch<any>(url)
+    if (!data || !data.relations) return null
+
+    // Find active "member of band" relations (no end-date = still active)
+    const memberOf = data.relations.filter((r: any) =>
+      r.type === 'member of band' && !r.ended && r.direction === 'forward'
+    )
+
+    if (memberOf.length === 0) return null
+
+    // Prefer the most recently joined group (sort by begin date desc)
+    memberOf.sort((a: any, b: any) => {
+      const dateA = a['begin'] || '0000'
+      const dateB = b['begin'] || '0000'
+      return dateB.localeCompare(dateA)
+    })
+
+    const group = memberOf[0].artist
+    return { name: group.name, mbid: group.id }
+  }
+
+  /**
    * Convenience: search artist then fetch all releases.
    * Returns null if artist not found in MusicBrainz.
    */
