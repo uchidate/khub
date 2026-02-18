@@ -72,6 +72,11 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'soompi.com',
             },
+            // Soompi image CDN (subdomains like 0.soompi.io, 1.soompi.io, etc.)
+            {
+                protocol: 'https',
+                hostname: '*.soompi.io',
+            },
             {
                 protocol: 'https',
                 hostname: 'www.koreaboo.com',
@@ -79,6 +84,11 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'koreaboo.com',
+            },
+            // Koreaboo image CDN
+            {
+                protocol: 'https',
+                hostname: 'image.koreaboo.com',
             },
             {
                 protocol: 'https',
