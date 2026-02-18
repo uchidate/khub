@@ -65,7 +65,7 @@ export async function getDashboardData() {
             where: { userId },
             include: {
                 artist: { select: { id: true, nameRomanized: true, primaryImageUrl: true } },
-                production: { select: { id: true, titlePt: true, titleOriginal: true, imageUrl: true } },
+                production: { select: { id: true, titlePt: true, imageUrl: true } },
                 news: { select: { id: true, title: true, imageUrl: true } },
             },
             orderBy: { createdAt: 'desc' },
