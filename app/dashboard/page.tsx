@@ -14,11 +14,10 @@ import {
   History,
   Crown,
   Newspaper,
-  TrendingUp,
 } from 'lucide-react'
 import { PageTransition } from '@/components/features/PageTransition'
 import { getDashboardData } from '@/lib/actions/user'
-import { MediaCard } from '@/components/ui/MediaCard'
+import { FavoritesGallery } from '@/components/dashboard/FavoritesGallery'
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -27,7 +26,7 @@ export default async function DashboardPage() {
   const data = await getDashboardData()
   if (!data) return null
 
-  const { favorites, activities, latestNews, trendingArtists, stats } = data
+  const { activities, latestNews, trendingArtists, stats } = data
 
   const quickLinks = [
     { title: 'Perfil', description: 'Editar Informações', href: '/profile', icon: User },
@@ -158,62 +157,7 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
-            {favorites.length === 0 ? (
-              <div className="space-y-6">
-                {/* Empty state CTA */}
-                <div className="glass-card p-8 text-center border-dashed border-2 border-zinc-800/50 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4">
-                    <Star size={32} className="text-zinc-700" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Sua galáxia está vazia</h3>
-                  <p className="text-zinc-500 mb-6 max-w-sm mx-auto text-sm">Comece a explorar e adicione artistas, produções e notícias para construir seu universo pessoal.</p>
-                  <Link href="/artists" className="btn-primary text-xs uppercase tracking-widest">
-                    Explorar Universo
-                  </Link>
-                </div>
-
-                {/* Trending artists discovery */}
-                {trendingArtists.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <TrendingUp size={16} className="text-neon-pink" />
-                      <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Em alta agora</h3>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                      {trendingArtists.map((artist: any) => (
-                        <MediaCard
-                          key={artist.id}
-                          id={artist.id}
-                          title={artist.nameRomanized}
-                          imageUrl={artist.primaryImageUrl}
-                          type="artist"
-                          href={`/artists/${artist.id}`}
-                          aspectRatio="square"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {favorites.map((fav: any) => {
-                  const entity = fav.artist || fav.production || fav.news
-                  if (!entity) return null
-                  return (
-                    <MediaCard
-                      key={fav.id}
-                      id={entity.id}
-                      title={'nameRomanized' in entity ? entity.nameRomanized : 'titlePt' in entity ? entity.titlePt : (entity as any).title}
-                      imageUrl={'primaryImageUrl' in entity ? entity.primaryImageUrl : (entity as any).imageUrl}
-                      type={fav.artist ? 'artist' : fav.production ? 'production' : 'news'}
-                      href={fav.artist ? `/artists/${entity.id}` : fav.production ? `/productions/${entity.id}` : `/news/${entity.id}`}
-                      aspectRatio="square"
-                    />
-                  )
-                })}
-              </div>
-            )}
+            <FavoritesGallery trendingArtists={trendingArtists} />
           </div>
 
           {/* 5. Latest News (Full Width) */}

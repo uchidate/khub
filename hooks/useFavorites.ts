@@ -26,11 +26,24 @@ export function useFavorites() {
         .then(r => r.json())
         .then(data => {
           const dbIds: string[] = data.allIds || data.artistIds || []
-          // Merge with localStorage so any offline actions are preserved
           const local = getLocal()
+
+          // Merge localStorage into DB state (DB is source of truth, local fills gaps)
           const merged = Array.from(new Set([...dbIds, ...local]))
           setFavorites(merged)
           saveLocal(merged)
+
+          // Push any localStorage items not yet in DB (resolves type server-side)
+          const unsynced = local.filter(id => !dbIds.includes(id))
+          if (unsynced.length > 0) {
+            fetch('/api/users/favorites/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids: unsynced }),
+            }).catch(() => {
+              // Silent failure — local state already correct
+            })
+          }
         })
         .catch(() => {
           // Fallback to localStorage if DB unreachable
