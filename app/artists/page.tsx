@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,7 @@ export default async function ArtistsPage() {
             />
 
             <ArtistsList />
+            <ScrollToTop />
         </PageTransition>
     )
 }

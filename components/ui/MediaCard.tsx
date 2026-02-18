@@ -146,7 +146,7 @@ export function MediaCard({
                             )}
 
                             {/* Badges container */}
-                            <div className="flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                            <div className="flex flex-wrap gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-y-0 md:translate-y-4 md:group-hover:translate-y-0">
                                 {badges.slice(0, 3).map((badge) => (
                                     <span key={badge} className="text-[9px] uppercase font-black px-2 py-1 bg-white text-black rounded-sm shadow-lg tracking-widest">
                                         {badge}
@@ -156,7 +156,7 @@ export function MediaCard({
 
                             {/* Artists mentioned (news only) */}
                             {artists.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                                <div className="flex flex-wrap gap-1 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-y-0 md:translate-y-4 md:group-hover:translate-y-0">
                                     {artists.slice(0, 3).map((name) => (
                                         <span key={name} className="text-[9px] uppercase font-black px-2 py-1 bg-neon-pink/80 text-white rounded-sm shadow-lg tracking-widest">
                                             {name}

@@ -4,7 +4,19 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { MediaCard } from '@/components/ui/MediaCard'
 import { ArtistFilters, type ArtistFilterValues } from './ArtistFilters'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+function ArtistsSkeleton() {
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
+            {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                    <div className="aspect-[2/3] rounded-xl bg-zinc-800/60" />
+                </div>
+            ))}
+        </div>
+    )
+}
 
 interface Artist {
     id: string
@@ -115,11 +127,7 @@ export function ArtistsList() {
             />
 
             {/* Loading State */}
-            {isLoading && (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                </div>
-            )}
+            {isLoading && <ArtistsSkeleton />}
 
             {/* Empty State */}
             {!isLoading && artists.length === 0 && (

@@ -5,6 +5,19 @@ import Image from 'next/image'
 import { Search, User, Newspaper, Film, ArrowLeft } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 
+function stripMarkdown(text: string): string {
+    return text
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+        .replace(/`[^`]+`/g, '')
+        .replace(/^[-*+]\s+/gm, '')
+        .replace(/\n+/g, ' ')
+        .trim()
+}
+
 export const dynamic = 'force-dynamic'
 
 interface SearchPageProps {
@@ -206,7 +219,7 @@ async function SearchResults({ query }: { query: string }) {
                                     <h3 className="font-bold text-white group-hover:text-pink-400 transition-colors line-clamp-2 mb-2">
                                         {newsItem.title}
                                     </h3>
-                                    <p className="text-sm text-zinc-500 line-clamp-2">{newsItem.contentMd}</p>
+                                    <p className="text-sm text-zinc-500 line-clamp-2">{stripMarkdown(newsItem.contentMd).slice(0, 180)}</p>
                                     <p className="text-xs text-zinc-600 mt-2">
                                         {new Date(newsItem.publishedAt).toLocaleDateString('pt-BR')}
                                     </p>
