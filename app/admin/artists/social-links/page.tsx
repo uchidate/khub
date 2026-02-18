@@ -207,10 +207,11 @@ export default function SocialLinksAdminPage() {
             const reader = res.body.getReader()
             const decoder = new TextDecoder()
             let buffer = ''
+            let reading = true
 
-            while (true) {
+            while (reading) {
                 const { done, value } = await reader.read()
-                if (done) break
+                if (done) { reading = false; break }
                 buffer += decoder.decode(value, { stream: true })
                 const lines = buffer.split('\n')
                 buffer = lines.pop() || ''
