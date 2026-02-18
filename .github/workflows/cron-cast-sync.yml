@@ -2,9 +2,9 @@ name: 🎬 Cron Job - Sync Production Cast
 
 on:
   schedule:
-    # Runs every 12 hours — TMDB credits are stable, no need for frequent updates
+    # Runs every 2 hours — syncs cast for newly matched productions quickly
     # Format: minute hour day month day-of-week
-    - cron: '0 */12 * * *'
+    - cron: '30 */2 * * *'
 
   # Allow manual trigger with optional limit parameter
   workflow_dispatch:
