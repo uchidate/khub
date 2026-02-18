@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import { MediaCard } from "@/components/ui/MediaCard"
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 
 export const dynamic = 'force-dynamic'
 
@@ -68,6 +69,7 @@ export default async function ProductionsPage() {
             <Suspense fallback={<SkeletonGrid />}>
                 <ProductionsGrid />
             </Suspense>
+            <ScrollToTop />
         </PageTransition>
     )
 }

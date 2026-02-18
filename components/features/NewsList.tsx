@@ -2,9 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { MediaCard } from '@/components/ui/MediaCard'
+import { NewsListCard } from './NewsListCard'
 import { NewsFilters, type FilterValues } from './NewsFilters'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+function NewsSkeleton() {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-xl overflow-hidden bg-zinc-800/60">
+                    <div className="aspect-video" />
+                    <div className="p-4 space-y-3">
+                        <div className="h-4 bg-zinc-700/60 rounded w-3/4" />
+                        <div className="h-3 bg-zinc-700/40 rounded w-1/2" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
 
 interface Artist {
     id: string
@@ -17,6 +33,7 @@ interface NewsItem {
     imageUrl: string | null
     publishedAt: string
     tags: string[]
+    contentMd?: string | null
     artists: Array<{
         artist: {
             id: string
@@ -148,11 +165,7 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
             )}
 
             {/* Loading State */}
-            {isLoading && (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                </div>
-            )}
+            {isLoading && <NewsSkeleton />}
 
             {/* Empty State */}
             {!isLoading && news.length === 0 && (
@@ -169,21 +182,19 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
             {/* Grid de Notícias */}
             {!isLoading && news.length > 0 && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 perspective-1000">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                         {news.map((item) => {
                             const artistNames = item.artists.map(a => a.artist.nameRomanized)
                             return (
-                                <MediaCard
+                                <NewsListCard
                                     key={item.id}
                                     id={item.id}
                                     title={item.title}
-                                    subtitle={new Date(item.publishedAt).toLocaleDateString('pt-BR')}
                                     imageUrl={item.imageUrl}
-                                    type="news"
-                                    href={`/news/${item.id}`}
-                                    badges={item.tags?.slice(0, 3) || []}
+                                    publishedAt={item.publishedAt}
+                                    tags={item.tags || []}
+                                    contentMd={item.contentMd}
                                     artists={artistNames}
-                                    aspectRatio="video"
                                 />
                             )
                         })}

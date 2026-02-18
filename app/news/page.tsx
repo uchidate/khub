@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { NewsList } from "@/components/features/NewsList"
-import { Loader2 } from 'lucide-react'
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +15,16 @@ export const metadata: Metadata = {
 
 function LoadingSkeleton() {
     return (
-        <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-xl overflow-hidden bg-zinc-800/60">
+                    <div className="aspect-video" />
+                    <div className="p-4 space-y-3">
+                        <div className="h-4 bg-zinc-700/60 rounded w-3/4" />
+                        <div className="h-3 bg-zinc-700/40 rounded w-1/2" />
+                    </div>
+                </div>
+            ))}
         </div>
     )
 }
@@ -52,6 +60,7 @@ export default async function NewsPage() {
             <Suspense fallback={<LoadingSkeleton />}>
                 <NewsContent />
             </Suspense>
+            <ScrollToTop />
         </PageTransition>
     )
 }
