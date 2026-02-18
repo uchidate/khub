@@ -94,19 +94,34 @@ export class MusicBrainzService {
   /**
    * Search for an artist by name, returns their MusicBrainz ID (mbid).
    * Returns null if not found or confidence too low.
+   *
+   * Strategy:
+   * 1. Exact-phrase search with quotes (high confidence ≥ 90)
+   * 2. If not found, fallback without quotes (relaxed confidence ≥ 85)
+   *    Useful for Korean/CJK names where tokenization differs.
    */
   async searchArtist(name: string): Promise<string | null> {
-    const query = encodeURIComponent(`"${name}"`)
-    const url = `${MB_BASE_URL}/artist/?query=${query}&limit=5&fmt=json`
+    // Attempt 1: exact phrase match (most reliable for latin names)
+    const exactQuery = encodeURIComponent(`"${name}"`)
+    const exactUrl = `${MB_BASE_URL}/artist/?query=${exactQuery}&limit=5&fmt=json`
 
-    const result = await this.fetch<MBArtistSearchResponse>(url)
-    if (!result || result.artists.length === 0) return null
+    const exactResult = await this.fetch<MBArtistSearchResponse>(exactUrl)
+    if (exactResult && exactResult.artists.length > 0) {
+      const best = exactResult.artists[0]
+      if (best.score >= 90) return best.id
+    }
 
-    // Accept only high-confidence matches (score >= 90)
-    const best = result.artists[0]
-    if (best.score < 90) return null
+    // Attempt 2: fuzzy match without quotes (better for CJK/Korean names)
+    const fuzzyQuery = encodeURIComponent(name)
+    const fuzzyUrl = `${MB_BASE_URL}/artist/?query=${fuzzyQuery}&limit=5&fmt=json`
 
-    return best.id
+    const fuzzyResult = await this.fetch<MBArtistSearchResponse>(fuzzyUrl)
+    if (!fuzzyResult || fuzzyResult.artists.length === 0) return null
+
+    const best = fuzzyResult.artists[0]
+    if (best.score >= 85) return best.id
+
+    return null
   }
 
   /**

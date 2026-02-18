@@ -3,7 +3,9 @@
  *
  * Busca o grupo musical atual de cada artista via MusicBrainz.
  * Para cada artista:
- *   1. Busca o mbid do artista (já salvo, ou pesquisa pelo nome)
+ *   1. Usa mbid salvo, OU busca no MusicBrainz por:
+ *      a. nameRomanized
+ *      b. nameHangul (se (a) falhar)
  *   2. Usa a relação "member of band" para obter o grupo
  *   3. Atualiza musicalGroup, musicalGroupMbid e groupSyncAt
  *
@@ -26,14 +28,14 @@ export async function POST(request: NextRequest) {
     const limit: number = Math.min(Number(body.limit) || 50, 200)
     const onlyMissing: boolean = body.onlyMissing !== false // default true
 
-    // Fetch artists that need group sync
+    // Fetch artists that need group sync — include nameHangul for fallback search
     const where = onlyMissing
         ? { groupSyncAt: { equals: null as null } }
         : {}
 
     const artists = await prisma.artist.findMany({
         where,
-        select: { id: true, nameRomanized: true, mbid: true, musicalGroup: true },
+        select: { id: true, nameRomanized: true, nameHangul: true, mbid: true, musicalGroup: true },
         orderBy: { trendingScore: 'desc' },
         take: limit,
     })
@@ -57,11 +59,26 @@ export async function POST(request: NextRequest) {
 
                 try {
                     let mbid = artist.mbid
+                    let searchedBy = ''
 
                     // Search MusicBrainz if no mbid yet
                     if (!mbid) {
+                        // 1st attempt: romanized name
                         mbid = await mb.searchArtist(artist.nameRomanized)
                         if (mbid) {
+                            searchedBy = artist.nameRomanized
+                        }
+
+                        // 2nd attempt: Korean name (hangul) — better match for K-pop artists
+                        if (!mbid && artist.nameHangul) {
+                            mbid = await mb.searchArtist(artist.nameHangul)
+                            if (mbid) {
+                                searchedBy = artist.nameHangul
+                            }
+                        }
+
+                        if (mbid) {
+                            send(`MB_FOUND:${artist.nameRomanized}:${searchedBy}`)
                             // Save mbid for future use
                             await prisma.artist.update({
                                 where: { id: artist.id },
