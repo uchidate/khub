@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, Languages, UsersRound } from 'lucide-react'
+import { Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, Languages, UsersRound, GitMerge } from 'lucide-react'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: Shield, exact: true },
@@ -10,6 +10,7 @@ const navItems = [
   { href: '/admin/artists', label: 'Artistas', icon: Music2 },
   { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
   { href: '/admin/artists/fix-names', label: 'Corrigir Nomes', icon: Languages },
+  { href: '/admin/artists/duplicates', label: 'Duplicados', icon: GitMerge },
   { href: '/admin/artists/groups', label: 'Grupos Musicais', icon: UsersRound },
   { href: '/admin/groups', label: 'Gerir Grupos', icon: UsersRound },
   { href: '/admin/agencies', label: 'Agências', icon: Building2 },
