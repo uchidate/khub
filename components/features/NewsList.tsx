@@ -100,7 +100,7 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
 
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: '20',
+                limit: '24',
                 ...(filters.search && { search: filters.search }),
                 ...(filters.artistId && { artistId: filters.artistId }),
                 ...(filters.source && { source: filters.source }),

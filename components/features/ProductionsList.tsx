@@ -103,19 +103,20 @@ export function ProductionsList() {
             <div className="flex flex-col sm:flex-row gap-3 mb-8">
                 {/* Search */}
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
                     <input
                         type="text"
                         defaultValue={filters.search}
                         placeholder="Buscar"
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSearch((e.target as HTMLInputElement).value) }}
                         onBlur={(e) => handleSearch(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        className="w-full px-4 pr-10 py-2.5 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors"
                     />
-                    {filters.search && (
+                    {filters.search ? (
                         <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
                             <X className="w-4 h-4" />
                         </button>
+                    ) : (
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
                     )}
                 </div>
 

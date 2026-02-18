@@ -72,21 +72,22 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
             {/* Barra de Busca Principal */}
             <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                     <input
                         type="text"
                         placeholder="Buscar por nome..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                        className="w-full px-4 pr-12 py-4 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
                     />
-                    {search && (
+                    {search ? (
                         <button
                             onClick={() => setSearch('')}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
                         >
                             <X className="w-5 h-5" />
                         </button>
+                    ) : (
+                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 pointer-events-none" />
                     )}
                 </div>
 
