@@ -33,6 +33,12 @@ function parseLine(line: string): LogLine {
             const group = parts.slice(1).join(':')
             return { text: `✅ ${name} → ${group}`, type: 'success' }
         }
+        case 'MB_FOUND': {
+            const parts = payload.split(':')
+            const artist = parts[0]
+            const searchedBy = parts.slice(1).join(':')
+            return { text: `🔍 ${artist} encontrado via "${searchedBy}"`, type: 'info' }
+        }
         case 'SOLO':
             return { text: `➖ Solo: ${payload}`, type: 'warning' }
         case 'NOT_FOUND':
