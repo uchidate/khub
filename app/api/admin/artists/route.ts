@@ -68,6 +68,11 @@ export async function GET(request: NextRequest) {
               albums: true,
             },
           },
+          memberships: {
+            where: { isActive: true },
+            include: { group: { select: { id: true, name: true } } },
+            take: 1,
+          },
         },
       }),
       prisma.artist.count({ where }),
@@ -76,12 +81,15 @@ export async function GET(request: NextRequest) {
     const formattedArtists = artists.map((artist: {
       _count: { productions: number; albums: number }
       agency: { id: string; name: string } | null
+      memberships: { group: { id: string; name: string } }[]
       [key: string]: unknown
     }) => ({
       ...artist,
       productionsCount: artist._count.productions,
       albumsCount: artist._count.albums,
       agencyName: artist.agency?.name,
+      musicalGroupName: artist.memberships?.[0]?.group.name ?? null,
+      musicalGroupId: artist.memberships?.[0]?.group.id ?? null,
     }))
 
     return paginatedResponse(

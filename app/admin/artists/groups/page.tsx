@@ -10,7 +10,8 @@ interface Artist {
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
-    musicalGroup: string | null
+    musicalGroupName: string | null
+    musicalGroupId: string | null
     groupSyncAt: string | null
 }
 
@@ -72,9 +73,18 @@ export default function ArtistGroupsAdminPage() {
     const fetchArtists = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await fetch('/api/admin/artists?limit=1000&offset=0')
-            const data = await res.json()
-            setArtists(data.items || [])
+            const all: Artist[] = []
+            let page = 1
+            let hasMore = true
+            while (hasMore) {
+                const res = await fetch(`/api/admin/artists?limit=100&page=${page}`)
+                const json = await res.json()
+                const items: Artist[] = json.data || []
+                all.push(...items)
+                hasMore = items.length === 100
+                page++
+            }
+            setArtists(all)
         } finally {
             setLoading(false)
         }
@@ -89,11 +99,11 @@ export default function ArtistGroupsAdminPage() {
             list = list.filter(a =>
                 a.nameRomanized.toLowerCase().includes(q) ||
                 (a.nameHangul || '').toLowerCase().includes(q) ||
-                (a.musicalGroup || '').toLowerCase().includes(q)
+                (a.musicalGroupName || '').toLowerCase().includes(q)
             )
         }
-        if (filter === 'with_group') list = list.filter(a => !!a.musicalGroup)
-        if (filter === 'solo') list = list.filter(a => !a.musicalGroup && !!a.groupSyncAt)
+        if (filter === 'with_group') list = list.filter(a => !!a.musicalGroupName)
+        if (filter === 'solo') list = list.filter(a => !a.musicalGroupName && !!a.groupSyncAt)
         if (filter === 'unsynced') list = list.filter(a => !a.groupSyncAt)
         setFiltered(list)
     }, [artists, search, filter])
@@ -163,7 +173,7 @@ export default function ArtistGroupsAdminPage() {
         return 'text-zinc-300'
     }
 
-    const withGroup = artists.filter(a => !!a.musicalGroup).length
+    const withGroup = artists.filter(a => !!a.musicalGroupName).length
     const unsynced = artists.filter(a => !a.groupSyncAt).length
 
     return (
@@ -330,10 +340,10 @@ export default function ArtistGroupsAdminPage() {
                                 </div>
 
                                 <div className="flex-shrink-0">
-                                    {artist.musicalGroup ? (
+                                    {artist.musicalGroupName ? (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-full text-xs font-bold">
                                             <Music2 className="w-3 h-3" />
-                                            {artist.musicalGroup}
+                                            {artist.musicalGroupName}
                                         </span>
                                     ) : artist.groupSyncAt ? (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded-full text-xs">
