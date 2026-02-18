@@ -102,7 +102,7 @@ export function SearchBar() {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Buscar..."
+          placeholder="Buscar"
           className="
             w-full pl-11 pr-10 py-3
             bg-zinc-900 text-white
