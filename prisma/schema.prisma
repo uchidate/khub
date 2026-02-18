@@ -10,16 +10,55 @@ datasource db {
 }
 
 model Agency {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  website   String?
-  socials   Json?
-  artists   Artist[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(cuid())
+  name          String         @unique
+  website       String?
+  socials       Json?
+  artists       Artist[]
+  musicalGroups MusicalGroup[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([createdAt])
   @@index([name])
+}
+
+model MusicalGroup {
+  id              String                  @id @default(cuid())
+  name            String                  @unique
+  nameHangul      String?
+  mbid            String?                 @unique // MusicBrainz group ID
+  bio             String?
+  profileImageUrl String?
+  debutDate       DateTime?
+  disbandDate     DateTime?               // null = grupo ativo
+  agency          Agency?                 @relation(fields: [agencyId], references: [id])
+  agencyId        String?
+  socialLinks     Json?
+  members         ArtistGroupMembership[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([name])
+  @@index([agencyId])
+}
+
+model ArtistGroupMembership {
+  id        String       @id @default(cuid())
+  artist    Artist       @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artistId  String
+  group     MusicalGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
+  joinDate  DateTime?    // data de entrada no grupo
+  leaveDate DateTime?    // null = ainda ativo
+  isActive  Boolean      @default(true)
+  role      String?      // ex: "vocalist", "rapper", "leader"
+  position  Int?         // ordem de exibição na lista de membros
+  createdAt DateTime     @default(now())
+
+  @@unique([artistId, groupId])
+  @@index([groupId])
+  @@index([artistId])
 }
 
 model Artist {
@@ -54,9 +93,8 @@ model Artist {
   translatedAt       DateTime?
   // Enrichment tracking
   mbid               String?            // MusicBrainz artist ID (para discografia)
-  musicalGroup       String?            // Grupo musical atual (ex: BTS, BLACKPINK)
-  musicalGroupMbid   String?            // MusicBrainz ID do grupo (para deduplicação)
   groupSyncAt        DateTime?          // última sincronização de grupo musical
+  memberships        ArtistGroupMembership[]
   discographySyncAt  DateTime?          // última sincronização de discografia
   socialLinksUpdatedAt DateTime?        // última sincronização de redes sociais
   createdAt          DateTime           @default(now())

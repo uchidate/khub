@@ -31,10 +31,10 @@ const NavBar = () => {
     const navLinks = [
         { label: "Início", href: "/" },
         { label: "Artistas", href: "/artists" },
-{ label: "Filmes & Séries", href: "/productions" },
+        { label: "Grupos", href: "/groups" },
+        { label: "Filmes & Séries", href: "/productions" },
         { label: "Notícias", href: "/news" },
         { label: "Premium", href: "/premium" },
-        { label: "Sobre", href: "/about" },
     ]
 
     return (

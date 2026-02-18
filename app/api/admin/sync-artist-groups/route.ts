@@ -3,11 +3,9 @@
  *
  * Busca o grupo musical atual de cada artista via MusicBrainz.
  * Para cada artista:
- *   1. Usa mbid salvo, OU busca no MusicBrainz por:
- *      a. nameRomanized
- *      b. nameHangul (se (a) falhar)
+ *   1. Usa mbid salvo, OU busca no MusicBrainz por nameRomanized → nameHangul
  *   2. Usa a relação "member of band" para obter o grupo
- *   3. Atualiza musicalGroup, musicalGroupMbid e groupSyncAt
+ *   3. Faz upsert em MusicalGroup e cria ArtistGroupMembership
  *
  * Retorna stream de texto com progresso linha a linha.
  */
@@ -28,14 +26,13 @@ export async function POST(request: NextRequest) {
     const limit: number = Math.min(Number(body.limit) || 50, 200)
     const onlyMissing: boolean = body.onlyMissing !== false // default true
 
-    // Fetch artists that need group sync — include nameHangul for fallback search
     const where = onlyMissing
         ? { groupSyncAt: { equals: null as null } }
         : {}
 
     const artists = await prisma.artist.findMany({
         where,
-        select: { id: true, nameRomanized: true, nameHangul: true, mbid: true, musicalGroup: true },
+        select: { id: true, nameRomanized: true, nameHangul: true, mbid: true },
         orderBy: { trendingScore: 'desc' },
         take: limit,
     })
@@ -61,25 +58,19 @@ export async function POST(request: NextRequest) {
                     let mbid = artist.mbid
                     let searchedBy = ''
 
-                    // Search MusicBrainz if no mbid yet
                     if (!mbid) {
                         // 1st attempt: romanized name
                         mbid = await mb.searchArtist(artist.nameRomanized)
-                        if (mbid) {
-                            searchedBy = artist.nameRomanized
-                        }
+                        if (mbid) searchedBy = artist.nameRomanized
 
-                        // 2nd attempt: Korean name (hangul) — better match for K-pop artists
+                        // 2nd attempt: Korean hangul name
                         if (!mbid && artist.nameHangul) {
                             mbid = await mb.searchArtist(artist.nameHangul)
-                            if (mbid) {
-                                searchedBy = artist.nameHangul
-                            }
+                            if (mbid) searchedBy = artist.nameHangul
                         }
 
                         if (mbid) {
                             send(`MB_FOUND:${artist.nameRomanized}:${searchedBy}`)
-                            // Save mbid for future use
                             await prisma.artist.update({
                                 where: { id: artist.id },
                                 data: { mbid },
@@ -97,24 +88,34 @@ export async function POST(request: NextRequest) {
                         continue
                     }
 
-                    const group = await mb.getArtistGroup(mbid)
+                    const groupData = await mb.getArtistGroup(mbid)
 
-                    await prisma.artist.update({
-                        where: { id: artist.id },
-                        data: {
-                            musicalGroup: group?.name ?? null,
-                            musicalGroupMbid: group?.mbid ?? null,
-                            groupSyncAt: new Date(),
-                        },
-                    })
+                    if (groupData) {
+                        // Upsert the MusicalGroup entity
+                        const group = await prisma.musicalGroup.upsert({
+                            where: { mbid: groupData.mbid },
+                            create: { name: groupData.name, mbid: groupData.mbid },
+                            update: { name: groupData.name },
+                        })
 
-                    if (group) {
-                        send(`FOUND:${artist.nameRomanized}:${group.name}`)
+                        // Create or update the membership
+                        await prisma.artistGroupMembership.upsert({
+                            where: { artistId_groupId: { artistId: artist.id, groupId: group.id } },
+                            create: { artistId: artist.id, groupId: group.id, isActive: true },
+                            update: { isActive: true, leaveDate: null },
+                        })
+
+                        send(`FOUND:${artist.nameRomanized}:${groupData.name}`)
                         found++
                     } else {
                         send(`SOLO:${artist.nameRomanized}`)
                         notFound++
                     }
+
+                    await prisma.artist.update({
+                        where: { id: artist.id },
+                        data: { groupSyncAt: new Date() },
+                    })
                 } catch (e) {
                     send(`ERROR:${artist.nameRomanized}:${String(e)}`)
                     errors++
