@@ -14,7 +14,7 @@ interface Artist {
   nameHangul: string | null
   stageName: string | null
   country: string | null
-  imageUrl: string | null
+  primaryImageUrl: string | null
   gender: string | null
   createdAt: Date
   productionsCount: number
@@ -27,9 +27,9 @@ const columns: Column<Artist>[] = [
     key: 'imageUrl',
     label: 'Foto',
     render: (artist) =>
-      artist.imageUrl ? (
+      artist.primaryImageUrl ? (
         <Image
-          src={artist.imageUrl}
+          src={artist.primaryImageUrl}
           alt={artist.nameRomanized}
           width={40}
           height={40}
@@ -95,7 +95,7 @@ const formFields: FormField[] = [
       { value: 'other', label: 'Outro' },
     ],
   },
-  { key: 'imageUrl', label: 'URL da Imagem', type: 'text', placeholder: 'https://...' },
+  { key: 'primaryImageUrl', label: 'URL da Imagem', type: 'text', placeholder: 'https://...' },
   { key: 'tmdbId', label: 'TMDB ID', type: 'text', placeholder: 'ID do The Movie Database' },
 ]
 
