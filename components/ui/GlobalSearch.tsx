@@ -84,7 +84,7 @@ export function GlobalSearch() {
                         }}
                         onFocus={() => setIsOpen(true)}
                         placeholder="Buscar"
-                        className="w-full pl-12 pr-24 py-3 bg-zinc-900/50 border border-white/10 rounded-full text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all hover:border-purple-500/30"
+                        className="w-full pl-14 pr-24 py-3 bg-zinc-900/50 border border-white/10 rounded-full text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all hover:border-purple-500/30"
                     />
 
                     {/* Right side icons */}
@@ -110,7 +110,7 @@ export function GlobalSearch() {
 
             {/* Results Dropdown */}
             {isOpen && query.trim().length >= 2 && (
-                <div className="absolute top-full mt-2 w-full bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50">
+                <div className="absolute top-full mt-2 w-[660px] max-w-[90vw] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50">
                     {/* Loading State */}
                     {isLoading && (
                         <div className="flex items-center justify-center gap-2 py-8 text-zinc-400">
