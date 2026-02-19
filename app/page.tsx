@@ -8,6 +8,7 @@ import { HeroSection } from "@/components/features/HeroSection"
 import { StatsSection } from "@/components/features/StatsSection"
 import { FeaturedCarousel } from "@/components/features/FeaturedCarousel"
 import { TrendingArtists } from "@/components/features/TrendingArtists"
+import { TrendingGroups } from "@/components/features/TrendingGroups"
 import { LatestProductions } from "@/components/features/LatestProductions"
 import { RecommendedForYou } from "@/components/features/RecommendedForYou"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
@@ -119,6 +120,22 @@ export default async function Home() {
     // Top News para seção de notícias (3 mais recentes)
     const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
+    // Grupos em destaque (8 com mais membros / mais favoritos)
+    const trendingGroups = await prisma.musicalGroup.findMany({
+        take: 8,
+        where: { disbandDate: null }, // Apenas grupos ativos
+        orderBy: [{ name: 'asc' }],
+        select: {
+            id: true,
+            name: true,
+            nameHangul: true,
+            profileImageUrl: true,
+            debutDate: true,
+            disbandDate: true,
+            _count: { select: { members: true } },
+        },
+    }).catch(() => [])
+
     return (
         <div className="bg-black min-h-screen pb-20 overflow-x-hidden">
             <HeroSection />
@@ -131,6 +148,13 @@ export default async function Home() {
             </ScrollReveal>
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-12">
+
+                {/* Grupos em Destaque */}
+                {trendingGroups.length > 0 && (
+                    <ScrollReveal delay={0.05}>
+                        <TrendingGroups groups={trendingGroups} />
+                    </ScrollReveal>
+                )}
 
                 {/* Featured News Carousel */}
                 {featuredNews.length > 0 && (

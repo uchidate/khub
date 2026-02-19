@@ -44,7 +44,7 @@ export function StatsSection() {
 
     if (isLoading || !stats) {
         return (
-            <section className="relative py-20">
+            <section className="relative py-10 md:py-12">
                 <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6">
                     {[...Array(4)].map((_, i) => (
                         <div key={i} className="animate-pulse">
@@ -88,12 +88,12 @@ export function StatsSection() {
     ]
 
     return (
-        <section ref={ref} className="relative py-20">
+        <section ref={ref} className="relative py-10 md:py-12">
             {/* Background Effect */}
             <div className="absolute inset-0 bg-gradient-to-b from-purple-900/5 via-transparent to-transparent pointer-events-none" />
 
             <div className="relative max-w-[1400px] mx-auto">
-                <div className="text-center mb-12">
+                <div className="text-center mb-8">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={isInView ? { opacity: 1, y: 0 } : {}}
