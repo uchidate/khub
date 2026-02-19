@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import Image from "next/image"
 import Link from "next/link"
 import { ViewTracker } from "@/components/features/ViewTracker"
+import { InstagramFeed } from "@/components/features/InstagramFeed"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -86,7 +87,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function ArtistDetailPage({ params }: { params: { id: string } }) {
-    const [artist, artistNews] = await Promise.all([
+    const [artist, artistNews, instagramPosts] = await Promise.all([
         prisma.artist.findUnique({
             where: { id: params.id },
             include: {
@@ -104,6 +105,12 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
             select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
             orderBy: { publishedAt: 'desc' },
             take: 6,
+        }),
+        prisma.instagramPost.findMany({
+            where: { artistId: params.id },
+            orderBy: { postedAt: 'desc' },
+            take: 12,
+            select: { id: true, imageUrl: true, caption: true, permalink: true, postedAt: true },
         }),
     ])
 
@@ -529,6 +536,14 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                     ))}
                                 </div>
                             </section>
+                        )}
+
+                        {/* Instagram Feed */}
+                        {instagramPosts.length > 0 && (
+                            <InstagramFeed
+                                posts={instagramPosts}
+                                instagramUrl={(artist.socialLinks as Record<string, string> | null)?.instagram ?? null}
+                            />
                         )}
                     </div>
                 </div>

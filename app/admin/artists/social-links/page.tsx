@@ -21,6 +21,8 @@ interface Artist {
     nameHangul: string | null
     primaryImageUrl: string | null
     socialLinks: SocialLinks | null
+    instagramFeedUrl: string | null
+    instagramLastSync: string | null
 }
 
 const PLATFORMS: { key: keyof SocialLinks; label: string; placeholder: string; icon?: React.ReactNode; color: string }[] = [
@@ -38,14 +40,31 @@ function countLinks(links: SocialLinks | null): number {
     return Object.values(links).filter(Boolean).length
 }
 
-function SocialLinksModal({ artist, onClose, onSave }: {
+function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
     artist: Artist
     onClose: () => void
     onSave: (links: SocialLinks) => Promise<void>
+    onFeedSave: (artistId: string, feedUrl: string) => Promise<void>
 }) {
     const [links, setLinks] = useState<SocialLinks>(artist.socialLinks || {})
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
+    const [feedUrl, setFeedUrl] = useState(artist.instagramFeedUrl || '')
+    const [feedSaving, setFeedSaving] = useState(false)
+    const [feedSaved, setFeedSaved] = useState(false)
+
+    const handleFeedSave = async () => {
+        setFeedSaving(true)
+        try {
+            await onFeedSave(artist.id, feedUrl)
+            setFeedSaved(true)
+            setTimeout(() => setFeedSaved(false), 2000)
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Erro ao salvar feed')
+        } finally {
+            setFeedSaving(false)
+        }
+    }
 
     const handleSave = async () => {
         setSaving(true)
@@ -108,6 +127,38 @@ function SocialLinksModal({ artist, onClose, onSave }: {
                             />
                         </div>
                     ))}
+                </div>
+
+                {/* Instagram RSS.app Feed */}
+                <div className="mx-6 mb-4 p-4 bg-pink-500/5 border border-pink-500/20 rounded-xl">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Instagram className="w-4 h-4 text-pink-400" />
+                        <span className="text-xs font-black text-pink-400 uppercase tracking-widest">Instagram RSS.app</span>
+                        {artist.instagramLastSync && (
+                            <span className="text-[10px] text-zinc-600 ml-auto">
+                                Sync: {new Date(artist.instagramLastSync).toLocaleDateString('pt-BR')}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-[11px] text-zinc-500 mb-3">
+                        Cole a URL do feed JSON gerado no <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">RSS.app</a> para este artista.
+                    </p>
+                    <div className="flex gap-2">
+                        <input
+                            type="url"
+                            value={feedUrl}
+                            onChange={(e) => setFeedUrl(e.target.value)}
+                            placeholder="https://rss.app/feeds/XXXXXXXX.json"
+                            className="flex-1 px-3 py-2 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-pink-500/50 text-xs"
+                        />
+                        <button
+                            onClick={handleFeedSave}
+                            disabled={feedSaving}
+                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${feedSaved ? 'bg-green-600 text-white' : 'bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white'}`}
+                        >
+                            {feedSaved ? <><Check className="w-3 h-3" /> OK</> : feedSaving ? '...' : 'Salvar'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Footer */}
@@ -177,6 +228,18 @@ export default function SocialLinksAdminPage() {
         ))
         setSavedId(artistId)
         setTimeout(() => setSavedId(null), 2000)
+    }
+
+    const handleFeedSave = async (artistId: string, feedUrl: string) => {
+        const res = await fetch(`/api/admin/artists/${artistId}/instagram-feed`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ feedUrl }),
+        })
+        if (!res.ok) throw new Error('Erro ao salvar feed')
+        setArtists(prev => prev.map(a =>
+            a.id === artistId ? { ...a, instagramFeedUrl: feedUrl || null } : a
+        ))
     }
 
     const missing = artists.filter(a => !countLinks(a.socialLinks)).length
@@ -417,6 +480,13 @@ export default function SocialLinksAdminPage() {
                                         })}
                                     </div>
 
+                                    {/* Instagram feed badge */}
+                                    {artist.instagramFeedUrl && (
+                                        <span className="hidden sm:flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 flex-shrink-0">
+                                            <Instagram className="w-2.5 h-2.5" /> RSS
+                                        </span>
+                                    )}
+
                                     {/* Link count badge */}
                                     <span className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 ${linkCount > 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
                                         {linkCount}/{PLATFORMS.length}
@@ -442,6 +512,7 @@ export default function SocialLinksAdminPage() {
                     artist={editing}
                     onClose={() => setEditing(null)}
                     onSave={(links) => handleSave(editing.id, links)}
+                    onFeedSave={handleFeedSave}
                 />
             )}
         </AdminLayout>

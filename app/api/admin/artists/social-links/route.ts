@@ -26,6 +26,8 @@ export async function GET() {
             primaryImageUrl: true,
             socialLinks: true,
             socialLinksUpdatedAt: true,
+            instagramFeedUrl: true,
+            instagramLastSync: true,
         },
     })
 

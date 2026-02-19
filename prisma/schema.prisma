@@ -40,6 +40,10 @@ model MusicalGroup {
   videos          Json?                   // [{title, url}] — MVs principais
   members         ArtistGroupMembership[]
   userFavorites   Favorite[]
+  // Instagram sync (RSS.app)
+  instagramFeedUrl  String?               // RSS.app JSON feed URL
+  instagramLastSync DateTime?             // última sincronização bem-sucedida
+  instagramPosts    InstagramPost[]
   // Trending metrics
   viewCount       Int                     @default(0)
   favoriteCount   Int                     @default(0)
@@ -106,6 +110,10 @@ model Artist {
   memberships        ArtistGroupMembership[]
   discographySyncAt  DateTime?          // última sincronização de discografia
   socialLinksUpdatedAt DateTime?        // última sincronização de redes sociais
+  // Instagram sync (RSS.app)
+  instagramFeedUrl    String?           // RSS.app JSON feed URL
+  instagramLastSync   DateTime?         // última sincronização bem-sucedida
+  instagramPosts      InstagramPost[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -124,6 +132,25 @@ model Artist {
   @@index([translationStatus, createdAt])
   @@index([discographySyncAt])
   @@index([socialLinksUpdatedAt])
+}
+
+model InstagramPost {
+  id        String        @id @default(cuid())
+  postId    String        @unique  // shortcode extraído da URL /p/POSTID/
+  artistId  String?
+  groupId   String?
+  imageUrl  String?
+  caption   String?
+  permalink String
+  postedAt  DateTime
+  createdAt DateTime      @default(now())
+
+  artist    Artist?       @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  group     MusicalGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([artistId, postedAt])
+  @@index([groupId, postedAt])
+  @@index([postedAt])
 }
 
 model Album {
