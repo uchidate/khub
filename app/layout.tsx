@@ -10,11 +10,15 @@ import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { JsonLd } from "@/components/seo/JsonLd"
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
+const BASE_URL = 'https://www.hallyuhub.com.br'
+
 export const metadata: Metadata = {
+    metadataBase: new URL(BASE_URL),
     title: {
         template: '%s | HallyuHub',
         default: 'HallyuHub - O Portal da Onda Coreana'
@@ -26,16 +30,34 @@ export const metadata: Metadata = {
         statusBarStyle: "black-translucent",
         title: "HallyuHub",
     },
+    alternates: {
+        canonical: BASE_URL,
+    },
     openGraph: {
-        title: "HallyuHub",
-        description: "Cultura coreana em um só lugar.",
-        images: [{ url: "https://hallyuhub.com.br/og-image.jpg" }],
+        title: "HallyuHub - O Portal da Onda Coreana",
+        description: "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+        images: [{
+            url: `${BASE_URL}/og-image.jpg`,
+            width: 1200,
+            height: 630,
+            alt: "HallyuHub - O Portal da Onda Coreana",
+        }],
         siteName: 'HallyuHub',
         locale: 'pt_BR',
         type: 'website',
+        url: BASE_URL,
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: "HallyuHub - O Portal da Onda Coreana",
+        description: "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+        images: [`${BASE_URL}/og-image.jpg`],
     },
     verification: {
         google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        other: {
+            'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION ?? '',
+        },
     },
 }
 
@@ -56,6 +78,16 @@ export default function RootLayout({
                 {process.env.NEXT_PUBLIC_GA_ID && (
                     <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
                 )}
+                <JsonLd data={{
+                    "@context": "https://schema.org",
+                    "@type": "Organization",
+                    "name": "HallyuHub",
+                    "url": BASE_URL,
+                    "logo": `${BASE_URL}/og-image.jpg`,
+                    "description": "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+                    "inLanguage": "pt-BR",
+                    "sameAs": [],
+                }} />
                 <SessionProvider>
                     <NavigationProgress />
                     <div className="min-h-screen flex flex-col">

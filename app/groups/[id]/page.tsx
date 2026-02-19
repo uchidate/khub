@@ -3,19 +3,40 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
+import { JsonLd } from '@/components/seo/JsonLd'
 import { Globe, Users } from 'lucide-react'
 import type { Metadata } from 'next'
+
+const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
     const group = await prisma.musicalGroup.findUnique({ where: { id: params.id } })
     if (!group) return { title: 'Grupo não encontrado - HallyuHub' }
+    const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
     return {
         title: `${group.name} - HallyuHub`,
-        description: group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`,
+        description: description.slice(0, 160),
+        alternates: {
+            canonical: `${BASE_URL}/groups/${params.id}`,
+        },
         openGraph: {
-            title: group.name,
+            title: `${group.name} - HallyuHub`,
+            description: description.slice(0, 160),
+            images: group.profileImageUrl ? [{
+                url: group.profileImageUrl,
+                width: 1200,
+                height: 630,
+                alt: group.name,
+            }] : [],
+            type: 'website',
+            url: `${BASE_URL}/groups/${params.id}`,
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${group.name} - HallyuHub`,
+            description: description.slice(0, 160),
             images: group.profileImageUrl ? [group.profileImageUrl] : [],
         },
     }
@@ -62,8 +83,35 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     const disbandYear = group.disbandDate ? new Date(group.disbandDate).getFullYear() : null
     const socialLinks = (group.socialLinks as Record<string, string>) || {}
 
+    const memberPersons = activeMembers.slice(0, 15).map(m => ({
+        "@type": "Person",
+        "name": m.artist.nameRomanized,
+        "url": `${BASE_URL}/artists/${m.artist.id}`,
+    }))
+
     return (
         <div className="min-h-screen">
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "MusicGroup",
+                "name": group.name,
+                "alternateName": group.nameHangul ?? undefined,
+                "description": group.bio?.slice(0, 300) ?? undefined,
+                "image": group.profileImageUrl ?? undefined,
+                "url": `${BASE_URL}/groups/${group.id}`,
+                ...(debutYear ? { "foundingDate": String(debutYear) } : {}),
+                ...(disbandYear ? { "dissolutionDate": String(disbandYear) } : {}),
+                ...(group.agency ? { "memberOf": { "@type": "Organization", "name": group.agency.name } } : {}),
+                ...(memberPersons.length ? { "member": memberPersons } : {}),
+            }} />
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Grupos", "item": `${BASE_URL}/groups` },
+                    { "@type": "ListItem", "position": 2, "name": group.name, "item": `${BASE_URL}/groups/${group.id}` },
+                ],
+            }} />
             {/* Hero */}
             <div className="relative h-[50vh] md:h-[60vh]">
                 {group.profileImageUrl ? (

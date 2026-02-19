@@ -5,8 +5,11 @@ import { ViewTracker } from "@/components/features/ViewTracker"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
+import { JsonLd } from "@/components/seo/JsonLd"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper } from "lucide-react"
 import type { Metadata } from "next"
+
+const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,6 +66,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     return {
         title: `${artist.nameRomanized} (${artist.nameHangul}) - HallyuHub`,
         description: description.slice(0, 160),
+        alternates: {
+            canonical: `${BASE_URL}/artists/${params.id}`,
+        },
         openGraph: {
             title: `${artist.nameRomanized} - HallyuHub`,
             description: description.slice(0, 160),
@@ -72,7 +78,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
                 height: 630,
                 alt: artist.nameRomanized
             }] : [],
-            type: 'profile'
+            type: 'profile',
+            url: `${BASE_URL}/artists/${params.id}`,
         },
         twitter: {
             card: 'summary_large_image',
@@ -132,9 +139,32 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
     const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
     const age = birthDate ? Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
 
+    const group = artist.memberships?.[0]?.group ?? null
+
     return (
         <div className="min-h-screen">
             <ViewTracker artistId={artist.id} />
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "Person",
+                "name": artist.nameRomanized,
+                "alternateName": artist.nameHangul ?? undefined,
+                "description": artist.bio?.slice(0, 300) ?? undefined,
+                "image": artist.primaryImageUrl ?? undefined,
+                "url": `${BASE_URL}/artists/${artist.id}`,
+                "birthDate": artist.birthDate ? new Date(artist.birthDate).toISOString().split('T')[0] : undefined,
+                "jobTitle": artist.roles?.[0] ?? undefined,
+                ...(group ? { "memberOf": { "@type": "MusicGroup", "name": group.name } } : {}),
+                ...(artist.agency ? { "worksFor": { "@type": "Organization", "name": artist.agency.name } } : {}),
+            }} />
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Artistas", "item": `${BASE_URL}/artists` },
+                    { "@type": "ListItem", "position": 2, "name": artist.nameRomanized, "item": `${BASE_URL}/artists/${artist.id}` },
+                ],
+            }} />
             {/* Hero */}
             <div className="relative h-[65vh] md:h-[75vh]">
                 {artist.primaryImageUrl ? (

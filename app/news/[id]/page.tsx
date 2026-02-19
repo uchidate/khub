@@ -10,7 +10,10 @@ import { RelatedNews } from "@/components/features/RelatedNews"
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
 import { CommentsSection } from "@/components/features/CommentsSection"
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"
+import { JsonLd } from "@/components/seo/JsonLd"
 import type { Metadata } from "next"
+
+const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +49,9 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
     return {
         title: `${news.title} - HallyuHub`,
         description: description,
+        alternates: {
+            canonical: `${BASE_URL}/news/${params.id}`,
+        },
         openGraph: {
             title: news.title,
             description: description,
@@ -57,7 +63,8 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
             }] : [],
             type: 'article',
             publishedTime: news.publishedAt.toISOString(),
-            authors: ['HallyuHub']
+            authors: ['HallyuHub'],
+            url: `${BASE_URL}/news/${params.id}`,
         },
         twitter: {
             card: 'summary_large_image',
@@ -133,8 +140,38 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     const wordCount = news.contentMd.split(/\s+/).length
     const readingTime = Math.ceil(wordCount / 200)
 
+    const articleDescription = news.contentMd
+        ? news.contentMd.replace(/#{1,6}\s+/g, '').replace(/\*\*?([^*]+)\*\*?/g, '$1').replace(/\n+/g, ' ').trim().slice(0, 300)
+        : news.title
+
     return (
         <>
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "NewsArticle",
+                "headline": news.title,
+                "description": articleDescription,
+                "image": news.imageUrl ? [news.imageUrl] : undefined,
+                "datePublished": news.publishedAt.toISOString(),
+                "dateModified": news.publishedAt.toISOString(),
+                "url": `${BASE_URL}/news/${news.id}`,
+                "inLanguage": "pt-BR",
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "HallyuHub",
+                    "logo": { "@type": "ImageObject", "url": `${BASE_URL}/og-image.jpg` },
+                },
+                "author": { "@type": "Organization", "name": "HallyuHub" },
+                ...(news.tags?.length ? { "keywords": news.tags.join(', ') } : {}),
+            }} />
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Notícias", "item": `${BASE_URL}/news` },
+                    { "@type": "ListItem", "position": 2, "name": news.title, "item": `${BASE_URL}/news/${news.id}` },
+                ],
+            }} />
             <ReadingProgressBar />
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
                 <div className="max-w-4xl mx-auto">

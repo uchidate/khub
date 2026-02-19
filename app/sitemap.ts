@@ -9,6 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const routes = [
             '',
             '/artists',
+            '/groups',
             '/productions',
             '/news',
             '/about',
@@ -65,7 +66,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.7,
         }))
 
-        return [...routes, ...artistRoutes, ...productionRoutes, ...newsRoutes]
+        // 5. Dynamic Groups
+        const groups = await prisma.musicalGroup.findMany({
+            select: { id: true, updatedAt: true },
+            take: 1000,
+        })
+
+        const groupRoutes = groups.map((group) => ({
+            url: `${BASE_URL}/groups/${group.id}`,
+            lastModified: group.updatedAt,
+            changeFrequency: 'weekly' as const,
+            priority: 0.75,
+        }))
+
+        return [...routes, ...artistRoutes, ...productionRoutes, ...newsRoutes, ...groupRoutes]
     } catch (error) {
         console.error('Error generating sitemap:', error)
         return [
