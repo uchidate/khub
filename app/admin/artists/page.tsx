@@ -20,6 +20,8 @@ interface Artist {
   productionsCount: number
   albumsCount: number
   agencyName: string | null
+  musicalGroupName: string | null
+  musicalGroupId: string | null
 }
 
 const columns: Column<Artist>[] = [
@@ -48,14 +50,21 @@ const columns: Column<Artist>[] = [
     render: (artist) => <span className="text-zinc-400">{artist.nameHangul || '-'}</span>,
   },
   {
-    key: 'stageName',
-    label: 'Nome Artístico',
-    render: (artist) => <span className="text-zinc-400">{artist.stageName || '-'}</span>,
-  },
-  {
     key: 'agencyName',
     label: 'Agência',
     render: (artist) => <span className="text-zinc-400">{artist.agencyName || '-'}</span>,
+  },
+  {
+    key: 'musicalGroupName',
+    label: 'Grupo',
+    render: (artist) =>
+      artist.musicalGroupName ? (
+        <span className="text-electric-cyan text-xs font-medium px-2 py-0.5 bg-electric-cyan/10 rounded-full">
+          {artist.musicalGroupName}
+        </span>
+      ) : (
+        <span className="text-zinc-600">-</span>
+      ),
   },
   {
     key: 'productionsCount',
@@ -71,7 +80,7 @@ const columns: Column<Artist>[] = [
   },
   {
     key: 'createdAt',
-    label: 'Data de Cadastro',
+    label: 'Cadastro',
     sortable: true,
     render: (artist) => new Date(artist.createdAt).toLocaleDateString('pt-BR'),
   },
@@ -83,7 +92,6 @@ const formFields: FormField[] = [
   { key: 'stageNames', label: 'Nomes Artísticos', type: 'text', placeholder: 'Ex: Suzy, Bae (separados por vírgula)' },
   { key: 'bio', label: 'Biografia', type: 'textarea', placeholder: 'Biografia do artista...' },
   { key: 'birthDate', label: 'Data de Nascimento', type: 'date' },
-  { key: 'country', label: 'País', type: 'text', placeholder: 'Ex: South Korea' },
   {
     key: 'gender',
     label: 'Gênero',
@@ -94,6 +102,13 @@ const formFields: FormField[] = [
       { value: 'non_binary', label: 'Não-binário' },
       { value: 'other', label: 'Outro' },
     ],
+  },
+  {
+    key: 'musicalGroupId',
+    label: 'Grupo Musical',
+    type: 'select-async',
+    optionsUrl: '/api/admin/groups/all',
+    placeholder: 'Selecionar grupo...',
   },
   { key: 'primaryImageUrl', label: 'URL da Imagem', type: 'text', placeholder: 'https://...' },
   { key: 'tmdbId', label: 'TMDB ID', type: 'text', placeholder: 'ID do The Movie Database' },
@@ -195,6 +210,7 @@ export default function ArtistsAdminPage() {
           stageNames: Array.isArray((editingArtist as any).stageNames)
             ? (editingArtist as any).stageNames.join(', ')
             : '',
+          musicalGroupId: (editingArtist as any).musicalGroupId ?? '',
         } : undefined}
         open={formOpen}
         onClose={() => setFormOpen(false)}

@@ -26,6 +26,7 @@ const artistSchema = z.object({
   socialLinks: z.record(z.string(), z.string()).optional(),  // JSON: { instagram: "...", etc }
   tmdbId: z.string().optional(),
   agencyId: z.string().optional(),
+  musicalGroupId: z.string().optional(),         // '' = remove from group, id = add/update membership
 })
 
 /**
@@ -170,8 +171,11 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
     const validated = artistSchema.partial().parse(body)
 
+    // Extract musicalGroupId before passing to artist update
+    const { musicalGroupId, ...artistFields } = validated
+
     // Convert date strings to Date objects; empty string → null for nullable fields
-    const data: Record<string, unknown> = { ...validated }
+    const data: Record<string, unknown> = { ...artistFields }
     if (validated.birthDate === '' || validated.birthDate === undefined) {
       data.birthDate = null
     } else {
@@ -186,14 +190,29 @@ export async function PATCH(request: NextRequest) {
       where: { id: artistId },
       data: data as any,
       include: {
-        agency: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        agency: { select: { id: true, name: true } },
       },
     })
+
+    // Handle group membership separately (not part of Artist model)
+    if (musicalGroupId !== undefined) {
+      if (musicalGroupId === '' || musicalGroupId === null) {
+        // Remove from all groups
+        await prisma.artistGroupMembership.deleteMany({ where: { artistId } })
+      } else {
+        // Upsert membership — set isActive, clear leaveDate
+        await prisma.artistGroupMembership.upsert({
+          where: { artistId_groupId: { artistId, groupId: musicalGroupId } },
+          create: { artistId, groupId: musicalGroupId, isActive: true },
+          update: { isActive: true, leaveDate: null },
+        })
+        // Deactivate any other group membership (artist can be in multiple groups but we simplify to 1 active)
+        await prisma.artistGroupMembership.updateMany({
+          where: { artistId, groupId: { not: musicalGroupId } },
+          data: { isActive: false },
+        })
+      }
+    }
 
     return NextResponse.json(artist)
   } catch (error) {
