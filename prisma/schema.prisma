@@ -35,6 +35,9 @@ model MusicalGroup {
   agency          Agency?                 @relation(fields: [agencyId], references: [id])
   agencyId        String?
   socialLinks     Json?
+  fanClubName     String?                 // ex: "ARMY", "BLINK", "ONCE"
+  officialColor   String?                 // hex ex: "#c6a852" — cor oficial do grupo
+  videos          Json?                   // [{title, url}] — MVs principais
   members         ArtistGroupMembership[]
   userFavorites   Favorite[]
   // Trending metrics

@@ -7,7 +7,8 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
-import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink } from 'lucide-react'
+import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
+import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
 import type { Metadata } from 'next'
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -83,12 +84,31 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     const currentYear = new Date().getFullYear()
     const yearsActive = debutYear ? (disbandYear ?? currentYear) - debutYear : null
     const socialLinks = (group.socialLinks as Record<string, string>) || {}
+    const fanClubName = group.fanClubName ?? null
+    const officialColorRaw = group.officialColor ?? null
+    const videos = (group.videos as Array<{ title: string; url: string }>) || []
 
-    // Tema visual: extrai cor do site oficial (cache 24h)
+    // Tema visual: officialColor > cor do site > fallback purple
     const websiteUrl = socialLinks.website ?? socialLinks.Website ?? socialLinks.official ?? null
-    const themeColor = websiteUrl ? await fetchGroupThemeColor(websiteUrl) : null
+    const themeColor = officialColorRaw ?? (websiteUrl ? await fetchGroupThemeColor(websiteUrl) : null)
     const accent = themeColor ?? '#9333ea'
     const themeVars = buildGroupThemeVars(themeColor)
+
+    // Grupos relacionados: mesma agência (excluindo este) ou mesma geração
+    const relatedGroups = await prisma.musicalGroup.findMany({
+        where: {
+            id: { not: group.id },
+            ...(group.agencyId
+                ? { agencyId: group.agencyId }
+                : debutYear
+                    ? { debutDate: { gte: new Date(`${debutYear - 3}-01-01`), lte: new Date(`${debutYear + 3}-12-31`) } }
+                    : { id: 'never' }
+            ),
+        },
+        take: 6,
+        orderBy: { trendingScore: 'desc' },
+        select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
+    })
 
     // Notícias relacionadas aos membros do grupo
     const relatedNews = memberArtistIds.length > 0
@@ -206,6 +226,12 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                     Ativo
                                 </span>
                             )}
+                            {fanClubName && (
+                                <span className="text-xs font-black px-3 py-1 backdrop-blur-sm rounded-full border"
+                                    style={{ background: toRgba(accent, 0.15), color: accent, borderColor: toRgba(accent, 0.3) }}>
+                                    {fanClubName}
+                                </span>
+                            )}
                             {debutYear && (
                                 <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-zinc-400 rounded-full border border-white/10">
                                     Desde {debutYear}
@@ -215,6 +241,12 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-zinc-400 rounded-full border border-white/10">
                                     {group.agency.name}
                                 </span>
+                            )}
+                            {group.debutDate && !disbandYear && (
+                                <AnniversaryCountdown
+                                    debutDate={group.debutDate.toISOString()}
+                                    groupName={group.name}
+                                />
                             )}
                         </div>
 
@@ -386,6 +418,37 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             <StatCard icon={<Eye className="w-5 h-5" />} label="Visualizações" value={group.viewCount.toLocaleString('pt-BR')} color="text-cyan-400" />
                             <StatCard icon={<Heart className="w-5 h-5" />} label="Fãs" value={group.favoriteCount.toLocaleString('pt-BR')} color="text-pink-400" />
                         </div>
+
+                        {/* Grupos Relacionados */}
+                        {relatedGroups.length > 0 && (
+                            <div>
+                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">
+                                    {group.agencyId ? 'Mesma Agência' : 'Mesma Geração'}
+                                </h3>
+                                <div className="flex flex-col gap-2">
+                                    {relatedGroups.map(rg => (
+                                        <Link key={rg.id} href={`/groups/${rg.id}`}
+                                            className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/rg">
+                                            <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                                                {rg.profileImageUrl ? (
+                                                    <Image src={rg.profileImageUrl} alt={rg.name} fill sizes="40px" className="object-cover group-hover/rg:scale-105 transition-transform" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <span className="text-sm font-black text-zinc-600">{rg.name[0]}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-white truncate group-hover/rg:text-purple-300 transition-colors">{rg.name}</p>
+                                                {rg.disbandDate && (
+                                                    <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Disbandado</p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* ── MAIN ── */}
@@ -491,6 +554,42 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             </section>
                         )}
 
+                        {/* MVs principais */}
+                        {videos.length > 0 && (
+                            <section>
+                                <SectionHeader icon={<Play className="w-5 h-5" />} title="MVs Principais" count={videos.length} accent={accent} />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {videos.map((mv, i) => {
+                                        const videoId = extractYoutubeId(mv.url)
+                                        if (!videoId) return null
+                                        return (
+                                            <a key={i} href={mv.url} target="_blank" rel="noopener noreferrer"
+                                                className="group block rounded-xl overflow-hidden border border-white/5 hover:border-white/20 transition-all">
+                                                <div className="relative aspect-video bg-zinc-900">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                                                        alt={mv.title}
+                                                        className="w-full h-full object-cover brightness-75 group-hover:brightness-90 transition-all"
+                                                    />
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-transform group-hover:scale-110"
+                                                            style={{ background: toRgba(accent, 0.85) }}>
+                                                            <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="p-3" style={{ background: toRgba(accent, 0.05) }}>
+                                                    <p className="text-sm font-bold text-white group-hover:opacity-80 transition-opacity line-clamp-1">{mv.title}</p>
+                                                    <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider font-bold">YouTube</p>
+                                                </div>
+                                            </a>
+                                        )
+                                    })}
+                                </div>
+                            </section>
+                        )}
+
                         {/* Ex-membros */}
                         {formerMembers.length > 0 && (
                             <section>
@@ -512,6 +611,25 @@ export default async function GroupDetailPage({ params }: { params: { id: string
             </div>
         </div>
     )
+}
+
+/* ── Helpers ── */
+
+function extractYoutubeId(url: string): string | null {
+    try {
+        const u = new URL(url)
+        // https://www.youtube.com/watch?v=ID
+        const v = u.searchParams.get('v')
+        if (v) return v
+        // https://youtu.be/ID
+        if (u.hostname === 'youtu.be') return u.pathname.slice(1)
+        // https://www.youtube.com/embed/ID
+        const embedMatch = u.pathname.match(/\/embed\/([^/?]+)/)
+        if (embedMatch) return embedMatch[1]
+        return null
+    } catch {
+        return null
+    }
 }
 
 /* ── Sub-componentes ── */
