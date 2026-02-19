@@ -33,6 +33,7 @@ export default function InstagramAdminPage() {
     const [feedValues, setFeedValues] = useState<Record<string, string>>({})
     const [syncing, setSyncing] = useState(false)
     const [syncMsg, setSyncMsg] = useState('')
+    const [syncDetails, setSyncDetails] = useState<{ name: string; posts: number; error?: string }[]>([])
 
     const fetchArtists = useCallback(async () => {
         setLoading(true)
@@ -98,8 +99,8 @@ export default function InstagramAdminPage() {
             const res = await fetch('/api/admin/instagram/sync', { method: 'POST' })
             const data = await res.json()
             if (res.ok) {
-                setSyncMsg(`✅ ${data.totalPosts} posts sincronizados${data.totalErrors > 0 ? ` (${data.totalErrors} erros)` : ''}`)
-                // Refresh para atualizar datas de sync
+                setSyncMsg(`✅ ${data.totalPosts} posts sincronizados${data.totalErrors > 0 ? ` · ${data.totalErrors} erros` : ''}`)
+                setSyncDetails(data.results ?? [])
                 await fetchArtists()
             } else {
                 setSyncMsg('❌ Erro ao sincronizar')
@@ -142,6 +143,27 @@ export default function InstagramAdminPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Sync result details */}
+                {syncDetails.length > 0 && (
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <p className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Resultado do sync</p>
+                        <div className="space-y-1.5">
+                            {syncDetails.map((r, i) => (
+                                <div key={i} className="flex items-start justify-between gap-4 text-xs">
+                                    <span className="text-zinc-300 font-medium">{r.name}</span>
+                                    {r.error ? (
+                                        <span className="text-red-400 font-mono text-[10px] text-right max-w-xs truncate" title={r.error}>
+                                            ❌ {r.error.replace('Error: ', '').slice(0, 80)}
+                                        </span>
+                                    ) : (
+                                        <span className="text-green-400 font-bold flex-shrink-0">✅ {r.posts} posts</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Como configurar */}
                 <div className="bg-zinc-900 border border-pink-500/10 rounded-xl p-5">
