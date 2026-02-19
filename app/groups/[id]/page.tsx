@@ -409,8 +409,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                                 {/* Spotify link */}
                                                 {album.spotifyUrl && (
                                                     <a href={album.spotifyUrl} target="_blank" rel="noopener noreferrer"
-                                                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 backdrop-blur-sm transition-all"
-                                                        onClick={e => e.stopPropagation()}>
+                                                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 backdrop-blur-sm transition-all">
                                                         <span className="text-xs font-black text-white bg-green-500 px-3 py-1.5 rounded-full">
                                                             Ouvir no Spotify
                                                         </span>
