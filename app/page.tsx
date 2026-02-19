@@ -38,13 +38,14 @@ export default async function Home() {
         publishedAt: news.publishedAt.toISOString()
     }))
 
-    // Trending Artists (6 artistas em alta)
+    // Trending Artists (12 artistas em alta)
     const trendingArtists = await prisma.artist.findMany({
-        take: 6,
+        take: 12,
         orderBy: { trendingScore: 'desc' },
         select: {
             id: true,
             nameRomanized: true,
+            nameHangul: true,
             primaryImageUrl: true,
             roles: true,
             trendingScore: true,
@@ -135,9 +136,9 @@ export default async function Home() {
     // Top News para seção de notícias (3 mais recentes)
     const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
-    // Grupos em destaque (8 mais populares entre grupos ativos)
+    // Grupos em destaque (10 mais populares entre grupos ativos)
     const trendingGroups = await prisma.musicalGroup.findMany({
-        take: 8,
+        take: 10,
         where: { disbandDate: null }, // Apenas grupos ativos
         orderBy: [{ trendingScore: 'desc' }, { favoriteCount: 'desc' }, { viewCount: 'desc' }],
         select: {
