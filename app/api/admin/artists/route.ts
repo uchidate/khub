@@ -118,12 +118,15 @@ export async function POST(request: NextRequest) {
 
     // Convert date strings to Date objects; empty string → null for nullable fields
     const data: Record<string, unknown> = { ...validated }
-    if (validated.birthDate) {
+    if (validated.birthDate === '' || validated.birthDate === undefined) {
+      data.birthDate = null
+    } else {
       data.birthDate = new Date(validated.birthDate)
     }
     if (validated.primaryImageUrl === '' || validated.primaryImageUrl === null) {
       data.primaryImageUrl = null
     }
+    if (validated.nameHangul === '') data.nameHangul = null
 
     const artist = await prisma.artist.create({
       data: data as any,
@@ -169,12 +172,15 @@ export async function PATCH(request: NextRequest) {
 
     // Convert date strings to Date objects; empty string → null for nullable fields
     const data: Record<string, unknown> = { ...validated }
-    if (validated.birthDate) {
+    if (validated.birthDate === '' || validated.birthDate === undefined) {
+      data.birthDate = null
+    } else {
       data.birthDate = new Date(validated.birthDate)
     }
     if (validated.primaryImageUrl === '' || validated.primaryImageUrl === null) {
       data.primaryImageUrl = null
     }
+    if (validated.nameHangul === '') data.nameHangul = null
 
     const artist = await prisma.artist.update({
       where: { id: artistId },
