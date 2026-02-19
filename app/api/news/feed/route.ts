@@ -20,6 +20,7 @@ const newsInclude = {
 function buildWhereClause(filters: {
     search?: string;
     artistId?: string;
+    groupArtistIds?: string[];
     source?: string;
     from?: string;
     to?: string;
@@ -36,7 +37,16 @@ function buildWhereClause(filters: {
         };
     }
 
-    // Filtro por artista específico (sobrescreve personalização)
+    // Filtro por grupo (todos os artistas do grupo)
+    if (filters.groupArtistIds && filters.groupArtistIds.length > 0) {
+        where.artists = {
+            some: {
+                artistId: { in: filters.groupArtistIds }
+            }
+        };
+    }
+
+    // Filtro por artista específico (sobrescreve personalização e grupo)
     if (filters.artistId) {
         where.artists = {
             some: {
@@ -83,15 +93,26 @@ export async function GET(request: NextRequest) {
     // Filtros
     const search = searchParams.get('search') || undefined;
     const artistId = searchParams.get('artistId') || undefined;
+    const groupId = searchParams.get('groupId') || undefined;
     const source = searchParams.get('source') || undefined;
     const from = searchParams.get('from') || undefined;
     const to = searchParams.get('to') || undefined;
+
+    // Se groupId fornecido, buscar artistIds do grupo
+    let groupArtistIds: string[] | undefined;
+    if (groupId) {
+        const memberships = await prisma.artistGroupMembership.findMany({
+            where: { groupId },
+            select: { artistId: true },
+        });
+        groupArtistIds = memberships.map(m => m.artistId);
+    }
 
     const session = await getServerSession(authOptions);
 
     // Feed sem autenticação: retorna tudo ordenado por data (com filtros)
     if (!session?.user?.email) {
-        const where = buildWhereClause({ search, artistId, source, from, to });
+        const where = buildWhereClause({ search, artistId, groupArtistIds, source, from, to });
 
         const [news, total] = await Promise.all([
             prisma.news.findMany({
@@ -130,7 +151,7 @@ export async function GET(request: NextRequest) {
 
     // Sem favoritos: feed padrão com mensagem (com filtros)
     if (favoriteArtistIds.length === 0) {
-        const where = buildWhereClause({ search, artistId, source, from, to });
+        const where = buildWhereClause({ search, artistId, groupArtistIds, source, from, to });
 
         const [news, total] = await Promise.all([
             prisma.news.findMany({
@@ -157,10 +178,11 @@ export async function GET(request: NextRequest) {
     const where = buildWhereClause({
         search,
         artistId,
+        groupArtistIds: artistId ? undefined : groupArtistIds,
         source,
         from,
         to,
-        favoriteArtistIds: artistId ? undefined : favoriteArtistIds, // Se filtrar por artista específico, ignora personalização
+        favoriteArtistIds: (artistId || groupArtistIds) ? undefined : favoriteArtistIds,
     });
 
     const [news, total] = await Promise.all([

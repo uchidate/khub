@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     if (!query || query.trim().length < 2) {
         return NextResponse.json({
             artists: [],
+            groups: [],
             news: [],
             productions: [],
             total: 0,
@@ -30,8 +31,8 @@ export async function GET(request: NextRequest) {
     const searchTerm = query.trim()
 
     try {
-        // Buscar em paralelo nos 3 modelos
-        const [artists, news, productions] = await Promise.all([
+        // Buscar em paralelo nos 4 modelos
+        const [artists, news, productions, groups] = await Promise.all([
             // Buscar artistas
             types.includes('artists') ? prisma.artist.findMany({
                 where: {
@@ -96,13 +97,33 @@ export async function GET(request: NextRequest) {
                     { voteAverage: 'desc' },
                     { year: 'desc' }
                 ]
+            }) : [],
+
+            // Buscar grupos
+            types.includes('groups') ? prisma.musicalGroup.findMany({
+                where: {
+                    OR: [
+                        { name: { contains: searchTerm, mode: 'insensitive' } },
+                        { nameHangul: { contains: searchTerm, mode: 'insensitive' } },
+                    ]
+                },
+                take: limit,
+                select: {
+                    id: true,
+                    name: true,
+                    nameHangul: true,
+                    profileImageUrl: true,
+                    debutDate: true,
+                },
+                orderBy: { name: 'asc' }
             }) : []
         ])
 
-        const total = artists.length + news.length + productions.length
+        const total = artists.length + news.length + productions.length + groups.length
 
         return NextResponse.json({
             artists,
+            groups,
             news,
             productions,
             total,

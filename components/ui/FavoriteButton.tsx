@@ -8,7 +8,7 @@ interface FavoriteButtonProps {
   id: string
   className?: string
   itemName?: string
-  itemType?: 'artista' | 'agência' | 'produção' | 'notícia'
+  itemType?: 'artista' | 'agência' | 'produção' | 'notícia' | 'grupo'
 }
 
 export function FavoriteButton({ id, className = '', itemName, itemType }: FavoriteButtonProps) {

@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { FavoriteButton } from '@/components/ui/FavoriteButton'
+import { ViewTracker } from '@/components/features/ViewTracker'
 import { Globe, Users } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -15,12 +17,14 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const group = await prisma.musicalGroup.findUnique({ where: { id: params.id } })
     if (!group) return { title: 'Grupo não encontrado - HallyuHub' }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
+    const isThinContent = !group.profileImageUrl && !group.bio
     return {
         title: `${group.name} - HallyuHub`,
         description: description.slice(0, 160),
         alternates: {
             canonical: `${BASE_URL}/groups/${params.id}`,
         },
+        ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title: `${group.name} - HallyuHub`,
             description: description.slice(0, 160),
@@ -91,6 +95,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
 
     return (
         <div className="min-h-screen">
+            <ViewTracker groupId={group.id} />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "MusicGroup",
@@ -144,7 +149,15 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             Disbandado em {disbandYear}
                         </span>
                     )}
-                    <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter">{group.name}</h1>
+                    <div className="flex items-start gap-4">
+                        <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter">{group.name}</h1>
+                        <FavoriteButton
+                            id={group.id}
+                            itemName={group.name}
+                            itemType="grupo"
+                            className="mt-2 bg-black/40 border border-white/10 backdrop-blur-sm"
+                        />
+                    </div>
                     {group.nameHangul && (
                         <p className="text-xl md:text-2xl text-purple-500 font-bold mt-1">{group.nameHangul}</p>
                     )}

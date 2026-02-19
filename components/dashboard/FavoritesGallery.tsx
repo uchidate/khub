@@ -7,7 +7,7 @@ import { MediaCard } from '@/components/ui/MediaCard'
 
 type FavoriteItem = {
   id: string
-  type: 'artist' | 'production' | 'news'
+  type: 'artist' | 'group' | 'production' | 'news'
   nameRomanized?: string
   title?: string
   imageUrl?: string
@@ -103,6 +103,8 @@ export function FavoritesGallery({ trendingArtists }: Props) {
           href={
             item.type === 'artist'
               ? `/artists/${item.id}`
+              : item.type === 'group'
+              ? `/groups/${item.id}`
               : item.type === 'production'
               ? `/productions/${item.id}`
               : `/news/${item.id}`

@@ -5,7 +5,8 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus } from 'lucide-react'
+import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
+import { Plus, Users } from 'lucide-react'
 import Image from 'next/image'
 
 interface MusicalGroup {
@@ -115,7 +116,9 @@ const formFields: FormField[] = [
 export default function GroupsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [membersOpen, setMembersOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<MusicalGroup | null>(null)
+  const [managingGroup, setManagingGroup] = useState<MusicalGroup | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const handleCreate = () => {
@@ -126,6 +129,11 @@ export default function GroupsPage() {
   const handleEdit = (group: MusicalGroup) => {
     setEditingGroup(group)
     setFormOpen(true)
+  }
+
+  const handleManageMembers = (group: MusicalGroup) => {
+    setManagingGroup(group)
+    setMembersOpen(true)
   }
 
   const handleDelete = (ids: string[]) => {
@@ -199,6 +207,15 @@ export default function GroupsPage() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por nome ou nome em hangul..."
+          actions={(group) => (
+            <button
+              onClick={() => handleManageMembers(group)}
+              title="Gerenciar Membros"
+              className="p-2 text-zinc-400 hover:text-purple-400 hover:bg-purple-900/20 rounded-lg transition-colors"
+            >
+              <Users size={16} />
+            </button>
+          )}
         />
       </div>
 
@@ -218,6 +235,15 @@ export default function GroupsPage() {
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}
       />
+
+      {managingGroup && (
+        <GroupMembersModal
+          groupId={managingGroup.id}
+          groupName={managingGroup.name}
+          open={membersOpen}
+          onClose={() => { setMembersOpen(false); setManagingGroup(null) }}
+        />
+      )}
     </AdminLayout>
   )
 }

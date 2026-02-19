@@ -36,11 +36,17 @@ model MusicalGroup {
   agencyId        String?
   socialLinks     Json?
   members         ArtistGroupMembership[]
+  userFavorites   Favorite[]
+  // Trending metrics
+  viewCount       Int                     @default(0)
+  favoriteCount   Int                     @default(0)
+  trendingScore   Float                   @default(0.0)
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
 
   @@index([name])
   @@index([agencyId])
+  @@index([trendingScore])
 }
 
 model ArtistGroupMembership {
@@ -367,24 +373,28 @@ model Tag {
 }
 
 model Favorite {
-  id           String      @id @default(cuid())
+  id           String        @id @default(cuid())
   userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   artistId     String?
-  artist       Artist?     @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artist       Artist?       @relation(fields: [artistId], references: [id], onDelete: Cascade)
   productionId String?
-  production   Production? @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  production   Production?   @relation(fields: [productionId], references: [id], onDelete: Cascade)
   newsId       String?
-  news         News?       @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  createdAt    DateTime    @default(now())
+  news         News?         @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  groupId      String?
+  group        MusicalGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
 
   @@unique([userId, artistId])
   @@unique([userId, productionId])
   @@unique([userId, newsId])
+  @@unique([userId, groupId])
   @@index([userId])
   @@index([artistId])
   @@index([productionId])
   @@index([newsId])
+  @@index([groupId])
 }
 
 model Activity {

@@ -1,17 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, X, Calendar, User, Globe } from 'lucide-react'
+import { Search, X, Calendar, User, Globe, Users } from 'lucide-react'
 
 export interface NewsFiltersProps {
     onFilterChange: (filters: FilterValues) => void
     artists?: Array<{ id: string; nameRomanized: string }>
+    groups?: Array<{ id: string; name: string }>
     initialFilters?: FilterValues
 }
 
 export interface FilterValues {
     search?: string
     artistId?: string
+    groupId?: string
     source?: string
     from?: string
     to?: string
@@ -23,12 +25,12 @@ const NEWS_SOURCES = [
     { value: 'kpopstarz.com', label: 'KpopStarz' },
 ]
 
-export function NewsFilters({ onFilterChange, artists = [], initialFilters = {} }: NewsFiltersProps) {
+export function NewsFilters({ onFilterChange, artists = [], groups = [], initialFilters = {} }: NewsFiltersProps) {
     const [filters, setFilters] = useState<FilterValues>(initialFilters)
     const [isExpanded, setIsExpanded] = useState(false)
 
     // Detectar se há filtros ativos (exceto search)
-    const hasActiveFilters = !!(filters.artistId || filters.source || filters.from || filters.to)
+    const hasActiveFilters = !!(filters.artistId || filters.groupId || filters.source || filters.from || filters.to)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -93,7 +95,30 @@ export function NewsFilters({ onFilterChange, artists = [], initialFilters = {} 
 
             {/* Painel de Filtros Expandido */}
             {isExpanded && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-zinc-900/30 border border-white/5 rounded-xl backdrop-blur-sm">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-zinc-900/30 border border-white/5 rounded-xl backdrop-blur-sm">
+                    {/* Filtro por Grupo */}
+                    {groups.length > 0 && (
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-zinc-400 mb-2">
+                                <Users className="w-4 h-4" />
+                                Grupo
+                            </label>
+                            <select
+                                value={filters.groupId || ''}
+                                onChange={(e) => {
+                                    updateFilter('groupId', e.target.value || undefined)
+                                    if (e.target.value) updateFilter('artistId', undefined)
+                                }}
+                                className="w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                            >
+                                <option value="">Todos os grupos</option>
+                                {groups.map(group => (
+                                    <option key={group.id} value={group.id}>{group.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {/* Filtro por Artista */}
                     <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-zinc-400 mb-2">
@@ -102,7 +127,10 @@ export function NewsFilters({ onFilterChange, artists = [], initialFilters = {} 
                         </label>
                         <select
                             value={filters.artistId || ''}
-                            onChange={(e) => updateFilter('artistId', e.target.value || undefined)}
+                            onChange={(e) => {
+                                updateFilter('artistId', e.target.value || undefined)
+                                if (e.target.value) updateFilter('groupId', undefined)
+                            }}
                             className="w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
                         >
                             <option value="">Todos os artistas</option>
@@ -163,6 +191,18 @@ export function NewsFilters({ onFilterChange, artists = [], initialFilters = {} 
             {/* Indicadores de Filtros Ativos */}
             {hasActiveFilters && !isExpanded && (
                 <div className="flex flex-wrap gap-2">
+                    {filters.groupId && (
+                        <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/30 rounded-full text-xs text-purple-400">
+                            <Users className="w-3 h-3" />
+                            {groups.find(g => g.id === filters.groupId)?.name || 'Grupo selecionado'}
+                            <button
+                                onClick={() => updateFilter('groupId', undefined)}
+                                className="hover:text-purple-300"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </span>
+                    )}
                     {filters.artistId && (
                         <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/30 rounded-full text-xs text-purple-400">
                             <User className="w-3 h-3" />

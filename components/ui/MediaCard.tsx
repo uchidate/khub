@@ -11,7 +11,7 @@ interface MediaCardProps {
     title: string
     subtitle?: string
     imageUrl: string | null
-    type: 'artist' | 'production' | 'news'
+    type: 'artist' | 'group' | 'production' | 'news'
     href: string
     badges?: string[]
     artists?: string[] // Artistas mencionados (apenas para type="news")
@@ -72,6 +72,7 @@ export function MediaCard({
     const getFavoriteType = () => {
         switch (type) {
             case 'artist': return 'artista'
+            case 'group': return 'grupo'
             case 'production': return 'produção'
             case 'news': return 'notícia'
             default: return 'artista'
