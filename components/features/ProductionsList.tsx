@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { MediaCard } from '@/components/ui/MediaCard'
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, X, Film } from 'lucide-react'
 
 interface Production {
     id: string
@@ -17,12 +17,19 @@ interface Production {
     streamingPlatforms: string[] | null
 }
 
-const PRODUCTION_TYPES = ['MOVIE', 'SERIES', 'SPECIAL', 'DOCUMENTARY']
+const TYPE_OPTIONS: { value: string; label: string }[] = [
+    { value: '', label: 'Todos' },
+    { value: 'MOVIE', label: 'Filmes' },
+    { value: 'SERIES', label: 'Séries' },
+    { value: 'SPECIAL', label: 'Especiais' },
+    { value: 'DOCUMENTARY', label: 'Documentários' },
+]
+
 const SORT_OPTIONS = [
-    { value: 'newest', label: 'Mais recentes' },
-    { value: 'year', label: 'Ano' },
+    { value: 'newest', label: 'Recentes' },
     { value: 'rating', label: 'Avaliação' },
-    { value: 'name', label: 'Nome A-Z' },
+    { value: 'year', label: 'Ano' },
+    { value: 'name', label: 'A-Z' },
 ]
 
 function ProductionsSkeleton() {
@@ -43,6 +50,7 @@ export function ProductionsList() {
     const [productions, setProductions] = useState<Production[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
+    const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
 
     const getFilters = useCallback(() => ({
         search: searchParams.get('search') || '',
@@ -89,7 +97,10 @@ export function ProductionsList() {
     const filters = getFilters()
     const currentPage = getCurrentPage()
 
-    const handleSearch = (value: string) => updateUrl({ ...filters, search: value }, 1)
+    const handleSearch = (value: string) => {
+        setSearchInput(value)
+        updateUrl({ ...filters, search: value }, 1)
+    }
     const handleType = (value: string) => updateUrl({ ...filters, type: value }, 1)
     const handleSort = (value: string) => updateUrl({ ...filters, sortBy: value }, 1)
     const handlePage = (p: number) => {
@@ -97,21 +108,24 @@ export function ProductionsList() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
+    const hasActiveFilters = filters.search || filters.type
+
     return (
         <div>
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <div className="mb-8 space-y-3">
                 {/* Search */}
-                <div className="relative flex-1">
+                <div className="relative">
                     <input
                         type="text"
-                        defaultValue={filters.search}
-                        placeholder="Buscar"
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleSearch((e.target as HTMLInputElement).value) }}
-                        onBlur={(e) => handleSearch(e.target.value)}
-                        className="w-full px-4 pr-10 py-2.5 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(searchInput) }}
+                        onBlur={() => handleSearch(searchInput)}
+                        placeholder="Buscar filme, série ou drama..."
+                        className="w-full px-4 pr-10 py-3.5 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                     />
-                    {filters.search ? (
+                    {searchInput ? (
                         <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
                             <X className="w-4 h-4" />
                         </button>
@@ -120,26 +134,59 @@ export function ProductionsList() {
                     )}
                 </div>
 
-                {/* Type filter */}
-                <select
-                    value={filters.type}
-                    onChange={(e) => handleType(e.target.value)}
-                    className="px-4 py-2.5 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 focus:outline-none focus:border-purple-500/50 transition-colors cursor-pointer"
-                >
-                    <option value="">Todos os tipos</option>
-                    {PRODUCTION_TYPES.map(t => (
-                        <option key={t} value={t}>{t === 'MOVIE' ? 'Filmes' : t === 'SERIES' ? 'Séries' : t === 'SPECIAL' ? 'Especiais' : 'Documentários'}</option>
-                    ))}
-                </select>
+                {/* Type + Sort row */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Type filter */}
+                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto">
+                        {TYPE_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => handleType(opt.value)}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
+                                    filters.type === opt.value
+                                        ? 'bg-purple-600 text-white'
+                                        : 'text-zinc-400 hover:text-white'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
 
-                {/* Sort */}
-                <select
-                    value={filters.sortBy}
-                    onChange={(e) => handleSort(e.target.value)}
-                    className="px-4 py-2.5 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 focus:outline-none focus:border-purple-500/50 transition-colors cursor-pointer"
-                >
-                    {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                    {/* Sort */}
+                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl ml-auto">
+                        {SORT_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => handleSort(opt.value)}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
+                                    filters.sortBy === opt.value
+                                        ? 'bg-purple-600 text-white'
+                                        : 'text-zinc-400 hover:text-white'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Active filters summary */}
+                {hasActiveFilters && (
+                    <div className="flex items-center gap-3">
+                        {!isLoading && (
+                            <p className="text-xs text-zinc-500">
+                                {pagination.total} produção{pagination.total !== 1 ? 'ões' : ''} encontrada{pagination.total !== 1 ? 's' : ''}
+                            </p>
+                        )}
+                        <button
+                            onClick={() => { handleSearch(''); handleType('') }}
+                            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                            Limpar filtros
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Loading */}
@@ -148,8 +195,15 @@ export function ProductionsList() {
             {/* Empty */}
             {!isLoading && productions.length === 0 && (
                 <div className="text-center py-20">
-                    <p className="text-zinc-400 text-lg mb-2">Nenhuma produção encontrada</p>
-                    <p className="text-zinc-500 text-sm">Tente ajustar os filtros</p>
+                    <Film className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                    <p className="text-zinc-400 font-bold text-lg mb-2">Nenhuma produção encontrada</p>
+                    <p className="text-zinc-500 text-sm mb-4">Tente ajustar os filtros de busca</p>
+                    <button
+                        onClick={() => { handleSearch(''); handleType('') }}
+                        className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                    >
+                        Limpar filtros
+                    </button>
                 </div>
             )}
 
