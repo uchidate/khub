@@ -7,6 +7,7 @@ export interface ArtistFilterValues {
     search?: string
     role?: string
     groupId?: string
+    agencyId?: string
     memberType?: string
     sortBy?: string
 }
@@ -41,16 +42,22 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
     const [search, setSearch] = useState(initialFilters.search || '')
     const [role, setRole] = useState(initialFilters.role || '')
     const [groupId, setGroupId] = useState(initialFilters.groupId || '')
+    const [agencyId, setAgencyId] = useState(initialFilters.agencyId || '')
     const [memberType, setMemberType] = useState(initialFilters.memberType || '')
     const [sortBy, setSortBy] = useState(initialFilters.sortBy || 'trending')
     const [showFilters, setShowFilters] = useState(false)
     const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
+    const [agencies, setAgencies] = useState<{ id: string; name: string }[]>([])
 
-    // Carregar grupos para o filtro
+    // Carregar grupos e agências para os filtros
     useEffect(() => {
         fetch('/api/groups/list')
             .then(r => r.json())
             .then(data => setGroups(data.groups ?? []))
+            .catch(() => {})
+        fetch('/api/agencies/list')
+            .then(r => r.json())
+            .then(data => setAgencies(data.agencies ?? []))
             .catch(() => {})
     }, [])
 
@@ -66,13 +73,14 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
     useEffect(() => {
         applyFilters()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [role, groupId, memberType, sortBy])
+    }, [role, groupId, agencyId, memberType, sortBy])
 
     const applyFilters = () => {
         onFilterChange({
             search: search || undefined,
             role: role || undefined,
             groupId: groupId || undefined,
+            agencyId: agencyId || undefined,
             memberType: memberType || undefined,
             sortBy,
         })
@@ -82,12 +90,13 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
         setSearch('')
         setRole('')
         setGroupId('')
+        setAgencyId('')
         setMemberType('')
         setSortBy('trending')
         onFilterChange({ sortBy: 'trending' })
     }
 
-    const hasActiveFilters = !!(search || role || groupId || memberType || sortBy !== 'trending')
+    const hasActiveFilters = !!(search || role || groupId || agencyId || memberType || sortBy !== 'trending')
 
     return (
         <div className="mb-10 space-y-4">
@@ -149,7 +158,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
             {/* Painel de Filtros Expandido */}
             {showFilters && (
                 <div className="p-6 rounded-xl bg-zinc-900/50 border border-white/10 space-y-6 animate-in slide-in-from-top-2 duration-200">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {/* Filtro de Tipo */}
                         <div>
                             <label className="block text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3">
@@ -193,6 +202,31 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                                     className="mt-2 text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors"
                                 >
                                     <X className="w-3 h-3" /> Limpar grupo
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Filtro de Agência */}
+                        <div>
+                            <label className="block text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3">
+                                Agência
+                            </label>
+                            <select
+                                value={agencyId}
+                                onChange={(e) => setAgencyId(e.target.value)}
+                                className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
+                            >
+                                <option value="">Todas as agências</option>
+                                {agencies.map(a => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                            </select>
+                            {agencyId && (
+                                <button
+                                    onClick={() => setAgencyId('')}
+                                    className="mt-2 text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors"
+                                >
+                                    <X className="w-3 h-3" /> Limpar agência
                                 </button>
                             )}
                         </div>
@@ -253,6 +287,12 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                         <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold rounded-full flex items-center gap-2">
                             🎶 {groups.find(g => g.id === groupId)?.name ?? '...'}
                             <button onClick={() => setGroupId('')}><X className="w-3 h-3" /></button>
+                        </span>
+                    )}
+                    {agencyId && (
+                        <span className="px-3 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 text-xs font-bold rounded-full flex items-center gap-2">
+                            🏢 {agencies.find(a => a.id === agencyId)?.name ?? '...'}
+                            <button onClick={() => setAgencyId('')}><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {memberType && (
