@@ -7,7 +7,6 @@ import {
   User,
   Settings,
   Shield,
-  Star,
   Zap,
   Clock,
   ChevronRight,
@@ -18,6 +17,7 @@ import {
 import { PageTransition } from '@/components/features/PageTransition'
 import { getDashboardData } from '@/lib/actions/user'
 import { FavoritesGallery } from '@/components/dashboard/FavoritesGallery'
+import { FavoritesStatCard } from '@/components/dashboard/FavoritesStatCard'
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -61,23 +61,8 @@ export default async function DashboardPage() {
         {/* Bento Grid layout */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:grid-rows-[auto_auto_auto]">
 
-          {/* 1. Primary Stat: Favorites (Large Square) */}
-          <div className="glass-card p-8 md:col-span-1 md:row-span-2 flex flex-col justify-between group overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-3xl rounded-full group-hover:bg-yellow-500/20 transition-all" />
-            <div className="relative z-10">
-              <div className="p-3 bg-yellow-500/20 w-fit rounded-xl text-yellow-500 mb-4">
-                <Star size={24} fill="currentColor" className="opacity-80" />
-              </div>
-              <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mb-1">Favoritos</p>
-              <p className="text-5xl font-display font-black text-white">{stats.favoritesCount}</p>
-            </div>
-            <div className="mt-8 relative z-10">
-              <p className="text-zinc-500 text-xs mb-4 leading-relaxed">Itens salvos na sua coleção pessoal.</p>
-              <Link href="/favorites" className="flex items-center gap-2 text-yellow-500 text-xs font-black uppercase tracking-widest hover:translate-x-1 transition-transform">
-                Ver Coleção <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
+          {/* 1. Primary Stat: Favorites (Large Square) — client-side so count reflects localStorage sync */}
+          <FavoritesStatCard />
 
           {/* 2. Timeline / Activity (Wide Rectangle) */}
           <div className="glass-card p-6 md:col-span-2 md:row-span-2 flex flex-col relative overflow-hidden">
