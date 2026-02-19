@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Sparkles, Calendar, Star } from 'lucide-react'
+import { Sparkles, Calendar, Star, Trophy } from 'lucide-react'
 
 interface LatestProduction {
     id: string
@@ -12,35 +12,49 @@ interface LatestProduction {
     year: number | null
     imageUrl: string | null
     voteAverage: number | null
-    createdAt: string
+    createdAt?: string
 }
 
 interface LatestProductionsProps {
     productions: LatestProduction[]
+    title?: string
+    subtitle?: string
+    variant?: 'latest' | 'top'
 }
 
-export function LatestProductions({ productions }: LatestProductionsProps) {
+export function LatestProductions({
+    productions,
+    title,
+    subtitle,
+    variant = 'latest',
+}: LatestProductionsProps) {
     if (productions.length === 0) return null
 
-    const isNew = (createdAt: string) => {
+    const isNew = (createdAt?: string) => {
+        if (!createdAt) return false
         const daysSinceAdded = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
         return daysSinceAdded < 7
     }
+
+    const displayTitle = title ?? (variant === 'top' ? 'Mais Bem Avaliados' : 'Recém Adicionados')
+    const displaySubtitle = subtitle ?? (variant === 'top' ? 'Nota TMDB acima de 7.5' : 'Últimos dramas e filmes no catálogo')
+    const Icon = variant === 'top' ? Trophy : Sparkles
+    const iconGradient = variant === 'top' ? 'from-yellow-500 to-orange-500' : 'from-purple-600 to-pink-600'
 
     return (
         <section className="py-12">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl">
-                        <Sparkles className="w-6 h-6 text-white" />
+                    <div className={`p-2 bg-gradient-to-br ${iconGradient} rounded-xl`}>
+                        <Icon className="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h2 className="text-3xl md:text-4xl font-black text-white">
-                            Recém Adicionados
+                            {displayTitle}
                         </h2>
                         <p className="text-zinc-400 text-sm mt-1">
-                            Últimos dramas e filmes no catálogo
+                            {displaySubtitle}
                         </p>
                     </div>
                 </div>
@@ -67,7 +81,7 @@ export function LatestProductions({ productions }: LatestProductionsProps) {
                         >
                             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-zinc-900 mb-3 shadow-lg">
                                 {/* New Badge */}
-                                {isNew(production.createdAt) && (
+                                {isNew(production.createdAt) && variant === 'latest' && (
                                     <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full">
                                         <span className="text-white text-xs font-black uppercase">
                                             Novo

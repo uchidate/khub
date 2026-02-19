@@ -72,6 +72,21 @@ export default async function Home() {
         createdAt: prod.createdAt.toISOString()
     }))
 
+    // Top Rated Productions (6 com maior nota TMDB ≥ 7.5)
+    const topRatedProductions = await prisma.production.findMany({
+        where: { voteAverage: { gte: 7.5 } },
+        take: 6,
+        orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
+        select: {
+            id: true,
+            titlePt: true,
+            type: true,
+            year: true,
+            imageUrl: true,
+            voteAverage: true,
+        }
+    })
+
     // Recommended News (apenas para usuários autenticados)
     let recommendedNews: any[] = []
     let favoritesCount = 0
@@ -120,11 +135,11 @@ export default async function Home() {
     // Top News para seção de notícias (3 mais recentes)
     const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
-    // Grupos em destaque (8 com mais membros / mais favoritos)
+    // Grupos em destaque (8 mais populares entre grupos ativos)
     const trendingGroups = await prisma.musicalGroup.findMany({
         take: 8,
         where: { disbandDate: null }, // Apenas grupos ativos
-        orderBy: [{ name: 'asc' }],
+        orderBy: [{ trendingScore: 'desc' }, { favoriteCount: 'desc' }, { viewCount: 'desc' }],
         select: {
             id: true,
             name: true,
@@ -187,6 +202,16 @@ export default async function Home() {
                 {latestProductions.length > 0 && (
                     <ScrollReveal delay={0.2}>
                         <LatestProductions productions={latestProductions} />
+                    </ScrollReveal>
+                )}
+
+                {/* Top Rated Productions */}
+                {topRatedProductions.length > 0 && (
+                    <ScrollReveal delay={0.25}>
+                        <LatestProductions
+                            productions={topRatedProductions}
+                            variant="top"
+                        />
                     </ScrollReveal>
                 )}
 
