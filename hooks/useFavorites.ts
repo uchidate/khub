@@ -10,6 +10,7 @@ const API_ENDPOINTS: Record<string, string> = {
   'artista': '/api/artists',
   'produção': '/api/productions',
   'notícia': '/api/news',
+  'grupo': '/api/groups',
 }
 
 export function useFavorites() {

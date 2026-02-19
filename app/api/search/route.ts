@@ -74,6 +74,23 @@ export async function GET(request: NextRequest) {
       take: 5,
     })
 
+    // Search groups
+    const groups = await prisma.musicalGroup.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { nameHangul: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        nameHangul: true,
+        profileImageUrl: true,
+      },
+      take: 3,
+    })
+
     // Format results
     const results = [
       ...artists.map(a => ({
@@ -82,6 +99,13 @@ export async function GET(request: NextRequest) {
         title: a.nameRomanized,
         subtitle: a.agency?.name || a.nameHangul,
         imageUrl: a.primaryImageUrl,
+      })),
+      ...groups.map(g => ({
+        id: g.id,
+        type: 'group' as const,
+        title: g.name,
+        subtitle: g.nameHangul,
+        imageUrl: g.profileImageUrl,
       })),
       ...productions.map(p => ({
         id: p.id,

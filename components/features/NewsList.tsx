@@ -27,6 +27,11 @@ interface Artist {
     nameRomanized: string
 }
 
+interface Group {
+    id: string
+    name: string
+}
+
 interface NewsItem {
     id: string
     title: string
@@ -44,9 +49,10 @@ interface NewsItem {
 
 interface NewsListProps {
     initialArtists?: Artist[]
+    initialGroups?: Group[]
 }
 
-export function NewsList({ initialArtists = [] }: NewsListProps) {
+export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -66,6 +72,7 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
         return {
             search: searchParams.get('search') || undefined,
             artistId: searchParams.get('artistId') || undefined,
+            groupId: searchParams.get('groupId') || undefined,
             source: searchParams.get('source') || undefined,
             from: searchParams.get('from') || undefined,
             to: searchParams.get('to') || undefined,
@@ -82,6 +89,7 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
 
         if (filters.search) params.set('search', filters.search)
         if (filters.artistId) params.set('artistId', filters.artistId)
+        if (filters.groupId) params.set('groupId', filters.groupId)
         if (filters.source) params.set('source', filters.source)
         if (filters.from) params.set('from', filters.from)
         if (filters.to) params.set('to', filters.to)
@@ -103,6 +111,7 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
                 limit: '24',
                 ...(filters.search && { search: filters.search }),
                 ...(filters.artistId && { artistId: filters.artistId }),
+                ...(filters.groupId && { groupId: filters.groupId }),
                 ...(filters.source && { source: filters.source }),
                 ...(filters.from && { from: filters.from }),
                 ...(filters.to && { to: filters.to }),
@@ -149,6 +158,7 @@ export function NewsList({ initialArtists = [] }: NewsListProps) {
             <NewsFilters
                 onFilterChange={handleFilterChange}
                 artists={initialArtists}
+                groups={initialGroups}
                 initialFilters={getFiltersFromUrl()}
             />
 

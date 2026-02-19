@@ -42,23 +42,27 @@ function LoadingSkeleton() {
 }
 
 async function NewsContent() {
-    // Buscar artistas com notícias para popular o filtro
-    const artists = await prisma.artist.findMany({
-        where: {
-            news: {
-                some: {}
-            }
-        },
-        select: {
-            id: true,
-            nameRomanized: true,
-        },
-        orderBy: {
-            nameRomanized: 'asc'
-        }
-    })
+    // Buscar artistas e grupos com notícias para popular os filtros
+    const [artists, groups] = await Promise.all([
+        prisma.artist.findMany({
+            where: { news: { some: {} } },
+            select: { id: true, nameRomanized: true },
+            orderBy: { nameRomanized: 'asc' },
+        }),
+        prisma.musicalGroup.findMany({
+            where: {
+                members: {
+                    some: {
+                        artist: { news: { some: {} } },
+                    },
+                },
+            },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' },
+        }),
+    ])
 
-    return <NewsList initialArtists={artists} />
+    return <NewsList initialArtists={artists} initialGroups={groups} />
 }
 
 export default async function NewsPage() {

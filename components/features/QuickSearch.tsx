@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Command, User, Film, Newspaper, ArrowRight } from 'lucide-react'
+import { Search, X, Command, User, Film, Newspaper, ArrowRight, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 interface SearchResult {
     id: string
     title: string
-    type: 'artist' | 'production' | 'news'
+    type: 'artist' | 'group' | 'production' | 'news'
     subtitle?: string
     imageUrl?: string
 }
@@ -75,8 +75,13 @@ export function QuickSearch() {
 
     const handleSelect = (id: string, type: string) => {
         setIsOpen(false)
-        const path = type === 'artist' ? 'artists' : type === 'production' ? 'productions' : 'news'
-        router.push(`/${path}/${id}`)
+        const pathMap: Record<string, string> = {
+            artist: 'artists',
+            group: 'groups',
+            production: 'productions',
+            news: 'news',
+        }
+        router.push(`/${pathMap[type] ?? type}/${id}`)
     }
 
     return (
@@ -139,7 +144,7 @@ export function QuickSearch() {
                                                         <Image src={result.imageUrl} alt={result.title} fill className="object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-zinc-700">
-                                                            {result.type === 'artist' ? <User size={20} /> : result.type === 'production' ? <Film size={20} /> : <Newspaper size={20} />}
+                                                            {result.type === 'artist' ? <User size={20} /> : result.type === 'group' ? <Users size={20} /> : result.type === 'production' ? <Film size={20} /> : <Newspaper size={20} />}
                                                         </div>
                                                     )}
                                                 </div>
@@ -147,7 +152,7 @@ export function QuickSearch() {
                                                     <div className="flex items-center gap-2">
                                                         <h4 className="text-white font-bold group-hover:text-purple-400 transition-colors">{result.title}</h4>
                                                         <span className="text-[10px] uppercase font-black text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded border border-white/5">
-                                                            {result.type === 'artist' ? 'Artista' : result.type === 'production' ? 'Produção' : 'Notícia'}
+                                                            {result.type === 'artist' ? 'Artista' : result.type === 'group' ? 'Grupo' : result.type === 'production' ? 'Produção' : 'Notícia'}
                                                         </span>
                                                     </div>
                                                     {result.subtitle && <p className="text-xs text-zinc-500 line-clamp-1">{result.subtitle}</p>}

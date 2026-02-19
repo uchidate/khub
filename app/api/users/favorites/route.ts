@@ -27,10 +27,12 @@ export async function GET(request: NextRequest) {
             artistId: true,
             productionId: true,
             newsId: true,
+            groupId: true,
             ...(full ? {
                 artist: { select: { id: true, nameRomanized: true, primaryImageUrl: true } },
                 production: { select: { id: true, titlePt: true, imageUrl: true } },
                 news: { select: { id: true, title: true, imageUrl: true } },
+                group: { select: { id: true, name: true, profileImageUrl: true } },
             } : {}),
         },
         orderBy: { createdAt: 'desc' },
@@ -40,13 +42,15 @@ export async function GET(request: NextRequest) {
     const artistIds = favorites.filter(f => f.artistId).map(f => f.artistId as string)
     const productionIds = favorites.filter(f => f.productionId).map(f => f.productionId as string)
     const newsIds = favorites.filter(f => f.newsId).map(f => f.newsId as string)
+    const groupIds = favorites.filter(f => f.groupId).map(f => f.groupId as string)
 
     if (!full) {
         return NextResponse.json({
-            allIds: [...artistIds, ...productionIds, ...newsIds],
+            allIds: [...artistIds, ...productionIds, ...newsIds, ...groupIds],
             artistIds,
             productionIds,
             newsIds,
+            groupIds,
         })
     }
 
@@ -62,15 +66,19 @@ export async function GET(request: NextRequest) {
             if (f.newsId && (f as any).news) {
                 return { id: f.newsId, type: 'news' as const, ...(f as any).news }
             }
+            if (f.groupId && (f as any).group) {
+                return { id: f.groupId, type: 'group' as const, nameRomanized: (f as any).group.name, primaryImageUrl: (f as any).group.profileImageUrl }
+            }
             return null
         })
         .filter(Boolean)
 
     return NextResponse.json({
-        allIds: [...artistIds, ...productionIds, ...newsIds],
+        allIds: [...artistIds, ...productionIds, ...newsIds, ...groupIds],
         artistIds,
         productionIds,
         newsIds,
+        groupIds,
         items,
     })
 }

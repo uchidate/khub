@@ -28,7 +28,9 @@ export async function GET(request: NextRequest) {
             },
             orderBy: { name: 'asc' },
         })
-        return NextResponse.json({ groups })
+        return NextResponse.json({ groups }, {
+            headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+        })
     }
 
     // Simple list for dropdowns
@@ -37,5 +39,7 @@ export async function GET(request: NextRequest) {
         orderBy: { name: 'asc' },
     })
 
-    return NextResponse.json({ groups })
+    return NextResponse.json({ groups }, {
+        headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+    })
 }

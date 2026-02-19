@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { FavoriteButton } from '@/components/ui/FavoriteButton'
+import { ViewTracker } from '@/components/features/ViewTracker'
 import { Globe, Users } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -93,6 +95,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
 
     return (
         <div className="min-h-screen">
+            <ViewTracker groupId={group.id} />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "MusicGroup",
@@ -146,7 +149,15 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             Disbandado em {disbandYear}
                         </span>
                     )}
-                    <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter">{group.name}</h1>
+                    <div className="flex items-start gap-4">
+                        <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter">{group.name}</h1>
+                        <FavoriteButton
+                            id={group.id}
+                            itemName={group.name}
+                            itemType="grupo"
+                            className="mt-2 bg-black/40 border border-white/10 backdrop-blur-sm"
+                        />
+                    </div>
                     {group.nameHangul && (
                         <p className="text-xl md:text-2xl text-purple-500 font-bold mt-1">{group.nameHangul}</p>
                     )}
