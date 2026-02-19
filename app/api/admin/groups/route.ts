@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
@@ -9,6 +10,8 @@ const log = createLogger('ADMIN-GROUPS')
 
 // Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
+
+const socialLinksSchema = z.record(z.string(), z.string().url().or(z.literal(''))).optional().nullable()
 
 const groupSchema = z.object({
   name: z.string().min(1).max(100),
@@ -19,6 +22,7 @@ const groupSchema = z.object({
   debutDate: z.string().optional().nullable(),
   disbandDate: z.string().optional().nullable(),
   agencyId: z.string().optional().nullable(),
+  socialLinks: socialLinksSchema,
 })
 
 /**
@@ -107,7 +111,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Grupo musical já cadastrado' }, { status: 400 })
     }
 
-    const { debutDate, disbandDate, agencyId, profileImageUrl, ...rest } = validated
+    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, ...rest } = validated
+
+    const cleanedLinks = socialLinks
+      ? Object.fromEntries(Object.entries(socialLinks).filter(([, v]) => v !== ''))
+      : null
 
     const group = await prisma.musicalGroup.create({
       data: {
@@ -116,6 +124,7 @@ export async function POST(request: NextRequest) {
         debutDate: debutDate ? new Date(debutDate) : null,
         disbandDate: disbandDate ? new Date(disbandDate) : null,
         agencyId: agencyId === '' ? null : agencyId,
+        socialLinks: cleanedLinks && Object.keys(cleanedLinks).length > 0 ? cleanedLinks : Prisma.JsonNull,
       },
     })
 
@@ -169,7 +178,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const { debutDate, disbandDate, agencyId, profileImageUrl, ...rest } = validated
+    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, ...rest } = validated
 
     const updateData: Record<string, unknown> = { ...rest }
 
@@ -187,6 +196,14 @@ export async function PATCH(request: NextRequest) {
 
     if (agencyId !== undefined) {
       updateData.agencyId = agencyId === '' ? null : agencyId
+    }
+
+    if (socialLinks !== undefined) {
+      // Remove entries with empty string values
+      const cleaned = socialLinks
+        ? Object.fromEntries(Object.entries(socialLinks).filter(([, v]) => v !== ''))
+        : null
+      updateData.socialLinks = cleaned && Object.keys(cleaned).length > 0 ? cleaned : Prisma.JsonNull
     }
 
     const group = await prisma.musicalGroup.update({
