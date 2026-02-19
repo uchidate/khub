@@ -124,7 +124,7 @@ export default async function Home() {
     const trendingGroups = await prisma.musicalGroup.findMany({
         take: 8,
         where: { disbandDate: null }, // Apenas grupos ativos
-        orderBy: [{ favoriteCount: 'desc' }, { name: 'asc' }],
+        orderBy: [{ name: 'asc' }],
         select: {
             id: true,
             name: true,
@@ -134,7 +134,7 @@ export default async function Home() {
             disbandDate: true,
             _count: { select: { members: true } },
         },
-    })
+    }).catch(() => [])
 
     return (
         <div className="bg-black min-h-screen pb-20 overflow-x-hidden">
