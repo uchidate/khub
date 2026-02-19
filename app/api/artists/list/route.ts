@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined
     const role = searchParams.get('role') || undefined
     const groupId = searchParams.get('groupId') || undefined
+    const agencyId = searchParams.get('agencyId') || undefined
     const memberType = searchParams.get('memberType') || undefined // 'solo' | 'group'
     const sortBy = searchParams.get('sortBy') || 'trending'
 
@@ -37,6 +38,10 @@ export async function GET(request: NextRequest) {
 
     if (groupId) {
         where.memberships = { some: { groupId, isActive: true } }
+    }
+
+    if (agencyId) {
+        where.agencyId = agencyId
     }
 
     if (memberType === 'group') {

@@ -54,6 +54,9 @@ export function ArtistsList() {
         return {
             search: searchParams.get('search') || undefined,
             role: searchParams.get('role') || undefined,
+            groupId: searchParams.get('groupId') || undefined,
+            agencyId: searchParams.get('agencyId') || undefined,
+            memberType: searchParams.get('memberType') || undefined,
             sortBy: searchParams.get('sortBy') || 'trending',
         }
     }, [searchParams])
@@ -68,6 +71,9 @@ export function ArtistsList() {
 
         if (filters.search) params.set('search', filters.search)
         if (filters.role) params.set('role', filters.role)
+        if (filters.groupId) params.set('groupId', filters.groupId)
+        if (filters.agencyId) params.set('agencyId', filters.agencyId)
+        if (filters.memberType) params.set('memberType', filters.memberType)
         if (filters.sortBy && filters.sortBy !== 'trending') params.set('sortBy', filters.sortBy)
         if (page > 1) params.set('page', page.toString())
 
@@ -88,6 +94,7 @@ export function ArtistsList() {
                 ...(filters.search && { search: filters.search }),
                 ...(filters.role && { role: filters.role }),
                 ...(filters.groupId && { groupId: filters.groupId }),
+                ...(filters.agencyId && { agencyId: filters.agencyId }),
                 ...(filters.memberType && { memberType: filters.memberType }),
                 ...(filters.sortBy && { sortBy: filters.sortBy }),
             })
