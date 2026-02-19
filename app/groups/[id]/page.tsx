@@ -244,7 +244,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             )}
                             {group.debutDate && !disbandYear && (
                                 <AnniversaryCountdown
-                                    debutDate={group.debutDate.toISOString()}
+                                    date={group.debutDate.toISOString()}
+                                    label="aniversário de debut"
                                     groupName={group.name}
                                 />
                             )}
