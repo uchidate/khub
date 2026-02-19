@@ -93,24 +93,22 @@ export default function InstagramAdminPage() {
 
     const handleSyncAll = async () => {
         setSyncing(true)
-        setSyncMsg('Iniciando sync...')
+        setSyncMsg('Sincronizando posts...')
         try {
-            const res = await fetch('/api/cron/sync-instagram', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET ?? ''}` },
-            })
-            if (res.status === 202) {
-                setSyncMsg('✅ Sync iniciado em background — pode levar alguns minutos')
-                setTimeout(() => setSyncMsg(''), 5000)
-            } else if (res.status === 401) {
-                setSyncMsg('❌ CRON_SECRET não configurado para uso manual')
+            const res = await fetch('/api/admin/instagram/sync', { method: 'POST' })
+            const data = await res.json()
+            if (res.ok) {
+                setSyncMsg(`✅ ${data.totalPosts} posts sincronizados${data.totalErrors > 0 ? ` (${data.totalErrors} erros)` : ''}`)
+                // Refresh para atualizar datas de sync
+                await fetchArtists()
             } else {
-                setSyncMsg('❌ Erro ao iniciar sync')
+                setSyncMsg('❌ Erro ao sincronizar')
             }
         } catch {
             setSyncMsg('❌ Erro de rede')
         } finally {
             setSyncing(false)
+            setTimeout(() => setSyncMsg(''), 6000)
         }
     }
 
