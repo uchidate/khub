@@ -20,11 +20,15 @@ interface MusicalGroup {
   agencyId: string | null
   agencyName: string | null
   socialLinks: Record<string, string> | null
+  fanClubName: string | null
+  officialColor: string | null
+  videos: Array<{ title: string; url: string }> | null
   membersCount: number
   createdAt: Date
 }
 
 const SOCIAL_PLATFORMS = ['website', 'instagram', 'youtube', 'twitter', 'tiktok', 'spotify', 'weverse', 'vlive'] as const
+const MAX_MVS = 6
 
 const columns: Column<MusicalGroup>[] = [
   {
@@ -123,6 +127,22 @@ const formFields: FormField[] = [
   { key: 'sl_spotify', label: '🎧 Spotify', type: 'text', placeholder: 'https://open.spotify.com/artist/...' },
   { key: 'sl_weverse', label: '💬 Weverse', type: 'text', placeholder: 'https://weverse.io/bts' },
   { key: 'sl_vlive', label: '📺 VLive', type: 'text', placeholder: 'https://channels.vlive.tv/...' },
+  // Fã-clube e identidade visual
+  { key: 'fanClubName', label: '💜 Nome do Fã-Clube', type: 'text', placeholder: 'Ex: ARMY, BLINK, ONCE' },
+  { key: 'officialColor', label: '🎨 Cor Oficial (hex)', type: 'text', placeholder: 'Ex: #c6a852' },
+  // MVs principais — armazenados como JSON videos
+  { key: 'mv1_title', label: '🎬 MV 1 — Título', type: 'text', placeholder: 'Ex: Dynamite' },
+  { key: 'mv1_url', label: '🎬 MV 1 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv2_title', label: '🎬 MV 2 — Título', type: 'text', placeholder: 'Ex: Butter' },
+  { key: 'mv2_url', label: '🎬 MV 2 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv3_title', label: '🎬 MV 3 — Título', type: 'text', placeholder: 'Ex: DNA' },
+  { key: 'mv3_url', label: '🎬 MV 3 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv4_title', label: '🎬 MV 4 — Título', type: 'text', placeholder: 'Ex: Boy With Luv' },
+  { key: 'mv4_url', label: '🎬 MV 4 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv5_title', label: '🎬 MV 5 — Título', type: 'text', placeholder: 'Ex: IDOL' },
+  { key: 'mv5_url', label: '🎬 MV 5 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv6_title', label: '🎬 MV 6 — Título', type: 'text', placeholder: 'Ex: Fake Love' },
+  { key: 'mv6_url', label: '🎬 MV 6 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
 ]
 
 export default function GroupsPage() {
@@ -145,7 +165,16 @@ export default function GroupsPage() {
         socialFlat[`sl_${platform}`] = group.socialLinks[platform] ?? ''
       }
     }
-    setEditingGroup({ ...group, ...socialFlat } as unknown as MusicalGroup)
+    const mvFlat: Record<string, string> = {}
+    if (group.videos) {
+      group.videos.forEach((mv, i) => {
+        if (i < MAX_MVS) {
+          mvFlat[`mv${i + 1}_title`] = mv.title ?? ''
+          mvFlat[`mv${i + 1}_url`] = mv.url ?? ''
+        }
+      })
+    }
+    setEditingGroup({ ...group, ...socialFlat, ...mvFlat } as unknown as MusicalGroup)
     setFormOpen(true)
   }
 
@@ -170,9 +199,19 @@ export default function GroupsPage() {
       if (val && val.trim()) socialLinks[platform] = val.trim()
       delete data[`sl_${platform}`]
     }
+    // Assemble mv*_title / mv*_url into videos JSON array
+    const videos: Array<{ title: string; url: string }> = []
+    for (let i = 1; i <= MAX_MVS; i++) {
+      const title = (data[`mv${i}_title`] as string | undefined)?.trim() ?? ''
+      const url = (data[`mv${i}_url`] as string | undefined)?.trim() ?? ''
+      delete data[`mv${i}_title`]
+      delete data[`mv${i}_url`]
+      if (url) videos.push({ title: title || `MV ${i}`, url })
+    }
     const payload = {
       ...data,
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : null,
+      videos: videos.length > 0 ? videos : null,
     }
 
     const res = await fetch(url, {

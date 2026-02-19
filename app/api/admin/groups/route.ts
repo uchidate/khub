@@ -12,6 +12,7 @@ const log = createLogger('ADMIN-GROUPS')
 export const dynamic = 'force-dynamic'
 
 const socialLinksSchema = z.record(z.string(), z.string().url().or(z.literal(''))).optional().nullable()
+const videoSchema = z.array(z.object({ title: z.string(), url: z.string().url() })).optional().nullable()
 
 const groupSchema = z.object({
   name: z.string().min(1).max(100),
@@ -23,6 +24,9 @@ const groupSchema = z.object({
   disbandDate: z.string().optional().nullable(),
   agencyId: z.string().optional().nullable(),
   socialLinks: socialLinksSchema,
+  fanClubName: z.string().optional().nullable(),
+  officialColor: z.string().regex(/^#[0-9a-fA-F]{3,8}$/).optional().nullable().or(z.literal('').transform(() => null)),
+  videos: videoSchema,
 })
 
 /**
@@ -74,6 +78,10 @@ export async function GET(request: NextRequest) {
       disbandDate: group.disbandDate,
       agencyId: group.agencyId,
       agencyName: group.agency?.name ?? null,
+      socialLinks: group.socialLinks,
+      fanClubName: group.fanClubName,
+      officialColor: group.officialColor,
+      videos: group.videos,
       membersCount: group._count.members,
       createdAt: group.createdAt,
     }))
@@ -111,7 +119,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Grupo musical já cadastrado' }, { status: 400 })
     }
 
-    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, ...rest } = validated
+    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, videos, ...rest } = validated
 
     const cleanedLinks = socialLinks
       ? Object.fromEntries(Object.entries(socialLinks).filter(([, v]) => v !== ''))
@@ -125,6 +133,7 @@ export async function POST(request: NextRequest) {
         disbandDate: disbandDate ? new Date(disbandDate) : null,
         agencyId: agencyId === '' ? null : agencyId,
         socialLinks: cleanedLinks && Object.keys(cleanedLinks).length > 0 ? cleanedLinks : Prisma.JsonNull,
+        videos: videos && videos.length > 0 ? videos : Prisma.JsonNull,
       },
     })
 
@@ -178,7 +187,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, ...rest } = validated
+    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, videos, ...rest } = validated
 
     const updateData: Record<string, unknown> = { ...rest }
 
@@ -199,11 +208,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (socialLinks !== undefined) {
-      // Remove entries with empty string values
       const cleaned = socialLinks
         ? Object.fromEntries(Object.entries(socialLinks).filter(([, v]) => v !== ''))
         : null
       updateData.socialLinks = cleaned && Object.keys(cleaned).length > 0 ? cleaned : Prisma.JsonNull
+    }
+
+    if (videos !== undefined) {
+      updateData.videos = videos && videos.length > 0 ? videos : Prisma.JsonNull
     }
 
     const group = await prisma.musicalGroup.update({

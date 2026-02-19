@@ -14,13 +14,31 @@ type Group = {
     disbandDate: string | null
     agency: { id: string; name: string } | null
     _count: { members: number }
+    viewCount: number
+    trendingScore: number
+}
+
+// K-pop generations defined by debut year
+const GENERATIONS: { label: string; from: number; to: number }[] = [
+    { label: '1ª Geração', from: 1990, to: 2002 },
+    { label: '2ª Geração', from: 2003, to: 2011 },
+    { label: '3ª Geração', from: 2012, to: 2019 },
+    { label: '4ª Geração', from: 2020, to: 2024 },
+    { label: '5ª Geração', from: 2025, to: 9999 },
+]
+
+function getGeneration(debutDate: string | null): string | null {
+    if (!debutDate) return null
+    const year = new Date(debutDate).getFullYear()
+    return GENERATIONS.find(g => year >= g.from && year <= g.to)?.label ?? null
 }
 
 export default function GroupsPage() {
     const [groups, setGroups] = useState<Group[]>([])
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disbanded'>('all')
-    const [sortBy, setSortBy] = useState<'name' | 'debut' | 'members'>('name')
+    const [generationFilter, setGenerationFilter] = useState<string>('all')
+    const [sortBy, setSortBy] = useState<'name' | 'debut' | 'members' | 'popular'>('name')
 
     useEffect(() => {
         fetch('/api/groups/list?full=true')
@@ -44,6 +62,10 @@ export default function GroupsPage() {
         if (statusFilter === 'active') result = result.filter(g => !g.disbandDate)
         if (statusFilter === 'disbanded') result = result.filter(g => !!g.disbandDate)
 
+        if (generationFilter !== 'all') {
+            result = result.filter(g => getGeneration(g.debutDate) === generationFilter)
+        }
+
         result = [...result].sort((a, b) => {
             if (sortBy === 'debut') {
                 const ya = a.debutDate ? new Date(a.debutDate).getFullYear() : 9999
@@ -51,14 +73,19 @@ export default function GroupsPage() {
                 return ya - yb
             }
             if (sortBy === 'members') return b._count.members - a._count.members
+            if (sortBy === 'popular') return b.trendingScore !== a.trendingScore
+                ? b.trendingScore - a.trendingScore
+                : b.viewCount - a.viewCount
             return a.name.localeCompare(b.name)
         })
 
         return result
-    }, [groups, search, statusFilter, sortBy])
+    }, [groups, search, statusFilter, generationFilter, sortBy])
 
     const totalActive = groups.filter(g => !g.disbandDate).length
     const totalDisbanded = groups.filter(g => !!g.disbandDate).length
+
+    const hasActiveFilters = search || statusFilter !== 'all' || generationFilter !== 'all'
 
     return (
         <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
@@ -79,6 +106,7 @@ export default function GroupsPage() {
 
             {/* Filtros */}
             <div className="mb-8 space-y-3">
+                {/* Busca + Status + Sort */}
                 <div className="flex flex-col sm:flex-row gap-3">
                     {/* Busca */}
                     <div className="flex-1 relative">
@@ -107,10 +135,37 @@ export default function GroupsPage() {
                             </button>
                         ))}
                     </div>
+                </div>
+
+                {/* Geração + Ordenação */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Filtro por geração */}
+                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto">
+                        <button
+                            onClick={() => setGenerationFilter('all')}
+                            className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === 'all' ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-white'}`}
+                        >
+                            Toda Geração
+                        </button>
+                        {GENERATIONS.map(g => (
+                            <button
+                                key={g.label}
+                                onClick={() => setGenerationFilter(g.label)}
+                                className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === g.label ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-white'}`}
+                            >
+                                {g.label}
+                            </button>
+                        ))}
+                    </div>
 
                     {/* Ordenação */}
-                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl">
-                        {([['name', 'A-Z'], ['debut', 'Estreia'], ['members', 'Membros']] as const).map(([val, label]) => (
+                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl ml-auto">
+                        {([
+                            ['name', 'A-Z'],
+                            ['debut', 'Estreia'],
+                            ['members', 'Membros'],
+                            ['popular', 'Populares'],
+                        ] as const).map(([val, label]) => (
                             <button
                                 key={val}
                                 onClick={() => setSortBy(val)}
@@ -122,10 +177,18 @@ export default function GroupsPage() {
                     </div>
                 </div>
 
-                {(search || statusFilter !== 'all') && (
-                    <p className="text-xs text-zinc-500">
-                        {filtered.length} grupo{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
-                    </p>
+                {hasActiveFilters && (
+                    <div className="flex items-center gap-3">
+                        <p className="text-xs text-zinc-500">
+                            {filtered.length} grupo{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
+                        </p>
+                        <button
+                            onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }}
+                            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                        >
+                            Limpar filtros
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -137,7 +200,7 @@ export default function GroupsPage() {
             ) : filtered.length === 0 ? (
                 <div className="text-center py-20">
                     <p className="text-zinc-500 font-bold">Nenhum grupo encontrado</p>
-                    <button onClick={() => { setSearch(''); setStatusFilter('all') }} className="mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors">
+                    <button onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }} className="mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors">
                         Limpar filtros
                     </button>
                 </div>
@@ -145,6 +208,7 @@ export default function GroupsPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                     {filtered.map(group => {
                         const faded = !!group.disbandDate
+                        const gen = getGeneration(group.debutDate)
                         return (
                             <Link
                                 key={group.id}
@@ -187,6 +251,9 @@ export default function GroupsPage() {
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5">
                                         {group.debutDate && (
                                             <span className="text-[10px] font-bold text-zinc-600">{new Date(group.debutDate).getFullYear()}</span>
+                                        )}
+                                        {gen && (
+                                            <span className="text-[10px] font-bold text-zinc-700">{gen}</span>
                                         )}
                                         {group.agency && (
                                             <span className="text-[10px] font-bold text-purple-500/80 truncate max-w-[100px]">{group.agency.name}</span>

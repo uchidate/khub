@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
                 disbandDate: true,
                 agency: { select: { id: true, name: true } },
                 _count: { select: { members: true } },
+                viewCount: true,
+                trendingScore: true,
             },
             orderBy: { name: 'asc' },
         })
