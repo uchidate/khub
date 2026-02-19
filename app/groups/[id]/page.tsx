@@ -6,6 +6,7 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { ViewTracker } from '@/components/features/ViewTracker'
+import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -83,6 +84,12 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     const yearsActive = debutYear ? (disbandYear ?? currentYear) - debutYear : null
     const socialLinks = (group.socialLinks as Record<string, string>) || {}
 
+    // Tema visual: extrai cor do site oficial (cache 24h)
+    const websiteUrl = socialLinks.website ?? socialLinks.Website ?? socialLinks.official ?? null
+    const themeColor = websiteUrl ? await fetchGroupThemeColor(websiteUrl) : null
+    const accent = themeColor ?? '#9333ea'
+    const themeVars = buildGroupThemeVars(themeColor)
+
     // Notícias relacionadas aos membros do grupo
     const relatedNews = memberArtistIds.length > 0
         ? await prisma.news.findMany({
@@ -110,8 +117,16 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     }))
 
     return (
-        <div className="min-h-screen bg-black">
+        <div className="min-h-screen bg-black" style={themeVars}>
             <ViewTracker groupId={group.id} />
+            {/* Estilos dinâmicos baseados na cor do grupo */}
+            <style dangerouslySetInnerHTML={{ __html: `
+                .group:hover .group-accent-badge { background: ${toRgba(accent, 0.85)}; }
+                .group:hover .member-card-border { border-color: ${toRgba(accent, 0.45)}; box-shadow: 0 20px 40px ${toRgba(accent, 0.1)}; }
+                .news-card:hover { border-color: ${toRgba(accent, 0.35)} !important; }
+                .album-card:hover { border-color: ${toRgba(accent, 0.35)} !important; }
+                .album-title:hover { color: ${accent}; }
+            ` }} />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "MusicGroup",
@@ -161,12 +176,15 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             className="object-cover object-top"
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-900/60 via-zinc-900 to-black" />
+                        <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.3)} 0%, #18181b 60%, #000 100%)` }} />
                     )}
                 </div>
                 {/* Gradientes */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
+                {/* Glow colorido da marca no rodapé do hero */}
+                <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
+                    style={{ background: `linear-gradient(to top, ${toRgba(accent, 0.15)}, transparent)` }} />
 
                 {/* Breadcrumbs */}
                 <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20">
@@ -183,7 +201,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                     Disbandado em {disbandYear}
                                 </span>
                             ) : (
-                                <span className="text-xs font-black uppercase px-3 py-1 bg-emerald-500/20 backdrop-blur-sm text-emerald-400 rounded-full border border-emerald-500/30">
+                                <span className="text-xs font-black uppercase px-3 py-1 backdrop-blur-sm rounded-full border"
+                                    style={{ background: toRgba(accent, 0.2), color: accent, borderColor: toRgba(accent, 0.4) }}>
                                     Ativo
                                 </span>
                             )}
@@ -206,7 +225,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                     {group.name}
                                 </h1>
                                 {group.nameHangul && (
-                                    <p className="text-xl md:text-3xl text-purple-400 font-bold mt-1 drop-shadow-lg">{group.nameHangul}</p>
+                                    <p className="text-xl md:text-3xl font-bold mt-1 drop-shadow-lg" style={{ color: accent }}>{group.nameHangul}</p>
                                 )}
                             </div>
                             <div className="mb-2">
@@ -221,24 +240,17 @@ export default async function GroupDetailPage({ params }: { params: { id: string
 
                         {/* Stats rápidas */}
                         <div className="flex items-center gap-4 flex-wrap mt-1">
-                            <div className="flex items-center gap-1.5 text-zinc-400">
-                                <Users className="w-3.5 h-3.5" />
-                                <span className="text-sm font-bold">{activeMembers.length} membros</span>
-                            </div>
-                            {yearsActive !== null && (
-                                <div className="flex items-center gap-1.5 text-zinc-400">
-                                    <Calendar className="w-3.5 h-3.5" />
-                                    <span className="text-sm font-bold">{yearsActive} {yearsActive === 1 ? 'ano' : 'anos'} de carreira</span>
+                            {[
+                                { icon: <Users className="w-3.5 h-3.5" />, text: `${activeMembers.length} membros` },
+                                ...(yearsActive !== null ? [{ icon: <Calendar className="w-3.5 h-3.5" />, text: `${yearsActive} ${yearsActive === 1 ? 'ano' : 'anos'} de carreira` }] : []),
+                                { icon: <Eye className="w-3.5 h-3.5" />, text: `${group.viewCount.toLocaleString('pt-BR')} views` },
+                                { icon: <Heart className="w-3.5 h-3.5" />, text: `${group.favoriteCount.toLocaleString('pt-BR')} fãs` },
+                            ].map((stat, i) => (
+                                <div key={i} className="flex items-center gap-1.5" style={{ color: toRgba(accent, 0.8) }}>
+                                    {stat.icon}
+                                    <span className="text-sm font-bold">{stat.text}</span>
                                 </div>
-                            )}
-                            <div className="flex items-center gap-1.5 text-zinc-400">
-                                <Eye className="w-3.5 h-3.5" />
-                                <span className="text-sm font-bold">{group.viewCount.toLocaleString('pt-BR')} views</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-zinc-400">
-                                <Heart className="w-3.5 h-3.5" />
-                                <span className="text-sm font-bold">{group.favoriteCount.toLocaleString('pt-BR')} fãs</span>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -289,7 +301,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                             <Building2 className="w-3.5 h-3.5" />
                                             <span className="text-xs font-black uppercase tracking-widest">Agência</span>
                                         </div>
-                                        <Link href={`/agencies/${group.agency.id}`} className="text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors">
+                                        <Link href={`/agencies/${group.agency.id}`} className="text-sm font-bold transition-colors hover:opacity-80"
+                                            style={{ color: accent }}>
                                             {group.agency.name}
                                         </Link>
                                     </div>
@@ -334,19 +347,19 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                         {/* Membros atuais */}
                         {activeMembers.length > 0 && (
                             <section>
-                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Membros" count={activeMembers.length} />
-                                <MemberGrid members={activeMembers} />
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Membros" count={activeMembers.length} accent={accent} />
+                                <MemberGrid members={activeMembers} accent={accent} />
                             </section>
                         )}
 
                         {/* Notícias recentes */}
                         {relatedNews.length > 0 && (
                             <section>
-                                <SectionHeader icon={<Newspaper className="w-5 h-5" />} title="Notícias Recentes" />
+                                <SectionHeader icon={<Newspaper className="w-5 h-5" />} title="Notícias Recentes" accent={accent} />
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     {relatedNews.map(news => (
                                         <Link key={news.id} href={`/news/${news.id}`}
-                                            className="group flex gap-4 p-4 rounded-2xl bg-zinc-900/50 border border-white/5 hover:border-purple-500/30 hover:bg-zinc-900 transition-all">
+                                            className="news-card group flex gap-4 p-4 rounded-2xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition-all">
                                             <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-zinc-800 flex-shrink-0">
                                                 {news.imageUrl ? (
                                                     <Image src={news.imageUrl} alt={news.title} fill sizes="80px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -377,7 +390,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 </div>
                                 <div className="mt-4 text-center">
                                     <Link href={`/news?groupId=${group.id}`}
-                                        className="inline-flex items-center gap-2 text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors">
+                                        className="inline-flex items-center gap-2 text-sm font-bold transition-colors"
+                                        style={{ color: accent }}>
                                         Ver todas as notícias →
                                     </Link>
                                 </div>
@@ -387,11 +401,11 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                         {/* Discografia recente */}
                         {recentAlbums.length > 0 && (
                             <section>
-                                <SectionHeader icon={<Music className="w-5 h-5" />} title="Discografia Recente" />
+                                <SectionHeader icon={<Music className="w-5 h-5" />} title="Discografia Recente" accent={accent} />
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {recentAlbums.map(album => (
                                         <div key={album.id} className="group">
-                                            <div className="relative aspect-square rounded-xl overflow-hidden bg-zinc-800 mb-3 border border-white/5 group-hover:border-purple-500/30 transition-colors">
+                                            <div className="album-card relative aspect-square rounded-xl overflow-hidden bg-zinc-800 mb-3 border border-white/5 transition-colors">
                                                 {album.coverUrl ? (
                                                     <Image src={album.coverUrl} alt={album.title} fill sizes="(max-width: 640px) 50vw, 33vw"
                                                         className="object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -402,7 +416,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                                 )}
                                                 {/* Type badge */}
                                                 <div className="absolute top-2 left-2">
-                                                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-black/70 backdrop-blur-sm text-purple-300 rounded">
+                                                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-black/70 backdrop-blur-sm rounded"
+                                                        style={{ color: accent }}>
                                                         {album.type === 'ALBUM' ? 'Álbum' : album.type === 'EP' ? 'EP' : 'Single'}
                                                     </span>
                                                 </div>
@@ -416,7 +431,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                                     </a>
                                                 )}
                                             </div>
-                                            <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">{album.title}</h3>
+                                            <h3 className="album-title text-sm font-bold text-white line-clamp-1 transition-colors">{album.title}</h3>
                                             <p className="text-xs text-zinc-500 mt-0.5">{album.artist.nameRomanized}</p>
                                             {album.releaseDate && (
                                                 <p className="text-[10px] text-zinc-600 mt-0.5">
@@ -432,8 +447,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                         {/* Ex-membros */}
                         {formerMembers.length > 0 && (
                             <section>
-                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Ex-Membros" count={formerMembers.length} muted />
-                                <MemberGrid members={formerMembers} faded />
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Ex-Membros" count={formerMembers.length} muted accent={accent} />
+                                <MemberGrid members={formerMembers} faded accent={accent} />
                             </section>
                         )}
 
@@ -454,11 +469,21 @@ export default async function GroupDetailPage({ params }: { params: { id: string
 
 /* ── Sub-componentes ── */
 
-function SectionHeader({ icon, title, count, muted = false }: { icon: React.ReactNode; title: string; count?: number; muted?: boolean }) {
+function SectionHeader({ icon, title, count, muted = false, accent = '#9333ea' }: {
+    icon: React.ReactNode
+    title: string
+    count?: number
+    muted?: boolean
+    accent?: string
+}) {
     return (
         <div className="flex items-center gap-3 mb-6">
-            <div className={`p-2 rounded-xl ${muted ? 'bg-zinc-800' : 'bg-gradient-to-br from-purple-600/30 to-pink-600/30 border border-purple-500/20'}`}>
-                <span className={muted ? 'text-zinc-500' : 'text-purple-400'}>{icon}</span>
+            <div className="p-2 rounded-xl border"
+                style={muted
+                    ? { background: 'rgb(39 39 42)', borderColor: 'transparent' }
+                    : { background: toRgba(accent, 0.15), borderColor: toRgba(accent, 0.25) }
+                }>
+                <span style={{ color: muted ? '#52525b' : accent }}>{icon}</span>
             </div>
             <div>
                 <h2 className={`text-xl font-black ${muted ? 'text-zinc-500' : 'text-white'}`}>{title}</h2>
@@ -523,6 +548,7 @@ function SocialLink({ platform, url }: { platform: string; url: string }) {
 function MemberGrid({
     members,
     faded = false,
+    accent = '#9333ea',
 }: {
     members: {
         id: string
@@ -538,6 +564,7 @@ function MemberGrid({
         }
     }[]
     faded?: boolean
+    accent?: string
 }) {
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -547,7 +574,7 @@ function MemberGrid({
                     href={`/artists/${member.artist.id}`}
                     className={`group block ${faded ? 'opacity-50 hover:opacity-90 transition-opacity' : ''}`}
                 >
-                    <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 group-hover:border-purple-500/40 transition-all mb-3 shadow-lg group-hover:shadow-purple-500/10 group-hover:shadow-2xl">
+                    <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 member-card-border transition-all duration-300 mb-3 shadow-lg">
                         {member.artist.primaryImageUrl ? (
                             <Image
                                 src={member.artist.primaryImageUrl}
@@ -557,8 +584,9 @@ function MemberGrid({
                                 className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-90 group-hover:brightness-100"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-zinc-900">
-                                <span className="text-3xl font-black text-zinc-600 group-hover:text-purple-400 transition-colors">
+                            <div className="w-full h-full flex items-center justify-center"
+                                style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.2)}, #18181b)` }}>
+                                <span className="text-3xl font-black text-zinc-600 group-hover:text-white transition-colors">
                                     {member.artist.nameRomanized[0]}
                                 </span>
                             </div>
@@ -568,14 +596,14 @@ function MemberGrid({
                         {/* Role badge */}
                         {member.role && (
                             <div className="absolute bottom-2 left-2 right-2">
-                                <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-purple-600/80 backdrop-blur-sm text-white rounded-full">
+                                <span className="text-[10px] font-black uppercase px-2 py-0.5 backdrop-blur-sm text-white rounded-full group-accent-badge">
                                     {member.role}
                                 </span>
                             </div>
                         )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-white text-sm leading-tight group-hover:text-purple-300 transition-colors">
+                        <h3 className="font-bold text-white text-sm leading-tight group-hover:opacity-80 transition-opacity">
                             {member.artist.nameRomanized}
                         </h3>
                         {member.artist.nameHangul && (
