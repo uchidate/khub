@@ -19,9 +19,12 @@ interface MusicalGroup {
   disbandDate: Date | null
   agencyId: string | null
   agencyName: string | null
+  socialLinks: Record<string, string> | null
   membersCount: number
   createdAt: Date
 }
+
+const SOCIAL_PLATFORMS = ['website', 'instagram', 'youtube', 'twitter', 'tiktok', 'spotify', 'weverse', 'vlive'] as const
 
 const columns: Column<MusicalGroup>[] = [
   {
@@ -111,6 +114,15 @@ const formFields: FormField[] = [
   { key: 'debutDate', label: 'Data de Debut', type: 'date' },
   { key: 'disbandDate', label: 'Data de Disbandamento', type: 'date' },
   { key: 'agencyId', label: 'Agência', type: 'select-async', optionsUrl: '/api/admin/agencies/all' },
+  // Redes sociais — armazenadas como JSON socialLinks
+  { key: 'sl_website', label: '🌐 Site Oficial', type: 'text', placeholder: 'https://bts.weverse.io' },
+  { key: 'sl_instagram', label: '📸 Instagram', type: 'text', placeholder: 'https://instagram.com/bts.bighitofficial' },
+  { key: 'sl_youtube', label: '▶️ YouTube', type: 'text', placeholder: 'https://youtube.com/@BANGTANTV' },
+  { key: 'sl_twitter', label: '🐦 Twitter / X', type: 'text', placeholder: 'https://twitter.com/BTS_twt' },
+  { key: 'sl_tiktok', label: '🎵 TikTok', type: 'text', placeholder: 'https://tiktok.com/@bts_official_bighit' },
+  { key: 'sl_spotify', label: '🎧 Spotify', type: 'text', placeholder: 'https://open.spotify.com/artist/...' },
+  { key: 'sl_weverse', label: '💬 Weverse', type: 'text', placeholder: 'https://weverse.io/bts' },
+  { key: 'sl_vlive', label: '📺 VLive', type: 'text', placeholder: 'https://channels.vlive.tv/...' },
 ]
 
 export default function GroupsPage() {
@@ -127,7 +139,13 @@ export default function GroupsPage() {
   }
 
   const handleEdit = (group: MusicalGroup) => {
-    setEditingGroup(group)
+    const socialFlat: Record<string, string> = {}
+    if (group.socialLinks) {
+      for (const platform of SOCIAL_PLATFORMS) {
+        socialFlat[`sl_${platform}`] = group.socialLinks[platform] ?? ''
+      }
+    }
+    setEditingGroup({ ...group, ...socialFlat } as unknown as MusicalGroup)
     setFormOpen(true)
   }
 
@@ -145,10 +163,22 @@ export default function GroupsPage() {
     const url = editingGroup ? `/api/admin/groups?id=${editingGroup.id}` : '/api/admin/groups'
     const method = editingGroup ? 'PATCH' : 'POST'
 
+    // Assemble sl_* flat fields into socialLinks JSON
+    const socialLinks: Record<string, string> = {}
+    for (const platform of SOCIAL_PLATFORMS) {
+      const val = data[`sl_${platform}`] as string | undefined
+      if (val && val.trim()) socialLinks[platform] = val.trim()
+      delete data[`sl_${platform}`]
+    }
+    const payload = {
+      ...data,
+      socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : null,
+    }
+
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     })
 
     if (!res.ok) {
