@@ -5,7 +5,10 @@ import { notFound } from "next/navigation"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { TrailerModal } from "@/components/features/TrailerModal"
+import { JsonLd } from "@/components/seo/JsonLd"
 import type { Metadata } from "next"
+
+const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,6 +38,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     return {
         title: `${production.titlePt} (${production.titleKr}) - HallyuHub`,
         description: fullDescription.slice(0, 160),
+        alternates: {
+            canonical: `${BASE_URL}/productions/${params.id}`,
+        },
         openGraph: {
             title: `${production.titlePt} - HallyuHub`,
             description: fullDescription.slice(0, 160),
@@ -44,7 +50,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
                 height: 630,
                 alt: production.titlePt
             }] : [],
-            type: 'video.movie'
+            type: 'video.movie',
+            url: `${BASE_URL}/productions/${params.id}`,
         },
         twitter: {
             card: 'summary_large_image',
@@ -83,8 +90,38 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
         return m === 0 ? `${h}h` : `${h}h ${m}min`
     }
 
+    const isMovie = production.type === 'MOVIE' || production.type === 'FILM'
+    const schemaType = isMovie ? 'Movie' : 'TVSeries'
+    const castActors = production.artists.slice(0, 10).map(a => ({
+        "@type": "Person",
+        "name": a.artist.nameRomanized,
+        "url": `${BASE_URL}/artists/${a.artist.id}`,
+    }))
+
     return (
         <div className="min-h-screen">
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": schemaType,
+                "name": production.titlePt,
+                "alternateName": production.titleKr ?? undefined,
+                "description": production.synopsis?.slice(0, 300) ?? undefined,
+                "image": production.imageUrl ?? undefined,
+                "url": `${BASE_URL}/productions/${production.id}`,
+                "inLanguage": "ko",
+                "countryOfOrigin": { "@type": "Country", "name": "Korea, Republic of" },
+                ...(production.year ? { "datePublished": String(production.year) } : {}),
+                ...(castActors.length ? { "actor": castActors } : {}),
+                ...(production.tags?.length ? { "genre": production.tags } : {}),
+            }} />
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Produções", "item": `${BASE_URL}/productions` },
+                    { "@type": "ListItem", "position": 2, "name": production.titlePt, "item": `${BASE_URL}/productions/${production.id}` },
+                ],
+            }} />
             {/* Cinematic Hero */}
             <div className="relative h-[50vh] md:h-[60vh] bg-black overflow-hidden">
                 {heroImageUrl ? (
