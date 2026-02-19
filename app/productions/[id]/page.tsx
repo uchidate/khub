@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { Film } from "lucide-react"
 import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -77,7 +78,24 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
         notFound()
     }
 
-    const tags = production.tags || []
+    // Related productions: same tags overlap OR same type, ordered by rating
+    const tags = (production.tags || []) as string[]
+    const relatedProductions = await prisma.production.findMany({
+        where: {
+            id: { not: production.id },
+            OR: [
+                ...(tags.length > 0 ? [{ tags: { hasSome: tags } }] : []),
+                { type: production.type },
+            ],
+        },
+        orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
+        take: 6,
+        select: {
+            id: true, titlePt: true, titleKr: true, type: true,
+            year: true, imageUrl: true, backdropUrl: true, voteAverage: true,
+        },
+    })
+
     const galleryUrls = (production.galleryUrls as string[] | null) || []
 
     const heroImageUrl = production.backdropUrl || production.imageUrl
@@ -245,6 +263,54 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                                 className="object-cover hover:scale-105 transition-transform duration-500"
                                             />
                                         </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Related productions */}
+                        {relatedProductions.length > 0 && (
+                            <div>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+                                        <Film className="w-4 h-4" />
+                                        Você também pode gostar
+                                    </h3>
+                                    <Link href="/productions" className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors">
+                                        Ver tudo →
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    {relatedProductions.map((rel) => (
+                                        <Link key={rel.id} href={`/productions/${rel.id}`} className="group block">
+                                            <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-all mb-2">
+                                                {rel.backdropUrl || rel.imageUrl ? (
+                                                    <Image
+                                                        src={rel.backdropUrl || rel.imageUrl!}
+                                                        alt={rel.titlePt}
+                                                        fill
+                                                        sizes="(max-width: 640px) 50vw, 33vw"
+                                                        className="object-cover brightness-75 group-hover:brightness-90 group-hover:scale-105 transition-all duration-500"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Film className="w-8 h-8 text-zinc-700" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                                {rel.voteAverage && rel.voteAverage > 0 && (
+                                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-yellow-400">
+                                                        ★ {rel.voteAverage.toFixed(1)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">{rel.titlePt}</p>
+                                                <p className="text-[10px] text-zinc-600 font-bold mt-0.5">
+                                                    {rel.year}{rel.year && rel.type ? ' · ' : ''}{rel.type}
+                                                </p>
+                                            </div>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>
