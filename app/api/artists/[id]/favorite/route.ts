@@ -32,6 +32,12 @@ export async function POST(
       }
     })
 
+    if (session?.user?.id) {
+      await (prisma as any).activity.create({
+        data: { userId: session.user.id, type: 'LIKE', entityId: params.id, entityType: 'ARTIST' },
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
     log.error('Favorite increment error', { error: getErrorMessage(error) })
@@ -62,6 +68,12 @@ export async function DELETE(
         })
       }
     })
+
+    if (session?.user?.id) {
+      await (prisma as any).activity.create({
+        data: { userId: session.user.id, type: 'UNLIKE', entityId: params.id, entityType: 'ARTIST' },
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
