@@ -252,6 +252,23 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 </div>
                             ))}
                         </div>
+
+                        {/* Botão site oficial */}
+                        {websiteUrl && (
+                            <div className="mt-2">
+                                <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-black backdrop-blur-sm border transition-all hover:opacity-90"
+                                    style={{
+                                        background: toRgba(accent, 0.2),
+                                        borderColor: toRgba(accent, 0.5),
+                                        color: '#fff',
+                                    }}>
+                                    <Globe className="w-3.5 h-3.5" style={{ color: accent }} />
+                                    Site Oficial
+                                    <ExternalLink className="w-3 h-3 opacity-60" />
+                                </a>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -322,14 +339,44 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             </div>
                         </div>
 
-                        {/* Redes Sociais */}
-                        {Object.keys(socialLinks).length > 0 && (
+                        {/* Site Oficial — card destacado com cor do tema */}
+                        {websiteUrl && (
+                            <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                                className="block p-5 rounded-2xl border transition-all hover:opacity-90 group/site"
+                                style={{
+                                    background: `linear-gradient(135deg, ${toRgba(accent, 0.12)}, ${toRgba(accent, 0.05)})`,
+                                    borderColor: toRgba(accent, 0.3),
+                                }}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Site Oficial</span>
+                                    <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover/site:text-white transition-colors" />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {/* Swatch da cor extraída */}
+                                    <div className="w-8 h-8 rounded-lg flex-shrink-0 border border-white/10"
+                                        style={{ background: accent }} />
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-bold text-white truncate">
+                                            {new URL(websiteUrl).hostname.replace(/^www\./, '')}
+                                        </p>
+                                        {themeColor && (
+                                            <p className="text-[10px] text-zinc-500 mt-0.5 font-mono">{themeColor} · cor extraída</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </a>
+                        )}
+
+                        {/* Redes Sociais (sem website — já mostrado acima) */}
+                        {Object.keys(socialLinks).filter(k => !['website', 'Website', 'official'].includes(k)).length > 0 && (
                             <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
                                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4">Redes Sociais</h3>
                                 <div className="flex flex-col gap-2">
-                                    {Object.entries(socialLinks).map(([platform, url]) => (
-                                        <SocialLink key={platform} platform={platform} url={url} />
-                                    ))}
+                                    {Object.entries(socialLinks)
+                                        .filter(([k]) => !['website', 'Website', 'official'].includes(k))
+                                        .map(([platform, url]) => (
+                                            <SocialLink key={platform} platform={platform} url={url} />
+                                        ))}
                                 </div>
                             </div>
                         )}
