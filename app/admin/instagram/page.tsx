@@ -271,13 +271,22 @@ export default function InstagramAdminPage() {
                                     )}
 
                                     {/* Feed URL input */}
-                                    <input
-                                        type="url"
-                                        value={currentFeed}
-                                        onChange={(e) => setFeedValues(prev => ({ ...prev, [artist.id]: e.target.value }))}
-                                        placeholder="https://rss.app/feeds/XXXXXXXX.json"
-                                        className="flex-1 px-3 py-2 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-pink-500/50 text-xs min-w-0"
-                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <input
+                                            type="url"
+                                            value={currentFeed}
+                                            onChange={(e) => setFeedValues(prev => ({ ...prev, [artist.id]: e.target.value }))}
+                                            placeholder="https://rss.app/feeds/XXXXXXXX.json"
+                                            className={`w-full px-3 py-2 bg-black/50 border rounded-lg text-white placeholder-zinc-600 focus:outline-none text-xs ${
+                                                currentFeed && !currentFeed.endsWith('.json')
+                                                    ? 'border-yellow-500/60 focus:border-yellow-500'
+                                                    : 'border-zinc-800 focus:border-pink-500/50'
+                                            }`}
+                                        />
+                                        {currentFeed && !currentFeed.endsWith('.json') && (
+                                            <p className="text-yellow-400 text-[10px] mt-0.5">URL deve terminar em .json</p>
+                                        )}
+                                    </div>
 
                                     {/* Link to Instagram profile */}
                                     {artist.instagramFeedUrl && (

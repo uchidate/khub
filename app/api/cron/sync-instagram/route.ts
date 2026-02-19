@@ -61,7 +61,11 @@ async function fetchAndSync(
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-  const feed = (await res.json()) as { items?: RssFeedItem[] }
+  const text = await res.text()
+  if (text.trimStart().startsWith('<')) {
+    throw new Error('Feed retorna XML — use a URL JSON do RSS.app (ex: https://rss.app/feeds/v1.1/XXXX.json)')
+  }
+  const feed = JSON.parse(text) as { items?: RssFeedItem[] }
   const items = (feed.items ?? []).slice(0, 12)
 
   let count = 0
