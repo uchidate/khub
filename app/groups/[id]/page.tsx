@@ -15,12 +15,14 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const group = await prisma.musicalGroup.findUnique({ where: { id: params.id } })
     if (!group) return { title: 'Grupo não encontrado - HallyuHub' }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
+    const isThinContent = !group.profileImageUrl && !group.bio
     return {
         title: `${group.name} - HallyuHub`,
         description: description.slice(0, 160),
         alternates: {
             canonical: `${BASE_URL}/groups/${params.id}`,
         },
+        ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title: `${group.name} - HallyuHub`,
             description: description.slice(0, 160),

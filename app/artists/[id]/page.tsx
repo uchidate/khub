@@ -63,12 +63,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const roles = artist.roles || []
     const description = artist.bio || `${artist.nameRomanized} (${artist.nameHangul}) - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
 
+    const isThinContent = !artist.primaryImageUrl && !artist.bio
+
     return {
         title: `${artist.nameRomanized} (${artist.nameHangul}) - HallyuHub`,
         description: description.slice(0, 160),
         alternates: {
             canonical: `${BASE_URL}/artists/${params.id}`,
         },
+        ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title: `${artist.nameRomanized} - HallyuHub`,
             description: description.slice(0, 160),

@@ -3,12 +3,25 @@ import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-    title: 'Artistas',
-    description: 'Explore perfis detalhados de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.',
+const BASE_URL = 'https://www.hallyuhub.com.br'
+
+export async function generateMetadata(): Promise<Metadata> {
+    const total = await prisma.artist.count().catch(() => 0)
+    const desc = `Explore ${total > 0 ? `${total} ` : ''}perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.`
+    return {
+        title: 'Artistas',
+        description: desc,
+        alternates: { canonical: `${BASE_URL}/artists` },
+        openGraph: {
+            title: 'Artistas K-Pop & K-Drama | HallyuHub',
+            description: desc,
+            url: `${BASE_URL}/artists`,
+        },
+    }
 }
 
 export default async function ArtistsPage() {

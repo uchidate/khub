@@ -8,9 +8,21 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-    title: 'Notícias',
-    description: 'Fique por dentro de tudo o que acontece no vibrante mundo do entretenimento coreano.',
+const BASE_URL = 'https://www.hallyuhub.com.br'
+
+export async function generateMetadata(): Promise<Metadata> {
+    const total = await prisma.news.count().catch(() => 0)
+    const desc = `${total > 0 ? `${total} ` : ''}notícias sobre K-Pop, K-Drama e cultura coreana. Fique por dentro de tudo.`
+    return {
+        title: 'Notícias',
+        description: desc,
+        alternates: { canonical: `${BASE_URL}/news` },
+        openGraph: {
+            title: 'Notícias K-Pop & K-Drama | HallyuHub',
+            description: desc,
+            url: `${BASE_URL}/news`,
+        },
+    }
 }
 
 function LoadingSkeleton() {
