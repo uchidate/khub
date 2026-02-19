@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, Languages, UsersRound, GitMerge } from 'lucide-react'
+import { Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, Languages, UsersRound, GitMerge, Instagram } from 'lucide-react'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: Shield, exact: true },
   { href: '/admin/users', label: 'Usuários', icon: Users },
   { href: '/admin/artists', label: 'Artistas', icon: Music2 },
   { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
+  { href: '/admin/instagram', label: 'Instagram Feeds', icon: Instagram },
   { href: '/admin/artists/fix-names', label: 'Corrigir Nomes', icon: Languages },
   { href: '/admin/artists/duplicates', label: 'Duplicados', icon: GitMerge },
   { href: '/admin/artists/groups', label: 'Grupos Musicais', icon: UsersRound },

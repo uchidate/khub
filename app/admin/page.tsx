@@ -4,7 +4,7 @@ import Link from 'next/link'
 import {
   Shield, Users, Database, Activity, Settings, Film,
   Music2, Building2, UserX, ImageOff, Newspaper, AlertTriangle,
-  Plus, RefreshCw, GitMerge, Tag, Clapperboard, Mic2,
+  Plus, RefreshCw, GitMerge, Tag, Clapperboard, Mic2, Instagram,
 } from 'lucide-react'
 import NavBar from '@/components/NavBar'
 import prisma from '@/lib/prisma'
@@ -116,6 +116,7 @@ export default async function AdminPage() {
     { label: 'Gerenciar Grupos', href: '/admin/groups', icon: Music2, desc: 'Membros, MVs, tema' },
     { label: 'Duplicados', href: '/admin/artists/duplicates', icon: GitMerge, desc: 'Detectar e mesclar' },
     { label: 'Gerenciar Tags', href: '/admin/tags', icon: Tag, desc: 'Normalizar tags de notícias' },
+    { label: 'Instagram Feeds', href: '/admin/instagram', icon: Instagram, desc: 'Feeds RSS.app por artista' },
     { label: 'Cron Jobs', href: '/admin/cron', icon: RefreshCw, desc: 'Status e logs' },
     { label: 'Configurações', href: '/admin/settings', icon: Settings, desc: 'Configurações gerais' },
   ]
