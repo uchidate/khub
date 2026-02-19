@@ -109,7 +109,7 @@ const formFields: FormField[] = [
   { key: 'profileImageUrl', label: 'URL da Foto', type: 'text', placeholder: 'https://...' },
   { key: 'debutDate', label: 'Data de Debut', type: 'date' },
   { key: 'disbandDate', label: 'Data de Disbandamento', type: 'date' },
-  { key: 'agencyId', label: 'Agency ID', type: 'text', placeholder: 'ID da agência' },
+  { key: 'agencyId', label: 'Agência', type: 'select-async', optionsUrl: '/api/admin/agencies/all' },
 ]
 
 export default function GroupsPage() {

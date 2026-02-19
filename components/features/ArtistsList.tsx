@@ -24,6 +24,7 @@ interface Artist {
     nameHangul: string | null
     primaryImageUrl: string | null
     roles: string[]
+    memberships: { group: { id: string; name: string } }[]
 }
 
 interface ArtistsListResponse {
@@ -86,6 +87,8 @@ export function ArtistsList() {
                 limit: '24',
                 ...(filters.search && { search: filters.search }),
                 ...(filters.role && { role: filters.role }),
+                ...(filters.groupId && { groupId: filters.groupId }),
+                ...(filters.memberType && { memberType: filters.memberType }),
                 ...(filters.sortBy && { sortBy: filters.sortBy }),
             })
 
@@ -145,19 +148,25 @@ export function ArtistsList() {
             {!isLoading && artists.length > 0 && (
                 <>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10 perspective-1000">
-                        {artists.map((artist) => (
-                            <MediaCard
-                                key={artist.id}
-                                id={artist.id}
-                                title={artist.nameRomanized}
-                                subtitle={artist.nameHangul || undefined}
-                                imageUrl={artist.primaryImageUrl}
-                                type="artist"
-                                href={`/artists/${artist.id}`}
-                                badges={artist.roles || []}
-                                aspectRatio="poster"
-                            />
-                        ))}
+                        {artists.map((artist) => {
+                            const group = artist.memberships?.[0]?.group
+                            return (
+                                <MediaCard
+                                    key={artist.id}
+                                    id={artist.id}
+                                    title={artist.nameRomanized}
+                                    subtitle={artist.nameHangul || undefined}
+                                    imageUrl={artist.primaryImageUrl}
+                                    type="artist"
+                                    href={`/artists/${artist.id}`}
+                                    badges={[
+                                        ...(group ? [group.name] : []),
+                                        ...(artist.roles || []),
+                                    ]}
+                                    aspectRatio="poster"
+                                />
+                            )
+                        })}
                     </div>
 
                     {/* Paginação */}
