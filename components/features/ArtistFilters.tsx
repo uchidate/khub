@@ -6,6 +6,8 @@ import { Search, SlidersHorizontal, X } from 'lucide-react'
 export interface ArtistFilterValues {
     search?: string
     role?: string
+    groupId?: string
+    memberType?: string
     sortBy?: string
 }
 
@@ -24,34 +26,54 @@ const ROLES = [
 ]
 
 const SORT_OPTIONS = [
-    { value: 'name', label: 'Nome (A-Z)' },
     { value: 'trending', label: 'Mais Populares' },
+    { value: 'name', label: 'Nome (A-Z)' },
     { value: 'newest', label: 'Mais Recentes' },
+]
+
+const MEMBER_TYPE_OPTIONS = [
+    { value: '', label: 'Todos' },
+    { value: 'group', label: '🎶 Grupo' },
+    { value: 'solo', label: '🎤 Solo' },
 ]
 
 export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFiltersProps) {
     const [search, setSearch] = useState(initialFilters.search || '')
     const [role, setRole] = useState(initialFilters.role || '')
+    const [groupId, setGroupId] = useState(initialFilters.groupId || '')
+    const [memberType, setMemberType] = useState(initialFilters.memberType || '')
     const [sortBy, setSortBy] = useState(initialFilters.sortBy || 'trending')
     const [showFilters, setShowFilters] = useState(false)
+    const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
+
+    // Carregar grupos para o filtro
+    useEffect(() => {
+        fetch('/api/groups/list')
+            .then(r => r.json())
+            .then(data => setGroups(data.groups ?? []))
+            .catch(() => {})
+    }, [])
 
     // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
             applyFilters()
         }, 500)
-
         return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search])
 
     useEffect(() => {
         applyFilters()
-    }, [role, sortBy])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [role, groupId, memberType, sortBy])
 
     const applyFilters = () => {
         onFilterChange({
             search: search || undefined,
             role: role || undefined,
+            groupId: groupId || undefined,
+            memberType: memberType || undefined,
             sortBy,
         })
     }
@@ -59,17 +81,17 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
     const clearFilters = () => {
         setSearch('')
         setRole('')
+        setGroupId('')
+        setMemberType('')
         setSortBy('trending')
-        onFilterChange({
-            sortBy: 'trending',
-        })
+        onFilterChange({ sortBy: 'trending' })
     }
 
-    const hasActiveFilters = search || role || sortBy !== 'trending'
+    const hasActiveFilters = !!(search || role || groupId || memberType || sortBy !== 'trending')
 
     return (
         <div className="mb-10 space-y-4">
-            {/* Barra de Busca Principal */}
+            {/* Barra de Busca + Toggle rápido */}
             <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
                     <input
@@ -91,6 +113,23 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                     )}
                 </div>
 
+                {/* Quick: Solo / Grupo */}
+                <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl">
+                    {MEMBER_TYPE_OPTIONS.map(opt => (
+                        <button
+                            key={opt.value}
+                            onClick={() => setMemberType(opt.value)}
+                            className={`px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                                memberType === opt.value
+                                    ? 'bg-purple-600 text-white'
+                                    : 'text-zinc-400 hover:text-white'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+
                 <button
                     onClick={() => setShowFilters(!showFilters)}
                     className={`flex items-center gap-2 px-6 py-4 rounded-xl font-bold transition-all ${
@@ -110,7 +149,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
             {/* Painel de Filtros Expandido */}
             {showFilters && (
                 <div className="p-6 rounded-xl bg-zinc-900/50 border border-white/10 space-y-6 animate-in slide-in-from-top-2 duration-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Filtro de Tipo */}
                         <div>
                             <label className="block text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3">
@@ -133,7 +172,32 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                             </div>
                         </div>
 
-                        {/* Filtro de Ordenação */}
+                        {/* Filtro de Grupo */}
+                        <div>
+                            <label className="block text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3">
+                                Grupo Musical
+                            </label>
+                            <select
+                                value={groupId}
+                                onChange={(e) => setGroupId(e.target.value)}
+                                className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
+                            >
+                                <option value="">Todos os grupos</option>
+                                {groups.map(g => (
+                                    <option key={g.id} value={g.id}>{g.name}</option>
+                                ))}
+                            </select>
+                            {groupId && (
+                                <button
+                                    onClick={() => setGroupId('')}
+                                    className="mt-2 text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors"
+                                >
+                                    <X className="w-3 h-3" /> Limpar grupo
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Ordenação */}
                         <div>
                             <label className="block text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3">
                                 Ordenar Por
@@ -156,12 +220,11 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                         </div>
                     </div>
 
-                    {/* Limpar Filtros */}
                     {hasActiveFilters && (
                         <div className="pt-4 border-t border-white/5 flex justify-end">
                             <button
                                 onClick={clearFilters}
-                                className="px-6 py-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/30 text-red-400 rounded-lg font-bold transition-all hover:scale-105 active:scale-95 text-sm uppercase tracking-wider"
+                                className="px-6 py-2 bg-red-600/10 hover:bg-red-600/20 border border-red-600/30 text-red-400 rounded-lg font-bold transition-all text-sm uppercase tracking-wider"
                             >
                                 Limpar Filtros
                             </button>
@@ -173,23 +236,29 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
             {/* Tags de Filtros Ativos */}
             {hasActiveFilters && (
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                        Filtros ativos:
-                    </span>
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Filtros ativos:</span>
                     {search && (
                         <span className="px-3 py-1 bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-bold rounded-full flex items-center gap-2">
-                            Busca: "{search}"
-                            <button onClick={() => setSearch('')} className="hover:text-white">
-                                <X className="w-3 h-3" />
-                            </button>
+                            &quot;{search}&quot;
+                            <button onClick={() => setSearch('')}><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {role && (
                         <span className="px-3 py-1 bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-bold rounded-full flex items-center gap-2">
                             {ROLES.find(r => r.value === role)?.label}
-                            <button onClick={() => setRole('')} className="hover:text-white">
-                                <X className="w-3 h-3" />
-                            </button>
+                            <button onClick={() => setRole('')}><X className="w-3 h-3" /></button>
+                        </span>
+                    )}
+                    {groupId && (
+                        <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold rounded-full flex items-center gap-2">
+                            🎶 {groups.find(g => g.id === groupId)?.name ?? '...'}
+                            <button onClick={() => setGroupId('')}><X className="w-3 h-3" /></button>
+                        </span>
+                    )}
+                    {memberType && (
+                        <span className="px-3 py-1 bg-zinc-700/50 text-zinc-300 text-xs font-bold rounded-full flex items-center gap-2">
+                            {MEMBER_TYPE_OPTIONS.find(m => m.value === memberType)?.label}
+                            <button onClick={() => setMemberType('')}><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {sortBy !== 'trending' && (

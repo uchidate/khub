@@ -6,10 +6,13 @@ import { X } from 'lucide-react'
 export interface FormField {
   key: string
   label: string
-  type: 'text' | 'email' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'tags'
+  type: 'text' | 'email' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'select-async' | 'tags'
   placeholder?: string
   required?: boolean
+  /** Static options for type='select' */
   options?: { value: string; label: string }[]
+  /** API URL for type='select-async'. Response: { data: { id, name }[] } */
+  optionsUrl?: string
 }
 
 interface FormModalProps {
@@ -25,6 +28,27 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
   const [formData, setFormData] = useState<Record<string, unknown>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [asyncOptions, setAsyncOptions] = useState<Record<string, { value: string; label: string }[]>>({})
+
+  // Load async options for select-async fields
+  useEffect(() => {
+    const asyncFields = fields.filter(f => f.type === 'select-async' && f.optionsUrl)
+    if (asyncFields.length === 0) return
+
+    asyncFields.forEach(field => {
+      fetch(`${field.optionsUrl}`)
+        .then(r => r.json())
+        .then(data => {
+          const items: { id: string; name: string }[] = data.data ?? data.items ?? data
+          setAsyncOptions(prev => ({
+            ...prev,
+            [field.key]: items.map(item => ({ value: item.id, label: item.name })),
+          }))
+        })
+        .catch(() => {})
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields])
 
   useEffect(() => {
     if (open) {
@@ -57,6 +81,9 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
     setFormData((prev) => ({ ...prev, [key]: value }))
   }
 
+  const selectClass = "w-full px-4 py-3 bg-black/50 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-purple-500/50 text-sm"
+  const inputClass = "w-full px-4 py-3 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
@@ -87,17 +114,31 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
                   placeholder={field.placeholder}
                   required={field.required}
                   rows={4}
-                  className="w-full px-4 py-3 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm resize-none"
+                  className={`${inputClass} resize-none`}
                 />
               ) : field.type === 'select' ? (
                 <select
                   value={String(formData[field.key] || '')}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   required={field.required}
-                  className="w-full px-4 py-3 bg-black/50 border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-purple-500/50 text-sm"
+                  className={selectClass}
                 >
                   <option value="">Selecionar...</option>
                   {field.options?.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              ) : field.type === 'select-async' ? (
+                <select
+                  value={String(formData[field.key] || '')}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  required={field.required}
+                  className={selectClass}
+                >
+                  <option value="">{asyncOptions[field.key] ? 'Nenhum' : 'Carregando...'}</option>
+                  {(asyncOptions[field.key] ?? []).map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -109,7 +150,7 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
                   value={Array.isArray(formData[field.key]) ? (formData[field.key] as string[]).join(', ') : String(formData[field.key] || '')}
                   onChange={(e) => handleChange(field.key, e.target.value.split(',').map((t) => t.trim()).filter(Boolean))}
                   placeholder={field.placeholder || 'Separar por vírgula'}
-                  className="w-full px-4 py-3 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
+                  className={inputClass}
                 />
               ) : (
                 <input
@@ -118,7 +159,7 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
                   onChange={(e) => handleChange(field.key, field.type === 'number' ? Number(e.target.value) : e.target.value)}
                   placeholder={field.placeholder}
                   required={field.required}
-                  className="w-full px-4 py-3 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
+                  className={inputClass}
                 />
               )}
             </div>

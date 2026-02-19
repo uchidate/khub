@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
     // Filtros
     const search = searchParams.get('search') || undefined
     const role = searchParams.get('role') || undefined
+    const groupId = searchParams.get('groupId') || undefined
+    const memberType = searchParams.get('memberType') || undefined // 'solo' | 'group'
     const sortBy = searchParams.get('sortBy') || 'trending'
 
     // Construir where clause
@@ -31,6 +33,16 @@ export async function GET(request: NextRequest) {
 
     if (role) {
         where.roles = { has: role }
+    }
+
+    if (groupId) {
+        where.memberships = { some: { groupId, isActive: true } }
+    }
+
+    if (memberType === 'group') {
+        where.memberships = { some: { isActive: true } }
+    } else if (memberType === 'solo') {
+        where.memberships = { none: { isActive: true } }
     }
 
     // Construir orderBy
@@ -62,6 +74,11 @@ export async function GET(request: NextRequest) {
                     nameHangul: true,
                     primaryImageUrl: true,
                     roles: true,
+                    memberships: {
+                        where: { isActive: true },
+                        select: { group: { select: { id: true, name: true } } },
+                        take: 1,
+                    },
                 }
             }),
             prisma.artist.count({ where }),
