@@ -111,6 +111,11 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '*.wp.com',
             },
+            // YouTube thumbnails — MVs de grupos musicais
+            {
+                protocol: 'https',
+                hostname: 'img.youtube.com',
+            },
         ],
     },
 };

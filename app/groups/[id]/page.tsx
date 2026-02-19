@@ -566,11 +566,12 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                             <a key={i} href={mv.url} target="_blank" rel="noopener noreferrer"
                                                 className="group block rounded-xl overflow-hidden border border-white/5 hover:border-white/20 transition-all">
                                                 <div className="relative aspect-video bg-zinc-900">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img
+                                                    <Image
                                                         src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
                                                         alt={mv.title}
-                                                        className="w-full h-full object-cover brightness-75 group-hover:brightness-90 transition-all"
+                                                        fill
+                                                        sizes="(max-width: 640px) 100vw, 50vw"
+                                                        className="object-cover brightness-75 group-hover:brightness-90 transition-all"
                                                     />
                                                     <div className="absolute inset-0 flex items-center justify-center">
                                                         <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-transform group-hover:scale-110"
