@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,18 +29,9 @@ export async function GET(request: NextRequest) {
         where.type = type
     }
 
-    if (ageRating === 'all') {
-        // 'all' → sem filtro de classificação (mostra tudo, inclusive 18+ e sem classificação)
-    } else if (ageRating) {
-        // Classificação específica (L, 10, 12, 14, 16, 18)
-        where.ageRating = ageRating
-    } else {
-        // Padrão (sem seleção): exibir apenas classificadas (não-nulo) exceto 18+
-        where.ageRating = {
-            not: null,     // Tem classificação
-            notIn: ['18']  // E não é adulto
-        }
-    }
+    // Aplicar filtro de classificação etária (respeita SystemSettings + UserContentPreferences)
+    const ageRatingFilter = await applyAgeRatingFilter(ageRating)
+    Object.assign(where, ageRatingFilter)
 
     let orderBy: any
     switch (sortBy) {
