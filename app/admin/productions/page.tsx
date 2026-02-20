@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus } from 'lucide-react'
+import { Plus, Users, RefreshCw } from 'lucide-react'
 
 const AGE_RATING_STYLES: Record<string, string> = {
   'L':  'bg-green-500/20 text-green-400 border-green-500/30',
@@ -115,6 +115,59 @@ export default function ProductionsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editingProduction, setEditingProduction] = useState<Production | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [batchSyncing, setBatchSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState('')
+
+  const handleSyncCast = async (production: Production) => {
+    if (syncingId) return
+    setSyncingId(production.id)
+    setSyncMsg('')
+    try {
+      const res = await fetch('/api/admin/productions/sync-cast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productionId: production.id }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSyncMsg(`✅ ${production.titlePt}: ${data.synced} artistas importados`)
+        refetchTable()
+      } else {
+        setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao importar elenco'}`)
+      }
+    } catch {
+      setSyncMsg('❌ Erro de rede')
+    } finally {
+      setSyncingId(null)
+      setTimeout(() => setSyncMsg(''), 6000)
+    }
+  }
+
+  const handleSyncPending = async () => {
+    if (batchSyncing) return
+    setBatchSyncing(true)
+    setSyncMsg('Sincronizando elenco pendente...')
+    try {
+      const res = await fetch('/api/admin/productions/sync-cast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pending: true, limit: 20 }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSyncMsg(`✅ ${data.processed} produções processadas · ${data.totalSynced} artistas importados`)
+        refetchTable()
+      } else {
+        setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao sincronizar'}`)
+      }
+    } catch {
+      setSyncMsg('❌ Erro de rede')
+    } finally {
+      setBatchSyncing(false)
+      setTimeout(() => setSyncMsg(''), 8000)
+    }
+  }
 
   const handleCreate = () => {
     setEditingProduction(null)
@@ -172,16 +225,34 @@ export default function ProductionsPage() {
   return (
     <AdminLayout title="Produções">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <p className="text-zinc-400">Gerencie dramas, filmes e outras produções da plataforma</p>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
-          >
-            <Plus size={18} />
-            Nova Produção
-          </button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              onClick={handleSyncPending}
+              disabled={batchSyncing}
+              className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw size={16} className={batchSyncing ? 'animate-spin' : ''} />
+              {batchSyncing ? 'Importando...' : 'Importar Elenco Pendente'}
+            </button>
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
+            >
+              <Plus size={18} />
+              Nova Produção
+            </button>
+          </div>
         </div>
+
+        {syncMsg && (
+          <div className={`px-4 py-3 rounded-lg text-sm font-medium ${
+            syncMsg.startsWith('✅') ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
+            {syncMsg}
+          </div>
+        )}
 
         <DataTable<Production>
           columns={columns}
@@ -189,6 +260,17 @@ export default function ProductionsPage() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por título..."
+          actions={(production) => (
+            <button
+              onClick={() => handleSyncCast(production)}
+              disabled={syncingId === production.id}
+              title="Importar elenco do TMDB"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-400 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Users size={13} className={syncingId === production.id ? 'animate-pulse' : ''} />
+              {syncingId === production.id ? '...' : 'Elenco'}
+            </button>
+          )}
         />
       </div>
 
