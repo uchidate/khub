@@ -13,16 +13,21 @@ export const dynamic = 'force-dynamic'
 interface RssFeedItem {
   id: string
   url: string
+  external_url?: string
   title?: string
   image?: string
   content_html?: string
   date_published?: string
 }
 
-function extractPostId(url: string): string | null {
-  // Suporta posts (/p/), reels (/reel/) e IGTV (/tv/)
-  const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
-  return match ? match[1] : null
+function extractPostId(item: RssFeedItem): string | null {
+  // Verifica id, url e external_url — RSS.app pode colocar a URL do Instagram em qualquer um deles
+  for (const candidate of [item.external_url, item.url, item.id]) {
+    if (!candidate) continue
+    const match = candidate.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
+    if (match) return match[1]
+  }
+  return null
 }
 
 function extractImageUrl(item: RssFeedItem): string | null {
@@ -34,7 +39,12 @@ function extractImageUrl(item: RssFeedItem): string | null {
   return null
 }
 
-async function fetchAndSync(feedUrl: string, artistId?: string, groupId?: string): Promise<number> {
+interface SyncResult {
+  count: number
+  debugSample?: { id: string; url: string; external_url?: string }[]
+}
+
+async function fetchAndSync(feedUrl: string, artistId?: string, groupId?: string): Promise<SyncResult> {
   const res = await fetch(feedUrl, {
     headers: { 'User-Agent': 'HallyuHub-Sync/1.0' },
     signal: AbortSignal.timeout(20_000),
@@ -48,11 +58,19 @@ async function fetchAndSync(feedUrl: string, artistId?: string, groupId?: string
   const feed = JSON.parse(text) as { items?: RssFeedItem[] }
   const items = (feed.items ?? []).slice(0, 12)
 
+  // Amostra para debug — primeiros 3 items com campos de URL
+  const debugSample = items.slice(0, 3).map(i => ({
+    id: i.id ?? '',
+    url: i.url ?? '',
+    external_url: i.external_url,
+  }))
+
   let count = 0
   for (const item of items) {
-    const postId = extractPostId(item.id || item.url)
+    const postId = extractPostId(item)
     if (!postId) continue
 
+    const permalink = item.url || item.external_url || ''
     await prisma.instagramPost.upsert({
       where: { postId },
       update: { imageUrl: extractImageUrl(item), caption: item.title?.slice(0, 500) ?? null },
@@ -62,13 +80,13 @@ async function fetchAndSync(feedUrl: string, artistId?: string, groupId?: string
         groupId: groupId ?? null,
         imageUrl: extractImageUrl(item),
         caption: item.title?.slice(0, 500) ?? null,
-        permalink: item.url,
+        permalink,
         postedAt: item.date_published ? new Date(item.date_published) : new Date(),
       },
     })
     count++
   }
-  return count
+  return { count, debugSample: count === 0 ? debugSample : undefined }
 }
 
 export async function POST() {
@@ -86,13 +104,13 @@ export async function POST() {
     }),
   ])
 
-  const results: { name: string; posts: number; error?: string }[] = []
+  const results: { name: string; posts: number; error?: string; debug?: unknown }[] = []
 
   for (const artist of artists) {
     try {
-      const n = await fetchAndSync(artist.instagramFeedUrl!, artist.id, undefined)
+      const { count, debugSample } = await fetchAndSync(artist.instagramFeedUrl!, artist.id, undefined)
       await prisma.artist.update({ where: { id: artist.id }, data: { instagramLastSync: new Date() } })
-      results.push({ name: artist.nameRomanized, posts: n })
+      results.push({ name: artist.nameRomanized, posts: count, debug: debugSample })
     } catch (err) {
       results.push({ name: artist.nameRomanized, posts: 0, error: String(err) })
     }
@@ -100,9 +118,9 @@ export async function POST() {
 
   for (const group of groups) {
     try {
-      const n = await fetchAndSync(group.instagramFeedUrl!, undefined, group.id)
+      const { count, debugSample } = await fetchAndSync(group.instagramFeedUrl!, undefined, group.id)
       await prisma.musicalGroup.update({ where: { id: group.id }, data: { instagramLastSync: new Date() } })
-      results.push({ name: group.name, posts: n })
+      results.push({ name: group.name, posts: count, debug: debugSample })
     } catch (err) {
       results.push({ name: group.name, posts: 0, error: String(err) })
     }
