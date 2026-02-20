@@ -129,6 +129,7 @@ export class ProductionAgeRatingService {
   /**
    * Sincroniza a classificação etária de uma produção específica.
    * Só atualiza se a produção tiver tmdbId e ageRating estiver null.
+   * Sempre marca ageRatingSyncAt = now() para evitar reprocessamento imediato.
    */
   async syncProductionAgeRating(productionId: string): Promise<{
     updated: boolean
@@ -153,31 +154,49 @@ export class ProductionAgeRatingService {
       production.tmdbType as 'movie' | 'tv'
     )
 
+    // Sempre registra a tentativa — evita reprocessar produções sem dados no TMDB
+    await prisma.production.update({
+      where: { id: productionId },
+      data: {
+        ageRatingSyncAt: new Date(),
+        ...(ageRating ? { ageRating } : {}),
+      },
+    })
+
     if (!ageRating) {
       return { updated: false, ageRating: null, reason: 'not_found_on_tmdb' }
     }
-
-    await prisma.production.update({
-      where: { id: productionId },
-      data: { ageRating },
-    })
 
     return { updated: true, ageRating }
   }
 
   /**
    * Sincroniza a classificação de produções que têm tmdbId mas não têm ageRating.
+   * Exclui produções já tentadas nos últimos `retryCooldownDays` dias
+   * para evitar reprocessar sempre as mesmas sem dados no TMDB.
    */
-  async syncPendingAgeRatings(limit: number = 20): Promise<{
+  async syncPendingAgeRatings(limit: number = 20, retryCooldownDays = 7): Promise<{
     processed: number
     updated: number
     notFound: number
   }> {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - retryCooldownDays)
+
     const productions = await prisma.production.findMany({
-      where: { ageRating: null, tmdbId: { not: null } },
+      where: {
+        ageRating: null,
+        tmdbId: { not: null },
+        // Incluir: nunca tentadas OU tentadas há mais de retryCooldownDays dias
+        OR: [
+          { ageRatingSyncAt: null },
+          { ageRatingSyncAt: { lt: cutoff } },
+        ],
+      },
       select: { id: true, titlePt: true },
       take: limit,
-      orderBy: { createdAt: 'asc' },
+      // Prioriza as nunca tentadas (null primeiro), depois as mais antigas
+      orderBy: [{ ageRatingSyncAt: 'asc' }],
     })
 
     let updated = 0

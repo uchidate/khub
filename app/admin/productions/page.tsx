@@ -182,7 +182,10 @@ export default function ProductionsPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        setSyncMsg(`✅ ${data.updated} classificações atualizadas · ${data.notFound} sem dados no TMDB (de ${data.processed} processadas)`)
+        const remainingMsg = data.remaining > 0
+          ? ` · ${data.remaining} ainda sem classificação (serão retentadas em 7 dias)`
+          : ' · Todas classificadas!'
+        setSyncMsg(`✅ ${data.updated} classificadas · ${data.notFound} sem dados no TMDB (${data.processed} processadas)${remainingMsg}`)
         refetchTable()
       } else {
         setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao classificar'}`)
@@ -191,7 +194,7 @@ export default function ProductionsPage() {
       setSyncMsg('❌ Erro de rede')
     } finally {
       setAgeSyncing(false)
-      setTimeout(() => setSyncMsg(''), 10000)
+      setTimeout(() => setSyncMsg(''), 15000)
     }
   }
 
