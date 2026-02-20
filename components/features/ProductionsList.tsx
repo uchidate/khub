@@ -15,6 +15,7 @@ interface Production {
     backdropUrl: string | null
     voteAverage: number | null
     streamingPlatforms: string[] | null
+    ageRating: string | null
 }
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -25,12 +26,30 @@ const TYPE_OPTIONS: { value: string; label: string }[] = [
     { value: 'DOCUMENTARY', label: 'Documentários' },
 ]
 
+const AGE_RATING_OPTIONS: { value: string; label: string; color: string }[] = [
+    { value: '', label: 'Todas as Faixas', color: '' },
+    { value: 'L', label: 'Livre', color: 'bg-green-600/80' },
+    { value: '10', label: '10+', color: 'bg-blue-600/80' },
+    { value: '12', label: '12+', color: 'bg-yellow-600/80' },
+    { value: '14', label: '14+', color: 'bg-orange-600/80' },
+    { value: '16', label: '16+', color: 'bg-red-600/80' },
+]
+
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Recentes' },
     { value: 'rating', label: 'Avaliação' },
     { value: 'year', label: 'Ano' },
     { value: 'name', label: 'A-Z' },
 ]
+
+const AGE_BADGE_STYLE: Record<string, string> = {
+    'L':  'bg-green-600 text-white',
+    '10': 'bg-blue-600 text-white',
+    '12': 'bg-yellow-500 text-black',
+    '14': 'bg-orange-500 text-white',
+    '16': 'bg-red-600 text-white',
+    '18': 'bg-red-900 text-red-100',
+}
 
 function ProductionsSkeleton() {
     return (
@@ -39,6 +58,14 @@ function ProductionsSkeleton() {
                 <div key={i} className="animate-pulse rounded-xl bg-zinc-800/60 aspect-video" />
             ))}
         </div>
+    )
+}
+
+function AgeRatingBadge({ rating }: { rating: string }) {
+    return (
+        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-black ${AGE_BADGE_STYLE[rating] ?? 'bg-zinc-700 text-zinc-300'}`}>
+            {rating === 'L' ? 'L' : `${rating}+`}
+        </span>
     )
 }
 
@@ -55,15 +82,17 @@ export function ProductionsList() {
     const getFilters = useCallback(() => ({
         search: searchParams.get('search') || '',
         type: searchParams.get('type') || '',
+        ageRating: searchParams.get('ageRating') || '',
         sortBy: searchParams.get('sortBy') || 'newest',
     }), [searchParams])
 
     const getCurrentPage = () => Math.max(1, parseInt(searchParams.get('page') || '1'))
 
-    const updateUrl = useCallback((filters: { search: string; type: string; sortBy: string }, page = 1) => {
+    const updateUrl = useCallback((filters: { search: string; type: string; ageRating: string; sortBy: string }, page = 1) => {
         const params = new URLSearchParams()
         if (filters.search) params.set('search', filters.search)
         if (filters.type) params.set('type', filters.type)
+        if (filters.ageRating) params.set('ageRating', filters.ageRating)
         if (filters.sortBy && filters.sortBy !== 'newest') params.set('sortBy', filters.sortBy)
         if (page > 1) params.set('page', page.toString())
         router.push(params.toString() ? `${pathname}?${params}` : pathname, { scroll: false })
@@ -79,6 +108,7 @@ export function ProductionsList() {
                 limit: '18',
                 ...(filters.search && { search: filters.search }),
                 ...(filters.type && { type: filters.type }),
+                ...(filters.ageRating && { ageRating: filters.ageRating }),
                 ...(filters.sortBy && { sortBy: filters.sortBy }),
             })
             const res = await fetch(`/api/productions/list?${params}`)
@@ -102,13 +132,18 @@ export function ProductionsList() {
         updateUrl({ ...filters, search: value }, 1)
     }
     const handleType = (value: string) => updateUrl({ ...filters, type: value }, 1)
+    const handleAgeRating = (value: string) => updateUrl({ ...filters, ageRating: value }, 1)
     const handleSort = (value: string) => updateUrl({ ...filters, sortBy: value }, 1)
     const handlePage = (p: number) => {
         updateUrl(filters, p)
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
+    const clearAll = () => {
+        setSearchInput('')
+        updateUrl({ search: '', type: '', ageRating: '', sortBy: 'newest' }, 1)
+    }
 
-    const hasActiveFilters = filters.search || filters.type
+    const hasActiveFilters = filters.search || filters.type || filters.ageRating
 
     return (
         <div>
@@ -171,6 +206,29 @@ export function ProductionsList() {
                     </div>
                 </div>
 
+                {/* Age Rating filter */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mr-1">Classificação:</span>
+                    {AGE_RATING_OPTIONS.map(opt => (
+                        <button
+                            key={opt.value}
+                            onClick={() => handleAgeRating(opt.value)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                                filters.ageRating === opt.value
+                                    ? opt.color
+                                        ? `${opt.color} text-white ring-2 ring-white/20`
+                                        : 'bg-purple-600 text-white'
+                                    : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:text-white'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                    {!filters.ageRating && (
+                        <span className="text-[10px] text-zinc-600 italic ml-1">conteúdo 18+ oculto por padrão</span>
+                    )}
+                </div>
+
                 {/* Active filters summary */}
                 {hasActiveFilters && (
                     <div className="flex items-center gap-3">
@@ -179,10 +237,7 @@ export function ProductionsList() {
                                 {pagination.total} produção{pagination.total !== 1 ? 'ões' : ''} encontrada{pagination.total !== 1 ? 's' : ''}
                             </p>
                         )}
-                        <button
-                            onClick={() => { handleSearch(''); handleType('') }}
-                            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
-                        >
+                        <button onClick={clearAll} className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
                             Limpar filtros
                         </button>
                     </div>
@@ -198,10 +253,7 @@ export function ProductionsList() {
                     <Film className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
                     <p className="text-zinc-400 font-bold text-lg mb-2">Nenhuma produção encontrada</p>
                     <p className="text-zinc-500 text-sm mb-4">Tente ajustar os filtros de busca</p>
-                    <button
-                        onClick={() => { handleSearch(''); handleType('') }}
-                        className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
-                    >
+                    <button onClick={clearAll} className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
                         Limpar filtros
                     </button>
                 </div>
@@ -211,19 +263,28 @@ export function ProductionsList() {
             {!isLoading && productions.length > 0 && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 perspective-1000">
-                        {productions.map((prod) => (
-                            <MediaCard
-                                key={prod.id}
-                                id={prod.id}
-                                title={prod.titlePt}
-                                subtitle={`${prod.year ?? ''} • ${prod.type ?? ''}`}
-                                imageUrl={prod.backdropUrl || prod.imageUrl}
-                                type="production"
-                                href={`/productions/${prod.id}`}
-                                badges={prod.streamingPlatforms as string[] || []}
-                                aspectRatio="video"
-                            />
-                        ))}
+                        {productions.map((prod) => {
+                            const subtitleParts = [prod.year, prod.type].filter(Boolean)
+                            return (
+                                <div key={prod.id} className="relative">
+                                    <MediaCard
+                                        id={prod.id}
+                                        title={prod.titlePt}
+                                        subtitle={subtitleParts.join(' • ')}
+                                        imageUrl={prod.backdropUrl || prod.imageUrl}
+                                        type="production"
+                                        href={`/productions/${prod.id}`}
+                                        badges={prod.streamingPlatforms as string[] || []}
+                                        aspectRatio="video"
+                                    />
+                                    {prod.ageRating && (
+                                        <div className="absolute top-2 right-2 z-10">
+                                            <AgeRatingBadge rating={prod.ageRating} />
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
                     </div>
 
                     {/* Pagination */}

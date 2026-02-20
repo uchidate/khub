@@ -22,6 +22,7 @@ const productionSchema = z.object({
   sourceUrls: z.array(z.string()).optional().default([]),
   tags: z.array(z.string()).optional().default([]),
   trailerUrl: z.string().url().optional().nullable(),
+  ageRating: z.enum(['L', '10', '12', '14', '16', '18']).optional().nullable(),
 })
 
 /**

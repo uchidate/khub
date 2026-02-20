@@ -7,6 +7,15 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus } from 'lucide-react'
 
+const AGE_RATING_STYLES: Record<string, string> = {
+  'L':  'bg-green-500/20 text-green-400 border-green-500/30',
+  '10': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  '12': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  '14': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  '16': 'bg-red-600/20 text-red-400 border-red-600/30',
+  '18': 'bg-red-900/40 text-red-300 border-red-700/50',
+}
+
 interface Production {
   id: string
   titlePt: string
@@ -14,6 +23,7 @@ interface Production {
   type: string
   year: number | null
   imageUrl: string | null
+  ageRating: string | null
   artistsCount: number
   createdAt: string
 }
@@ -59,6 +69,15 @@ const columns: Column<Production>[] = [
       production.year || <span className="text-zinc-500">N/A</span>,
   },
   {
+    key: 'ageRating',
+    label: 'Faixa',
+    render: (production) => production.ageRating ? (
+      <span className={`px-2 py-0.5 rounded text-xs font-black border ${AGE_RATING_STYLES[production.ageRating] ?? 'bg-zinc-700/50 text-zinc-400'}`}>
+        {production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+`}
+      </span>
+    ) : <span className="text-zinc-600 text-xs">—</span>,
+  },
+  {
     key: 'artistsCount',
     label: 'Artistas',
     sortable: true,
@@ -75,6 +94,20 @@ const formFields: FormField[] = [
   { key: 'imageUrl', label: 'URL da Imagem', type: 'text', placeholder: 'https://exemplo.com/poster.jpg' },
   { key: 'trailerUrl', label: 'URL do Trailer', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
   { key: 'tags', label: 'Tags', type: 'tags', placeholder: 'Ex: k-drama, romance, 2024' },
+  {
+    key: 'ageRating',
+    label: 'Classificação Etária (DJCTQ)',
+    type: 'select',
+    options: [
+      { value: '', label: 'Não classificado' },
+      { value: 'L', label: 'Livre' },
+      { value: '10', label: '10 anos' },
+      { value: '12', label: '12 anos' },
+      { value: '14', label: '14 anos' },
+      { value: '16', label: '16 anos' },
+      { value: '18', label: '18 anos (adulto)' },
+    ],
+  },
 ]
 
 export default function ProductionsPage() {
