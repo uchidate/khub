@@ -41,7 +41,7 @@
     "framer-motion": "^12.31.0",
     "googleapis": "^171.0.0",
     "lucide-react": "^0.344.0",
-    "next": "^14.2.35",
+    "next": "^16.1.6",
     "next-auth": "^4.24.13",
     "nodemailer": "^7.0.13",
     "nprogress": "^0.2.0",
