@@ -20,7 +20,8 @@ interface RssFeedItem {
 }
 
 function extractPostId(url: string): string | null {
-  const match = url.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/)
+  // Suporta posts (/p/), reels (/reel/) e IGTV (/tv/)
+  const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
   return match ? match[1] : null
 }
 
