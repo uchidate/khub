@@ -176,6 +176,18 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         {production.runtime && (
                             <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.runtime)}</span>
                         )}
+                        {production.ageRating && (
+                            <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
+                                production.ageRating === 'L'  ? 'bg-green-700/60 text-green-300 border border-green-600/40' :
+                                production.ageRating === '10' ? 'bg-blue-700/60 text-blue-300 border border-blue-600/40' :
+                                production.ageRating === '12' ? 'bg-yellow-700/60 text-yellow-300 border border-yellow-600/40' :
+                                production.ageRating === '14' ? 'bg-orange-700/60 text-orange-300 border border-orange-600/40' :
+                                production.ageRating === '16' ? 'bg-red-700/60 text-red-300 border border-red-600/40' :
+                                'bg-red-950/80 text-red-400 border border-red-800/60'
+                            }`}>
+                                {production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+`}
+                            </span>
+                        )}
                         {production.voteAverage && production.voteAverage > 0 && (
                             <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
                                 production.voteAverage >= 7 ? 'text-green-400 bg-green-950/50 border border-green-800/40' :
@@ -352,6 +364,21 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <div className="flex justify-between py-3 border-b border-white/5">
                                     <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Duração</span>
                                     <span className="text-sm font-bold text-zinc-300">{formatRuntime(production.runtime)}</span>
+                                </div>
+                            )}
+                            {production.ageRating && (
+                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Classificação</span>
+                                    <span className={`text-xs font-black px-2.5 py-1 rounded ${
+                                        production.ageRating === 'L'  ? 'bg-green-600 text-white' :
+                                        production.ageRating === '10' ? 'bg-blue-600 text-white' :
+                                        production.ageRating === '12' ? 'bg-yellow-500 text-black' :
+                                        production.ageRating === '14' ? 'bg-orange-500 text-white' :
+                                        production.ageRating === '16' ? 'bg-red-600 text-white' :
+                                        'bg-red-900 text-red-100'
+                                    }`}>
+                                        {production.ageRating === 'L' ? 'Livre' : `${production.ageRating} anos`}
+                                    </span>
                                 </div>
                             )}
                             {production.streamingPlatforms && production.streamingPlatforms.length > 0 && (

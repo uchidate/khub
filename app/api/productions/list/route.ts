@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
 
     const search = searchParams.get('search') || undefined
     const type = searchParams.get('type') || undefined
+    const ageRating = searchParams.get('ageRating') || undefined
     const sortBy = searchParams.get('sortBy') || 'newest'
 
     const where: any = {}
@@ -25,6 +26,13 @@ export async function GET(request: NextRequest) {
 
     if (type) {
         where.type = type
+    }
+
+    if (ageRating) {
+        where.ageRating = ageRating
+    } else {
+        // Por padrão, excluir conteúdo adulto (18+) da listagem pública
+        where.NOT = { ageRating: '18' }
     }
 
     let orderBy: any
@@ -59,6 +67,7 @@ export async function GET(request: NextRequest) {
                 backdropUrl: true,
                 voteAverage: true,
                 streamingPlatforms: true,
+                ageRating: true,
             }
         }),
         prisma.production.count({ where }),

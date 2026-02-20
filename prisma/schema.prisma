@@ -199,6 +199,8 @@ model Production {
   runtime            Int? // Minutes
   voteAverage        Float? // TMDB rating
   trailerUrl         String? // YouTube trailer URL
+  // Classificação etária DJCTQ
+  ageRating          String? // 'L' | '10' | '12' | '14' | '16' | '18'
   // Cast sync tracking
   castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
   createdAt          DateTime           @default(now())
