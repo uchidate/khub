@@ -201,6 +201,7 @@ model Production {
   trailerUrl         String? // YouTube trailer URL
   // Classificação etária DJCTQ
   ageRating          String? // 'L' | '10' | '12' | '14' | '16' | '18'
+  ageRatingSyncAt    DateTime? // última tentativa de busca de classificação (com ou sem resultado)
   // Cast sync tracking
   castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
   createdAt          DateTime           @default(now())
@@ -215,6 +216,7 @@ model Production {
   @@index([tmdbId])
   @@index([releaseDate])
   @@index([castSyncAt])
+  @@index([ageRatingSyncAt])
 }
 
 model ArtistProduction {
