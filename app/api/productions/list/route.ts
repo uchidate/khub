@@ -31,8 +31,12 @@ export async function GET(request: NextRequest) {
     if (ageRating) {
         where.ageRating = ageRating
     } else {
-        // Por padrão, excluir conteúdo adulto (18+) da listagem pública
-        where.NOT = { ageRating: '18' }
+        // Por padrão, excluir conteúdo adulto (18+) mas incluir produções sem classificação (null)
+        // Nota: where.NOT em campos nullable exclui NULLs no SQL — usamos AND explícito
+        where.AND = [
+            ...(where.AND || []),
+            { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
+        ]
     }
 
     let orderBy: any
