@@ -1,14 +1,20 @@
 /**
  * Production Age Rating Service
  *
- * Busca a classificação etária (DJCTQ) do TMDB para produções brasileiras.
+ * Busca a classificação etária (DJCTQ) do TMDB para produções.
+ * Prioridade: BR (DJCTQ) → fallback para KR (KMRB, mapeado para DJCTQ)
  *
- * - Filmes: GET /movie/{id}/release_dates → certification do país BR
- * - Séries: GET /tv/{id}/content_ratings  → rating do país BR
+ * - Filmes: GET /movie/{id}/release_dates → certification do país BR ou KR
+ * - Séries: GET /tv/{id}/content_ratings  → rating do país BR ou KR
  *
- * Mapeamento TMDB BR → ageRating interno:
- *   'L', '10', '12', '14', '16', '18' → valores idênticos ao DJCTQ
- *   Qualquer outro valor ou ausência → null (sem classificação)
+ * Mapeamento BR (DJCTQ) — valores idênticos:
+ *   'L', '10', '12', '14', '16', '18'
+ *
+ * Mapeamento KR (KMRB) → DJCTQ:
+ *   'All'                  → 'L'   (todos os públicos)
+ *   '12'                   → '12'
+ *   '15'                   → '14'  (sem equivalente exato; DJCTQ 14 é o mais próximo)
+ *   '18' / 'Restricted'   → '18'
  */
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
@@ -18,6 +24,16 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 
 const VALID_RATINGS = new Set(['L', '10', '12', '14', '16', '18'])
+
+/** Mapeamento KMRB (KR) → DJCTQ (BR) */
+const KR_TO_DJCTQ: Record<string, string> = {
+  'All':                   'L',
+  '12':                    '12',
+  '15':                    '14',
+  '18':                    '18',
+  'Restricted Screening':  '18',
+  'Restricted':            '18',
+}
 
 interface ReleaseDateEntry {
   certification: string
@@ -50,8 +66,9 @@ export class ProductionAgeRatingService {
   }
 
   /**
-   * Busca a classificação etária BR no TMDB para um tmdbId + tmdbType.
-   * Retorna null se não encontrada ou se o valor não for um rating DJCTQ válido.
+   * Busca a classificação etária no TMDB para um tmdbId + tmdbType.
+   * Tenta BR (DJCTQ) primeiro; se não encontrado, tenta KR (KMRB → mapeado para DJCTQ).
+   * Retorna null se nenhuma classificação válida for encontrada.
    */
   async fetchAgeRating(tmdbId: number | string, tmdbType: 'movie' | 'tv'): Promise<string | null> {
     await this.rateLimiter.acquire()
@@ -62,26 +79,47 @@ export class ProductionAgeRatingService {
         const res = await fetch(url)
         if (!res.ok) return null
 
-        const data: ReleaseDateEntry & ReleaseDatesResponse = await res.json()
-        const br = (data as unknown as ReleaseDatesResponse).results?.find(
-          (r) => r.iso_3166_1 === 'BR'
-        )
-        if (!br) return null
+        const data = await res.json() as ReleaseDatesResponse
 
-        // Pegar a certification mais restritiva (type 3 = theatrical release)
-        const cert = br.release_dates.find((d) => d.type === 3)?.certification
-          ?? br.release_dates[0]?.certification
-        return cert && VALID_RATINGS.has(cert) ? cert : null
+        // 1. Tentar BR (DJCTQ)
+        const br = data.results?.find((r) => r.iso_3166_1 === 'BR')
+        if (br) {
+          const cert = br.release_dates.find((d) => d.type === 3)?.certification
+            ?? br.release_dates[0]?.certification
+          if (cert && VALID_RATINGS.has(cert)) return cert
+        }
+
+        // 2. Fallback: KR (KMRB → DJCTQ)
+        const kr = data.results?.find((r) => r.iso_3166_1 === 'KR')
+        if (kr) {
+          const cert = kr.release_dates.find((d) => d.type === 3)?.certification
+            ?? kr.release_dates[0]?.certification
+          if (cert) {
+            const mapped = KR_TO_DJCTQ[cert]
+            if (mapped) return mapped
+          }
+        }
+
+        return null
       } else {
         const url = `${TMDB_BASE_URL}/tv/${tmdbId}/content_ratings?api_key=${TMDB_API_KEY}`
         const res = await fetch(url)
         if (!res.ok) return null
 
-        const data: ContentRatingsResponse = await res.json()
-        const br = data.results?.find((r) => r.iso_3166_1 === 'BR')
-        if (!br) return null
+        const data = await res.json() as ContentRatingsResponse
 
-        return br.rating && VALID_RATINGS.has(br.rating) ? br.rating : null
+        // 1. Tentar BR (DJCTQ)
+        const br = data.results?.find((r) => r.iso_3166_1 === 'BR')
+        if (br?.rating && VALID_RATINGS.has(br.rating)) return br.rating
+
+        // 2. Fallback: KR (KMRB → DJCTQ)
+        const kr = data.results?.find((r) => r.iso_3166_1 === 'KR')
+        if (kr?.rating) {
+          const mapped = KR_TO_DJCTQ[kr.rating]
+          if (mapped) return mapped
+        }
+
+        return null
       }
     } catch {
       return null
