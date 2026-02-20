@@ -183,7 +183,7 @@ export default function FixNamesAdminPage() {
             const decoder = new TextDecoder()
             let buffer = ''
 
-            while (true) {
+            for (;;) {
                 const { done, value } = await reader.read()
                 if (done) break
                 buffer += decoder.decode(value, { stream: true })
