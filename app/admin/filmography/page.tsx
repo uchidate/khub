@@ -12,8 +12,8 @@ interface Artist {
   nameHangul: string | null
   tmdbId: string | null
   tmdbSyncStatus: string | null
-  tmdbLastSync: Date | null
-  productionCount: number
+  tmdbLastSync: Date | null | string
+  productionsCount: number
 }
 
 interface Stats {
@@ -50,11 +50,11 @@ export default function FilmographyAdminPage() {
       }
 
       // Load artists with filmography info
-      // In a real implementation, this would be a dedicated API endpoint
-      // For now, we'll use a client-side approach
-      const artistsRes = await fetch('/api/artists') // Placeholder - needs implementation
-      if (!artistsRes.ok) {
-        // Fallback: redirect to main admin or show error
+      const artistsRes = await fetch('/api/admin/artists?limit=100')
+      if (artistsRes.ok) {
+        const data = await artistsRes.json()
+        setArtists(data.items || [])
+      } else {
         console.error('Failed to load artists')
       }
     } catch (error) {
@@ -160,7 +160,7 @@ export default function FilmographyAdminPage() {
   }
 
   const filteredArtists = artists.filter(artist => {
-    if (filter === 'without' && artist.productionCount > 0) return false
+    if (filter === 'without' && artist.productionsCount > 0) return false
     if (filter === 'outdated' && artist.tmdbLastSync) {
       const daysSinceSync = Math.floor(
         (Date.now() - new Date(artist.tmdbLastSync).getTime()) / (1000 * 60 * 60 * 24)
@@ -287,15 +287,68 @@ export default function FilmographyAdminPage() {
             </p>
           </div>
 
-          {/* Placeholder for Artist List */}
+          {/* Artist List */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Lista de Artistas</h2>
-            <p className="text-zinc-400 text-center py-8">
-              A lista de artistas aparecerá aqui após implementar o endpoint <code className="bg-black px-2 py-1 rounded">/api/admin/artists</code>
-            </p>
-            <p className="text-zinc-500 text-sm text-center">
-              Por enquanto, use o botão "Sincronizar Desatualizados" acima para atualizar filmografias em lote.
-            </p>
+            <h2 className="text-xl font-bold text-white mb-4">
+              Lista de Artistas ({filteredArtists.length})
+            </h2>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
+              </div>
+            ) : filteredArtists.length === 0 ? (
+              <p className="text-zinc-400 text-center py-8">
+                Nenhum artista encontrado com os filtros selecionados
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {filteredArtists.map((artist) => (
+                  <div
+                    key={artist.id}
+                    className="flex items-center justify-between p-4 bg-black/50 border border-zinc-700 rounded-lg hover:border-purple-500/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      {getStatusIcon(artist.tmdbSyncStatus)}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-white">{artist.nameRomanized}</h3>
+                          {artist.nameHangul && (
+                            <span className="text-sm text-zinc-500">({artist.nameHangul})</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-zinc-500">
+                          <span>{getStatusText(artist.tmdbSyncStatus)}</span>
+                          <span>•</span>
+                          <span>{artist.productionsCount} produções</span>
+                          {artist.tmdbLastSync && (
+                            <>
+                              <span>•</span>
+                              <span>
+                                Última sync:{' '}
+                                {new Date(artist.tmdbLastSync).toLocaleDateString('pt-BR')}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => syncArtist(artist.id)}
+                      disabled={syncing === artist.id}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      <RefreshCw
+                        size={16}
+                        className={syncing === artist.id ? 'animate-spin' : ''}
+                      />
+                      {syncing === artist.id ? 'Sincronizando...' : 'Sincronizar'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
