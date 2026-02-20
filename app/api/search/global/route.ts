@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
             // Buscar produções
             types.includes('productions') ? prisma.production.findMany({
                 where: {
+                    flaggedAsNonKorean: false,
                     OR: [
                         { titlePt: { contains: searchTerm, mode: 'insensitive' } },
                         { titleKr: { contains: searchTerm, mode: 'insensitive' } },

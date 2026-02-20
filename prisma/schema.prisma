@@ -209,6 +209,9 @@ model Production {
   ageRatingSyncAt    DateTime? // última tentativa de busca de classificação (com ou sem resultado)
   // Cast sync tracking
   castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
+  // Moderation fields
+  flaggedAsNonKorean Boolean            @default(false)
+  flaggedAt          DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -222,6 +225,7 @@ model Production {
   @@index([releaseDate])
   @@index([castSyncAt])
   @@index([ageRatingSyncAt])
+  @@index([flaggedAsNonKorean])
 }
 
 model ArtistProduction {

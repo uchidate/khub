@@ -15,7 +15,10 @@ export async function GET(request: NextRequest) {
     const ageRating = searchParams.get('ageRating') || undefined
     const sortBy = searchParams.get('sortBy') || 'newest'
 
-    const where: any = {}
+    const where: any = {
+        // Filtrar produções marcadas como não-relevantes
+        flaggedAsNonKorean: false,
+    }
 
     if (search) {
         where.OR = [
