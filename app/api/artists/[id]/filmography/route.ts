@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
 
 const log = createLogger('ARTISTS')
 
@@ -25,11 +26,17 @@ export async function GET(
     const sortBy = searchParams.get('sortBy') || 'year'
     const order = searchParams.get('order') || 'desc'
 
-    // Get artist with filmography
+    // Aplicar filtro de classificação etária
+    const ageRatingFilter = await applyAgeRatingFilter()
+
+    // Get artist with filmography (filtrada por classificação)
     const artist = await prisma.artist.findUnique({
       where: { id },
       include: {
         productions: {
+          where: {
+            production: ageRatingFilter,
+          },
           include: {
             production: true,
           },
