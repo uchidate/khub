@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
     // Search productions
     const productions = await prisma.production.findMany({
       where: {
+        flaggedAsNonKorean: false,
         OR: [
           { titlePt: { contains: query, mode: 'insensitive' } },
           { titleKr: { contains: query, mode: 'insensitive' } },
