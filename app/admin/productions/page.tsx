@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, Users, RefreshCw } from 'lucide-react'
+import { Plus, Users, RefreshCw, ShieldCheck } from 'lucide-react'
 
 const AGE_RATING_STYLES: Record<string, string> = {
   'L':  'bg-green-500/20 text-green-400 border-green-500/30',
@@ -117,6 +117,7 @@ export default function ProductionsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [syncingId, setSyncingId] = useState<string | null>(null)
   const [batchSyncing, setBatchSyncing] = useState(false)
+  const [ageSyncing, setAgeSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
 
   const handleSyncCast = async (production: Production) => {
@@ -166,6 +167,31 @@ export default function ProductionsPage() {
     } finally {
       setBatchSyncing(false)
       setTimeout(() => setSyncMsg(''), 8000)
+    }
+  }
+
+  const handleSyncAgeRating = async () => {
+    if (ageSyncing) return
+    setAgeSyncing(true)
+    setSyncMsg('Buscando classificações no TMDB...')
+    try {
+      const res = await fetch('/api/admin/productions/sync-age-rating', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pending: true, limit: 50 }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSyncMsg(`✅ ${data.updated} classificações atualizadas · ${data.notFound} sem dados no TMDB (de ${data.processed} processadas)`)
+        refetchTable()
+      } else {
+        setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao classificar'}`)
+      }
+    } catch {
+      setSyncMsg('❌ Erro de rede')
+    } finally {
+      setAgeSyncing(false)
+      setTimeout(() => setSyncMsg(''), 10000)
     }
   }
 
@@ -228,6 +254,14 @@ export default function ProductionsPage() {
         <div className="flex items-center justify-between gap-4">
           <p className="text-zinc-400">Gerencie dramas, filmes e outras produções da plataforma</p>
           <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              onClick={handleSyncAgeRating}
+              disabled={ageSyncing}
+              className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ShieldCheck size={16} className={ageSyncing ? 'animate-pulse' : ''} />
+              {ageSyncing ? 'Classificando...' : 'Classificar Pendentes'}
+            </button>
             <button
               onClick={handleSyncPending}
               disabled={batchSyncing}

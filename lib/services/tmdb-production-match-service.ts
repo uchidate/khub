@@ -10,6 +10,7 @@
  */
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
+import { ProductionAgeRatingService } from './production-age-rating-service'
 import prisma from '../prisma'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
@@ -61,12 +62,14 @@ function mapTypeToTmdb(productionType: string): 'movie' | 'tv' {
 
 export class TmdbProductionMatchService {
   private rateLimiter: RateLimiter
+  private ageRatingService: ProductionAgeRatingService
 
   constructor() {
     if (!TMDB_API_KEY) {
       throw new Error('TMDB_API_KEY is not configured')
     }
     this.rateLimiter = new RateLimiter(RateLimiterPresets.TMDB)
+    this.ageRatingService = new ProductionAgeRatingService()
   }
 
   private async sleep(ms: number): Promise<void> {
@@ -172,7 +175,7 @@ export class TmdbProductionMatchService {
       where: { id: productionId },
       select: {
         id: true, titlePt: true, titleKr: true, type: true, year: true,
-        imageUrl: true, synopsis: true, tmdbId: true,
+        imageUrl: true, synopsis: true, tmdbId: true, ageRating: true,
       },
     })
 
@@ -249,6 +252,15 @@ export class TmdbProductionMatchService {
     if (trailerUrl) {
       updateData.trailerUrl = trailerUrl
       fieldsUpdated.push('trailerUrl')
+    }
+
+    // Buscar classificação etária BR (apenas se não estiver preenchida)
+    if (!production.ageRating) {
+      const ageRating = await this.ageRatingService.fetchAgeRating(searchResult.id, tmdbType)
+      if (ageRating) {
+        updateData.ageRating = ageRating
+        fieldsUpdated.push('ageRating')
+      }
     }
 
     await prisma.production.update({

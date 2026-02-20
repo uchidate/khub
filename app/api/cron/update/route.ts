@@ -322,6 +322,7 @@ async function runCronProcessing(lockId: string) {
                             voteAverage: production.voteAverage,
                             trailerUrl: production.trailerUrl,
                             tags: production.tags,
+                            ageRating: production.ageRating ?? null,
                             streamingPlatforms: [],
                             sourceUrls: [],
                         }

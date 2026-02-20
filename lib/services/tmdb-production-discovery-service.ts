@@ -8,6 +8,7 @@
  */
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
+import { ProductionAgeRatingService } from './production-age-rating-service'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
@@ -71,6 +72,7 @@ export interface DiscoveredProduction {
   voteAverage: number
   trailerUrl: string | null
   tags: string[]
+  ageRating: string | null
   cast: Array<{
     tmdbId: number
     name: string
@@ -80,12 +82,14 @@ export interface DiscoveredProduction {
 
 export class TMDBProductionDiscoveryService {
   private rateLimiter: RateLimiter
+  private ageRatingService: ProductionAgeRatingService
 
   constructor() {
     if (!TMDB_API_KEY) {
       throw new Error('TMDB_API_KEY is not configured')
     }
     this.rateLimiter = new RateLimiter(RateLimiterPresets.TMDB)
+    this.ageRatingService = new ProductionAgeRatingService()
   }
 
   /**
@@ -110,7 +114,8 @@ export class TMDBProductionDiscoveryService {
       const details = await this.getTVDetails(show.id)
       if (!details) continue
 
-      discovered.push(this.mapTVToDiscoveredProduction(details))
+      const ageRating = await this.ageRatingService.fetchAgeRating(show.id, 'tv')
+      discovered.push(this.mapTVToDiscoveredProduction(details, ageRating))
     }
 
     console.log(`✅ Discovered ${discovered.length} K-dramas`)
@@ -139,7 +144,8 @@ export class TMDBProductionDiscoveryService {
       const details = await this.getMovieDetails(movie.id)
       if (!details) continue
 
-      discovered.push(this.mapMovieToDiscoveredProduction(details))
+      const ageRating = await this.ageRatingService.fetchAgeRating(movie.id, 'movie')
+      discovered.push(this.mapMovieToDiscoveredProduction(details, ageRating))
     }
 
     console.log(`✅ Discovered ${discovered.length} Korean movies`)
@@ -219,7 +225,7 @@ export class TMDBProductionDiscoveryService {
   /**
    * Map TV show to DiscoveredProduction
    */
-  private mapTVToDiscoveredProduction(details: TMDBProductionDetails): DiscoveredProduction {
+  private mapTVToDiscoveredProduction(details: TMDBProductionDetails, ageRating: string | null = null): DiscoveredProduction {
     const title = details.name || details.original_name || 'Unknown Title'
     const koreanTitle = details.original_language === 'ko' ? (details.original_name || null) : null
 
@@ -262,6 +268,7 @@ export class TMDBProductionDiscoveryService {
       voteAverage: details.vote_average,
       trailerUrl,
       tags,
+      ageRating,
       cast,
     }
   }
@@ -289,7 +296,7 @@ export class TMDBProductionDiscoveryService {
   /**
    * Map movie to DiscoveredProduction
    */
-  private mapMovieToDiscoveredProduction(details: TMDBProductionDetails): DiscoveredProduction {
+  private mapMovieToDiscoveredProduction(details: TMDBProductionDetails, ageRating: string | null = null): DiscoveredProduction {
     const title = details.title || details.original_title || 'Unknown Title'
     const koreanTitle = details.original_language === 'ko' ? (details.original_title || null) : null
 
@@ -332,6 +339,7 @@ export class TMDBProductionDiscoveryService {
       voteAverage: details.vote_average,
       trailerUrl,
       tags,
+      ageRating,
       cast,
     }
   }
