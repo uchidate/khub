@@ -28,15 +28,17 @@ export async function GET(request: NextRequest) {
         where.type = type
     }
 
-    if (ageRating) {
+    if (ageRating === 'all') {
+        // 'all' → sem filtro de classificação (mostra tudo, inclusive 18+ e sem classificação)
+    } else if (ageRating) {
+        // Classificação específica (L, 10, 12, 14, 16, 18)
         where.ageRating = ageRating
     } else {
-        // Por padrão, excluir conteúdo adulto (18+) mas incluir produções sem classificação (null)
-        // Nota: where.NOT em campos nullable exclui NULLs no SQL — usamos AND explícito
-        where.AND = [
-            ...(where.AND || []),
-            { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
-        ]
+        // Padrão (sem seleção): exibir apenas classificadas (não-nulo) exceto 18+
+        where.ageRating = {
+            not: null,     // Tem classificação
+            notIn: ['18']  // E não é adulto
+        }
     }
 
     let orderBy: any

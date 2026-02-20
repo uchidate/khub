@@ -27,12 +27,14 @@ const TYPE_OPTIONS: { value: string; label: string }[] = [
 ]
 
 const AGE_RATING_OPTIONS: { value: string; label: string; color: string }[] = [
-    { value: '', label: 'Todas as Faixas', color: '' },
+    { value: '', label: 'Classificadas', color: '' },
+    { value: 'all', label: 'Todas (incl. 18+)', color: '' },
     { value: 'L', label: 'Livre', color: 'bg-green-600/80' },
     { value: '10', label: '10+', color: 'bg-blue-600/80' },
     { value: '12', label: '12+', color: 'bg-yellow-600/80' },
     { value: '14', label: '14+', color: 'bg-orange-600/80' },
     { value: '16', label: '16+', color: 'bg-red-600/80' },
+    { value: '18', label: '18+', color: 'bg-red-900/80' },
 ]
 
 const SORT_OPTIONS = [
@@ -225,7 +227,7 @@ export function ProductionsList() {
                         </button>
                     ))}
                     {!filters.ageRating && (
-                        <span className="text-[10px] text-zinc-600 italic ml-1">conteúdo 18+ oculto por padrão</span>
+                        <span className="text-[10px] text-zinc-600 italic ml-1">18+ e sem classificação ocultos</span>
                     )}
                 </div>
 
