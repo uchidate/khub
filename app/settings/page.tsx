@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Settings, Bell, Lock, Eye, Globe, Palette } from 'lucide-react'
+import { Settings, Bell, Lock, Eye, Globe, Palette, Shield } from 'lucide-react'
 import NavBar from '@/components/NavBar'
 
 export default async function SettingsPage() {
@@ -21,6 +21,13 @@ export default async function SettingsPage() {
         { label: 'Notificações push', enabled: false },
         { label: 'Atualizações de artistas favoritos', enabled: true },
       ],
+    },
+    {
+      title: 'Conteúdo',
+      description: 'Controle quais classificações etárias você deseja ver',
+      icon: Shield,
+      href: '/settings/content-preferences',
+      isLink: true,
     },
     {
       title: 'Privacidade',
@@ -69,45 +76,73 @@ export default async function SettingsPage() {
 
           {/* Settings Sections */}
           <div className="space-y-6 mb-8">
-            {settingsSections.map((section, index) => (
-              <div
-                key={section.title}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 animate-slide-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                    <section.icon className="text-purple-500" size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold text-white mb-1">{section.title}</h2>
-                    <p className="text-sm text-zinc-400">{section.description}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {section.settings.map((setting) => (
-                    <div
-                      key={setting.label}
-                      className="flex items-center justify-between py-3 border-t border-zinc-800 first:border-t-0"
-                    >
-                      <span className="text-white">{setting.label}</span>
-                      <button
-                        className={`relative w-14 h-7 rounded-full transition-colors ${
-                          setting.enabled ? 'bg-purple-500' : 'bg-zinc-700'
-                        }`}
-                      >
-                        <div
-                          className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                            setting.enabled ? 'translate-x-7' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
+            {settingsSections.map((section: any, index: number) => {
+              // Renderizar seção com link (ex: Conteúdo)
+              if (section.isLink && section.href) {
+                return (
+                  <Link
+                    key={section.title}
+                    href={section.href}
+                    className="block bg-zinc-900 border border-zinc-800 hover:border-purple-500/50 rounded-2xl p-8 animate-slide-up transition-all group"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-purple-500/10 group-hover:bg-purple-500/20 rounded-lg flex items-center justify-center transition-colors">
+                        <section.icon className="text-purple-500" size={24} />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-white mb-1 group-hover:text-purple-400 transition-colors">{section.title}</h2>
+                        <p className="text-sm text-zinc-400">{section.description}</p>
+                      </div>
+                      <div className="text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        →
+                      </div>
                     </div>
-                  ))}
+                  </Link>
+                )
+              }
+
+              // Renderizar seção normal (com settings)
+              return (
+                <div
+                  key={section.title}
+                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 animate-slide-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                      <section.icon className="text-purple-500" size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-xl font-bold text-white mb-1">{section.title}</h2>
+                      <p className="text-sm text-zinc-400">{section.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {section.settings?.map((setting: any) => (
+                      <div
+                        key={setting.label}
+                        className="flex items-center justify-between py-3 border-t border-zinc-800 first:border-t-0"
+                      >
+                        <span className="text-white">{setting.label}</span>
+                        <button
+                          className={`relative w-14 h-7 rounded-full transition-colors ${
+                            setting.enabled ? 'bg-purple-500' : 'bg-zinc-700'
+                          }`}
+                        >
+                          <div
+                            className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                              setting.enabled ? 'translate-x-7' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {/* Security Section */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 animate-slide-up">
