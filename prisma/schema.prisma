@@ -114,6 +114,10 @@ model Artist {
   instagramFeedUrl    String?           // RSS.app JSON feed URL
   instagramLastSync   DateTime?         // última sincronização bem-sucedida
   instagramPosts      InstagramPost[]
+  // Moderation (filtrar artistas não-relevantes para cultura coreana)
+  flaggedAsNonKorean Boolean            @default(false) // Admin marcou como não-relevante
+  flaggedAt          DateTime?          // Quando foi flagged
+  placeOfBirth       String?            // Local de nascimento (do TMDB)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -124,6 +128,7 @@ model Artist {
   @@index([createdAt])
   @@index([birthDate])
   @@index([nameRomanized, createdAt])
+  @@index([flaggedAsNonKorean])
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
   @@index([tmdbSyncStatus, tmdbLastSync])

@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     // Search artists
     const artists = await prisma.artist.findMany({
       where: {
+        flaggedAsNonKorean: false,
         OR: [
           { nameRomanized: { contains: query, mode: 'insensitive' } },
           { nameHangul: { contains: query, mode: 'insensitive' } },

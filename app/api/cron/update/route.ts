@@ -160,6 +160,7 @@ async function runCronProcessing(lockId: string) {
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
                             tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
+                            placeOfBirth: artist.placeOfBirth || null,
                         },
                         create: {
                             nameRomanized: artist.nameRomanized,
@@ -170,6 +171,7 @@ async function runCronProcessing(lockId: string) {
                             bio: artist.bio || null,
                             primaryImageUrl: artist.primaryImageUrl || null,
                             tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
+                            placeOfBirth: artist.placeOfBirth || null,
                         },
                     });
 

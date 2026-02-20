@@ -88,9 +88,9 @@ export class TMDBDiscoveryService {
       const details = await this.getPersonDetails(person.id);
       if (!details) continue;
 
-      // Verificar se é artista coreano
-      const isKorean = this.isKoreanArtist(details);
-      if (!isKorean) continue;
+      // Verificar se é artista relevante para cultura coreana
+      const isRelevant = this.isRelevantToKoreanCulture(details);
+      if (!isRelevant) continue;
 
       discovered.push(this.mapToDiscoveredArtist(details));
 
@@ -209,8 +209,8 @@ export class TMDBDiscoveryService {
         const details = await this.getPersonDetails(member.id);
         if (!details) continue;
 
-        const isKorean = this.isKoreanArtist(details);
-        if (!isKorean) continue;
+        const isRelevant = this.isRelevantToKoreanCulture(details);
+        if (!isRelevant) continue;
 
         seenIds.add(member.id);
         artists.push(this.mapToDiscoveredArtist(details));
@@ -249,33 +249,79 @@ export class TMDBDiscoveryService {
   }
 
   /**
-   * Verifica se é um artista coreano baseado nos dados
+   * Verifica se artista é relevante para cultura coreana
+   * Aceita: coreanos nativos OU não-coreanos com vínculo forte
+   *
+   * Critérios (qualquer um = ACEITAR):
+   * 1. Coreano nativo (nascido na Coreia OU nome Hangul)
+   * 2. Biografia menciona K-pop, K-drama, Korean entertainment
+   * 3. Local de nascimento não é de país conflitante (China, Japan como principal, etc.)
+   *
+   * Validação PERMISSIVA - Admin pode revisar depois via moderação
    */
-  private isKoreanArtist(person: TMDBPersonDetails): boolean {
-    // Verificar local de nascimento
-    if (person.place_of_birth) {
-      const birthPlace = person.place_of_birth.toLowerCase();
-      if (
-        birthPlace.includes('korea') ||
-        birthPlace.includes('seoul') ||
-        birthPlace.includes('busan') ||
-        birthPlace.includes('incheon') ||
-        birthPlace.includes('daegu')
-      ) {
-        return true;
-      }
-    }
+  private isRelevantToKoreanCulture(person: TMDBPersonDetails): boolean {
+    const birthPlace = person.place_of_birth?.toLowerCase() || '';
+    const bio = person.biography?.toLowerCase() || '';
 
-    // Verificar nomes alternativos para nomes coreanos
+    // 1. Coreano nativo? → ACEITAR
+    const isBornInKorea =
+      birthPlace.includes('korea') ||
+      birthPlace.includes('seoul') ||
+      birthPlace.includes('busan') ||
+      birthPlace.includes('incheon') ||
+      birthPlace.includes('daegu') ||
+      birthPlace.includes('gwangju') ||
+      birthPlace.includes('daejeon') ||
+      birthPlace.includes('ulsan');
+
+    if (isBornInKorea) return true;
+
+    // Tem nome em Hangul (coreano)?
     if (person.also_known_as && person.also_known_as.length > 0) {
       const hasKoreanName = person.also_known_as.some(name => {
-        // Detectar caracteres coreanos (Hangul)
-        return /[\uAC00-\uD7AF]/.test(name);
+        return /[\uAC00-\uD7AF]/.test(name); // Hangul
       });
       if (hasKoreanName) return true;
     }
 
-    return false;
+    // 2. Biografia menciona vínculo com cultura coreana? → ACEITAR
+    const hasKoreanCultureMention =
+      bio.includes('k-pop') ||
+      bio.includes('kpop') ||
+      bio.includes('k-drama') ||
+      bio.includes('korean drama') ||
+      bio.includes('korean idol') ||
+      bio.includes('korean entertainment') ||
+      bio.includes('korean industry') ||
+      bio.includes('korean film') ||
+      bio.includes('korean cinema') ||
+      bio.includes('korean music') ||
+      bio.includes('korean group') ||
+      bio.includes('korean band');
+
+    if (hasKoreanCultureMention) return true;
+
+    // 3. BLOQUEAR se claramente de outro país (sem menção a Coreia)
+    const isFromConflictingCountry =
+      (birthPlace.includes('china') && !birthPlace.includes('korea')) ||
+      (birthPlace.includes('japan') && !birthPlace.includes('korea')) ||
+      (birthPlace.includes('thailand') && !bio.includes('korea')) ||
+      (birthPlace.includes('vietnam') && !bio.includes('korea')) ||
+      (birthPlace.includes('philippines') && !bio.includes('korea')) ||
+      (birthPlace.includes('india') && !bio.includes('korea'));
+
+    if (isFromConflictingCountry) {
+      // Se é de outro país mas biografia menciona Coreia → ACEITAR (pode ser membro de grupo K-pop)
+      if (bio.includes('korea') || bio.includes('korean')) {
+        return true;
+      }
+      // Se não menciona Coreia e é de outro país → REJEITAR
+      return false;
+    }
+
+    // 4. Caso padrão: se não temos certeza, ACEITAR (admin vai revisar)
+    // Melhor falso positivo (admin remove depois) que falso negativo (perde artista relevante)
+    return true;
   }
 
   /**
@@ -291,13 +337,13 @@ export class TMDBDiscoveryService {
       koreanName,
       biography: person.biography || '',
       birthDate: person.birthday ? new Date(person.birthday) : null,
-      placeOfBirth: person.place_of_birth,
+      placeOfBirth: person.place_of_birth, // Salvamos para moderação admin
       profileImage: person.profile_path
         ? `${TMDB_IMAGE_BASE}${person.profile_path}`
         : null,
       department: person.known_for_department || 'Acting',
       popularity: person.popularity,
-      isKorean: true,
+      isKorean: this.isRelevantToKoreanCulture(person), // Validação atualizada
     };
   }
 
