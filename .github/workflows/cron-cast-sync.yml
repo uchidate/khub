@@ -19,7 +19,7 @@ jobs:
   sync-cast:
     name: Sync Production Cast from TMDB
     runs-on: ubuntu-latest
-    timeout-minutes: 10 # Endpoint retorna 202 imediatamente; processamento em background
+    timeout-minutes: 15 # Endpoint retorna 202 imediatamente; processamento em background
 
     steps:
       - name: 🎬 Call Cast Sync Endpoint
@@ -28,7 +28,7 @@ jobs:
           echo "🚀 Calling cast sync endpoint (limit: $LIMIT)..."
 
           # O endpoint retorna 202 Accepted imediatamente e processa em background
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
             "https://www.hallyuhub.com.br/api/cron/sync-cast?limit=$LIMIT" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
