@@ -33,7 +33,7 @@ export default function InstagramAdminPage() {
     const [feedValues, setFeedValues] = useState<Record<string, string>>({})
     const [syncing, setSyncing] = useState(false)
     const [syncMsg, setSyncMsg] = useState('')
-    const [syncDetails, setSyncDetails] = useState<{ name: string; posts: number; error?: string }[]>([])
+    const [syncDetails, setSyncDetails] = useState<{ name: string; posts: number; error?: string; debug?: { id: string; url: string; external_url?: string }[] }[]>([])
 
     const fetchArtists = useCallback(async () => {
         setLoading(true)
@@ -150,14 +150,31 @@ export default function InstagramAdminPage() {
                         <p className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Resultado do sync</p>
                         <div className="space-y-1.5">
                             {syncDetails.map((r, i) => (
-                                <div key={i} className="flex items-start justify-between gap-4 text-xs">
-                                    <span className="text-zinc-300 font-medium">{r.name}</span>
-                                    {r.error ? (
-                                        <span className="text-red-400 font-mono text-[10px] text-right max-w-xs truncate" title={r.error}>
-                                            ❌ {r.error.replace('Error: ', '').slice(0, 80)}
-                                        </span>
-                                    ) : (
-                                        <span className="text-green-400 font-bold flex-shrink-0">✅ {r.posts} posts</span>
+                                <div key={i} className="text-xs space-y-1">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <span className="text-zinc-300 font-medium">{r.name}</span>
+                                        {r.error ? (
+                                            <span className="text-red-400 font-mono text-[10px] text-right max-w-xs truncate" title={r.error}>
+                                                ❌ {r.error.replace('Error: ', '').slice(0, 80)}
+                                            </span>
+                                        ) : (
+                                            <span className={`font-bold flex-shrink-0 ${r.posts > 0 ? 'text-green-400' : 'text-yellow-400'}`}>
+                                                {r.posts > 0 ? `✅ ${r.posts} posts` : '⚠️ 0 posts'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {r.posts === 0 && !r.error && r.debug && r.debug.length > 0 && (
+                                        <div className="ml-2 pl-2 border-l border-yellow-500/30 space-y-0.5">
+                                            <p className="text-yellow-500/70 text-[10px] font-bold uppercase">URLs do feed (amostra):</p>
+                                            {r.debug.map((d, j) => (
+                                                <div key={j} className="text-[10px] text-zinc-500 font-mono truncate" title={`id: ${d.id}\nurl: ${d.url}\nexternal_url: ${d.external_url ?? '-'}`}>
+                                                    url: {d.url || '(vazio)'}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {r.posts === 0 && !r.error && r.debug && r.debug.length === 0 && (
+                                        <p className="ml-2 text-[10px] text-zinc-600 italic">Feed retornou 0 itens</p>
                                     )}
                                 </div>
                             ))}
