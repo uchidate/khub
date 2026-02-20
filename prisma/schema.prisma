@@ -303,6 +303,7 @@ model User {
   notificationSettings   UserNotificationSettings?
   notificationHistory    NotificationHistory[]
   comments               Comment[]
+  contentPreferences     UserContentPreferences?
 
   @@index([email])
 }
@@ -482,4 +483,28 @@ model ArtistDiscoveryLog {
   @@index([attemptedAt])
   @@index([tmdbId, attemptedAt])
   @@map("artist_discovery_log")
+}
+
+// Configurações globais do sistema (singleton - sempre id = "singleton")
+model SystemSettings {
+  id                        String   @id @default("singleton")
+  allowAdultContent         Boolean  @default(false)   // Permite conteúdo 18+ no site
+  allowUnclassifiedContent  Boolean  @default(false)   // Permite produções sem classificação
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// Preferências de conteúdo por usuário (quais classificações deseja ver)
+model UserContentPreferences {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allowedRatings String[] // ex: ['L', '10', '12', '14'] ou ['null'] para não classificados
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_content_preferences")
 }
