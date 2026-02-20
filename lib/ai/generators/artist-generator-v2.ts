@@ -9,6 +9,7 @@ export interface ArtistData {
     bio: string;
     primaryImageUrl: string;
     tmdbId: number;
+    placeOfBirth?: string;
 }
 
 /**
@@ -186,6 +187,7 @@ export class ArtistGeneratorV2 {
             bio, // Biografia ORIGINAL (EN/KR) - será traduzida depois
             primaryImageUrl: discovered.profileImage || '',
             tmdbId: discovered.tmdbId,
+            placeOfBirth: discovered.placeOfBirth || undefined,
         };
     }
 

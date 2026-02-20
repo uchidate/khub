@@ -41,6 +41,7 @@ export default async function Home() {
 
     // Trending Artists (12 artistas em alta)
     const trendingArtists = await prisma.artist.findMany({
+        where: { flaggedAsNonKorean: false },
         take: 12,
         orderBy: { trendingScore: 'desc' },
         select: {

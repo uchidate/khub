@@ -114,6 +114,7 @@ export default async function AdminPage() {
     { label: 'Publicar Notícia', href: '/admin/news', icon: Newspaper, desc: 'Via RSS ou manual' },
     { label: 'Importar Filmografia', href: '/admin/filmography', icon: Clapperboard, desc: 'TMDB → Artista' },
     { label: 'Gerenciar Grupos', href: '/admin/groups', icon: Music2, desc: 'Membros, MVs, tema' },
+    { label: 'Moderação Artistas', href: '/admin/artists/moderation', icon: AlertTriangle, desc: 'Revisar artistas suspeitos' },
     { label: 'Duplicados', href: '/admin/artists/duplicates', icon: GitMerge, desc: 'Detectar e mesclar' },
     { label: 'Gerenciar Tags', href: '/admin/tags', icon: Tag, desc: 'Normalizar tags de notícias' },
     { label: 'Instagram Feeds', href: '/admin/instagram', icon: Instagram, desc: 'Feeds RSS.app por artista' },

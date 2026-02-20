@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
             // Buscar artistas
             types.includes('artists') ? prisma.artist.findMany({
                 where: {
+                    flaggedAsNonKorean: false,
                     OR: [
                         { nameRomanized: { contains: searchTerm, mode: 'insensitive' } },
                         { nameHangul: { contains: searchTerm, mode: 'insensitive' } },

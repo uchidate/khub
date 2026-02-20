@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'trending'
 
     // Construir where clause
-    const where: any = {}
+    const where: any = {
+        // Filtrar artistas marcados como não-relevantes
+        flaggedAsNonKorean: false,
+    }
 
     if (search) {
         where.OR = [
