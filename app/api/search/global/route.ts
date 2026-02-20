@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
 
 const log = createLogger('SEARCH')
 
@@ -31,6 +32,9 @@ export async function GET(request: NextRequest) {
     const searchTerm = query.trim()
 
     try {
+        // Aplicar filtro de classificação etária
+        const ageRatingFilter = await applyAgeRatingFilter()
+
         // Buscar em paralelo nos 4 modelos
         const [artists, news, productions, groups] = await Promise.all([
             // Buscar artistas
@@ -81,7 +85,8 @@ export async function GET(request: NextRequest) {
                         { titlePt: { contains: searchTerm, mode: 'insensitive' } },
                         { titleKr: { contains: searchTerm, mode: 'insensitive' } },
                         { synopsis: { contains: searchTerm, mode: 'insensitive' } }
-                    ]
+                    ],
+                    ...ageRatingFilter,
                 },
                 take: limit,
                 select: {

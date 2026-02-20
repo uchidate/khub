@@ -4,6 +4,7 @@ import Image from "next/image"
 import type { Metadata } from "next"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { HeroSection } from "@/components/features/HeroSection"
 import { StatsSection } from "@/components/features/StatsSection"
 import { FeaturedCarousel } from "@/components/features/FeaturedCarousel"
@@ -53,8 +54,12 @@ export default async function Home() {
         }
     })
 
+    // Aplicar filtro de classificação etária (respeita SystemSettings + UserContentPreferences)
+    const ageRatingFilter = await applyAgeRatingFilter()
+
     // Latest Productions (6 mais recentes)
     const latestProductionsRaw = await prisma.production.findMany({
+        where: ageRatingFilter,
         take: 6,
         orderBy: { createdAt: 'desc' },
         select: {
@@ -75,7 +80,10 @@ export default async function Home() {
 
     // Top Rated Productions (6 com maior nota TMDB ≥ 7.5)
     const topRatedProductions = await prisma.production.findMany({
-        where: { voteAverage: { gte: 7.5 } },
+        where: {
+            voteAverage: { gte: 7.5 },
+            ...ageRatingFilter,
+        },
         take: 6,
         orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
         select: {
