@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export async function generateMetadata(): Promise<Metadata> {
-    const total = await prisma.production.count().catch(() => 0)
+    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}filmes e séries coreanas. De romances épicos a thrillers de tirar o fôlego.`
     return {
         title: 'Filmes & Séries',

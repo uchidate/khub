@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         where: { id: params.id },
         include: {
             artists: {
+                where: { artist: { flaggedAsNonKorean: false } },
                 include: { artist: true }
             }
         }
@@ -68,6 +69,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
         where: { id: params.id },
         include: {
             artists: {
+                where: { artist: { flaggedAsNonKorean: false } },
                 include: { artist: true },
                 orderBy: { role: 'asc' }
             }
@@ -83,6 +85,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
     const relatedProductions = await prisma.production.findMany({
         where: {
             id: { not: production.id },
+            flaggedAsNonKorean: false,
             OR: [
                 ...(tags.length > 0 ? [{ tags: { hasSome: tags } }] : []),
                 { type: production.type },
