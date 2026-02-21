@@ -9,6 +9,7 @@
  */
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
+import { isRelevantToKoreanCulture } from '../utils/korean-validation'
 import prisma from '../prisma'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
@@ -43,6 +44,9 @@ interface TMDBPersonDetails {
   birthday: string | null
   profile_path: string | null
   popularity: number
+  // Origin validation fields
+  place_of_birth: string | null
+  also_known_as: string[]
 }
 
 export class ProductionCastService {
@@ -168,6 +172,12 @@ export class ProductionCastService {
           // Fetch full details to create a richer Artist record
           const details = await this.getPersonDetails(member.id)
 
+          // VALIDATION: Check if cast member is relevant to Korean culture
+          const isRelevant = details ? isRelevantToKoreanCulture(details) : false
+          if (!isRelevant && details) {
+            console.warn(`⚠️  Non-Korean cast member detected: "${member.name}" (tmdbId: ${member.id}, birthplace: ${details.place_of_birth || 'N/A'})`)
+          }
+
           const nameRomanized = member.name
           // Ensure uniqueness — if name exists, append TMDB id
           const nameCandidate = nameRomanized
@@ -187,12 +197,16 @@ export class ProductionCastService {
                 : null,
               bio: details?.biography || null,
               birthDate: details?.birthday ? new Date(details.birthday) : null,
+              placeOfBirth: details?.place_of_birth || null,
               roles: ['ATOR'],
               tmdbId: String(member.id),
               tmdbSyncStatus: 'SYNCED',
               tmdbLastSync: new Date(),
               tmdbLastAttempt: new Date(),
               translationStatus: 'pending',
+              // AUTO-FLAG if not relevant to Korean culture
+              flaggedAsNonKorean: !isRelevant,
+              flaggedAt: !isRelevant ? new Date() : null,
             },
           })
 

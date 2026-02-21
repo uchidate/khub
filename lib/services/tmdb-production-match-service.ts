@@ -52,6 +52,12 @@ interface TMDBDetails {
   videos?: {
     results: Array<{ key: string; site: string; type: string; official: boolean }>
   }
+  // Origin validation fields
+  production_countries?: Array<{
+    iso_3166_1: string  // 'KR', 'US', 'JP', etc.
+    name: string        // 'South Korea', 'United States', etc.
+  }>
+  origin_country?: string[]  // TV shows: ['KR'], ['US', 'KR'], etc.
 }
 
 function mapTypeToTmdb(productionType: string): 'movie' | 'tv' {
@@ -163,6 +169,24 @@ export class TmdbProductionMatchService {
   }
 
   /**
+   * Check if production is Korean-origin based on TMDB data.
+   * Returns true if 'KR' is in origin_country or production_countries.
+   */
+  private isKoreanOrigin(details: TMDBDetails): boolean {
+    // TV: check origin_country (array of codes)
+    if (details.origin_country?.includes('KR')) {
+      return true
+    }
+
+    // Movie/TV: check production_countries
+    if (details.production_countries?.some(c => c.iso_3166_1 === 'KR')) {
+      return true
+    }
+
+    return false
+  }
+
+  /**
    * Match and enrich a single production.
    * Returns the matched tmdbId or null if no match found.
    */
@@ -203,12 +227,28 @@ export class TmdbProductionMatchService {
     // Fetch full details
     const details = await this.fetchDetails(searchResult.id, tmdbType)
 
+    // VALIDATION: Check if production is Korean-origin
+    const isKorean = details ? this.isKoreanOrigin(details) : false
+    if (!isKorean && details) {
+      const origins = details.production_countries?.map(c => c.iso_3166_1).join(', ') ||
+                      details.origin_country?.join(', ') || 'N/A'
+      console.warn(`⚠️  Non-Korean production detected: "${production.titlePt}" (tmdbId: ${tmdbId}, origin: ${origins})`)
+    }
+
     // Build update data — only fill fields that are currently null/missing
     const updateData: Record<string, unknown> = {
       tmdbId,
       tmdbType,
+      // AUTO-FLAG if not Korean-origin
+      ...(details && !isKorean ? {
+        flaggedAsNonKorean: true,
+        flaggedAt: new Date(),
+      } : {}),
     }
     const fieldsUpdated: string[] = ['tmdbId', 'tmdbType']
+    if (!isKorean) {
+      fieldsUpdated.push('flaggedAsNonKorean')
+    }
 
     const backdropPath = details?.backdrop_path || searchResult.backdrop_path
     if (backdropPath) {
