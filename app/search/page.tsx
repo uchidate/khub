@@ -42,6 +42,7 @@ async function SearchResults({ query }: { query: string }) {
     const [artists, news, productions] = await Promise.all([
         prisma.artist.findMany({
             where: {
+                flaggedAsNonKorean: false,
                 OR: [
                     { nameRomanized: { contains: searchTerm, mode: 'insensitive' } },
                     { nameHangul: { contains: searchTerm, mode: 'insensitive' } },
@@ -80,6 +81,7 @@ async function SearchResults({ query }: { query: string }) {
 
         prisma.production.findMany({
             where: {
+                flaggedAsNonKorean: false,
                 OR: [
                     { titlePt: { contains: searchTerm, mode: 'insensitive' } },
                     { titleKr: { contains: searchTerm, mode: 'insensitive' } },
