@@ -93,7 +93,10 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
             include: {
                 agency: true,
                 albums: { orderBy: { releaseDate: 'desc' } },
-                productions: { include: { production: true } },
+                productions: {
+                    where: { production: { flaggedAsNonKorean: false } },
+                    include: { production: true },
+                },
                 memberships: {
                     include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },
                     orderBy: { isActive: 'desc' },
