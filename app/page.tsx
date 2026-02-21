@@ -60,7 +60,10 @@ export default async function Home() {
 
     // Latest Productions (6 mais recentes)
     const latestProductionsRaw = await prisma.production.findMany({
-        where: ageRatingFilter,
+        where: {
+            flaggedAsNonKorean: false,
+            ...ageRatingFilter,
+        },
         take: 6,
         orderBy: { createdAt: 'desc' },
         select: {
@@ -82,6 +85,7 @@ export default async function Home() {
     // Top Rated Productions (6 com maior nota TMDB ≥ 7.5)
     const topRatedProductions = await prisma.production.findMany({
         where: {
+            flaggedAsNonKorean: false,
             voteAverage: { gte: 7.5 },
             ...ageRatingFilter,
         },
