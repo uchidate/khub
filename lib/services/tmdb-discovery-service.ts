@@ -11,6 +11,7 @@
  */
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter';
+import { isRelevantToKoreanCulture as validateKoreanRelevance } from '../utils/korean-validation';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
@@ -249,79 +250,15 @@ export class TMDBDiscoveryService {
   }
 
   /**
-   * Verifica se artista é relevante para cultura coreana
-   * Aceita: coreanos nativos OU não-coreanos com vínculo forte
+   * Verifica se artista é relevante para cultura coreana.
    *
-   * Critérios (qualquer um = ACEITAR):
-   * 1. Coreano nativo (nascido na Coreia OU nome Hangul)
-   * 2. Biografia menciona K-pop, K-drama, Korean entertainment
-   * 3. Local de nascimento não é de país conflitante (China, Japan como principal, etc.)
+   * Delega para utilitário compartilhado korean-validation.ts
+   * com lógica RIGOROSA (default: rejeitar se incerto).
    *
-   * Validação PERMISSIVA - Admin pode revisar depois via moderação
+   * Mudança de filosofia: requer evidência positiva de relevância coreana.
    */
   private isRelevantToKoreanCulture(person: TMDBPersonDetails): boolean {
-    const birthPlace = person.place_of_birth?.toLowerCase() || '';
-    const bio = person.biography?.toLowerCase() || '';
-
-    // 1. Coreano nativo? → ACEITAR
-    const isBornInKorea =
-      birthPlace.includes('korea') ||
-      birthPlace.includes('seoul') ||
-      birthPlace.includes('busan') ||
-      birthPlace.includes('incheon') ||
-      birthPlace.includes('daegu') ||
-      birthPlace.includes('gwangju') ||
-      birthPlace.includes('daejeon') ||
-      birthPlace.includes('ulsan');
-
-    if (isBornInKorea) return true;
-
-    // Tem nome em Hangul (coreano)?
-    if (person.also_known_as && person.also_known_as.length > 0) {
-      const hasKoreanName = person.also_known_as.some(name => {
-        return /[\uAC00-\uD7AF]/.test(name); // Hangul
-      });
-      if (hasKoreanName) return true;
-    }
-
-    // 2. Biografia menciona vínculo com cultura coreana? → ACEITAR
-    const hasKoreanCultureMention =
-      bio.includes('k-pop') ||
-      bio.includes('kpop') ||
-      bio.includes('k-drama') ||
-      bio.includes('korean drama') ||
-      bio.includes('korean idol') ||
-      bio.includes('korean entertainment') ||
-      bio.includes('korean industry') ||
-      bio.includes('korean film') ||
-      bio.includes('korean cinema') ||
-      bio.includes('korean music') ||
-      bio.includes('korean group') ||
-      bio.includes('korean band');
-
-    if (hasKoreanCultureMention) return true;
-
-    // 3. BLOQUEAR se claramente de outro país (sem menção a Coreia)
-    const isFromConflictingCountry =
-      (birthPlace.includes('china') && !birthPlace.includes('korea')) ||
-      (birthPlace.includes('japan') && !birthPlace.includes('korea')) ||
-      (birthPlace.includes('thailand') && !bio.includes('korea')) ||
-      (birthPlace.includes('vietnam') && !bio.includes('korea')) ||
-      (birthPlace.includes('philippines') && !bio.includes('korea')) ||
-      (birthPlace.includes('india') && !bio.includes('korea'));
-
-    if (isFromConflictingCountry) {
-      // Se é de outro país mas biografia menciona Coreia → ACEITAR (pode ser membro de grupo K-pop)
-      if (bio.includes('korea') || bio.includes('korean')) {
-        return true;
-      }
-      // Se não menciona Coreia e é de outro país → REJEITAR
-      return false;
-    }
-
-    // 4. Caso padrão: se não temos certeza, ACEITAR (admin vai revisar)
-    // Melhor falso positivo (admin remove depois) que falso negativo (perde artista relevante)
-    return true;
+    return validateKoreanRelevance(person);
   }
 
   /**

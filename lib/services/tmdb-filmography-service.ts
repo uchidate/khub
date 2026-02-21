@@ -381,6 +381,7 @@ export class TMDBFilmographyService {
           voteAverage: details.vote_average,
           streamingPlatforms,
           role,
+          production_countries: details.production_countries,
         }
       } else {
         // Handle TV show
@@ -416,6 +417,8 @@ export class TMDBFilmographyService {
           voteAverage: details.vote_average,
           streamingPlatforms,
           role,
+          production_countries: details.production_countries,
+          origin_country: details.origin_country,
         }
       }
     } catch (error) {

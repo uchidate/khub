@@ -84,7 +84,8 @@ export class ArtistGeneratorV2 {
         console.log(`📊 Excluded: ${existingTmdbIds.size} in DB, ${recentlyAttemptedIds.size} recently attempted`);
 
         // Descobrir artistas do TMDB (buscar mais para ter margem)
-        const discovered = await this.tmdbDiscovery.discoverKoreanArtists(count * 3);
+        // Multiplicador aumentado de 3 para 5 devido ao filtro mais rigoroso em isRelevantToKoreanCulture
+        const discovered = await this.tmdbDiscovery.discoverKoreanArtists(count * 5);
 
         console.log(`📊 Found ${discovered.length} Korean artists, filtering...`);
 

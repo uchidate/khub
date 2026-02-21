@@ -283,6 +283,8 @@ export interface TMDBProductionData {
   voteAverage: number | null
   streamingPlatforms: string[]
   role: string | null // Character name or job (Director, Writer, etc.)
+  production_countries?: Array<{ iso_3166_1: string; name: string }>
+  origin_country?: string[] // TV shows only
 }
 
 export interface RateLimitInfo {

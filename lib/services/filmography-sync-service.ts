@@ -77,6 +77,15 @@ export function stringSimilarity(str1: string, str2: string): number {
   return 1 - matrix[s2.length][s1.length] / maxLength
 }
 
+/**
+ * Check if production has Korean origin based on TMDB data
+ */
+function isKoreanOrigin(prodData: TMDBProductionData): boolean {
+  if (prodData.origin_country?.includes('KR')) return true
+  if (prodData.production_countries?.some(c => c.iso_3166_1 === 'KR')) return true
+  return false
+}
+
 export class FilmographySyncService {
   private tmdbService = getTMDBFilmographyService()
   private slackService = getSlackService()
@@ -518,6 +527,15 @@ export class FilmographySyncService {
       return 'added'
     }
 
+    // Validate origin and auto-flag non-Korean productions
+    const isKorean = isKoreanOrigin(prodData)
+    if (!isKorean) {
+      const origins = prodData.origin_country?.join(', ') ||
+                     prodData.production_countries?.map(c => c.iso_3166_1).join(', ') ||
+                     'N/A'
+      console.warn(`⚠️  Non-Korean production detected (filmography sync): "${prodData.title}" (tmdbId: ${prodData.tmdbId}, origin: ${origins})`)
+    }
+
     // Create new production
     const newProduction = await prisma.production.create({
       data: {
@@ -535,6 +553,9 @@ export class FilmographySyncService {
         streamingPlatforms: prodData.streamingPlatforms,
         sourceUrls: [],
         tags: [],
+        // Auto-flag non-Korean productions
+        flaggedAsNonKorean: !isKorean,
+        flaggedAt: !isKorean ? new Date() : null,
       },
     })
 
