@@ -29,6 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         // 2. Dynamic Artists
         const artists = await prisma.artist.findMany({
+            where: { flaggedAsNonKorean: false },
             select: { id: true, updatedAt: true },
             take: 1000,
         })
@@ -42,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         // 3. Dynamic Productions
         const productions = await prisma.production.findMany({
+            where: { flaggedAsNonKorean: false },
             select: { id: true, updatedAt: true },
             take: 1000,
         })

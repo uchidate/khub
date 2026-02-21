@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export async function generateMetadata(): Promise<Metadata> {
-    const total = await prisma.artist.count().catch(() => 0)
+    const total = await prisma.artist.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)
     const desc = `Explore ${total > 0 ? `${total} ` : ''}perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.`
     return {
         title: 'Artistas',

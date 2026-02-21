@@ -45,7 +45,7 @@ async function NewsContent() {
     // Buscar artistas e grupos com notícias para popular os filtros
     const [artists, groups] = await Promise.all([
         prisma.artist.findMany({
-            where: { news: { some: {} } },
+            where: { flaggedAsNonKorean: false, news: { some: {} } },
             select: { id: true, nameRomanized: true },
             orderBy: { nameRomanized: 'asc' },
         }),
