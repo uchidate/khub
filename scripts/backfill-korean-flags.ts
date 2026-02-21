@@ -10,6 +10,7 @@
  *   npx tsx scripts/backfill-korean-flags.ts --only=productions
  *   npx tsx scripts/backfill-korean-flags.ts --only=artists
  *   npx tsx scripts/backfill-korean-flags.ts --batch=50   # Tamanho do lote (default 100)
+ *   npx tsx scripts/backfill-korean-flags.ts --strict     # Flaga artistas sem qualquer evidência coreana
  */
 
 import 'dotenv/config'
@@ -23,6 +24,7 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 // ============================================================================
 const args = process.argv.slice(2)
 const isDryRun = args.includes('--dry-run')
+const isStrict = args.includes('--strict') // Flaga artistas sem evidência coreana (mesmo sem dados)
 const onlyArg = args.find(a => a.startsWith('--only='))?.split('=')[1]
 const batchArg = args.find(a => a.startsWith('--batch='))?.split('=')[1]
 const BATCH_SIZE = batchArg ? parseInt(batchArg) : 100
@@ -262,7 +264,7 @@ async function backfillArtists() {
             continue
           }
 
-          // Confirmado não-coreano via TMDB
+          // Confirmado não-coreano via TMDB (tem birthplace fora da Coreia)
           if (details.place_of_birth && !bornInKorea) {
             console.log(`  ⚠️  Flagrando artista (TMDB): "${artist.nameRomanized}" (nascimento: ${details.place_of_birth})`)
             if (!isDryRun) {
@@ -278,11 +280,35 @@ async function backfillArtists() {
             flagged++
             continue
           }
+
+          // Modo estrito: sem nenhuma evidência coreana no TMDB → flagar
+          if (isStrict) {
+            console.log(`  ⚠️  Flagrando artista (sem evidência coreana): "${artist.nameRomanized}"`)
+            if (!isDryRun) {
+              await prisma.artist.update({
+                where: { id: artist.id },
+                data: { flaggedAsNonKorean: true, flaggedAt: new Date() },
+              })
+            }
+            flagged++
+            continue
+          }
         }
       }
 
-      // Sem evidência suficiente → manter (benefício da dúvida)
-      skipped++
+      // Sem evidência suficiente → manter (benefício da dúvida) OU flagar no modo estrito
+      if (isStrict) {
+        console.log(`  ⚠️  Flagrando artista (sem dados): "${artist.nameRomanized}"`)
+        if (!isDryRun) {
+          await prisma.artist.update({
+            where: { id: artist.id },
+            data: { flaggedAsNonKorean: true, flaggedAt: new Date() },
+          })
+        }
+        flagged++
+      } else {
+        skipped++
+      }
     }
 
     offset += batch.length
