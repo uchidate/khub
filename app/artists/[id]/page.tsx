@@ -142,6 +142,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
         ? await prisma.artist.findMany({
             where: {
                 id: { not: artist.id },
+                flaggedAsNonKorean: false,
                 memberships: { some: { groupId: activeGroup.id, isActive: true } },
             },
             take: 8,
