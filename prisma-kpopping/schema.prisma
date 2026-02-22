@@ -8,34 +8,38 @@ datasource db {
 }
 
 model Idol {
-  id           String    @id @default(cuid())
-  slug         String    @unique // slug da URL: kpopping.com/profiles/idol/{slug}
-  nameRomanized String
-  nameHangul   String?
-  fullName     String?
-  birthday     DateTime?
-  height       String?   // ex: "162 cm"
-  weight       String?   // ex: "44 kg"
-  bloodType    String?   // ex: "A"
-  zodiacSign   String?   // ex: "Capricorn"
-  mbti         String?   // ex: "ISTP"
-  debutDate    DateTime?
-  education    String?
-  hometown     String?
-  country      String?
-  fandom       String?
-  imageUrl     String?
-  profileUrl   String    // URL completa do perfil
-  rawData      Json?     // todos os campos brutos extraídos
+  id            String    @id @default(cuid())
+  slug          String    @unique // slug da URL: kpopping.com/profiles/idol/{slug}
+  nameRomanized String    // stageName
+  nameHangul    String?   // nativeName
+  fullName      String?   // fullName
+  birthday      DateTime?
+  height        Int?      // cm (ex: 162)
+  weight        Int?      // kg (ex: 44)
+  bloodType     String?   // ex: "A"
+  mbti          String?   // ex: "ISTP"
+  debutDate     DateTime?
+  education     String?
+  hometown      String?
+  country       String?   // ISO 3166-1 alpha-2 (ex: "KR")
+  gender        String?   // "female" | "male"
+  status        String?   // "active" | "inactive" | "solo"
+  fandomName    String?   // ex: "BLINK"
+  fandomColors  Json?     // ex: [{"hex":"#000000","name":"Black"}]
+  bio           String?   // biografia em texto
+  imageUrl      String?   // URL da foto de perfil
+  profileUrl    String    // URL completa do perfil kpopping
 
-  groups       IdolInGroup[]
+  groups        IdolInGroup[]
 
-  scrapedAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  scrapedAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([nameRomanized])
   @@index([nameHangul])
   @@index([debutDate])
+  @@index([country])
+  @@index([gender])
 }
 
 model Group {
@@ -47,7 +51,7 @@ model Group {
   disbandDate  DateTime?
   agency       String?
   fandomName   String?
-  fandomColors String[]
+  fandomColors Json?
   imageUrl     String?
   rawData      Json?
 
