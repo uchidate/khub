@@ -24,7 +24,7 @@
     "gdrive:auth:local": "node scripts/run-gdrive-auth.js",
     "gdrive:upload": "tsx scripts/google-drive-upload.ts",
     "migrate:postgres": "tsx scripts/migrate-to-postgres.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && prisma generate --schema=prisma-kpopping/schema.prisma --config=prisma-kpopping/prisma.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

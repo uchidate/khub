@@ -22,10 +22,12 @@ RUN npm ci --ignore-scripts
 # Copiar prisma para geração do client
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
+COPY prisma-kpopping ./prisma-kpopping/
 
 # OTIMIZAÇÃO: Prisma generate UMA vez (deps stage)
 # Antes gerava 2x: deps + builder
-RUN npx prisma generate
+RUN npx prisma generate && \
+    npx prisma generate --schema=prisma-kpopping/schema.prisma --config=prisma-kpopping/prisma.config.ts
 
 # Stage 2: Production deps (apenas runtime)
 FROM node:20-bullseye-slim AS deps-production
