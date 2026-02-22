@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/kpopping-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Idol {
+  id           String    @id @default(cuid())
+  slug         String    @unique // slug da URL: kpopping.com/profiles/idol/{slug}
+  nameRomanized String
+  nameHangul   String?
+  fullName     String?
+  birthday     DateTime?
+  height       String?   // ex: "162 cm"
+  weight       String?   // ex: "44 kg"
+  bloodType    String?   // ex: "A"
+  zodiacSign   String?   // ex: "Capricorn"
+  mbti         String?   // ex: "ISTP"
+  debutDate    DateTime?
+  education    String?
+  hometown     String?
+  country      String?
+  fandom       String?
+  imageUrl     String?
+  profileUrl   String    // URL completa do perfil
+  rawData      Json?     // todos os campos brutos extraídos
+
+  groups       IdolInGroup[]
+
+  scrapedAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([nameRomanized])
+  @@index([nameHangul])
+  @@index([debutDate])
+}
+
+model Group {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  nameHangul   String?
+  debutDate    DateTime?
+  disbandDate  DateTime?
+  agency       String?
+  fandomName   String?
+  fandomColors String[]
+  imageUrl     String?
+  rawData      Json?
+
+  members      IdolInGroup[]
+
+  scrapedAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([name])
+}
+
+model IdolInGroup {
+  idol      Idol    @relation(fields: [idolId], references: [id])
+  idolId    String
+  group     Group   @relation(fields: [groupId], references: [id])
+  groupId   String
+  isActive  Boolean @default(true)
+  position  String? // ex: "Main Vocalist", "Leader"
+
+  @@id([idolId, groupId])
+}
