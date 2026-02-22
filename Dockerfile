@@ -85,6 +85,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Prisma (já gerado no deps stage)
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/prisma-kpopping ./prisma-kpopping
 
 # Scripts + Libs de AI
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
