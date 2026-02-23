@@ -269,7 +269,7 @@ export default async function Home() {
                                                     {item.title}
                                                 </h3>
                                                 <p className="text-xs text-zinc-500 line-clamp-2 md:line-clamp-1">
-                                                    {item.contentMd
+                                                    {(item.originalContent || item.contentMd)
                                                         .replace(/#{1,6}\s+/g, '')
                                                         .replace(/\*\*([^*]+)\*\*/g, '$1')
                                                         .replace(/\*([^*]+)\*/g, '$1')

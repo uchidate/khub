@@ -39,6 +39,7 @@ interface NewsItem {
     publishedAt: string
     tags: string[]
     contentMd?: string | null
+    originalContent?: string | null
     artists: Array<{
         artist: {
             id: string
@@ -203,7 +204,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                                     imageUrl={item.imageUrl}
                                     publishedAt={item.publishedAt}
                                     tags={item.tags || []}
-                                    contentMd={item.contentMd}
+                                    contentMd={item.originalContent || item.contentMd}
                                     artists={artistNames}
                                 />
                             )
