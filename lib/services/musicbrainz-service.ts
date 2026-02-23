@@ -213,6 +213,35 @@ export class MusicBrainzService {
   }
 
   /**
+   * Fetch debut date for a musical group (or artist) by mbid.
+   * Uses MusicBrainz life-span.begin field.
+   * Returns a Date object or null if not available.
+   *
+   * Handles partial dates:
+   *   'YYYY-MM-DD' → exact date
+   *   'YYYY-MM'    → first day of month
+   *   'YYYY'       → January 1st of that year
+   */
+  async getGroupDebutDate(mbid: string): Promise<Date | null> {
+    const url = `${MB_BASE_URL}/artist/${mbid}?fmt=json`
+    const data = await this.fetch<any>(url)
+    if (!data) return null
+
+    const begin = data['life-span']?.begin as string | undefined
+    if (!begin) return null
+
+    // Normalize partial dates to full YYYY-MM-DD
+    const normalized =
+      begin.length === 10 ? begin :
+      begin.length === 7  ? `${begin}-01` :
+      begin.length === 4  ? `${begin}-01-01` : null
+
+    if (!normalized) return null
+    const date = new Date(normalized)
+    return isNaN(date.getTime()) ? null : date
+  }
+
+  /**
    * Convenience: search artist then fetch all releases.
    * Returns null if artist not found in MusicBrainz.
    */

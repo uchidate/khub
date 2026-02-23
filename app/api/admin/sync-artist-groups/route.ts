@@ -91,11 +91,27 @@ export async function POST(request: NextRequest) {
                     const groupData = await mb.getArtistGroup(mbid)
 
                     if (groupData) {
+                        // Fetch debut date from MusicBrainz (only for new groups — avoids extra API call on update)
+                        const existingGroup = await prisma.musicalGroup.findUnique({
+                            where: { mbid: groupData.mbid },
+                            select: { id: true, debutDate: true },
+                        })
+                        const debutDate = (!existingGroup || !existingGroup.debutDate)
+                            ? await mb.getGroupDebutDate(groupData.mbid)
+                            : null
+
                         // Upsert the MusicalGroup entity
                         const group = await prisma.musicalGroup.upsert({
                             where: { mbid: groupData.mbid },
-                            create: { name: groupData.name, mbid: groupData.mbid },
-                            update: { name: groupData.name },
+                            create: {
+                                name: groupData.name,
+                                mbid: groupData.mbid,
+                                ...(debutDate ? { debutDate } : {}),
+                            },
+                            update: {
+                                name: groupData.name,
+                                ...(debutDate ? { debutDate } : {}),
+                            },
                         })
 
                         // Create or update the membership

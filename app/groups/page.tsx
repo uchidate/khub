@@ -29,7 +29,9 @@ const GENERATIONS: { label: string; from: number; to: number }[] = [
 
 function getGeneration(debutDate: string | null): string | null {
     if (!debutDate) return null
-    const year = new Date(debutDate).getFullYear()
+    // Parse year directly from ISO string (avoids timezone off-by-one on UTC midnight dates)
+    const year = parseInt(debutDate.slice(0, 4), 10)
+    if (isNaN(year)) return null
     return GENERATIONS.find(g => year >= g.from && year <= g.to)?.label ?? null
 }
 
