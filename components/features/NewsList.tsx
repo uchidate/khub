@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { NewsListCard } from './NewsListCard'
 import { NewsFilters, type FilterValues } from './NewsFilters'
@@ -53,6 +53,8 @@ interface NewsListProps {
     initialGroups?: Group[]
 }
 
+type FeedMode = 'personalized' | 'all'
+
 export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListProps) {
     const router = useRouter()
     const pathname = usePathname()
@@ -60,34 +62,31 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
 
     const [news, setNews] = useState<NewsItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [isPersonalized, setIsPersonalized] = useState(false)
     const [followingCount, setFollowingCount] = useState(0)
-    const [pagination, setPagination] = useState({
-        page: 1,
-        total: 0,
-        pages: 0,
-    })
+    const [feedMode, setFeedMode] = useState<FeedMode>(
+        () => (searchParams.get('feed') === 'all' ? 'all' : 'personalized')
+    )
+    const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
+
+    // Ref para leitura do feedMode atual sem adicionar dependência nos useCallbacks
+    const feedModeRef = useRef<FeedMode>(feedMode)
+    feedModeRef.current = feedMode
 
     // Extrair filtros da URL
-    const getFiltersFromUrl = useCallback((): FilterValues => {
-        return {
-            search: searchParams.get('search') || undefined,
-            artistId: searchParams.get('artistId') || undefined,
-            groupId: searchParams.get('groupId') || undefined,
-            source: searchParams.get('source') || undefined,
-            from: searchParams.get('from') || undefined,
-            to: searchParams.get('to') || undefined,
-        }
-    }, [searchParams])
+    const getFiltersFromUrl = useCallback((): FilterValues => ({
+        search: searchParams.get('search') || undefined,
+        artistId: searchParams.get('artistId') || undefined,
+        groupId: searchParams.get('groupId') || undefined,
+        source: searchParams.get('source') || undefined,
+        from: searchParams.get('from') || undefined,
+        to: searchParams.get('to') || undefined,
+    }), [searchParams])
 
-    const getCurrentPage = () => {
-        return Math.max(1, parseInt(searchParams.get('page') || '1'))
-    }
+    const getCurrentPage = () => Math.max(1, parseInt(searchParams.get('page') || '1'))
 
-    // Atualizar URL com filtros
-    const updateUrl = useCallback((filters: FilterValues, page: number = 1) => {
+    // Atualizar URL com filtros e feed mode
+    const updateUrl = useCallback((filters: FilterValues, page: number = 1, feed?: FeedMode) => {
         const params = new URLSearchParams()
-
         if (filters.search) params.set('search', filters.search)
         if (filters.artistId) params.set('artistId', filters.artistId)
         if (filters.groupId) params.set('groupId', filters.groupId)
@@ -95,7 +94,9 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         if (filters.from) params.set('from', filters.from)
         if (filters.to) params.set('to', filters.to)
         if (page > 1) params.set('page', page.toString())
-
+        // Preservar feed mode — usar valor explícito ou ler do ref (atual)
+        const currentFeed = feed ?? feedModeRef.current
+        if (currentFeed === 'all') params.set('feed', 'all')
         const newUrl = params.toString() ? `${pathname}?${params}` : pathname
         router.push(newUrl, { scroll: false })
     }, [pathname, router])
@@ -110,6 +111,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
             const params = new URLSearchParams({
                 page: page.toString(),
                 limit: '24',
+                feed: feedModeRef.current,
                 ...(filters.search && { search: filters.search }),
                 ...(filters.artistId && { artistId: filters.artistId }),
                 ...(filters.groupId && { groupId: filters.groupId }),
@@ -122,7 +124,6 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
             const data = await response.json()
 
             setNews(data.news || [])
-            setIsPersonalized(data.isPersonalized || false)
             setFollowingCount(data.followingCount || 0)
             setPagination({
                 page: data.pagination.page,
@@ -136,25 +137,61 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         }
     }, [getFiltersFromUrl])
 
-    // Buscar notícias quando URL mudar
+    // Sincronizar feedMode com URL (ex: botão voltar do browser)
     useEffect(() => {
-        fetchNews()
-    }, [fetchNews])
+        const urlFeed: FeedMode = searchParams.get('feed') === 'all' ? 'all' : 'personalized'
+        setFeedMode(urlFeed)
+    }, [searchParams])
 
-    // Handler de mudança de filtros — memoizado para não re-disparar o efeito do NewsFilters
+    // Buscar notícias quando URL mudar
+    useEffect(() => { fetchNews() }, [fetchNews])
+
     const handleFilterChange = useCallback((filters: FilterValues) => {
-        updateUrl(filters, 1) // Sempre volta para página 1 quando muda filtros
+        updateUrl(filters, 1)
     }, [updateUrl])
 
-    // Handler de mudança de página
     const handlePageChange = (newPage: number) => {
-        const filters = getFiltersFromUrl()
-        updateUrl(filters, newPage)
+        updateUrl(getFiltersFromUrl(), newPage)
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
+    const handleFeedMode = (mode: FeedMode) => {
+        // Atualizar ref imediatamente (antes do re-render) para a chamada de API usar o valor novo
+        feedModeRef.current = mode
+        setFeedMode(mode)
+        updateUrl(getFiltersFromUrl(), 1, mode)
+    }
+
+    const showTabs = followingCount > 0
+
     return (
         <div>
+            {/* Tabs: Para você / Todas — visível apenas quando usuário tem artistas seguidos */}
+            {showTabs && (
+                <div className="flex border-b border-white/10 mb-6">
+                    <button
+                        onClick={() => handleFeedMode('personalized')}
+                        className={`px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
+                            feedMode === 'personalized'
+                                ? 'border-purple-500 text-white'
+                                : 'border-transparent text-zinc-400 hover:text-white'
+                        }`}
+                    >
+                        Para você
+                    </button>
+                    <button
+                        onClick={() => handleFeedMode('all')}
+                        className={`px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
+                            feedMode === 'all'
+                                ? 'border-purple-500 text-white'
+                                : 'border-transparent text-zinc-400 hover:text-white'
+                        }`}
+                    >
+                        Todas
+                    </button>
+                </div>
+            )}
+
             {/* Filtros */}
             <NewsFilters
                 onFilterChange={handleFilterChange}
@@ -162,18 +199,6 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                 groups={initialGroups}
                 initialFilters={getFiltersFromUrl()}
             />
-
-            {/* Banner de Feed Personalizado */}
-            {isPersonalized && (
-                <div className="mb-8 px-4 py-3 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center gap-3">
-                    <span className="text-purple-400 text-sm font-bold uppercase tracking-wider">
-                        Feed personalizado
-                    </span>
-                    <span className="text-zinc-400 text-sm">
-                        Notícias dos {followingCount} artista{followingCount > 1 ? 's' : ''} que você segue
-                    </span>
-                </div>
-            )}
 
             {/* Loading State */}
             {isLoading && <NewsSkeleton />}
@@ -184,9 +209,21 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                     <p className="text-zinc-400 text-lg mb-2">
                         Nenhuma notícia encontrada
                     </p>
-                    <p className="text-zinc-500 text-sm">
-                        Tente ajustar os filtros ou fazer uma nova busca
-                    </p>
+                    {feedMode === 'personalized' && showTabs ? (
+                        <p className="text-zinc-500 text-sm">
+                            Nenhuma notícia dos seus artistas seguidos.{' '}
+                            <button
+                                onClick={() => handleFeedMode('all')}
+                                className="text-purple-400 hover:text-purple-300 underline"
+                            >
+                                Ver todas as notícias
+                            </button>
+                        </p>
+                    ) : (
+                        <p className="text-zinc-500 text-sm">
+                            Tente ajustar os filtros ou fazer uma nova busca
+                        </p>
+                    )}
                 </div>
             )}
 

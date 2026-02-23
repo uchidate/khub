@@ -90,6 +90,9 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')));
     const skip = (page - 1) * limit;
 
+    // Modo de feed: 'all' ignora personalização por favoritos
+    const feedParam = searchParams.get('feed') || 'personalized';
+
     // Filtros
     const search = searchParams.get('search') || undefined;
     const artistId = searchParams.get('artistId') || undefined;
@@ -174,7 +177,9 @@ export async function GET(request: NextRequest) {
         });
     }
 
-    // Feed personalizado: apenas notícias dos artistas seguidos (com filtros adicionais)
+    // Aplicar personalização apenas quando feed='personalized' e sem filtro explícito de artista/grupo
+    const applyPersonalization = feedParam !== 'all' && !artistId && !groupArtistIds;
+
     const where = buildWhereClause({
         search,
         artistId,
@@ -182,7 +187,7 @@ export async function GET(request: NextRequest) {
         source,
         from,
         to,
-        favoriteArtistIds: (artistId || groupArtistIds) ? undefined : favoriteArtistIds,
+        favoriteArtistIds: applyPersonalization ? favoriteArtistIds : undefined,
     });
 
     const [news, total] = await Promise.all([
@@ -198,7 +203,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
         news,
-        isPersonalized: !artistId && favoriteArtistIds.length > 0,
+        isPersonalized: applyPersonalization,
         followingCount: favoriteArtistIds.length,
         pagination: { page, limit, total, pages: Math.ceil(total / limit) },
         filters: { search, artistId, source, from, to },
