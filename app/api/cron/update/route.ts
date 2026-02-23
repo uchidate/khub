@@ -237,9 +237,11 @@ async function runCronProcessing(lockId: string) {
                         const newsAge = Date.now() - new Date(savedNews.createdAt).getTime();
                         isNewNews = newsAge < 10000;
 
+                        // Usar conteúdo original para extração (mais fiel aos nomes reais)
+                        const extractionContent = news.originalContent || news.contentMd;
                         const artistMentions = await extractionService.extractArtists(
                             news.title,
-                            news.contentMd
+                            extractionContent
                         );
 
                         for (const mention of artistMentions) {
