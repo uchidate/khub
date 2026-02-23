@@ -66,6 +66,7 @@ services:
       - .env.production
     volumes:
       - hallyuhub-data:/app/data
+      - instagram-images-production:/app/public/instagram
     networks:
       - web
       - backend-production
@@ -105,3 +106,4 @@ volumes:
     external: true
   ollama-production-data:
     external: true
+  instagram-images-production:

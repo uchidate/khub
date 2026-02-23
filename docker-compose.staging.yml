@@ -66,6 +66,7 @@ services:
       - .env.staging
     volumes:
       - hallyuhub-data:/app/data
+      - instagram-images-staging:/app/public/instagram
     networks:
       - web
       - backend-staging
@@ -103,3 +104,4 @@ volumes:
     external: true
   ollama-staging-data:
     external: true
+  instagram-images-staging:

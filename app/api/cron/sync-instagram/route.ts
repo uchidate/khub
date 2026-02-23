@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
+import { downloadInstagramImage } from '@/lib/instagram-image-downloader'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,14 +75,19 @@ async function fetchAndSync(
     const postId = extractPostId(item.id || item.url)
     if (!postId) continue
 
+    const rawImageUrl = extractImageUrl(item)
+    const imageUrl = rawImageUrl
+      ? await downloadInstagramImage(postId, rawImageUrl)
+      : null
+
     await prisma.instagramPost.upsert({
       where: { postId },
-      update: { imageUrl: extractImageUrl(item), caption: item.title?.slice(0, 500) ?? null },
+      update: { imageUrl, caption: item.title?.slice(0, 500) ?? null },
       create: {
         postId,
         artistId: artistId ?? null,
         groupId: groupId ?? null,
-        imageUrl: extractImageUrl(item),
+        imageUrl,
         caption: item.title?.slice(0, 500) ?? null,
         permalink: item.url,
         postedAt: item.date_published ? new Date(item.date_published) : new Date(),

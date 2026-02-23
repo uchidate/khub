@@ -116,6 +116,15 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'img.youtube.com',
             },
+            // Instagram CDN — posts do feed via RSS.app
+            {
+                protocol: 'https',
+                hostname: 'scontent.cdninstagram.com',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.cdninstagram.com',
+            },
         ],
     },
 };
