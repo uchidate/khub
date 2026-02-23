@@ -46,14 +46,17 @@ model Group {
   id           String    @id @default(cuid())
   slug         String    @unique
   name         String
-  nameHangul   String?
+  nameHangul   String?   // koreanName / nativeName
+  groupType    String?   // "girl_group" | "boy_group" | "co-ed" | "solo"
+  status       String?   // "active" | "disbanded" | "hiatus"
+  agency       String?   // company name
   debutDate    DateTime?
   disbandDate  DateTime?
-  agency       String?
   fandomName   String?
-  fandomColors Json?
+  fandomColors Json?     // [{hex: "#000000", name: "Black"}, ...]
+  memberCount  Int?
+  bio          String?
   imageUrl     String?
-  rawData      Json?
 
   members      IdolInGroup[]
 
@@ -61,6 +64,8 @@ model Group {
   updatedAt    DateTime  @updatedAt
 
   @@index([name])
+  @@index([status])
+  @@index([groupType])
 }
 
 model IdolInGroup {

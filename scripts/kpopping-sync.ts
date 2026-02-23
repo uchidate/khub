@@ -1,10 +1,12 @@
 /**
- * Script: Sincroniza perfis de idols do kpopping.com via JSON API
+ * Script: Sincroniza idols, grupos e membros do kpopping.com via JSON API
  *
  * Uso:
- *   npx tsx scripts/kpopping-sync.ts                # Sync completo (~9000 idols)
+ *   npx tsx scripts/kpopping-sync.ts                # Sync completo: idols + grupos + links
+ *   npx tsx scripts/kpopping-sync.ts --only=idols   # Só idols
+ *   npx tsx scripts/kpopping-sync.ts --only=groups  # Só grupos + IdolInGroup
  *   npx tsx scripts/kpopping-sync.ts --dry-run      # Simula sem salvar
- *   npx tsx scripts/kpopping-sync.ts --limit=50     # Limita a N idols
+ *   npx tsx scripts/kpopping-sync.ts --limit=50     # Limita N idols E N grupos
  *   npx tsx scripts/kpopping-sync.ts --slug=Jisoo   # Inspeciona um idol específico
  *
  * Banco separado:
@@ -20,16 +22,20 @@ import { PrismaPg } from '@prisma/adapter-pg'
 // Config
 // ============================================================================
 const KPOPPING_API = 'https://kpopping.com/api'
-const DELAY_MS = 300 // API é mais rápida que HTML scraping
+const DELAY_MS = 300
 
 const args = process.argv.slice(2)
 const isDryRun = args.includes('--dry-run')
+const onlyArg = args.find(a => a.startsWith('--only='))?.split('=')[1] // 'idols' | 'groups'
 const limitArg = args.find(a => a.startsWith('--limit='))?.split('=')[1]
 const slugArg = args.find(a => a.startsWith('--slug='))?.split('=')[1]
 const LIMIT = limitArg ? parseInt(limitArg) : Infinity
 
+const syncIdols = !onlyArg || onlyArg === 'idols'
+const syncGroups = !onlyArg || onlyArg === 'groups'
+
 // ============================================================================
-// DB (banco separado)
+// DB
 // ============================================================================
 const dbUrl = process.env.KPOPPING_DATABASE_URL
 if (!isDryRun && !slugArg && !dbUrl) {
@@ -98,33 +104,60 @@ interface IdolDetail extends IdolListItem {
   mbti: string | null
   education: string | null
   fandomName: string | null
-  fandomColors: string | null // JSON string: "[{\"hex\":\"#000000\",\"name\":\"Black\"}]"
+  fandomColors: string | null // JSON string
   bioRaw: string | null
+}
+
+interface GroupListItem {
+  id: string
+  slug: string
+  name: string
+  image: string | null
+  debutDate: string | null
+  agency: string | null
+  status: string | null
+}
+
+interface GroupMember {
+  id: string
+  slug: string
+  name: string
+  koreanName: string | null
+  position: string | null
+  birthday: string | null
+  nationality: string | null
+  image: string | null
+}
+
+interface GroupDetail extends GroupListItem {
+  koreanName: string | null
+  nativeName: string | null
+  groupType: string | null
+  company: string | null
+  disbandDate: string | null
+  fandomName: string | null
+  fandom: string | null
+  fandomColors: Array<{ hex: string; name: string }> | null
+  memberCount: number | null
+  bioRaw: string | null
+  members: GroupMember[]
+  formerMembers: GroupMember[]
 }
 
 // ============================================================================
 // Helpers
 // ============================================================================
 function parseDate(raw: string | null | undefined): Date | null {
-  if (!raw) return null
+  if (!raw || raw.trim() === '') return null
   const d = new Date(raw)
   return isNaN(d.getTime()) ? null : d
-}
-
-function parseFandomColors(raw: string | null): object | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
 }
 
 // ============================================================================
 // API Calls
 // ============================================================================
 async function fetchAllIdols(): Promise<IdolListItem[]> {
-  console.log('📋 Buscando lista completa de idols via API...')
+  console.log('📋 Buscando lista de idols via API...')
   const data = await fetchJson<IdolListItem[]>(`${KPOPPING_API}/idols`)
   if (!data || !Array.isArray(data)) {
     console.error('❌ Resposta inesperada de /api/idols')
@@ -138,12 +171,33 @@ async function fetchIdolDetail(slug: string): Promise<IdolDetail | null> {
   return fetchJson<IdolDetail>(`${KPOPPING_API}/idols/${encodeURIComponent(slug)}`)
 }
 
+async function fetchAllGroups(): Promise<GroupListItem[]> {
+  console.log('📋 Buscando lista de grupos via API...')
+  const data = await fetchJson<GroupListItem[]>(`${KPOPPING_API}/groups`)
+  if (!data || !Array.isArray(data)) {
+    console.error('❌ Resposta inesperada de /api/groups')
+    return []
+  }
+  console.log(`   ${data.length} grupos encontrados`)
+  return data
+}
+
+async function fetchGroupDetail(slug: string): Promise<GroupDetail | null> {
+  return fetchJson<GroupDetail>(`${KPOPPING_API}/groups/${encodeURIComponent(slug)}`)
+}
+
 // ============================================================================
 // Sync idol
 // ============================================================================
 async function syncIdol(slug: string, listItem?: IdolListItem): Promise<boolean> {
   const detail = await fetchIdolDetail(slug)
   if (!detail && !listItem) return false
+
+  const fandomColorsRaw = detail?.fandomColors
+  let fandomColors = null
+  if (fandomColorsRaw) {
+    try { fandomColors = JSON.parse(fandomColorsRaw) } catch { /* ignore */ }
+  }
 
   const data = {
     slug,
@@ -162,7 +216,7 @@ async function syncIdol(slug: string, listItem?: IdolListItem): Promise<boolean>
     gender: detail?.gender || listItem?.gender || null,
     status: detail?.status || listItem?.status || null,
     fandomName: detail?.fandomName || null,
-    fandomColors: parseFandomColors(detail?.fandomColors ?? null),
+    fandomColors,
     bio: detail?.bioRaw || null,
     imageUrl: detail?.image || listItem?.image || null,
     profileUrl: `https://kpopping.com/profiles/idol/${slug}`,
@@ -186,11 +240,79 @@ async function syncIdol(slug: string, listItem?: IdolListItem): Promise<boolean>
 }
 
 // ============================================================================
+// Sync group + IdolInGroup
+// ============================================================================
+async function syncGroup(slug: string, listItem?: GroupListItem): Promise<boolean> {
+  const detail = await fetchGroupDetail(slug)
+  if (!detail && !listItem) return false
+
+  const data = {
+    slug,
+    name: detail?.name || listItem?.name || slug,
+    nameHangul: detail?.koreanName || detail?.nativeName || null,
+    groupType: detail?.groupType || null,
+    status: detail?.status || listItem?.status || null,
+    agency: detail?.company || listItem?.agency || null,
+    debutDate: parseDate(detail?.debutDate || listItem?.debutDate),
+    disbandDate: parseDate(detail?.disbandDate),
+    fandomName: detail?.fandomName || detail?.fandom || null,
+    fandomColors: detail?.fandomColors ?? null,
+    memberCount: detail?.memberCount ?? null,
+    bio: detail?.bioRaw || null,
+    imageUrl: detail?.image || listItem?.image || null,
+  }
+
+  console.log(
+    `  ✅ ${data.name}${data.nameHangul ? ' (' + data.nameHangul + ')' : ''}` +
+    `${data.groupType ? ' · ' + data.groupType : ''}` +
+    `${data.memberCount ? ' · ' + data.memberCount + ' membros' : ''}`
+  )
+
+  if (!isDryRun && db) {
+    await db.group.upsert({
+      where: { slug },
+      update: { ...data, updatedAt: new Date() },
+      create: data,
+    })
+
+    // Vincular membros (ativos e ex-membros)
+    if (detail) {
+      const allMembers = [
+        ...detail.members.map(m => ({ ...m, isActive: true })),
+        ...detail.formerMembers.map(m => ({ ...m, isActive: false })),
+      ]
+
+      for (const member of allMembers) {
+        const idol = await db.idol.findUnique({ where: { slug: member.slug } })
+        if (!idol) continue
+
+        const group = await db.group.findUnique({ where: { slug } })
+        if (!group) continue
+
+        await db.idolInGroup.upsert({
+          where: { idolId_groupId: { idolId: idol.id, groupId: group.id } },
+          update: { isActive: member.isActive, position: member.position || null },
+          create: {
+            idolId: idol.id,
+            groupId: group.id,
+            isActive: member.isActive,
+            position: member.position || null,
+          },
+        })
+      }
+    }
+  }
+
+  return true
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 async function main() {
   console.log('🎤 Kpopping Sync (JSON API)')
   console.log(`   Dry run: ${isDryRun}`)
+  console.log(`   Modo:    ${onlyArg ?? 'completo (idols + grupos)'}`)
   if (LIMIT !== Infinity) console.log(`   Limite:  ${LIMIT}`)
   if (slugArg) console.log(`   Slug:    ${slugArg}`)
 
@@ -207,27 +329,51 @@ async function main() {
     return
   }
 
-  // Fetch lista completa
-  const allIdols = await fetchAllIdols()
-  if (allIdols.length === 0) {
-    console.error('❌ Nenhum idol encontrado. Abortando.')
-    process.exit(1)
+  // ── Sync idols ──────────────────────────────────────────────────────────
+  if (syncIdols) {
+    console.log('\n🎤 Sincronizando idols...')
+    const allIdols = await fetchAllIdols()
+    if (allIdols.length === 0) {
+      console.error('❌ Nenhum idol encontrado. Abortando.')
+      process.exit(1)
+    }
+
+    const toSync = allIdols.slice(0, LIMIT === Infinity ? allIdols.length : LIMIT)
+    let done = 0, fail = 0
+    for (let i = 0; i < toSync.length; i++) {
+      const item = toSync[i]
+      process.stdout.write(`[${i + 1}/${toSync.length}] ${item.slug} `)
+      const ok = await syncIdol(item.slug, item)
+      ok ? done++ : fail++
+      if (i < toSync.length - 1) await sleep(DELAY_MS)
+    }
+
+    console.log(`\n   Idols: ${done} sincronizados | ${fail} falhos`)
   }
 
-  const toSync = allIdols.slice(0, LIMIT === Infinity ? allIdols.length : LIMIT)
+  // ── Sync grupos + IdolInGroup ──────────────────────────────────────────
+  if (syncGroups) {
+    console.log('\n🎵 Sincronizando grupos...')
+    const allGroups = await fetchAllGroups()
+    if (allGroups.length === 0) {
+      console.error('❌ Nenhum grupo encontrado.')
+    } else {
+      const toSync = allGroups.slice(0, LIMIT === Infinity ? allGroups.length : LIMIT)
+      let done = 0, fail = 0
+      for (let i = 0; i < toSync.length; i++) {
+        const item = toSync[i]
+        process.stdout.write(`[${i + 1}/${toSync.length}] ${item.slug} `)
+        const ok = await syncGroup(item.slug, item)
+        ok ? done++ : fail++
+        if (i < toSync.length - 1) await sleep(DELAY_MS)
+      }
 
-  let done = 0, fail = 0
-  for (let i = 0; i < toSync.length; i++) {
-    const item = toSync[i]
-    process.stdout.write(`[${i + 1}/${toSync.length}] ${item.slug} `)
-    const ok = await syncIdol(item.slug, item)
-    ok ? done++ : fail++
-    if (i < toSync.length - 1) await sleep(DELAY_MS)
+      console.log(`\n   Grupos: ${done} sincronizados | ${fail} falhos`)
+    }
   }
 
-  console.log(`\n✅ Concluído!`)
-  console.log(`   Idols: ${done} sincronizados | ${fail} falhos`)
-  if (isDryRun) console.log('\n   ⚠️  Dry run — nenhuma alteração salva')
+  console.log('\n✅ Concluído!')
+  if (isDryRun) console.log('   ⚠️  Dry run — nenhuma alteração salva')
 
   await db?.$disconnect()
 }
