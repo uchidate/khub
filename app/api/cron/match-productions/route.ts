@@ -61,21 +61,33 @@ export async function POST(request: NextRequest) {
     }
 
     const rawLimit = parseInt(request.nextUrl.searchParams.get('limit') || '5');
-    const limit = Math.min(Math.max(1, rawLimit), 20);
+    const limit = Math.min(Math.max(1, rawLimit), 50);
+    const mode = request.nextUrl.searchParams.get('mode') || 'match';
 
-    log.info('Starting production TMDB match job in background', { limit });
+    log.info('Starting production TMDB match job in background', { limit, mode });
 
-    runMatchProductions(limit, requestId, log).catch(err => {
-        log.error('Unhandled error in background production match', {
-            error: err instanceof Error ? err.message : String(err),
+    if (mode === 'backfill-tv') {
+        runBackfillTvSeries(limit, requestId, log).catch(err => {
+            log.error('Unhandled error in background TV backfill', {
+                error: err instanceof Error ? err.message : String(err),
+            });
         });
-    });
+    } else {
+        runMatchProductions(limit, requestId, log).catch(err => {
+            log.error('Unhandled error in background production match', {
+                error: err instanceof Error ? err.message : String(err),
+            });
+        });
+    }
 
     return NextResponse.json({
         status: 'accepted',
-        message: 'Production TMDB match started in background',
+        message: mode === 'backfill-tv'
+            ? 'TV series backfill started in background'
+            : 'Production TMDB match started in background',
         requestId,
         limit,
+        mode,
         timestamp: new Date().toISOString(),
     }, { status: 202 });
 }
@@ -103,9 +115,30 @@ async function runMatchProductions(
     }
 }
 
+async function runBackfillTvSeries(
+    limit: number,
+    requestId: string,
+    log: { info: (msg: string, ctx?: any) => void; error: (msg: string, ctx?: any) => void }
+) {
+    const startTime = Date.now();
+    try {
+        const service = getTmdbProductionMatchService();
+        const result = await service.backfillTvSeriesFields(limit);
+        const duration = Math.round((Date.now() - startTime) / 1000);
+        log.info('TV series backfill completed', { result, duration_s: duration });
+    } catch (error: any) {
+        const duration = Math.round((Date.now() - startTime) / 1000);
+        log.error('TV series backfill failed', {
+            error: error.message,
+            stack: error.stack,
+            duration_s: duration,
+        });
+    }
+}
+
 export async function GET() {
     return NextResponse.json({
         error: 'Method not allowed. Use POST.',
-        hint: 'POST /api/cron/match-productions?limit=5',
+        hint: 'POST /api/cron/match-productions?limit=5 | POST /api/cron/match-productions?mode=backfill-tv&limit=20',
     }, { status: 405 });
 }

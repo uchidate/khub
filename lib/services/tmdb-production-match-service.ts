@@ -340,6 +340,82 @@ export class TmdbProductionMatchService {
   }
 
   /**
+   * Backfill TV series fields for productions that already have tmdbId
+   * but are missing the new TV-specific fields (episodeCount, seasonCount, etc).
+   */
+  async backfillTvSeriesFields(limit: number = 10): Promise<{
+    processed: number
+    updated: number
+    skipped: number
+  }> {
+    const series = await prisma.production.findMany({
+      where: {
+        tmdbId: { not: null },
+        tmdbType: 'tv',
+        episodeCount: null,
+      },
+      select: { id: true, titlePt: true, tmdbId: true },
+      take: limit,
+      orderBy: { createdAt: 'asc' },
+    })
+
+    let updated = 0
+    let skipped = 0
+
+    for (const production of series) {
+      try {
+        const details = await this.fetchDetails(parseInt(production.tmdbId!), 'tv')
+        if (!details) {
+          skipped++
+          continue
+        }
+
+        const updateData: Record<string, unknown> = {}
+        const fieldsUpdated: string[] = []
+
+        if (details.number_of_episodes) {
+          updateData.episodeCount = details.number_of_episodes
+          fieldsUpdated.push('episodeCount')
+        }
+        if (details.number_of_seasons) {
+          updateData.seasonCount = details.number_of_seasons
+          fieldsUpdated.push('seasonCount')
+        }
+        if (details.episode_run_time?.length) {
+          updateData.episodeRuntime = details.episode_run_time[0]
+          fieldsUpdated.push('episodeRuntime')
+        }
+        if (details.networks?.length) {
+          updateData.network = details.networks[0].name
+          fieldsUpdated.push('network')
+        }
+        if (details.status) {
+          updateData.productionStatus = details.status
+          fieldsUpdated.push('productionStatus')
+        }
+
+        if (fieldsUpdated.length === 0) {
+          skipped++
+          continue
+        }
+
+        await prisma.production.update({
+          where: { id: production.id },
+          data: updateData,
+        })
+
+        updated++
+        console.log(`✅ Backfilled "${production.titlePt}" → ${fieldsUpdated.join(', ')}`)
+      } catch (err) {
+        console.error(`Failed to backfill ${production.id}:`, err)
+        skipped++
+      }
+    }
+
+    return { processed: series.length, updated, skipped }
+  }
+
+  /**
    * Match pending productions (those without tmdbId).
    */
   async matchPendingProductions(limit: number = 5): Promise<{
