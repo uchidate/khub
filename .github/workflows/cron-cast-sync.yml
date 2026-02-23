@@ -12,7 +12,7 @@ on:
       limit:
         description: 'Number of productions to process'
         required: false
-        default: '5'
+        default: '20'
         type: string
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: 🎬 Call Cast Sync Endpoint
         run: |
-          LIMIT="${{ github.event.inputs.limit || '5' }}"
+          LIMIT="${{ github.event.inputs.limit || '20' }}"
           echo "🚀 Calling cast sync endpoint (limit: $LIMIT)..."
 
           # O endpoint retorna 202 Accepted imediatamente e processa em background
@@ -58,6 +58,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **Endpoint**: https://www.hallyuhub.com.br/api/cron/sync-cast" >> $GITHUB_STEP_SUMMARY
-          echo "- **Limit**: ${{ github.event.inputs.limit || '5' }} productions" >> $GITHUB_STEP_SUMMARY
+          echo "- **Limit**: ${{ github.event.inputs.limit || '20' }} productions" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Note**: Cast sync runs in background. Check server logs for results." >> $GITHUB_STEP_SUMMARY
