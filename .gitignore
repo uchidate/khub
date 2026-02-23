@@ -95,3 +95,6 @@ pre-upgrade-state.md
 
 # Claude Code local files
 .claude/
+
+# Instagram downloaded images (runtime, persisted via Docker volume)
+public/instagram/
