@@ -1,0 +1,79 @@
+name: 🔗 Reprocessar Artistas nas Notícias
+
+on:
+  # Apenas trigger manual — operação pontual
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Notícias por execução (max: 1000)'
+        required: false
+        default: '300'
+        type: string
+      offset:
+        description: 'Offset (0 = início, 300 = próxima página, etc.)'
+        required: false
+        default: '0'
+        type: string
+      mode:
+        description: 'Modo de processamento'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all      # Reprocessa todas as notícias (adiciona vínculos faltantes)
+          - missing  # Apenas notícias sem nenhum artista
+
+jobs:
+  relink-artists:
+    name: Reprocessar Artistas nas Notícias
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 🔗 Chamar endpoint de reprocessamento
+        run: |
+          LIMIT="${{ github.event.inputs.limit || '300' }}"
+          OFFSET="${{ github.event.inputs.offset || '0' }}"
+          MODE="${{ github.event.inputs.mode || 'all' }}"
+
+          echo "🚀 Reprocessando artistas (limit=$LIMIT, offset=$OFFSET, mode=$MODE)..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
+            "https://www.hallyuhub.com.br/api/cron/relink-news-artists?limit=$LIMIT&offset=$OFFSET&mode=$MODE" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "📊 Response Code: $HTTP_CODE"
+          echo "$BODY" | jq '.' || echo "$BODY"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            REQUEST_ID=$(echo "$BODY" | jq -r '.requestId // "unknown"')
+            NEXT_OFFSET=$((OFFSET + LIMIT))
+            echo "✅ Reprocessamento iniciado em background"
+            echo "📋 Request ID: $REQUEST_ID"
+            echo ""
+            echo "📝 Para verificar resultados:"
+            echo "   ssh root@31.97.255.107 \"docker logs hallyuhub | grep $REQUEST_ID\""
+            echo ""
+            echo "📌 Para processar a próxima página:"
+            echo "   Execute este workflow novamente com offset=$NEXT_OFFSET"
+          else
+            echo "❌ Falhou com status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🔗 Reprocessamento de Artistas" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Limit**: ${{ github.event.inputs.limit || '300' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Offset**: ${{ github.event.inputs.offset || '0' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: ${{ github.event.inputs.mode || 'all' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Processamento roda em background. Verifique logs do servidor para resultados." >> $GITHUB_STEP_SUMMARY
