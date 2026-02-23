@@ -12,13 +12,13 @@ const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export async function generateMetadata(): Promise<Metadata> {
     const total = await prisma.production.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)
-    const desc = `${total > 0 ? `${total} ` : ''}filmes e séries coreanas. De romances épicos a thrillers de tirar o fôlego.`
+    const desc = `${total > 0 ? `${total} ` : ''}produções coreanas. De romances épicos a thrillers de tirar o fôlego.`
     return {
-        title: 'Filmes & Séries',
+        title: 'Produções',
         description: desc,
         alternates: { canonical: `${BASE_URL}/productions` },
         openGraph: {
-            title: 'Filmes & Séries Coreanas | HallyuHub',
+            title: 'Produções Coreanas | HallyuHub',
             description: desc,
             url: `${BASE_URL}/productions`,
         },
@@ -29,7 +29,7 @@ export default async function ProductionsPage() {
     return (
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <SectionHeader
-                title="Filmes & Séries"
+                title="Produções"
                 subtitle="De romances épicos a thrillers de tirar o fôlego. O melhor do entretenimento coreano selecionado para você."
             />
 
