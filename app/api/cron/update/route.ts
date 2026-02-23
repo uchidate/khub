@@ -196,7 +196,7 @@ async function runCronProcessing(lockId: string) {
                 const excludeNews = existingNews.map((n: { sourceUrl: string }) => n.sourceUrl);
 
                 const isStaging = process.env.DEPLOY_ENV === 'staging';
-                const newsCount = isStaging ? 2 : 10;
+                const newsCount = isStaging ? 2 : 50;
 
                 log.info(`Fetching ${newsCount} news items`, { env: process.env.DEPLOY_ENV || 'production' });
 
