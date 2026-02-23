@@ -26,6 +26,13 @@ const TYPE_OPTIONS: { value: string; label: string }[] = [
     { value: 'DOCUMENTARY', label: 'Documentários' },
 ]
 
+const TYPE_LABEL: Record<string, string> = {
+    FILME: 'Filme', Filme: 'Filme', MOVIE: 'Filme',
+    SERIE: 'Série', serie: 'Série', SERIES: 'Série', 'K-Drama': 'K-Drama', SHOW: 'Show',
+    SPECIAL: 'Especial', ESPECIAL: 'Especial',
+    DOCUMENTARY: 'Documentário', DOCUMENTARIO: 'Documentário',
+}
+
 const AGE_RATING_OPTIONS: { value: string; label: string; color: string }[] = [
     { value: '', label: 'Classificadas', color: '' },
     { value: 'all', label: 'Todas (incl. 18+)', color: '' },
@@ -266,7 +273,7 @@ export function ProductionsList() {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 perspective-1000">
                         {productions.map((prod) => {
-                            const subtitleParts = [prod.year, prod.type].filter(Boolean)
+                            const subtitleParts = [prod.year, prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null].filter(Boolean)
                             return (
                                 <div key={prod.id} className="relative">
                                     <MediaCard
