@@ -80,24 +80,61 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
         notFound()
     }
 
-    // Related productions: same tags overlap OR same type, ordered by rating
     const tags = (production.tags || []) as string[]
-    const relatedProductions = await prisma.production.findMany({
-        where: {
-            id: { not: production.id },
-            flaggedAsNonKorean: false,
-            OR: [
-                ...(tags.length > 0 ? [{ tags: { hasSome: tags } }] : []),
-                { type: production.type },
-            ],
-        },
-        orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
-        take: 6,
-        select: {
-            id: true, titlePt: true, titleKr: true, type: true,
-            year: true, imageUrl: true, backdropUrl: true, voteAverage: true,
-        },
-    })
+    const artistIds = production.artists.map(a => a.artist.id)
+
+    const relatedSelect = {
+        id: true, titlePt: true, titleKr: true, type: true,
+        year: true, imageUrl: true, backdropUrl: true, voteAverage: true,
+    } as const
+
+    // Priority 1: shared cast (strongest signal — "more with this actor")
+    const byArtist = artistIds.length > 0
+        ? await prisma.production.findMany({
+            where: {
+                id: { not: production.id },
+                flaggedAsNonKorean: false,
+                artists: { some: { artistId: { in: artistIds } } },
+            },
+            orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
+            take: 6,
+            select: relatedSelect,
+        })
+        : []
+
+    // Priority 2: shared tags (fill remaining slots)
+    const byArtistIds = byArtist.map(p => p.id)
+    const needByTag = 6 - byArtist.length
+    const byTag = tags.length > 0 && needByTag > 0
+        ? await prisma.production.findMany({
+            where: {
+                id: { notIn: [production.id, ...byArtistIds] },
+                flaggedAsNonKorean: false,
+                tags: { hasSome: tags },
+            },
+            orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
+            take: needByTag,
+            select: relatedSelect,
+        })
+        : []
+
+    // Priority 3: same type (fallback)
+    const usedIds = [production.id, ...byArtistIds, ...byTag.map(p => p.id)]
+    const needByType = 6 - byArtist.length - byTag.length
+    const byType = needByType > 0
+        ? await prisma.production.findMany({
+            where: {
+                id: { notIn: usedIds },
+                flaggedAsNonKorean: false,
+                type: production.type,
+            },
+            orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
+            take: needByType,
+            select: relatedSelect,
+        })
+        : []
+
+    const relatedProductions = [...byArtist, ...byTag, ...byType]
 
     const galleryUrls = (production.galleryUrls as string[] | null) || []
 
@@ -159,7 +196,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                 {/* Breadcrumbs */}
                 <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[
-                        { label: 'Filmes & Séries', href: '/productions' },
+                        { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }
                     ]} />
                     <FavoriteButton
@@ -305,9 +342,9 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                     {relatedProductions.map((rel) => (
                                         <Link key={rel.id} href={`/productions/${rel.id}`} className="group block">
                                             <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-all mb-2">
-                                                {rel.backdropUrl || rel.imageUrl ? (
+                                                {rel.imageUrl || rel.backdropUrl ? (
                                                     <Image
-                                                        src={rel.backdropUrl || rel.imageUrl!}
+                                                        src={rel.imageUrl || rel.backdropUrl!}
                                                         alt={rel.titlePt}
                                                         fill
                                                         sizes="(max-width: 640px) 50vw, 33vw"
@@ -324,11 +361,16 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                                         ★ {rel.voteAverage.toFixed(1)}
                                                     </div>
                                                 )}
+                                                <div className="absolute bottom-2 left-2">
+                                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded text-zinc-400">
+                                                        {rel.type}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">{rel.titlePt}</p>
                                                 <p className="text-[10px] text-zinc-600 font-bold mt-0.5">
-                                                    {rel.year}{rel.year && rel.type ? ' · ' : ''}{rel.type}
+                                                    {rel.titleKr || rel.year}
                                                 </p>
                                             </div>
                                         </Link>
