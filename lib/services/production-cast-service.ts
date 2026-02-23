@@ -1,7 +1,7 @@
 /**
  * Production Cast Service
  *
- * Fetches the top 5 cast members from TMDB for each production (movie/TV)
+ * Fetches the top 20 cast members from TMDB for each production (movie/TV)
  * and creates/updates them as Artist records, linking via ArtistProduction.
  *
  * Direction: Production → fetch cast → upsert Artists + ArtistProduction
@@ -112,7 +112,7 @@ export class ProductionCastService {
   private async getProductionCast(
     tmdbId: number,
     tmdbType: 'movie' | 'tv',
-    topN: number = 5
+    topN: number = 20
   ): Promise<TMDBCastMember[]> {
     const endpoint = tmdbType === 'movie'
       ? `${TMDB_BASE_URL}/movie/${tmdbId}/credits?language=ko-KR`
@@ -152,7 +152,7 @@ export class ProductionCastService {
     const tmdbId = parseInt(production.tmdbId)
     const tmdbType = production.tmdbType as 'movie' | 'tv'
 
-    const castMembers = await this.getProductionCast(tmdbId, tmdbType, 5)
+    const castMembers = await this.getProductionCast(tmdbId, tmdbType, 20)
 
     let synced = 0
 
@@ -287,6 +287,18 @@ export class ProductionCastService {
 
     return { processed: productions.length, totalSynced, totalSkipped }
   }
+
+  /**
+   * Reset castSyncAt for all synced productions so they get re-processed
+   * with the updated cast limit. Returns the count of productions reset.
+   */
+  async resetCastSyncAt(): Promise<number> {
+    const result = await prisma.production.updateMany({
+      where: { castSyncAt: { not: null } },
+      data: { castSyncAt: null },
+    })
+    return result.count
+  }
 }
 
 let instance: ProductionCastService | null = null
@@ -297,3 +309,4 @@ export function getProductionCastService(): ProductionCastService {
   }
   return instance
 }
+

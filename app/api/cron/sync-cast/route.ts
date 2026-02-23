@@ -5,15 +5,16 @@ import { getProductionCastService } from '@/lib/services/production-cast-service
 /**
  * Cron Job - Sync Production Cast
  *
- * Fetches top 5 cast members from TMDB for each production that hasn't had
+ * Fetches top 20 cast members from TMDB for each production that hasn't had
  * its cast synced yet (or is stale), creating/updating Artist records and
  * linking them via ArtistProduction.
  *
  * AUTENTICAÇÃO: Requer CRON_SECRET via header Authorization: Bearer ou ?token=
  * RETORNO: 202 Accepted imediatamente — processamento continua em background.
  *
- * POST /api/cron/sync-cast         → sync 5 productions
- * POST /api/cron/sync-cast?limit=N → sync N productions (max 20)
+ * POST /api/cron/sync-cast                    → sync 5 productions
+ * POST /api/cron/sync-cast?limit=N            → sync N productions (max 50)
+ * POST /api/cron/sync-cast?mode=reset-resync  → reset castSyncAt de todas e sincroniza N
  */
 export async function POST(request: NextRequest) {
     const requestId = `cron-cast-sync-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
@@ -61,12 +62,13 @@ export async function POST(request: NextRequest) {
     }
 
     const rawLimit = parseInt(request.nextUrl.searchParams.get('limit') || '5');
-    const limit = Math.min(Math.max(1, rawLimit), 20);
+    const limit = Math.min(Math.max(1, rawLimit), 50);
+    const mode = request.nextUrl.searchParams.get('mode') || 'sync';
 
-    log.info('Starting cast sync job in background', { limit });
+    log.info('Starting cast sync job in background', { limit, mode });
 
     // Fire-and-forget background processing
-    runCastSync(limit, requestId, log).catch(err => {
+    runCastSync(limit, mode, requestId, log).catch(err => {
         log.error('Unhandled error in background cast sync', {
             error: err instanceof Error ? err.message : String(err),
         });
@@ -74,15 +76,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
         status: 'accepted',
-        message: 'Cast sync started in background',
+        message: mode === 'reset-resync'
+            ? 'Cast reset + resync started in background'
+            : 'Cast sync started in background',
         requestId,
         limit,
+        mode,
         timestamp: new Date().toISOString(),
     }, { status: 202 });
 }
 
 async function runCastSync(
     limit: number,
+    mode: string,
     requestId: string,
     log: { info: (msg: string, ctx?: any) => void; error: (msg: string, ctx?: any) => void }
 ) {
@@ -90,6 +96,12 @@ async function runCastSync(
 
     try {
         const service = getProductionCastService();
+
+        if (mode === 'reset-resync') {
+            const resetCount = await service.resetCastSyncAt()
+            log.info('Cast sync reset completed', { resetCount })
+        }
+
         const result = await service.syncPendingProductionCasts(limit);
         const duration = Math.round((Date.now() - startTime) / 1000);
 
@@ -107,6 +119,6 @@ async function runCastSync(
 export async function GET() {
     return NextResponse.json({
         error: 'Method not allowed. Use POST.',
-        hint: 'POST /api/cron/sync-cast?limit=5',
+        hint: 'POST /api/cron/sync-cast?limit=5 | POST /api/cron/sync-cast?mode=reset-resync&limit=10',
     }, { status: 405 });
 }
