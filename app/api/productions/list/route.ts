@@ -29,7 +29,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (type) {
-        where.type = type
+        // Map filter values to the actual DB values (legacy data uses PT names)
+        const TYPE_MAP: Record<string, string[]> = {
+            MOVIE:       ['FILME', 'Filme', 'MOVIE'],
+            SERIES:      ['SERIE', 'serie', 'SERIES', 'K-Drama', 'SHOW'],
+            SPECIAL:     ['SPECIAL', 'ESPECIAL'],
+            DOCUMENTARY: ['DOCUMENTARY', 'DOCUMENTARIO', 'DOCUMENTÁRIO'],
+        }
+        const dbValues = TYPE_MAP[type]
+        where.type = dbValues ? { in: dbValues } : type
     }
 
     // Aplicar filtro de classificação etária (respeita SystemSettings + UserContentPreferences)
