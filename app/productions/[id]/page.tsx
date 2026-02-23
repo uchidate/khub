@@ -176,7 +176,13 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
                         <span className="w-1 h-1 bg-zinc-700 rounded-full" />
                         <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
-                        {production.runtime && (
+                        {production.episodeCount && (
+                            <span className="text-xs font-bold text-zinc-400">{production.episodeCount} ep.</span>
+                        )}
+                        {production.episodeRuntime && (
+                            <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.episodeRuntime)}/ep</span>
+                        )}
+                        {!production.episodeCount && production.runtime && (
                             <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.runtime)}</span>
                         )}
                         {production.ageRating && (
@@ -363,10 +369,54 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Tipo</span>
                                 <span className="text-sm font-bold text-zinc-300 uppercase">{production.type}</span>
                             </div>
-                            {production.runtime && production.runtime > 0 && (
+                            {production.runtime && production.runtime > 0 && !production.episodeCount && (
                                 <div className="flex justify-between py-3 border-b border-white/5">
                                     <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Duração</span>
                                     <span className="text-sm font-bold text-zinc-300">{formatRuntime(production.runtime)}</span>
+                                </div>
+                            )}
+                            {production.episodeCount && (
+                                <div className="flex justify-between py-3 border-b border-white/5">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Episódios</span>
+                                    <span className="text-sm font-bold text-zinc-300">{production.episodeCount} ep.</span>
+                                </div>
+                            )}
+                            {production.seasonCount && production.seasonCount > 1 && (
+                                <div className="flex justify-between py-3 border-b border-white/5">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Temporadas</span>
+                                    <span className="text-sm font-bold text-zinc-300">{production.seasonCount}</span>
+                                </div>
+                            )}
+                            {production.episodeRuntime && (
+                                <div className="flex justify-between py-3 border-b border-white/5">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Ep. Duração</span>
+                                    <span className="text-sm font-bold text-zinc-300">{formatRuntime(production.episodeRuntime)}</span>
+                                </div>
+                            )}
+                            {production.network && (
+                                <div className="flex justify-between py-3 border-b border-white/5">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Canal</span>
+                                    <span className="text-sm font-bold text-zinc-300">{production.network}</span>
+                                </div>
+                            )}
+                            {production.productionStatus && (
+                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Status</span>
+                                    <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
+                                        production.productionStatus === 'Returning Series'
+                                            ? 'bg-green-900/50 text-green-400 border border-green-700/40'
+                                            : production.productionStatus === 'Ended'
+                                            ? 'bg-zinc-800 text-zinc-400 border border-zinc-700/40'
+                                            : production.productionStatus === 'In Production'
+                                            ? 'bg-blue-900/50 text-blue-400 border border-blue-700/40'
+                                            : 'bg-zinc-800 text-zinc-500 border border-zinc-700/40'
+                                    }`}>
+                                        {production.productionStatus === 'Returning Series' ? 'Em exibição' :
+                                         production.productionStatus === 'Ended' ? 'Encerrada' :
+                                         production.productionStatus === 'Cancelled' ? 'Cancelada' :
+                                         production.productionStatus === 'In Production' ? 'Em produção' :
+                                         production.productionStatus}
+                                    </span>
                                 </div>
                             )}
                             {production.ageRating && (

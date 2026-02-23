@@ -43,6 +43,10 @@ interface TMDBDetails {
   id: number
   runtime?: number             // movie: minutes
   episode_run_time?: number[]  // tv: [minutes per ep]
+  number_of_episodes?: number  // tv: total episodes
+  number_of_seasons?: number   // tv: number of seasons
+  status?: string              // "Returning Series" | "Ended" | "Cancelled" | "In Production"
+  networks?: Array<{ id: number; name: string; origin_country: string }>
   vote_average: number
   poster_path: string | null
   backdrop_path: string | null
@@ -286,6 +290,30 @@ export class TmdbProductionMatchService {
     if (!production.synopsis && details?.overview) {
       updateData.synopsis = details.overview
       fieldsUpdated.push('synopsis')
+    }
+
+    // TV Series specific fields
+    if (details && tmdbType === 'tv') {
+      if (details.number_of_episodes) {
+        updateData.episodeCount = details.number_of_episodes
+        fieldsUpdated.push('episodeCount')
+      }
+      if (details.number_of_seasons) {
+        updateData.seasonCount = details.number_of_seasons
+        fieldsUpdated.push('seasonCount')
+      }
+      if (details.episode_run_time?.length) {
+        updateData.episodeRuntime = details.episode_run_time[0]
+        fieldsUpdated.push('episodeRuntime')
+      }
+      if (details.networks?.length) {
+        updateData.network = details.networks[0].name
+        fieldsUpdated.push('network')
+      }
+      if (details.status) {
+        updateData.productionStatus = details.status
+        fieldsUpdated.push('productionStatus')
+      }
     }
 
     const trailerUrl = this.extractTrailerUrl(details?.videos)

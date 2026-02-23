@@ -207,6 +207,12 @@ model Production {
   // Classificação etária DJCTQ
   ageRating          String? // 'L' | '10' | '12' | '14' | '16' | '18'
   ageRatingSyncAt    DateTime? // última tentativa de busca de classificação (com ou sem resultado)
+  // TV Series specific fields
+  episodeCount       Int?      // número total de episódios (TV)
+  seasonCount        Int?      // número de temporadas (TV)
+  episodeRuntime     Int?      // duração média por episódio em minutos (TV)
+  network            String?   // canal/plataforma de origem (ex: tvN, JTBC, Netflix)
+  productionStatus   String?   // "Returning Series" | "Ended" | "Cancelled" | "In Production"
   // Cast sync tracking
   castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
   // Moderation fields
