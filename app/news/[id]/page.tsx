@@ -35,8 +35,9 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
         }
     }
 
-    const rawDescription = news.contentMd
-        ? news.contentMd
+    const mainContent = news.originalContent || news.contentMd
+    const rawDescription = mainContent
+        ? mainContent
             .replace(/#{1,6}\s+/g, '')
             .replace(/\*\*([^*]+)\*\*/g, '$1')
             .replace(/\*([^*]+)\*/g, '$1')
@@ -136,12 +137,15 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
         }
     })
 
+    // Usar conteúdo original quando disponível (traduções via Ollama tinham baixa qualidade)
+    const mainContent = news.originalContent || news.contentMd
+
     // Calcular tempo de leitura (média de 200 palavras por minuto)
-    const wordCount = news.contentMd.split(/\s+/).length
+    const wordCount = mainContent.split(/\s+/).length
     const readingTime = Math.ceil(wordCount / 200)
 
-    const articleDescription = news.contentMd
-        ? news.contentMd.replace(/#{1,6}\s+/g, '').replace(/\*\*?([^*]+)\*\*?/g, '$1').replace(/\n+/g, ' ').trim().slice(0, 300)
+    const articleDescription = mainContent
+        ? mainContent.replace(/#{1,6}\s+/g, '').replace(/\*\*?([^*]+)\*\*?/g, '$1').replace(/\n+/g, ' ').trim().slice(0, 300)
         : news.title
 
     return (
@@ -292,40 +296,8 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
                 {/* Conteúdo */}
                 <article className="max-w-none">
-                    <MarkdownRenderer content={news.contentMd} />
+                    <MarkdownRenderer content={mainContent} />
                 </article>
-
-                {/* Texto Original (excerpt do RSS) */}
-                {news.originalContent && (
-                    <section className="mt-12 p-6 rounded-2xl bg-zinc-900/40 border border-white/10">
-                        <div className="flex items-center gap-2 mb-4">
-                            <ExternalLink className="w-4 h-4 text-zinc-500" />
-                            <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
-                                Texto original
-                            </span>
-                            <span className="ml-auto text-xs text-zinc-600">
-                                {(() => { try { return new URL(news.sourceUrl).hostname } catch { return '' } })()}
-                            </span>
-                        </div>
-                        {news.originalTitle && news.originalTitle !== news.title && (
-                            <p className="text-sm font-bold text-zinc-400 mb-3 italic">
-                                &ldquo;{news.originalTitle}&rdquo;
-                            </p>
-                        )}
-                        <p className="text-zinc-500 text-sm leading-relaxed line-clamp-6">
-                            {news.originalContent.replace(/\*\*.*?\*\*/g, '').replace(/\n/g, ' ').trim()}
-                        </p>
-                        <a
-                            href={news.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 mt-4 text-xs text-purple-400 hover:text-purple-300 font-medium transition-colors"
-                        >
-                            Ler artigo completo
-                            <ExternalLink className="w-3 h-3" />
-                        </a>
-                    </section>
-                )}
 
                 {/* Compartilhamento */}
                 <div className="mt-12 p-6 rounded-2xl bg-zinc-900/50 border border-white/10">
