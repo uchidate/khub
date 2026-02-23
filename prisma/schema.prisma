@@ -38,8 +38,9 @@ model MusicalGroup {
   fanClubName     String?                 // ex: "ARMY", "BLINK", "ONCE"
   officialColor   String?                 // hex ex: "#c6a852" — cor oficial do grupo
   videos          Json?                   // [{title, url}] — MVs principais
-  members         ArtistGroupMembership[]
-  userFavorites   Favorite[]
+  members              ArtistGroupMembership[]
+  kpoppingSuggestions  KpoppingMembershipSuggestion[]
+  userFavorites        Favorite[]
   // Instagram sync (RSS.app)
   instagramFeedUrl  String?               // RSS.app JSON feed URL
   instagramLastSync DateTime?             // última sincronização bem-sucedida
@@ -120,9 +121,10 @@ model Artist {
   placeOfBirth       String?            // Local de nascimento (do TMDB)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
-  userFavorites      Favorite[]
-  albums             Album[]
-  news               NewsArtist[]
+  userFavorites        Favorite[]
+  albums               Album[]
+  news                 NewsArtist[]
+  kpoppingSuggestions  KpoppingMembershipSuggestion[]
 
   @@index([agencyId])
   @@index([createdAt])
@@ -509,6 +511,67 @@ model SystemSettings {
   updatedAt                 DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+// Sugestões de vínculo artista-grupo vindas da base kpopping (curadoria)
+model KpoppingMembershipSuggestion {
+  id                String   @id @default(cuid())
+
+  // Chave do vínculo no kpopping (IDs da base externa)
+  kpoppingIdolId    String
+  kpoppingGroupId   String
+
+  // Snapshot dos dados do idol (kpopping) — denormalizado para exibição sem precisar do outro banco
+  idolName          String
+  idolNameHangul    String?
+  idolBirthday      DateTime?
+  idolImageUrl      String?
+  idolHeight        Int?
+  idolBloodType     String?
+  idolPosition      String?   // ex: "Main Vocalist", "Leader"
+  idolIsActive      Boolean   // membro ativo no grupo
+  idolProfileUrl    String?
+
+  // Snapshot dos dados do grupo (kpopping)
+  groupName         String
+  groupNameHangul   String?
+  groupImageUrl     String?
+  groupDebutDate    DateTime?
+  groupAgency       String?
+  groupStatus       String?
+
+  // Correspondência automática com o banco principal
+  artist            Artist?       @relation(fields: [artistId], references: [id])
+  artistId          String?
+  musicalGroup      MusicalGroup? @relation(fields: [musicalGroupId], references: [id])
+  musicalGroupId    String?
+
+  // Score de confiança do matching (0.0 a 1.0)
+  artistMatchScore  Float?
+  artistMatchReason String?   // ex: "exact_romanized", "icase_hangul", "normalized"
+  groupMatchScore   Float?
+  groupMatchReason  String?
+
+  // Status de curadoria
+  status            KpoppingSuggestionStatus @default(PENDING)
+  reviewedAt        DateTime?
+  reviewNotes       String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([kpoppingIdolId, kpoppingGroupId])
+  @@index([status])
+  @@index([artistId])
+  @@index([musicalGroupId])
+  @@index([status, createdAt])
+  @@map("kpopping_membership_suggestions")
+}
+
+enum KpoppingSuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // Preferências de conteúdo por usuário (quais classificações deseja ver)

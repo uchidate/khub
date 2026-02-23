@@ -4,7 +4,7 @@ import Link from 'next/link'
 import {
   Shield, Users, Database, Activity, Settings, Film,
   Music2, Building2, UserX, ImageOff, Newspaper, AlertTriangle,
-  Plus, RefreshCw, GitMerge, Tag, Clapperboard, Mic2, Instagram,
+  Plus, RefreshCw, GitMerge, Tag, Clapperboard, Mic2, Instagram, Link2,
 } from 'lucide-react'
 import NavBar from '@/components/NavBar'
 import prisma from '@/lib/prisma'
@@ -116,6 +116,7 @@ export default async function AdminPage() {
     { label: 'Gerenciar Grupos', href: '/admin/groups', icon: Music2, desc: 'Membros, MVs, tema' },
     { label: 'Moderação Artistas', href: '/admin/artists/moderation', icon: AlertTriangle, desc: 'Revisar artistas suspeitos' },
     { label: 'Moderação Produções', href: '/admin/productions/moderation', icon: Film, desc: 'Revisar produções suspeitas' },
+    { label: 'Curadoria Kpopping', href: '/admin/kpopping', icon: Link2, desc: 'Aprovar vínculos artista-grupo' },
     { label: 'Duplicados', href: '/admin/artists/duplicates', icon: GitMerge, desc: 'Detectar e mesclar' },
     { label: 'Gerenciar Tags', href: '/admin/tags', icon: Tag, desc: 'Normalizar tags de notícias' },
     { label: 'Instagram Feeds', href: '/admin/instagram', icon: Instagram, desc: 'Feeds RSS.app por artista' },
