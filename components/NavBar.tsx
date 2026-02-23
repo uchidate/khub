@@ -32,7 +32,7 @@ const NavBar = () => {
         { label: "Início", href: "/" },
         { label: "Artistas", href: "/artists" },
         { label: "Grupos", href: "/groups" },
-        { label: "Filmes & Séries", href: "/productions" },
+        { label: "Produções", href: "/productions" },
         { label: "Notícias", href: "/news" },
         { label: "Premium", href: "/premium" },
     ]
