@@ -6,7 +6,8 @@
  *   npx tsx scripts/kpopping-sync.ts --only=idols   # Só idols
  *   npx tsx scripts/kpopping-sync.ts --only=groups  # Só grupos + IdolInGroup
  *   npx tsx scripts/kpopping-sync.ts --dry-run      # Simula sem salvar
- *   npx tsx scripts/kpopping-sync.ts --limit=50     # Limita N idols E N grupos
+ *   npx tsx scripts/kpopping-sync.ts --limit=2000    # Limita N idols E N grupos
+ *   npx tsx scripts/kpopping-sync.ts --offset=2000  # Pula os primeiros N (para batches)
  *   npx tsx scripts/kpopping-sync.ts --slug=Jisoo   # Inspeciona um idol específico
  *
  * Banco separado:
@@ -28,8 +29,10 @@ const args = process.argv.slice(2)
 const isDryRun = args.includes('--dry-run')
 const onlyArg = args.find(a => a.startsWith('--only='))?.split('=')[1] // 'idols' | 'groups'
 const limitArg = args.find(a => a.startsWith('--limit='))?.split('=')[1]
+const offsetArg = args.find(a => a.startsWith('--offset='))?.split('=')[1]
 const slugArg = args.find(a => a.startsWith('--slug='))?.split('=')[1]
 const LIMIT = limitArg ? parseInt(limitArg) : Infinity
+const OFFSET = offsetArg ? parseInt(offsetArg) : 0
 
 const syncIdols = !onlyArg || onlyArg === 'idols'
 const syncGroups = !onlyArg || onlyArg === 'groups'
@@ -313,6 +316,7 @@ async function main() {
   console.log('🎤 Kpopping Sync (JSON API)')
   console.log(`   Dry run: ${isDryRun}`)
   console.log(`   Modo:    ${onlyArg ?? 'completo (idols + grupos)'}`)
+  if (OFFSET > 0) console.log(`   Offset:  ${OFFSET}`)
   if (LIMIT !== Infinity) console.log(`   Limite:  ${LIMIT}`)
   if (slugArg) console.log(`   Slug:    ${slugArg}`)
 
@@ -338,7 +342,7 @@ async function main() {
       process.exit(1)
     }
 
-    const toSync = allIdols.slice(0, LIMIT === Infinity ? allIdols.length : LIMIT)
+    const toSync = allIdols.slice(OFFSET, OFFSET + (LIMIT === Infinity ? allIdols.length : LIMIT))
     let done = 0, fail = 0
     for (let i = 0; i < toSync.length; i++) {
       const item = toSync[i]
@@ -358,7 +362,7 @@ async function main() {
     if (allGroups.length === 0) {
       console.error('❌ Nenhum grupo encontrado.')
     } else {
-      const toSync = allGroups.slice(0, LIMIT === Infinity ? allGroups.length : LIMIT)
+      const toSync = allGroups.slice(OFFSET, OFFSET + (LIMIT === Infinity ? allGroups.length : LIMIT))
       let done = 0, fail = 0
       for (let i = 0; i < toSync.length; i++) {
         const item = toSync[i]
