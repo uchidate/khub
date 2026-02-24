@@ -26,6 +26,20 @@ export const metadata: Metadata = {
 export default async function Home() {
     const session = await getServerSession(authOptions)
 
+    // Site stats (server-side para evitar loading flash e bugs de isInView)
+    const [artistCount, productionCount, newsCount, totalViews] = await Promise.all([
+        prisma.artist.count(),
+        prisma.production.count(),
+        prisma.news.count(),
+        prisma.artist.aggregate({ _sum: { viewCount: true } }),
+    ])
+    const siteStats = {
+        artists: artistCount,
+        productions: productionCount,
+        news: newsCount,
+        views: totalViews._sum.viewCount ?? 0,
+    }
+
     // Featured News for Carousel (5 mais recentes com imagem)
     const featuredNewsRaw = await prisma.news.findMany({
         where: { imageUrl: { not: null } },
@@ -171,7 +185,7 @@ export default async function Home() {
 
             {/* Stats Section */}
             <div className="relative z-20 px-4 sm:px-6 lg:px-12 -mt-10">
-                <StatsSection />
+                <StatsSection stats={siteStats} />
             </div>
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-12">
