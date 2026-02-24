@@ -41,11 +41,15 @@ interface TMDBProductionDetails extends TMDBProduction {
   status: string
   tagline: string
   homepage: string
+  networks?: Array<{ id: number; name: string; origin_country: string }>
+  production_countries?: Array<{ iso_3166_1: string; name: string }>
+  origin_country?: string[]
   videos?: {
     results: Array<{
       key: string
       site: string
       type: string
+      official?: boolean
     }>
   }
   credits?: {
@@ -58,9 +62,28 @@ interface TMDBProductionDetails extends TMDBProduction {
   }
 }
 
+export interface PeriodPreviewItem {
+  tmdbId: number
+  tmdbType: 'tv' | 'movie'
+  name: string
+  originalName: string | null
+  date: string | null
+  posterUrl: string | null
+  voteAverage: number
+  voteCount: number
+}
+
+export interface PeriodPreviewResult {
+  results: PeriodPreviewItem[]
+  total: number
+  page: number
+  totalPages: number
+}
+
 export interface DiscoveredProduction {
   tmdbId: number
   tmdbType: 'movie' | 'tv'
+  type: string          // 'Drama' | 'Filme'
   titlePt: string
   titleKr: string | null
   synopsis: string
@@ -79,6 +102,12 @@ export interface DiscoveredProduction {
     name: string
     character: string
   }>
+  // TV-specific
+  episodeCount: number | null
+  seasonCount: number | null
+  episodeRuntime: number | null
+  network: string | null
+  productionStatus: string | null
 }
 
 export class TMDBProductionDiscoveryService {
@@ -230,8 +259,10 @@ export class TMDBProductionDiscoveryService {
     const title = details.name || details.original_name || 'Unknown Title'
     const koreanTitle = details.original_language === 'ko' ? (details.original_name || null) : null
 
-    // Extract trailer
+    // Extract trailer (prefer official)
     const youtubeTrailer = details.videos?.results?.find(
+      (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser') && v.official
+    ) || details.videos?.results?.find(
       (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
     )
     const trailerUrl = youtubeTrailer ? `https://www.youtube.com/watch?v=${youtubeTrailer.key}` : null
@@ -258,6 +289,7 @@ export class TMDBProductionDiscoveryService {
     return {
       tmdbId: details.id,
       tmdbType: 'tv',
+      type: 'Drama',
       titlePt: title,
       titleKr: koreanTitle,
       synopsis: details.overview || 'Sem sinopse disponível.',
@@ -272,6 +304,11 @@ export class TMDBProductionDiscoveryService {
       tags,
       ageRating,
       cast,
+      episodeCount: details.number_of_episodes ?? null,
+      seasonCount: details.number_of_seasons ?? null,
+      episodeRuntime: details.episode_run_time?.[0] ?? null,
+      network: details.networks?.[0]?.name ?? null,
+      productionStatus: details.status || null,
     }
   }
 
@@ -302,8 +339,10 @@ export class TMDBProductionDiscoveryService {
     const title = details.title || details.original_title || 'Unknown Title'
     const koreanTitle = details.original_language === 'ko' ? (details.original_title || null) : null
 
-    // Extract trailer
+    // Extract trailer (prefer official)
     const youtubeTrailer = details.videos?.results?.find(
+      (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser') && v.official
+    ) || details.videos?.results?.find(
       (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
     )
     const trailerUrl = youtubeTrailer ? `https://www.youtube.com/watch?v=${youtubeTrailer.key}` : null
@@ -330,6 +369,7 @@ export class TMDBProductionDiscoveryService {
     return {
       tmdbId: details.id,
       tmdbType: 'movie',
+      type: 'Filme',
       titlePt: title,
       titleKr: koreanTitle,
       synopsis: details.overview || 'Sem sinopse disponível.',
@@ -344,7 +384,87 @@ export class TMDBProductionDiscoveryService {
       tags,
       ageRating,
       cast,
+      episodeCount: null,
+      seasonCount: null,
+      episodeRuntime: null,
+      network: null,
+      productionStatus: null,
     }
+  }
+
+  /**
+   * Preview productions from TMDB by year/month — lightweight, no full detail fetch.
+   * Used for the "Importar por Período" admin panel.
+   */
+  async previewByPeriod(params: {
+    type: 'tv' | 'movie'
+    year: number
+    month?: number  // 1–12; undefined = full year
+    page?: number   // 1-based TMDB page
+    sortBy?: string // default: 'popularity.desc'
+  }): Promise<PeriodPreviewResult> {
+    const { type, year, month, page = 1, sortBy = 'popularity.desc' } = params
+
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const dateFrom = month
+      ? `${year}-${pad(month)}-01`
+      : `${year}-01-01`
+    const dateTo = month
+      ? `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`
+      : `${year}-12-31`
+
+    const dateParam = type === 'tv'
+      ? `first_air_date.gte=${dateFrom}&first_air_date.lte=${dateTo}`
+      : `release_date.gte=${dateFrom}&release_date.lte=${dateTo}`
+
+    const url = `${TMDB_BASE_URL}/discover/${type}?api_key=${TMDB_API_KEY}&with_original_language=ko&sort_by=${sortBy}&include_adult=false&${dateParam}&page=${page}`
+
+    await this.rateLimiter.acquire()
+    const response = await fetch(url)
+    if (!response.ok) {
+      console.error(`TMDB discover failed: ${response.status}`)
+      return { results: [], total: 0, page, totalPages: 0 }
+    }
+
+    const data = await response.json()
+    const results: PeriodPreviewItem[] = (data.results || []).map((item: TMDBProduction) => ({
+      tmdbId: item.id,
+      tmdbType: type,
+      name: (type === 'tv' ? item.name : item.title) || item.original_name || item.original_title || '',
+      originalName: item.original_language === 'ko'
+        ? (item.original_name || item.original_title || null)
+        : null,
+      date: (type === 'tv' ? item.first_air_date : item.release_date) || null,
+      posterUrl: item.poster_path ? `${TMDB_IMAGE_BASE}${item.poster_path}` : null,
+      voteAverage: item.vote_average,
+      voteCount: item.vote_count,
+    }))
+
+    return {
+      results,
+      total: data.total_results || 0,
+      page: data.page || page,
+      totalPages: Math.min(data.total_pages || 0, 20), // TMDB caps at 500, cap at 20 for sanity
+    }
+  }
+
+  /**
+   * Fetch full production data for a specific TMDB ID + type.
+   * Includes all fields used on the site: episodes, network, age rating, etc.
+   * Used for the import step.
+   */
+  async getFullProductionData(tmdbId: number, type: 'tv' | 'movie'): Promise<DiscoveredProduction | null> {
+    const details = type === 'tv'
+      ? await this.getTVDetails(tmdbId)
+      : await this.getMovieDetails(tmdbId)
+
+    if (!details) return null
+
+    const ageRating = await this.ageRatingService.fetchAgeRating(tmdbId, type)
+
+    return type === 'tv'
+      ? this.mapTVToDiscoveredProduction(details, ageRating)
+      : this.mapMovieToDiscoveredProduction(details, ageRating)
   }
 }
 
