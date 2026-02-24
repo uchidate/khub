@@ -1,207 +1,198 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import Link from 'next/link'
-import {
-  Link2,
-  ArrowLeft,
-  RefreshCw,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  RotateCcw,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  User,
-  Users,
-  Calendar,
-  Ruler,
-  Droplets,
-  Briefcase,
-} from 'lucide-react'
+import Image from 'next/image'
+import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-type Suggestion = {
+interface IdolItem {
+  kpoppingIdolId: string
+  idolName: string
+  idolNameHangul?: string
+  idolBirthday?: string
+  idolImageUrl?: string
+  idolHeight?: number
+  idolBloodType?: string
+  idolProfileUrl?: string
+  artistId?: string
+  artistMatchScore?: number
+  artistMatchReason?: string
+  artist?: {
+    id: string
+    nameRomanized: string
+    nameHangul?: string
+    primaryImageUrl?: string
+    birthDate?: string
+  }
+  groupCount: number
+}
+
+interface GroupItem {
+  kpoppingGroupId: string
+  groupName: string
+  groupNameHangul?: string
+  groupImageUrl?: string
+  groupDebutDate?: string
+  groupAgency?: string
+  groupStatus?: string
+  musicalGroupId?: string
+  groupMatchScore?: number
+  groupMatchReason?: string
+  musicalGroup?: {
+    id: string
+    name: string
+    nameHangul?: string
+    profileImageUrl?: string
+    debutDate?: string
+    agency?: { name: string }
+  }
+  memberCount: number
+}
+
+interface MembershipItem {
   id: string
   kpoppingIdolId: string
   kpoppingGroupId: string
-  // Dados kpopping – idol
   idolName: string
-  idolNameHangul: string | null
-  idolBirthday: string | null
-  idolImageUrl: string | null
-  idolHeight: number | null
-  idolBloodType: string | null
-  idolPosition: string | null
-  idolIsActive: boolean
-  idolProfileUrl: string | null
-  // Dados kpopping – grupo
+  idolNameHangul?: string
   groupName: string
-  groupNameHangul: string | null
-  groupImageUrl: string | null
-  groupDebutDate: string | null
-  groupAgency: string | null
-  groupStatus: string | null
-  // Match
-  artistMatchScore: number | null
-  artistMatchReason: string | null
-  groupMatchScore: number | null
-  groupMatchReason: string | null
-  // Status
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
-  reviewedAt: string | null
-  reviewNotes: string | null
-  // Relações HallyuHub
-  artist: HallyuArtist | null
-  musicalGroup: HallyuGroup | null
+  idolPosition?: string
+  idolIsActive: boolean
+  artistId: string
+  musicalGroupId: string
+  artist: { nameRomanized: string; nameHangul?: string; primaryImageUrl?: string }
+  musicalGroup: { name: string; nameHangul?: string; profileImageUrl?: string }
 }
 
-type HallyuArtist = {
-  id: string
-  nameRomanized: string
-  nameHangul: string | null
-  birthDate: string | null
-  primaryImageUrl: string | null
-  height: string | null
-  bloodType: string | null
-  memberships: { group: { id: string; name: string } }[]
-}
-
-type HallyuGroup = {
-  id: string
+interface TMDBResult {
+  tmdbId: number
   name: string
-  nameHangul: string | null
-  profileImageUrl: string | null
-  debutDate: string | null
-  agency: { name: string } | null
+  profilePath?: string
+  knownForDepartment: string
+  popularity: number
+  knownFor: string[]
+  alreadyExists: boolean
 }
 
-type SearchResult = {
+interface SearchHit {
   id: string
   nameRomanized?: string
   name?: string
-  nameHangul: string | null
+  nameHangul?: string
   primaryImageUrl?: string
   profileImageUrl?: string
-  birthDate?: string | null
-  debutDate?: string | null
-  height?: string | null
-  bloodType?: string | null
-  agency?: { name: string } | null
+  birthDate?: string
+  debutDate?: string
 }
 
-type StatusFilter = 'PENDING' | 'APPROVED' | 'REJECTED'
-type MatchFilter = 'all' | 'has_artist' | 'no_artist' | 'has_group' | 'no_group'
-
-type GenerateStats = {
-  processed: number
-  created: number
-  updated: number
-  skipped: number
-  errors: number
+interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  totalPages: number
 }
 
-// ─── Utilitários ──────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  })
-}
-
-function scoreColor(score: number | null): string {
-  if (score === null) return 'text-zinc-500'
+function scoreColor(score?: number | null) {
+  if (!score) return 'text-gray-400'
   if (score >= 0.95) return 'text-green-400'
   if (score >= 0.85) return 'text-yellow-400'
   return 'text-orange-400'
 }
 
-function scoreLabel(score: number | null, reason: string | null): string {
-  if (score === null) return 'sem match'
-  return `${Math.round(score * 100)}% — ${reason ?? ''}`
+function reasonLabel(reason?: string | null) {
+  if (!reason) return null
+  const map: Record<string, string> = {
+    exact_hangul: '한자 정확',
+    exact_romanized: 'Exato',
+    icase_romanized: 'Case-insensitive',
+    normalized_romanized: 'Normalizado',
+    user_confirmed: 'Confirmado',
+    user_rejected: 'Rejeitado',
+  }
+  return map[reason] ?? reason
 }
 
-// ─── Componente de busca inline ───────────────────────────────────────────────
+function formatDate(d?: string | null) {
+  if (!d) return null
+  return new Date(d).toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+function avatarPlaceholder(name: string) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=80&background=1f2937&color=9ca3af`
+}
+
+// ─── Inline Typeahead Search ───────────────────────────────────────────────────
 
 function InlineSearch({
   type,
-  onSelect,
   placeholder,
+  onSelect,
 }: {
   type: 'artist' | 'group'
-  onSelect: (result: SearchResult) => void
   placeholder: string
+  onSelect: (item: SearchHit) => void
 }) {
   const [q, setQ] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
+  const [results, setResults] = useState<SearchHit[]>([])
   const [loading, setLoading] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    if (q.length < 2) { setResults([]); return }
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const endpoint = type === 'artist'
-          ? `/api/admin/kpopping/artists/search?q=${encodeURIComponent(q)}`
-          : `/api/admin/kpopping/groups/search?q=${encodeURIComponent(q)}`
-        const res = await fetch(endpoint)
-        const data = await res.json()
-        setResults(data.items ?? [])
-      } finally {
-        setLoading(false)
-      }
-    }, 300)
-  }, [q, type])
+  const endpoint = type === 'artist'
+    ? '/api/admin/kpopping/artists/search'
+    : '/api/admin/kpopping/groups/search'
+
+  const search = useCallback(async (query: string) => {
+    if (query.length < 2) { setResults([]); return }
+    setLoading(true)
+    try {
+      const res = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      setResults(data.items || [])
+    } finally {
+      setLoading(false)
+    }
+  }, [endpoint])
+
+  const handleChange = (val: string) => {
+    setQ(val)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => search(val), 300)
+  }
 
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2">
-        <Search size={14} className="text-zinc-500 flex-shrink-0" />
-        <input
-          type="text"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder={placeholder}
-          className="bg-transparent text-sm text-white placeholder-zinc-500 outline-none w-full"
-        />
-        {loading && <RefreshCw size={12} className="animate-spin text-zinc-500" />}
-      </div>
+    <div className="relative mt-2">
+      <input
+        className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
+        placeholder={placeholder}
+        value={q}
+        onChange={e => handleChange(e.target.value)}
+      />
+      {loading && <span className="absolute right-2 top-2 text-xs text-gray-500">...</span>}
       {results.length > 0 && (
-        <ul className="absolute z-20 top-full left-0 right-0 mt-1 bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden shadow-xl">
-          {results.map(r => (
-            <li key={r.id}>
-              <button
-                onClick={() => { onSelect(r); setQ(''); setResults([]) }}
-                className="w-full text-left flex items-center gap-3 px-3 py-2 hover:bg-zinc-700 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-md overflow-hidden bg-zinc-700 flex-shrink-0">
-                  {(r.primaryImageUrl || r.profileImageUrl) ? (
-                    <img
-                      src={r.primaryImageUrl || r.profileImageUrl!}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-500">
-                      {type === 'artist' ? <User size={14} /> : <Users size={14} />}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
-                    {r.nameRomanized || r.name}
-                  </p>
-                  {r.nameHangul && (
-                    <p className="text-xs text-zinc-400">{r.nameHangul}</p>
-                  )}
-                </div>
-              </button>
+        <ul className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg max-h-48 overflow-y-auto">
+          {results.map(item => (
+            <li
+              key={item.id}
+              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-700 cursor-pointer"
+              onClick={() => { onSelect(item); setQ(''); setResults([]) }}
+            >
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+                <Image
+                  src={(item.primaryImageUrl || item.profileImageUrl) ?? avatarPlaceholder(item.nameRomanized ?? item.name ?? '')}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="object-cover w-full h-full"
+                  unoptimized
+                />
+              </div>
+              <div>
+                <span className="text-sm text-gray-200">{item.nameRomanized ?? item.name}</span>
+                {item.nameHangul && <span className="text-xs text-gray-500 ml-1">{item.nameHangul}</span>}
+              </div>
             </li>
           ))}
         </ul>
@@ -210,698 +201,912 @@ function InlineSearch({
   )
 }
 
-// ─── Card de sugestão ─────────────────────────────────────────────────────────
+// ─── TMDB Search Panel ─────────────────────────────────────────────────────────
 
-function SuggestionCard({
-  suggestion,
-  onAction,
+function TMDBPanel({
+  idolName,
+  kpoppingIdolId,
+  onConfirmed,
 }: {
-  suggestion: Suggestion
-  onAction: () => void
+  idolName: string
+  kpoppingIdolId: string
+  onConfirmed: (artist: { id: string; nameRomanized: string; nameHangul?: string; primaryImageUrl?: string }) => void
 }) {
-  const [processing, setProcessing] = useState(false)
-  const [notes, setNotes] = useState('')
-  const [overrideArtist, setOverrideArtist] = useState<SearchResult | null>(null)
-  const [overrideGroup, setOverrideGroup] = useState<SearchResult | null>(null)
+  const [results, setResults] = useState<TMDBResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const [adding, setAdding] = useState<number | null>(null)
+  const [searched, setSearched] = useState(false)
 
-  const effectiveArtist = overrideArtist ?? (suggestion.artist ? {
-    id: suggestion.artist.id,
-    nameRomanized: suggestion.artist.nameRomanized,
-    nameHangul: suggestion.artist.nameHangul,
-    primaryImageUrl: suggestion.artist.primaryImageUrl,
-    birthDate: suggestion.artist.birthDate,
-    height: suggestion.artist.height,
-    bloodType: suggestion.artist.bloodType,
-  } : null)
-
-  const effectiveGroup = overrideGroup ?? (suggestion.musicalGroup ? {
-    id: suggestion.musicalGroup.id,
-    name: suggestion.musicalGroup.name,
-    nameHangul: suggestion.musicalGroup.nameHangul,
-    profileImageUrl: suggestion.musicalGroup.profileImageUrl,
-    debutDate: suggestion.musicalGroup.debutDate,
-    agency: suggestion.musicalGroup.agency,
-  } : null)
-
-  async function doAction(action: 'approve' | 'reject' | 'revoke') {
-    if (action === 'approve' && (!effectiveArtist || !effectiveGroup)) {
-      alert('Selecione um artista e um grupo antes de aprovar.')
-      return
-    }
-
-    setProcessing(true)
+  const doSearch = useCallback(async () => {
+    setLoading(true)
+    setSearched(true)
     try {
-      const body: Record<string, unknown> = { action, notes }
-      if (action === 'approve') {
-        body.artistId = effectiveArtist!.id
-        body.musicalGroupId = effectiveGroup!.id
-        body.isActive = suggestion.idolIsActive
-        body.role = suggestion.idolPosition ?? undefined
-      }
-
-      const res = await fetch(`/api/admin/kpopping/suggestions/${suggestion.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error ?? 'Erro ao processar')
-      }
-      onAction()
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erro desconhecido')
+      const res = await fetch(`/api/admin/kpopping/tmdb/search?q=${encodeURIComponent(idolName)}`)
+      const data = await res.json()
+      setResults(data.items || [])
     } finally {
-      setProcessing(false)
+      setLoading(false)
+    }
+  }, [idolName])
+
+  useEffect(() => { doSearch() }, [doSearch])
+
+  const addArtist = async (tmdbId: number) => {
+    setAdding(tmdbId)
+    try {
+      const res = await fetch('/api/admin/kpopping/tmdb/add-artist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tmdbId, kpoppingIdolId }),
+      })
+      const data = await res.json()
+      if (data.ok) onConfirmed(data.artist)
+    } finally {
+      setAdding(null)
     }
   }
 
-  const statusBadge = {
-    PENDING: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400',
-    APPROVED: 'bg-green-500/10 border-green-500/30 text-green-400',
-    REJECTED: 'bg-red-500/10 border-red-500/30 text-red-400',
-  }[suggestion.status]
+  return (
+    <div className="mt-3 bg-gray-900 border border-gray-700 rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
+        <button onClick={doSearch} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+          <RefreshCw size={10} /> Refazer
+        </button>
+      </div>
 
-  const statusLabel = {
-    PENDING: 'Pendente',
-    APPROVED: 'Aprovado',
-    REJECTED: 'Rejeitado',
-  }[suggestion.status]
+      {loading && <p className="text-xs text-gray-500 py-2">Buscando...</p>}
+
+      {!loading && searched && results.length === 0 && (
+        <p className="text-xs text-gray-500 py-2">Nenhum resultado encontrado no TMDB.</p>
+      )}
+
+      <ul className="space-y-2">
+        {results.map(r => (
+          <li key={r.tmdbId} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+              {r.profilePath ? (
+                <Image src={r.profilePath} alt={r.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">?</div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-gray-200 truncate">{r.name}</p>
+              <p className="text-xs text-gray-500">
+                {r.knownForDepartment} · ★ {r.popularity.toFixed(1)}
+                {r.knownFor.length > 0 && ` · ${r.knownFor.join(', ')}`}
+              </p>
+            </div>
+            {r.alreadyExists ? (
+              <span className="text-xs text-yellow-500 flex-shrink-0">Já existe</span>
+            ) : (
+              <button
+                onClick={() => addArtist(r.tmdbId)}
+                disabled={adding === r.tmdbId}
+                className="flex-shrink-0 text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-2 py-1 rounded"
+              >
+                {adding === r.tmdbId ? '...' : '+ Criar'}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// ─── Idol Card ─────────────────────────────────────────────────────────────────
+
+function IdolCard({
+  idol,
+}: {
+  idol: IdolItem
+}) {
+  const [pending, setPending] = useState(false)
+  const [showTMDB, setShowTMDB] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [localArtist, setLocalArtist] = useState(idol.artist)
+  const [localArtistId, setLocalArtistId] = useState(idol.artistId)
+  const [localReason, setLocalReason] = useState(idol.artistMatchReason)
+
+  const isConfirmed = localReason === 'user_confirmed'
+  const isRejected = localReason === 'user_rejected'
+
+  const doAction = async (action: string, artistId?: string) => {
+    setPending(true)
+    try {
+      const res = await fetch(`/api/admin/kpopping/idols/${encodeURIComponent(idol.kpoppingIdolId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, artistId }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        if (action === 'confirm' && data.artist) {
+          setLocalArtist(data.artist)
+          setLocalArtistId(data.artist.id)
+          setLocalReason('user_confirmed')
+        } else if (action === 'reject') {
+          setLocalArtist(undefined)
+          setLocalArtistId(undefined)
+          setLocalReason('user_rejected')
+        } else if (action === 'reset') {
+          setLocalArtist(undefined)
+          setLocalArtistId(undefined)
+          setLocalReason(undefined)
+        }
+        setShowSearch(false)
+        setShowTMDB(false)
+      }
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const handleManualSelect = (item: SearchHit) => {
+    setLocalArtist({
+      id: item.id,
+      nameRomanized: item.nameRomanized ?? item.name ?? '',
+      nameHangul: item.nameHangul,
+      primaryImageUrl: item.primaryImageUrl,
+      birthDate: item.birthDate,
+    })
+    setLocalArtistId(item.id)
+    setShowSearch(false)
+  }
+
+  const handleTMDBConfirmed = (artist: { id: string; nameRomanized: string; nameHangul?: string; primaryImageUrl?: string }) => {
+    setLocalArtist({ ...artist })
+    setLocalArtistId(artist.id)
+    setLocalReason('user_confirmed')
+    setShowTMDB(false)
+  }
+
+  const idolImg = idol.idolImageUrl ?? avatarPlaceholder(idol.idolName)
+  const artistImg = localArtist?.primaryImageUrl ?? avatarPlaceholder(localArtist?.nameRomanized ?? '?')
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors">
-
-      {/* Header do card */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusBadge}`}>
-            {statusLabel}
-          </span>
-          {suggestion.reviewedAt && (
-            <span className="text-xs text-zinc-500">
-              em {formatDate(suggestion.reviewedAt)}
+    <div className={`bg-gray-800 border rounded-xl p-4 space-y-3 ${
+      isConfirmed ? 'border-green-700/50' : isRejected ? 'border-red-700/50' : 'border-gray-700'
+    }`}>
+      {/* Status badge */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isConfirmed && (
+            <span className="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <CheckCircle size={10} /> Confirmado
             </span>
           )}
-          {suggestion.reviewNotes && (
-            <span className="text-xs text-zinc-500 italic">"{suggestion.reviewNotes}"</span>
+          {isRejected && (
+            <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <XCircle size={10} /> Rejeitado
+            </span>
+          )}
+          {!isConfirmed && !isRejected && localArtistId && (
+            <span className={`text-xs font-mono ${scoreColor(idol.artistMatchScore)}`}>
+              {Math.round((idol.artistMatchScore ?? 0) * 100)}% · {reasonLabel(idol.artistMatchReason)}
+            </span>
+          )}
+          {!localArtistId && !isRejected && (
+            <span className="text-xs text-gray-500">Sem correspondência</span>
           )}
         </div>
-        {suggestion.idolIsActive ? (
-          <span className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
-            Ativo no grupo
-          </span>
-        ) : (
-          <span className="text-xs text-zinc-400 bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded-full">
-            Ex-membro
-          </span>
-        )}
+        <span className="text-xs text-gray-600">{idol.groupCount} grupo{idol.groupCount !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Comparação lado a lado — Idol */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {/* Kpopping – Idol */}
-        <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
-          <p className="text-xs font-bold text-purple-400 uppercase tracking-wider mb-3 flex items-center gap-1">
-            <Link2 size={12} /> Kpopping
-          </p>
-          <div className="flex gap-3">
-            <div className="w-16 h-16 rounded-lg overflow-hidden bg-zinc-700 flex-shrink-0">
-              {suggestion.idolImageUrl ? (
-                <img src={suggestion.idolImageUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-500">
-                  <User size={24} />
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-white text-sm">{suggestion.idolName}</p>
-              {suggestion.idolNameHangul && (
-                <p className="text-xs text-zinc-400">{suggestion.idolNameHangul}</p>
-              )}
-              {suggestion.idolPosition && (
-                <p className="text-xs text-purple-300 mt-0.5">{suggestion.idolPosition}</p>
-              )}
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2">
-                {suggestion.idolBirthday && (
-                  <span className="text-xs text-zinc-400 flex items-center gap-1">
-                    <Calendar size={10} /> {formatDate(suggestion.idolBirthday)}
-                  </span>
-                )}
-                {suggestion.idolHeight && (
-                  <span className="text-xs text-zinc-400 flex items-center gap-1">
-                    <Ruler size={10} /> {suggestion.idolHeight}cm
-                  </span>
-                )}
-                {suggestion.idolBloodType && (
-                  <span className="text-xs text-zinc-400 flex items-center gap-1">
-                    <Droplets size={10} /> {suggestion.idolBloodType}
-                  </span>
-                )}
-              </div>
-            </div>
+      {/* Side-by-side */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+            <Image src={idolImg} alt={idol.idolName} width={48} height={48} className="object-cover w-full h-full" unoptimized />
           </div>
-          {suggestion.idolProfileUrl && (
-            <a
-              href={suggestion.idolProfileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 text-xs text-purple-400 hover:underline block"
-            >
-              Ver no kpopping.com →
-            </a>
-          )}
-        </div>
-
-        {/* HallyuHub – Artist */}
-        <div className={`rounded-xl p-4 border transition-colors ${
-          effectiveArtist
-            ? 'bg-zinc-800/50 border-zinc-700'
-            : 'bg-zinc-900 border-dashed border-zinc-700'
-        }`}>
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-1">
-            <User size={12} /> HallyuHub — Artista
-            {suggestion.artistMatchScore !== null && !overrideArtist && (
-              <span className={`ml-auto text-xs font-normal ${scoreColor(suggestion.artistMatchScore)}`}>
-                {scoreLabel(suggestion.artistMatchScore, suggestion.artistMatchReason)}
-              </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-200 truncate">{idol.idolName}</p>
+            {idol.idolNameHangul && <p className="text-xs text-gray-500">{idol.idolNameHangul}</p>}
+            {idol.idolBirthday && <p className="text-xs text-gray-600">{formatDate(idol.idolBirthday)}</p>}
+            {(idol.idolHeight || idol.idolBloodType) && (
+              <p className="text-xs text-gray-600">
+                {idol.idolHeight ? `${idol.idolHeight}cm` : ''}
+                {idol.idolHeight && idol.idolBloodType ? ' · ' : ''}
+                {idol.idolBloodType ? `Tipo ${idol.idolBloodType}` : ''}
+              </p>
             )}
-            {overrideArtist && (
-              <span className="ml-auto text-xs font-normal text-blue-400">selecionado manualmente</span>
-            )}
-          </p>
-
-          {effectiveArtist ? (
-            <div className="flex gap-3">
-              <div className="w-16 h-16 rounded-lg overflow-hidden bg-zinc-700 flex-shrink-0">
-                {effectiveArtist.primaryImageUrl ? (
-                  <img src={effectiveArtist.primaryImageUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-zinc-500">
-                    <User size={24} />
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-bold text-white text-sm">{effectiveArtist.nameRomanized}</p>
-                {effectiveArtist.nameHangul && (
-                  <p className="text-xs text-zinc-400">{effectiveArtist.nameHangul}</p>
-                )}
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2">
-                  {effectiveArtist.birthDate && (
-                    <span className="text-xs text-zinc-400 flex items-center gap-1">
-                      <Calendar size={10} /> {formatDate(effectiveArtist.birthDate)}
-                    </span>
-                  )}
-                  {effectiveArtist.height && (
-                    <span className="text-xs text-zinc-400 flex items-center gap-1">
-                      <Ruler size={10} /> {effectiveArtist.height}
-                    </span>
-                  )}
-                  {effectiveArtist.bloodType && (
-                    <span className="text-xs text-zinc-400 flex items-center gap-1">
-                      <Droplets size={10} /> {effectiveArtist.bloodType}
-                    </span>
-                  )}
-                </div>
-                <Link
-                  href={`/artists/${effectiveArtist.id}`}
-                  target="_blank"
-                  className="mt-2 text-xs text-blue-400 hover:underline block"
-                >
-                  Ver perfil →
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-zinc-500 mb-3">
-              <AlertTriangle size={16} />
-              <p className="text-sm">Sem correspondência automática</p>
-            </div>
-          )}
-
-          {/* Busca manual */}
-          <div className="mt-3">
-            <InlineSearch
-              type="artist"
-              placeholder="Buscar artista..."
-              onSelect={r => setOverrideArtist(r)}
-            />
-          </div>
-          {overrideArtist && (
-            <button
-              onClick={() => setOverrideArtist(null)}
-              className="mt-1 text-xs text-zinc-500 hover:text-zinc-400"
-            >
-              ✕ Remover seleção manual
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Comparação — Grupo */}
-      <div className="grid grid-cols-2 gap-4 mb-5">
-        {/* Kpopping – Group */}
-        <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
-          <p className="text-xs font-bold text-purple-400 uppercase tracking-wider mb-3 flex items-center gap-1">
-            <Users size={12} /> Kpopping — Grupo
-          </p>
-          <div className="flex gap-3">
-            <div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-700 flex-shrink-0">
-              {suggestion.groupImageUrl ? (
-                <img src={suggestion.groupImageUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-500">
-                  <Users size={18} />
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-white text-sm">{suggestion.groupName}</p>
-              {suggestion.groupNameHangul && (
-                <p className="text-xs text-zinc-400">{suggestion.groupNameHangul}</p>
-              )}
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                {suggestion.groupDebutDate && (
-                  <span className="text-xs text-zinc-400 flex items-center gap-1">
-                    <Calendar size={10} /> Estreia: {formatDate(suggestion.groupDebutDate)}
-                  </span>
-                )}
-                {suggestion.groupAgency && (
-                  <span className="text-xs text-zinc-400 flex items-center gap-1">
-                    <Briefcase size={10} /> {suggestion.groupAgency}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* HallyuHub – Group */}
-        <div className={`rounded-xl p-4 border transition-colors ${
-          effectiveGroup
-            ? 'bg-zinc-800/50 border-zinc-700'
-            : 'bg-zinc-900 border-dashed border-zinc-700'
-        }`}>
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-1">
-            <Users size={12} /> HallyuHub — Grupo
-            {suggestion.groupMatchScore !== null && !overrideGroup && (
-              <span className={`ml-auto text-xs font-normal ${scoreColor(suggestion.groupMatchScore)}`}>
-                {scoreLabel(suggestion.groupMatchScore, suggestion.groupMatchReason)}
-              </span>
-            )}
-            {overrideGroup && (
-              <span className="ml-auto text-xs font-normal text-blue-400">selecionado manualmente</span>
-            )}
-          </p>
-
-          {effectiveGroup ? (
-            <div className="flex gap-3">
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-700 flex-shrink-0">
-                {effectiveGroup.profileImageUrl ? (
-                  <img src={effectiveGroup.profileImageUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-zinc-500">
-                    <Users size={18} />
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-bold text-white text-sm">{effectiveGroup.name}</p>
-                {effectiveGroup.nameHangul && (
-                  <p className="text-xs text-zinc-400">{effectiveGroup.nameHangul}</p>
-                )}
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                  {effectiveGroup.debutDate && (
-                    <span className="text-xs text-zinc-400 flex items-center gap-1">
-                      <Calendar size={10} /> Estreia: {formatDate(effectiveGroup.debutDate)}
-                    </span>
-                  )}
-                  {effectiveGroup.agency?.name && (
-                    <span className="text-xs text-zinc-400 flex items-center gap-1">
-                      <Briefcase size={10} /> {effectiveGroup.agency.name}
-                    </span>
-                  )}
-                </div>
-                <Link
-                  href={`/groups/${effectiveGroup.id}`}
-                  target="_blank"
-                  className="mt-1 text-xs text-blue-400 hover:underline block"
-                >
-                  Ver grupo →
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-zinc-500 mb-3">
-              <AlertTriangle size={16} />
-              <p className="text-sm">Sem correspondência automática</p>
-            </div>
-          )}
-
-          {/* Busca manual */}
-          <div className="mt-3">
-            <InlineSearch
-              type="group"
-              placeholder="Buscar grupo..."
-              onSelect={r => setOverrideGroup(r)}
-            />
-          </div>
-          {overrideGroup && (
-            <button
-              onClick={() => setOverrideGroup(null)}
-              className="mt-1 text-xs text-zinc-500 hover:text-zinc-400"
-            >
-              ✕ Remover seleção manual
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Notas + Ações */}
-      <div className="border-t border-zinc-800 pt-4">
-        <input
-          type="text"
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          placeholder="Notas (opcional)..."
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-zinc-600 mb-3"
-        />
-
-        <div className="flex items-center gap-3 flex-wrap">
-          {suggestion.status === 'PENDING' && (
+        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
+          {localArtist ? (
             <>
-              <button
-                onClick={() => doAction('approve')}
-                disabled={processing || !effectiveArtist || !effectiveGroup}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {processing ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                Aprovar vínculo
-              </button>
-              <button
-                onClick={() => doAction('reject')}
-                disabled={processing}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
-              >
-                {processing ? <RefreshCw size={14} className="animate-spin" /> : <XCircle size={14} />}
-                Rejeitar
-              </button>
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+                <Image src={artistImg} alt={localArtist.nameRomanized} width={48} height={48} className="object-cover w-full h-full" unoptimized />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-200 truncate">{localArtist.nameRomanized}</p>
+                {localArtist.nameHangul && <p className="text-xs text-gray-500">{localArtist.nameHangul}</p>}
+                {localArtist.birthDate && <p className="text-xs text-gray-600">{formatDate(localArtist.birthDate)}</p>}
+              </div>
             </>
-          )}
-
-          {suggestion.status === 'APPROVED' && (
-            <button
-              onClick={() => {
-                if (!confirm('Revogar este vínculo removerá a associação artista-grupo. Continuar?')) return
-                doAction('revoke')
-              }}
-              disabled={processing}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
-            >
-              {processing ? <RefreshCw size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-              Revogar vínculo
-            </button>
-          )}
-
-          {suggestion.status === 'REJECTED' && (
-            <button
-              onClick={() => {
-                setNotes('')
-                doAction('approve')
-              }}
-              disabled={processing || !effectiveArtist || !effectiveGroup}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {processing ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-              Aprovar mesmo assim
-            </button>
+          ) : (
+            <div className="flex items-center justify-center w-full text-gray-600 text-xs">
+              {isRejected ? 'Sem correspondência' : 'Não encontrado'}
+            </div>
           )}
         </div>
+      </div>
+
+      {/* Manual search */}
+      {showSearch && (
+        <InlineSearch
+          type="artist"
+          placeholder="Buscar artista no HallyuHub..."
+          onSelect={handleManualSelect}
+        />
+      )}
+
+      {/* TMDB panel */}
+      {showTMDB && (
+        <TMDBPanel
+          idolName={idol.idolName}
+          kpoppingIdolId={idol.kpoppingIdolId}
+          onConfirmed={handleTMDBConfirmed}
+        />
+      )}
+
+      {/* Confirm pending manual selection */}
+      {localArtistId && localArtistId !== idol.artistId && localReason !== 'user_confirmed' && (
+        <button
+          onClick={() => doAction('confirm', localArtistId)}
+          disabled={pending}
+          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white py-1.5 rounded flex items-center justify-center gap-1"
+        >
+          <CheckCircle size={12} /> Confirmar seleção manual
+        </button>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2 flex-wrap">
+        {!isConfirmed && !isRejected && localArtistId && localArtistId === idol.artistId && (
+          <button
+            onClick={() => doAction('confirm', localArtistId)}
+            disabled={pending}
+            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-3 py-1.5 rounded flex items-center gap-1"
+          >
+            <CheckCircle size={12} /> Confirmar
+          </button>
+        )}
+
+        {!isRejected && (
+          <button
+            onClick={() => doAction('reject')}
+            disabled={pending}
+            className="text-xs bg-red-900 hover:bg-red-800 disabled:opacity-50 text-red-300 px-3 py-1.5 rounded flex items-center gap-1"
+          >
+            <XCircle size={12} /> Rejeitar
+          </button>
+        )}
+
+        <button
+          onClick={() => { setShowSearch(!showSearch); setShowTMDB(false) }}
+          disabled={pending}
+          className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded flex items-center gap-1"
+        >
+          <Search size={12} /> HallyuHub
+        </button>
+
+        <button
+          onClick={() => { setShowTMDB(!showTMDB); setShowSearch(false) }}
+          disabled={pending}
+          className="text-xs bg-purple-900 hover:bg-purple-800 text-purple-300 px-3 py-1.5 rounded flex items-center gap-1"
+        >
+          <Star size={12} /> TMDB
+        </button>
+
+        {(isConfirmed || isRejected) && (
+          <button
+            onClick={() => doAction('reset')}
+            disabled={pending}
+            className="text-xs text-gray-600 hover:text-gray-400 px-2 py-1.5 flex items-center gap-1"
+          >
+            <RotateCcw size={10} /> Reset
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
+// ─── Group Card ────────────────────────────────────────────────────────────────
 
-export default function KpoppingCurationPage() {
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [generating, setGenerating] = useState(false)
-  const [generateStats, setGenerateStats] = useState<GenerateStats | null>(null)
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('PENDING')
-  const [matchFilter, setMatchFilter] = useState<MatchFilter>('all')
+function GroupCard({ group }: { group: GroupItem }) {
+  const [pending, setPending] = useState(false)
+  const [localGroup, setLocalGroup] = useState(group.musicalGroup)
+  const [localGroupId, setLocalGroupId] = useState(group.musicalGroupId)
+  const [localReason, setLocalReason] = useState(group.groupMatchReason)
+  const [showSearch, setShowSearch] = useState(false)
+
+  const isConfirmed = localReason === 'user_confirmed'
+  const isRejected = localReason === 'user_rejected'
+
+  const doAction = async (action: string, musicalGroupId?: string) => {
+    setPending(true)
+    try {
+      const res = await fetch(`/api/admin/kpopping/groups-overview/${encodeURIComponent(group.kpoppingGroupId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, musicalGroupId }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        if (action === 'confirm' && data.group) {
+          setLocalGroup(data.group)
+          setLocalGroupId(data.group.id)
+          setLocalReason('user_confirmed')
+        } else if (action === 'reject') {
+          setLocalGroup(undefined)
+          setLocalGroupId(undefined)
+          setLocalReason('user_rejected')
+        } else if (action === 'reset') {
+          setLocalGroup(undefined)
+          setLocalGroupId(undefined)
+          setLocalReason(undefined)
+        }
+        setShowSearch(false)
+      }
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const handleManualSelect = (item: SearchHit) => {
+    setLocalGroup({
+      id: item.id,
+      name: item.name ?? '',
+      nameHangul: item.nameHangul,
+      profileImageUrl: item.profileImageUrl,
+      debutDate: item.debutDate,
+    })
+    setLocalGroupId(item.id)
+    setShowSearch(false)
+  }
+
+  const groupImg = group.groupImageUrl ?? avatarPlaceholder(group.groupName)
+  const khubImg = localGroup?.profileImageUrl ?? avatarPlaceholder(localGroup?.name ?? '?')
+
+  return (
+    <div className={`bg-gray-800 border rounded-xl p-4 space-y-3 ${
+      isConfirmed ? 'border-green-700/50' : isRejected ? 'border-red-700/50' : 'border-gray-700'
+    }`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {isConfirmed && (
+            <span className="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <CheckCircle size={10} /> Confirmado
+            </span>
+          )}
+          {isRejected && (
+            <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <XCircle size={10} /> Rejeitado
+            </span>
+          )}
+          {!isConfirmed && !isRejected && localGroupId && (
+            <span className={`text-xs font-mono ${scoreColor(group.groupMatchScore)}`}>
+              {Math.round((group.groupMatchScore ?? 0) * 100)}% · {reasonLabel(group.groupMatchReason)}
+            </span>
+          )}
+          {!localGroupId && !isRejected && (
+            <span className="text-xs text-gray-500">Sem correspondência</span>
+          )}
+        </div>
+        <span className="text-xs text-gray-600">{group.memberCount} membro{group.memberCount !== 1 ? 's' : ''}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+            <Image src={groupImg} alt={group.groupName} width={48} height={48} className="object-cover w-full h-full" unoptimized />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-200 truncate">{group.groupName}</p>
+            {group.groupNameHangul && <p className="text-xs text-gray-500">{group.groupNameHangul}</p>}
+            {group.groupDebutDate && <p className="text-xs text-gray-600">Debut: {formatDate(group.groupDebutDate)}</p>}
+            {group.groupAgency && <p className="text-xs text-gray-600 truncate">{group.groupAgency}</p>}
+          </div>
+        </div>
+
+        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
+          {localGroup ? (
+            <>
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+                <Image src={khubImg} alt={localGroup.name} width={48} height={48} className="object-cover w-full h-full" unoptimized />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-200 truncate">{localGroup.name}</p>
+                {localGroup.nameHangul && <p className="text-xs text-gray-500">{localGroup.nameHangul}</p>}
+                {localGroup.agency?.name && <p className="text-xs text-gray-600 truncate">{localGroup.agency.name}</p>}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center w-full text-gray-600 text-xs">
+              {isRejected ? 'Sem correspondência' : 'Não encontrado'}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showSearch && (
+        <InlineSearch
+          type="group"
+          placeholder="Buscar grupo no HallyuHub..."
+          onSelect={handleManualSelect}
+        />
+      )}
+
+      {localGroupId && localGroupId !== group.musicalGroupId && localReason !== 'user_confirmed' && (
+        <button
+          onClick={() => doAction('confirm', localGroupId)}
+          disabled={pending}
+          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white py-1.5 rounded flex items-center justify-center gap-1"
+        >
+          <CheckCircle size={12} /> Confirmar seleção manual
+        </button>
+      )}
+
+      <div className="flex gap-2 flex-wrap">
+        {!isConfirmed && !isRejected && localGroupId && localGroupId === group.musicalGroupId && (
+          <button
+            onClick={() => doAction('confirm', localGroupId)}
+            disabled={pending}
+            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-3 py-1.5 rounded flex items-center gap-1"
+          >
+            <CheckCircle size={12} /> Confirmar
+          </button>
+        )}
+
+        {!isRejected && (
+          <button
+            onClick={() => doAction('reject')}
+            disabled={pending}
+            className="text-xs bg-red-900 hover:bg-red-800 disabled:opacity-50 text-red-300 px-3 py-1.5 rounded flex items-center gap-1"
+          >
+            <XCircle size={12} /> Rejeitar
+          </button>
+        )}
+
+        <button
+          onClick={() => setShowSearch(!showSearch)}
+          disabled={pending}
+          className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded flex items-center gap-1"
+        >
+          <Search size={12} /> Buscar
+        </button>
+
+        {(isConfirmed || isRejected) && (
+          <button
+            onClick={() => doAction('reset')}
+            disabled={pending}
+            className="text-xs text-gray-600 hover:text-gray-400 px-2 py-1.5 flex items-center gap-1"
+          >
+            <RotateCcw size={10} /> Reset
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Membership Card ───────────────────────────────────────────────────────────
+
+function MembershipCard({
+  item,
+  onApplied,
+}: {
+  item: MembershipItem
+  onApplied: () => void
+}) {
+  const [pending, setPending] = useState(false)
+  const [role, setRole] = useState(item.idolPosition ?? '')
+  const [isActive, setIsActive] = useState(item.idolIsActive)
+  const [done, setDone] = useState(false)
+
+  const apply = async () => {
+    setPending(true)
+    try {
+      const res = await fetch(`/api/admin/kpopping/suggestions/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve',
+          artistId: item.artistId,
+          musicalGroupId: item.musicalGroupId,
+          role: role || undefined,
+          isActive,
+        }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setDone(true)
+        onApplied()
+      }
+    } finally {
+      setPending(false)
+    }
+  }
+
+  if (done) return null
+
+  return (
+    <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-3">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+            <Image
+              src={item.artist.primaryImageUrl ?? avatarPlaceholder(item.artist.nameRomanized)}
+              alt={item.artist.nameRomanized}
+              width={40} height={40}
+              className="object-cover w-full h-full"
+              unoptimized
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-200 truncate">{item.artist.nameRomanized}</p>
+            {item.artist.nameHangul && <p className="text-xs text-gray-500">{item.artist.nameHangul}</p>}
+          </div>
+        </div>
+
+        <Link2 size={16} className="text-gray-600 flex-shrink-0" />
+
+        <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+          <div className="text-right min-w-0">
+            <p className="text-sm font-semibold text-gray-200 truncate">{item.musicalGroup.name}</p>
+            {item.musicalGroup.nameHangul && <p className="text-xs text-gray-500">{item.musicalGroup.nameHangul}</p>}
+          </div>
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+            <Image
+              src={item.musicalGroup.profileImageUrl ?? avatarPlaceholder(item.musicalGroup.name)}
+              alt={item.musicalGroup.name}
+              width={40} height={40}
+              className="object-cover w-full h-full"
+              unoptimized
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <input
+          className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 w-36 focus:outline-none focus:border-purple-500"
+          placeholder="Role (vocalist...)"
+          value={role}
+          onChange={e => setRole(e.target.value)}
+        />
+        <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={e => setIsActive(e.target.checked)}
+            className="accent-purple-500"
+          />
+          Ativo
+        </label>
+        <button
+          onClick={apply}
+          disabled={pending}
+          className="ml-auto text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-1.5 rounded flex items-center gap-1"
+        >
+          <Link2 size={12} /> {pending ? 'Aplicando...' : 'Aplicar Vínculo'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Pagination ────────────────────────────────────────────────────────────────
+
+function Pagination({
+  page,
+  totalPages,
+  onPage,
+}: {
+  page: number
+  totalPages: number
+  onPage: (p: number) => void
+}) {
+  if (totalPages <= 1) return null
+  return (
+    <div className="flex items-center justify-center gap-3 mt-6">
+      <button
+        onClick={() => onPage(page - 1)}
+        disabled={page <= 1}
+        className="p-1.5 rounded bg-gray-800 text-gray-400 hover:text-gray-200 disabled:opacity-30"
+      >
+        <ChevronLeft size={16} />
+      </button>
+      <span className="text-sm text-gray-400">{page} / {totalPages}</span>
+      <button
+        onClick={() => onPage(page + 1)}
+        disabled={page >= totalPages}
+        className="p-1.5 rounded bg-gray-800 text-gray-400 hover:text-gray-200 disabled:opacity-30"
+      >
+        <ChevronRight size={16} />
+      </button>
+    </div>
+  )
+}
+
+// ─── Tab: Idols ────────────────────────────────────────────────────────────────
+
+function IdolsTab() {
+  const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [data, setData] = useState<PaginatedResponse<IdolItem> | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const fetchSuggestions = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({
-        status: statusFilter,
-        page: String(page),
-        limit: '15',
-      })
-      if (matchFilter === 'has_artist') params.set('hasArtist', 'true')
-      if (matchFilter === 'no_artist') params.set('hasArtist', 'false')
-      if (matchFilter === 'has_group') params.set('hasGroup', 'true')
-      if (matchFilter === 'no_group') params.set('hasGroup', 'false')
-
-      const res = await fetch(`/api/admin/kpopping/suggestions?${params}`)
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Erro ao buscar sugestões')
-
-      setSuggestions(data.items)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
-    } catch (err: unknown) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Erro desconhecido' })
+      const res = await fetch(`/api/admin/kpopping/idols?filter=${filter}&page=${page}&limit=20`)
+      const json = await res.json()
+      setData(json)
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, matchFilter, page])
+  }, [filter, page])
 
-  useEffect(() => {
-    fetchSuggestions()
-  }, [fetchSuggestions])
+  useEffect(() => { load() }, [load])
+  useEffect(() => { setPage(1) }, [filter])
 
-  async function generateSuggestions() {
+  const filters = [
+    { key: 'all', label: 'Todos' },
+    { key: 'auto', label: 'Auto-match' },
+    { key: 'confirmed', label: 'Confirmados' },
+    { key: 'rejected', label: 'Rejeitados' },
+    { key: 'unmatched', label: 'Sem match' },
+  ]
+
+  return (
+    <div>
+      <div className="flex gap-2 flex-wrap mb-4">
+        {filters.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              filter === f.key
+                ? 'bg-purple-600 border-purple-500 text-white'
+                : 'border-gray-700 text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+          <RefreshCw size={12} /> Recarregar
+        </button>
+      </div>
+
+      {loading && <p className="text-center text-gray-500 py-8">Carregando...</p>}
+
+      {!loading && data && (
+        <>
+          <p className="text-xs text-gray-600 mb-3">{data.total} idols</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.items.map(idol => (
+              <IdolCard key={idol.kpoppingIdolId} idol={idol} />
+            ))}
+          </div>
+          {data.items.length === 0 && (
+            <p className="text-center text-gray-600 py-8">Nenhum idol encontrado com este filtro.</p>
+          )}
+          <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Tab: Groups ───────────────────────────────────────────────────────────────
+
+function GroupsTab() {
+  const [filter, setFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [data, setData] = useState<PaginatedResponse<GroupItem> | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/kpopping/groups-overview?filter=${filter}&page=${page}&limit=20`)
+      const json = await res.json()
+      setData(json)
+    } finally {
+      setLoading(false)
+    }
+  }, [filter, page])
+
+  useEffect(() => { load() }, [load])
+  useEffect(() => { setPage(1) }, [filter])
+
+  const filters = [
+    { key: 'all', label: 'Todos' },
+    { key: 'auto', label: 'Auto-match' },
+    { key: 'confirmed', label: 'Confirmados' },
+    { key: 'rejected', label: 'Rejeitados' },
+    { key: 'unmatched', label: 'Sem match' },
+  ]
+
+  return (
+    <div>
+      <div className="flex gap-2 flex-wrap mb-4">
+        {filters.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              filter === f.key
+                ? 'bg-purple-600 border-purple-500 text-white'
+                : 'border-gray-700 text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+          <RefreshCw size={12} /> Recarregar
+        </button>
+      </div>
+
+      {loading && <p className="text-center text-gray-500 py-8">Carregando...</p>}
+
+      {!loading && data && (
+        <>
+          <p className="text-xs text-gray-600 mb-3">{data.total} grupos</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.items.map(group => (
+              <GroupCard key={group.kpoppingGroupId} group={group} />
+            ))}
+          </div>
+          {data.items.length === 0 && (
+            <p className="text-center text-gray-600 py-8">Nenhum grupo encontrado com este filtro.</p>
+          )}
+          <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Tab: Memberships ──────────────────────────────────────────────────────────
+
+function MembershipsTab() {
+  const [page, setPage] = useState(1)
+  const [data, setData] = useState<PaginatedResponse<MembershipItem> | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/kpopping/suggestions?confirmed=true&status=PENDING&page=${page}&limit=20`)
+      const json = await res.json()
+      setData(json)
+    } finally {
+      setLoading(false)
+    }
+  }, [page])
+
+  useEffect(() => { load() }, [load])
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-400">
+          Vínculos prontos — idol e grupo ambos confirmados.
+        </p>
+        <button onClick={load} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+          <RefreshCw size={12} /> Recarregar
+        </button>
+      </div>
+
+      {loading && <p className="text-center text-gray-500 py-8">Carregando...</p>}
+
+      {!loading && data && (
+        <>
+          <p className="text-xs text-gray-600 mb-3">{data.total} vínculos pendentes</p>
+          <div className="space-y-3">
+            {data.items.map(item => (
+              <MembershipCard key={item.id} item={item} onApplied={load} />
+            ))}
+          </div>
+          {data.items.length === 0 && (
+            <div className="text-center py-12">
+              <Link2 size={32} className="mx-auto text-gray-700 mb-3" />
+              <p className="text-gray-600 text-sm">Nenhum vínculo pronto.</p>
+              <p className="text-gray-700 text-xs mt-1">Confirme idols na aba Idols e grupos na aba Grupos primeiro.</p>
+            </div>
+          )}
+          <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
+
+export default function KpoppingCurationPage() {
+  const [tab, setTab] = useState<'idols' | 'groups' | 'memberships'>('idols')
+  const [generating, setGenerating] = useState(false)
+  const [generateStats, setGenerateStats] = useState<{
+    processed: number; created: number; updated: number; skipped: number; errors: number
+  } | null>(null)
+
+  const generate = async () => {
     setGenerating(true)
     setGenerateStats(null)
-    setMessage(null)
     try {
       const res = await fetch('/api/admin/kpopping/suggestions/generate', { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Erro ao gerar sugestões')
-      setGenerateStats(data.stats)
-      setMessage({ type: 'success', text: 'Sugestões geradas com sucesso!' })
-      await fetchSuggestions()
-    } catch (err: unknown) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Erro desconhecido' })
+      if (data.stats) setGenerateStats(data.stats)
     } finally {
       setGenerating(false)
     }
   }
 
-  function handleStatusChange(s: StatusFilter) {
-    setStatusFilter(s)
-    setMatchFilter('all')
-    setPage(1)
-  }
-
-  function handleMatchChange(m: MatchFilter) {
-    setMatchFilter(m)
-    setPage(1)
-  }
+  const tabs = [
+    { key: 'idols' as const, label: 'Idols', icon: Users },
+    { key: 'groups' as const, label: 'Grupos', icon: Music },
+    { key: 'memberships' as const, label: 'Memberships', icon: Link2 },
+  ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black p-6">
-      <div className="max-w-5xl mx-auto">
-
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors mb-4"
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-100">Curadoria Kpopping</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Confirme idols → artistas e grupos → musicais, depois aplique os vínculos.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <button
+            onClick={generate}
+            disabled={generating}
+            className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2"
           >
-            <ArrowLeft size={20} />
-            Voltar ao Admin
-          </Link>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <Link2 className="text-purple-500" size={40} />
-              <div>
-                <h1 className="text-4xl font-black text-white">Curadoria Kpopping</h1>
-                <p className="text-zinc-400 mt-1">
-                  Revise e aprove vínculos artista-grupo da base kpopping.com
-                </p>
-              </div>
-            </div>
-
-            {/* Botão Gerar */}
-            <button
-              onClick={generateSuggestions}
-              disabled={generating}
-              className="flex items-center gap-2 px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold transition-colors disabled:opacity-50"
-            >
-              {generating
-                ? <RefreshCw size={18} className="animate-spin" />
-                : <Sparkles size={18} />}
-              {generating ? 'Gerando...' : 'Gerar Sugestões'}
-            </button>
-          </div>
-        </div>
-
-        {/* Stats de geração */}
-        {generateStats && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6 grid grid-cols-5 gap-4 text-center">
-            {[
-              { label: 'Processados', value: generateStats.processed, color: 'text-white' },
-              { label: 'Criados', value: generateStats.created, color: 'text-green-400' },
-              { label: 'Atualizados', value: generateStats.updated, color: 'text-blue-400' },
-              { label: 'Ignorados', value: generateStats.skipped, color: 'text-zinc-400' },
-              { label: 'Erros', value: generateStats.errors, color: 'text-red-400' },
-            ].map(s => (
-              <div key={s.label}>
-                <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
-                <p className="text-xs text-zinc-500">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Message */}
-        {message && (
-          <div className={`border rounded-xl p-4 flex items-start gap-3 mb-6 ${
-            message.type === 'success'
-              ? 'bg-green-500/10 border-green-500/20'
-              : 'bg-red-500/10 border-red-500/20'
-          }`}>
-            {message.type === 'success'
-              ? <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              : <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />}
-            <p className={`text-sm font-medium ${message.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-              {message.text}
+            <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
+            {generating ? 'Gerando...' : 'Gerar Sugestões'}
+          </button>
+          {generateStats && (
+            <p className="text-xs text-gray-500">
+              {generateStats.created} criadas · {generateStats.updated} atualizadas · {generateStats.skipped} ignoradas · {generateStats.errors} erros
             </p>
-          </div>
-        )}
-
-        {/* Filtros */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-6 space-y-3">
-          {/* Status */}
-          <div className="flex flex-wrap gap-2">
-            {([
-              ['PENDING', 'Pendentes'],
-              ['APPROVED', 'Aprovados'],
-              ['REJECTED', 'Rejeitados'],
-            ] as [StatusFilter, string][]).map(([val, label]) => (
-              <button
-                key={val}
-                onClick={() => handleStatusChange(val)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  statusFilter === val
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-            <span className="ml-auto text-sm text-zinc-500 self-center">
-              {total} sugestão{total !== 1 ? 'ões' : ''}
-            </span>
-          </div>
-
-          {/* Match */}
-          <div className="flex flex-wrap gap-2">
-            {([
-              ['all', 'Todos'],
-              ['has_artist', 'Com artista'],
-              ['no_artist', 'Sem artista'],
-              ['has_group', 'Com grupo'],
-              ['no_group', 'Sem grupo'],
-            ] as [MatchFilter, string][]).map(([val, label]) => (
-              <button
-                key={val}
-                onClick={() => handleMatchChange(val)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  matchFilter === val
-                    ? 'bg-zinc-700 text-white border border-zinc-600'
-                    : 'bg-zinc-800 text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          )}
         </div>
-
-        {/* Lista */}
-        {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-          </div>
-        ) : suggestions.length === 0 ? (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">Nenhuma sugestão encontrada</h3>
-            <p className="text-zinc-400 mb-4">
-              {statusFilter === 'PENDING'
-                ? 'Não há sugestões pendentes. Clique em "Gerar Sugestões" para processar a base kpopping.'
-                : `Nenhuma sugestão ${statusFilter === 'APPROVED' ? 'aprovada' : 'rejeitada'} com estes filtros.`}
-            </p>
-            {statusFilter === 'PENDING' && (
-              <button
-                onClick={generateSuggestions}
-                disabled={generating}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <Sparkles size={16} />
-                Gerar agora
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {suggestions.map(s => (
-              <SuggestionCard
-                key={s.id}
-                suggestion={s}
-                onAction={() => {
-                  setMessage({ type: 'success', text: 'Ação realizada com sucesso!' })
-                  fetchSuggestions()
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Paginação */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="flex items-center gap-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft size={16} /> Anterior
-            </button>
-            <span className="text-zinc-400 text-sm">
-              Página {page} de {totalPages}
-            </span>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="flex items-center gap-1 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              Próxima <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-gray-800">
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              tab === t.key
+                ? 'border-purple-500 text-purple-400'
+                : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <t.icon size={15} />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      {tab === 'idols' && <IdolsTab />}
+      {tab === 'groups' && <GroupsTab />}
+      {tab === 'memberships' && <MembershipsTab />}
     </div>
   )
 }

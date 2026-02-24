@@ -16,15 +16,22 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)))
     const hasArtist = searchParams.get('hasArtist') // 'true' | 'false' | null = todos
     const hasGroup = searchParams.get('hasGroup')
+    // confirmed=true → both idol and group user_confirmed (used by Memberships tab)
+    const confirmed = searchParams.get('confirmed')
 
     const where: Record<string, unknown> = {
       status: status.toUpperCase(),
     }
 
-    if (hasArtist === 'true') where.artistId = { not: null }
-    if (hasArtist === 'false') where.artistId = null
-    if (hasGroup === 'true') where.musicalGroupId = { not: null }
-    if (hasGroup === 'false') where.musicalGroupId = null
+    if (confirmed === 'true') {
+      where.artistMatchReason = 'user_confirmed'
+      where.groupMatchReason = 'user_confirmed'
+    } else {
+      if (hasArtist === 'true') where.artistId = { not: null }
+      if (hasArtist === 'false') where.artistId = null
+      if (hasGroup === 'true') where.musicalGroupId = { not: null }
+      if (hasGroup === 'false') where.musicalGroupId = null
+    }
 
     const [items, total] = await Promise.all([
       prisma.kpoppingMembershipSuggestion.findMany({
