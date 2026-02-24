@@ -62,11 +62,18 @@ export async function POST() {
       // 1. Garantir membership
       const existing = await prisma.artistGroupMembership.findUnique({
         where: { artistId_groupId: { artistId: s.artistId, groupId: s.musicalGroupId } },
-        select: { artistId: true },
+        select: { artistId: true, role: true },
       })
 
       if (existing) {
         membershipsExisted++
+        // Atualiza role se estava nulo e kpopping tem posição
+        if (!existing.role && s.idolPosition) {
+          await prisma.artistGroupMembership.update({
+            where: { artistId_groupId: { artistId: s.artistId, groupId: s.musicalGroupId } },
+            data: { role: s.idolPosition },
+          })
+        }
       } else {
         await prisma.artistGroupMembership.create({
           data: {
