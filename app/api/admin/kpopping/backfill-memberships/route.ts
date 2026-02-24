@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { getErrorMessage } from '@/lib/utils/error'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,7 @@ export async function POST() {
   const { error } = await requireAdmin()
   if (error) return error
 
+  try {
   // Busca sugestões APPROVED ou PENDING onde o idol foi confirmado pelo curador
   // e existe um musicalGroupId válido (grupo auto-matched ou user_confirmed).
   const candidates = await prisma.kpoppingMembershipSuggestion.findMany({
@@ -146,4 +148,7 @@ export async function POST() {
     groupsEnriched,
     errors,
   })
+  } catch (err) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 })
+  }
 }

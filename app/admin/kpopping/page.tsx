@@ -1239,6 +1239,7 @@ export default function KpoppingCurationPage() {
   const [backfillResult, setBackfillResult] = useState<{
     total: number; membershipsCreated: number; membershipsExisted: number; suggestionsApproved: number; artistsEnriched: number; groupsEnriched: number; errors: number
   } | null>(null)
+  const [backfillError, setBackfillError] = useState<string | null>(null)
 
   const generate = async () => {
     setGenerating(true)
@@ -1255,10 +1256,17 @@ export default function KpoppingCurationPage() {
   const backfill = async () => {
     setBackfilling(true)
     setBackfillResult(null)
+    setBackfillError(null)
     try {
       const res = await fetch('/api/admin/kpopping/backfill-memberships', { method: 'POST' })
       const data = await res.json()
-      if (data.ok) setBackfillResult(data)
+      if (res.ok) {
+        setBackfillResult(data)
+      } else {
+        setBackfillError(data.error ?? `Erro ${res.status}`)
+      }
+    } catch (e) {
+      setBackfillError(e instanceof Error ? e.message : 'Erro de rede')
     } finally {
       setBackfilling(false)
     }
@@ -1304,6 +1312,9 @@ export default function KpoppingCurationPage() {
             <p className="text-xs text-purple-400">
               {backfillResult.total} candidatos · Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Aprovadas: {backfillResult.suggestionsApproved} · Artistas enriquecidos: {backfillResult.artistsEnriched} · Grupos enriquecidos: {backfillResult.groupsEnriched} · {backfillResult.errors} erros
             </p>
+          )}
+          {backfillError && (
+            <p className="text-xs text-red-400">Backfill erro: {backfillError}</p>
           )}
           {generateStats && (
             <p className="text-xs text-gray-500">
