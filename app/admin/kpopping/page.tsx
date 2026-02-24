@@ -976,22 +976,31 @@ function Pagination({
 function IdolsTab() {
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
+  const [q, setQ] = useState('')
+  const [debouncedQ, setDebouncedQ] = useState('')
   const [data, setData] = useState<PaginatedResponse<IdolItem> | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q), 300)
+    return () => clearTimeout(t)
+  }, [q])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/kpopping/idols?filter=${filter}&page=${page}&limit=20`)
+      const params = new URLSearchParams({ filter, page: String(page), limit: '20' })
+      if (debouncedQ) params.set('q', debouncedQ)
+      const res = await fetch(`/api/admin/kpopping/idols?${params}`)
       const json = await res.json()
       setData(json)
     } finally {
       setLoading(false)
     }
-  }, [filter, page])
+  }, [filter, page, debouncedQ])
 
   useEffect(() => { load() }, [load])
-  useEffect(() => { setPage(1) }, [filter])
+  useEffect(() => { setPage(1) }, [filter, debouncedQ])
 
   const filters = [
     { key: 'all', label: 'Todos' },
@@ -1003,6 +1012,17 @@ function IdolsTab() {
 
   return (
     <div>
+      <div className="flex gap-2 mb-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Buscar idol..."
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
+          />
+        </div>
+      </div>
       <div className="flex gap-2 flex-wrap mb-4">
         {filters.map(f => (
           <button
@@ -1047,22 +1067,31 @@ function IdolsTab() {
 function GroupsTab() {
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
+  const [q, setQ] = useState('')
+  const [debouncedQ, setDebouncedQ] = useState('')
   const [data, setData] = useState<PaginatedResponse<GroupItem> | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q), 300)
+    return () => clearTimeout(t)
+  }, [q])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/kpopping/groups-overview?filter=${filter}&page=${page}&limit=20`)
+      const params = new URLSearchParams({ filter, page: String(page), limit: '20' })
+      if (debouncedQ) params.set('q', debouncedQ)
+      const res = await fetch(`/api/admin/kpopping/groups-overview?${params}`)
       const json = await res.json()
       setData(json)
     } finally {
       setLoading(false)
     }
-  }, [filter, page])
+  }, [filter, page, debouncedQ])
 
   useEffect(() => { load() }, [load])
-  useEffect(() => { setPage(1) }, [filter])
+  useEffect(() => { setPage(1) }, [filter, debouncedQ])
 
   const filters = [
     { key: 'all', label: 'Todos' },
@@ -1074,6 +1103,17 @@ function GroupsTab() {
 
   return (
     <div>
+      <div className="flex gap-2 mb-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Buscar grupo..."
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
+          />
+        </div>
+      </div>
       <div className="flex gap-2 flex-wrap mb-4">
         {filters.map(f => (
           <button
@@ -1117,28 +1157,47 @@ function GroupsTab() {
 
 function MembershipsTab() {
   const [page, setPage] = useState(1)
+  const [q, setQ] = useState('')
+  const [debouncedQ, setDebouncedQ] = useState('')
   const [data, setData] = useState<PaginatedResponse<MembershipItem> | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q), 300)
+    return () => clearTimeout(t)
+  }, [q])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/kpopping/suggestions?confirmed=true&status=PENDING&page=${page}&limit=20`)
+      const params = new URLSearchParams({ confirmed: 'true', status: 'PENDING', page: String(page), limit: '20' })
+      if (debouncedQ) params.set('q', debouncedQ)
+      const res = await fetch(`/api/admin/kpopping/suggestions?${params}`)
       const json = await res.json()
       setData(json)
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [page, debouncedQ])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { setPage(1) }, [debouncedQ])
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-400">
+      <div className="flex items-center gap-3 mb-4">
+        <p className="text-sm text-gray-400 flex-1">
           Vínculos prontos — idol e grupo ambos confirmados.
         </p>
+        <div className="relative">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Buscar idol ou grupo..."
+            className="pl-8 pr-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500 w-52"
+          />
+        </div>
         <button onClick={load} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
           <RefreshCw size={12} /> Recarregar
         </button>

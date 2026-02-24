@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const hasGroup = searchParams.get('hasGroup')
     // confirmed=true → both idol and group user_confirmed (used by Memberships tab)
     const confirmed = searchParams.get('confirmed')
+    const q = searchParams.get('q')?.trim()
 
     const where: Record<string, unknown> = {
       status: status.toUpperCase(),
@@ -31,6 +32,15 @@ export async function GET(req: NextRequest) {
       if (hasArtist === 'false') where.artistId = null
       if (hasGroup === 'true') where.musicalGroupId = { not: null }
       if (hasGroup === 'false') where.musicalGroupId = null
+    }
+
+    if (q) {
+      where.OR = [
+        { idolName: { contains: q, mode: 'insensitive' } },
+        { idolNameHangul: { contains: q, mode: 'insensitive' } },
+        { groupName: { contains: q, mode: 'insensitive' } },
+        { groupNameHangul: { contains: q, mode: 'insensitive' } },
+      ]
     }
 
     const [items, total] = await Promise.all([
