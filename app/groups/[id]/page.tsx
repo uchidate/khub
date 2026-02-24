@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
+import { ReportButton } from '@/components/ui/ReportButton'
 import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
@@ -261,7 +262,9 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                     <p className="text-xl md:text-3xl font-bold mt-1 drop-shadow-lg" style={{ color: accent }}>{group.nameHangul}</p>
                                 )}
                             </div>
-                            <div className="mb-2">
+                            <div className="mb-2 flex items-center gap-2">
+                                <ReportButton entityType="group" entityId={group.id} entityName={group.name}
+                                    className="bg-black/40 border border-white/10 backdrop-blur-sm" />
                                 <FavoriteButton
                                     id={group.id}
                                     itemName={group.name}

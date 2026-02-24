@@ -4,6 +4,7 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
+import { ReportButton } from "@/components/ui/ReportButton"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { Film } from "lucide-react"
@@ -203,12 +204,16 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }
                     ]} />
-                    <FavoriteButton
-                        id={production.id}
-                        itemName={production.titlePt}
-                        itemType="produção"
-                        className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
-                    />
+                    <div className="flex items-center gap-2">
+                        <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt}
+                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                        <FavoriteButton
+                            id={production.id}
+                            itemName={production.titlePt}
+                            itemType="produção"
+                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                        />
+                    </div>
                 </div>
 
                 {/* Hero content */}

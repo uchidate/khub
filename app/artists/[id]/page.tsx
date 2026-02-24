@@ -6,6 +6,7 @@ import { InstagramFeed } from "@/components/features/InstagramFeed"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
+import { ReportButton } from "@/components/ui/ReportButton"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin } from "lucide-react"
@@ -203,8 +204,12 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 {/* Breadcrumbs + Favorite */}
                 <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: artist.nameRomanized }]} />
-                    <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista"
-                        className="bg-black/40 border border-white/10 backdrop-blur-sm" />
+                    <div className="flex items-center gap-2">
+                        <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized}
+                            className="bg-black/40 border border-white/10 backdrop-blur-sm" />
+                        <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista"
+                            className="bg-black/40 border border-white/10 backdrop-blur-sm" />
+                    </div>
                 </div>
 
                 {/* Hero content */}
