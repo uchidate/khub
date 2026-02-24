@@ -194,8 +194,9 @@ export default function ProductionsPage() {
       let totalSynced = 0
 
       // 2. Loop: process batches of 20 until no more pending
-      // Uses batchData.processed === 0 as stop condition (not resetCount, which excluded never-synced)
-      while (true) {
+      // Stop condition: batchData.processed === 0 (not resetCount, which excluded never-synced)
+      let hasMore = true
+      while (hasMore) {
         setSyncMsg(`🔄 Resincronizando elenco... ${processed}/${total} produções processadas`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',
@@ -203,9 +204,12 @@ export default function ProductionsPage() {
           body: JSON.stringify({ pending: true, limit: 20 }),
         })
         const batchData = await batchRes.json()
-        if (!batchRes.ok || batchData.processed === 0) break
-        processed += batchData.processed as number
-        totalSynced += batchData.totalSynced as number
+        if (!batchRes.ok || batchData.processed === 0) {
+          hasMore = false
+        } else {
+          processed += batchData.processed as number
+          totalSynced += batchData.totalSynced as number
+        }
       }
 
       setSyncMsg(`✅ Resync completo: ${processed}/${total} produções · ${totalSynced} artistas atualizados`)
