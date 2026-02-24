@@ -296,6 +296,119 @@ function TMDBPanel({
   )
 }
 
+// ─── TMDB Group Search Panel ──────────────────────────────────────────────────
+
+interface TMDBGroupResult {
+  tmdbId: number
+  mediaType: string
+  name: string
+  imagePath?: string
+  firstAirDate?: string
+  popularity: number
+  existingGroupId?: string
+  existingGroupName?: string
+}
+
+function TMDBGroupPanel({
+  groupName,
+  kpoppingGroupId,
+  onConfirmed,
+}: {
+  groupName: string
+  kpoppingGroupId: string
+  onConfirmed: (group: { id: string; name: string; nameHangul?: string; profileImageUrl?: string }) => void
+}) {
+  const [results, setResults] = useState<TMDBGroupResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const [adding, setAdding] = useState<number | null>(null)
+  const [searched, setSearched] = useState(false)
+
+  const doSearch = useCallback(async () => {
+    setLoading(true)
+    setSearched(true)
+    try {
+      const res = await fetch(`/api/admin/kpopping/tmdb/search-group?q=${encodeURIComponent(groupName)}`)
+      const data = await res.json()
+      setResults(data.items || [])
+    } finally {
+      setLoading(false)
+    }
+  }, [groupName])
+
+  useEffect(() => { doSearch() }, [doSearch])
+
+  const addGroup = async (r: TMDBGroupResult) => {
+    setAdding(r.tmdbId)
+    try {
+      const res = await fetch('/api/admin/kpopping/tmdb/add-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: r.name,
+          imagePath: r.imagePath,
+          firstAirDate: r.firstAirDate,
+          kpoppingGroupId,
+        }),
+      })
+      const data = await res.json()
+      if (data.ok) onConfirmed(data.group)
+    } finally {
+      setAdding(null)
+    }
+  }
+
+  const mediaLabel: Record<string, string> = { tv: 'TV Show', movie: 'Filme', person: 'Pessoa' }
+
+  return (
+    <div className="mt-3 bg-gray-900 border border-gray-700 rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
+        <button onClick={doSearch} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+          <RefreshCw size={10} /> Refazer
+        </button>
+      </div>
+
+      {loading && <p className="text-xs text-gray-500 py-2">Buscando...</p>}
+
+      {!loading && searched && results.length === 0 && (
+        <p className="text-xs text-gray-500 py-2">Nenhum resultado encontrado no TMDB.</p>
+      )}
+
+      <ul className="space-y-2">
+        {results.map(r => (
+          <li key={r.tmdbId} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+              {r.imagePath ? (
+                <Image src={r.imagePath} alt={r.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">?</div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-gray-200 truncate">{r.name}</p>
+              <p className="text-xs text-gray-500">
+                {mediaLabel[r.mediaType] ?? r.mediaType} · ★ {r.popularity.toFixed(1)}
+                {r.firstAirDate && ` · ${r.firstAirDate.slice(0, 4)}`}
+              </p>
+            </div>
+            {r.existingGroupId ? (
+              <span className="text-xs text-yellow-500 flex-shrink-0">Já existe</span>
+            ) : (
+              <button
+                onClick={() => addGroup(r)}
+                disabled={adding === r.tmdbId}
+                className="flex-shrink-0 text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-2 py-1 rounded"
+              >
+                {adding === r.tmdbId ? '...' : '+ Criar'}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 // ─── Idol Card ─────────────────────────────────────────────────────────────────
 
 function IdolCard({
@@ -524,6 +637,7 @@ function GroupCard({ group }: { group: GroupItem }) {
   const [localGroupId, setLocalGroupId] = useState(group.musicalGroupId)
   const [localReason, setLocalReason] = useState(group.groupMatchReason)
   const [showSearch, setShowSearch] = useState(false)
+  const [showTMDB, setShowTMDB] = useState(false)
 
   const isConfirmed = localReason === 'user_confirmed'
   const isRejected = localReason === 'user_rejected'
@@ -552,6 +666,7 @@ function GroupCard({ group }: { group: GroupItem }) {
           setLocalReason(undefined)
         }
         setShowSearch(false)
+        setShowTMDB(false)
       }
     } finally {
       setPending(false)
@@ -568,6 +683,13 @@ function GroupCard({ group }: { group: GroupItem }) {
     })
     setLocalGroupId(item.id)
     setShowSearch(false)
+  }
+
+  const handleTMDBConfirmed = (g: { id: string; name: string; nameHangul?: string; profileImageUrl?: string }) => {
+    setLocalGroup({ ...g })
+    setLocalGroupId(g.id)
+    setLocalReason('user_confirmed')
+    setShowTMDB(false)
   }
 
   const groupImg = group.groupImageUrl ?? avatarPlaceholder(group.groupName)
@@ -642,6 +764,14 @@ function GroupCard({ group }: { group: GroupItem }) {
         />
       )}
 
+      {showTMDB && (
+        <TMDBGroupPanel
+          groupName={group.groupName}
+          kpoppingGroupId={group.kpoppingGroupId}
+          onConfirmed={handleTMDBConfirmed}
+        />
+      )}
+
       {localGroupId && localGroupId !== group.musicalGroupId && localReason !== 'user_confirmed' && (
         <button
           onClick={() => doAction('confirm', localGroupId)}
@@ -674,11 +804,19 @@ function GroupCard({ group }: { group: GroupItem }) {
         )}
 
         <button
-          onClick={() => setShowSearch(!showSearch)}
+          onClick={() => { setShowSearch(!showSearch); setShowTMDB(false) }}
           disabled={pending}
           className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded flex items-center gap-1"
         >
-          <Search size={12} /> Buscar
+          <Search size={12} /> HallyuHub
+        </button>
+
+        <button
+          onClick={() => { setShowTMDB(!showTMDB); setShowSearch(false) }}
+          disabled={pending}
+          className="text-xs bg-purple-900 hover:bg-purple-800 text-purple-300 px-3 py-1.5 rounded flex items-center gap-1"
+        >
+          <Star size={12} /> TMDB
         </button>
 
         {(isConfirmed || isRejected) && (
