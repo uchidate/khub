@@ -173,27 +173,47 @@ export default function ProductionsPage() {
   }
 
   const handleResetResync = async () => {
-    if (resetSyncing || !confirm('Isso vai resetar o castSyncAt de TODAS as produções e reprocessar as primeiras 20. Continuar?')) return
+    if (resetSyncing || !confirm('Isso vai resetar e resincronizar o elenco de TODAS as produções automaticamente. Pode levar vários minutos. Continuar?')) return
     setResetSyncing(true)
-    setSyncMsg('Resetando e resincronizando elenco...')
+    setSyncMsg('Resetando elenco de todas as produções...')
     try {
-      const res = await fetch('/api/admin/productions/sync-cast', {
+      // 1. Reset all castSyncAt
+      const resetRes = await fetch('/api/admin/productions/sync-cast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reset: true, limit: 20 }),
+        body: JSON.stringify({ reset: true }),
       })
-      const data = await res.json()
-      if (res.ok) {
-        setSyncMsg(`✅ ${data.resetCount} produções liberadas para resync. Agora clique "Importar Elenco Pendente" repetidamente para processar todas em lotes de 20.`)
-        refetchTable()
-      } else {
-        setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao resetar'}`)
+      const resetData = await resetRes.json()
+      if (!resetRes.ok) {
+        setSyncMsg(`❌ Erro ao resetar: ${resetData.error ?? 'falha'}`)
+        return
       }
+
+      const total = resetData.resetCount as number
+      let processed = 0
+      let totalSynced = 0
+
+      // 2. Loop: process batches of 20 until all done
+      while (processed < total) {
+        setSyncMsg(`🔄 Resincronizando elenco... ${processed}/${total} produções processadas`)
+        const batchRes = await fetch('/api/admin/productions/sync-cast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pending: true, limit: 20 }),
+        })
+        const batchData = await batchRes.json()
+        if (!batchRes.ok || batchData.processed === 0) break
+        processed += batchData.processed as number
+        totalSynced += batchData.totalSynced as number
+      }
+
+      setSyncMsg(`✅ Resync completo: ${processed}/${total} produções · ${totalSynced} artistas atualizados`)
+      refetchTable()
     } catch {
-      setSyncMsg('❌ Erro de rede')
+      setSyncMsg('❌ Erro de rede durante o resync')
     } finally {
       setResetSyncing(false)
-      setTimeout(() => setSyncMsg(''), 20000)
+      setTimeout(() => setSyncMsg(''), 15000)
     }
   }
 
@@ -303,7 +323,7 @@ export default function ProductionsPage() {
             <button
               onClick={handleResetResync}
               disabled={resetSyncing}
-              title="Marca TODAS as produções como pendentes de resync. Use 'Importar Elenco Pendente' em seguida para processar em lotes."
+              title="Reseta e reprocessa automaticamente o elenco de TODAS as produções em lotes de 20 (atualiza castOrder)"
               className="flex items-center gap-2 px-4 py-2.5 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-700/40 text-amber-400 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RotateCcw size={16} className={resetSyncing ? 'animate-spin' : ''} />
