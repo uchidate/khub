@@ -2,16 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Users, Film, Newspaper, TrendingUp } from 'lucide-react'
-import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
-
-interface Stat {
-    label: string
-    value: number
-    icon: React.ReactNode
-    color: string
-    gradient: string
-}
+import { motion } from 'framer-motion'
 
 interface StatsData {
     artists: number
@@ -20,43 +11,12 @@ interface StatsData {
     views: number
 }
 
-export function StatsSection() {
-    const [stats, setStats] = useState<StatsData | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const ref = useRef(null)
-    const isInView = useInView(ref, { once: true, margin: "0px" })
+interface StatsSectionProps {
+    stats: StatsData
+}
 
-    useEffect(() => {
-        fetchStats()
-    }, [])
-
-    const fetchStats = async () => {
-        try {
-            const response = await fetch('/api/stats')
-            const data = await response.json()
-            setStats(data)
-        } catch (error) {
-            console.error('Error fetching stats:', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    if (isLoading || !stats) {
-        return (
-            <section className="relative py-10 md:py-12">
-                <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} className="animate-pulse">
-                            <div className="h-40 bg-zinc-900/50 rounded-2xl border border-white/10" />
-                        </div>
-                    ))}
-                </div>
-            </section>
-        )
-    }
-
-    const statsList: Stat[] = [
+export function StatsSection({ stats }: StatsSectionProps) {
+    const statsList = [
         {
             label: 'Artistas',
             value: stats.artists,
@@ -88,7 +48,7 @@ export function StatsSection() {
     ]
 
     return (
-        <section ref={ref} className="relative py-10 md:py-12">
+        <section className="relative py-10 md:py-12">
             {/* Background Effect */}
             <div className="absolute inset-0 bg-gradient-to-b from-purple-900/5 via-transparent to-transparent pointer-events-none" />
 
@@ -96,7 +56,8 @@ export function StatsSection() {
                 <div className="text-center mb-8">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        animate={isInView ? { opacity: 1, y: 0 } : {}}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
                     >
                         <span className="text-xs font-black uppercase tracking-[0.3em] text-purple-400 mb-4 block">
@@ -113,7 +74,8 @@ export function StatsSection() {
                         <motion.div
                             key={stat.label}
                             initial={{ opacity: 0, y: 40 }}
-                            animate={isInView ? { opacity: 1, y: 0 } : {}}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
                             transition={{ duration: 0.6, delay: index * 0.1 }}
                             className="group"
                         >
@@ -129,7 +91,6 @@ export function StatsSection() {
                                     <div className="space-y-2">
                                         <AnimatedCounter
                                             value={stat.value}
-                                            isInView={isInView}
                                             className={`text-4xl md:text-5xl font-black ${stat.color} tracking-tighter`}
                                         />
                                         <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
@@ -149,22 +110,18 @@ export function StatsSection() {
     )
 }
 
-// Componente de contador animado
+// Contador animado — dispara no mount (dados já chegam prontos do servidor)
 function AnimatedCounter({
     value,
-    isInView,
     className
 }: {
     value: number
-    isInView: boolean
     className?: string
 }) {
     const [count, setCount] = useState(0)
 
     useEffect(() => {
-        if (!isInView) return
-
-        const duration = 2000 // 2 segundos
+        const duration = 2000
         const steps = 60
         const increment = value / steps
         const stepDuration = duration / steps
@@ -181,7 +138,7 @@ function AnimatedCounter({
         }, stepDuration)
 
         return () => clearInterval(timer)
-    }, [value, isInView])
+    }, [value])
 
     return (
         <div className={className}>
