@@ -19,7 +19,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         include: {
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
-                include: { artist: true }
+                include: { artist: true },
+                orderBy: [{ castOrder: 'asc' }, { role: 'asc' }],
             }
         }
     })
@@ -71,7 +72,10 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
                 include: { artist: true },
-                orderBy: { role: 'asc' }
+                orderBy: [
+                    { castOrder: 'asc' },
+                    { role: 'asc' },
+                ],
             }
         }
     })
@@ -285,24 +289,66 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         {production.artists.length > 0 && (
                             <div>
                                 <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                    {production.artists.map(({ artist, role }) => (
-                                        <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
-                                            <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-colors">
-                                                {artist.primaryImageUrl ? (
-                                                    <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.7] group-hover:brightness-90" />
-                                                ) : (
-                                                    <div className="flex items-center justify-center h-full text-zinc-700 font-black text-sm">{artist.nameRomanized}</div>
-                                                )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                                <div className="absolute bottom-0 left-0 right-0 p-3">
-                                                    <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
-                                                    {role && <p className="text-xs text-purple-500 font-bold">{role}</p>}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+                                {(() => {
+                                    const hasOrder = production.artists.some(a => a.castOrder !== null)
+                                    const leads = hasOrder ? production.artists.filter(a => (a.castOrder ?? 99) <= 2) : production.artists.slice(0, 3)
+                                    const rest = hasOrder ? production.artists.filter(a => (a.castOrder ?? 99) > 2) : production.artists.slice(3)
+                                    return (
+                                        <>
+                                            {/* Main cast */}
+                                            {leads.length > 0 && (
+                                                <>
+                                                    <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3">Elenco Principal</p>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                                                        {leads.map(({ artist, role }) => (
+                                                            <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
+                                                                <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 border border-purple-500/20 hover:border-purple-500/50 transition-colors">
+                                                                    {artist.primaryImageUrl ? (
+                                                                        <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
+                                                                    ) : (
+                                                                        <div className="flex items-center justify-center h-full text-zinc-700 font-black text-sm">{artist.nameRomanized}</div>
+                                                                    )}
+                                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                                                    <div className="absolute top-2 left-2">
+                                                                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-purple-600/80 backdrop-blur-sm rounded text-white">Principal</span>
+                                                                    </div>
+                                                                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                                                                        <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
+                                                                        {role && <p className="text-xs text-purple-400 font-bold truncate">{role}</p>}
+                                                                    </div>
+                                                                </div>
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                            {/* Supporting cast */}
+                                            {rest.length > 0 && (
+                                                <>
+                                                    {leads.length > 0 && <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Elenco de Apoio</p>}
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                        {rest.map(({ artist, role }) => (
+                                                            <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
+                                                                <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-colors">
+                                                                    {artist.primaryImageUrl ? (
+                                                                        <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.7] group-hover:brightness-90" />
+                                                                    ) : (
+                                                                        <div className="flex items-center justify-center h-full text-zinc-700 font-black text-sm">{artist.nameRomanized}</div>
+                                                                    )}
+                                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                                                                        <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
+                                                                        {role && <p className="text-xs text-purple-500 font-bold truncate">{role}</p>}
+                                                                    </div>
+                                                                </div>
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </>
+                                    )
+                                })()}
                             </div>
                         )}
 
