@@ -18,7 +18,8 @@ export async function POST() {
   const { error } = await requireAdmin()
   if (error) return error
 
-  // Busca sugestões APPROVED e PENDING+user_confirmed num único query
+  // Busca sugestões APPROVED ou PENDING onde o idol foi confirmado pelo curador
+  // e existe um musicalGroupId válido (grupo auto-matched ou user_confirmed).
   const candidates = await prisma.kpoppingMembershipSuggestion.findMany({
     where: {
       artistId: { not: null },
@@ -28,7 +29,7 @@ export async function POST() {
         {
           status: 'PENDING',
           artistMatchReason: 'user_confirmed',
-          groupMatchReason: 'user_confirmed',
+          // aceita qualquer grupo match (auto ou user_confirmed)
         },
       ],
     },
