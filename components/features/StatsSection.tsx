@@ -24,7 +24,7 @@ export function StatsSection() {
     const [stats, setStats] = useState<StatsData | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const ref = useRef(null)
-    const isInView = useInView(ref, { once: true, margin: "-100px" })
+    const isInView = useInView(ref, { once: true, margin: "0px" })
 
     useEffect(() => {
         fetchStats()

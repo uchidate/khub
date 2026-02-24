@@ -170,11 +170,9 @@ export default async function Home() {
             <HeroSection />
 
             {/* Stats Section */}
-            <ScrollReveal>
-                <div className="relative z-20 px-4 sm:px-6 lg:px-12 -mt-10">
-                    <StatsSection />
-                </div>
-            </ScrollReveal>
+            <div className="relative z-20 px-4 sm:px-6 lg:px-12 -mt-10">
+                <StatsSection />
+            </div>
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-12">
 
