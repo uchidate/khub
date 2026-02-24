@@ -8,11 +8,10 @@ export const dynamic = 'force-dynamic'
  * POST /api/admin/kpopping/backfill-memberships
  *
  * Processa duas categorias de sugestões:
- * A) APPROVED com artistId + musicalGroupId — garante que o vínculo existe e enriquece artista
- * B) PENDING com artistMatchReason='user_confirmed' E groupMatchReason='user_confirmed'
- *    — cria o vínculo, enriquece o artista e marca a sugestão como APPROVED
+ * A) APPROVED com artistId + musicalGroupId — garante que o vínculo existe e enriquece artista + grupo
+ * B) PENDING com artistMatchReason='user_confirmed' — cria o vínculo, enriquece artista + grupo e marca como APPROVED
  *
- * Campos do artista só são preenchidos se estiverem nulos (nunca sobrescreve).
+ * Campos só são preenchidos se estiverem nulos (nunca sobrescreve).
  */
 export async function POST() {
   const { error } = await requireAdmin()
@@ -44,12 +43,16 @@ export async function POST() {
       idolHeight: true,
       idolBloodType: true,
       idolImageUrl: true,
+      groupNameHangul: true,
+      groupImageUrl: true,
+      groupDebutDate: true,
     },
   })
 
   let membershipsCreated = 0
   let membershipsExisted = 0
   let artistsEnriched = 0
+  let groupsEnriched = 0
   let suggestionsApproved = 0
   let errors = 0
 
@@ -86,10 +89,16 @@ export async function POST() {
       }
 
       // 3. Enriquecer perfil do artista (apenas campos nulos)
-      const artist = await prisma.artist.findUnique({
-        where: { id: s.artistId },
-        select: { birthDate: true, height: true, bloodType: true, primaryImageUrl: true },
-      })
+      const [artist, group] = await Promise.all([
+        prisma.artist.findUnique({
+          where: { id: s.artistId },
+          select: { birthDate: true, height: true, bloodType: true, primaryImageUrl: true },
+        }),
+        prisma.musicalGroup.findUnique({
+          where: { id: s.musicalGroupId },
+          select: { nameHangul: true, profileImageUrl: true, debutDate: true },
+        }),
+      ])
       if (!artist) continue
 
       const enrichFields: Record<string, unknown> = {}
@@ -101,6 +110,19 @@ export async function POST() {
       if (Object.keys(enrichFields).length > 0) {
         await prisma.artist.update({ where: { id: s.artistId }, data: enrichFields })
         artistsEnriched++
+      }
+
+      // 4. Enriquecer perfil do grupo (apenas campos nulos)
+      if (group) {
+        const groupEnrichFields: Record<string, unknown> = {}
+        if (s.groupNameHangul && !group.nameHangul)       groupEnrichFields.nameHangul = s.groupNameHangul
+        if (s.groupImageUrl && !group.profileImageUrl)    groupEnrichFields.profileImageUrl = s.groupImageUrl
+        if (s.groupDebutDate && !group.debutDate)         groupEnrichFields.debutDate = s.groupDebutDate
+
+        if (Object.keys(groupEnrichFields).length > 0) {
+          await prisma.musicalGroup.update({ where: { id: s.musicalGroupId }, data: groupEnrichFields })
+          groupsEnriched++
+        }
       }
     } catch {
       errors++
@@ -114,6 +136,7 @@ export async function POST() {
     membershipsExisted,
     suggestionsApproved,
     artistsEnriched,
+    groupsEnriched,
     errors,
   })
 }
