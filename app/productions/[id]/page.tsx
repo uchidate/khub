@@ -252,7 +252,9 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         ))}
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
-                    {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1 mb-8">{production.titleKr}</p>}
+                    {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1">{production.titleKr}</p>}
+                    {production.tagline && <p className="text-base text-zinc-400 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
+                    {!production.tagline && <div className="mb-8" />}
 
                     {production.trailerUrl && (
                         <div className="mt-8">

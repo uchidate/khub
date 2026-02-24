@@ -316,6 +316,7 @@ async function runCronProcessing(lockId: string) {
                             type: production.tmdbType === 'tv' ? 'K-Drama' : 'Filme',
                             year: production.releaseDate ? production.releaseDate.getFullYear() : null,
                             synopsis: production.synopsis,
+                            tagline: production.tagline ?? null,
                             imageUrl: production.imageUrl,
                             backdropUrl: production.backdropUrl,
                             galleryUrls: production.galleryUrls,

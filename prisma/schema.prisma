@@ -206,6 +206,7 @@ model Production {
   runtime            Int? // Minutes
   voteAverage        Float? // TMDB rating
   trailerUrl         String? // YouTube trailer URL
+  tagline            String? // Slogan/frase de impacto do TMDB
   // Classificação etária DJCTQ
   ageRating          String? // 'L' | '10' | '12' | '14' | '16' | '18'
   ageRatingSyncAt    DateTime? // última tentativa de busca de classificação (com ou sem resultado)

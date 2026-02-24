@@ -64,6 +64,7 @@ export interface DiscoveredProduction {
   titlePt: string
   titleKr: string | null
   synopsis: string
+  tagline: string | null
   imageUrl: string | null
   backdropUrl: string | null
   galleryUrls: string[]
@@ -260,6 +261,7 @@ export class TMDBProductionDiscoveryService {
       titlePt: title,
       titleKr: koreanTitle,
       synopsis: details.overview || 'Sem sinopse disponível.',
+      tagline: details.tagline || null,
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
       backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
       galleryUrls,
@@ -331,6 +333,7 @@ export class TMDBProductionDiscoveryService {
       titlePt: title,
       titleKr: koreanTitle,
       synopsis: details.overview || 'Sem sinopse disponível.',
+      tagline: details.tagline || null,
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
       backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
       galleryUrls,
