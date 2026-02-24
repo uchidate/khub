@@ -23,10 +23,14 @@ function parseLineFixNames(line: string): LogLine {
         }
         case 'NO_TMDB':
             return { text: `➖ Sem TMDB: ${payload}`, type: 'warning' }
+        case 'DUPLICATE': {
+            const [from, to] = payload.split('→')
+            return { text: `⚠️ Duplicata — nome "${to}" já existe: ${from}`, type: 'warning' }
+        }
         case 'ERROR':
             return { text: `❌ Erro: ${payload}`, type: 'error' }
         case 'DONE':
-            return { text: `🎉 Concluído! ${payload.replace('fixed=', 'corrigidos: ').replace(',noTmdb=', ' | sem TMDB: ').replace(',errors=', ' | erros: ')}`, type: 'done' }
+            return { text: `🎉 Concluído! ${payload.replace('fixed=', 'corrigidos: ').replace(',noTmdb=', ' | sem TMDB: ').replace(',duplicates=', ' | duplicatas: ').replace(',errors=', ' | erros: ')}`, type: 'done' }
         default:
             return { text: line, type: 'info' }
     }
@@ -218,8 +222,8 @@ export default function FixNamesAdminPage() {
         setFixRunning,
         setFixLog,
         setFixStats,
-        /fixed=(\d+),noTmdb=(\d+),errors=(\d+)/,
-        (m) => ({ total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]), main: parseInt(m[1]), secondary: parseInt(m[2]), errors: parseInt(m[3]) })
+        /fixed=(\d+),noTmdb=(\d+),duplicates=(\d+),errors=(\d+)/,
+        (m) => ({ total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]), main: parseInt(m[1]), secondary: parseInt(m[2]) + parseInt(m[3]), errors: parseInt(m[4]) })
     ), [])
 
     const startFillHangul = useCallback(() => runStream(

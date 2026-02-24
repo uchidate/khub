@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { TrendingUp } from 'lucide-react'
+import { getRoleLabel } from '@/lib/utils/role-labels'
 
 interface TrendingArtist {
     id: string
@@ -8,6 +9,7 @@ interface TrendingArtist {
     nameHangul: string | null
     primaryImageUrl: string | null
     roles: string[]
+    gender?: number | null
     trendingScore: number
     viewCount: number
 }
@@ -111,7 +113,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                 )}
                                 {artist.roles && artist.roles.length > 0 && (
                                     <p className="text-zinc-500 text-[10px] mt-0.5 line-clamp-1">
-                                        {artist.roles[0]}
+                                        {getRoleLabel(artist.roles[0], artist.gender)}
                                     </p>
                                 )}
                             </div>

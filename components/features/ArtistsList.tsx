@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { MediaCard } from '@/components/ui/MediaCard'
 import { ArtistFilters, type ArtistFilterValues } from './ArtistFilters'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { getRoleLabels } from '@/lib/utils/role-labels'
 
 function ArtistsSkeleton() {
     return (
@@ -24,6 +25,7 @@ interface Artist {
     nameHangul: string | null
     primaryImageUrl: string | null
     roles: string[]
+    gender?: number | null
     memberships: { group: { id: string; name: string } }[]
 }
 
@@ -168,7 +170,7 @@ export function ArtistsList() {
                                     href={`/artists/${artist.id}`}
                                     badges={[
                                         ...(group ? [group.name] : []),
-                                        ...(artist.roles || []),
+                                        ...getRoleLabels(artist.roles || [], artist.gender),
                                     ]}
                                     aspectRatio="poster"
                                 />

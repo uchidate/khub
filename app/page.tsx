@@ -63,7 +63,7 @@ export default async function Home() {
             nameRomanized: true,
             nameHangul: true,
             primaryImageUrl: true,
-            roles: true,
+            roles: true, gender: true,
             trendingScore: true,
             viewCount: true
         }

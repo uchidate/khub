@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma"
 import Image from "next/image"
 import Link from "next/link"
+import { getRoleLabel, getRoleLabels } from "@/lib/utils/role-labels"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { InstagramFeed } from "@/components/features/InstagramFeed"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
@@ -9,7 +10,7 @@ import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ReportButton } from "@/components/ui/ReportButton"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
-import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -88,7 +89,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function ArtistDetailPage({ params }: { params: { id: string } }) {
-    const [artist, artistNews, instagramPosts] = await Promise.all([
+    const [artist, artistNews, instagramPosts, newsCount] = await Promise.all([
         prisma.artist.findUnique({
             where: { id: params.id },
             include: {
@@ -117,6 +118,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
             take: 12,
             select: { id: true, imageUrl: true, caption: true, permalink: true, postedAt: true },
         }),
+        prisma.news.count({ where: { artists: { some: { artistId: params.id } } } }),
     ])
 
     if (!artist) {
@@ -151,7 +153,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 memberships: { some: { groupId: activeGroup.id, isActive: true } },
             },
             take: 8,
-            select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true },
+            select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
             orderBy: { trendingScore: 'desc' },
         })
         : []
@@ -217,7 +219,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                     <div className="flex flex-col gap-3 max-w-3xl">
                         {/* Roles + group + birthday countdown */}
                         <div className="flex items-center gap-2 flex-wrap">
-                            {roles.map(role => (
+                            {getRoleLabels(roles, artist.gender).map(role => (
                                 <span key={role} className="text-xs font-black uppercase px-3 py-1 bg-white/10 backdrop-blur-sm text-white rounded-full border border-white/20">
                                     {role}
                                 </span>
@@ -375,6 +377,23 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 <div className="text-2xl font-black text-pink-400">{artist.favoriteCount.toLocaleString('pt-BR')}</div>
                                 <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Fãs</p>
                             </div>
+                            <div className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <Film className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+                                <div className="text-2xl font-black text-purple-400">{artist.productions.length}</div>
+                                <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Produções</p>
+                            </div>
+                            <div className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <Disc3 className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
+                                <div className="text-2xl font-black text-emerald-400">{artist.albums.length}</div>
+                                <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Lançamentos</p>
+                            </div>
+                            {newsCount > 0 && (
+                                <div className="col-span-2 p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                    <Newspaper className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+                                    <div className="text-2xl font-black text-amber-400">{newsCount}</div>
+                                    <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Notícias</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Artistas Relacionados (membros do grupo) */}
@@ -401,7 +420,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                 {ra.nameHangul && <p className="text-[10px] text-zinc-600 mt-0.5">{ra.nameHangul}</p>}
                                             </div>
                                             {ra.roles?.[0] && (
-                                                <span className="text-[9px] font-black uppercase text-zinc-600 flex-shrink-0">{ra.roles[0]}</span>
+                                                <span className="text-[9px] font-black uppercase text-zinc-600 flex-shrink-0">{getRoleLabel(ra.roles[0], ra.gender)}</span>
                                             )}
                                         </Link>
                                     ))}
@@ -419,6 +438,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                                     <Music className="w-4 h-4" />
                                     Discografia
+                                    <span className="ml-auto text-zinc-700 font-bold normal-case tracking-normal">{artist.albums.length} lançamento{artist.albums.length !== 1 ? 's' : ''}</span>
                                 </h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {artist.albums.map((album) => (
@@ -467,7 +487,13 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                         {/* Filmography */}
                         <section>
-                            <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-6">Filmografia</h3>
+                            <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Film className="w-4 h-4" />
+                                Filmografia
+                                {artist.productions.length > 0 && (
+                                    <span className="ml-auto text-zinc-700 font-bold normal-case tracking-normal">{artist.productions.length} produção{artist.productions.length !== 1 ? 'ões' : ''}</span>
+                                )}
+                            </h3>
                             {artist.productions.length > 0 ? (
                                 <div className="space-y-4">
                                     {artist.productions.map(({ production }) => (

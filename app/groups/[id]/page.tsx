@@ -55,7 +55,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             nameRomanized: true,
                             nameHangul: true,
                             primaryImageUrl: true,
-                            roles: true,
+                            roles: true, gender: true,
                         },
                     },
                 },

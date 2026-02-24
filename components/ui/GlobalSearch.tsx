@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Search, X, Loader2, User, Newspaper, Film, TrendingUp } from 'lucide-react'
 import { useGlobalSearch } from '@/hooks/useGlobalSearch'
+import { getRoleLabel } from '@/lib/utils/role-labels'
 
 export function GlobalSearch() {
     const router = useRouter()
@@ -158,7 +159,7 @@ export function GlobalSearch() {
                                                     </p>
                                                     {artist.roles.length > 0 && (
                                                         <p className="text-xs text-zinc-500 truncate">
-                                                            {artist.roles[0]}
+                                                            {getRoleLabel(artist.roles[0], artist.gender)}
                                                         </p>
                                                     )}
                                                 </div>

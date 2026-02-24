@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
             tmdbSyncStatus: 'SYNCED',
             tmdbLastSync: new Date(),
             roles,
+            gender: details.gender ?? null,
             stageNames: [],
             placeOfBirth: details.place_of_birth || null,
           },

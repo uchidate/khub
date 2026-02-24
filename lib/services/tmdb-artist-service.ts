@@ -28,6 +28,7 @@ interface TMDBPersonDetails {
   known_for_department: string;
   popularity: number;
   also_known_as?: string[];
+  gender?: number; // 0=unspecified, 1=female, 2=male, 3=non-binary
 }
 
 interface RealArtistData {
@@ -40,6 +41,7 @@ interface RealArtistData {
   profileImageUrl: string;
   biography?: string;
   roles: string[];
+  gender?: number;
   popularity: number;
   height?: string;
   bloodType?: string;
@@ -235,6 +237,7 @@ export class TMDBArtistService {
         : 'https://via.placeholder.com/500x750?text=No+Image',
       biography: fullDetails.biography || undefined,
       roles,
+      gender: fullDetails.gender ?? undefined,
       popularity: fullDetails.popularity,
       // Wiki fields initialized as undefined, enriched later
       birthName: undefined,

@@ -159,6 +159,7 @@ export async function POST(req: NextRequest) {
             send(`TOTAL:${artists.length}`)
             let fixed = 0
             let noTmdb = 0
+            let duplicates = 0
             let errors = 0
 
             for (let i = 0; i < artists.length; i++) {
@@ -176,6 +177,20 @@ export async function POST(req: NextRequest) {
                     if (!tmdb || !tmdb.name || KOREAN_REGEX.test(tmdb.name)) {
                         send(`NO_TMDB:${artist.nameRomanized}`)
                         noTmdb++
+                        continue
+                    }
+
+                    // Verificar se o nome romanizado já existe em outro artista
+                    const conflict = await prisma.artist.findFirst({
+                        where: {
+                            nameRomanized: { equals: tmdb.name, mode: 'insensitive' },
+                            id: { not: artist.id },
+                        },
+                        select: { id: true, nameRomanized: true },
+                    })
+                    if (conflict) {
+                        send(`DUPLICATE:${artist.nameRomanized}→${tmdb.name}`)
+                        duplicates++
                         continue
                     }
 
@@ -203,7 +218,7 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            send(`DONE:fixed=${fixed},noTmdb=${noTmdb},errors=${errors}`)
+            send(`DONE:fixed=${fixed},noTmdb=${noTmdb},duplicates=${duplicates},errors=${errors}`)
             controller.close()
         },
     })

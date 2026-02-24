@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
                     nameHangul: true,
                     primaryImageUrl: true,
                     roles: true,
+                    gender: true,
                     trendingScore: true
                 },
                 orderBy: { trendingScore: 'desc' }

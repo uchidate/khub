@@ -6,6 +6,7 @@ interface Artist {
     nameHangul: string | null
     primaryImageUrl: string | null
     roles: string[]
+    gender?: number | null
     trendingScore: number
 }
 
