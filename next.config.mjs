@@ -125,6 +125,20 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '*.cdninstagram.com',
             },
+            // Cloudflare R2 — CDN próprio (uploads de artistas e grupos)
+            {
+                protocol: 'https',
+                hostname: '*.r2.dev',
+            },
+            // Kpopping.com — fotos de idols e grupos (curadoria kpopping)
+            {
+                protocol: 'https',
+                hostname: 'kpopping.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'cdn.kpopping.com',
+            },
         ],
     },
 };
