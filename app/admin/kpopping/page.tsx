@@ -1176,6 +1176,10 @@ export default function KpoppingCurationPage() {
   const [generateStats, setGenerateStats] = useState<{
     processed: number; created: number; updated: number; skipped: number; errors: number
   } | null>(null)
+  const [backfilling, setBackfilling] = useState(false)
+  const [backfillResult, setBackfillResult] = useState<{
+    total: number; membershipsCreated: number; membershipsExisted: number; artistsEnriched: number; errors: number
+  } | null>(null)
 
   const generate = async () => {
     setGenerating(true)
@@ -1186,6 +1190,18 @@ export default function KpoppingCurationPage() {
       if (data.stats) setGenerateStats(data.stats)
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const backfill = async () => {
+    setBackfilling(true)
+    setBackfillResult(null)
+    try {
+      const res = await fetch('/api/admin/kpopping/backfill-memberships', { method: 'POST' })
+      const data = await res.json()
+      if (data.ok) setBackfillResult(data)
+    } finally {
+      setBackfilling(false)
     }
   }
 
@@ -1206,14 +1222,30 @@ export default function KpoppingCurationPage() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <button
-            onClick={generate}
-            disabled={generating}
-            className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
-            {generating ? 'Gerando...' : 'Gerar Sugestões'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={backfill}
+              disabled={backfilling}
+              title="Garante que todas as sugestões APPROVED tenham ArtistGroupMembership no DB"
+              className="text-sm bg-purple-900/50 hover:bg-purple-800/50 disabled:opacity-50 text-purple-300 px-4 py-2 rounded-lg flex items-center gap-2 border border-purple-700/30"
+            >
+              <Star size={14} className={backfilling ? 'animate-pulse' : ''} />
+              {backfilling ? 'Corrigindo...' : 'Backfill Vínculos'}
+            </button>
+            <button
+              onClick={generate}
+              disabled={generating}
+              className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2"
+            >
+              <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
+              {generating ? 'Gerando...' : 'Gerar Sugestões'}
+            </button>
+          </div>
+          {backfillResult && (
+            <p className="text-xs text-purple-400">
+              Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Artistas enriquecidos: {backfillResult.artistsEnriched} · {backfillResult.errors} erros
+            </p>
+          )}
           {generateStats && (
             <p className="text-xs text-gray-500">
               {generateStats.created} criadas · {generateStats.updated} atualizadas · {generateStats.skipped} ignoradas · {generateStats.errors} erros

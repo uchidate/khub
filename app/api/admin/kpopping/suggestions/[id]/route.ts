@@ -61,9 +61,12 @@ export async function PATCH(
     if (action === 'approve') {
       const { artistId, musicalGroupId, role, isActive, joinDate, leaveDate, notes } = parsed.data
 
-      // Garante que artista e grupo existem
+      // Garante que artista e grupo existem (inclui campos para enriquecimento)
       const [artist, group] = await Promise.all([
-        prisma.artist.findUnique({ where: { id: artistId }, select: { id: true, nameRomanized: true } }),
+        prisma.artist.findUnique({
+          where: { id: artistId },
+          select: { id: true, nameRomanized: true, birthDate: true, height: true, bloodType: true, primaryImageUrl: true },
+        }),
         prisma.musicalGroup.findUnique({ where: { id: musicalGroupId }, select: { id: true, name: true } }),
       ])
       if (!artist) return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
@@ -87,6 +90,22 @@ export async function PATCH(
           leaveDate: leaveDate ? new Date(leaveDate) : undefined,
         },
       })
+
+      // Enriquece o perfil do artista com dados do kpopping (apenas campos nulos)
+      const enrichFields: Record<string, unknown> = {}
+      if (suggestion.idolBirthday && !artist.birthDate)
+        enrichFields.birthDate = suggestion.idolBirthday
+      if (suggestion.idolHeight && !artist.height)
+        enrichFields.height = String(suggestion.idolHeight)
+      if (suggestion.idolBloodType && !artist.bloodType)
+        enrichFields.bloodType = suggestion.idolBloodType
+      if (suggestion.idolImageUrl && !artist.primaryImageUrl)
+        enrichFields.primaryImageUrl = suggestion.idolImageUrl
+
+      if (Object.keys(enrichFields).length > 0) {
+        await prisma.artist.update({ where: { id: artistId }, data: enrichFields })
+        log.info(`Artista enriquecido: ${artist.nameRomanized} — ${Object.keys(enrichFields).join(', ')}`)
+      }
 
       // Atualiza a sugestão
       const updated = await prisma.kpoppingMembershipSuggestion.update({
