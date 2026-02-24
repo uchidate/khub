@@ -199,7 +199,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
 
                 {/* Breadcrumbs */}
-                <div className="absolute top-4 md:top-6 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
+                <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
                     <Breadcrumbs items={[
                         { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }

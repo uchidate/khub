@@ -25,8 +25,8 @@ const NavBar = () => {
 
     const closeSearch = useCallback(() => setSearchOpen(false), [])
 
-    // Hide NavBar on auth pages - AFTER all hooks
-    if (pathname?.startsWith('/auth')) return null
+    // Hide NavBar on auth and admin pages - AFTER all hooks
+    if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin')) return null
 
     const navLinks = [
         { label: "Início", href: "/" },
