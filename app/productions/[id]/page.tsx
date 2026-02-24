@@ -293,17 +293,58 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h3>
                                 {(() => {
                                     const hasOrder = production.artists.some(a => a.castOrder !== null)
-                                    // With TMDB order: 0-1 = leads, 2-5 = secondary, 6+ = supporting
-                                    // Fallback (no order): split by position in list
-                                    const leads = hasOrder
-                                        ? production.artists.filter(a => (a.castOrder ?? 99) <= 1)
-                                        : production.artists.slice(0, 2)
-                                    const secondary = hasOrder
-                                        ? production.artists.filter(a => { const o = a.castOrder ?? 99; return o >= 2 && o <= 5 })
-                                        : production.artists.slice(2, 6)
-                                    const supporting = hasOrder
-                                        ? production.artists.filter(a => (a.castOrder ?? 99) >= 6)
-                                        : production.artists.slice(6)
+
+                                    // Dynamic tier detection: find natural "gaps" in castOrder values
+                                    // A significant gap between consecutive cast positions marks a tier boundary
+                                    let leads: typeof production.artists
+                                    let secondary: typeof production.artists
+                                    let supporting: typeof production.artists
+
+                                    if (hasOrder) {
+                                        const ordered = [...production.artists].sort(
+                                            (a, b) => (a.castOrder ?? 999) - (b.castOrder ?? 999)
+                                        )
+                                        const n = ordered.length
+
+                                        if (n <= 2) {
+                                            leads = ordered; secondary = []; supporting = []
+                                        } else {
+                                            // Compute gaps between consecutive cast orders
+                                            const gaps = ordered.slice(1).map((a, i) => ({
+                                                boundaryAt: i + 1, // index where new tier would start
+                                                size: (a.castOrder ?? 999) - (ordered[i].castOrder ?? 999),
+                                            }))
+                                            const avgGap = gaps.reduce((s, g) => s + g.size, 0) / gaps.length
+
+                                            // A gap is "significant" if ≥ 2 AND at least 1.5× the average gap
+                                            const boundaries = gaps
+                                                .filter(g => g.size >= Math.max(2, avgGap * 1.5))
+                                                .sort((a, b) => b.size - a.size) // largest gaps first
+                                                .slice(0, 2) // at most 2 tier boundaries
+                                                .sort((a, b) => a.boundaryAt - b.boundaryAt) // restore position order
+                                                .map(g => g.boundaryAt)
+
+                                            if (boundaries.length === 0) {
+                                                leads = ordered; secondary = []; supporting = []
+                                            } else if (boundaries.length === 1) {
+                                                const [b] = boundaries
+                                                leads = ordered.slice(0, b)
+                                                secondary = ordered.slice(b)
+                                                supporting = []
+                                            } else {
+                                                const [b1, b2] = boundaries
+                                                leads = ordered.slice(0, b1)
+                                                secondary = ordered.slice(b1, b2)
+                                                supporting = ordered.slice(b2)
+                                            }
+                                        }
+                                    } else {
+                                        // Fallback when no TMDB order: positional split
+                                        const n = production.artists.length
+                                        leads = production.artists.slice(0, Math.min(2, n))
+                                        secondary = production.artists.slice(2, Math.min(6, n))
+                                        supporting = production.artists.slice(6)
+                                    }
 
                                     const CastCard = ({ artist, role, badge }: { artist: typeof leads[0]['artist'], role: string | null, badge?: { label: string, color: string } }) => (
                                         <Link href={`/artists/${artist.id}`} className="group">
@@ -333,7 +374,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                             {leads.length > 0 && (
                                                 <div className="mb-8">
                                                     <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3">Protagonistas</p>
-                                                    <div className="grid grid-cols-2 gap-4">
+                                                    <div className={`grid gap-4 ${leads.length <= 2 ? 'grid-cols-2' : leads.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
                                                         {leads.map(({ artist, role }) => (
                                                             <CastCard key={artist.id} artist={artist} role={role} badge={{ label: 'Protagonista', color: 'bg-purple-600/80' }} />
                                                         ))}
