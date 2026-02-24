@@ -189,12 +189,13 @@ export default function ProductionsPage() {
         return
       }
 
-      const total = resetData.resetCount as number
+      const total = resetData.total as number
       let processed = 0
       let totalSynced = 0
 
-      // 2. Loop: process batches of 20 until all done
-      while (processed < total) {
+      // 2. Loop: process batches of 20 until no more pending
+      // Uses batchData.processed === 0 as stop condition (not resetCount, which excluded never-synced)
+      while (true) {
         setSyncMsg(`🔄 Resincronizando elenco... ${processed}/${total} produções processadas`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',

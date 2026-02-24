@@ -27,10 +27,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.reset) {
-    // Apenas reseta castSyncAt de todas as produções (sem sincronizar)
+    // Reseta castSyncAt de TODAS as produções com tmdbId (incluindo nunca sincronizadas)
     // O admin usa "Importar Elenco Pendente" em seguida para processar em lotes
-    const resetCount = await service.resetCastSyncAt()
-    return NextResponse.json({ ok: true, resetCount })
+    const { resetCount, total } = await service.resetCastSyncAt()
+    return NextResponse.json({ ok: true, resetCount, total })
   }
 
   if (body.pending) {

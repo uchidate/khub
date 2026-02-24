@@ -291,15 +291,15 @@ export class ProductionCastService {
   }
 
   /**
-   * Reset castSyncAt for all synced productions so they get re-processed
-   * with the updated cast limit. Returns the count of productions reset.
+   * Reset castSyncAt for ALL productions with a tmdbId so they get re-processed.
+   * Returns { resetCount, total } where total = all productions eligible for sync.
    */
-  async resetCastSyncAt(): Promise<number> {
+  async resetCastSyncAt(): Promise<{ resetCount: number; total: number }> {
     const result = await prisma.production.updateMany({
-      where: { castSyncAt: { not: null } },
+      where: { tmdbId: { not: null } },
       data: { castSyncAt: null },
     })
-    return result.count
+    return { resetCount: result.count, total: result.count }
   }
 }
 
