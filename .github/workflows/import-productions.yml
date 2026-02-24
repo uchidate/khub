@@ -1,0 +1,119 @@
+name: 🎬 Import Korean Productions from TMDB
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: 'Ano inicial'
+        required: true
+        default: '2020'
+        type: string
+      end_year:
+        description: 'Ano final'
+        required: true
+        default: '2025'
+        type: string
+      types:
+        description: 'Tipos a importar'
+        required: true
+        default: 'tv,movie'
+        type: choice
+        options:
+          - tv,movie
+          - tv
+          - movie
+      dry_run:
+        description: 'Dry run (simula sem gravar)'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  import-productions:
+    name: 🎬 Import ${{ inputs.start_year }}–${{ inputs.end_year }} [${{ inputs.types }}]${{ inputs.dry_run == 'true' && ' (DRY RUN)' || '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: 🎬 Run Import Script on Production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 360m
+          script: |
+            set -e
+            cd /var/www/hallyuhub
+
+            echo "🎬 Iniciando import de produções coreanas..."
+            echo "   Período: ${{ inputs.start_year }}–${{ inputs.end_year }}"
+            echo "   Tipos: ${{ inputs.types }}"
+            echo "   Dry run: ${{ inputs.dry_run }}"
+            echo "──────────────────────────────────────────"
+
+            docker-compose -f docker-compose.prod.yml exec -T hallyuhub \
+              env START_YEAR=${{ inputs.start_year }} \
+                  END_YEAR=${{ inputs.end_year }} \
+                  TYPES=${{ inputs.types }} \
+                  DRY_RUN=${{ inputs.dry_run }} \
+              npx tsx scripts/import-productions-range.ts
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🎬 Import Korean Productions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Período** | ${{ inputs.start_year }}–${{ inputs.end_year }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Tipos** | ${{ inputs.types }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Dry Run** | ${{ inputs.dry_run }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Hora** | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📢 Notify Success
+        if: success() && inputs.dry_run == 'false'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+        run: |
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "✅ Import de produções concluído (${{ inputs.start_year }}–${{ inputs.end_year }}, tipos: ${{ inputs.types }})",
+              "blocks": [{
+                "type": "header",
+                "text": {"type": "plain_text", "text": "✅ Import de Produções Concluído"}
+              }, {
+                "type": "section",
+                "fields": [
+                  {"type": "mrkdwn", "text": "*Período:* ${{ inputs.start_year }}–${{ inputs.end_year }}"},
+                  {"type": "mrkdwn", "text": "*Tipos:* ${{ inputs.types }}"},
+                  {"type": "mrkdwn", "text": "*Status:* ✅ Sucesso"}
+                ]
+              }, {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver logs completos>"}
+              }]
+            }' || true
+
+      - name: 📢 Notify Failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+        run: |
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "❌ Falha no import de produções (${{ inputs.start_year }}–${{ inputs.end_year }})",
+              "blocks": [{
+                "type": "header",
+                "text": {"type": "plain_text", "text": "❌ Falha no Import de Produções"}
+              }, {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver logs do erro>"}
+              }]
+            }' || true

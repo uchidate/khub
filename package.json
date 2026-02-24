@@ -20,6 +20,7 @@
     "ai:stats": "tsx scripts/ai-stats.ts",
     "test:slack": "tsx scripts/test-slack-notifications.ts",
     "refresh:productions": "tsx scripts/refresh-productions.ts",
+    "import:productions": "tsx scripts/import-productions-range.ts",
     "gdrive:auth": "tsx scripts/google-drive-auth.ts",
     "gdrive:auth:local": "node scripts/run-gdrive-auth.js",
     "gdrive:upload": "tsx scripts/google-drive-upload.ts",
