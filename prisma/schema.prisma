@@ -576,6 +576,25 @@ enum KpoppingSuggestionStatus {
   REJECTED
 }
 
+// Reports de problemas enviados por usuários nas páginas públicas
+model Report {
+  id          String   @id @default(cuid())
+  entityType  String   // 'artist' | 'production' | 'group'
+  entityId    String
+  entityName  String   // snapshot do nome na hora do report
+  category    String   // 'wrong_info' | 'wrong_image' | 'duplicate' | 'missing_info' | 'other'
+  description String?  @db.Text
+  status      String   @default("PENDING") // 'PENDING' | 'REVIEWED' | 'RESOLVED' | 'DISMISSED'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityId])
+  @@index([status])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("reports")
+}
+
 // Preferências de conteúdo por usuário (quais classificações deseja ver)
 model UserContentPreferences {
   id             String   @id @default(cuid())
