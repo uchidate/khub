@@ -24,13 +24,18 @@ export function AnniversaryCountdown({ date, debutDate, label = 'aniversário', 
         const today = new Date()
         today.setHours(0, 0, 0, 0)
 
+        // Usar componentes UTC para evitar desvio de 1 dia por timezone (UTC-3)
+        const birthYear = d.getUTCFullYear()
+        const birthMonth = d.getUTCMonth()
+        const birthDay = d.getUTCDate()
+
         const thisYear = today.getFullYear()
-        const yearsCompleting = thisYear - d.getFullYear() + (
+        const yearsCompleting = thisYear - birthYear + (
             // If anniversary already passed this year, count next year
-            new Date(thisYear, d.getMonth(), d.getDate()) < today ? 1 : 0
+            new Date(thisYear, birthMonth, birthDay) < today ? 1 : 0
         )
 
-        const nextAnniv = new Date(thisYear, d.getMonth(), d.getDate())
+        const nextAnniv = new Date(thisYear, birthMonth, birthDay)
         if (nextAnniv < today) nextAnniv.setFullYear(thisYear + 1)
 
         const isToday = nextAnniv.getTime() === today.getTime()
