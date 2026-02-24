@@ -11,6 +11,7 @@ import { RelatedNews } from "@/components/features/RelatedNews"
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
 import { CommentsSection } from "@/components/features/CommentsSection"
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import type { Metadata } from "next"
 
@@ -295,10 +296,24 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                     </section>
                 )}
 
+                {/* Ad: topo do artigo */}
+                <AdBanner
+                    slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_ARTICLE_TOP ?? ''}
+                    format="horizontal"
+                    className="mb-10"
+                />
+
                 {/* Conteúdo */}
                 <article className="max-w-none">
                     <MarkdownRenderer content={mainContent} />
                 </article>
+
+                {/* Ad: após artigo */}
+                <AdBanner
+                    slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_ARTICLE_BOTTOM ?? ''}
+                    format="rectangle"
+                    className="mt-10"
+                />
 
                 {/* Compartilhamento */}
                 <div className="mt-12 p-6 rounded-2xl bg-zinc-900/50 border border-white/10">

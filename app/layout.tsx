@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Outfit, Inter } from "next/font/google"
+import Script from "next/script"
 import "../styles/globals.css"
 import "../styles/nprogress.css"
 import { GoogleAnalytics } from '@next/third-parties/google'
@@ -77,6 +78,13 @@ export default function RootLayout({
             <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
                 {process.env.NEXT_PUBLIC_GA_ID && (
                     <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+                )}
+                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
+                    <Script
+                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+                        crossOrigin="anonymous"
+                        strategy="afterInteractive"
+                    />
                 )}
                 <JsonLd data={{
                     "@context": "https://schema.org",
