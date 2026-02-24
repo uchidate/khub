@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, Users, RefreshCw, ShieldCheck, RotateCcw } from 'lucide-react'
+import { Plus, Users, RefreshCw, ShieldCheck, RotateCcw, CalendarSearch, ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 const AGE_RATING_STYLES: Record<string, string> = {
   'L':  'bg-green-500/20 text-green-400 border-green-500/30',
@@ -15,6 +16,16 @@ const AGE_RATING_STYLES: Record<string, string> = {
   '16': 'bg-red-600/20 text-red-400 border-red-600/30',
   '18': 'bg-red-900/40 text-red-300 border-red-700/50',
 }
+
+const MONTHS = [
+  { value: '0', label: 'Todos os meses' },
+  { value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' },
+  { value: '3', label: 'Março' }, { value: '4', label: 'Abril' },
+  { value: '5', label: 'Maio' }, { value: '6', label: 'Junho' },
+  { value: '7', label: 'Julho' }, { value: '8', label: 'Agosto' },
+  { value: '9', label: 'Setembro' }, { value: '10', label: 'Outubro' },
+  { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' },
+]
 
 interface Production {
   id: string
@@ -26,6 +37,26 @@ interface Production {
   ageRating: string | null
   artistsCount: number
   createdAt: string
+}
+
+interface PreviewItem {
+  tmdbId: number
+  tmdbType: 'tv' | 'movie'
+  name: string
+  originalName: string | null
+  date: string | null
+  posterUrl: string | null
+  voteAverage: number
+  voteCount: number
+  exists: boolean
+  existingId: string | null
+}
+
+interface PreviewResult {
+  results: PreviewItem[]
+  total: number
+  page: number
+  totalPages: number
 }
 
 const columns: Column<Production>[] = [
@@ -122,6 +153,19 @@ export default function ProductionsPage() {
   const [ageSyncing, setAgeSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
 
+  // Import by period state
+  const [importPanelOpen, setImportPanelOpen] = useState(false)
+  const [importType, setImportType] = useState<'tv' | 'movie'>('tv')
+  const [importYear, setImportYear] = useState(String(new Date().getFullYear()))
+  const [importMonth, setImportMonth] = useState('0')
+  const [importSortBy, setImportSortBy] = useState('popularity.desc')
+  const [importPage, setImportPage] = useState(1)
+  const [importSearching, setImportSearching] = useState(false)
+  const [importPreview, setImportPreview] = useState<PreviewResult | null>(null)
+  const [importSelected, setImportSelected] = useState<Set<number>>(new Set())
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
+
   const handleSyncCast = async (production: Production) => {
     if (syncingId) return
     setSyncingId(production.id)
@@ -177,7 +221,6 @@ export default function ProductionsPage() {
     setResetSyncing(true)
     setSyncMsg('Resetando elenco de todas as produções...')
     try {
-      // 1. Reset all castSyncAt
       const resetRes = await fetch('/api/admin/productions/sync-cast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -193,8 +236,6 @@ export default function ProductionsPage() {
       let processed = 0
       let totalSynced = 0
 
-      // 2. Loop: process batches of 20 until no more pending
-      // Stop condition: batchData.processed === 0 (not resetCount, which excluded never-synced)
       let hasMore = true
       while (hasMore) {
         setSyncMsg(`🔄 Resincronizando elenco... ${processed}/${total} produções processadas`)
@@ -250,6 +291,83 @@ export default function ProductionsPage() {
     }
   }
 
+  // --- Import by Period ---
+
+  const handleImportSearch = async (page = 1) => {
+    setImportSearching(true)
+    setImportMsg('')
+    setImportPage(page)
+    try {
+      const params = new URLSearchParams({
+        type: importType,
+        year: importYear,
+        sortBy: importSortBy,
+        page: String(page),
+      })
+      if (importMonth !== '0') params.set('month', importMonth)
+
+      const res = await fetch(`/api/admin/productions/import-by-period?${params}`)
+      const data: PreviewResult = await res.json()
+      if (!res.ok) {
+        setImportMsg(`❌ Erro: ${(data as { error?: string }).error ?? 'falha na busca'}`)
+        return
+      }
+      setImportPreview(data)
+      // Auto-select all new items
+      const newIds = new Set(data.results.filter((r) => !r.exists).map((r) => r.tmdbId))
+      setImportSelected(newIds)
+    } catch {
+      setImportMsg('❌ Erro de rede')
+    } finally {
+      setImportSearching(false)
+    }
+  }
+
+  const toggleSelect = (tmdbId: number) => {
+    setImportSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(tmdbId)) next.delete(tmdbId)
+      else next.add(tmdbId)
+      return next
+    })
+  }
+
+  const selectAllNew = () => {
+    if (!importPreview) return
+    const newIds = importPreview.results.filter((r) => !r.exists).map((r) => r.tmdbId)
+    setImportSelected(new Set(newIds))
+  }
+
+  const handleImport = async () => {
+    if (importing || importSelected.size === 0 || !importPreview) return
+    setImporting(true)
+    setImportMsg('Importando produções...')
+    try {
+      const items = importPreview.results
+        .filter((r) => importSelected.has(r.tmdbId))
+        .map((r) => ({ tmdbId: r.tmdbId, type: r.tmdbType }))
+
+      const res = await fetch('/api/admin/productions/import-by-period', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setImportMsg(`✅ ${data.created} importadas · ${data.skipped} já existiam · ${data.errors} erros`)
+        refetchTable()
+        // Refresh preview to update exists flags
+        await handleImportSearch(importPage)
+      } else {
+        setImportMsg(`❌ Erro: ${data.error ?? 'falha na importação'}`)
+      }
+    } catch {
+      setImportMsg('❌ Erro de rede')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const handleCreate = () => {
     setEditingProduction(null)
     setFormOpen(true)
@@ -266,7 +384,6 @@ export default function ProductionsPage() {
   }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
-    // Convert year to number if it's a string
     if (data.year && typeof data.year === 'string') {
       data.year = parseInt(data.year)
     }
@@ -303,12 +420,14 @@ export default function ProductionsPage() {
     refetchTable()
   }
 
+  const newCount = importSelected.size
+
   return (
     <AdminLayout title="Produções">
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4">
           <p className="text-zinc-400">Gerencie dramas, filmes e outras produções da plataforma</p>
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0 flex-wrap justify-end">
             <button
               onClick={handleSyncAgeRating}
               disabled={ageSyncing}
@@ -328,11 +447,22 @@ export default function ProductionsPage() {
             <button
               onClick={handleResetResync}
               disabled={resetSyncing}
-              title="Reseta e reprocessa automaticamente o elenco de TODAS as produções em lotes de 20 (atualiza castOrder)"
+              title="Reseta e reprocessa automaticamente o elenco de TODAS as produções em lotes de 20"
               className="flex items-center gap-2 px-4 py-2.5 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-700/40 text-amber-400 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RotateCcw size={16} className={resetSyncing ? 'animate-spin' : ''} />
               {resetSyncing ? 'Resincronizando...' : 'Resync Completo'}
+            </button>
+            <button
+              onClick={() => { setImportPanelOpen((v) => !v); setImportMsg('') }}
+              className={`flex items-center gap-2 px-4 py-2.5 border font-bold rounded-lg transition-all ${
+                importPanelOpen
+                  ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300'
+                  : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300'
+              }`}
+            >
+              <CalendarSearch size={16} />
+              Importar por Período
             </button>
             <button
               onClick={handleCreate}
@@ -349,6 +479,183 @@ export default function ProductionsPage() {
             syncMsg.startsWith('✅') ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'
           }`}>
             {syncMsg}
+          </div>
+        )}
+
+        {/* Import by Period Panel */}
+        {importPanelOpen && (
+          <div className="rounded-xl border border-cyan-500/20 bg-zinc-900/60 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-cyan-400 uppercase tracking-widest">Importar por Período</h3>
+              <button onClick={() => setImportPanelOpen(false)} className="text-zinc-500 hover:text-zinc-300">
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Filters row */}
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-zinc-500 font-bold uppercase">Tipo</label>
+                <select
+                  value={importType}
+                  onChange={(e) => setImportType(e.target.value as 'tv' | 'movie')}
+                  className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-medium"
+                >
+                  <option value="tv">K-Drama / Série</option>
+                  <option value="movie">Filme</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-zinc-500 font-bold uppercase">Ano</label>
+                <input
+                  type="number"
+                  value={importYear}
+                  onChange={(e) => setImportYear(e.target.value)}
+                  min="1990"
+                  max="2030"
+                  className="w-24 px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-medium"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-zinc-500 font-bold uppercase">Mês</label>
+                <select
+                  value={importMonth}
+                  onChange={(e) => setImportMonth(e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-medium"
+                >
+                  {MONTHS.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-zinc-500 font-bold uppercase">Ordenar por</label>
+                <select
+                  value={importSortBy}
+                  onChange={(e) => setImportSortBy(e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-medium"
+                >
+                  <option value="popularity.desc">Popularidade</option>
+                  <option value="vote_average.desc">Melhor avaliados</option>
+                  <option value="first_air_date.desc">Mais recentes</option>
+                  <option value="first_air_date.asc">Mais antigos</option>
+                </select>
+              </div>
+              <button
+                onClick={() => handleImportSearch(1)}
+                disabled={importSearching}
+                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {importSearching ? 'Buscando...' : 'Buscar no TMDB'}
+              </button>
+            </div>
+
+            {importMsg && (
+              <div className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                importMsg.startsWith('✅') ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'
+              }`}>
+                {importMsg}
+              </div>
+            )}
+
+            {/* Results */}
+            {importPreview && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs text-zinc-500">
+                  <span>{importPreview.total} resultados · página {importPreview.page}/{importPreview.totalPages}</span>
+                  <button onClick={selectAllNew} className="text-cyan-400 hover:text-cyan-300 font-bold">
+                    Selecionar todos novos
+                  </button>
+                </div>
+
+                <div className="divide-y divide-zinc-800 rounded-lg border border-zinc-800 overflow-hidden max-h-[460px] overflow-y-auto">
+                  {importPreview.results.map((item) => (
+                    <label
+                      key={item.tmdbId}
+                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                        item.exists
+                          ? 'bg-zinc-900/40 opacity-60'
+                          : importSelected.has(item.tmdbId)
+                          ? 'bg-cyan-500/5 hover:bg-cyan-500/10'
+                          : 'bg-zinc-900/20 hover:bg-zinc-800/40'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={importSelected.has(item.tmdbId)}
+                        onChange={() => !item.exists && toggleSelect(item.tmdbId)}
+                        disabled={item.exists}
+                        className="accent-cyan-500 w-4 h-4 flex-shrink-0"
+                      />
+                      {item.posterUrl ? (
+                        <Image
+                          src={item.posterUrl}
+                          alt={item.name}
+                          width={32}
+                          height={48}
+                          className="rounded object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-8 h-12 rounded bg-zinc-800 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-zinc-200 truncate">{item.name}</p>
+                        {item.originalName && (
+                          <p className="text-xs text-zinc-500 truncate">{item.originalName}</p>
+                        )}
+                        <p className="text-xs text-zinc-600 mt-0.5">
+                          {item.date ? item.date.slice(0, 7) : '—'}
+                          {item.voteAverage > 0 && ` · ★ ${item.voteAverage.toFixed(1)}`}
+                        </p>
+                      </div>
+                      <span className={`flex-shrink-0 text-xs font-black px-2 py-0.5 rounded-full border ${
+                        item.exists
+                          ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                          : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                      }`}>
+                        {item.exists ? '✓ Existe' : '+ Novo'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleImportSearch(importPage - 1)}
+                      disabled={importPage <= 1 || importSearching}
+                      className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-400"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="text-xs text-zinc-500">
+                      {importPage} / {importPreview.totalPages}
+                    </span>
+                    <button
+                      onClick={() => handleImportSearch(importPage + 1)}
+                      disabled={importPage >= importPreview.totalPages || importSearching}
+                      className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-400"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-zinc-500">
+                      {newCount} selecionada{newCount !== 1 ? 's' : ''}
+                    </span>
+                    <button
+                      onClick={handleImport}
+                      disabled={importing || newCount === 0}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      {importing ? 'Importando...' : `Importar ${newCount > 0 ? newCount : ''} Produção${newCount !== 1 ? 'ões' : ''}`}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
