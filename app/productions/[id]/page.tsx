@@ -513,7 +513,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                 <div className="flex justify-between py-3 border-b border-white/5">
                                     <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Estreia</span>
                                     <span className="text-sm font-bold text-zinc-300">
-                                        {new Date(production.releaseDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        {new Date(production.releaseDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
                                     </span>
                                 </div>
                             )}

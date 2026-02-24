@@ -70,8 +70,8 @@ export default function GroupsPage() {
 
         result = [...result].sort((a, b) => {
             if (sortBy === 'debut') {
-                const ya = a.debutDate ? new Date(a.debutDate).getFullYear() : 9999
-                const yb = b.debutDate ? new Date(b.debutDate).getFullYear() : 9999
+                const ya = a.debutDate ? new Date(a.debutDate).getUTCFullYear() : 9999
+                const yb = b.debutDate ? new Date(b.debutDate).getUTCFullYear() : 9999
                 return ya - yb
             }
             if (sortBy === 'members') return b._count.members - a._count.members
@@ -252,7 +252,7 @@ export default function GroupsPage() {
                                     )}
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5">
                                         {group.debutDate && (
-                                            <span className="text-[10px] font-bold text-zinc-600">{new Date(group.debutDate).getFullYear()}</span>
+                                            <span className="text-[10px] font-bold text-zinc-600">{new Date(group.debutDate).getUTCFullYear()}</span>
                                         )}
                                         {gen && (
                                             <span className="text-[10px] font-bold text-zinc-700">{gen}</span>

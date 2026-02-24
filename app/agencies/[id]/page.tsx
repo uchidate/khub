@@ -121,8 +121,8 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
                                         {group.nameHangul && <p className="text-xs text-zinc-600 mt-0.5">{group.nameHangul}</p>}
                                         {group.debutDate && (
                                             <p className="text-[10px] text-zinc-700 font-bold mt-0.5">
-                                                {new Date(group.debutDate).getFullYear()}
-                                                {group.disbandDate ? ` – ${new Date(group.disbandDate).getFullYear()}` : ''}
+                                                {new Date(group.debutDate).getUTCFullYear()}
+                                                {group.disbandDate ? ` – ${new Date(group.disbandDate).getUTCFullYear()}` : ''}
                                             </p>
                                         )}
                                     </div>
