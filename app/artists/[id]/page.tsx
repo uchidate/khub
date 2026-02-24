@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma"
 import Image from "next/image"
 import Link from "next/link"
+import { getRoleLabel, getRoleLabels } from "@/lib/utils/role-labels"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { InstagramFeed } from "@/components/features/InstagramFeed"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
@@ -152,7 +153,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 memberships: { some: { groupId: activeGroup.id, isActive: true } },
             },
             take: 8,
-            select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true },
+            select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
             orderBy: { trendingScore: 'desc' },
         })
         : []
@@ -218,7 +219,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                     <div className="flex flex-col gap-3 max-w-3xl">
                         {/* Roles + group + birthday countdown */}
                         <div className="flex items-center gap-2 flex-wrap">
-                            {roles.map(role => (
+                            {getRoleLabels(roles, artist.gender).map(role => (
                                 <span key={role} className="text-xs font-black uppercase px-3 py-1 bg-white/10 backdrop-blur-sm text-white rounded-full border border-white/20">
                                     {role}
                                 </span>
@@ -419,7 +420,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                 {ra.nameHangul && <p className="text-[10px] text-zinc-600 mt-0.5">{ra.nameHangul}</p>}
                                             </div>
                                             {ra.roles?.[0] && (
-                                                <span className="text-[9px] font-black uppercase text-zinc-600 flex-shrink-0">{ra.roles[0]}</span>
+                                                <span className="text-[9px] font-black uppercase text-zinc-600 flex-shrink-0">{getRoleLabel(ra.roles[0], ra.gender)}</span>
                                             )}
                                         </Link>
                                     ))}

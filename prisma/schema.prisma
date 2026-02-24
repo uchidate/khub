@@ -83,6 +83,7 @@ model Artist {
   birthName          String?
   stageNames         String[]
   roles              String[]
+  gender             Int?               // 0=unspecified, 1=female, 2=male, 3=non-binary (TMDB convention)
   height             String?
   bloodType          String?
   zodiacSign         String?

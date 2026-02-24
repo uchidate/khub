@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
                     nameHangul: true,
                     primaryImageUrl: true,
                     roles: true,
+                    gender: true,
                     memberships: {
                         where: { isActive: true },
                         select: { group: { select: { id: true, name: true } } },

@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
+import { getRoleLabel } from "@/lib/utils/role-labels"
 import { Calendar, ExternalLink, Clock, User } from "lucide-react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -87,7 +88,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                             id: true,
                             nameRomanized: true,
                             primaryImageUrl: true,
-                            roles: true
+                            roles: true, gender: true
                         }
                     }
                 }
@@ -284,7 +285,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                                         </p>
                                         {artist.roles && artist.roles.length > 0 && (
                                             <p className="text-xs text-zinc-500 mt-1">
-                                                {artist.roles[0]}
+                                                {getRoleLabel(artist.roles[0], artist.gender)}
                                             </p>
                                         )}
                                     </div>

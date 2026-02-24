@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getRoleLabel } from '@/lib/utils/role-labels'
 import { Search, User, Newspaper, Film, ArrowLeft } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 
@@ -54,7 +55,7 @@ async function SearchResults({ query }: { query: string }) {
                 nameRomanized: true,
                 nameHangul: true,
                 primaryImageUrl: true,
-                roles: true,
+                roles: true, gender: true,
                 trendingScore: true
             },
             orderBy: { trendingScore: 'desc' }
@@ -169,7 +170,7 @@ async function SearchResults({ query }: { query: string }) {
                                     {artist.nameRomanized}
                                 </h3>
                                 {artist.roles.length > 0 && (
-                                    <p className="text-xs text-zinc-500 truncate">{artist.roles[0]}</p>
+                                    <p className="text-xs text-zinc-500 truncate">{getRoleLabel(artist.roles[0], artist.gender)}</p>
                                 )}
                             </Link>
                         ))}

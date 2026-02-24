@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
+import { getRoleLabel } from "@/lib/utils/role-labels"
 import { ExternalLink, Users, Music2 } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
@@ -13,7 +14,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
             artists: {
                 select: {
                     id: true, nameRomanized: true, nameHangul: true,
-                    primaryImageUrl: true, roles: true,
+                    primaryImageUrl: true, roles: true, gender: true,
                 },
                 orderBy: { trendingScore: 'desc' },
             },
@@ -162,7 +163,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
                                         <h4 className="font-bold text-sm text-white group-hover:text-purple-300 transition-colors">{artist.nameRomanized}</h4>
                                         {artist.nameHangul && <p className="text-xs text-zinc-600 mt-0.5">{artist.nameHangul}</p>}
                                         {artist.roles && artist.roles.length > 0 && (
-                                            <p className="text-[10px] text-zinc-600 font-bold mt-0.5">{artist.roles.slice(0, 2).join(' · ')}</p>
+                                            <p className="text-[10px] text-zinc-600 font-bold mt-0.5">{artist.roles.slice(0, 2).map(r => getRoleLabel(r, artist.gender)).join(' · ')}</p>
                                         )}
                                     </div>
                                 </Link>
