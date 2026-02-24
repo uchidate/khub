@@ -136,7 +136,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
     const stageNames = artist.stageNames || []
     const socialLinks = (artist.socialLinks as Record<string, string>) || {}
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
-    const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+    const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
     const age = birthDate ? Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
 
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
@@ -454,7 +454,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                     </span>
                                                     {album.releaseDate && (
                                                         <span className="text-[10px] font-bold text-zinc-500">
-                                                            {new Date(album.releaseDate).getFullYear()}
+                                                            {new Date(album.releaseDate).getUTCFullYear()}
                                                         </span>
                                                     )}
                                                 </div>

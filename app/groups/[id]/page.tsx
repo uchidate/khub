@@ -80,8 +80,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     const activeMembers = group.members.filter(m => m.isActive)
     const formerMembers = group.members.filter(m => !m.isActive)
     const memberArtistIds = group.members.map(m => m.artistId)
-    const debutYear = group.debutDate ? new Date(group.debutDate).getFullYear() : null
-    const disbandYear = group.disbandDate ? new Date(group.disbandDate).getFullYear() : null
+    const debutYear = group.debutDate ? new Date(group.debutDate).getUTCFullYear() : null
+    const disbandYear = group.disbandDate ? new Date(group.disbandDate).getUTCFullYear() : null
     const currentYear = new Date().getFullYear()
     const yearsActive = debutYear ? (disbandYear ?? currentYear) - debutYear : null
     const socialLinks = (group.socialLinks as Record<string, string>) || {}
@@ -331,7 +331,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                     <InfoRow
                                         icon={<Calendar className="w-3.5 h-3.5" />}
                                         label="Debut"
-                                        value={group.debutDate ? new Date(group.debutDate).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }) : String(debutYear)}
+                                        value={group.debutDate ? new Date(group.debutDate).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : String(debutYear)}
                                     />
                                 )}
                                 {disbandYear && (
@@ -549,7 +549,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                             <p className="text-xs text-zinc-500 mt-0.5">{album.artist.nameRomanized}</p>
                                             {album.releaseDate && (
                                                 <p className="text-[10px] text-zinc-600 mt-0.5">
-                                                    {new Date(album.releaseDate).getFullYear()}
+                                                    {new Date(album.releaseDate).getUTCFullYear()}
                                                 </p>
                                             )}
                                         </div>
@@ -781,8 +781,8 @@ function MemberGrid({
                         )}
                         {(member.joinDate || member.leaveDate) && (
                             <p className="text-[10px] text-zinc-600 mt-1">
-                                {member.joinDate ? new Date(member.joinDate).getFullYear() : '?'}
-                                {member.leaveDate ? ` – ${new Date(member.leaveDate).getFullYear()}` : ''}
+                                {member.joinDate ? new Date(member.joinDate).getUTCFullYear() : '?'}
+                                {member.leaveDate ? ` – ${new Date(member.leaveDate).getUTCFullYear()}` : ''}
                             </p>
                         )}
                     </div>

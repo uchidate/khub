@@ -287,7 +287,7 @@ function MemberRow({
                 <p className="text-sm font-medium text-white truncate">{m.artist.nameRomanized}</p>
                 <p className="text-xs text-zinc-500">
                     {m.role || 'Sem papel definido'}
-                    {m.leaveDate && ` · Saiu em ${new Date(m.leaveDate).getFullYear()}`}
+                    {m.leaveDate && ` · Saiu em ${new Date(m.leaveDate).getUTCFullYear()}`}
                 </p>
             </div>
             <div className="flex items-center gap-1.5">

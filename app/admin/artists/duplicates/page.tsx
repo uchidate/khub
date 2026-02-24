@@ -37,7 +37,7 @@ type PairSelections = Partial<Record<CuratableField, FieldSelection>>
 
 function getFieldValue(artist: ArtistCard, field: CuratableField): string | null {
     if (field === 'agencyId') return artist.agency?.name ?? null
-    if (field === 'birthDate') return artist.birthDate ? new Date(artist.birthDate).toLocaleDateString('pt-BR') : null
+    if (field === 'birthDate') return artist.birthDate ? new Date(artist.birthDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : null
     return (artist as unknown as Record<string, string | null>)[field]
 }
 

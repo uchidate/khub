@@ -66,7 +66,7 @@ const columns: Column<MusicalGroup>[] = [
     sortable: true,
     render: (group) =>
       group.debutDate ? (
-        <span>{new Date(group.debutDate).getFullYear()}</span>
+        <span>{new Date(group.debutDate).getUTCFullYear()}</span>
       ) : (
         <span className="text-zinc-600">-</span>
       ),
