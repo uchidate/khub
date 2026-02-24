@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import Image from "next/image"
 import Link from "next/link"
 import { getRoleLabel, getRoleLabels } from "@/lib/utils/role-labels"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { InstagramFeed } from "@/components/features/InstagramFeed"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
@@ -431,6 +432,12 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                     {/* ── MAIN ── */}
                     <div className="lg:col-span-2 space-y-16">
+
+                        {/* Ad: topo do conteúdo principal */}
+                        <AdBanner
+                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''}
+                            format="horizontal"
+                        />
 
                         {/* Discography */}
                         {artist.albums.length > 0 && (

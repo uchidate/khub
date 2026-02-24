@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { NewsListCard } from './NewsListCard'
 import { NewsFilters, type FilterValues } from './NewsFilters'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 function NewsSkeleton() {
@@ -198,6 +199,13 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                 artists={initialArtists}
                 groups={initialGroups}
                 initialFilters={getFiltersFromUrl()}
+            />
+
+            {/* Ad: entre filtros e grid */}
+            <AdBanner
+                slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_LIST ?? ''}
+                format="horizontal"
+                className="my-6"
             />
 
             {/* Loading State */}
