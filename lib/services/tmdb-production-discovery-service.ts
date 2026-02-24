@@ -289,7 +289,7 @@ export class TMDBProductionDiscoveryService {
     return {
       tmdbId: details.id,
       tmdbType: 'tv',
-      type: 'Drama',
+      type: 'K-Drama',
       titlePt: title,
       titleKr: koreanTitle,
       synopsis: details.overview || 'Sem sinopse disponível.',
