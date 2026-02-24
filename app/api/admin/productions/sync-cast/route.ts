@@ -27,11 +27,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.reset) {
-    // Reset castSyncAt de todas as produções + sincroniza lote
-    const limit = Math.min(body.limit ?? 10, 50)
+    // Apenas reseta castSyncAt de todas as produções (sem sincronizar)
+    // O admin usa "Importar Elenco Pendente" em seguida para processar em lotes
     const resetCount = await service.resetCastSyncAt()
-    const result = await service.syncPendingProductionCasts(limit)
-    return NextResponse.json({ ok: true, resetCount, ...result })
+    return NextResponse.json({ ok: true, resetCount })
   }
 
   if (body.pending) {

@@ -8,7 +8,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
-import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin } from "lucide-react"
 import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -292,6 +292,9 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 )}
                                 {birthDateFormatted && (
                                     <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Nascimento" value={`${birthDateFormatted}${age !== null ? ` (${age} anos)` : ''}`} />
+                                )}
+                                {artist.placeOfBirth && (
+                                    <InfoRow icon={<MapPin className="w-3.5 h-3.5" />} label="Naturalidade" value={artist.placeOfBirth} />
                                 )}
                                 {artist.height && (
                                     <InfoRow icon={<Ruler className="w-3.5 h-3.5" />} label="Altura" value={artist.height} />

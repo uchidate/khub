@@ -90,6 +90,7 @@ const formFields: FormField[] = [
   { key: 'titleKr', label: 'Título em Coreano', type: 'text', placeholder: 'Ex: 사랑의 불시착' },
   { key: 'type', label: 'Tipo', type: 'text', placeholder: 'Ex: Drama, Filme, Reality Show', required: true },
   { key: 'year', label: 'Ano', type: 'number', placeholder: '2024' },
+  { key: 'tagline', label: 'Tagline / Slogan', type: 'text', placeholder: 'Ex: "사랑은 눈물이다" ou frase de impacto do TMDB' },
   { key: 'synopsis', label: 'Sinopse', type: 'textarea', placeholder: 'Breve descrição da produção...' },
   { key: 'imageUrl', label: 'URL da Imagem', type: 'text', placeholder: 'https://exemplo.com/poster.jpg' },
   { key: 'trailerUrl', label: 'URL do Trailer', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
@@ -183,16 +184,16 @@ export default function ProductionsPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        setSyncMsg(`✅ ${data.resetCount} produções resetadas · ${data.processed} processadas · ${data.totalSynced} artistas importados`)
+        setSyncMsg(`✅ ${data.resetCount} produções liberadas para resync. Agora clique "Importar Elenco Pendente" repetidamente para processar todas em lotes de 20.`)
         refetchTable()
       } else {
-        setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao resincronizar'}`)
+        setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao resetar'}`)
       }
     } catch {
       setSyncMsg('❌ Erro de rede')
     } finally {
       setResetSyncing(false)
-      setTimeout(() => setSyncMsg(''), 10000)
+      setTimeout(() => setSyncMsg(''), 20000)
     }
   }
 
@@ -302,7 +303,7 @@ export default function ProductionsPage() {
             <button
               onClick={handleResetResync}
               disabled={resetSyncing}
-              title="Reseta castSyncAt de todas as produções e reprocessa as primeiras 20 (atualiza castOrder)"
+              title="Marca TODAS as produções como pendentes de resync. Use 'Importar Elenco Pendente' em seguida para processar em lotes."
               className="flex items-center gap-2 px-4 py-2.5 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-700/40 text-amber-400 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RotateCcw size={16} className={resetSyncing ? 'animate-spin' : ''} />
