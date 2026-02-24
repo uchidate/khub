@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, Users, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Plus, Users, RefreshCw, ShieldCheck, RotateCcw } from 'lucide-react'
 
 const AGE_RATING_STYLES: Record<string, string> = {
   'L':  'bg-green-500/20 text-green-400 border-green-500/30',
@@ -117,6 +117,7 @@ export default function ProductionsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [syncingId, setSyncingId] = useState<string | null>(null)
   const [batchSyncing, setBatchSyncing] = useState(false)
+  const [resetSyncing, setResetSyncing] = useState(false)
   const [ageSyncing, setAgeSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
 
@@ -167,6 +168,31 @@ export default function ProductionsPage() {
     } finally {
       setBatchSyncing(false)
       setTimeout(() => setSyncMsg(''), 8000)
+    }
+  }
+
+  const handleResetResync = async () => {
+    if (resetSyncing || !confirm('Isso vai resetar o castSyncAt de TODAS as produções e reprocessar as primeiras 20. Continuar?')) return
+    setResetSyncing(true)
+    setSyncMsg('Resetando e resincronizando elenco...')
+    try {
+      const res = await fetch('/api/admin/productions/sync-cast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reset: true, limit: 20 }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSyncMsg(`✅ ${data.resetCount} produções resetadas · ${data.processed} processadas · ${data.totalSynced} artistas importados`)
+        refetchTable()
+      } else {
+        setSyncMsg(`❌ Erro: ${data.error ?? 'falha ao resincronizar'}`)
+      }
+    } catch {
+      setSyncMsg('❌ Erro de rede')
+    } finally {
+      setResetSyncing(false)
+      setTimeout(() => setSyncMsg(''), 10000)
     }
   }
 
@@ -272,6 +298,15 @@ export default function ProductionsPage() {
             >
               <RefreshCw size={16} className={batchSyncing ? 'animate-spin' : ''} />
               {batchSyncing ? 'Importando...' : 'Importar Elenco Pendente'}
+            </button>
+            <button
+              onClick={handleResetResync}
+              disabled={resetSyncing}
+              title="Reseta castSyncAt de todas as produções e reprocessa as primeiras 20 (atualiza castOrder)"
+              className="flex items-center gap-2 px-4 py-2.5 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-700/40 text-amber-400 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RotateCcw size={16} className={resetSyncing ? 'animate-spin' : ''} />
+              {resetSyncing ? 'Resincronizando...' : 'Resync Completo'}
             </button>
             <button
               onClick={handleCreate}

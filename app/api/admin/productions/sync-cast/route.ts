@@ -17,13 +17,21 @@ export async function POST(req: NextRequest) {
   const { error } = await requireAdmin()
   if (error) return error
 
-  const body = await req.json() as { productionId?: string; pending?: boolean; limit?: number }
+  const body = await req.json() as { productionId?: string; pending?: boolean; reset?: boolean; limit?: number }
   const service = new ProductionCastService()
 
   if (body.productionId) {
     // Sync de uma produção específica
     const result = await service.syncProductionCast(body.productionId)
     return NextResponse.json({ ok: true, ...result })
+  }
+
+  if (body.reset) {
+    // Reset castSyncAt de todas as produções + sincroniza lote
+    const limit = Math.min(body.limit ?? 10, 50)
+    const resetCount = await service.resetCastSyncAt()
+    const result = await service.syncPendingProductionCasts(limit)
+    return NextResponse.json({ ok: true, resetCount, ...result })
   }
 
   if (body.pending) {
@@ -33,5 +41,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...result })
   }
 
-  return NextResponse.json({ error: 'Informe productionId ou pending:true' }, { status: 400 })
+  return NextResponse.json({ error: 'Informe productionId, pending:true ou reset:true' }, { status: 400 })
 }
