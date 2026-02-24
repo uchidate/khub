@@ -1,13 +1,18 @@
 /**
  * RSS News Service
  *
- * Busca notícias reais de feeds RSS de sites K-pop
+ * Busca notícias reais de feeds RSS de sites K-pop / K-drama
  * Estratégia: Dados 100% reais ao invés de gerados por AI
  *
- * Fontes RSS (gratuitas):
- * - AllKpop: https://www.allkpop.com/rss
- * - Soompi: https://www.soompi.com/feed
- * - Koreaboo: https://www.koreaboo.com/feed/
+ * Fontes RSS ativas:
+ * - Soompi:      https://www.soompi.com/feed
+ * - Koreaboo:    https://www.koreaboo.com/feed/
+ * - KpopStarz:   https://www.kpopstarz.com/rss
+ * - Dramabeans:  https://www.dramabeans.com/feed/  (K-drama recaps)
+ * - Asian Junkie: https://www.asianjunkie.com/feed/ (K-pop / J-pop)
+ *
+ * Fontes descontinuadas:
+ * - AllKpop: https://www.allkpop.com/rss (retorna 404)
  */
 
 import { parseStringPromise } from 'xml2js';
@@ -43,6 +48,16 @@ const RSS_FEEDS: RSSFeed[] = [
   {
     name: 'KpopStarz',
     url: 'https://www.kpopstarz.com/rss',
+    language: 'en',
+  },
+  {
+    name: 'Dramabeans',
+    url: 'https://www.dramabeans.com/feed/',
+    language: 'en',
+  },
+  {
+    name: 'Asian Junkie',
+    url: 'https://www.asianjunkie.com/feed/',
     language: 'en',
   },
   // AllKpop removido temporariamente (retorna 404)
