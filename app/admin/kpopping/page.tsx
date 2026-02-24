@@ -1237,7 +1237,7 @@ export default function KpoppingCurationPage() {
   } | null>(null)
   const [backfilling, setBackfilling] = useState(false)
   const [backfillResult, setBackfillResult] = useState<{
-    total: number; membershipsCreated: number; membershipsExisted: number; suggestionsApproved: number; artistsEnriched: number; errors: number
+    total: number; membershipsCreated: number; membershipsExisted: number; suggestionsApproved: number; artistsEnriched: number; groupsEnriched: number; errors: number
   } | null>(null)
 
   const generate = async () => {
@@ -1302,7 +1302,7 @@ export default function KpoppingCurationPage() {
           </div>
           {backfillResult && (
             <p className="text-xs text-purple-400">
-              {backfillResult.total} candidatos · Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Aprovadas: {backfillResult.suggestionsApproved} · Artistas enriquecidos: {backfillResult.artistsEnriched} · {backfillResult.errors} erros
+              {backfillResult.total} candidatos · Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Aprovadas: {backfillResult.suggestionsApproved} · Artistas enriquecidos: {backfillResult.artistsEnriched} · Grupos enriquecidos: {backfillResult.groupsEnriched} · {backfillResult.errors} erros
             </p>
           )}
           {generateStats && (

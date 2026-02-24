@@ -67,7 +67,10 @@ export async function PATCH(
           where: { id: artistId },
           select: { id: true, nameRomanized: true, birthDate: true, height: true, bloodType: true, primaryImageUrl: true },
         }),
-        prisma.musicalGroup.findUnique({ where: { id: musicalGroupId }, select: { id: true, name: true } }),
+        prisma.musicalGroup.findUnique({
+          where: { id: musicalGroupId },
+          select: { id: true, name: true, nameHangul: true, profileImageUrl: true, debutDate: true },
+        }),
       ])
       if (!artist) return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
       if (!group) return NextResponse.json({ error: 'Grupo não encontrado' }, { status: 404 })
@@ -105,6 +108,20 @@ export async function PATCH(
       if (Object.keys(enrichFields).length > 0) {
         await prisma.artist.update({ where: { id: artistId }, data: enrichFields })
         log.info(`Artista enriquecido: ${artist.nameRomanized} — ${Object.keys(enrichFields).join(', ')}`)
+      }
+
+      // Enriquece o perfil do grupo com dados do kpopping (apenas campos nulos)
+      const groupEnrichFields: Record<string, unknown> = {}
+      if (suggestion.groupNameHangul && !group.nameHangul)
+        groupEnrichFields.nameHangul = suggestion.groupNameHangul
+      if (suggestion.groupImageUrl && !group.profileImageUrl)
+        groupEnrichFields.profileImageUrl = suggestion.groupImageUrl
+      if (suggestion.groupDebutDate && !group.debutDate)
+        groupEnrichFields.debutDate = suggestion.groupDebutDate
+
+      if (Object.keys(groupEnrichFields).length > 0) {
+        await prisma.musicalGroup.update({ where: { id: musicalGroupId }, data: groupEnrichFields })
+        log.info(`Grupo enriquecido: ${group.name} — ${Object.keys(groupEnrichFields).join(', ')}`)
       }
 
       // Atualiza a sugestão
