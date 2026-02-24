@@ -311,7 +311,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                         } else {
                                             // Compute gaps between consecutive cast orders
                                             const gaps = ordered.slice(1).map((a, i) => ({
-                                                boundaryAt: i + 1, // index where new tier would start
+                                                boundaryAt: i + 1,
                                                 size: (a.castOrder ?? 999) - (ordered[i].castOrder ?? 999),
                                             }))
                                             const avgGap = gaps.reduce((s, g) => s + g.size, 0) / gaps.length
@@ -319,23 +319,29 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                             // A gap is "significant" if ≥ 2 AND at least 1.5× the average gap
                                             const boundaries = gaps
                                                 .filter(g => g.size >= Math.max(2, avgGap * 1.5))
-                                                .sort((a, b) => b.size - a.size) // largest gaps first
-                                                .slice(0, 2) // at most 2 tier boundaries
-                                                .sort((a, b) => a.boundaryAt - b.boundaryAt) // restore position order
+                                                .sort((a, b) => b.size - a.size)
+                                                .slice(0, 2)
+                                                .sort((a, b) => a.boundaryAt - b.boundaryAt)
                                                 .map(g => g.boundaryAt)
 
-                                            if (boundaries.length === 0) {
-                                                leads = ordered; secondary = []; supporting = []
-                                            } else if (boundaries.length === 1) {
-                                                const [b] = boundaries
-                                                leads = ordered.slice(0, b)
-                                                secondary = ordered.slice(b)
-                                                supporting = []
-                                            } else {
+                                            if (boundaries.length >= 1) {
+                                                // Natural tier boundaries found — use gap-based split
                                                 const [b1, b2] = boundaries
                                                 leads = ordered.slice(0, b1)
                                                 secondary = ordered.slice(b1, b2)
-                                                supporting = ordered.slice(b2)
+                                                supporting = b2 != null ? ordered.slice(b2) : []
+                                            } else {
+                                                // No natural gaps (continuous ordering, e.g. 0,1,2,3...)
+                                                // Fall back to billing position thresholds
+                                                leads = ordered.filter(a => (a.castOrder ?? 999) <= 1)
+                                                secondary = ordered.filter(a => { const o = a.castOrder ?? 999; return o >= 2 && o <= 5 })
+                                                supporting = ordered.filter(a => (a.castOrder ?? 999) >= 6)
+                                                // Safety: if somehow leads is empty, put first 2 in leads
+                                                if (leads.length === 0) {
+                                                    leads = ordered.slice(0, 2)
+                                                    secondary = ordered.slice(2, 6)
+                                                    supporting = ordered.slice(6)
+                                                }
                                             }
                                         }
                                     } else {
