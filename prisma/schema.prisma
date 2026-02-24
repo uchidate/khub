@@ -242,6 +242,7 @@ model ArtistProduction {
   production   Production @relation(fields: [productionId], references: [id])
   productionId String
   role         String?
+  castOrder    Int?
 
   @@id([artistId, productionId])
 }

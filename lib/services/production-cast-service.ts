@@ -225,9 +225,11 @@ export class ProductionCastService {
             artistId,
             productionId: production.id,
             role: member.character || null,
+            castOrder: member.order,
           },
           update: {
             role: member.character || null,
+            castOrder: member.order,
           },
         })
 
