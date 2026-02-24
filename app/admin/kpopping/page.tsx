@@ -861,8 +861,7 @@ function MembershipCard({
           isActive,
         }),
       })
-      const data = await res.json()
-      if (data.ok) {
+      if (res.ok) {
         setDone(true)
         onApplied()
       }
