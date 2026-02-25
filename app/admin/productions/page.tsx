@@ -556,7 +556,8 @@ export default function ProductionsPage() {
       if (!resetRes.ok) { showMsg(`❌ Erro ao resetar: ${resetData.error ?? 'falha'}`); return }
       const total = resetData.total as number
       let processed = 0; let totalSynced = 0
-      while (true) {
+      let keepGoing = true
+      while (keepGoing) {
         setSyncMsg(`🔄 Resincronizando... ${processed}/${total} produções`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',
@@ -564,7 +565,7 @@ export default function ProductionsPage() {
           body: JSON.stringify({ pending: true, limit: 20 }),
         })
         const batchData = await batchRes.json()
-        if (!batchRes.ok || batchData.processed === 0) break
+        if (!batchRes.ok || batchData.processed === 0) { keepGoing = false; break }
         processed += batchData.processed as number
         totalSynced += batchData.totalSynced as number
       }
