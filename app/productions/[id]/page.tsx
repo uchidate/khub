@@ -185,21 +185,24 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                     { "@type": "ListItem", "position": 2, "name": production.titlePt, "item": `${BASE_URL}/productions/${production.id}` },
                 ],
             }} />
-            {/* Cinematic Hero */}
-            <div className="relative h-[50vh] md:h-[60vh] bg-black overflow-hidden">
-                {heroImageUrl ? (
-                    <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover brightness-[0.45]" />
-                ) : (
-                    <>
-                        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-                        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-pink-600/10 rounded-full blur-3xl" />
-                    </>
-                )}
-                <div className="absolute inset-0 hero-gradient" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+            {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
+            <div className="relative min-h-[55vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
+                {/* Background image (contained, never clips content) */}
+                <div className="absolute inset-0">
+                    {heroImageUrl ? (
+                        <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover brightness-[0.45]" />
+                    ) : (
+                        <>
+                            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
+                            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-pink-600/10 rounded-full blur-3xl" />
+                        </>
+                    )}
+                    <div className="absolute inset-0 hero-gradient" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+                </div>
 
                 {/* Breadcrumbs */}
-                <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start">
+                <div className="relative z-10 pt-24 md:pt-28 px-4 sm:px-12 md:px-20 flex justify-between items-start flex-shrink-0">
                     <Breadcrumbs items={[
                         { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }
@@ -216,9 +219,12 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                     </div>
                 </div>
 
+                {/* Spacer — pushes hero content to the bottom */}
+                <div className="flex-1 min-h-[24px]" />
+
                 {/* Hero content */}
-                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-12 md:px-20 pb-10 md:pb-16">
-                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                <div className="relative z-10 px-4 sm:px-12 md:px-20 pb-10 md:pb-16">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-4">
                         {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
                         <span className="w-1 h-1 bg-zinc-700 rounded-full" />
                         <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
@@ -256,7 +262,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                             <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
                         ))}
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
+                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
                     {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1">{production.titleKr}</p>}
                     {production.tagline && <p className="text-base text-zinc-400 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
                     {!production.tagline && <div className="mb-8" />}
