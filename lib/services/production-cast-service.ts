@@ -23,9 +23,6 @@ const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 2000
 
-// Resync cast older than 30 days
-const CAST_SYNC_STALE_DAYS = 30
-
 interface TMDBCastMember {
   id: number
   name: string
@@ -280,23 +277,18 @@ export class ProductionCastService {
   }
 
   /**
-   * Sync cast for pending productions (castSyncAt IS NULL or stale).
+   * Sync cast for pending productions: has tmdbId but no artists yet.
+   * (Productions that already have artists use "Resync Completo" instead.)
    */
   async syncPendingProductionCasts(limit: number = 5): Promise<{
     processed: number
     totalSynced: number
     totalSkipped: number
   }> {
-    const staleThreshold = new Date()
-    staleThreshold.setDate(staleThreshold.getDate() - CAST_SYNC_STALE_DAYS)
-
     const productions = await prisma.production.findMany({
       where: {
         tmdbId: { not: null },
-        OR: [
-          { castSyncAt: null },
-          { castSyncAt: { lt: staleThreshold } },
-        ],
+        artists: { none: {} },
       },
       select: { id: true, titlePt: true },
       take: limit,
