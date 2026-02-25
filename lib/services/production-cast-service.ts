@@ -10,11 +10,15 @@
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
 import { isRelevantToKoreanCulture } from '../utils/korean-validation'
+import { findArtistSocialLinks } from './wikidata-social-links'
 import prisma from '../prisma'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
+
+// Detects Korean (Hangul) characters
+const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
 
 const MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 2000
@@ -44,6 +48,7 @@ interface TMDBPersonDetails {
   birthday: string | null
   profile_path: string | null
   popularity: number
+  gender?: number // 0=unspecified, 1=female, 2=male, 3=non-binary
   // Origin validation fields
   place_of_birth: string | null
   also_known_as: string[]
@@ -115,8 +120,8 @@ export class ProductionCastService {
     topN: number = 20
   ): Promise<TMDBCastMember[]> {
     const endpoint = tmdbType === 'movie'
-      ? `${TMDB_BASE_URL}/movie/${tmdbId}/credits?language=ko-KR`
-      : `${TMDB_BASE_URL}/tv/${tmdbId}/credits?language=ko-KR`
+      ? `${TMDB_BASE_URL}/movie/${tmdbId}/credits?language=en-US`
+      : `${TMDB_BASE_URL}/tv/${tmdbId}/credits?language=en-US`
 
     const result = await this.fetchWithRetry<TMDBCreditsResponse>(endpoint)
     if (!result) return []
@@ -131,7 +136,7 @@ export class ProductionCastService {
    * Fetch full person details from TMDB
    */
   private async getPersonDetails(tmdbPersonId: number): Promise<TMDBPersonDetails | null> {
-    const url = `${TMDB_BASE_URL}/person/${tmdbPersonId}?language=ko-KR`
+    const url = `${TMDB_BASE_URL}/person/${tmdbPersonId}?language=en-US`
     return await this.fetchWithRetry<TMDBPersonDetails>(url)
   }
 
@@ -178,26 +183,47 @@ export class ProductionCastService {
             console.warn(`⚠️  Non-Korean cast member detected: "${member.name}" (tmdbId: ${member.id}, birthplace: ${details.place_of_birth || 'N/A'})`)
           }
 
-          const nameRomanized = member.name
+          // With en-US: member.name = romanized, member.original_name = Korean (Hangul)
+          // Fallback: if member.name is still Korean (edge case), use original_name as romanized
+          let nameRomanized = member.name
+          let nameHangul: string | null = null
+
+          if (KOREAN_REGEX.test(member.name)) {
+            // Unexpected: name came back in Korean — treat original_name as hangul, name as hangul too
+            nameHangul = member.name
+            // Try original_name as romanized if it's not Korean
+            if (member.original_name && !KOREAN_REGEX.test(member.original_name)) {
+              nameRomanized = member.original_name
+            } else {
+              // Last resort: use member.name as-is (will be flagged and corrected by fix-names cron)
+              nameRomanized = member.name
+            }
+          } else if (member.original_name && KOREAN_REGEX.test(member.original_name)) {
+            nameHangul = member.original_name
+          }
+
           // Ensure uniqueness — if name exists, append TMDB id
-          const nameCandidate = nameRomanized
           const nameExists = await prisma.artist.findUnique({
-            where: { nameRomanized: nameCandidate },
+            where: { nameRomanized },
             select: { id: true },
           })
 
           const finalName = nameExists ? `${nameRomanized} (${member.id})` : nameRomanized
 
+          // Fetch Wikidata social links for the new artist
+          const wikidataSocialLinks = await findArtistSocialLinks(finalName, nameHangul)
+
           const created = await prisma.artist.create({
             data: {
               nameRomanized: finalName,
-              nameHangul: member.original_name !== member.name ? member.original_name : null,
+              nameHangul,
               primaryImageUrl: member.profile_path
                 ? `${TMDB_IMAGE_BASE_URL}${member.profile_path}`
                 : null,
               bio: details?.biography || null,
               birthDate: details?.birthday ? new Date(details.birthday) : null,
               placeOfBirth: details?.place_of_birth || null,
+              gender: details?.gender ?? null,
               roles: ['ATOR'],
               tmdbId: String(member.id),
               tmdbSyncStatus: 'SYNCED',
@@ -207,6 +233,11 @@ export class ProductionCastService {
               // AUTO-FLAG if not relevant to Korean culture
               flaggedAsNonKorean: !isRelevant,
               flaggedAt: !isRelevant ? new Date() : null,
+              // Social links from Wikidata (if found)
+              ...(Object.keys(wikidataSocialLinks).length > 0 && {
+                socialLinks: wikidataSocialLinks,
+                socialLinksUpdatedAt: new Date(),
+              }),
             },
           })
 
