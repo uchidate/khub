@@ -37,14 +37,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
-    const filter = searchParams.get('filter') // 'no_rating' | 'no_cast' | null
+    const filter = searchParams.get('filter')
+    // Supported filters:
+    //   no_cast           — all without any artists
+    //   no_cast_pending   — no artists, has tmdbId, never attempted
+    //   no_cast_attempted — no artists, has tmdbId, already tried (castSyncAt set)
+    //   no_cast_no_tmdb   — no artists, no tmdbId
+    //   no_rating           — all without age rating
+    //   no_rating_pending   — no rating, has tmdbId, never attempted
+    //   no_rating_attempted — no rating, has tmdbId, already tried (ageRatingSyncAt set)
+    //   no_rating_no_tmdb   — no rating, no tmdbId
 
     const filterWhere =
-      filter === 'no_rating'
-        ? { ageRating: null }
-        : filter === 'no_cast'
-        ? { artists: { none: {} } }
-        : {}
+      filter === 'no_cast'           ? { artists: { none: {} } }
+      : filter === 'no_cast_pending'   ? { artists: { none: {} }, tmdbId: { not: null }, castSyncAt: null }
+      : filter === 'no_cast_attempted' ? { artists: { none: {} }, tmdbId: { not: null }, castSyncAt: { not: null } }
+      : filter === 'no_cast_no_tmdb'   ? { artists: { none: {} }, tmdbId: null }
+      : filter === 'no_rating'           ? { ageRating: null }
+      : filter === 'no_rating_pending'   ? { ageRating: null, tmdbId: { not: null }, ageRatingSyncAt: null }
+      : filter === 'no_rating_attempted' ? { ageRating: null, tmdbId: { not: null }, ageRatingSyncAt: { not: null } }
+      : filter === 'no_rating_no_tmdb'   ? { ageRating: null, tmdbId: null }
+      : {}
 
     const where = search
       ? {

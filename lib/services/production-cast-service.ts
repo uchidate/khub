@@ -277,8 +277,10 @@ export class ProductionCastService {
   }
 
   /**
-   * Sync cast for pending productions: has tmdbId but no artists yet.
-   * (Productions that already have artists use "Resync Completo" instead.)
+   * Sync cast for pending productions: has tmdbId, no artists, never attempted.
+   * castSyncAt IS NULL means it was never tried (or was reset).
+   * Productions already tried (castSyncAt IS NOT NULL) but with no result
+   * need manual intervention or a full resync.
    */
   async syncPendingProductionCasts(limit: number = 5): Promise<{
     processed: number
@@ -289,6 +291,7 @@ export class ProductionCastService {
       where: {
         tmdbId: { not: null },
         artists: { none: {} },
+        castSyncAt: null,  // Never attempted — avoids re-processing "tried, found nothing" rows
       },
       select: { id: true, titlePt: true },
       take: limit,

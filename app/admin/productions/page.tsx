@@ -87,9 +87,18 @@ interface Stats {
   total: number
   noCast: number
   noRating: number
+  noCastPending: number
+  noCastAttempted: number
+  noCastNoTmdb: number
+  noRatingPending: number
+  noRatingAttempted: number
+  noRatingNoTmdb: number
 }
 
-type FilterType = '' | 'no_rating' | 'no_cast'
+type FilterType =
+  | ''
+  | 'no_cast' | 'no_cast_pending' | 'no_cast_attempted' | 'no_cast_no_tmdb'
+  | 'no_rating' | 'no_rating_pending' | 'no_rating_attempted' | 'no_rating_no_tmdb'
 
 // ─── Cast Modal ───────────────────────────────────────────────────────────────
 
@@ -359,33 +368,127 @@ function StatsBar({
   filter: FilterType
   onFilter: (f: FilterType) => void
 }) {
-  const tabs: { label: string; value: FilterType; count: number | null; dot: string }[] = [
-    { label: 'Todas', value: '', count: stats?.total ?? null, dot: 'bg-zinc-400' },
-    { label: 'Sem classificação', value: 'no_rating', count: stats?.noRating ?? null, dot: 'bg-yellow-400' },
-    { label: 'Sem elenco', value: 'no_cast', count: stats?.noCast ?? null, dot: 'bg-red-400' },
+  const isNoCast = filter === 'no_cast' || filter === 'no_cast_pending' || filter === 'no_cast_attempted' || filter === 'no_cast_no_tmdb'
+  const isNoRating = filter === 'no_rating' || filter === 'no_rating_pending' || filter === 'no_rating_attempted' || filter === 'no_rating_no_tmdb'
+
+  const mainTabs = [
+    { label: 'Todas', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-zinc-400' },
+    { label: 'Sem classificação', value: 'no_rating' as FilterType, count: stats?.noRating ?? null, dot: 'bg-yellow-400' },
+    { label: 'Sem elenco', value: 'no_cast' as FilterType, count: stats?.noCast ?? null, dot: 'bg-red-400' },
   ]
 
+  const castSubTabs = [
+    {
+      label: 'Pendentes',
+      value: 'no_cast_pending' as FilterType,
+      count: stats?.noCastPending ?? null,
+      title: 'Tem TMDB ID mas nunca foi tentado — clique "Elenco Pendente" para processar',
+      color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20',
+      activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20',
+    },
+    {
+      label: 'Já tentados',
+      value: 'no_cast_attempted' as FilterType,
+      count: stats?.noCastAttempted ?? null,
+      title: 'Tem TMDB ID, foi processado, mas não encontrou elenco — verificar dados no TMDB',
+      color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60',
+      activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60',
+    },
+    {
+      label: 'Sem TMDB',
+      value: 'no_cast_no_tmdb' as FilterType,
+      count: stats?.noCastNoTmdb ?? null,
+      title: 'Sem TMDB ID — requer entrada manual',
+      color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800',
+      activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800',
+    },
+  ]
+
+  const ratingSubTabs = [
+    {
+      label: 'Pendentes',
+      value: 'no_rating_pending' as FilterType,
+      count: stats?.noRatingPending ?? null,
+      title: 'Tem TMDB ID mas nunca foi tentado — clique "Classificar Pendentes" para processar',
+      color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20',
+      activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20',
+    },
+    {
+      label: 'Já tentados',
+      value: 'no_rating_attempted' as FilterType,
+      count: stats?.noRatingAttempted ?? null,
+      title: 'Tem TMDB ID, foi processado, mas não encontrou classificação — verificar dados no TMDB',
+      color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60',
+      activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60',
+    },
+    {
+      label: 'Sem TMDB',
+      value: 'no_rating_no_tmdb' as FilterType,
+      count: stats?.noRatingNoTmdb ?? null,
+      title: 'Sem TMDB ID — requer entrada manual',
+      color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800',
+      activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800',
+    },
+  ]
+
+  const subTabs = isNoCast ? castSubTabs : isNoRating ? ratingSubTabs : []
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {tabs.map((tab) => (
-        <button
-          key={tab.value}
-          onClick={() => onFilter(tab.value)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-            filter === tab.value
-              ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
-          }`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
-          {tab.label}
-          {tab.count != null && (
-            <span className={`font-mono tabular-nums ${filter === tab.value ? 'text-purple-300' : 'text-zinc-500'}`}>
-              {tab.count}
-            </span>
-          )}
-        </button>
-      ))}
+    <div className="space-y-2">
+      {/* Main tabs */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {mainTabs.map((tab) => {
+          const isActive = tab.value === ''
+            ? filter === ''
+            : tab.value === 'no_cast' ? isNoCast
+            : tab.value === 'no_rating' ? isNoRating
+            : filter === tab.value
+          return (
+            <button
+              key={tab.value}
+              onClick={() => onFilter(tab.value)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                isActive
+                  ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
+              {tab.label}
+              {tab.count != null && (
+                <span className={`font-mono tabular-nums ${isActive ? 'text-purple-300' : 'text-zinc-500'}`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Sub-tabs (visible when a category filter is active) */}
+      {subTabs.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap pl-1">
+          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mr-1">↳</span>
+          {subTabs.map((sub) => {
+            const isActive = filter === sub.value
+            return (
+              <button
+                key={sub.value}
+                onClick={() => onFilter(isActive ? (isNoCast ? 'no_cast' : 'no_rating') : sub.value)}
+                title={sub.title}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold transition-all border ${
+                  isActive ? sub.activeColor : sub.color
+                }`}
+              >
+                {sub.label}
+                {sub.count != null && (
+                  <span className="font-mono tabular-nums opacity-80">{sub.count}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
