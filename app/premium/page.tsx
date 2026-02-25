@@ -74,7 +74,7 @@ const FEATURES: FeatureRow[] = [
 const FAQS = [
   {
     q: 'O registro de interesse gera cobrança?',
-    a: 'Não. O HallyuHub está em fase beta. Ao registrar interesse você apenas garante seu lugar na lista e um desconto vitalício de 40% quando a assinatura for lançada.',
+    a: 'Não. O HallyuHub está em fase beta. Ao registrar interesse você apenas garante seu lugar na lista de acesso antecipado quando a assinatura for lançada.',
   },
   {
     q: 'Posso cancelar quando quiser?',
@@ -89,8 +89,8 @@ const FAQS = [
     a: 'O sistema detecta seus artistas favoritos e filtra automaticamente as notícias para mostrar primeiro o conteúdo relevante para você, com badge "Para você" no dashboard.',
   },
   {
-    q: 'O que é o desconto vitalício de 40%?',
-    a: 'Quem registrar interesse antes do lançamento oficial receberá o preço congelado com 40% de desconto para sempre — mesmo que o preço suba no futuro.',
+    q: 'Quem registra interesse agora tem alguma vantagem?',
+    a: 'Sim. Os primeiros a registrar interesse terão acesso prioritário quando o plano for lançado e poderão participar do programa de early access antes de todos.',
   },
 ]
 
@@ -296,7 +296,7 @@ export default function PremiumPage() {
                 </button>
                 {isSuccess && (
                   <p className="text-[10px] text-purple-400 font-bold text-center mt-2">
-                    Você receberá 40% de desconto no lançamento!
+                    Você está na lista! Avisaremos no lançamento.
                   </p>
                 )}
                 {errorMsg && loadingTier !== tier.name && (
@@ -433,9 +433,9 @@ export default function PremiumPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.08),transparent_70%)]" />
           <div className="relative z-10">
             <Info className="mx-auto text-purple-400 mb-4" size={32} />
-            <h4 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter">Versão Beta — Trave seu desconto agora</h4>
+            <h4 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter">Versão Beta — Seja um dos primeiros</h4>
             <p className="text-zinc-400 mb-8 max-w-xl mx-auto text-sm leading-relaxed">
-              O HallyuHub está em fase beta. O registro de interesse <strong className="text-white">não gera cobrança imediata</strong>, mas garante que você seja um dos primeiros a testar com um desconto vitalício de <strong className="text-purple-400">40%</strong> quando a assinatura for lançada.
+              O HallyuHub está em fase beta. O registro de interesse <strong className="text-white">não gera cobrança</strong>. Você será avisado assim que o plano for lançado e terá acesso prioritário.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <button
@@ -446,8 +446,8 @@ export default function PremiumPage() {
                 {successTier
                   ? '✓ Interesse registrado!'
                   : !session?.user
-                    ? 'Entrar e garantir 40% de desconto'
-                    : 'Garantir desconto de 40%'}
+                    ? 'Entrar e registrar interesse'
+                    : 'Quero acesso antecipado'}
               </button>
               <Link href="/contact" className="px-10 py-4 bg-zinc-800 text-white text-xs font-black rounded-full hover:bg-zinc-700 transition-all uppercase tracking-widest">
                 Falar com Suporte
