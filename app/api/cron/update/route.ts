@@ -195,10 +195,12 @@ async function runCronProcessing(lockId: string) {
                 });
                 const excludeNews = existingNews.map((n: { sourceUrl: string }) => n.sourceUrl);
 
-                const isStaging = process.env.DEPLOY_ENV === 'staging';
-                const newsCount = isStaging ? 2 : 50;
+                // Processar todos os itens novos de todos os feeds (máx ~75: 5 feeds × 15 itens)
+                // Sem limite global para garantir que fontes menos frequentes (Dramabeans, Asian Junkie)
+                // não sejam suprimidas por fontes mais ativas (Soompi, Koreaboo)
+                const newsCount = 200;
 
-                log.info(`Fetching ${newsCount} news items`, { env: process.env.DEPLOY_ENV || 'production' });
+                log.info(`Fetching all new news items from all feeds`, { env: process.env.DEPLOY_ENV || 'production' });
 
                 const newsItems = await newsGenerator.generateMultipleNews(newsCount, {
                     excludeList: excludeNews
@@ -227,6 +229,7 @@ async function runCronProcessing(lockId: string) {
                             imageUrl: news.imageUrl || null,
                             tags: news.tags || [],
                             publishedAt: news.publishedAt,
+                            source: news.source || null,
                             translationStatus: 'pending',
                         },
                     });

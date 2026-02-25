@@ -243,7 +243,7 @@ export function ProductionsList() {
                     <div className="flex items-center gap-3">
                         {!isLoading && (
                             <p className="text-xs text-zinc-500">
-                                {pagination.total} produção{pagination.total !== 1 ? 'ões' : ''} encontrada{pagination.total !== 1 ? 's' : ''}
+                                {pagination.total} {pagination.total !== 1 ? 'produções' : 'produção'} encontrada{pagination.total !== 1 ? 's' : ''}
                             </p>
                         )}
                         <button onClick={clearAll} className="text-xs text-purple-400 hover:text-purple-300 transition-colors">

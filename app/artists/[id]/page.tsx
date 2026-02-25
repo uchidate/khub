@@ -498,7 +498,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 <Film className="w-4 h-4" />
                                 Filmografia
                                 {artist.productions.length > 0 && (
-                                    <span className="ml-auto text-zinc-700 font-bold normal-case tracking-normal">{artist.productions.length} produção{artist.productions.length !== 1 ? 'ões' : ''}</span>
+                                    <span className="ml-auto text-zinc-700 font-bold normal-case tracking-normal">{artist.productions.length} {artist.productions.length !== 1 ? 'produções' : 'produção'}</span>
                                 )}
                             </h3>
                             {artist.productions.length > 0 ? (
