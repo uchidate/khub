@@ -80,6 +80,7 @@ export function MediaCard({
     }
 
     return (
+        <div className="relative group cursor-pointer">
         <motion.div
             ref={ref}
             onMouseMove={handleMouseMove}
@@ -89,7 +90,7 @@ export function MediaCard({
                 rotateX,
                 transformStyle: "preserve-3d",
             }}
-            className="relative group cursor-pointer"
+            className="relative"
         >
             <Link href={href}>
                 <div
@@ -171,18 +172,17 @@ export function MediaCard({
                 </div>
             </Link>
 
-            {/* Actions Layer (Outside to avoid extreme skewing but translated Z) */}
-            <div
-                style={{ transform: "translateZ(100px)" }}
-                className="absolute top-3 right-3 z-30"
-            >
+        </motion.div>
+
+            {/* Actions Layer — fora do motion.div para não participar do 3D tilt */}
+            <div className="absolute top-3 right-3 z-30">
                 <FavoriteButton
                     id={id}
                     itemName={title}
                     itemType={getFavoriteType()}
-                    className="bg-black/40 backdrop-blur-md border border-white/10 hover:bg-purple-600 hover:border-purple-500 transition-colors"
+                    className="bg-zinc-900/60 backdrop-blur-sm hover:bg-zinc-900/80 transition-colors"
                 />
             </div>
-        </motion.div>
+        </div>
     )
 }
