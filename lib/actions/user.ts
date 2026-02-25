@@ -60,35 +60,127 @@ export async function getDashboardData() {
 
     const userId = session.user.id
 
-    const [activities, latestNews, trendingArtists, user] = await Promise.all([
+    // Fetch favorite artist IDs for personalized news
+    const favoriteArtistRows = await prisma.favorite.findMany({
+        where: { userId, artistId: { not: null } },
+        select: { artistId: true },
+    })
+    const favoriteArtistIds = favoriteArtistRows.map(f => f.artistId!).filter(Boolean)
+    const hasFollowing = favoriteArtistIds.length > 0
+
+    const [
+        activities,
+        latestNews,
+        personalizedNews,
+        trendingArtists,
+        user,
+        artistCount,
+        productionCount,
+        newsCount,
+        groupCount,
+        commentsCount,
+    ] = await Promise.all([
+        // Atividades recentes (com entityId para resolver nomes)
         (prisma as any).activity.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
-            take: 10
+            take: 12,
         }),
+        // Últimas notícias genéricas (fallback)
         prisma.news.findMany({
             orderBy: { publishedAt: 'desc' },
             take: 4,
-            select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
+            select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true, source: true },
         }),
+        // Notícias personalizadas (artistas favoritos)
+        hasFollowing
+            ? prisma.news.findMany({
+                where: { artists: { some: { artistId: { in: favoriteArtistIds } } } },
+                orderBy: { publishedAt: 'desc' },
+                take: 4,
+                select: {
+                    id: true,
+                    title: true,
+                    imageUrl: true,
+                    publishedAt: true,
+                    tags: true,
+                    source: true,
+                    artists: {
+                        select: { artist: { select: { nameRomanized: true } } },
+                        take: 2,
+                    },
+                },
+            })
+            : Promise.resolve([]),
+        // Trending artists (por trendingScore)
         prisma.artist.findMany({
-            orderBy: { viewCount: 'desc' },
+            orderBy: { trendingScore: 'desc' },
             take: 6,
             select: { id: true, nameRomanized: true, primaryImageUrl: true },
         }),
         prisma.user.findUnique({
             where: { id: userId },
-            select: { createdAt: true }
-        })
+            select: { createdAt: true },
+        }),
+        // Stats por tipo
+        prisma.favorite.count({ where: { userId, artistId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, productionId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, newsId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, groupId: { not: null } } }),
+        prisma.comment.count({ where: { userId } }),
     ])
 
-    const stats = {
-        favoritesCount: await (prisma as any).favorite.count({ where: { userId } }),
-        activityScore: activities.length * 10,
-        joinDate: user?.createdAt
+    // Resolver nomes das entidades nas atividades
+    const uniqueIds = (type: string) =>
+        Array.from(new Set<string>(
+            activities.filter((a: any) => a.entityType === type && a.entityId).map((a: any) => a.entityId as string)
+        ))
+    const entityIds = {
+        ARTIST:     uniqueIds('ARTIST'),
+        PRODUCTION: uniqueIds('PRODUCTION'),
+        NEWS:       uniqueIds('NEWS'),
     }
 
-    return { activities, latestNews, trendingArtists, stats }
+    const [artistNames, productionNames, newsNames] = await Promise.all([
+        entityIds.ARTIST.length > 0
+            ? prisma.artist.findMany({ where: { id: { in: entityIds.ARTIST as string[] } }, select: { id: true, nameRomanized: true } })
+            : Promise.resolve([]),
+        entityIds.PRODUCTION.length > 0
+            ? prisma.production.findMany({ where: { id: { in: entityIds.PRODUCTION as string[] } }, select: { id: true, titlePt: true } })
+            : Promise.resolve([]),
+        entityIds.NEWS.length > 0
+            ? prisma.news.findMany({ where: { id: { in: entityIds.NEWS as string[] } }, select: { id: true, title: true } })
+            : Promise.resolve([]),
+    ])
+
+    const nameMap: Record<string, string> = {}
+    artistNames.forEach((a: any) => { nameMap[a.id] = a.nameRomanized })
+    productionNames.forEach((p: any) => { nameMap[p.id] = p.titlePt })
+    newsNames.forEach((n: any) => { nameMap[n.id] = n.title })
+
+    const activitiesWithNames = activities.map((a: any) => ({
+        ...a,
+        entityName: a.entityId ? nameMap[a.entityId] : undefined,
+    }))
+
+    const stats = {
+        favoritesCount: artistCount + productionCount + newsCount + groupCount,
+        artistCount,
+        productionCount,
+        newsCount,
+        groupCount,
+        commentsCount,
+        joinDate: user?.createdAt,
+    }
+
+    return {
+        activities: activitiesWithNames,
+        latestNews,
+        personalizedNews,
+        hasFollowing,
+        trendingArtists,
+        stats,
+    }
 }
 
 export async function registerInterest(tierName: string) {

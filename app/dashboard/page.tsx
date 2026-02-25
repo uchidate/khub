@@ -13,11 +13,28 @@ import {
   History,
   Crown,
   Newspaper,
+  Heart,
+  MessageCircle,
+  Sparkles,
 } from 'lucide-react'
 import { PageTransition } from '@/components/features/PageTransition'
 import { getDashboardData } from '@/lib/actions/user'
 import { FavoritesGallery } from '@/components/dashboard/FavoritesGallery'
 import { FavoritesStatCard } from '@/components/dashboard/FavoritesStatCard'
+
+const ACTIVITY_LABELS: Record<string, { label: string; color: string }> = {
+  LIKE:   { label: '♡ Favoritou',  color: 'text-pink-400' },
+  UNLIKE: { label: '✕ Removeu',   color: 'text-zinc-500' },
+  VIEW:   { label: '◎ Visualizou', color: 'text-electric-cyan' },
+  LOGIN:  { label: '→ Entrou',     color: 'text-green-400' },
+}
+
+const ENTITY_HREF: Record<string, (id: string) => string> = {
+  ARTIST:     id => `/artists/${id}`,
+  PRODUCTION: id => `/productions/${id}`,
+  NEWS:       id => `/news/${id}`,
+  GROUP:      id => `/groups/${id}`,
+}
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -26,13 +43,20 @@ export default async function DashboardPage() {
   const data = await getDashboardData()
   if (!data) return null
 
-  const { activities, latestNews, trendingArtists, stats } = data
+  const { activities, latestNews, personalizedNews, hasFollowing, trendingArtists, stats } = data
 
   const quickLinks = [
     { title: 'Perfil', description: 'Editar Informações', href: '/profile', icon: User },
     { title: 'Configurações', description: 'Privacidade', href: '/settings', icon: Settings },
     ...(session.user.role?.toLowerCase() === 'admin' ? [{ title: 'Admin', description: 'Painel', href: '/admin', icon: Shield }] : []),
   ]
+
+  // Notícias a exibir: personalizadas (Para você) ou últimas (fallback)
+  const newsToShow = hasFollowing && personalizedNews.length > 0 ? personalizedNews : latestNews
+  const newsTitle = hasFollowing && personalizedNews.length > 0 ? 'Para você' : 'Últimas Notícias'
+  const newsSubtitle = hasFollowing && personalizedNews.length > 0
+    ? 'Notícias dos seus artistas favoritos'
+    : 'Fique por dentro do universo hallyu'
 
   return (
     <PageTransition>
@@ -58,53 +82,84 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        {/* Bento Grid layout */}
+        {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:grid-rows-[auto_auto_auto]">
 
-          {/* 1. Primary Stat: Favorites (Large Square) — client-side so count reflects localStorage sync */}
-          <FavoritesStatCard />
+          {/* 1. Stats de Coleção (com breakdown por tipo) */}
+          <FavoritesStatCard
+            artistCount={stats.artistCount}
+            productionCount={stats.productionCount}
+            newsCount={stats.newsCount}
+            groupCount={stats.groupCount}
+          />
 
-          {/* 2. Timeline / Activity (Wide Rectangle) */}
+          {/* 2. Timeline de Atividade (com nomes das entidades) */}
           <div className="glass-card p-6 md:col-span-2 md:row-span-2 flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-display font-bold text-xl text-white flex items-center gap-2">
                 <History size={20} className="text-electric-cyan" />
                 Atividade Recente
               </h3>
-              <span className="text-xs font-mono text-zinc-500 bg-zinc-900/50 px-2 py-1 rounded-md border border-white/5">
-                Score: {stats.activityScore}
-              </span>
+              {/* Comentários */}
+              {stats.commentsCount > 0 && (
+                <Link href="/profile" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white transition-colors">
+                  <MessageCircle size={12} className="text-electric-cyan" />
+                  {stats.commentsCount} comentário{stats.commentsCount !== 1 ? 's' : ''}
+                </Link>
+              )}
             </div>
 
-            <div className="flex-grow space-y-3 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+            <div className="flex-grow space-y-2 overflow-y-auto max-h-[340px] pr-1 custom-scrollbar">
               {activities.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-60">
                   <Clock size={32} className="mb-2" />
                   <p className="text-xs font-mono">Sem atividade recente</p>
                 </div>
               ) : (
-                activities.map((activity: any) => (
-                  <div key={activity.id} className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
-                    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded bg-black/50 border border-white/10 ${activity.type === 'LIKE' ? 'text-neon-pink' : 'text-electric-cyan'
-                      }`}>
-                      {activity.type}
-                    </span>
-                    <div className="flex-grow min-w-0">
-                      <p className="text-sm text-zinc-200 truncate">
-                        <span className="font-bold text-white">
-                          {activity.entityType || 'SYSTEM'}
-                        </span>
-                        <span className="mx-2 text-zinc-600">•</span>
+                activities.map((activity: any) => {
+                  const config = ACTIVITY_LABELS[activity.type] ?? { label: activity.type, color: 'text-zinc-500' }
+                  const href = activity.entityId && activity.entityType
+                    ? ENTITY_HREF[activity.entityType]?.(activity.entityId)
+                    : null
+
+                  const content = (
+                    <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
+                      <span className={`text-[10px] font-black whitespace-nowrap ${config.color}`}>
+                        {config.label}
+                      </span>
+                      <div className="flex-grow min-w-0">
+                        {activity.entityName ? (
+                          <p className="text-xs text-white font-bold truncate">{activity.entityName}</p>
+                        ) : (
+                          <p className="text-xs text-zinc-600 truncate italic">
+                            {activity.entityType?.toLowerCase() ?? 'sistema'}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-zinc-600 whitespace-nowrap flex-shrink-0">
                         {new Date(activity.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                      </p>
+                      </span>
                     </div>
-                  </div>
-                ))
+                  )
+
+                  return href ? (
+                    <Link key={activity.id} href={href}>{content}</Link>
+                  ) : (
+                    <div key={activity.id}>{content}</div>
+                  )
+                })
               )}
             </div>
+
+            {/* Membro desde */}
+            {stats.joinDate && (
+              <p className="text-[10px] text-zinc-700 mt-4 pt-3 border-t border-white/5">
+                Membro desde {new Date(stats.joinDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </p>
+            )}
           </div>
 
-          {/* 3. Quick Actions (Vertical Stack) */}
+          {/* 3. Quick Actions */}
           <div className="space-y-4 md:col-span-1 md:row-span-2">
             {quickLinks.map((link) => (
               <Link key={link.href} href={link.href} className="glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-cyber-purple">
@@ -120,6 +175,17 @@ export default async function DashboardPage() {
               </Link>
             ))}
 
+            {/* Favoritos link rápido */}
+            <Link href="/favorites" className="glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-pink-500">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-pink-400 transition-colors">
+                  <Heart size={18} />
+                </div>
+                <p className="font-bold text-sm text-white">Favoritos</p>
+              </div>
+              <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+            </Link>
+
             <div className="glass-card p-5 bg-gradient-to-br from-cyber-purple/20 to-transparent border-cyber-purple/30 relative overflow-hidden group">
               <div className="flex items-center gap-3 mb-2 relative z-10">
                 <Zap size={18} className="text-cyber-purple" />
@@ -130,7 +196,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* 4. Favorites Gallery (Wide Span) */}
+          {/* 4. Galeria de Favoritos */}
           <div className="md:col-span-4 mt-4">
             <div className="flex justify-between items-end mb-6">
               <div>
@@ -141,59 +207,79 @@ export default async function DashboardPage() {
                 Ver Tudo <ChevronRight size={14} />
               </Link>
             </div>
-
             <FavoritesGallery trendingArtists={trendingArtists} />
           </div>
 
-          {/* 5. Latest News (Full Width) */}
-          {latestNews.length > 0 && (
+          {/* 5. Notícias (personalizadas ou gerais) */}
+          {newsToShow.length > 0 && (
             <div className="md:col-span-4 mt-4">
               <div className="flex justify-between items-end mb-6">
                 <div>
-                  <h2 className="text-2xl font-display font-black text-white uppercase italic tracking-tight">Últimas Notícias</h2>
-                  <p className="text-zinc-500 text-sm mt-1">Fique por dentro do universo hallyu</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-2xl font-display font-black text-white uppercase italic tracking-tight">{newsTitle}</h2>
+                    {hasFollowing && personalizedNews.length > 0 && (
+                      <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-neon-pink/20 text-neon-pink border border-neon-pink/30">
+                        <Sparkles size={9} />
+                        Personalizado
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-zinc-500 text-sm">{newsSubtitle}</p>
                 </div>
                 <Link href="/news" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
                   Ver Tudo <ChevronRight size={14} />
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {latestNews.map((item: any) => (
-                  <Link
-                    key={item.id}
-                    href={`/news/${item.id}`}
-                    className="glass-card overflow-hidden group hover:scale-[1.02] transition-transform"
-                  >
-                    {item.imageUrl && (
-                      <div className="relative h-40 overflow-hidden">
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.title}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-500"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                        <div className="absolute bottom-2 left-3">
-                          {item.tags?.[0] && (
-                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-neon-pink/80 text-white">
-                              {item.tags[0]}
-                            </span>
+                {newsToShow.map((item: any) => {
+                  const mentionedArtists = item.artists?.map((a: any) => a.artist.nameRomanized) ?? []
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/news/${item.id}`}
+                      className="glass-card overflow-hidden group hover:scale-[1.02] transition-transform"
+                    >
+                      {item.imageUrl && (
+                        <div className="relative h-40 overflow-hidden">
+                          <Image
+                            src={item.imageUrl}
+                            alt={item.title}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                          <div className="absolute bottom-2 left-3 flex gap-1.5 flex-wrap">
+                            {item.tags?.[0] && (
+                              <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-neon-pink/80 text-white">
+                                {item.tags[0]}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Newspaper size={10} className="text-zinc-600" />
+                          <span className="text-xs text-zinc-500">
+                            {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                          </span>
+                          {item.source && (
+                            <span className="text-[10px] text-zinc-600 ml-auto">{item.source}</span>
                           )}
                         </div>
+                        <h4 className="text-sm font-bold text-white line-clamp-2 group-hover:text-electric-cyan transition-colors leading-snug">
+                          {item.title}
+                        </h4>
+                        {mentionedArtists.length > 0 && (
+                          <p className="text-[10px] text-neon-pink/70 mt-1.5 truncate">
+                            {mentionedArtists.join(' · ')}
+                          </p>
+                        )}
                       </div>
-                    )}
-                    <div className="p-4">
-                      <p className="text-xs text-zinc-500 mb-1 flex items-center gap-1">
-                        <Newspaper size={10} />
-                        {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
-                      </p>
-                      <h4 className="text-sm font-bold text-white line-clamp-2 group-hover:text-electric-cyan transition-colors">
-                        {item.title}
-                      </h4>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           )}
