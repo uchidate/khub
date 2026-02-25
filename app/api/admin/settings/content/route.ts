@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { revalidateTag } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,6 +66,7 @@ export async function PUT(req: NextRequest) {
       },
     })
 
+    revalidateTag('system-settings')
     return NextResponse.json({ success: true, settings })
   } catch (err) {
     console.error('Error updating content settings:', err)

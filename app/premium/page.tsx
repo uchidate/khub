@@ -1,12 +1,14 @@
 'use client'
 
 import {
-  Zap, Check, Star, Crown, Info, Map, Terminal, Rocket,
+  Zap, Check, Star, Crown, Info, Terminal, Rocket,
   X, ChevronDown, ChevronUp, Bell, Heart, Newspaper,
   Sparkles, Users, TrendingUp, Shield, Palette, MessageCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { PageTransition } from '@/components/features/PageTransition'
 import { registerInterest } from '@/lib/actions/user'
 
@@ -95,7 +97,6 @@ const FAQS = [
 const ROADMAP = [
   { title: 'IA Hallyu',           icon: Terminal, date: 'Mar 2026', desc: 'Chatbot especializado em K-Pop para tirar dúvidas e descobrir conteúdo em tempo real.' },
   { title: 'App Mobile Nativo',   icon: Rocket,   date: 'Abr 2026', desc: 'Versão nativa para iOS e Android com notificações push personalizadas.' },
-  { title: 'Hub de Ingressos',    icon: Map,      date: 'Jun 2026', desc: 'Centralizador de pré-vendas e descontos para shows de K-Pop no Brasil.' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -113,18 +114,30 @@ function fmt(price: number) {
 // ─── Componente principal ──────────────────────────────────────────────────────
 
 export default function PremiumPage() {
+  const { data: session } = useSession()
+  const router = useRouter()
   const [annual, setAnnual]           = useState(false)
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
   const [successTier, setSuccessTier] = useState<string | null>(null)
   const [openFaq, setOpenFaq]         = useState<number | null>(null)
+  const [errorMsg, setErrorMsg]       = useState<string | null>(null)
 
   const handleInterest = async (tierName: string) => {
     if (tierName === 'Curioso') return
+
+    // Redirecionar para login se não autenticado
+    if (!session?.user) {
+      router.push(`/auth/login?callbackUrl=/premium`)
+      return
+    }
+
     setLoadingTier(tierName)
+    setErrorMsg(null)
     try {
       await registerInterest(tierName)
       setSuccessTier(tierName)
-    } catch (e) {
+    } catch (e: any) {
+      setErrorMsg('Erro ao registrar interesse. Tente novamente.')
       console.error(e)
     } finally {
       setLoadingTier(null)
@@ -276,12 +289,21 @@ export default function PremiumPage() {
                         : 'bg-zinc-900 border border-white/10 text-white hover:bg-zinc-800'
                   }`}
                 >
-                  {isSuccess ? '✓ Interesse registrado!' : isLoading ? 'Processando...' : tier.cta}
+                  {isSuccess
+                    ? '✓ Interesse registrado!'
+                    : isLoading
+                      ? 'Processando...'
+                      : !session?.user && tier.name !== 'Curioso'
+                        ? 'Entrar e registrar interesse'
+                        : tier.cta}
                 </button>
                 {isSuccess && (
                   <p className="text-[10px] text-purple-400 font-bold text-center mt-2">
                     Você receberá 40% de desconto no lançamento!
                   </p>
+                )}
+                {errorMsg && loadingTier !== tier.name && (
+                  <p className="text-[10px] text-red-400 text-center mt-2">{errorMsg}</p>
                 )}
               </div>
             )
@@ -424,7 +446,11 @@ export default function PremiumPage() {
                 disabled={!!loadingTier || !!successTier}
                 className="px-10 py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white text-xs font-black rounded-full hover:from-purple-500 hover:to-purple-400 transition-all uppercase tracking-widest shadow-lg shadow-purple-600/30 disabled:opacity-50"
               >
-                {successTier ? '✓ Interesse registrado!' : 'Garantir desconto de 40%'}
+                {successTier
+                  ? '✓ Interesse registrado!'
+                  : !session?.user
+                    ? 'Entrar e garantir 40% de desconto'
+                    : 'Garantir desconto de 40%'}
               </button>
               <Link href="/contact" className="px-10 py-4 bg-zinc-800 text-white text-xs font-black rounded-full hover:bg-zinc-700 transition-all uppercase tracking-widest">
                 Falar com Suporte
