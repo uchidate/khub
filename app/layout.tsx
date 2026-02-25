@@ -110,10 +110,11 @@ export default function RootLayout({
                             <div className="max-w-7xl mx-auto px-4">
                                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                                     <span className="text-2xl font-black tracking-tighter uppercase"><span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span></span>
-                                    <div className="flex gap-8 text-sm text-zinc-500">
+                                    <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-500">
                                         <a href="/about" className="hover:text-white underline-offset-4 hover:underline">Sobre nós</a>
-                                        <a href="#" className="hover:text-white underline-offset-4 hover:underline">Privacidade</a>
-                                        <a href="#" className="hover:text-white underline-offset-4 hover:underline">Termos</a>
+                                        <a href="/faq" className="hover:text-white underline-offset-4 hover:underline">FAQ</a>
+                                        <a href="/privacidade" className="hover:text-white underline-offset-4 hover:underline">Privacidade</a>
+                                        <a href="/termos" className="hover:text-white underline-offset-4 hover:underline">Termos de Uso</a>
                                     </div>
                                     <p className="text-zinc-600 text-xs text-center md:text-right">
                                         &copy; {new Date().getFullYear()} HallyuHub. O portal brasileiro da cultura coreana.
