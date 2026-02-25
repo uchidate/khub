@@ -568,17 +568,19 @@ export default function ProductionsPage() {
   const handleSyncCast = async (production: Production) => {
     if (syncingId) return
     setSyncingId(production.id)
+    let success = false
     try {
       const res = await fetch('/api/admin/productions/sync-cast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productionId: production.id }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({})) as { synced?: number; error?: string }
       if (res.ok) {
         showMsg(`✅ ${production.titlePt}: ${data.synced} artistas importados`)
         refetchTable()
         fetchStats()
+        success = true
       } else {
         showMsg(`❌ Erro: ${data.error ?? 'falha ao importar elenco'}`)
       }
@@ -587,6 +589,8 @@ export default function ProductionsPage() {
     } finally {
       setSyncingId(null)
     }
+    // Propagate failure so CastModal can show the error instead of false "✅"
+    if (!success) throw new Error('sync failed')
   }
 
   // ─── Age rating per production ─────────────────────────────────────────────
