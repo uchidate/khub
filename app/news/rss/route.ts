@@ -73,7 +73,7 @@ export async function GET() {
     <link>${BASE_URL}/news</link>
     <description>As últimas notícias sobre K-Pop, K-Drama e cultura coreana.</description>
     <language>pt-BR</language>
-    <atom:link href="${BASE_URL}/news/feed" rel="self" type="application/rss+xml"/>
+    <atom:link href="${BASE_URL}/news/rss" rel="self" type="application/rss+xml"/>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     ${items}
   </channel>
