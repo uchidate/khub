@@ -150,9 +150,6 @@ export default function PremiumPage() {
 
         {/* ── Hero ─────────────────────────────────────────────────────────── */}
         <div className="text-center mb-16">
-          <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-purple-400 bg-purple-500/10 border border-purple-500/20 px-4 py-1.5 rounded-full mb-6">
-            <Sparkles size={10} /> Beta — Desconto vitalício de 40% para early adopters
-          </span>
           <h1 className="text-5xl md:text-7xl font-display font-black text-white uppercase italic tracking-tight leading-none mb-4">
             Evolua sua<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-electric-cyan animate-gradient">

@@ -88,6 +88,8 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                         select: {
                             id: true,
                             nameRomanized: true,
+                            nameHangul: true,
+                            stageNames: true,
                             primaryImageUrl: true,
                             roles: true, gender: true
                         }
@@ -103,6 +105,16 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
     // Processar tags
     const tags = news.tags || []
+
+    // Separar artistas em protagonistas (mencionados no título) vs secundários (só no corpo)
+    const titleLower = news.title.toLowerCase()
+    const isProtagonist = (artist: { nameRomanized: string; nameHangul: string | null; stageNames: string[] }) => {
+        if (titleLower.includes(artist.nameRomanized.toLowerCase())) return true
+        if (artist.nameHangul && titleLower.includes(artist.nameHangul.toLowerCase())) return true
+        return artist.stageNames.some(s => titleLower.includes(s.toLowerCase()))
+    }
+    const protagonistArtists = news.artists.filter(({ artist }) => isProtagonist(artist))
+    const secondaryArtists   = news.artists.filter(({ artist }) => !isProtagonist(artist))
 
     // Extrair IDs dos artistas para buscar notícias relacionadas
     const artistIds = news.artists.map(a => a.artist.id)
@@ -252,47 +264,89 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                     </div>
                 )}
 
-                {/* Artistas Mencionados */}
+                {/* Artistas */}
                 {news.artists.length > 0 && (
                     <section className="mb-12 p-6 rounded-2xl bg-gradient-to-br from-purple-900/10 to-pink-900/10 border border-purple-500/20">
                         <h2 className="text-sm font-black uppercase tracking-wider text-purple-400 mb-4 flex items-center gap-2">
                             <User className="w-4 h-4" />
-                            Artistas Mencionados
+                            {protagonistArtists.length > 0 ? 'Sobre' : 'Artistas Mencionados'}
                         </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            {news.artists.map(({ artist }) => (
-                                <Link
-                                    key={artist.id}
-                                    href={`/artists/${artist.id}`}
-                                    className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-black/40 hover:bg-black/60 border border-white/5 hover:border-purple-500/30 transition-all hover:scale-105"
-                                >
-                                    <div className="relative w-16 h-16 rounded-full overflow-hidden bg-zinc-800 ring-2 ring-purple-500/20 group-hover:ring-purple-500/50 transition-all">
-                                        {artist.primaryImageUrl ? (
-                                            <Image
-                                                src={artist.primaryImageUrl}
-                                                alt={artist.nameRomanized}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-xl">
-                                                {artist.nameRomanized[0]}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">
-                                            {artist.nameRomanized}
-                                        </p>
-                                        {artist.roles && artist.roles.length > 0 && (
-                                            <p className="text-xs text-zinc-500 mt-1">
-                                                {getRoleLabel(artist.roles[0], artist.gender)}
+
+                        {/* Protagonistas — mencionados no título */}
+                        {protagonistArtists.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                {protagonistArtists.map(({ artist }) => (
+                                    <Link
+                                        key={artist.id}
+                                        href={`/artists/${artist.id}`}
+                                        className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-black/40 hover:bg-black/60 border border-white/5 hover:border-purple-500/30 transition-all hover:scale-105"
+                                    >
+                                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-zinc-800 ring-2 ring-purple-500/20 group-hover:ring-purple-500/50 transition-all">
+                                            {artist.primaryImageUrl ? (
+                                                <Image
+                                                    src={artist.primaryImageUrl}
+                                                    alt={artist.nameRomanized}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-xl">
+                                                    {artist.nameRomanized[0]}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">
+                                                {artist.nameRomanized}
                                             </p>
-                                        )}
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                                            {artist.roles && artist.roles.length > 0 && (
+                                                <p className="text-xs text-zinc-500 mt-1">
+                                                    {getRoleLabel(artist.roles[0], artist.gender)}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Secundários — apenas mencionados no corpo */}
+                        {secondaryArtists.length > 0 && (
+                            <div className={protagonistArtists.length > 0 ? 'mt-4 pt-4 border-t border-white/5' : ''}>
+                                {protagonistArtists.length > 0 && (
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-3">
+                                        Também mencionados
+                                    </p>
+                                )}
+                                <div className="flex flex-wrap gap-2">
+                                    {secondaryArtists.map(({ artist }) => (
+                                        <Link
+                                            key={artist.id}
+                                            href={`/artists/${artist.id}`}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-white/5 hover:border-purple-500/30 hover:bg-zinc-800 transition-all group"
+                                        >
+                                            <div className="relative w-5 h-5 rounded-full overflow-hidden bg-zinc-800 shrink-0">
+                                                {artist.primaryImageUrl ? (
+                                                    <Image
+                                                        src={artist.primaryImageUrl}
+                                                        alt={artist.nameRomanized}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-600 flex items-center justify-center text-white font-bold text-[8px]">
+                                                        {artist.nameRomanized[0]}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="text-xs text-zinc-400 group-hover:text-white transition-colors font-medium">
+                                                {artist.nameRomanized}
+                                            </span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </section>
                 )}
 
