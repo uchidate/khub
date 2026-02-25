@@ -14,6 +14,7 @@
 import prisma from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { unstable_cache } from 'next/cache'
 
 export type AgeRatingWhereClause = {
   ageRating?: any
@@ -29,23 +30,26 @@ export type AgeRatingWhereClause = {
  * @param overrideRating - Permite override manual (ex: filtro "all" ou rating específico na UI)
  * @returns Objeto where clause do Prisma para filtrar por ageRating
  */
+// Cache system settings for 5 minutes — changes only via admin panel
+const getCachedSystemSettings = unstable_cache(
+  async () => {
+    let settings = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
+    if (!settings) {
+      settings = await prisma.systemSettings.create({
+        data: { id: 'singleton', allowAdultContent: false, allowUnclassifiedContent: false },
+      })
+    }
+    return settings
+  },
+  ['system-settings'],
+  { revalidate: 300, tags: ['system-settings'] }
+)
+
 export async function applyAgeRatingFilter(
   overrideRating?: string
 ): Promise<AgeRatingWhereClause> {
-  // 1. Buscar configurações globais
-  let systemSettings = await prisma.systemSettings.findUnique({
-    where: { id: 'singleton' },
-  })
-
-  if (!systemSettings) {
-    systemSettings = await prisma.systemSettings.create({
-      data: {
-        id: 'singleton',
-        allowAdultContent: false,
-        allowUnclassifiedContent: false,
-      },
-    })
-  }
+  // 1. Buscar configurações globais (cached 5 min)
+  const systemSettings = await getCachedSystemSettings()
 
   // 2. Override explícito via UI (ex: filtro "all" ou rating específico)
   if (overrideRating === 'all') {

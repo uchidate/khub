@@ -74,10 +74,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.6'  # Reduzido de 0.8 para 0.6
-          memory: 1.5G
+          cpus: '0.8'
+          memory: 2G
         reservations:
-          memory: 512M
+          memory: 768M
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
