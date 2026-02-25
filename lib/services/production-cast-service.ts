@@ -10,6 +10,7 @@
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
 import { isRelevantToKoreanCulture } from '../utils/korean-validation'
+import { findArtistSocialLinks } from './wikidata-social-links'
 import prisma from '../prisma'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
@@ -209,6 +210,9 @@ export class ProductionCastService {
 
           const finalName = nameExists ? `${nameRomanized} (${member.id})` : nameRomanized
 
+          // Fetch Wikidata social links for the new artist
+          const wikidataSocialLinks = await findArtistSocialLinks(finalName, nameHangul)
+
           const created = await prisma.artist.create({
             data: {
               nameRomanized: finalName,
@@ -229,6 +233,11 @@ export class ProductionCastService {
               // AUTO-FLAG if not relevant to Korean culture
               flaggedAsNonKorean: !isRelevant,
               flaggedAt: !isRelevant ? new Date() : null,
+              // Social links from Wikidata (if found)
+              ...(Object.keys(wikidataSocialLinks).length > 0 && {
+                socialLinks: wikidataSocialLinks,
+                socialLinksUpdatedAt: new Date(),
+              }),
             },
           })
 
