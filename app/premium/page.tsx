@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  Zap, Check, Star, Crown, Info, Map, Terminal, Rocket,
+  Zap, Check, Star, Crown, Info, Terminal, Rocket,
   X, ChevronDown, ChevronUp, Bell, Heart, Newspaper,
   Sparkles, Users, TrendingUp, Shield, Palette, MessageCircle,
 } from 'lucide-react'
