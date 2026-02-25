@@ -67,6 +67,10 @@ export async function GET(request: NextRequest) {
                                          ? { ...active, socialLinksUpdatedAt: null }
       : filter === 'no_social_attempted' ? { ...active, socialLinksUpdatedAt: { not: null }, socialLinks: { equals: Prisma.DbNull } }
       : filter === 'flagged'             ? { flaggedAsNonKorean: true }
+      : filter === 'with_group'          ? { ...active, memberships: { some: { isActive: true } } }
+      : filter === 'no_group'            ? { ...active, memberships: { none: { isActive: true } } }
+      : filter === 'no_group_unsynced'   ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null }
+      : filter === 'no_group_solo'       ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } }
       : {}
 
     const searchWhere = search
