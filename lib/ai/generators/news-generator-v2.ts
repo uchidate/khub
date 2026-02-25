@@ -9,6 +9,7 @@ export interface NewsData {
     publishedAt: Date;
     imageUrl?: string;
     tags?: string[];         // extraídas por keywords, sem AI
+    source?: string;         // nome do feed RSS (ex: 'Soompi', 'Dramabeans')
 }
 
 /**
@@ -77,6 +78,7 @@ export class NewsGeneratorV2 {
             publishedAt: item.publishedAt,
             imageUrl: item.imageUrl,
             tags,
+            source: item.source,
         };
     }
 
