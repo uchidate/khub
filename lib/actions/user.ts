@@ -184,9 +184,17 @@ export async function getDashboardData() {
 }
 
 export async function registerInterest(tierName: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Não autorizado")
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            console.warn('[registerInterest] No session found for tierName:', tierName)
+            return { success: false, error: 'unauthorized' as const }
+        }
 
-    await trackActivity(session.user.id, 'PREMIUM_INTEREST', undefined, undefined, { tier: tierName })
-    return { success: true }
+        await trackActivity(session.user.id, 'PREMIUM_INTEREST', undefined, undefined, { tier: tierName })
+        return { success: true, error: null }
+    } catch (e) {
+        console.error('[registerInterest] Unexpected error:', e)
+        return { success: false, error: 'internal' as const }
+    }
 }

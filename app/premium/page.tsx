@@ -134,7 +134,15 @@ export default function PremiumPage() {
     setLoadingTier(tierName)
     setErrorMsg(null)
     try {
-      await registerInterest(tierName)
+      const result = await registerInterest(tierName)
+      if (result.error === 'unauthorized') {
+        router.push(`/auth/login?callbackUrl=/premium`)
+        return
+      }
+      if (result.error === 'internal') {
+        setErrorMsg('Erro interno. Tente novamente em instantes.')
+        return
+      }
       setSuccessTier(tierName)
     } catch (e: any) {
       setErrorMsg('Erro ao registrar interesse. Tente novamente.')
