@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
@@ -41,7 +42,34 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
-    const where = search
+    const filter = searchParams.get('filter')
+    // Supported filters (all exclude flaggedAsNonKorean unless the filter IS flagged):
+    //   no_hangul           — nameHangul null
+    //   no_hangul_pending   — nameHangul null + tmdbId set
+    //   no_hangul_no_tmdb   — nameHangul null + tmdbId null
+    //   no_photo            — primaryImageUrl null
+    //   no_photo_pending    — primaryImageUrl null + tmdbId set
+    //   no_photo_no_tmdb    — primaryImageUrl null + tmdbId null
+    //   no_social           — never synced (socialLinksUpdatedAt null)
+    //   no_social_pending   — same as no_social
+    //   no_social_attempted — tried but nothing found (updatedAt set, socialLinks null)
+    //   flagged             — flaggedAsNonKorean true
+
+    const active = { flaggedAsNonKorean: false } as const
+    const filterWhere =
+      filter === 'no_hangul'           ? { ...active, nameHangul: null }
+      : filter === 'no_hangul_pending'   ? { ...active, nameHangul: null, tmdbId: { not: null } }
+      : filter === 'no_hangul_no_tmdb'   ? { ...active, nameHangul: null, tmdbId: null }
+      : filter === 'no_photo'            ? { ...active, primaryImageUrl: null }
+      : filter === 'no_photo_pending'    ? { ...active, primaryImageUrl: null, tmdbId: { not: null } }
+      : filter === 'no_photo_no_tmdb'    ? { ...active, primaryImageUrl: null, tmdbId: null }
+      : filter === 'no_social' || filter === 'no_social_pending'
+                                         ? { ...active, socialLinksUpdatedAt: null }
+      : filter === 'no_social_attempted' ? { ...active, socialLinksUpdatedAt: { not: null }, socialLinks: { equals: Prisma.DbNull } }
+      : filter === 'flagged'             ? { flaggedAsNonKorean: true }
+      : {}
+
+    const searchWhere = search
       ? {
           OR: [
             { nameRomanized: { contains: search, mode: 'insensitive' as const } },
@@ -49,6 +77,10 @@ export async function GET(request: NextRequest) {
           ],
         }
       : {}
+
+    const where = search
+      ? { AND: [filterWhere, searchWhere] }
+      : filterWhere
 
     const [artists, total] = await Promise.all([
       prisma.artist.findMany({
