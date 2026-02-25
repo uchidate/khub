@@ -18,6 +18,7 @@ interface DataTableProps<T> {
   actions?: (item: T) => React.ReactNode
   searchPlaceholder?: string
   filters?: React.ReactNode
+  extraParams?: Record<string, string>
 }
 
 interface PaginatedResponse<T> {
@@ -33,6 +34,7 @@ export function DataTable<T extends { id: string }>({
   actions,
   searchPlaceholder = 'Buscar...',
   filters,
+  extraParams,
 }: DataTableProps<T>) {
   const [data, setData] = useState<T[]>([])
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
@@ -51,6 +53,7 @@ export function DataTable<T extends { id: string }>({
         search,
         sortBy,
         sortOrder,
+        ...extraParams,
       })
       const res = await fetch(`${apiUrl}?${params}`)
       if (res.ok) {
@@ -63,7 +66,7 @@ export function DataTable<T extends { id: string }>({
     } finally {
       setLoading(false)
     }
-  }, [apiUrl, pagination.page, pagination.limit, search, sortBy, sortOrder])
+  }, [apiUrl, pagination.page, pagination.limit, search, sortBy, sortOrder, extraParams])
 
   useEffect(() => {
     fetchData()

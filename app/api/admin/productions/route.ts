@@ -37,14 +37,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
+    const filter = searchParams.get('filter') // 'no_rating' | 'no_cast' | null
+
+    const filterWhere =
+      filter === 'no_rating'
+        ? { ageRating: null }
+        : filter === 'no_cast'
+        ? { artists: { none: {} } }
+        : {}
+
     const where = search
       ? {
-          OR: [
-            { titlePt: { contains: search, mode: 'insensitive' as const } },
-            { titleKr: { contains: search, mode: 'insensitive' as const } },
+          AND: [
+            filterWhere,
+            {
+              OR: [
+                { titlePt: { contains: search, mode: 'insensitive' as const } },
+                { titleKr: { contains: search, mode: 'insensitive' as const } },
+              ],
+            },
           ],
         }
-      : {}
+      : filterWhere
 
     const [productions, total] = await Promise.all([
       prisma.production.findMany({
