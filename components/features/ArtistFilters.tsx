@@ -34,8 +34,8 @@ const SORT_OPTIONS = [
 
 const MEMBER_TYPE_OPTIONS = [
     { value: '', label: 'Todos' },
-    { value: 'group', label: '🎶 Grupo' },
-    { value: 'solo', label: '🎤 Solo' },
+    { value: 'group', label: 'Grupo' },
+    { value: 'solo', label: 'Solo' },
 ]
 
 export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFiltersProps) {
