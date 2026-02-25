@@ -22,8 +22,13 @@ export async function POST(req: NextRequest) {
 
   if (body.productionId) {
     // Sync de uma produção específica
-    const result = await service.syncProductionCast(body.productionId)
-    return NextResponse.json({ ok: true, ...result })
+    try {
+      const result = await service.syncProductionCast(body.productionId)
+      return NextResponse.json({ ok: true, ...result })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao sincronizar elenco'
+      return NextResponse.json({ error: msg }, { status: 500 })
+    }
   }
 
   if (body.reset) {
