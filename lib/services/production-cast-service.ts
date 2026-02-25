@@ -148,6 +148,13 @@ export class ProductionCastService {
     })
 
     if (!production?.tmdbId || !production?.tmdbType) {
+      // Mark as attempted even without tmdbType so the production leaves "Pendentes"
+      if (production) {
+        await prisma.production.update({
+          where: { id: productionId },
+          data: { castSyncAt: new Date() },
+        })
+      }
       return { synced: 0, skipped: 1 }
     }
 
