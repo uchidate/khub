@@ -64,10 +64,11 @@ export interface SignalIngestionResult {
 // ─── Score por ranking ────────────────────────────────────────────────────────
 
 export function rankToScore(rank: number): number {
-    if (rank === 1) return 30
-    if (rank === 2) return 25
-    if (rank === 3) return 20
-    if (rank <= 6) return 15
+    if (rank === 1) return 50
+    if (rank === 2) return 40
+    if (rank === 3) return 32
+    if (rank <= 5) return 24
+    if (rank <= 8) return 16
     return 10
 }
 

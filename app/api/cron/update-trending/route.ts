@@ -5,9 +5,14 @@
  * com base em atividade dos últimos 7 dias + streaming signals ativos.
  *
  * Fórmula Artist:
- *   base  = viewCount * 0.6 + favoriteCount * 0.3 + recentFavs * 0.3
- *   boost = Σ StreamingTrendSignal.score (signals não expirados)
- *   score = normalize(base + boost)  →  [0, 100]
+ *   base    = viewCount * 0.6 + favoriteCount * 0.3 + recentFavs * 0.3
+ *   boost   = Σ StreamingTrendSignal.score × STREAMING_WEIGHT (signals não expirados)
+ *   score   = normalize(base + boost)  →  [0, 100]
+ *
+ * STREAMING_WEIGHT garante peso alto mesmo quando viewCount cresce:
+ *   rank 1 numa plataforma  = 30 × 200 = 6.000 pts
+ *   rank 10 numa plataforma = 10 × 200 = 2.000 pts
+ *   Ator em rank 1 de 2 plataformas = 12.000 pts — equivalente a ~20k views orgânicos
  *
  * Auth: Bearer CRON_SECRET
  * Cron sugerido: a cada 6 horas
@@ -22,6 +27,11 @@ import { computeStreamingBoost } from '@/lib/services/streaming-signal-service'
 export const maxDuration = 120
 
 const log = createLogger('CRON-UPDATE-TRENDING')
+
+// Peso do sinal de streaming relativo ao engajamento orgânico.
+// rank1 numa plataforma = 30 × STREAMING_WEIGHT = 6.000 pts
+// Mantém streaming como fator dominante mesmo com alto viewCount orgânico.
+const STREAMING_WEIGHT = 200
 
 function verifyToken(request: NextRequest): boolean {
     const authToken =
@@ -84,7 +94,7 @@ async function updateArtistTrending(since7d: Date): Promise<number> {
     for (const artist of artists) {
         const fav = scores.get(artist.id) ?? 0
         const base = artist.viewCount * 0.6 + artist.favoriteCount * 0.3
-        const streamingBoost = computeStreamingBoost(artist.streamingSignals)
+        const streamingBoost = computeStreamingBoost(artist.streamingSignals) * STREAMING_WEIGHT
         scores.set(artist.id, base + fav + streamingBoost)
     }
 
