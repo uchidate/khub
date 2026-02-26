@@ -8,7 +8,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, RefreshCw, Trash2, ArrowLeft, Music, CheckCircle } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ArrowLeft, Music, CheckCircle, Pencil, X, Check, ExternalLink } from 'lucide-react'
 
 interface Artist {
   id: string
@@ -16,6 +16,8 @@ interface Artist {
   nameHangul: string | null
   primaryImageUrl: string | null
   discographySyncAt: string | null
+  tmdbId: string | null
+  mbid: string | null
 }
 
 interface Album {
@@ -153,10 +155,38 @@ export default function ArtistDiscographyPage() {
   const [syncModalOpen, setSyncModalOpen] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
+  // Inline ID editors
+  const [editingField, setEditingField] = useState<'tmdbId' | 'mbid' | null>(null)
+  const [editingValue, setEditingValue] = useState('')
+  const [savingId, setSavingId] = useState(false)
+
   const showToast = useCallback((msg: string, ok = true) => {
     setToast({ msg, ok })
     setTimeout(() => setToast(null), 4000)
   }, [])
+
+  const handleSaveId = async (field: 'tmdbId' | 'mbid') => {
+    setSavingId(true)
+    try {
+      const res = await fetch(`/api/admin/artists?id=${artistId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: editingValue.trim() }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string }
+        showToast(`❌ ${err.error ?? 'Erro ao salvar'}`, false)
+      } else {
+        setArtist(a => a ? { ...a, [field]: editingValue.trim() || null } : a)
+        showToast('✅ ID atualizado')
+        setEditingField(null)
+      }
+    } catch {
+      showToast('❌ Erro de rede', false)
+    } finally {
+      setSavingId(false)
+    }
+  }
 
   // Fetch artist info
   useEffect(() => {
@@ -329,39 +359,40 @@ export default function ArtistDiscographyPage() {
 
       <div className="space-y-6">
         {/* Back + Artist header */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/artists"
-              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              Artistas
-            </Link>
-            {!artistLoading && artist && (
-              <div className="flex items-center gap-3">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
-                  {artist.primaryImageUrl ? (
-                    <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Music className="w-4 h-4 text-zinc-600" />
-                    </div>
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <Link href="/admin/artists"
+                className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                Artistas
+              </Link>
+              {!artistLoading && artist && (
+                <div className="flex items-center gap-3">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+                    {artist.primaryImageUrl ? (
+                      <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Music className="w-4 h-4 text-zinc-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-black text-white">{artist.nameRomanized}</p>
+                    {artist.nameHangul && (
+                      <p className="text-xs text-zinc-500">{artist.nameHangul}</p>
+                    )}
+                  </div>
+                  {syncLastDate && (
+                    <span className="text-xs text-zinc-600 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Sync: {syncLastDate}
+                    </span>
                   )}
                 </div>
-                <div>
-                  <p className="font-black text-white">{artist.nameRomanized}</p>
-                  {artist.nameHangul && (
-                    <p className="text-xs text-zinc-500">{artist.nameHangul}</p>
-                  )}
-                </div>
-                {syncLastDate && (
-                  <span className="text-xs text-zinc-600 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Sync: {syncLastDate}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -388,6 +419,91 @@ export default function ArtistDiscographyPage() {
               Limpar tudo
             </button>
           </div>
+          </div>
+
+          {/* ID editors row */}
+          {!artistLoading && artist && (
+            <div className="flex items-center gap-3 flex-wrap pl-0">
+              {(['tmdbId', 'mbid'] as const).map((field) => {
+                const label = field === 'tmdbId' ? 'TMDB' : 'MusicBrainz'
+                const mbLink = field === 'mbid' && artist.mbid
+                  ? `https://musicbrainz.org/artist/${artist.mbid}`
+                  : null
+                const tmdbLink = field === 'tmdbId' && artist.tmdbId
+                  ? `https://www.themoviedb.org/person/${artist.tmdbId}`
+                  : null
+                const externalLink = mbLink ?? tmdbLink
+
+                const isEditing = editingField === field
+                const currentVal = artist[field]
+
+                return (
+                  <div key={field} className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black uppercase text-zinc-600">{label}</span>
+
+                    {isEditing ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={editingValue}
+                          onChange={e => setEditingValue(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleSaveId(field)
+                            if (e.key === 'Escape') setEditingField(null)
+                          }}
+                          placeholder={field === 'mbid' ? 'UUID do MusicBrainz' : 'ID numérico do TMDB'}
+                          className="text-xs font-mono bg-zinc-800 border border-zinc-600 text-white rounded px-2 py-0.5 w-52 focus:outline-none focus:border-purple-500"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handleSaveId(field)}
+                          disabled={savingId}
+                          className="p-1 text-green-400 hover:text-green-300 disabled:opacity-50"
+                          title="Salvar"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setEditingField(null)}
+                          className="p-1 text-zinc-500 hover:text-zinc-300"
+                          title="Cancelar"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        {currentVal ? (
+                          <span className="text-xs font-mono text-zinc-400 bg-zinc-800/60 px-1.5 py-0.5 rounded border border-zinc-700">
+                            {currentVal.length > 16 ? `${currentVal.slice(0, 8)}…` : currentVal}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-zinc-600 italic">não definido</span>
+                        )}
+                        {externalLink && (
+                          <a href={externalLink} target="_blank" rel="noopener noreferrer"
+                            className="p-0.5 text-zinc-600 hover:text-purple-400 transition-colors"
+                            title={`Abrir no ${label}`}>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            setEditingField(field)
+                            setEditingValue(artist[field] ?? '')
+                          }}
+                          className="p-0.5 text-zinc-600 hover:text-zinc-300 transition-colors"
+                          title={`Editar ${label} ID`}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* DataTable */}

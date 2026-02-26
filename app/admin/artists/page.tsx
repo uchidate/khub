@@ -28,6 +28,7 @@ interface Artist {
   socialLinks: Record<string, string> | null
   socialLinksUpdatedAt: string | null
   tmdbId: string | null
+  mbid: string | null
 }
 
 interface ArtistStats {
@@ -327,6 +328,7 @@ const formFields: FormField[] = [
   },
   { key: 'primaryImageUrl', label: 'URL da Imagem', type: 'text', placeholder: 'https://...' },
   { key: 'tmdbId', label: 'TMDB ID', type: 'text', placeholder: 'ID do The Movie Database' },
+  { key: 'mbid', label: 'MusicBrainz ID', type: 'text', placeholder: 'UUID do artista no MusicBrainz' },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
