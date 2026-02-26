@@ -262,6 +262,8 @@ model News {
   originalTitle       String?               // título original EN/KR do RSS
   originalContent     String?               // conteúdo original EN/KR do RSS
   source              String?               // nome do feed RSS (ex: 'Soompi', 'Dramabeans')
+  viewCount           Int                   @default(0)
+  trendingScore       Float                 @default(0.0)
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   userFavorites       Favorite[]
@@ -275,6 +277,7 @@ model News {
   @@index([sourceUrl])
   @@index([translationStatus])
   @@index([translationStatus, createdAt])
+  @@index([trendingScore])
 }
 
 model NewsArtist {

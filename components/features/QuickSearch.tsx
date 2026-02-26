@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Command, User, Film, Newspaper, ArrowRight, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 interface SearchResult {
     id: string
@@ -21,6 +22,7 @@ export function QuickSearch() {
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
     const inputRef = useRef<HTMLInputElement>(null)
+    const { trackSearch } = useAnalytics()
 
     // Listen for CMD+K or CTRL+K
     useEffect(() => {
@@ -75,6 +77,9 @@ export function QuickSearch() {
 
     const handleSelect = (id: string, type: string) => {
         setIsOpen(false)
+        if (query.trim().length >= 3) {
+            trackSearch(query.trim(), 'global')
+        }
         const pathMap: Record<string, string> = {
             artist: 'artists',
             group: 'groups',

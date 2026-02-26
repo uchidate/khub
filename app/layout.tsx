@@ -5,6 +5,8 @@ import "../styles/globals.css"
 import "../styles/nprogress.css"
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { SessionProvider } from "@/components/features/SessionProvider"
+import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
+import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
 import { NavigationProgress } from "@/components/features/NavigationProgress"
 import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
@@ -97,6 +99,8 @@ export default function RootLayout({
                     "sameAs": [],
                 }} />
                 <SessionProvider>
+                    <AnalyticsProvider>
+                    <WebVitalsReporter />
                     <NavigationProgress />
                     <div className="min-h-screen flex flex-col">
                         <NavBar />
@@ -123,6 +127,7 @@ export default function RootLayout({
                             </div>
                         </footer>
                     </div>
+                    </AnalyticsProvider>
                 </SessionProvider>
             </body>
         </html>

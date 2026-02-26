@@ -73,12 +73,21 @@ export function useAnalytics() {
     })
   }
 
-  const trackSearch = (query: string) => {
+  const trackSearch = (query: string, context?: string) => {
     trackEvent({
       action: 'search',
       category: 'search',
       label: query,
     })
+
+    // Log no banco para usuários autenticados (fire and forget)
+    if (query.trim().length >= 3) {
+      fetch('/api/track/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim(), context }),
+      }).catch(() => {})
+    }
   }
 
   const trackFavorite = (itemId: string, itemType: string, action: 'add' | 'remove') => {

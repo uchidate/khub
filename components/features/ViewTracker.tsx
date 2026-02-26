@@ -5,15 +5,18 @@ import { useEffect } from 'react'
 interface ViewTrackerProps {
   artistId?: string
   groupId?: string
+  newsId?: string
 }
 
-export function ViewTracker({ artistId, groupId }: ViewTrackerProps) {
+export function ViewTracker({ artistId, groupId, newsId }: ViewTrackerProps) {
   useEffect(() => {
     const url = artistId
       ? `/api/artists/${artistId}/view`
       : groupId
         ? `/api/groups/${groupId}/view`
-        : null
+        : newsId
+          ? `/api/news/${newsId}/view`
+          : null
 
     if (!url) return
 
@@ -21,7 +24,7 @@ export function ViewTracker({ artistId, groupId }: ViewTrackerProps) {
     fetch(url, { method: 'POST' }).catch(() => {
       // Silently fail - view tracking is not critical
     })
-  }, [artistId, groupId])
+  }, [artistId, groupId, newsId])
 
   // This component renders nothing
   return null

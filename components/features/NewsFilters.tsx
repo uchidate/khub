@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Search, X, Calendar, User, Globe, Users } from 'lucide-react'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 export interface NewsFiltersProps {
     onFilterChange: (filters: FilterValues) => void
@@ -33,6 +34,9 @@ const QUICK_SOURCE_PILLS = NEWS_SOURCES
 export function NewsFilters({ onFilterChange, artists = [], groups = [], initialFilters = {} }: NewsFiltersProps) {
     const [filters, setFilters] = useState<FilterValues>(initialFilters)
     const [isExpanded, setIsExpanded] = useState(false)
+    const { trackSearch } = useAnalytics()
+    // Ref para disparar trackSearch apenas quando a busca está estabilizada (após debounce)
+    const searchTrackedRef = useRef<string>('')
 
     // Detectar se há filtros ativos (exceto search)
     const hasActiveFilters = !!(filters.artistId || filters.groupId || filters.source || filters.from || filters.to)
@@ -40,10 +44,15 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
     useEffect(() => {
         const timer = setTimeout(() => {
             onFilterChange(filters)
+            // Rastrear busca textual após o debounce (evita spam por tecla)
+            if (filters.search && filters.search.length >= 3 && filters.search !== searchTrackedRef.current) {
+                searchTrackedRef.current = filters.search
+                trackSearch(filters.search, 'news')
+            }
         }, 500) // Debounce de 500ms
 
         return () => clearTimeout(timer)
-    }, [filters, onFilterChange])
+    }, [filters, onFilterChange, trackSearch])
 
     const updateFilter = (key: keyof FilterValues, value: string | undefined) => {
         setFilters(prev => {

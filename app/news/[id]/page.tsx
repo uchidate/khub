@@ -9,6 +9,7 @@ import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { RelatedNews } from "@/components/features/RelatedNews"
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
+import { ViewTracker } from "@/components/features/ViewTracker"
 import { CommentsSection } from "@/components/features/CommentsSection"
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"
 import { AdBanner } from "@/components/ui/AdBanner"
@@ -191,6 +192,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 ],
             }} />
             <ReadingProgressBar />
+            <ViewTracker newsId={news.id} />
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
                 <div className="max-w-4xl mx-auto">
                 {/* Breadcrumbs */}

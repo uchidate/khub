@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 const STORAGE_KEY = 'hallyuhub_favorites'
 
@@ -17,6 +18,7 @@ export function useFavorites() {
   const { status } = useSession()
   const [favorites, setFavorites] = useState<string[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const { trackFavorite } = useAnalytics()
 
   useEffect(() => {
     if (status === 'loading') return
@@ -66,6 +68,11 @@ export function useFavorites() {
 
     setFavorites(updated)
     saveLocal(updated)
+
+    // Rastrear no analytics
+    if (itemType) {
+      trackFavorite(id, itemType, isFav ? 'remove' : 'add')
+    }
 
     // Sync to DB for all supported content types
     const endpointPrefix = itemType ? API_ENDPOINTS[itemType] : null
