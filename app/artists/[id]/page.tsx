@@ -141,7 +141,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
     const stageNames = artist.stageNames || []
     const socialLinks = (artist.socialLinks as Record<string, string>) || {}
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
-    const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
     const age = birthDate ? Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
 
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
@@ -459,28 +459,33 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             {artist.productions.length > 0 ? (
                                 <div className="space-y-4">
                                     {artist.productions.map(({ production }) => (
-                                        <Link key={production.id} href={`/productions/${production.id}`}
-                                            className="group flex bg-zinc-900/50 rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/30 hover:bg-zinc-900 transition-all">
-                                            <div className="w-20 md:w-28 flex-shrink-0 relative bg-zinc-800">
-                                                {production.imageUrl ? (
-                                                    <Image src={production.imageUrl} alt={production.titlePt} fill sizes="112px"
-                                                        className="object-cover brightness-75 group-hover:brightness-90 transition-all" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <span className="text-xs font-black text-zinc-700 uppercase text-center px-2 leading-tight">{production.type}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 p-5">
-                                                <div className="flex flex-wrap items-center gap-3 mb-1">
-                                                    <h4 className="text-lg font-black text-white group-hover:text-purple-300 transition-colors">{production.titlePt}</h4>
-                                                    {production.year && <span className="text-xs font-bold text-purple-400">{production.year}</span>}
-                                                    <ExternalLink className="w-3.5 h-3.5 text-zinc-700 group-hover:text-purple-500 transition-colors ml-auto" />
+                                        <div key={production.id} className="relative group/card">
+                                            <Link href={`/productions/${production.id}`}
+                                                className="group flex bg-zinc-900/50 rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/30 hover:bg-zinc-900 transition-all">
+                                                <div className="w-20 md:w-28 flex-shrink-0 relative bg-zinc-800">
+                                                    {production.imageUrl ? (
+                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="112px"
+                                                            className="object-cover brightness-75 group-hover:brightness-90 transition-all" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center">
+                                                            <span className="text-xs font-black text-zinc-700 uppercase text-center px-2 leading-tight">{production.type}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {production.titleKr && <p className="text-xs text-zinc-600 font-medium mb-2">{production.titleKr}</p>}
-                                                {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2">{production.synopsis}</p>}
+                                                <div className="flex-1 p-5">
+                                                    <div className="flex flex-wrap items-center gap-3 mb-1">
+                                                        <h4 className="text-lg font-black text-white group-hover:text-purple-300 transition-colors">{production.titlePt}</h4>
+                                                        {production.year && <span className="text-xs font-bold text-purple-400">{production.year}</span>}
+                                                        <ExternalLink className="w-3.5 h-3.5 text-zinc-700 group-hover:text-purple-500 transition-colors ml-auto" />
+                                                    </div>
+                                                    {production.titleKr && <p className="text-xs text-zinc-600 font-medium mb-2">{production.titleKr}</p>}
+                                                    {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2">{production.synopsis}</p>}
+                                                </div>
+                                            </Link>
+                                            <div className="absolute top-2.5 right-2.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                                <AdminQuickEdit href={`/admin/productions/${production.id}`} label="Editar" />
                                             </div>
-                                        </Link>
+                                        </div>
                                     ))}
                                 </div>
                             ) : (

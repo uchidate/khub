@@ -173,6 +173,7 @@ export function ArtistsList() {
                                         ...getRoleLabels(artist.roles || [], artist.gender),
                                     ]}
                                     aspectRatio="poster"
+                                    adminHref={`/admin/artists/${artist.id}`}
                                 />
                             )
                         })}

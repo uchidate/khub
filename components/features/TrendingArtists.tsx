@@ -12,6 +12,7 @@ interface TrendingArtist {
     gender?: number | null
     trendingScore: number
     viewCount: number
+    streamingSignals?: { showTitle: string; rank: number }[]
 }
 
 interface TrendingArtistsProps {
@@ -90,6 +91,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                     const badgeClass = FEATURED_BADGE[index] ?? 'bg-black/60 text-zinc-300'
                     const glowClass = FEATURED_GLOW[index] ?? ''
                     const role = artist.roles?.[0] ? getRoleLabel(artist.roles[0], artist.gender) : null
+                    const signal = artist.streamingSignals?.[0]
 
                     return (
                         <Link
@@ -122,6 +124,17 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                 <div className={`absolute top-2.5 left-2.5 z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-lg ${badgeClass}`}>
                                     {index + 1}
                                 </div>
+
+                                {/* Streaming signal badge */}
+                                {signal && (
+                                    <div className="absolute top-2.5 right-2.5 z-10 max-w-[calc(100%-3.5rem)]">
+                                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-500/90 backdrop-blur-sm text-[8px] font-black text-white leading-none">
+                                            <span className="shrink-0">TOP {signal.rank}</span>
+                                            <span className="opacity-60">·</span>
+                                            <span className="truncate">{signal.showTitle}</span>
+                                        </span>
+                                    </div>
+                                )}
 
                                 {/* Bottom overlay */}
                                 <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -168,6 +181,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                     {rest.map((artist, i) => {
                         const index = i + 3
                         const borderClass = COMPACT_BORDER[i] ?? 'border border-purple-500/15'
+                        const compactSignal = artist.streamingSignals?.[0]
 
                         return (
                             <Link
@@ -196,6 +210,17 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                     )}
 
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                                    {/* Streaming badge */}
+                                    {compactSignal && (
+                                        <div className="absolute bottom-1 left-1 right-1 z-10">
+                                            <span className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-orange-500/90 backdrop-blur-sm text-[7px] font-black text-white leading-none w-full">
+                                                <span className="shrink-0">T{compactSignal.rank}</span>
+                                                <span className="opacity-50">·</span>
+                                                <span className="truncate">{compactSignal.showTitle}</span>
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <p className="dark:text-white text-zinc-900 font-semibold text-[10px] md:text-xs group-hover:text-orange-400 transition-colors line-clamp-1">

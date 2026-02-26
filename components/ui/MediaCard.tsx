@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
+import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 
 interface MediaCardProps {
     id: string
@@ -16,6 +17,7 @@ interface MediaCardProps {
     badges?: string[]
     artists?: string[] // Artistas mencionados (apenas para type="news")
     aspectRatio?: 'poster' | 'video' | 'square' // poster = 2:3, video = 16:9, square = 1:1
+    adminHref?: string
 }
 
 export function MediaCard({
@@ -27,7 +29,8 @@ export function MediaCard({
     href,
     badges = [],
     artists = [],
-    aspectRatio = 'poster'
+    aspectRatio = 'poster',
+    adminHref,
 }: MediaCardProps) {
     const aspectClass = aspectRatio === 'poster' ? 'aspect-[2/3]' : aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
     const [imgError, setImgError] = useState(false)
@@ -183,6 +186,11 @@ export function MediaCard({
                     className="bg-zinc-900/60 backdrop-blur-sm hover:bg-zinc-900/80 transition-colors"
                 />
             </div>
+            {adminHref && (
+                <div className="absolute bottom-10 left-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <AdminQuickEdit href={adminHref} label="Editar" />
+                </div>
+            )}
         </div>
     )
 }

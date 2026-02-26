@@ -66,7 +66,13 @@ export default async function Home() {
             primaryImageUrl: true,
             roles: true, gender: true,
             trendingScore: true,
-            viewCount: true
+            viewCount: true,
+            streamingSignals: {
+                where: { expiresAt: { gt: new Date() } },
+                select: { showTitle: true, rank: true },
+                orderBy: { rank: 'asc' },
+                take: 1,
+            },
         }
     })
 
@@ -325,7 +331,7 @@ export default async function Home() {
                                                 {item.imageUrl ? (
                                                     <Image src={item.imageUrl} alt={item.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                                                 ) : (
-                                                    <div className="w-full h-full bg-zinc-800" />
+                                                    <div className="w-full h-full dark:bg-zinc-800 bg-zinc-300" />
                                                 )}
                                             </div>
                                             <div className="flex flex-col justify-center">
