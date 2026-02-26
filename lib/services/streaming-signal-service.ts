@@ -63,12 +63,15 @@ export interface SignalIngestionResult {
 
 // ─── Score por ranking ────────────────────────────────────────────────────────
 
+// Curva de decaimento: rank 1 pesa 10× mais que rank 10.
+// rank 1 × STREAMING_WEIGHT = 100 × 200 = 20.000 pts por plataforma
+// rank 10 × STREAMING_WEIGHT = 10 × 200 =  2.000 pts por plataforma
 export function rankToScore(rank: number): number {
-    if (rank === 1) return 50
-    if (rank === 2) return 40
-    if (rank === 3) return 32
-    if (rank <= 5) return 24
-    if (rank <= 8) return 16
+    if (rank === 1) return 100
+    if (rank === 2) return 75
+    if (rank === 3) return 55
+    if (rank <= 5) return 35
+    if (rank <= 8) return 20
     return 10
 }
 
