@@ -472,18 +472,24 @@ model Activity {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  newsId    String
-  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String    @id @default(cuid())
+  content        String    @db.Text
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newsId         String
+  news           News      @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  // Moderação
+  status         String    @default("ACTIVE") // 'ACTIVE' | 'FLAGGED' | 'REMOVED'
+  moderationNote String?   @db.Text           // Nota do admin ao moderar
+  moderatedById  String?                      // ID do admin que moderou
+  moderatedAt    DateTime?                    // Quando a ação foi tomada
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([newsId])
   @@index([userId])
   @@index([createdAt])
+  @@index([status])
   @@index([newsId, createdAt])
 }
 
