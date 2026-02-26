@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
                     },
                     streamingSignals: {
                         where: { expiresAt: { gt: new Date() } },
-                        select: { showTitle: true, rank: true },
+                        select: { showTitle: true, rank: true, source: true },
                         orderBy: { rank: 'asc' },
                         take: 1,
                     },
