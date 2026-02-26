@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined
     const type = searchParams.get('type') || undefined
     const ageRating = searchParams.get('ageRating') || undefined
-    const sortBy = searchParams.get('sortBy') || 'newest'
+    const sortBy = searchParams.get('sortBy') || 'popular'
 
     const where: any = {
         // Filtrar produções marcadas como não-relevantes
@@ -44,14 +44,80 @@ export async function GET(request: NextRequest) {
     const ageRatingFilter = await applyAgeRatingFilter(ageRating)
     Object.assign(where, ageRatingFilter)
 
+    // Sort "popular": boost produções presentes no Top 10 dos streamings
+    if (sortBy === 'popular') {
+        // Buscar sinais ativos de streaming (plataformas reais, excluindo interno)
+        const activeSignals = await prisma.streamingTrendSignal.findMany({
+            where: {
+                expiresAt: { gt: new Date() },
+                source: { not: 'internal_production' },
+            },
+            select: { showTmdbId: true, rank: true },
+        })
+
+        // Melhor rank por showTmdbId (rank menor = posição mais alta)
+        const streamingBoost = new Map<string, number>()
+        for (const s of activeSignals) {
+            const existing = streamingBoost.get(s.showTmdbId)
+            if (existing === undefined || s.rank < existing) {
+                streamingBoost.set(s.showTmdbId, s.rank)
+            }
+        }
+
+        // Buscar IDs e campos de score de todas as produções que passam nos filtros
+        const allForScoring = await prisma.production.findMany({
+            where,
+            select: { id: true, tmdbId: true, voteAverage: true },
+        })
+
+        // Score: produções no streaming dominam; dentro de cada grupo, voteAverage desempata
+        // Boost: rank 1 → +1000, rank 10 → +100; base: voteAverage * 10 (máx 100)
+        const scored = allForScoring
+            .map(p => {
+                const bestRank = p.tmdbId ? streamingBoost.get(p.tmdbId) : undefined
+                const streamScore = bestRank !== undefined ? (11 - bestRank) * 100 : 0
+                const baseScore = (p.voteAverage ?? 0) * 10
+                return { id: p.id, score: streamScore + baseScore }
+            })
+            .sort((a, b) => b.score - a.score)
+
+        const total = scored.length
+        const pageIds = scored.slice(skip, skip + limit).map(p => p.id)
+
+        // Buscar dados completos apenas para a página atual
+        const pageProductions = await prisma.production.findMany({
+            where: { id: { in: pageIds } },
+            select: {
+                id: true,
+                titlePt: true,
+                titleKr: true,
+                type: true,
+                year: true,
+                imageUrl: true,
+                backdropUrl: true,
+                voteAverage: true,
+                streamingPlatforms: true,
+                ageRating: true,
+            },
+        })
+
+        // Restaurar a ordem do score (findMany não garante ordem do IN)
+        const prodById = new Map(pageProductions.map(p => [p.id, p]))
+        const productions = pageIds.map(id => prodById.get(id)).filter(Boolean)
+
+        return NextResponse.json({
+            productions,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit),
+            },
+        })
+    }
+
     let orderBy: any
     switch (sortBy) {
-        case 'popular':
-            orderBy = [
-                { voteAverage: { sort: 'desc', nulls: 'last' } },
-                { year: { sort: 'desc', nulls: 'last' } },
-            ]
-            break
         case 'rating':
             orderBy = [{ voteAverage: { sort: 'desc', nulls: 'last' } }, { year: 'desc' }]
             break
