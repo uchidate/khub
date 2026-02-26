@@ -91,7 +91,13 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = user.role
+        // user.role may be undefined for OAuth providers (PrismaAdapter only returns standard fields)
+        // Always fetch the latest role from DB to ensure correctness for all auth methods
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        })
+        token.role = dbUser?.role ?? 'user'
       }
       return token
     },
