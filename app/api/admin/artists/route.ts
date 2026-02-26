@@ -243,7 +243,24 @@ export async function PATCH(request: NextRequest) {
     }
     if (validated.nameHangul === '') data.nameHangul = null
     if (validated.tmdbId === '') data.tmdbId = null
-    if (validated.mbid === '') data.mbid = null
+    if (validated.mbid === '') {
+      data.mbid = null
+      // Reset sync timestamp so artist is re-queued for discography sync
+      data.discographySyncAt = null
+    }
+
+    // If mbid is being cleared, also delete all albums (they came from the wrong artist)
+    let clearedAlbumsCount = 0
+    if (validated.mbid === '') {
+      const oldArtist = await prisma.artist.findUnique({
+        where: { id: artistId },
+        select: { mbid: true },
+      })
+      if (oldArtist?.mbid) {
+        const deleted = await prisma.album.deleteMany({ where: { artistId } })
+        clearedAlbumsCount = deleted.count
+      }
+    }
 
     const artist = await prisma.artist.update({
       where: { id: artistId },
@@ -273,7 +290,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(artist)
+    return NextResponse.json({ ...artist, clearedAlbumsCount: clearedAlbumsCount || undefined })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
