@@ -126,7 +126,7 @@ const badgeClass = FEATURED_BADGE[index] ?? 'bg-black/60 text-zinc-300'
                                 {/* Streaming signal badge */}
                                 {signal && (
                                     <div className="absolute top-2.5 right-2.5 z-10 max-w-[calc(100%-3.5rem)]">
-                                        <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/95 backdrop-blur-sm text-[10px] font-black text-white leading-none shadow-lg">
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-red-600/95 backdrop-blur-sm text-xs font-black text-white leading-none shadow-lg">
                                             <span className="shrink-0">TOP {signal.rank}</span>
                                             <span className="opacity-60">·</span>
                                             <span className="truncate">{signal.showTitle}</span>
