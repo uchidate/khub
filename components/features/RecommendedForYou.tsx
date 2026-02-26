@@ -35,10 +35,10 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
                         <Heart className="w-6 h-6 text-white fill-white" />
                     </div>
                     <div>
-                        <h2 className="text-3xl md:text-4xl font-black text-white">
+                        <h2 className="text-3xl md:text-4xl font-black dark:text-white text-zinc-900">
                             Você Pode Gostar
                         </h2>
-                        <p className="text-zinc-400 text-sm mt-1">
+                        <p className="dark:text-zinc-400 text-zinc-600 text-sm mt-1">
                             Baseado nos seus {favoritesCount} artista{favoritesCount > 1 ? 's' : ''} favorito{favoritesCount > 1 ? 's' : ''}
                         </p>
                     </div>
@@ -62,10 +62,10 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
                     >
                         <Link
                             href={`/news/${item.id}`}
-                            className="group block bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all hover:shadow-lg hover:shadow-pink-500/10"
+                            className="group block dark:bg-zinc-900/50 bg-zinc-50 rounded-2xl overflow-hidden dark:border-white/5 border border-zinc-200 hover:border-pink-500/30 transition-all hover:shadow-lg hover:shadow-pink-500/10"
                         >
                             {/* Image */}
-                            <div className="relative aspect-video overflow-hidden bg-zinc-900">
+                            <div className="relative aspect-video overflow-hidden dark:bg-zinc-900 bg-zinc-200">
                                 {/* Recommended Badge */}
                                 <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full flex items-center gap-1.5">
                                     <Heart className="w-3 h-3 text-white fill-white" />
@@ -108,12 +108,12 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
                                 )}
 
                                 {/* Title */}
-                                <h3 className="text-white font-bold text-lg md:text-xl group-hover:text-pink-400 transition-colors line-clamp-2 mb-3 leading-tight">
+                                <h3 className="dark:text-white text-zinc-900 font-bold text-lg md:text-xl group-hover:text-pink-400 transition-colors line-clamp-2 mb-3 leading-tight">
                                     {item.title}
                                 </h3>
 
                                 {/* Meta */}
-                                <div className="flex items-center gap-4 text-xs text-zinc-400">
+                                <div className="flex items-center gap-4 text-xs dark:text-zinc-400 text-zinc-600">
                                     <div className="flex items-center gap-1.5">
                                         <Calendar className="w-3.5 h-3.5" />
                                         <span>
