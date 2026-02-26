@@ -7,6 +7,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -413,7 +414,12 @@ export default function ArtistsAdminPage() {
     },
     {
       key: 'albumsCount', label: 'Álbuns', sortable: true,
-      render: (artist) => <span className="text-pink-400">{artist.albumsCount}</span>,
+      render: (artist) => (
+        <Link href={`/admin/artists/${artist.id}/discography`}
+          className="text-pink-400 hover:text-pink-300 hover:underline font-bold">
+          {artist.albumsCount}
+        </Link>
+      ),
     },
     {
       key: 'createdAt', label: 'Cadastro', sortable: true,

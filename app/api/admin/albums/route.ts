@@ -33,14 +33,14 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+    const artistId = searchParams.get('artistId') || undefined
 
-    const where = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {}
+    const where = {
+      ...(artistId ? { artistId } : {}),
+      ...(search
+        ? { OR: [{ title: { contains: search, mode: 'insensitive' as const } }] }
+        : {}),
+    }
 
     const [albums, total] = await Promise.all([
       prisma.album.findMany({

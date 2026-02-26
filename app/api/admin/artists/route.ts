@@ -40,6 +40,24 @@ export async function GET(request: NextRequest) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
+
+    // Single-artist lookup: GET /api/admin/artists?id=<artistId>
+    const idLookup = searchParams.get('id')
+    if (idLookup) {
+      const artist = await prisma.artist.findUnique({
+        where: { id: idLookup },
+        select: {
+          id: true,
+          nameRomanized: true,
+          nameHangul: true,
+          primaryImageUrl: true,
+          discographySyncAt: true,
+        },
+      })
+      if (!artist) return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
+      return NextResponse.json(artist)
+    }
+
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
     const filter = searchParams.get('filter')
