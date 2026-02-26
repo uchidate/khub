@@ -187,7 +187,7 @@ export default async function Home() {
     const matchedProductions = uniqueTmdbIds.length > 0
         ? await prisma.production.findMany({
             where: { tmdbId: { in: uniqueTmdbIds } },
-            select: { id: true, tmdbId: true, imageUrl: true },
+            select: { id: true, tmdbId: true, imageUrl: true, titlePt: true },
         })
         : []
     const prodByTmdbId = new Map(matchedProductions.map(p => [p.tmdbId!, p]))
@@ -199,7 +199,7 @@ export default async function Home() {
         const prod = prodByTmdbId.get(show.showTmdbId)
         showsByPlatform[show.source].push({
             rank: show.rank,
-            showTitle: show.showTitle,
+            showTitle: prod?.titlePt ?? show.showTitle,
             showTmdbId: show.showTmdbId,
             source: show.source,
             productionId: prod?.id,
