@@ -249,17 +249,11 @@ export async function PATCH(request: NextRequest) {
       data.discographySyncAt = null
     }
 
-    // If mbid is being cleared, also delete all albums (they came from the wrong artist)
+    // If mbid is being cleared, also delete all albums (they may be orphaned)
     let clearedAlbumsCount = 0
     if (validated.mbid === '') {
-      const oldArtist = await prisma.artist.findUnique({
-        where: { id: artistId },
-        select: { mbid: true },
-      })
-      if (oldArtist?.mbid) {
-        const deleted = await prisma.album.deleteMany({ where: { artistId } })
-        clearedAlbumsCount = deleted.count
-      }
+      const deleted = await prisma.album.deleteMany({ where: { artistId } })
+      clearedAlbumsCount = deleted.count
     }
 
     const artist = await prisma.artist.update({
