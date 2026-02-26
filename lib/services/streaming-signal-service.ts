@@ -71,15 +71,38 @@ export function rankToScore(rank: number): number {
     return 10
 }
 
-// ─── TMDBTrendingProvider ─────────────────────────────────────────────────────
+// ─── TMDBStreamingProvider ────────────────────────────────────────────────────
+
+interface TMDBStreamingConfig {
+    /** Identificador único da fonte, ex: 'netflix_br' */
+    name: string
+    /** ID do provedor no TMDB (8 = Netflix, 337 = Disney+, 119 = Prime, 350 = Apple TV+) */
+    watchProviderId?: number
+    /** Região para filtro de disponibilidade, ex: 'BR' */
+    watchRegion?: string
+}
+
+// IDs de provedores no TMDB
+export const TMDB_PROVIDER_IDS = {
+    NETFLIX: 8,
+    DISNEY_PLUS: 337,
+    AMAZON_PRIME: 119,
+    APPLE_TV_PLUS: 350,
+} as const
 
 /**
- * Busca K-dramas populares via TMDB /discover/tv (filtra por original_language=ko).
- * Mais confiável que /trending/tv/week que não suporta filtro por idioma.
+ * Provider genérico para qualquer plataforma de streaming via TMDB /discover/tv.
+ * Filtra por idioma coreano + plataforma + região e extrai o elenco de cada show.
+ *
+ * Sem watchProviderId: retorna K-dramas populares globalmente (sem filtro de plataforma).
  */
-export class TMDBTrendingProvider implements StreamingSignalProvider {
-    readonly name = 'tmdb_trending'
+export class TMDBStreamingProvider implements StreamingSignalProvider {
+    readonly name: string
     private rateLimiter = new RateLimiter(RateLimiterPresets.TMDB)
+
+    constructor(private config: TMDBStreamingConfig) {
+        this.name = config.name
+    }
 
     private async fetch<T>(path: string): Promise<T> {
         await this.rateLimiter.acquire()
@@ -93,10 +116,21 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
     async fetchSignals(): Promise<StreamingSignal[]> {
         if (!TMDB_API_KEY) throw new Error('TMDB_API_KEY não configurado')
 
-        // /discover/tv garante conteúdo coreano; /trending/tv/week ignora with_original_language
+        const params = new URLSearchParams({
+            with_original_language: 'ko',
+            sort_by: 'popularity.desc',
+            include_adult: 'false',
+        })
+        if (this.config.watchProviderId) {
+            params.set('with_watch_providers', String(this.config.watchProviderId))
+        }
+        if (this.config.watchRegion) {
+            params.set('watch_region', this.config.watchRegion)
+        }
+
         const discover = await this.fetch<{
             results: Array<{ id: number; name: string; original_language: string }>
-        }>('/discover/tv?with_original_language=ko&sort_by=popularity.desc&include_adult=false')
+        }>(`/discover/tv?${params.toString()}`)
 
         const koreanShows = discover.results
             .filter(s => s.original_language === 'ko')
@@ -130,7 +164,7 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
                     })
                 }
             } catch (err) {
-                console.warn(`[TMDBTrendingProvider] Erro ao buscar créditos de show ${show.id}:`, err)
+                console.warn(`[TMDBStreamingProvider:${this.name}] Erro no show ${show.id}:`, err)
             }
         }
 
@@ -145,23 +179,52 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
  * Garante matches — artistas já estão no DB por definição.
  * Não requer chamadas externas.
  *
- * Critério: top N produções por voteAverage (≥ 7.0) e não-flagged.
+ * Critério: produções dos últimos 3 anos (recentes), com nota ≥ 7.0,
+ * ordenadas por ano DESC para priorizar as mais recentes.
+ * Se não houver produções recentes suficientes, complementa com as mais antigas.
  */
 export class InternalProductionProvider implements StreamingSignalProvider {
     readonly name = 'internal_production'
 
     async fetchSignals(): Promise<StreamingSignal[]> {
-        const productions = await prisma.production.findMany({
+        const threeYearsAgo = new Date().getFullYear() - 3
+
+        // Prioridade 1: lançamentos recentes (últimos 3 anos) com nota ≥ 7.0
+        const recent = await prisma.production.findMany({
             where: {
                 flaggedAsNonKorean: false,
                 voteAverage: { gte: 7.0 },
-                artists: { some: {} }, // apenas produções com elenco cadastrado
+                year: { gte: threeYearsAgo },
+                artists: { some: {} },
             },
-            orderBy: [{ voteAverage: 'desc' }],
+            orderBy: [{ year: 'desc' }, { voteAverage: 'desc' }],
             take: TOP_N_SHOWS,
+            select: { id: true, titlePt: true, year: true },
+        })
+
+        // Complementa com produções mais antigas se não atingir TOP_N_SHOWS
+        let productionIds = recent.map(p => p.id)
+        if (productionIds.length < TOP_N_SHOWS) {
+            const older = await prisma.production.findMany({
+                where: {
+                    flaggedAsNonKorean: false,
+                    voteAverage: { gte: 8.0 }, // exige nota mais alta para produções antigas
+                    id: { notIn: productionIds },
+                    artists: { some: {} },
+                },
+                orderBy: [{ voteAverage: 'desc' }],
+                take: TOP_N_SHOWS - productionIds.length,
+                select: { id: true },
+            })
+            productionIds = [...productionIds, ...older.map(p => p.id)]
+        }
+
+        const productions = await prisma.production.findMany({
+            where: { id: { in: productionIds } },
             select: {
                 id: true,
                 titlePt: true,
+                year: true,
                 artists: {
                     orderBy: { castOrder: 'asc' },
                     take: MAX_CAST_PER_SHOW,
@@ -173,6 +236,9 @@ export class InternalProductionProvider implements StreamingSignalProvider {
                 },
             },
         })
+
+        // Reordena para manter a ordem original (recentes primeiro)
+        productions.sort((a, b) => productionIds.indexOf(a.id) - productionIds.indexOf(b.id))
 
         const signals: StreamingSignal[] = []
 
@@ -199,10 +265,19 @@ export class InternalProductionProvider implements StreamingSignalProvider {
 // ─── Providers registrados ────────────────────────────────────────────────────
 
 export function getSignalProviders(): StreamingSignalProvider[] {
+    const BR = 'BR'
     return [
-        new InternalProductionProvider(), // primeiro: sem API, resultados imediatos
-        new TMDBTrendingProvider(),        // segundo: dados externos mais frescos
-        // new FlixPatrolProvider(),        // futuro
+        // Sem API externa — match garantido com dados do banco
+        new InternalProductionProvider(),
+
+        // Streamings BR — K-dramas mais populares por plataforma
+        new TMDBStreamingProvider({ name: 'netflix_br',  watchProviderId: TMDB_PROVIDER_IDS.NETFLIX,      watchRegion: BR }),
+        new TMDBStreamingProvider({ name: 'disney_br',   watchProviderId: TMDB_PROVIDER_IDS.DISNEY_PLUS,   watchRegion: BR }),
+        new TMDBStreamingProvider({ name: 'prime_br',    watchProviderId: TMDB_PROVIDER_IDS.AMAZON_PRIME,  watchRegion: BR }),
+        new TMDBStreamingProvider({ name: 'apple_br',    watchProviderId: TMDB_PROVIDER_IDS.APPLE_TV_PLUS, watchRegion: BR }),
+
+        // Fallback global (sem filtro de plataforma) — K-dramas mais populares no TMDB
+        new TMDBStreamingProvider({ name: 'tmdb_trending' }),
     ]
 }
 
