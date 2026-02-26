@@ -39,7 +39,7 @@ const NavBar = () => {
 
     return (
         <>
-            <nav className={`w-full z-[100] fixed top-0 transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'bg-transparent bg-gradient-to-b from-black/80 to-transparent py-6'}`}>
+            <nav className={`w-full z-[100] fixed top-0 transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'bg-transparent bg-gradient-to-b from-black/80 dark:from-black/80 to-transparent py-6'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between gap-4 md:gap-6 h-16 md:h-20">
                         {/* Logo */}
@@ -53,7 +53,9 @@ const NavBar = () => {
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`text-sm font-medium hover:text-zinc-300 transition-colors whitespace-nowrap ${pathname === link.href ? "text-white" : "text-zinc-400"
+                                    className={`text-sm font-medium transition-colors whitespace-nowrap ${pathname === link.href
+                                        ? "text-zinc-900 dark:text-white font-semibold"
+                                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300"
                                         }`}
                                 >
                                     {link.label}
@@ -69,7 +71,7 @@ const NavBar = () => {
                         {/* Right side actions - Grouped */}
                         <div className="flex items-center gap-2 flex-shrink-0">
                             {/* Desktop actions grouped */}
-                            <div className="hidden md:flex items-center gap-2 pr-3 border-r border-zinc-700/50">
+                            <div className="hidden md:flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-zinc-700/50">
                                 <ThemeToggle />
                             </div>
 
@@ -83,14 +85,14 @@ const NavBar = () => {
                                 {/* Mobile search button */}
                                 <button
                                     onClick={() => setSearchOpen(true)}
-                                    className="p-2 text-zinc-400 hover:text-white transition-colors"
+                                    className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
                                     aria-label="Buscar"
                                 >
                                     <Search className="w-5 h-5" />
                                 </button>
                                 <ThemeToggle />
                                 <UserMenu />
-                                <div className="pl-2 border-l border-zinc-700/50">
+                                <div className="pl-2 border-l border-zinc-200 dark:border-zinc-700/50">
                                     <MobileMenu links={navLinks} />
                                 </div>
                             </div>

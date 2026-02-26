@@ -46,6 +46,7 @@ const AGE_RATING_OPTIONS: { value: string; label: string; color: string }[] = [
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Recentes' },
+    { value: 'popular', label: 'Populares' },
     { value: 'rating', label: 'Avaliação' },
     { value: 'year', label: 'Ano' },
     { value: 'name', label: 'A-Z' },
@@ -87,6 +88,8 @@ export function ProductionsList() {
     const [isLoading, setIsLoading] = useState(true)
     const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
     const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
+    const [pageJumpInput, setPageJumpInput] = useState('')
+    const [isEditingPage, setIsEditingPage] = useState(false)
 
     const getFilters = useCallback(() => ({
         search: searchParams.get('search') || '',
@@ -298,7 +301,7 @@ export function ProductionsList() {
 
                     {/* Pagination */}
                     {pagination.pages > 1 && (
-                        <div className="mt-12 flex items-center justify-center gap-4">
+                        <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
                             <button
                                 onClick={() => handlePage(currentPage - 1)}
                                 disabled={currentPage === 1}
@@ -307,10 +310,49 @@ export function ProductionsList() {
                                 <ChevronLeft className="w-4 h-4" />
                                 Anterior
                             </button>
+
+                            {/* Page indicator / jump */}
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-zinc-400">Página {currentPage} de {pagination.pages}</span>
-                                <span className="text-xs text-zinc-600">({pagination.total} produções)</span>
+                                <span className="text-sm text-zinc-500">Página</span>
+                                {isEditingPage ? (
+                                    <input
+                                        autoFocus
+                                        type="number"
+                                        min={1}
+                                        max={pagination.pages}
+                                        value={pageJumpInput}
+                                        onChange={e => setPageJumpInput(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                const p = Math.min(pagination.pages, Math.max(1, parseInt(pageJumpInput) || currentPage))
+                                                handlePage(p)
+                                                setIsEditingPage(false)
+                                                setPageJumpInput('')
+                                            }
+                                            if (e.key === 'Escape') {
+                                                setIsEditingPage(false)
+                                                setPageJumpInput('')
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            setIsEditingPage(false)
+                                            setPageJumpInput('')
+                                        }}
+                                        className="w-14 text-center px-2 py-1 bg-zinc-800 border border-purple-500/50 rounded text-sm text-white focus:outline-none"
+                                    />
+                                ) : (
+                                    <button
+                                        onClick={() => { setIsEditingPage(true); setPageJumpInput(String(currentPage)) }}
+                                        className="px-2 py-1 rounded text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 hover:text-purple-400 transition-colors min-w-[2rem] text-center"
+                                        title="Clique para ir a uma página específica"
+                                    >
+                                        {currentPage}
+                                    </button>
+                                )}
+                                <span className="text-sm text-zinc-500">de {pagination.pages}</span>
+                                <span className="text-xs text-zinc-600 hidden sm:inline">({pagination.total.toLocaleString('pt-BR')} produções)</span>
                             </div>
+
                             <button
                                 onClick={() => handlePage(currentPage + 1)}
                                 disabled={currentPage === pagination.pages}

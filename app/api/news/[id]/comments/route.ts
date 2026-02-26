@@ -24,7 +24,8 @@ export async function GET(
     try {
         const comments = await prisma.comment.findMany({
             where: {
-                newsId: params.id
+                newsId: params.id,
+                status: 'ACTIVE',
             },
             include: {
                 user: {

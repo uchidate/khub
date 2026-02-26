@@ -46,11 +46,17 @@ export async function GET(request: NextRequest) {
 
     let orderBy: any
     switch (sortBy) {
+        case 'popular':
+            orderBy = [
+                { voteAverage: { sort: 'desc', nulls: 'last' } },
+                { year: { sort: 'desc', nulls: 'last' } },
+            ]
+            break
         case 'rating':
-            orderBy = [{ voteAverage: 'desc' }, { year: 'desc' }]
+            orderBy = [{ voteAverage: { sort: 'desc', nulls: 'last' } }, { year: 'desc' }]
             break
         case 'year':
-            orderBy = { year: 'desc' }
+            orderBy = [{ year: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }]
             break
         case 'name':
             orderBy = { titlePt: 'asc' }
