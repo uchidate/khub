@@ -178,7 +178,7 @@ export default function RegisterPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 placeholder:text-right focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
                   placeholder="Seu nome completo"
                 />
               </div>
@@ -197,7 +197,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 placeholder:text-right focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -216,7 +216,7 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 placeholder:text-right focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
                   placeholder="Mínimo 6 caracteres"
                 />
               </div>
@@ -235,7 +235,7 @@ export default function RegisterPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm bg-black/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 placeholder:text-right focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all"
                   placeholder="Repita a senha"
                 />
               </div>

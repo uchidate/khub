@@ -44,7 +44,7 @@ export function Input({
           id={inputId}
           className={`
             w-full px-4 py-3 text-sm
-            ${icon ? 'pl-11' : ''}
+            ${icon ? 'pl-11 placeholder:text-right' : ''}
             bg-zinc-900 text-white
             border rounded-lg
             transition-all duration-200
