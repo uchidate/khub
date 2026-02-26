@@ -5,41 +5,43 @@
  * baseados em presença de artistas em conteúdo popular de streaming.
  *
  * Fluxo:
- *   1. Cada provider busca os shows do momento em uma fonte (TMDB, FlixPatrol, etc.)
- *   2. Para cada show, busca o elenco e converte em StreamingSignal[]
+ *   1. Cada provider busca os shows do momento em uma fonte
+ *   2. Para cada show, extrai o elenco e converte em StreamingSignal[]
  *   3. O cron fetch-streaming-signals usa todos os providers registrados
  *   4. Os signals são persistidos em StreamingTrendSignal (upsert)
- *   5. O cron update-trending soma os scores ativos no trendingScore final
+ *   5. Ao final do cron, update-trending é executado automaticamente
  *
- * Para adicionar uma nova fonte: implementar StreamingSignalProvider e
- * registrar em SIGNAL_PROVIDERS.
+ * Providers:
+ *   - TMDBTrendingProvider:      top K-dramas via /discover/tv (TMDB API)
+ *   - InternalProductionProvider: top produções do nosso DB via ArtistProduction
+ *
+ * Para adicionar nova fonte: implementar StreamingSignalProvider e
+ * registrar em getSignalProviders().
  */
 
+import prisma from '@/lib/prisma'
 import { RateLimiter, RateLimiterPresets } from '@/lib/utils/rate-limiter'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 
-// Número de shows do ranking a processar (top N)
 const TOP_N_SHOWS = 10
-
-// Máximo de atores por show (para evitar rate limit excessivo)
 const MAX_CAST_PER_SHOW = 15
-
-// Dias até um signal expirar
 const SIGNAL_TTL_DAYS = 7
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export interface StreamingSignal {
-    /** TMDB person ID do ator */
-    tmdbPersonId: number
-    /** Nome do ator conforme TMDB */
+    /** TMDB person ID (providers externos) — mutuamente exclusivo com artistId */
+    tmdbPersonId?: number
+    /** ID interno do artista (InternalProductionProvider) — evita lookup extra */
+    artistId?: string
+    /** Nome do ator */
     personName: string
-    /** Título do show onde aparece */
+    /** Título do show */
     showTitle: string
-    /** TMDB ID do show */
-    showTmdbId: number
+    /** ID do show (TMDB ou internal productionId) */
+    showTmdbId: string
     /** Posição no ranking (1–N) */
     rank: number
     /** Identificador da fonte */
@@ -47,7 +49,6 @@ export interface StreamingSignal {
 }
 
 export interface StreamingSignalProvider {
-    /** Identificador único da fonte, ex: "tmdb_trending" */
     readonly name: string
     fetchSignals(): Promise<StreamingSignal[]>
 }
@@ -62,10 +63,6 @@ export interface SignalIngestionResult {
 
 // ─── Score por ranking ────────────────────────────────────────────────────────
 
-/**
- * Converte posição no ranking em pontuação de boost.
- * Rank 1 = boost máximo, rank 10 = boost mínimo.
- */
 export function rankToScore(rank: number): number {
     if (rank === 1) return 30
     if (rank === 2) return 25
@@ -77,8 +74,8 @@ export function rankToScore(rank: number): number {
 // ─── TMDBTrendingProvider ─────────────────────────────────────────────────────
 
 /**
- * Provider que usa o endpoint /trending/tv/week do TMDB
- * filtrado por produções coreanas (original_language=ko).
+ * Busca K-dramas populares via TMDB /discover/tv (filtra por original_language=ko).
+ * Mais confiável que /trending/tv/week que não suporta filtro por idioma.
  */
 export class TMDBTrendingProvider implements StreamingSignalProvider {
     readonly name = 'tmdb_trending'
@@ -86,7 +83,8 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
 
     private async fetch<T>(path: string): Promise<T> {
         await this.rateLimiter.acquire()
-        const url = `${TMDB_BASE_URL}${path}${path.includes('?') ? '&' : '?'}api_key=${TMDB_API_KEY}`
+        const sep = path.includes('?') ? '&' : '?'
+        const url = `${TMDB_BASE_URL}${path}${sep}api_key=${TMDB_API_KEY}`
         const res = await fetch(url, { next: { revalidate: 0 } })
         if (!res.ok) throw new Error(`TMDB ${path} → ${res.status}`)
         return res.json() as Promise<T>
@@ -95,12 +93,12 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
     async fetchSignals(): Promise<StreamingSignal[]> {
         if (!TMDB_API_KEY) throw new Error('TMDB_API_KEY não configurado')
 
-        // 1. Top trending Korean TV shows da semana
-        const trending = await this.fetch<{ results: Array<{ id: number; name: string; original_language: string }> }>(
-            '/trending/tv/week?with_original_language=ko'
-        )
+        // /discover/tv garante conteúdo coreano; /trending/tv/week ignora with_original_language
+        const discover = await this.fetch<{
+            results: Array<{ id: number; name: string; original_language: string }>
+        }>('/discover/tv?with_original_language=ko&sort_by=popularity.desc&include_adult=false')
 
-        const koreanShows = trending.results
+        const koreanShows = discover.results
             .filter(s => s.original_language === 'ko')
             .slice(0, TOP_N_SHOWS)
 
@@ -108,7 +106,6 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
 
         const signals: StreamingSignal[] = []
 
-        // 2. Para cada show, buscar aggregate_credits (agrupa personagens de todas as temporadas)
         for (let i = 0; i < koreanShows.length; i++) {
             const show = koreanShows[i]
             const rank = i + 1
@@ -127,13 +124,12 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
                         tmdbPersonId: member.id,
                         personName: member.name,
                         showTitle: show.name,
-                        showTmdbId: show.id,
+                        showTmdbId: String(show.id),
                         rank,
                         source: this.name,
                     })
                 }
             } catch (err) {
-                // Não bloqueia os outros shows se um falhar
                 console.warn(`[TMDBTrendingProvider] Erro ao buscar créditos de show ${show.id}:`, err)
             }
         }
@@ -142,14 +138,71 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
     }
 }
 
+// ─── InternalProductionProvider ───────────────────────────────────────────────
+
+/**
+ * Usa produções já cadastradas no banco (com elenco sincronizado via ArtistProduction).
+ * Garante matches — artistas já estão no DB por definição.
+ * Não requer chamadas externas.
+ *
+ * Critério: top N produções por voteAverage (≥ 7.0) e não-flagged.
+ */
+export class InternalProductionProvider implements StreamingSignalProvider {
+    readonly name = 'internal_production'
+
+    async fetchSignals(): Promise<StreamingSignal[]> {
+        const productions = await prisma.production.findMany({
+            where: {
+                flaggedAsNonKorean: false,
+                voteAverage: { gte: 7.0 },
+                artists: { some: {} }, // apenas produções com elenco cadastrado
+            },
+            orderBy: [{ voteAverage: 'desc' }],
+            take: TOP_N_SHOWS,
+            select: {
+                id: true,
+                titlePt: true,
+                artists: {
+                    orderBy: { castOrder: 'asc' },
+                    take: MAX_CAST_PER_SHOW,
+                    select: {
+                        artistId: true,
+                        castOrder: true,
+                        artist: { select: { nameRomanized: true } },
+                    },
+                },
+            },
+        })
+
+        const signals: StreamingSignal[] = []
+
+        for (let i = 0; i < productions.length; i++) {
+            const prod = productions[i]
+            const rank = i + 1
+
+            for (const cast of prod.artists) {
+                signals.push({
+                    artistId: cast.artistId,
+                    personName: cast.artist.nameRomanized,
+                    showTitle: prod.titlePt,
+                    showTmdbId: `internal:${prod.id}`,
+                    rank,
+                    source: this.name,
+                })
+            }
+        }
+
+        return signals
+    }
+}
+
 // ─── Providers registrados ────────────────────────────────────────────────────
-// Para adicionar nova fonte: instanciar aqui e inserir no array.
 
 export function getSignalProviders(): StreamingSignalProvider[] {
     return [
-        new TMDBTrendingProvider(),
-        // new FlixPatrolProvider(),  // futuro
-        // new JustWatchProvider(),   // futuro
+        new InternalProductionProvider(), // primeiro: sem API, resultados imediatos
+        new TMDBTrendingProvider(),        // segundo: dados externos mais frescos
+        // new FlixPatrolProvider(),        // futuro
     ]
 }
 
@@ -159,11 +212,6 @@ export function signalExpiresAt(fetchedAt: Date = new Date()): Date {
     return new Date(fetchedAt.getTime() + SIGNAL_TTL_DAYS * 24 * 60 * 60 * 1000)
 }
 
-/**
- * Retorna o boost total de streaming para um artista
- * somando os scores dos seus signals ainda não expirados.
- * Usado pelo update-trending para compor o trendingScore final.
- */
 export function computeStreamingBoost(signals: Array<{ score: number }>): number {
     return signals.reduce((sum, s) => sum + s.score, 0)
 }
