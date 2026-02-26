@@ -153,20 +153,17 @@ export function MediaCard({
                         {/* Bottom: streaming badge + title + subtitle + artists */}
                         <div className="absolute bottom-0 left-0 right-0 p-4">
                             {/* Streaming badge */}
-                            {streamingSignal && (() => {
-                                const cfg = streamingSignal.source ? getStreamingConfig(streamingSignal.source) : null
-                                return (
-                                    <div className="mb-2">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md backdrop-blur-sm text-white shadow-lg max-w-full overflow-hidden ${cfg ? cfg.bgColor : 'bg-orange-500/95'}`}>
-                                            <span className="text-[11px] font-black whitespace-nowrap">TOP {streamingSignal.rank}</span>
-                                            <span className="text-[9px] opacity-60">·</span>
-                                            {cfg && <span className="text-[10px] font-black whitespace-nowrap">{cfg.label}</span>}
-                                            {cfg && <span className="text-[9px] opacity-60">·</span>}
-                                            <span className="text-[10px] font-bold truncate">{streamingSignal.showTitle}</span>
-                                        </span>
-                                    </div>
-                                )
-                            })()}
+                            {streamingSignal && streamingSignal.source !== 'internal_production' && (
+                                <div className="mb-2">
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-red-600 backdrop-blur-sm text-white shadow-lg max-w-full overflow-hidden">
+                                        <span className="text-[11px] font-black whitespace-nowrap">TOP {streamingSignal.rank}</span>
+                                        <span className="text-[9px] opacity-60">·</span>
+                                        {streamingSignal.source && <span className="text-[10px] font-black whitespace-nowrap">{getStreamingConfig(streamingSignal.source).label}</span>}
+                                        {streamingSignal.source && <span className="text-[9px] opacity-60">·</span>}
+                                        <span className="text-[10px] font-bold truncate">{streamingSignal.showTitle}</span>
+                                    </span>
+                                </div>
+                            )}
                             <h3 className="text-xl md:text-2xl font-display font-black text-white leading-[0.9] mb-1 drop-shadow-lg uppercase italic tracking-tighter">
                                 {title}
                             </h3>

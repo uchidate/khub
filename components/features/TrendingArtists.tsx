@@ -125,20 +125,17 @@ const badgeClass = FEATURED_BADGE[index] ?? 'bg-black/60 text-zinc-300'
                                 </div>
 
                                 {/* Streaming signal badge */}
-                                {signal && (() => {
-                                    const cfg = signal.source ? getStreamingConfig(signal.source) : null
-                                    return (
-                                        <div className="absolute top-2.5 right-2.5 z-10 max-w-[calc(100%-3.5rem)]">
-                                            <span className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md backdrop-blur-sm text-xs font-black text-white leading-none shadow-lg ${cfg ? cfg.bgColor : 'bg-red-600/95'}`}>
-                                                <span className="shrink-0">TOP {signal.rank}</span>
-                                                <span className="opacity-60">·</span>
-                                                {cfg && <span className="shrink-0">{cfg.label}</span>}
-                                                {cfg && <span className="opacity-60">·</span>}
-                                                <span className="truncate">{signal.showTitle}</span>
-                                            </span>
-                                        </div>
-                                    )
-                                })()}
+                                {signal && signal.source !== 'internal_production' && (
+                                    <div className="absolute top-2.5 right-2.5 z-10 max-w-[calc(100%-3.5rem)]">
+                                        <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-red-600 backdrop-blur-sm text-xs font-black text-white leading-none shadow-lg">
+                                            <span className="shrink-0">TOP {signal.rank}</span>
+                                            <span className="opacity-60">·</span>
+                                            {signal.source && <span className="shrink-0">{getStreamingConfig(signal.source).label}</span>}
+                                            {signal.source && <span className="opacity-60">·</span>}
+                                            <span className="truncate">{signal.showTitle}</span>
+                                        </span>
+                                    </div>
+                                )}
 
                                 {/* Bottom overlay */}
                                 <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -203,18 +200,15 @@ const badgeClass = FEATURED_BADGE[index] ?? 'bg-black/60 text-zinc-300'
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                                     {/* Streaming badge */}
-                                    {compactSignal && (() => {
-                                        const cfg = compactSignal.source ? getStreamingConfig(compactSignal.source) : null
-                                        return (
-                                            <div className="absolute bottom-1.5 left-1 right-1 z-10">
-                                                <span className={`flex items-center gap-0.5 px-1.5 py-1 rounded-sm backdrop-blur-sm text-[9px] font-black text-white leading-none w-full shadow-md ${cfg ? cfg.bgColor : 'bg-orange-500/95'}`}>
-                                                    <span className="shrink-0">T{compactSignal.rank}</span>
-                                                    <span className="opacity-50">·</span>
-                                                    {cfg && <span className="shrink-0 truncate">{cfg.label}</span>}
-                                                </span>
-                                            </div>
-                                        )
-                                    })()}
+                                    {compactSignal && compactSignal.source !== 'internal_production' && (
+                                        <div className="absolute bottom-1.5 left-1 right-1 z-10">
+                                            <span className="flex items-center gap-0.5 px-1.5 py-1 rounded-sm bg-red-600 backdrop-blur-sm text-[9px] font-black text-white leading-none w-full shadow-md">
+                                                <span className="shrink-0">T{compactSignal.rank}</span>
+                                                <span className="opacity-50">·</span>
+                                                {compactSignal.source && <span className="shrink-0 truncate">{getStreamingConfig(compactSignal.source).label}</span>}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <p className="dark:text-white text-zinc-900 font-semibold text-[10px] md:text-xs group-hover:text-orange-400 transition-colors line-clamp-1">

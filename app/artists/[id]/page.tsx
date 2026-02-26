@@ -470,8 +470,8 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             {artist.productions.length > 0 ? (
                                 <div className="space-y-4">
                                     {artist.productions.map(({ production }) => {
-                                        const streamSignal = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
-                                        const streamConfig = streamSignal ? getStreamingConfig(streamSignal.source) : null
+                                        const streamSignalRaw = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
+                                        const streamSignal = streamSignalRaw?.source !== 'internal_production' ? streamSignalRaw : null
                                         return (
                                         <div key={production.id} className="relative group/card">
                                             <Link href={`/productions/${production.id}`}
@@ -485,12 +485,12 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                             <span className="text-xs font-black text-zinc-700 uppercase text-center px-2 leading-tight">{production.type}</span>
                                                         </div>
                                                     )}
-                                                    {streamSignal && streamConfig && (
+                                                    {streamSignal && (
                                                         <div className="absolute bottom-0 left-0 right-0 p-1">
-                                                            <span className={`flex items-center gap-1 px-1.5 py-1 rounded text-[9px] font-black text-white leading-none w-full ${streamConfig.bgColor}`}>
+                                                            <span className="flex items-center gap-1 px-1.5 py-1 rounded text-[9px] font-black text-white leading-none w-full bg-red-600">
                                                                 <span className="shrink-0">TOP {streamSignal.rank}</span>
                                                                 <span className="opacity-60">·</span>
-                                                                <span className="truncate">{streamConfig.label}</span>
+                                                                <span className="truncate">{getStreamingConfig(streamSignal.source).label}</span>
                                                             </span>
                                                         </div>
                                                     )}
