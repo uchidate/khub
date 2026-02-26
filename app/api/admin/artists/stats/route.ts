@@ -14,6 +14,12 @@
  *   noSocialPending  — socialLinksUpdatedAt null (never tried)
  *   noSocialAttempted — socialLinksUpdatedAt set but no links found yet
  *
+ * group breakdown:
+ *   withGroup       — has active ArtistGroupMembership
+ *   noGroup         — no active membership (total)
+ *   noGroupUnsynced — no membership + groupSyncAt null (never tried MusicBrainz)
+ *   noGroupSolo     — no membership + groupSyncAt set (tried, solo or not found)
+ *
  * All counts exclude flaggedAsNonKorean artists.
  */
 import { NextResponse } from 'next/server'
@@ -40,6 +46,9 @@ export async function GET() {
     noPhotoNoTmdb,
     noSocialPending,
     noSocialAttempted,
+    withGroup,
+    noGroupUnsynced,
+    noGroupSolo,
   ] = await Promise.all([
     prisma.artist.count(),
     prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
@@ -53,7 +62,7 @@ export async function GET() {
     prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: null } }),
     // no social links — never tried
     prisma.artist.count({ where: { ...active, socialLinksUpdatedAt: null } }),
-    // no social links — tried, nothing found (updatedAt set but socialLinks is still null)
+    // no social links — tried, nothing found
     prisma.artist.count({
       where: {
         ...active,
@@ -61,7 +70,13 @@ export async function GET() {
         socialLinks: { equals: Prisma.DbNull },
       },
     }),
+    // groups
+    prisma.artist.count({ where: { ...active, memberships: { some: { isActive: true } } } }),
+    prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null } }),
+    prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } } }),
   ])
+
+  const noGroup = noGroupUnsynced + noGroupSolo
 
   return NextResponse.json({
     total,
@@ -75,5 +90,9 @@ export async function GET() {
     noSocialTotal: noSocialPending + noSocialAttempted,
     noSocialPending,
     noSocialAttempted,
+    withGroup,
+    noGroup,
+    noGroupUnsynced,
+    noGroupSolo,
   })
 }
