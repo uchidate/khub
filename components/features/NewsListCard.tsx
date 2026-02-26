@@ -3,17 +3,37 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-interface NewsListCardProps {
-    id: string
-    title: string
-    imageUrl: string | null
-    publishedAt: string
-    tags: string[]
-    contentMd?: string | null
-    artists?: string[]
+const SOURCE_LABELS: Record<string, string> = {
+    'soompi.com': 'Soompi',
+    'koreaboo.com': 'Koreaboo',
+    'kpopstarz.com': 'KpopStarz',
+    'dramabeans.com': 'Dramabeans',
+    'asianjunkie.com': 'Asian Junkie',
 }
 
-function stripMarkdown(text: string): string {
+export function getSourceLabel(url?: string | null): string | null {
+    if (!url) return null
+    try {
+        const host = new URL(url).hostname.replace(/^www\./, '')
+        return SOURCE_LABELS[host] ?? null
+    } catch {
+        return null
+    }
+}
+
+export function relativeTime(dateStr: string): string {
+    const diffMs = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'agora'
+    if (mins < 60) return `há ${mins}min`
+    const hours = Math.floor(diffMs / 3600000)
+    if (hours < 24) return `há ${hours}h`
+    const days = Math.floor(diffMs / 86400000)
+    if (days < 7) return `há ${days}d`
+    return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
+
+export function stripMarkdown(text: string): string {
     return text
         .replace(/#{1,6}\s+/g, '')
         .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -26,6 +46,17 @@ function stripMarkdown(text: string): string {
         .trim()
 }
 
+interface NewsListCardProps {
+    id: string
+    title: string
+    imageUrl: string | null
+    publishedAt: string
+    tags: string[]
+    contentMd?: string | null
+    artists?: string[]
+    sourceUrl?: string | null
+}
+
 export function NewsListCard({
     id,
     title,
@@ -34,8 +65,10 @@ export function NewsListCard({
     tags,
     contentMd,
     artists = [],
+    sourceUrl,
 }: NewsListCardProps) {
     const excerpt = contentMd ? stripMarkdown(contentMd).slice(0, 140) : null
+    const sourceLabel = getSourceLabel(sourceUrl)
 
     return (
         <Link
@@ -57,6 +90,12 @@ export function NewsListCard({
                         <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                         </svg>
+                    </div>
+                )}
+                {/* Source badge */}
+                {sourceLabel && (
+                    <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/75 backdrop-blur-sm text-zinc-300 text-[9px] font-black uppercase tracking-wider rounded-sm">
+                        {sourceLabel}
                     </div>
                 )}
             </div>
@@ -92,11 +131,7 @@ export function NewsListCard({
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-auto pt-2">
                     <span className="text-[10px] font-bold text-zinc-600">
-                        {new Date(publishedAt).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                        })}
+                        {relativeTime(publishedAt)}
                     </span>
                     {artists.length > 0 && (
                         <div className="flex gap-1">

@@ -23,7 +23,12 @@ const NEWS_SOURCES = [
     { value: 'soompi.com', label: 'Soompi' },
     { value: 'koreaboo.com', label: 'Koreaboo' },
     { value: 'kpopstarz.com', label: 'KpopStarz' },
+    { value: 'dramabeans.com', label: 'Dramabeans' },
+    { value: 'asianjunkie.com', label: 'Asian Junkie' },
 ]
+
+// Fontes mostradas como pílulas de acesso rápido (mais populares)
+const QUICK_SOURCE_PILLS = NEWS_SOURCES
 
 export function NewsFilters({ onFilterChange, artists = [], groups = [], initialFilters = {} }: NewsFiltersProps) {
     const [filters, setFilters] = useState<FilterValues>(initialFilters)
@@ -67,6 +72,23 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
                     className="w-full px-4 pr-12 py-4 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
                 />
                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 pointer-events-none" />
+            </div>
+
+            {/* Pílulas de fonte rápida */}
+            <div className="flex flex-wrap gap-2">
+                {QUICK_SOURCE_PILLS.map(src => (
+                    <button
+                        key={src.value}
+                        onClick={() => updateFilter('source', filters.source === src.value ? undefined : src.value)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${
+                            filters.source === src.value
+                                ? 'bg-purple-600 border-purple-500 text-white'
+                                : 'bg-zinc-900/50 border-white/10 text-zinc-400 hover:text-white hover:border-purple-500/40'
+                        }`}
+                    >
+                        {src.label}
+                    </button>
+                ))}
             </div>
 
             {/* Toggle Filtros Avançados */}

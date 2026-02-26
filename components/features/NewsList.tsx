@@ -41,6 +41,7 @@ interface NewsItem {
     tags: string[]
     contentMd?: string | null
     originalContent?: string | null
+    sourceUrl?: string | null
     artists: Array<{
         artist: {
             id: string
@@ -251,6 +252,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                                     tags={item.tags || []}
                                     contentMd={item.originalContent || item.contentMd}
                                     artists={artistNames}
+                                    sourceUrl={item.sourceUrl}
                                 />
                             )
                         })}
