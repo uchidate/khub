@@ -63,21 +63,21 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                     </div>
                     <div>
                         <div className="flex items-baseline gap-2">
-                            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter">
+                            <h2 className="text-3xl md:text-4xl font-black dark:text-white text-zinc-900 tracking-tighter">
                                 TRENDING
                             </h2>
                             <span className="text-3xl md:text-4xl font-black text-orange-500 tracking-tighter italic">
                                 NOW
                             </span>
                         </div>
-                        <p className="text-zinc-500 text-xs mt-0.5">
+                        <p className="dark:text-zinc-500 text-zinc-600 text-xs mt-0.5">
                             Artistas mais populares do momento
                         </p>
                     </div>
                 </div>
                 <Link
                     href="/artists?sortBy=trending"
-                    className="hidden md:flex items-center gap-1 text-sm font-bold text-zinc-400 hover:text-white transition-colors"
+                    className="hidden md:flex items-center gap-1 text-sm font-bold dark:text-zinc-400 text-zinc-500 dark:hover:text-white hover:text-zinc-900 transition-colors"
                 >
                     Ver todos →
                 </Link>
@@ -198,7 +198,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                                 </div>
 
-                                <p className="text-white font-semibold text-[10px] md:text-xs group-hover:text-orange-400 transition-colors line-clamp-1">
+                                <p className="dark:text-white text-zinc-900 font-semibold text-[10px] md:text-xs group-hover:text-orange-400 transition-colors line-clamp-1">
                                     {artist.nameRomanized}
                                 </p>
                                 {artist.nameHangul && (
