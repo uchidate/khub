@@ -12,6 +12,7 @@ import { TrendingArtists } from "@/components/features/TrendingArtists"
 import { TrendingGroups } from "@/components/features/TrendingGroups"
 import { LatestProductions } from "@/components/features/LatestProductions"
 import { RecommendedForYou } from "@/components/features/RecommendedForYou"
+import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { Newspaper } from 'lucide-react'
@@ -163,6 +164,53 @@ export default async function Home() {
     // Top News para seção de notícias (3 mais recentes)
     const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
+    // Top 10 por streaming (Netflix, Disney+, Prime, Apple TV+)
+    const streamingSignalsRaw = await prisma.streamingTrendSignal.findMany({
+        where: {
+            expiresAt: { gt: new Date() },
+            source: { not: 'internal_production' },
+        },
+        select: { source: true, showTitle: true, showTmdbId: true, rank: true },
+        orderBy: [{ source: 'asc' }, { rank: 'asc' }],
+    })
+
+    // Deduplica por (source, showTmdbId) mantendo o menor rank
+    const seenShows = new Map<string, { source: string; showTitle: string; showTmdbId: string; rank: number }>()
+    for (const s of streamingSignalsRaw) {
+        const key = `${s.source}:${s.showTmdbId}`
+        const existing = seenShows.get(key)
+        if (!existing || s.rank < existing.rank) seenShows.set(key, s)
+    }
+
+    // Busca Productions correspondentes por tmdbId para imagens e links
+    const uniqueTmdbIds = Array.from(new Set(Array.from(seenShows.values()).map(s => s.showTmdbId)))
+    const matchedProductions = uniqueTmdbIds.length > 0
+        ? await prisma.production.findMany({
+            where: { tmdbId: { in: uniqueTmdbIds } },
+            select: { id: true, tmdbId: true, imageUrl: true },
+        })
+        : []
+    const prodByTmdbId = new Map(matchedProductions.map(p => [p.tmdbId!, p]))
+
+    // Monta ShowsByPlatform
+    const showsByPlatform: ShowsByPlatform = {}
+    for (const show of Array.from(seenShows.values())) {
+        if (!showsByPlatform[show.source]) showsByPlatform[show.source] = []
+        const prod = prodByTmdbId.get(show.showTmdbId)
+        showsByPlatform[show.source].push({
+            rank: show.rank,
+            showTitle: show.showTitle,
+            showTmdbId: show.showTmdbId,
+            source: show.source,
+            productionId: prod?.id,
+            imageUrl: prod?.imageUrl,
+        })
+    }
+    // Ordena cada plataforma por rank
+    for (const shows of Object.values(showsByPlatform)) {
+        shows.sort((a, b) => a.rank - b.rank)
+    }
+
     // Grupos em destaque (10 mais populares entre grupos ativos)
     const trendingGroups = await prisma.musicalGroup.findMany({
         take: 10,
@@ -203,6 +251,13 @@ export default async function Home() {
                         <section>
                             <FeaturedCarousel news={featuredNews} />
                         </section>
+                    </ScrollReveal>
+                )}
+
+                {/* Top 10 nos Streamings */}
+                {Object.keys(showsByPlatform).length > 0 && (
+                    <ScrollReveal delay={0.15}>
+                        <StreamingTopShows showsByPlatform={showsByPlatform} />
                     </ScrollReveal>
                 )}
 
