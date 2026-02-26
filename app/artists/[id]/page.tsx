@@ -482,7 +482,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                     {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2">{production.synopsis}</p>}
                                                 </div>
                                             </Link>
-                                            <div className="absolute top-2.5 right-2.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                            <div className="absolute top-2.5 right-2.5">
                                                 <AdminQuickEdit href={`/admin/productions/${production.id}`} label="Editar" />
                                             </div>
                                         </div>

@@ -155,7 +155,7 @@ export function NewsListCard({
             </div>
         </Link>
         {adminHref && (
-            <div className="absolute top-2 left-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
+            <div className="absolute top-2 left-2 z-10">
                 <AdminQuickEdit href={adminHref} label="Editar" />
             </div>
         )}
