@@ -21,9 +21,9 @@ import {
     getSignalProviders,
     rankToScore,
     signalExpiresAt,
-    computeStreamingBoost,
     SignalIngestionResult,
 } from '@/lib/services/streaming-signal-service'
+import { TrendingService } from '@/lib/services/trending-service'
 
 export const maxDuration = 120
 
@@ -159,46 +159,11 @@ async function runFetchStreamingSignals(): Promise<{
     }
 
     // ─── Auto-atualizar trendingScore dos artistas afetados ───────────────────
-    const trendingUpdated = await refreshArtistTrending(Array.from(affectedArtistIds))
-    log.info('Artist trending refreshed', { count: trendingUpdated })
+    // Recalcula trending de todos os artistas com normalização global + streaming weight
+    await TrendingService.getInstance().updateAllTrendingScores()
+    log.info('Artist trending refreshed (full recalc)')
 
-    return { ingestion: results, trendingUpdated }
-}
-
-/**
- * Recalcula o trendingScore apenas para os artistas que tiveram signals alterados.
- * Aplica boost relativo: normaliza dentro do subconjunto afetado e soma ao score base.
- */
-async function refreshArtistTrending(artistIds: string[]): Promise<number> {
-    if (artistIds.length === 0) return 0
-
-    const artists = await prisma.artist.findMany({
-        where: { id: { in: artistIds } },
-        select: {
-            id: true,
-            viewCount: true,
-            favoriteCount: true,
-            streamingSignals: {
-                where: { expiresAt: { gt: new Date() } },
-                select: { score: true },
-            },
-        },
-    })
-
-    let updated = 0
-    for (const artist of artists) {
-        const base = artist.viewCount * 0.6 + artist.favoriteCount * 0.3
-        const boost = computeStreamingBoost(artist.streamingSignals)
-        // Aplica boost diretamente (normalização global fica para o cron update-trending)
-        const newScore = base + boost
-        await prisma.artist.update({
-            where: { id: artist.id },
-            data: { trendingScore: newScore },
-        })
-        updated++
-    }
-
-    return updated
+    return { ingestion: results, trendingUpdated: results.reduce((s, r) => s + r.upserted, 0) }
 }
 
 // ─── Route handlers ───────────────────────────────────────────────────────────

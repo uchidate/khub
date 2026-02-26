@@ -46,44 +46,49 @@ export class TrendingService {
   }
 
   /**
-   * Batch update de trending scores usando uma única query SQL.
-   * Substitui o loop N+1 anterior (~2N queries) por 1 query.
+   * Batch update de trending scores usando SQL com normalização global [0, 100].
+   *
+   * Fórmula:
+   *   raw   = viewCount × 0.6 + favoriteCount × 0.3
+   *           + Σ StreamingTrendSignal.score × STREAMING_WEIGHT   (somente não expirados)
+   *   score = (raw / MAX(raw) global) × 100   →  normalizado [0, 100]
+   *
+   * STREAMING_WEIGHT = 200 garante que protagonistas das top 10 produções
+   * de streaming dominam o Trending Now mesmo com baixo engajamento orgânico.
    */
   async updateAllTrendingScores(): Promise<void> {
     log.info('Iniciando atualização de trending scores (batch SQL)...')
 
     const count = await prisma.artist.count()
-    log.debug(`Encontrados ${count} artistas`, { count })
 
-    // Única query que calcula e atualiza todos os scores de uma vez
-    // Fórmula: viewScore(30%) + favoriteScore(40%) + recentScore(20%) + completenessScore(10%)
     await prisma.$executeRaw`
-      UPDATE "Artist" SET
-        "trendingScore" = (
-          -- View score: min(viewCount/10000, 1) * 0.3
-          LEAST(COALESCE("viewCount", 0)::float / 10000.0, 1.0) * 0.3
-          +
-          -- Favorite score: min(favoriteCount/1000, 1) * 0.4
-          LEAST(COALESCE("favoriteCount", 0)::float / 1000.0, 1.0) * 0.4
-          +
-          -- Recent score: if created < 7 days ago, (1 - days/7) * 0.2
-          CASE
-            WHEN "createdAt" > NOW() - INTERVAL '7 days'
-            THEN (1.0 - EXTRACT(EPOCH FROM (NOW() - "createdAt")) / (7.0 * 86400.0)) * 0.2
-            ELSE 0.0
-          END
-          +
-          -- Completeness score: (hasBio + hasImage + hasFilmography) / 3 * 0.1
-          (
-            (CASE WHEN "bio" IS NOT NULL AND "bio" != '' THEN 1.0 ELSE 0.0 END)
-            + (CASE WHEN "primaryImageUrl" IS NOT NULL AND "primaryImageUrl" != '' THEN 1.0 ELSE 0.0 END)
-            + (CASE WHEN EXISTS (
-                SELECT 1 FROM "ArtistProduction" ap WHERE ap."artistId" = "Artist"."id"
-              ) THEN 1.0 ELSE 0.0 END)
-          ) / 3.0 * 0.1
-        ),
+      UPDATE "Artist" a
+      SET
+        "trendingScore" = scores.normalized,
         "lastTrendingUpdate" = NOW(),
         "updatedAt" = NOW()
+      FROM (
+        SELECT
+          id,
+          ROUND(
+            (raw / NULLIF(MAX(raw) OVER (), 0)) * 100 * 100
+          ) / 100.0 AS normalized
+        FROM (
+          SELECT
+            a.id,
+            -- Engajamento orgânico
+            (COALESCE(a."viewCount", 0) * 0.6 + COALESCE(a."favoriteCount", 0) * 0.3)
+            -- Boost streaming (somente protagonistas, sinais não expirados, ×200)
+            + COALESCE((
+                SELECT SUM(s.score) * 200
+                FROM streaming_trend_signal s
+                WHERE s."artistId" = a.id AND s."expiresAt" > NOW()
+              ), 0)
+            AS raw
+          FROM "Artist" a
+        ) raw_scores
+      ) scores
+      WHERE a.id = scores.id
     `
 
     log.info(`Trending scores atualizados para ${count} artistas (batch SQL)`, { count })
