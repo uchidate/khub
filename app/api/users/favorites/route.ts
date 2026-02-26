@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
             } : {}),
         },
         orderBy: { createdAt: 'desc' },
-        take: full ? 8 : undefined,
     })
 
     const artistIds = favorites.filter(f => f.artistId).map(f => f.artistId as string)

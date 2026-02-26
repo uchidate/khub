@@ -50,10 +50,10 @@ export function LatestProductions({
                         <Icon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-3xl md:text-4xl font-black text-white">
+                        <h2 className="text-3xl md:text-4xl font-black dark:text-white text-zinc-900">
                             {displayTitle}
                         </h2>
-                        <p className="text-zinc-400 text-sm mt-1">
+                        <p className="dark:text-zinc-400 text-zinc-600 text-sm mt-1">
                             {displaySubtitle}
                         </p>
                     </div>

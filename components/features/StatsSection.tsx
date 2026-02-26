@@ -63,7 +63,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                         <span className="text-xs font-black uppercase tracking-[0.3em] text-purple-400 mb-4 block">
                             Números em Tempo Real
                         </span>
-                        <h2 className="text-3xl md:text-5xl font-display font-black text-white italic tracking-tighter uppercase">
+                        <h2 className="text-3xl md:text-5xl font-display font-black dark:text-white text-zinc-900 italic tracking-tighter uppercase">
                             O Universo Hallyu
                         </h2>
                     </motion.div>
@@ -79,7 +79,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                             transition={{ duration: 0.6, delay: index * 0.1 }}
                             className="group"
                         >
-                            <div className={`relative p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} border border-white/10 hover:border-white/20 transition-all hover:scale-105 backdrop-blur-sm overflow-hidden`}>
+                            <div className={`relative p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} dark:border-white/10 dark:hover:border-white/20 border border-zinc-200 hover:border-zinc-300 transition-all hover:scale-105 backdrop-blur-sm overflow-hidden`}>
                                 {/* Glow Effect */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -93,7 +93,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                                             value={stat.value}
                                             className={`text-4xl md:text-5xl font-black ${stat.color} tracking-tighter`}
                                         />
-                                        <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+                                        <p className="text-sm font-bold dark:text-zinc-400 text-zinc-600 uppercase tracking-wider">
                                             {stat.label}
                                         </p>
                                     </div>

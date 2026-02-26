@@ -50,21 +50,21 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                         <Tv2 className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                        <h2 className="text-2xl md:text-3xl font-black dark:text-white text-zinc-900 tracking-tight">
                             Top 10 nos <span className={`${activeCfg.textColor}`} style={{ color: 'inherit' }}>
                                 <span className={`${activeTab === 'netflix_br' ? 'text-red-500' : activeTab === 'disney_br' ? 'text-blue-400' : activeTab === 'prime_br' ? 'text-sky-400' : activeTab === 'apple_br' ? 'text-zinc-300' : 'text-purple-400'}`}>
                                     Streamings
                                 </span>
                             </span>
                         </h2>
-                        <p className="text-zinc-500 text-xs mt-0.5">
+                        <p className="dark:text-zinc-500 text-zinc-600 text-xs mt-0.5">
                             K-dramas em destaque por plataforma
                         </p>
                     </div>
                 </div>
                 <Link
                     href="/productions"
-                    className="hidden md:flex items-center gap-1 text-sm font-bold text-zinc-400 hover:text-white transition-colors"
+                    className="hidden md:flex items-center gap-1 text-sm font-bold dark:text-zinc-400 text-zinc-500 dark:hover:text-white hover:text-zinc-900 transition-colors"
                 >
                     Ver produções <ChevronRight className="w-4 h-4" />
                 </Link>

@@ -6,6 +6,7 @@ import { getRoleLabel } from "@/lib/utils/role-labels"
 import { Calendar, ExternalLink, Clock, User } from "lucide-react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
+import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { RelatedNews } from "@/components/features/RelatedNews"
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
@@ -201,12 +202,15 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                         { label: 'Notícias', href: '/news' },
                         { label: news.title }
                     ]} />
-                    <FavoriteButton
-                        id={news.id}
-                        itemName={news.title}
-                        itemType="notícia"
-                        className="bg-zinc-900/50 backdrop-blur-sm hover:bg-zinc-900/70"
-                    />
+                    <div className="flex items-center gap-2">
+                        <AdminQuickEdit href="/admin/news" label="Editar" />
+                        <FavoriteButton
+                            id={news.id}
+                            itemName={news.title}
+                            itemType="notícia"
+                            className="bg-zinc-900/50 backdrop-blur-sm hover:bg-zinc-900/70"
+                        />
+                    </div>
                 </div>
 
                 {/* Hero Section */}
