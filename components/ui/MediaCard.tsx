@@ -18,6 +18,7 @@ interface MediaCardProps {
     artists?: string[] // Artistas mencionados (apenas para type="news")
     aspectRatio?: 'poster' | 'video' | 'square' // poster = 2:3, video = 16:9, square = 1:1
     adminHref?: string
+    streamingSignal?: { showTitle: string; rank: number }
 }
 
 export function MediaCard({
@@ -31,6 +32,7 @@ export function MediaCard({
     artists = [],
     aspectRatio = 'poster',
     adminHref,
+    streamingSignal,
 }: MediaCardProps) {
     const aspectClass = aspectRatio === 'poster' ? 'aspect-[2/3]' : aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
     const [imgError, setImgError] = useState(false)
@@ -134,8 +136,18 @@ export function MediaCard({
                     {/* Content Layer (Floating) */}
                     <div
                         style={{ transform: "translateZ(50px)" }}
-                        className="absolute inset-0 flex flex-col justify-end p-6 z-20"
+                        className="absolute inset-0 flex flex-col justify-end p-4 z-20"
                     >
+                        {/* Streaming badge */}
+                        {streamingSignal && (
+                            <div className="mb-2">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-orange-500/95 backdrop-blur-sm text-white shadow-lg max-w-full overflow-hidden">
+                                    <span className="text-[11px] font-black whitespace-nowrap">TOP {streamingSignal.rank}</span>
+                                    <span className="text-[9px] text-orange-200/70">·</span>
+                                    <span className="text-[10px] font-bold truncate">{streamingSignal.showTitle}</span>
+                                </span>
+                            </div>
+                        )}
                         <div>
                             <h3 className="text-xl md:text-2xl font-display font-black text-white leading-[0.9] mb-1 drop-shadow-lg uppercase italic tracking-tighter">
                                 {title}

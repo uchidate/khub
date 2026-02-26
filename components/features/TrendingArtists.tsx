@@ -47,7 +47,6 @@ const COMPACT_BORDER = [
 export function TrendingArtists({ artists }: TrendingArtistsProps) {
     if (artists.length === 0) return null
 
-    const maxScore = Math.max(...artists.map(a => a.trendingScore), 1)
     const featured = artists.slice(0, 3)
     const rest = artists.slice(3)
 
@@ -87,8 +86,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
             {/* Top 3 — featured */}
             <div className="grid grid-cols-3 gap-3 md:gap-5 mb-3">
                 {featured.map((artist, index) => {
-                    const barWidth = Math.round((artist.trendingScore / maxScore) * 100)
-                    const badgeClass = FEATURED_BADGE[index] ?? 'bg-black/60 text-zinc-300'
+const badgeClass = FEATURED_BADGE[index] ?? 'bg-black/60 text-zinc-300'
                     const glowClass = FEATURED_GLOW[index] ?? ''
                     const role = artist.roles?.[0] ? getRoleLabel(artist.roles[0], artist.gender) : null
                     const signal = artist.streamingSignals?.[0]
@@ -128,7 +126,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                 {/* Streaming signal badge */}
                                 {signal && (
                                     <div className="absolute top-2.5 right-2.5 z-10 max-w-[calc(100%-3.5rem)]">
-                                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-500/90 backdrop-blur-sm text-[8px] font-black text-white leading-none">
+                                        <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/95 backdrop-blur-sm text-[10px] font-black text-white leading-none shadow-lg">
                                             <span className="shrink-0">TOP {signal.rank}</span>
                                             <span className="opacity-60">·</span>
                                             <span className="truncate">{signal.showTitle}</span>
@@ -147,19 +145,6 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                     {role && (
                                         <p className="text-zinc-500 text-[10px] mt-0.5">{role}</p>
                                     )}
-
-                                    {/* Score bar + value */}
-                                    <div className="mt-2.5 flex items-center gap-2">
-                                        <div className="flex-1 bg-white/10 rounded-full h-1 overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full"
-                                                style={{ width: `${barWidth}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-[9px] font-black text-orange-400 tabular-nums shrink-0">
-                                            {artist.trendingScore.toFixed(1)}
-                                        </span>
-                                    </div>
 
                                     {/* View count */}
                                     <div className="mt-1.5 flex items-center gap-1 text-zinc-500">
@@ -213,8 +198,8 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
 
                                     {/* Streaming badge */}
                                     {compactSignal && (
-                                        <div className="absolute bottom-1 left-1 right-1 z-10">
-                                            <span className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-orange-500/90 backdrop-blur-sm text-[7px] font-black text-white leading-none w-full">
+                                        <div className="absolute bottom-1.5 left-1 right-1 z-10">
+                                            <span className="flex items-center gap-0.5 px-1.5 py-1 rounded-sm bg-orange-500/95 backdrop-blur-sm text-[9px] font-black text-white leading-none w-full shadow-md">
                                                 <span className="shrink-0">T{compactSignal.rank}</span>
                                                 <span className="opacity-50">·</span>
                                                 <span className="truncate">{compactSignal.showTitle}</span>
