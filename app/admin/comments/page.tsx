@@ -334,7 +334,6 @@ export default function AdminCommentsPage() {
                                 {/* User */}
                                 <div className="flex items-center gap-2 mb-2">
                                     {comment.user.image ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img src={comment.user.image} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                                     ) : (
                                         <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
