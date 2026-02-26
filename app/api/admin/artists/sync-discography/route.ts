@@ -4,9 +4,11 @@
  * Sincroniza a discografia de um único artista via MusicBrainz (com fallback AI).
  * Replica a lógica do sync em lote, mas para um artista por vez.
  *
- * Body: { artistId: string, clearFirst?: boolean }
+ * Body: { artistId: string, clearFirst?: boolean, clearOnly?: boolean }
  *   clearFirst: se true, deleta todos os álbuns do artista antes de sincronizar.
  *              Útil para corrigir vinculações erradas.
+ *   clearOnly:  se true, deleta os álbuns sem tentar re-sincronizar.
+ *              Útil quando o mbid foi removido e a discografia ficou órfã.
  *
  * Returns:
  *   { ok: true, addedCount: number, source: string, clearedCount?: number }
@@ -27,6 +29,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const artistId: string | undefined = body.artistId
   const clearFirst: boolean = body.clearFirst === true
+  const clearOnly: boolean = body.clearOnly === true
 
   if (!artistId) {
     return NextResponse.json({ error: 'artistId obrigatório' }, { status: 400 })
@@ -43,14 +46,18 @@ export async function POST(request: NextRequest) {
 
   let clearedCount = 0
 
-  if (clearFirst) {
+  if (clearFirst || clearOnly) {
     const deleted = await prisma.album.deleteMany({ where: { artistId } })
     clearedCount = deleted.count
-    // Reset sync timestamp so the service doesn't think it's up-to-date
     await prisma.artist.update({
       where: { id: artistId },
       data: { discographySyncAt: null },
     })
+  }
+
+  // clearOnly: apenas limpa, não tenta re-sincronizar
+  if (clearOnly) {
+    return NextResponse.json({ ok: true, clearedCount })
   }
 
   try {
