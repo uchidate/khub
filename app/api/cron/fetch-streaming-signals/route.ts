@@ -1,18 +1,15 @@
 /**
  * POST /api/cron/fetch-streaming-signals
  *
- * Busca os shows K-drama mais populares dos streamings (via TMDB trending),
- * extrai o elenco e persiste StreamingTrendSignal para cada ator presente
- * no banco com tmdbId correspondente.
+ * Ingestão de sinais de trending de streaming:
+ *   1. InternalProductionProvider: top produções do banco (garantia de match)
+ *   2. TMDBTrendingProvider: K-dramas populares via TMDB /discover/tv
  *
- * Os signals têm TTL de 7 dias e são consumidos pelo cron update-trending
- * para compor o trendingScore final dos artistas.
+ * Ao final, recalcula automaticamente o trendingScore dos artistas afetados
+ * (sem precisar disparar o cron update-trending separadamente).
  *
  * Auth:  Bearer CRON_SECRET
  * Cron:  1x por dia (ex: 03:00 UTC)
- *
- * Returns:
- *   202 Accepted + { success: true, status: 'accepted', requestId }
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -24,6 +21,7 @@ import {
     getSignalProviders,
     rankToScore,
     signalExpiresAt,
+    computeStreamingBoost,
     SignalIngestionResult,
 } from '@/lib/services/streaming-signal-service'
 
@@ -45,11 +43,17 @@ function verifyToken(request: NextRequest): boolean {
     }
 }
 
-async function runFetchStreamingSignals(): Promise<SignalIngestionResult[]> {
+// ─── Ingestão de signals ──────────────────────────────────────────────────────
+
+async function runFetchStreamingSignals(): Promise<{
+    ingestion: SignalIngestionResult[]
+    trendingUpdated: number
+}> {
     const providers = getSignalProviders()
     const results: SignalIngestionResult[] = []
+    const affectedArtistIds = new Set<string>()
 
-    // Limpar signals expirados antes de inserir novos
+    // Limpar signals expirados
     const deleted = await prisma.streamingTrendSignal.deleteMany({
         where: { expiresAt: { lt: new Date() } },
     })
@@ -68,38 +72,41 @@ async function runFetchStreamingSignals(): Promise<SignalIngestionResult[]> {
             const signals = await provider.fetchSignals()
             result.signalsFetched = signals.length
 
-            log.info(`Provider ${provider.name}: ${signals.length} signals fetched`)
-
-            // Deduplica por (tmdbPersonId, showTmdbId): mantém rank do show mais alto (menor número)
+            // Deduplica por (artistId|tmdbPersonId, showTmdbId)
             const deduped = new Map<string, typeof signals[0]>()
             for (const signal of signals) {
-                const key = `${signal.tmdbPersonId}:${signal.showTmdbId}`
+                const personKey = signal.artistId ?? String(signal.tmdbPersonId ?? '')
+                const key = `${personKey}:${signal.showTmdbId}`
                 const existing = deduped.get(key)
                 if (!existing || signal.rank < existing.rank) {
                     deduped.set(key, signal)
                 }
             }
 
-            // Busca artistas correspondentes em batch (por tmdbId)
-            const uniqueTmdbIds = Array.from(
-                new Set(Array.from(deduped.values()).map(s => String(s.tmdbPersonId)))
-            )
+            // Resolver artistId para signals externos (via tmdbId lookup em batch)
+            const externalSignals = Array.from(deduped.values()).filter(s => !s.artistId && s.tmdbPersonId)
+            if (externalSignals.length > 0) {
+                const tmdbIds = Array.from(new Set(externalSignals.map(s => String(s.tmdbPersonId))))
+                const matched = await prisma.artist.findMany({
+                    where: { tmdbId: { in: tmdbIds } },
+                    select: { id: true, tmdbId: true },
+                })
+                const tmdbToId = new Map(matched.map(a => [a.tmdbId!, a.id]))
+                for (const signal of externalSignals) {
+                    const resolved = tmdbToId.get(String(signal.tmdbPersonId))
+                    if (resolved) signal.artistId = resolved
+                }
+                result.artistsMatched += matched.length
+            }
 
-            const artists = await prisma.artist.findMany({
-                where: { tmdbId: { in: uniqueTmdbIds } },
-                select: { id: true, tmdbId: true },
-            })
-
-            const tmdbToArtistId = new Map(
-                artists.map(a => [a.tmdbId!, a.id])
-            )
-            result.artistsMatched = artists.length
+            // Contar artistas diretos (InternalProductionProvider)
+            const directMatches = Array.from(deduped.values()).filter(s => s.artistId).length
+            result.artistsMatched += directMatches
 
             const now = new Date()
 
-            // Upsert signals para artistas encontrados
             for (const signal of Array.from(deduped.values())) {
-                const artistId = tmdbToArtistId.get(String(signal.tmdbPersonId))
+                const artistId = signal.artistId
                 if (!artistId) continue
 
                 const score = rankToScore(signal.rank)
@@ -110,7 +117,7 @@ async function runFetchStreamingSignals(): Promise<SignalIngestionResult[]> {
                         where: {
                             artistId_showTmdbId_source: {
                                 artistId,
-                                showTmdbId: String(signal.showTmdbId),
+                                showTmdbId: signal.showTmdbId,
                                 source: signal.source,
                             },
                         },
@@ -118,7 +125,7 @@ async function runFetchStreamingSignals(): Promise<SignalIngestionResult[]> {
                             artistId,
                             source: signal.source,
                             showTitle: signal.showTitle,
-                            showTmdbId: String(signal.showTmdbId),
+                            showTmdbId: signal.showTmdbId,
                             rank: signal.rank,
                             score,
                             fetchedAt: now,
@@ -132,6 +139,7 @@ async function runFetchStreamingSignals(): Promise<SignalIngestionResult[]> {
                         },
                     })
                     result.upserted++
+                    affectedArtistIds.add(artistId)
                 } catch (err) {
                     result.errors.push(`artistId=${artistId}: ${getErrorMessage(err)}`)
                 }
@@ -150,8 +158,50 @@ async function runFetchStreamingSignals(): Promise<SignalIngestionResult[]> {
         })
     }
 
-    return results
+    // ─── Auto-atualizar trendingScore dos artistas afetados ───────────────────
+    const trendingUpdated = await refreshArtistTrending(Array.from(affectedArtistIds))
+    log.info('Artist trending refreshed', { count: trendingUpdated })
+
+    return { ingestion: results, trendingUpdated }
 }
+
+/**
+ * Recalcula o trendingScore apenas para os artistas que tiveram signals alterados.
+ * Aplica boost relativo: normaliza dentro do subconjunto afetado e soma ao score base.
+ */
+async function refreshArtistTrending(artistIds: string[]): Promise<number> {
+    if (artistIds.length === 0) return 0
+
+    const artists = await prisma.artist.findMany({
+        where: { id: { in: artistIds } },
+        select: {
+            id: true,
+            viewCount: true,
+            favoriteCount: true,
+            streamingSignals: {
+                where: { expiresAt: { gt: new Date() } },
+                select: { score: true },
+            },
+        },
+    })
+
+    let updated = 0
+    for (const artist of artists) {
+        const base = artist.viewCount * 0.6 + artist.favoriteCount * 0.3
+        const boost = computeStreamingBoost(artist.streamingSignals)
+        // Aplica boost diretamente (normalização global fica para o cron update-trending)
+        const newScore = base + boost
+        await prisma.artist.update({
+            where: { id: artist.id },
+            data: { trendingScore: newScore },
+        })
+        updated++
+    }
+
+    return updated
+}
+
+// ─── Route handlers ───────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
     if (!verifyToken(request)) {
@@ -162,7 +212,7 @@ export async function POST(request: NextRequest) {
     log.info('Fetch streaming signals started', { requestId })
 
     runFetchStreamingSignals()
-        .then(results => log.info('Fetch streaming signals completed', { requestId, results }))
+        .then(result => log.info('Fetch streaming signals completed', { requestId, ...result }))
         .catch(err => log.error('Fetch streaming signals failed', { requestId, error: getErrorMessage(err) }))
 
     return NextResponse.json({ success: true, status: 'accepted', requestId }, { status: 202 })
