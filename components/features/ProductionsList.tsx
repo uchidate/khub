@@ -95,7 +95,7 @@ export function ProductionsList() {
         search: searchParams.get('search') || '',
         type: searchParams.get('type') || '',
         ageRating: searchParams.get('ageRating') || '',
-        sortBy: searchParams.get('sortBy') || 'newest',
+        sortBy: searchParams.get('sortBy') || 'popular',
     }), [searchParams])
 
     const getCurrentPage = () => Math.max(1, parseInt(searchParams.get('page') || '1'))
@@ -105,7 +105,7 @@ export function ProductionsList() {
         if (filters.search) params.set('search', filters.search)
         if (filters.type) params.set('type', filters.type)
         if (filters.ageRating) params.set('ageRating', filters.ageRating)
-        if (filters.sortBy && filters.sortBy !== 'newest') params.set('sortBy', filters.sortBy)
+        if (filters.sortBy && filters.sortBy !== 'popular') params.set('sortBy', filters.sortBy)
         if (page > 1) params.set('page', page.toString())
         router.push(params.toString() ? `${pathname}?${params}` : pathname, { scroll: false })
     }, [pathname, router])
@@ -152,7 +152,7 @@ export function ProductionsList() {
     }
     const clearAll = () => {
         setSearchInput('')
-        updateUrl({ search: '', type: '', ageRating: '', sortBy: 'newest' }, 1)
+        updateUrl({ search: '', type: '', ageRating: '', sortBy: 'popular' }, 1)
     }
 
     const hasActiveFilters = filters.search || filters.type || filters.ageRating
