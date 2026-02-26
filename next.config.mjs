@@ -139,6 +139,16 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'cdn.kpopping.com',
             },
+            // Cover Art Archive — capas de álbuns via MusicBrainz
+            // coverartarchive.org redireciona para *.archive.org
+            {
+                protocol: 'https',
+                hostname: 'coverartarchive.org',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.archive.org',
+            },
         ],
     },
 };

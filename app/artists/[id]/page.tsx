@@ -5,6 +5,7 @@ import { getRoleLabel, getRoleLabels } from "@/lib/utils/role-labels"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { InstagramFeed } from "@/components/features/InstagramFeed"
+import { DiscographySection } from "@/components/features/DiscographySection"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -441,55 +442,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                         {/* Discography */}
                         {artist.albums.length > 0 && (
-                            <section>
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                    <Music className="w-4 h-4" />
-                                    Discografia
-                                    <span className="ml-auto text-zinc-700 font-bold normal-case tracking-normal">{artist.albums.length} lançamento{artist.albums.length !== 1 ? 's' : ''}</span>
-                                </h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {artist.albums.map((album) => (
-                                        <div key={album.id} className="group relative bg-zinc-900 rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/40 transition-all hover:-translate-y-1">
-                                            <div className="aspect-square relative bg-zinc-800">
-                                                {album.coverUrl ? (
-                                                    <Image src={album.coverUrl} alt={album.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-zinc-700">
-                                                        <Music className="w-8 h-8 opacity-20" />
-                                                    </div>
-                                                )}
-                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
-                                                    {album.spotifyUrl && (
-                                                        <a href={album.spotifyUrl} target="_blank" rel="noopener noreferrer"
-                                                            className="p-2 bg-green-500 rounded-full hover:scale-110 transition-transform text-black" title="Ouvir no Spotify">
-                                                            <Music className="w-4 h-4" />
-                                                        </a>
-                                                    )}
-                                                    {album.youtubeUrl && (
-                                                        <a href={album.youtubeUrl} target="_blank" rel="noopener noreferrer"
-                                                            className="p-2 bg-red-600 rounded-full hover:scale-110 transition-transform text-white" title="Ver no YouTube">
-                                                            <Youtube className="w-4 h-4" />
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="p-3">
-                                                <h4 className="font-bold text-white text-sm line-clamp-1">{album.title}</h4>
-                                                <div className="flex justify-between items-center mt-1">
-                                                    <span className="text-[10px] uppercase font-black text-purple-400 bg-purple-400/10 px-1.5 py-0.5 rounded-sm">
-                                                        {album.type === 'ALBUM' ? 'Álbum' : album.type === 'EP' ? 'EP' : 'Single'}
-                                                    </span>
-                                                    {album.releaseDate && (
-                                                        <span className="text-[10px] font-bold text-zinc-500">
-                                                            {new Date(album.releaseDate).getUTCFullYear()}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
+                            <DiscographySection albums={artist.albums} />
                         )}
 
                         {/* Filmography */}
