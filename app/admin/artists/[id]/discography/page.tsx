@@ -165,6 +165,32 @@ export default function ArtistDiscographyPage() {
     setTimeout(() => setToast(null), 4000)
   }, [])
 
+  const performSync = useCallback(async (clearFirst: boolean) => {
+    setSyncLoading(true)
+    setSyncModalOpen(false)
+    try {
+      const res = await fetch('/api/admin/artists/sync-discography', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artistId, clearFirst }),
+      })
+      const data = await res.json() as { ok?: boolean; addedCount?: number; source?: string; clearedCount?: number; error?: string }
+      if (res.ok && data.ok) {
+        const cleared = data.clearedCount ? ` (${data.clearedCount} removidos)` : ''
+        showToast(`✅ ${data.addedCount} álbum(ns) adicionado(s) via ${data.source}${cleared}`)
+        setArtist(a => a ? { ...a, discographySyncAt: new Date().toISOString() } : a)
+        refetchTable()
+      } else {
+        showToast(`❌ ${data.error ?? 'Falha na sincronização'}`, false)
+      }
+    } catch {
+      showToast('❌ Erro de rede', false)
+    } finally {
+      setSyncLoading(false)
+      setSyncClearFirst(false)
+    }
+  }, [artistId, showToast])
+
   const handleSaveId = async (field: 'tmdbId' | 'mbid') => {
     setSavingId(true)
     try {
@@ -182,13 +208,16 @@ export default function ArtistDiscographyPage() {
         setArtist(a => a ? {
           ...a,
           [field]: newVal,
-          // When mbid is cleared, reset the sync date too
           ...(field === 'mbid' && !newVal ? { discographySyncAt: null } : {}),
         } : a)
         setEditingField(null)
         if (data.clearedAlbumsCount) {
           refetchTable()
           showToast(`✅ MusicBrainz ID removido · ${data.clearedAlbumsCount} álbum(ns) limpos automaticamente`)
+        } else if (field === 'mbid' && newVal) {
+          // New MBID set — auto-sync discography
+          showToast('✅ MusicBrainz ID salvo · Sincronizando discografia…')
+          performSync(false)
         } else {
           showToast('✅ ID atualizado')
         }
@@ -327,32 +356,7 @@ export default function ArtistDiscographyPage() {
     showToast(`✅ ${allIds.length} álbum(ns) removido(s)`)
   }
 
-  const handleSync = async () => {
-    setSyncLoading(true)
-    setSyncModalOpen(false)
-    try {
-      const res = await fetch('/api/admin/artists/sync-discography', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ artistId, clearFirst: syncClearFirst }),
-      })
-      const data = await res.json() as { ok?: boolean; addedCount?: number; source?: string; clearedCount?: number; error?: string }
-      if (res.ok && data.ok) {
-        const cleared = data.clearedCount ? ` (${data.clearedCount} removidos)` : ''
-        showToast(`✅ ${data.addedCount} álbum(ns) adicionado(s) via ${data.source}${cleared}`)
-        // Update discographySyncAt in artist header
-        setArtist(a => a ? { ...a, discographySyncAt: new Date().toISOString() } : a)
-        refetchTable()
-      } else {
-        showToast(`❌ ${data.error ?? 'Falha na sincronização'}`, false)
-      }
-    } catch {
-      showToast('❌ Erro de rede', false)
-    } finally {
-      setSyncLoading(false)
-      setSyncClearFirst(false)
-    }
-  }
+  const handleSync = () => performSync(syncClearFirst)
 
   const syncLastDate = artist?.discographySyncAt
     ? new Date(artist.discographySyncAt).toLocaleDateString('pt-BR')
