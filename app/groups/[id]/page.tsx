@@ -6,6 +6,7 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { ReportButton } from '@/components/ui/ReportButton'
+import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
@@ -269,6 +270,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 <div className="mt-3" style={{ width: '56px', height: '3px', background: accent, borderRadius: '99px', opacity: 0.9 }} />
                             </div>
                             <div className="mb-2 flex items-center gap-2">
+                                <AdminQuickEdit href="/admin/groups" label="Editar" />
                                 <ReportButton entityType="group" entityId={group.id} entityName={group.name}
                                     className="bg-black/40 border border-white/10 backdrop-blur-sm" />
                                 <FavoriteButton
