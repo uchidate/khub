@@ -26,6 +26,7 @@ const artistSchema = z.object({
   primaryImageUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
   socialLinks: z.record(z.string(), z.string()).optional(),  // JSON: { instagram: "...", etc }
   tmdbId: z.string().optional(),
+  mbid: z.string().optional(),                  // MusicBrainz artist ID
   agencyId: z.string().optional(),
   musicalGroupId: z.string().optional(),         // '' = remove from group, id = add/update membership
 })
@@ -52,6 +53,8 @@ export async function GET(request: NextRequest) {
           nameHangul: true,
           primaryImageUrl: true,
           discographySyncAt: true,
+          tmdbId: true,
+          mbid: true,
         },
       })
       if (!artist) return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
@@ -239,6 +242,8 @@ export async function PATCH(request: NextRequest) {
       data.primaryImageUrl = null
     }
     if (validated.nameHangul === '') data.nameHangul = null
+    if (validated.tmdbId === '') data.tmdbId = null
+    if (validated.mbid === '') data.mbid = null
 
     const artist = await prisma.artist.update({
       where: { id: artistId },
