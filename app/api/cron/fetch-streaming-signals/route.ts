@@ -53,11 +53,11 @@ async function runFetchStreamingSignals(): Promise<{
     const results: SignalIngestionResult[] = []
     const affectedArtistIds = new Set<string>()
 
-    // Limpar signals expirados
-    const deleted = await prisma.streamingTrendSignal.deleteMany({
-        where: { expiresAt: { lt: new Date() } },
-    })
-    log.info('Expired signals removed', { count: deleted.count })
+    // Limpar TODOS os signals ativos antes de re-popular.
+    // Garante que sinais de não-protagonistas (gerados antes da regra de castOrder)
+    // sejam removidos imediatamente em vez de esperarem expirar em 7 dias.
+    const deleted = await prisma.streamingTrendSignal.deleteMany({})
+    log.info('Signals cleared (full refresh)', { count: deleted.count })
 
     for (const provider of providers) {
         const result: SignalIngestionResult = {

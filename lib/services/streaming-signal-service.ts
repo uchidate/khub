@@ -26,8 +26,12 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 
 const TOP_N_SHOWS = 10
-const MAX_CAST_PER_SHOW = 15
 const SIGNAL_TTL_DAYS = 7
+
+// Somente protagonistas recebem sinal de streaming.
+// castOrder 0 = 1º billed (lead masculino/feminino), 1 = 2º billed (co-protagonista).
+// Em K-dramas o casal principal ocupa sempre as posições 0 e 1.
+const MAX_PROTAGONIST_ORDER = 1
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -155,7 +159,7 @@ export class TMDBStreamingProvider implements StreamingSignalProvider {
 
                 const topCast = credits.cast
                     .sort((a, b) => a.order - b.order)
-                    .slice(0, MAX_CAST_PER_SHOW)
+                    .filter(m => m.order <= MAX_PROTAGONIST_ORDER)
 
                 for (const member of topCast) {
                     signals.push({
@@ -230,8 +234,8 @@ export class InternalProductionProvider implements StreamingSignalProvider {
                 titlePt: true,
                 year: true,
                 artists: {
+                    where: { castOrder: { lte: MAX_PROTAGONIST_ORDER } },
                     orderBy: { castOrder: 'asc' },
-                    take: MAX_CAST_PER_SHOW,
                     select: {
                         artistId: true,
                         castOrder: true,
