@@ -126,6 +126,7 @@ model Artist {
   albums               Album[]
   news                 NewsArtist[]
   kpoppingSuggestions  KpoppingMembershipSuggestion[]
+  streamingSignals     StreamingTrendSignal[]
 
   @@index([agencyId])
   @@index([createdAt])
@@ -611,4 +612,26 @@ model UserContentPreferences {
 
   @@index([userId])
   @@map("user_content_preferences")
+}
+
+// Sinal de trending baseado em presença de atores em shows populares de streaming
+// Fontes: TMDB trending (extensível para FlixPatrol, JustWatch, etc.)
+model StreamingTrendSignal {
+  id           String   @id @default(cuid())
+  artistId     String
+  source       String   // "tmdb_trending", futuramente "flixpatrol", etc.
+  showTitle    String
+  showTmdbId   String
+  rank         Int      // Posição no top 10 do streaming (1–10)
+  score        Float    // Peso calculado pelo rank (ex: rank 1 = 30, rank 10 = 10)
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime // fetchedAt + 7 dias
+
+  artist       Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, showTmdbId, source])
+  @@index([artistId])
+  @@index([expiresAt])
+  @@index([source])
+  @@map("streaming_trend_signal")
 }

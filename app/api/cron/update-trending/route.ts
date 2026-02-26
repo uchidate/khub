@@ -2,10 +2,12 @@
  * POST /api/cron/update-trending
  *
  * Recalcula trendingScore para Artist, MusicalGroup e News
- * com base em atividade dos últimos 7 dias.
+ * com base em atividade dos últimos 7 dias + streaming signals ativos.
  *
- * Fórmula: score = views_7d * 0.6 + favorites_7d * 0.3 + comments_7d * 0.1
- * O score é normalizado para [0, 100] dentro de cada categoria.
+ * Fórmula Artist:
+ *   base  = viewCount * 0.6 + favoriteCount * 0.3 + recentFavs * 0.3
+ *   boost = Σ StreamingTrendSignal.score (signals não expirados)
+ *   score = normalize(base + boost)  →  [0, 100]
  *
  * Auth: Bearer CRON_SECRET
  * Cron sugerido: a cada 6 horas
@@ -15,6 +17,7 @@ import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { computeStreamingBoost } from '@/lib/services/streaming-signal-service'
 
 export const maxDuration = 120
 
@@ -47,7 +50,7 @@ function normalize(scores: Map<string, number>): Map<string, number> {
 }
 
 async function updateArtistTrending(since7d: Date): Promise<number> {
-    // Contar favoritos recentes por artista (via Favorite model)
+    // Favoritos recentes por artista
     const recentFavs = await prisma.favorite.groupBy({
         by: ['artistId'],
         where: {
@@ -65,22 +68,28 @@ async function updateArtistTrending(since7d: Date): Promise<number> {
         scores.set(fav.artistId, current + fav._count.artistId * 0.3)
     }
 
-    // Obter viewCount atual de todos os artistas (proxy de views)
-    // Ponderamos viewCount total para refletir popularidade acumulada + recente
+    // ViewCount + favoriteCount base
     const artists = await prisma.artist.findMany({
-        select: { id: true, viewCount: true, favoriteCount: true },
+        select: {
+            id: true,
+            viewCount: true,
+            favoriteCount: true,
+            streamingSignals: {
+                where: { expiresAt: { gt: new Date() } },
+                select: { score: true },
+            },
+        },
     })
 
     for (const artist of artists) {
         const fav = scores.get(artist.id) ?? 0
-        // viewCount normalizado contribui 0.6, favoriteCount contribui 0.3 (se não há recentes)
         const base = artist.viewCount * 0.6 + artist.favoriteCount * 0.3
-        scores.set(artist.id, base + fav)
+        const streamingBoost = computeStreamingBoost(artist.streamingSignals)
+        scores.set(artist.id, base + fav + streamingBoost)
     }
 
     const normalized = normalize(scores)
 
-    // Batch update
     let updated = 0
     for (const entry of Array.from(normalized.entries())) {
         await prisma.artist.update({
@@ -134,7 +143,6 @@ async function updateGroupTrending(since7d: Date): Promise<number> {
 }
 
 async function updateNewsTrending(since7d: Date): Promise<number> {
-    // Favoritos recentes de news
     const recentFavs = await prisma.favorite.groupBy({
         by: ['newsId'],
         where: {
@@ -144,7 +152,6 @@ async function updateNewsTrending(since7d: Date): Promise<number> {
         _count: { newsId: true },
     })
 
-    // Comentários recentes por news
     const recentComments = await prisma.comment.groupBy({
         by: ['newsId'],
         where: { createdAt: { gte: since7d } },
