@@ -2,12 +2,10 @@ import type { Metadata } from "next"
 import { Outfit, Inter } from "next/font/google"
 import Script from "next/script"
 import "../styles/globals.css"
-import "../styles/nprogress.css"
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { SessionProvider } from "@/components/features/SessionProvider"
 import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
-import { NavigationProgress } from "@/components/features/NavigationProgress"
 import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
@@ -101,7 +99,8 @@ export default function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    <NavigationProgress />
+                    {/* Decorative top accent bar */}
+                    <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
                     <div className="min-h-screen flex flex-col">
                         <NavBar />
                         <ErrorBoundary>
