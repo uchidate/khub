@@ -88,6 +88,12 @@ export async function GET(request: NextRequest) {
                         select: { group: { select: { id: true, name: true } } },
                         take: 1,
                     },
+                    streamingSignals: {
+                        where: { expiresAt: { gt: new Date() } },
+                        select: { showTitle: true, rank: true },
+                        orderBy: { rank: 'asc' },
+                        take: 1,
+                    },
                 }
             }),
             prisma.artist.count({ where }),

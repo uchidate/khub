@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import Image from "next/image"
 import Link from "next/link"
 import { getRoleLabel, getRoleLabels } from "@/lib/utils/role-labels"
+import { getStreamingConfig } from "@/lib/config/streaming-platforms"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { InstagramFeed } from "@/components/features/InstagramFeed"
@@ -107,6 +108,11 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                     include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },
                     orderBy: { isActive: 'desc' },
                 },
+                streamingSignals: {
+                    where: { expiresAt: { gt: new Date() } },
+                    select: { showTitle: true, showTmdbId: true, rank: true, source: true },
+                    orderBy: { rank: 'asc' },
+                },
             }
         }),
         prisma.news.findMany({
@@ -136,6 +142,11 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
             </div>
         )
     }
+
+    // Mapa de tmdbId → sinal de streaming (melhor rank por produção)
+    const streamingByTmdbId = new Map(
+        (artist.streamingSignals ?? []).map(s => [s.showTmdbId, s])
+    )
 
     const roles = artist.roles || []
     const stageNames = artist.stageNames || []
@@ -458,7 +469,10 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             </h3>
                             {artist.productions.length > 0 ? (
                                 <div className="space-y-4">
-                                    {artist.productions.map(({ production }) => (
+                                    {artist.productions.map(({ production }) => {
+                                        const streamSignal = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
+                                        const streamConfig = streamSignal ? getStreamingConfig(streamSignal.source) : null
+                                        return (
                                         <div key={production.id} className="relative group/card">
                                             <Link href={`/productions/${production.id}`}
                                                 className="group flex bg-zinc-900/50 rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/30 hover:bg-zinc-900 transition-all">
@@ -469,6 +483,15 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center">
                                                             <span className="text-xs font-black text-zinc-700 uppercase text-center px-2 leading-tight">{production.type}</span>
+                                                        </div>
+                                                    )}
+                                                    {streamSignal && streamConfig && (
+                                                        <div className="absolute bottom-0 left-0 right-0 p-1">
+                                                            <span className={`flex items-center gap-1 px-1.5 py-1 rounded text-[9px] font-black text-white leading-none w-full ${streamConfig.bgColor}`}>
+                                                                <span className="shrink-0">TOP {streamSignal.rank}</span>
+                                                                <span className="opacity-60">·</span>
+                                                                <span className="truncate">{streamConfig.label}</span>
+                                                            </span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -482,11 +505,12 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                                     {production.synopsis && <p className="text-zinc-500 text-sm leading-relaxed line-clamp-2">{production.synopsis}</p>}
                                                 </div>
                                             </Link>
-                                            <div className="absolute top-2.5 right-2.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                            <div className="absolute top-2.5 right-2.5">
                                                 <AdminQuickEdit href={`/admin/productions/${production.id}`} label="Editar" />
                                             </div>
                                         </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             ) : (
                                 <div className="bg-zinc-900/50 rounded-2xl border border-white/5 p-12 text-center">

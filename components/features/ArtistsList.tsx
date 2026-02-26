@@ -27,6 +27,7 @@ interface Artist {
     roles: string[]
     gender?: number | null
     memberships: { group: { id: string; name: string } }[]
+    streamingSignals?: { showTitle: string; rank: number }[]
 }
 
 interface ArtistsListResponse {
@@ -174,6 +175,7 @@ export function ArtistsList() {
                                     ]}
                                     aspectRatio="poster"
                                     adminHref={`/admin/artists/${artist.id}`}
+                                    streamingSignal={artist.streamingSignals?.[0]}
                                 />
                             )
                         })}
