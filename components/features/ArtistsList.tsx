@@ -27,7 +27,7 @@ interface Artist {
     roles: string[]
     gender?: number | null
     memberships: { group: { id: string; name: string } }[]
-    streamingSignals?: { showTitle: string; rank: number }[]
+    streamingSignals?: { showTitle: string; rank: number; source: string }[]
 }
 
 interface ArtistsListResponse {

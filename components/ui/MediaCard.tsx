@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
+import { getStreamingConfig } from '@/lib/config/streaming-platforms'
 
 interface MediaCardProps {
     id: string
@@ -18,7 +19,7 @@ interface MediaCardProps {
     artists?: string[] // Artistas mencionados (apenas para type="news")
     aspectRatio?: 'poster' | 'video' | 'square' // poster = 2:3, video = 16:9, square = 1:1
     adminHref?: string
-    streamingSignal?: { showTitle: string; rank: number }
+    streamingSignal?: { showTitle: string; rank: number; source?: string }
 }
 
 export function MediaCard({
@@ -136,36 +137,44 @@ export function MediaCard({
                     {/* Content Layer (Floating) */}
                     <div
                         style={{ transform: "translateZ(50px)" }}
-                        className="absolute inset-0 flex flex-col justify-end p-4 z-20"
+                        className="absolute inset-0 z-20"
                     >
-                        {/* Streaming badge */}
-                        {streamingSignal && (
-                            <div className="mb-2">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-orange-500/95 backdrop-blur-sm text-white shadow-lg max-w-full overflow-hidden">
-                                    <span className="text-[11px] font-black whitespace-nowrap">TOP {streamingSignal.rank}</span>
-                                    <span className="text-[9px] text-orange-200/70">·</span>
-                                    <span className="text-[10px] font-bold truncate">{streamingSignal.showTitle}</span>
-                                </span>
-                            </div>
-                        )}
-                        <div>
-                            <h3 className="text-xl md:text-2xl font-display font-black text-white leading-[0.9] mb-1 drop-shadow-lg uppercase italic tracking-tighter">
-                                {title}
-                            </h3>
-                            {subtitle && (
-                                <p className="text-sm text-neon-pink font-bold mb-3 drop-shadow-md tracking-wider uppercase">
-                                    {subtitle}
-                                </p>
-                            )}
-
-                            {/* Badges container */}
-                            <div className="flex flex-wrap gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-y-0 md:translate-y-4 md:group-hover:translate-y-0">
-                                {badges.slice(0, 3).map((badge) => (
-                                    <span key={badge} className="text-[9px] uppercase font-black px-2 py-1 bg-white text-black rounded-sm shadow-lg tracking-widest">
+                        {/* Badges — canto superior esquerdo */}
+                        {badges.length > 0 && (
+                            <div className="absolute top-9 left-2 flex flex-col gap-1 max-w-[75%]">
+                                {badges.slice(0, 2).map((badge) => (
+                                    <span key={badge} className="text-[9px] uppercase font-black px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white rounded-sm shadow tracking-widest w-fit">
                                         {badge}
                                     </span>
                                 ))}
                             </div>
+                        )}
+
+                        {/* Bottom: streaming badge + title + subtitle + artists */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                            {/* Streaming badge */}
+                            {streamingSignal && (() => {
+                                const cfg = streamingSignal.source ? getStreamingConfig(streamingSignal.source) : null
+                                return (
+                                    <div className="mb-2">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md backdrop-blur-sm text-white shadow-lg max-w-full overflow-hidden ${cfg ? cfg.bgColor : 'bg-orange-500/95'}`}>
+                                            <span className="text-[11px] font-black whitespace-nowrap">TOP {streamingSignal.rank}</span>
+                                            <span className="text-[9px] opacity-60">·</span>
+                                            {cfg && <span className="text-[10px] font-black whitespace-nowrap">{cfg.label}</span>}
+                                            {cfg && <span className="text-[9px] opacity-60">·</span>}
+                                            <span className="text-[10px] font-bold truncate">{streamingSignal.showTitle}</span>
+                                        </span>
+                                    </div>
+                                )
+                            })()}
+                            <h3 className="text-xl md:text-2xl font-display font-black text-white leading-[0.9] mb-1 drop-shadow-lg uppercase italic tracking-tighter">
+                                {title}
+                            </h3>
+                            {subtitle && (
+                                <p className="text-sm text-neon-pink font-bold drop-shadow-md tracking-wider uppercase">
+                                    {subtitle}
+                                </p>
+                            )}
 
                             {/* Artists mentioned (news only) */}
                             {artists.length > 0 && (
