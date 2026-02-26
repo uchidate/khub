@@ -145,23 +145,52 @@ export class TMDBTrendingProvider implements StreamingSignalProvider {
  * Garante matches — artistas já estão no DB por definição.
  * Não requer chamadas externas.
  *
- * Critério: top N produções por voteAverage (≥ 7.0) e não-flagged.
+ * Critério: produções dos últimos 3 anos (recentes), com nota ≥ 7.0,
+ * ordenadas por ano DESC para priorizar as mais recentes.
+ * Se não houver produções recentes suficientes, complementa com as mais antigas.
  */
 export class InternalProductionProvider implements StreamingSignalProvider {
     readonly name = 'internal_production'
 
     async fetchSignals(): Promise<StreamingSignal[]> {
-        const productions = await prisma.production.findMany({
+        const threeYearsAgo = new Date().getFullYear() - 3
+
+        // Prioridade 1: lançamentos recentes (últimos 3 anos) com nota ≥ 7.0
+        const recent = await prisma.production.findMany({
             where: {
                 flaggedAsNonKorean: false,
                 voteAverage: { gte: 7.0 },
-                artists: { some: {} }, // apenas produções com elenco cadastrado
+                year: { gte: threeYearsAgo },
+                artists: { some: {} },
             },
-            orderBy: [{ voteAverage: 'desc' }],
+            orderBy: [{ year: 'desc' }, { voteAverage: 'desc' }],
             take: TOP_N_SHOWS,
+            select: { id: true, titlePt: true, year: true },
+        })
+
+        // Complementa com produções mais antigas se não atingir TOP_N_SHOWS
+        let productionIds = recent.map(p => p.id)
+        if (productionIds.length < TOP_N_SHOWS) {
+            const older = await prisma.production.findMany({
+                where: {
+                    flaggedAsNonKorean: false,
+                    voteAverage: { gte: 8.0 }, // exige nota mais alta para produções antigas
+                    id: { notIn: productionIds },
+                    artists: { some: {} },
+                },
+                orderBy: [{ voteAverage: 'desc' }],
+                take: TOP_N_SHOWS - productionIds.length,
+                select: { id: true },
+            })
+            productionIds = [...productionIds, ...older.map(p => p.id)]
+        }
+
+        const productions = await prisma.production.findMany({
+            where: { id: { in: productionIds } },
             select: {
                 id: true,
                 titlePt: true,
+                year: true,
                 artists: {
                     orderBy: { castOrder: 'asc' },
                     take: MAX_CAST_PER_SHOW,
@@ -173,6 +202,9 @@ export class InternalProductionProvider implements StreamingSignalProvider {
                 },
             },
         })
+
+        // Reordena para manter a ordem original (recentes primeiro)
+        productions.sort((a, b) => productionIds.indexOf(a.id) - productionIds.indexOf(b.id))
 
         const signals: StreamingSignal[] = []
 
