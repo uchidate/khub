@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 
 const SOURCE_LABELS: Record<string, string> = {
     'soompi.com': 'Soompi',
@@ -55,6 +56,7 @@ interface NewsListCardProps {
     contentMd?: string | null
     artists?: string[]
     sourceUrl?: string | null
+    adminHref?: string
 }
 
 export function NewsListCard({
@@ -66,11 +68,13 @@ export function NewsListCard({
     contentMd,
     artists = [],
     sourceUrl,
+    adminHref,
 }: NewsListCardProps) {
     const excerpt = contentMd ? stripMarkdown(contentMd).slice(0, 140) : null
     const sourceLabel = getSourceLabel(sourceUrl)
 
     return (
+        <div className="relative group/card">
         <Link
             href={`/news/${id}`}
             className="group flex flex-col rounded-xl overflow-hidden border border-white/5 hover:border-purple-500/30 bg-zinc-900/40 hover:bg-zinc-900/70 transition-all duration-300"
@@ -150,5 +154,11 @@ export function NewsListCard({
                 </div>
             </div>
         </Link>
+        {adminHref && (
+            <div className="absolute top-2 left-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
+                <AdminQuickEdit href={adminHref} label="Editar" />
+            </div>
+        )}
+        </div>
     )
 }
