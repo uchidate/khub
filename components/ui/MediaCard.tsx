@@ -187,7 +187,7 @@ export function MediaCard({
                 />
             </div>
             {adminHref && (
-                <div className="absolute bottom-10 left-2 z-30">
+                <div className="absolute top-2 left-2 z-30">
                     <AdminQuickEdit href={adminHref} label="Editar" />
                 </div>
             )}
