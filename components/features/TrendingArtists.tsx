@@ -30,6 +30,19 @@ const FEATURED_GLOW: Record<number, string> = {
     2: 'hover:shadow-amber-600/15',
 }
 
+// Borda "temperatura" — do mais quente (laranja, #4) ao mais frio (roxo, #12)
+const COMPACT_BORDER = [
+    'border border-orange-500/50',   // #4
+    'border border-orange-400/40',   // #5
+    'border border-amber-400/35',    // #6
+    'border border-yellow-500/30',   // #7
+    'border border-lime-500/25',     // #8
+    'border border-teal-500/25',     // #9
+    'border border-blue-500/20',     // #10
+    'border border-indigo-500/20',   // #11
+    'border border-purple-500/20',   // #12
+]
+
 export function TrendingArtists({ artists }: TrendingArtistsProps) {
     if (artists.length === 0) return null
 
@@ -154,7 +167,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-2 md:gap-2.5">
                     {rest.map((artist, i) => {
                         const index = i + 3
-                        const barWidth = Math.round((artist.trendingScore / maxScore) * 100)
+                        const borderClass = COMPACT_BORDER[i] ?? 'border border-purple-500/15'
 
                         return (
                             <Link
@@ -162,7 +175,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                 href={`/artists/${artist.id}`}
                                 className="group block"
                             >
-                                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 mb-1.5">
+                                <div className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 mb-1.5 ${borderClass}`}>
                                     {/* Rank */}
                                     <div className="absolute top-1.5 left-1.5 z-10 w-5 h-5 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center">
                                         <span className="text-[9px] font-black text-zinc-300">{index + 1}</span>
@@ -183,16 +196,6 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                     )}
 
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-                                    {/* Score bar */}
-                                    <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-1.5">
-                                        <div className="w-full bg-black/40 rounded-full h-0.5 overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-orange-500 to-red-500"
-                                                style={{ width: `${barWidth}%` }}
-                                            />
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <p className="text-white font-semibold text-[10px] md:text-xs group-hover:text-orange-400 transition-colors line-clamp-1">
