@@ -67,16 +67,12 @@ export interface SignalIngestionResult {
 
 // ─── Score por ranking ────────────────────────────────────────────────────────
 
-// Curva de decaimento: rank 1 pesa 10× mais que rank 10.
-// rank 1 × STREAMING_WEIGHT = 100 × 200 = 20.000 pts por plataforma
-// rank 10 × STREAMING_WEIGHT = 10 × 200 =  2.000 pts por plataforma
+// Curva suave: estar no top 10 é o sinal — a posição exata importa pouco.
+// Ratio rank1/rank10 = ~1.6:1  (vs 10:1 anterior)
+// rank 1 × STREAMING_WEIGHT = 100 × 200 = 20.000 pts
+// rank 10 × STREAMING_WEIGHT =  64 × 200 = 12.800 pts
 export function rankToScore(rank: number): number {
-    if (rank === 1) return 100
-    if (rank === 2) return 75
-    if (rank === 3) return 55
-    if (rank <= 5) return 35
-    if (rank <= 8) return 20
-    return 10
+    return 100 - (rank - 1) * 4   // rank1=100, rank5=84, rank10=64
 }
 
 // ─── TMDBStreamingProvider ────────────────────────────────────────────────────
