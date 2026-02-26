@@ -177,9 +177,21 @@ export default function ArtistDiscographyPage() {
         const err = await res.json().catch(() => ({})) as { error?: string }
         showToast(`❌ ${err.error ?? 'Erro ao salvar'}`, false)
       } else {
-        setArtist(a => a ? { ...a, [field]: editingValue.trim() || null } : a)
-        showToast('✅ ID atualizado')
+        const data = await res.json() as { clearedAlbumsCount?: number }
+        const newVal = editingValue.trim() || null
+        setArtist(a => a ? {
+          ...a,
+          [field]: newVal,
+          // When mbid is cleared, reset the sync date too
+          ...(field === 'mbid' && !newVal ? { discographySyncAt: null } : {}),
+        } : a)
         setEditingField(null)
+        if (data.clearedAlbumsCount) {
+          refetchTable()
+          showToast(`✅ MusicBrainz ID removido · ${data.clearedAlbumsCount} álbum(ns) limpos automaticamente`)
+        } else {
+          showToast('✅ ID atualizado')
+        }
       }
     } catch {
       showToast('❌ Erro de rede', false)
