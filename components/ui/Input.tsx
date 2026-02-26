@@ -35,7 +35,7 @@ export function Input({
 
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -43,8 +43,8 @@ export function Input({
         <input
           id={inputId}
           className={`
-            w-full px-4 py-3
-            ${icon ? 'pl-10' : ''}
+            w-full px-4 py-3 text-sm
+            ${icon ? 'pl-11' : ''}
             bg-zinc-900 text-white
             border rounded-lg
             transition-all duration-200

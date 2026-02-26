@@ -242,6 +242,8 @@ jobs:
           update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
           update_env "OLLAMA_MODEL" "gemma:2b"
           update_env "NEXT_PUBLIC_SITE_URL" "http://31.97.255.107:3001"
+          update_env "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
+          update_env "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
 
           chmod 600 .env.staging
 
@@ -406,6 +408,8 @@ jobs:
           update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
           update_env "OLLAMA_MODEL" "phi3:mini"
           update_env "NEXT_PUBLIC_SITE_URL" "https://www.hallyuhub.com.br"
+          update_env "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
+          update_env "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
 
           chmod 600 .env.production
 
