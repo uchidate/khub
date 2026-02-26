@@ -145,8 +145,11 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                 .group:hover .group-accent-badge { background: ${toRgba(accent, 0.85)}; }
                 .group:hover .member-card-border { border-color: ${toRgba(accent, 0.45)}; box-shadow: 0 20px 40px ${toRgba(accent, 0.1)}; }
                 .news-card:hover { border-color: ${toRgba(accent, 0.35)} !important; }
-                .album-card:hover { border-color: ${toRgba(accent, 0.35)} !important; }
+                .album-card:hover { border-color: ${toRgba(accent, 0.35)} !important; box-shadow: 0 0 20px ${toRgba(accent, 0.15)}; }
+                .album-title { transition: color 0.2s; }
                 .album-title:hover { color: ${accent}; }
+                .related-group-link:hover .related-group-name { color: ${accent}; }
+                .mv-card:hover { border-color: ${toRgba(accent, 0.4)} !important; }
             ` }} />
             <JsonLd data={{
                 "@context": "https://schema.org",
@@ -228,8 +231,9 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 </span>
                             )}
                             {fanClubName && (
-                                <span className="text-xs font-black px-3 py-1 backdrop-blur-sm rounded-full border"
+                                <span className="text-xs font-black px-3 py-1 backdrop-blur-sm rounded-full border inline-flex items-center gap-1.5"
                                     style={{ background: toRgba(accent, 0.15), color: accent, borderColor: toRgba(accent, 0.3) }}>
+                                    <Heart className="w-3 h-3 fill-current" />
                                     {fanClubName}
                                 </span>
                             )}
@@ -261,6 +265,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 {group.nameHangul && (
                                     <p className="text-xl md:text-3xl font-bold mt-1 drop-shadow-lg" style={{ color: accent }}>{group.nameHangul}</p>
                                 )}
+                                {/* Accent bar — identidade visual do grupo */}
+                                <div className="mt-3" style={{ width: '56px', height: '3px', background: accent, borderRadius: '99px', opacity: 0.9 }} />
                             </div>
                             <div className="mb-2 flex items-center gap-2">
                                 <ReportButton entityType="group" entityId={group.id} entityName={group.name}
@@ -317,9 +323,13 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                     <div className="space-y-8 lg:col-span-1">
                         {/* Bio */}
                         {group.bio && (
-                            <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
+                            <div className="p-6 rounded-2xl bg-zinc-900/50 relative overflow-hidden"
+                                style={{ border: `1px solid ${toRgba(accent, 0.2)}`, borderLeft: `3px solid ${accent}` }}>
+                                {/* Decorative quote mark */}
+                                <div className="absolute top-1 right-4 text-8xl font-black leading-none pointer-events-none select-none"
+                                    style={{ color: toRgba(accent, 0.1), fontFamily: 'Georgia, serif' }}>❝</div>
                                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Sobre</h3>
-                                <p className="text-zinc-300 leading-relaxed text-sm">{group.bio}</p>
+                                <p className="text-zinc-300 leading-relaxed text-sm relative z-10">{group.bio}</p>
                             </div>
                         )}
 
@@ -371,6 +381,25 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                         label="Ex-membros"
                                         value={String(formerMembers.length)}
                                     />
+                                )}
+                                {officialColorRaw && (
+                                    <div className="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
+                                        <div className="flex items-center gap-2 text-zinc-500">
+                                            <div className="w-3.5 h-3.5 rounded-full border border-white/20 flex-shrink-0"
+                                                style={{ background: officialColorRaw }} />
+                                            <span className="text-xs font-black uppercase tracking-widest">Cor Oficial</span>
+                                        </div>
+                                        <span className="text-xs font-bold text-zinc-400 font-mono">{officialColorRaw}</span>
+                                    </div>
+                                )}
+                                {fanClubName && (
+                                    <div className="flex justify-between items-center py-3 last:border-0">
+                                        <div className="flex items-center gap-2 text-zinc-500">
+                                            <Heart className="w-3.5 h-3.5" />
+                                            <span className="text-xs font-black uppercase tracking-widest">Fandom</span>
+                                        </div>
+                                        <span className="text-sm font-bold" style={{ color: accent }}>{fanClubName}</span>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -432,7 +461,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 <div className="flex flex-col gap-2">
                                     {relatedGroups.map(rg => (
                                         <Link key={rg.id} href={`/groups/${rg.id}`}
-                                            className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/rg">
+                                            className="related-group-link flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/rg">
                                             <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
                                                 {rg.profileImageUrl ? (
                                                     <Image src={rg.profileImageUrl} alt={rg.name} fill sizes="40px" className="object-cover group-hover/rg:scale-105 transition-transform" />
@@ -443,7 +472,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-white truncate group-hover/rg:text-purple-300 transition-colors">{rg.name}</p>
+                                                <p className="related-group-name text-sm font-bold text-white truncate transition-colors">{rg.name}</p>
                                                 {rg.disbandDate && (
                                                     <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Disbandado</p>
                                                 )}
@@ -568,7 +597,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                         if (!videoId) return null
                                         return (
                                             <a key={i} href={mv.url} target="_blank" rel="noopener noreferrer"
-                                                className="group block rounded-xl overflow-hidden border border-white/5 hover:border-white/20 transition-all">
+                                                className="mv-card group block rounded-xl overflow-hidden border border-white/5 transition-all">
                                                 <div className="relative aspect-video bg-zinc-900">
                                                     <Image
                                                         src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
