@@ -132,13 +132,6 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 </span>
                             </div>
 
-                            {/* Badge K-Drama (canto superior direito) */}
-                            {show.isKorean && (
-                                <div className="absolute top-1.5 right-1.5 z-10 px-1 py-0.5 rounded bg-purple-600/90 text-[7px] font-black text-white leading-none">
-                                    K
-                                </div>
-                            )}
-
                             {/* Nota TMDB (canto inferior direito) */}
                             {show.voteAverage != null && show.voteAverage > 0 && (
                                 <div className="absolute bottom-1.5 right-1.5 z-10 px-1 py-0.5 rounded bg-black/70 text-[8px] font-bold text-yellow-400 leading-none">
