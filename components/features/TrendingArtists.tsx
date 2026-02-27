@@ -124,21 +124,18 @@ const badgeClass = FEATURED_BADGE[index] ?? 'bg-black/60 text-zinc-300'
                                     {index + 1}
                                 </div>
 
-                                {/* Streaming signal badge */}
-                                {signal && signal.source !== 'internal_production' && (
-                                    <div className="absolute top-2.5 right-2.5 z-10 max-w-[calc(100%-3.5rem)]">
-                                        <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-red-600 backdrop-blur-sm text-xs font-black text-white leading-none shadow-lg">
-                                            <span className="shrink-0">TOP {signal.rank}</span>
-                                            <span className="opacity-60">·</span>
-                                            {signal.source && <span className="shrink-0">{getStreamingConfig(signal.source).label}</span>}
-                                            {signal.source && <span className="opacity-60">·</span>}
-                                            <span className="truncate">{signal.showTitle}</span>
-                                        </span>
-                                    </div>
-                                )}
-
                                 {/* Bottom overlay */}
                                 <div className="absolute bottom-0 left-0 right-0 p-3">
+                                    {/* Streaming signal badge */}
+                                    {signal && signal.source !== 'internal_production' && (
+                                        <div className="mb-1.5">
+                                            <span className="inline-flex items-center gap-1 px-1.5 py-1 rounded bg-red-600 text-[9px] font-black text-white leading-none shadow-md">
+                                                <span className="shrink-0">TOP {signal.rank}</span>
+                                                <span className="opacity-60">·</span>
+                                                {signal.source && <span className="shrink-0">{getStreamingConfig(signal.source).label}</span>}
+                                            </span>
+                                        </div>
+                                    )}
                                     <h3 className="text-white font-black text-sm md:text-base leading-tight group-hover:text-orange-300 transition-colors line-clamp-1">
                                         {artist.nameRomanized}
                                     </h3>
