@@ -80,16 +80,13 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                             key={platform}
                             onClick={() => setActiveTab(platform)}
                             className={`
-                                px-3 py-1.5 rounded-full text-xs font-bold transition-all border
+                                px-4 py-1.5 rounded-full text-xs font-bold transition-all
                                 ${isActive
-                                    ? `${cfg.bgColor} ${cfg.textColor} border-transparent shadow-lg`
-                                    : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-white'
+                                    ? 'bg-white text-black shadow-md'
+                                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
                                 }
                             `}
                         >
-                            {isActive && (
-                                <span className={`inline-block w-1.5 h-1.5 rounded-full ${cfg.dotColor} mr-1.5 animate-pulse`} />
-                            )}
                             {cfg.label}
                         </button>
                     )

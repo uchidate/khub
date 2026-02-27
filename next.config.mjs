@@ -106,7 +106,25 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'allkpop.com',
             },
-            // CDN comum usado por portais de notícias
+            // Dramabeans — imagens no próprio domínio (wp-content/uploads)
+            {
+                protocol: 'https',
+                hostname: 'dramabeans.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'www.dramabeans.com',
+            },
+            // Asian Junkie — imagens no próprio domínio (wp-content/uploads)
+            {
+                protocol: 'https',
+                hostname: 'asianjunkie.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'www.asianjunkie.com',
+            },
+            // CDN comum usado por portais de notícias WordPress
             {
                 protocol: 'https',
                 hostname: '*.wp.com',

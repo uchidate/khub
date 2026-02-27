@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { X, Menu } from "lucide-react"
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { useSession } from "next-auth/react"
 import { GlobalSearch } from "@/components/ui/GlobalSearch"
 
@@ -45,11 +46,9 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
         <Menu className="h-6 w-6" />
       </button>
 
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <>
-          {/* Menu Panel — full screen, no backdrop needed */}
-          <div className="fixed inset-0 bg-zinc-950 z-[120] md:hidden animate-slide-in-right">
+      {/* Mobile Menu Overlay — portal para escapar do stacking context do NavBar */}
+      {isOpen && createPortal(
+        <div className="fixed inset-0 bg-zinc-950 z-[500] animate-slide-in-right">
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-zinc-800">
@@ -118,8 +117,8 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                 </p>
               </div>
             </div>
-          </div>
-        </>
+        </div>,
+        document.body
       )}
     </>
   )
