@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Flag, X } from 'lucide-react'
 import { useToast } from '@/lib/hooks/useToast'
 
@@ -74,7 +75,7 @@ export function ReportButton({ entityType, entityId, entityName, className = '' 
         <Flag size={16} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           onClick={handleClose}
@@ -148,7 +149,8 @@ export function ReportButton({ entityType, entityId, entityName, className = '' 
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
