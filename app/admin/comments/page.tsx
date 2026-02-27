@@ -7,6 +7,7 @@ import {
     ChevronLeft, ChevronRight, ExternalLink, AlertTriangle,
     RefreshCw, Filter,
 } from 'lucide-react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
 
 interface Comment {
     id: string
@@ -176,16 +177,11 @@ export default function AdminCommentsPage() {
     const handleStatus = (v: string) => { setStatus(v); setPage(1) }
 
     return (
-        <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                    <h1 className="text-2xl font-black text-white flex items-center gap-3">
-                        <MessageSquare className="w-6 h-6 text-purple-400" />
-                        Administração de Comentários
-                    </h1>
-                    <p className="text-sm text-zinc-500 mt-1">Gerencie e modere os comentários dos usuários</p>
-                </div>
+        <AdminLayout title="Comentários">
+        <div className="space-y-6">
+            {/* Header row: description + refresh */}
+            <div className="flex items-center justify-between flex-wrap gap-3 -mt-6">
+                <p className="text-sm text-zinc-500">Gerencie e modere os comentários dos usuários</p>
                 <button onClick={fetchComments}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-all text-sm">
                     <RefreshCw className="w-3.5 h-3.5" /> Atualizar
@@ -483,5 +479,6 @@ export default function AdminCommentsPage() {
                 </div>
             )}
         </div>
+        </AdminLayout>
     )
 }

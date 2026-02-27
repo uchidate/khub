@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Film, AlertTriangle, CheckCircle, XCircle, ArrowLeft, RefreshCw, Trash2 } from 'lucide-react'
+import { Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2 } from 'lucide-react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
 
 type Production = {
   id: string
@@ -137,23 +138,9 @@ export default function ProductionModerationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors mb-4"
-          >
-            <ArrowLeft size={20} />
-            Voltar ao Admin
-          </Link>
-          <div className="flex items-center gap-3 mb-4">
-            <Film className="text-purple-500" size={40} />
-            <h1 className="text-4xl font-black text-white">Moderação de Produções</h1>
-          </div>
-          <p className="text-xl text-zinc-400">Revisar produções para relevância à cultura coreana</p>
-        </div>
+    <AdminLayout title="Moderação de Produções">
+      <div className="space-y-6">
+        <p className="text-zinc-400 text-sm -mt-6">Revisar produções para relevância à cultura coreana</p>
 
         {/* Filters */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
@@ -350,6 +337,6 @@ export default function ProductionModerationPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   )
 }
