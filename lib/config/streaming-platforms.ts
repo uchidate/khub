@@ -87,7 +87,6 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
 
 /** Ordem de exibição dos tabs na UI da seção StreamingTopShows */
 export const STREAMING_TAB_ORDER = [
-    'trending_global',
     'netflix_br',
     'disney_br',
     'prime_br',
