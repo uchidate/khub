@@ -1,10 +1,15 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Languages, RefreshCw, AlertTriangle, CheckCircle, Type } from 'lucide-react'
+import { Languages, RefreshCw, AlertTriangle, CheckCircle, Type, Database } from 'lucide-react'
 
-type LogLine = { text: string; type: 'info' | 'success' | 'warning' | 'error' | 'done' | 'progress' }
+type LogLine = {
+    text: string
+    type: 'info' | 'success' | 'warning' | 'error' | 'done' | 'progress'
+    link?: { href: string; label: string }
+}
 
 function parseLineFixNames(line: string): LogLine {
     const [type, ...rest] = line.split(':')
@@ -21,16 +26,54 @@ function parseLineFixNames(line: string): LogLine {
             const [from, to] = payload.split('→')
             return { text: `✅ ${from} → ${to}`, type: 'success' }
         }
-        case 'NO_TMDB':
-            return { text: `➖ Sem TMDB: ${payload}`, type: 'warning' }
+        case 'NO_TMDB': {
+            // formato: NO_TMDB:{name}:{id}
+            const parts = payload.split(':')
+            const artistId = parts[parts.length - 1]
+            const name = parts.slice(0, -1).join(':')
+            return {
+                text: `➖ Sem TMDB: ${name}`,
+                type: 'warning',
+                link: { href: `/admin/artists/${artistId}`, label: 'Adicionar TMDB ID →' },
+            }
+        }
         case 'DUPLICATE': {
-            const [from, to] = payload.split('→')
-            return { text: `⚠️ Duplicata — nome "${to}" já existe: ${from}`, type: 'warning' }
+            const [fromTo, outroId] = payload.split(':outro=')
+            const [from, to] = (fromTo ?? payload).split('→')
+            return { text: `⚠️ Duplicata real — nome "${to ?? ''}" já existe (outro=${outroId ?? '?'}): ${from}`, type: 'warning' }
+        }
+        case 'NAME_CONFLICT': {
+            // formato: NAME_CONFLICT:{from}→{to}:outro={id}
+            const [fromTo, outroId] = payload.split(':outro=')
+            const [from, to] = (fromTo ?? payload).split('→')
+            return {
+                text: `🔶 Mesmo nome, artistas diferentes — "${to ?? ''}" corrigido (verificar outro: ${outroId ?? '?'}): ${from}`,
+                type: 'warning',
+                link: outroId ? { href: `/admin/artists/${outroId}`, label: 'Ver outro artista →' } : undefined,
+            }
+        }
+        case 'NAME_CONFLICT_UNRESOLVABLE': {
+            // formato: NAME_CONFLICT_UNRESOLVABLE:{from}→{to}:{id}
+            const parts = payload.split(':')
+            const artistId = parts[parts.length - 1]
+            const [from, to] = parts.slice(0, -1).join(':').split('→')
+            return {
+                text: `🔴 Conflito irresolvível — "${to ?? ''}" já existe exatamente igual: ${from} (disambiguação manual necessária)`,
+                type: 'error',
+                link: { href: `/admin/artists/${artistId}`, label: 'Editar artista →' },
+            }
         }
         case 'ERROR':
             return { text: `❌ Erro: ${payload}`, type: 'error' }
-        case 'DONE':
-            return { text: `🎉 Concluído! ${payload.replace('fixed=', 'corrigidos: ').replace(',noTmdb=', ' | sem TMDB: ').replace(',duplicates=', ' | duplicatas: ').replace(',errors=', ' | erros: ')}`, type: 'done' }
+        case 'DONE': {
+            const fmt = payload
+                .replace('fixed=', 'corrigidos: ')
+                .replace(',noTmdb=', ' | sem TMDB: ')
+                .replace(',duplicates=', ' | duplicatas: ')
+                .replace(',nameConflicts=', ' | conflito de nome: ')
+                .replace(',errors=', ' | erros: ')
+            return { text: `🎉 Concluído! ${fmt}`, type: 'done' }
+        }
         default:
             return { text: line, type: 'info' }
     }
@@ -139,12 +182,65 @@ function LogPanel({
                     className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-white/5"
                 >
                     {log.map((line, i) => (
-                        <div key={i} className={lineColor(line.type)}>{line.text}</div>
+                        <div key={i} className={`flex items-center gap-2 ${lineColor(line.type)}`}>
+                            <span>{line.text}</span>
+                            {line.link && (
+                                <Link
+                                    href={line.link.href}
+                                    target="_blank"
+                                    className="ml-1 underline text-amber-400 hover:text-amber-300 whitespace-nowrap"
+                                >
+                                    {line.link.label}
+                                </Link>
+                            )}
+                        </div>
                     ))}
                 </div>
             )}
         </div>
     )
+}
+
+function parseLineSyncTmdb(line: string): LogLine {
+    const [type, ...rest] = line.split(':')
+    const payload = rest.join(':')
+
+    switch (type) {
+        case 'TOTAL':
+            return { text: `📋 ${payload} artistas com tmdbId para sincronizar`, type: 'info' }
+        case 'PROGRESS': {
+            const parts = payload.split(':')
+            return { text: `⏳ [${parts[0]}] ${parts.slice(1).join(':')}`, type: 'progress' }
+        }
+        case 'ENRICHED': {
+            const [name, fields] = payload.split(':')
+            return { text: `✅ ${name} — atualizados: ${fields}`, type: 'success' }
+        }
+        case 'COMPLETE':
+            return { text: `✓ Já completo: ${payload}`, type: 'progress' }
+        case 'NO_DATA': {
+            const parts = payload.split(':')
+            const artistId = parts[parts.length - 1]
+            const name = parts.slice(0, -1).join(':')
+            return {
+                text: `➖ Sem dados no TMDB: ${name}`,
+                type: 'warning',
+                link: { href: `/admin/artists/${artistId}`, label: 'Verificar →' },
+            }
+        }
+        case 'ERROR':
+            return { text: `❌ Erro: ${payload}`, type: 'error' }
+        case 'DONE': {
+            const fmt = payload
+                .replace('enriched=', 'enriquecidos: ')
+                .replace(',complete=', ' | já completos: ')
+                .replace(',noData=', ' | sem dados: ')
+                .replace(',errors=', ' | erros: ')
+            return { text: `🎉 Concluído! ${fmt}`, type: 'done' }
+        }
+        default:
+            return { text: line, type: 'info' }
+    }
 }
 
 export default function FixNamesAdminPage() {
@@ -158,8 +254,14 @@ export default function FixNamesAdminPage() {
     const [hangulLog, setHangulLog] = useState<LogLine[]>([])
     const [hangulStats, setHangulStats] = useState<Stats>(null)
 
+    // Estado para Sync TMDB
+    const [syncRunning, setSyncRunning] = useState(false)
+    const [syncLog, setSyncLog] = useState<LogLine[]>([])
+    const [syncStats, setSyncStats] = useState<Stats>(null)
+
     async function runStream(
-        mode: string,
+        endpoint: string,
+        body: Record<string, unknown>,
         parser: (line: string) => LogLine,
         setRunning: (v: boolean) => void,
         setLog: React.Dispatch<React.SetStateAction<LogLine[]>>,
@@ -172,10 +274,10 @@ export default function FixNamesAdminPage() {
         setStats(null)
 
         try {
-            const res = await fetch('/api/admin/fix-artist-names', {
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode }),
+                body: JSON.stringify(body),
             })
 
             if (!res.ok || !res.body) {
@@ -217,17 +319,24 @@ export default function FixNamesAdminPage() {
     }
 
     const startFixNames = useCallback(() => runStream(
-        'fix-names',
+        '/api/admin/fix-artist-names',
+        { mode: 'fix-names' },
         parseLineFixNames,
         setFixRunning,
         setFixLog,
         setFixStats,
-        /fixed=(\d+),noTmdb=(\d+),duplicates=(\d+),errors=(\d+)/,
-        (m) => ({ total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]), main: parseInt(m[1]), secondary: parseInt(m[2]) + parseInt(m[3]), errors: parseInt(m[4]) })
+        /fixed=(\d+),noTmdb=(\d+),duplicates=(\d+),nameConflicts=(\d+),errors=(\d+)/,
+        (m) => ({
+            total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]) + parseInt(m[5]),
+            main: parseInt(m[1]),
+            secondary: parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]),
+            errors: parseInt(m[5]),
+        })
     ), [])
 
     const startFillHangul = useCallback(() => runStream(
-        'fill-hangul',
+        '/api/admin/fix-artist-names',
+        { mode: 'fill-hangul' },
         parseLineFillHangul,
         setHangulRunning,
         setHangulLog,
@@ -236,35 +345,50 @@ export default function FixNamesAdminPage() {
         (m) => ({ total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]), main: parseInt(m[1]), secondary: parseInt(m[2]), errors: parseInt(m[3]) })
     ), [])
 
+    const startSyncTmdb = useCallback(() => runStream(
+        '/api/admin/sync-tmdb-data',
+        { mode: 'empty_only' },
+        parseLineSyncTmdb,
+        setSyncRunning,
+        setSyncLog,
+        setSyncStats,
+        /enriched=(\d+),complete=(\d+),noData=(\d+),errors=(\d+)/,
+        (m) => ({
+            total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]),
+            main: parseInt(m[1]),
+            secondary: parseInt(m[3]),
+            errors: parseInt(m[4]),
+        })
+    ), [])
+
     return (
-        <AdminLayout title="Corrigir Nomes de Artistas">
+        <AdminLayout title="Enriquecimento de Artistas via TMDB">
             <div className="space-y-6">
                 {/* Info card */}
                 <div className="bg-zinc-900 border border-amber-500/20 rounded-xl p-5">
                     <div className="flex items-start gap-3">
                         <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                        <div className="space-y-3">
+                        <div className="grid sm:grid-cols-3 gap-4 flex-1">
                             <div>
-                                <p className="text-sm font-bold text-white flex items-center gap-2">
-                                    <Type className="w-4 h-4 text-amber-400" />
-                                    Corrigir Nomes Romanizados
+                                <p className="text-xs font-bold text-white flex items-center gap-1.5 mb-1">
+                                    <Type className="w-3.5 h-3.5 text-amber-400" />
+                                    Corrigir Nomes
                                 </p>
-                                <ul className="mt-1.5 space-y-1 text-xs text-zinc-400">
-                                    <li>• Encontra artistas onde <code className="text-amber-300 bg-zinc-800 px-1 rounded">nameRomanized</code> contém caracteres coreanos</li>
-                                    <li>• Busca o nome romanizado correto no TMDB via <code className="text-amber-300 bg-zinc-800 px-1 rounded">tmdbId</code></li>
-                                    <li>• Move o nome coreano para <code className="text-amber-300 bg-zinc-800 px-1 rounded">nameHangul</code> (se vazio) e extrai <code className="text-amber-300 bg-zinc-800 px-1 rounded">stageNames</code></li>
-                                </ul>
+                                <p className="text-xs text-zinc-500">Hangul em nameRomanized → busca nome correto no TMDB, move para nameHangul</p>
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-white flex items-center gap-2">
-                                    <Languages className="w-4 h-4 text-amber-400" />
+                                <p className="text-xs font-bold text-white flex items-center gap-1.5 mb-1">
+                                    <Languages className="w-3.5 h-3.5 text-amber-400" />
                                     Preencher Hangul
                                 </p>
-                                <ul className="mt-1.5 space-y-1 text-xs text-zinc-400">
-                                    <li>• Encontra artistas com <code className="text-amber-300 bg-zinc-800 px-1 rounded">tmdbId</code> mas sem <code className="text-amber-300 bg-zinc-800 px-1 rounded">nameHangul</code></li>
-                                    <li>• Busca o nome em Hangul no campo <code className="text-amber-300 bg-zinc-800 px-1 rounded">also_known_as</code> do TMDB</li>
-                                    <li>• Preenche <code className="text-amber-300 bg-zinc-800 px-1 rounded">nameHangul</code> e <code className="text-amber-300 bg-zinc-800 px-1 rounded">stageNames</code> (se vazio)</li>
-                                </ul>
+                                <p className="text-xs text-zinc-500">Tem tmdbId mas sem nameHangul → busca no also_known_as do TMDB</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-white flex items-center gap-1.5 mb-1">
+                                    <Database className="w-3.5 h-3.5 text-amber-400" />
+                                    Sync TMDB
+                                </p>
+                                <p className="text-xs text-zinc-500">Preenche campos vazios (foto, bio, nascimento, local, gênero) para todos com tmdbId</p>
                             </div>
                         </div>
                     </div>
@@ -278,7 +402,7 @@ export default function FixNamesAdminPage() {
                     title="Corrigir nomes romanizados incorretos"
                     description="Artistas com Hangul em nameRomanized → busca nome correto no TMDB"
                     buttonLabel="Iniciar correção"
-                    statLabels={['Corrigidos', 'Sem TMDB', 'Erros']}
+                    statLabels={['Corrigidos', 'Sem TMDB / conflitos', 'Erros']}
                 />
 
                 <LogPanel
@@ -290,6 +414,17 @@ export default function FixNamesAdminPage() {
                     description="Artistas com tmdbId mas sem nameHangul → busca Hangul em also_known_as"
                     buttonLabel="Preencher Hangul"
                     statLabels={['Preenchidos', 'Sem dados', 'Erros']}
+                />
+
+                <LogPanel
+                    running={syncRunning}
+                    log={syncLog}
+                    stats={syncStats}
+                    onStart={startSyncTmdb}
+                    title="Sincronizar dados biográficos do TMDB"
+                    description="Para artistas com tmdbId: preenche foto, bio, nascimento, local, gênero, Hangul e aliases — apenas campos vazios"
+                    buttonLabel="Iniciar sync"
+                    statLabels={['Enriquecidos', 'Sem dados TMDB', 'Erros']}
                 />
             </div>
         </AdminLayout>

@@ -104,29 +104,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, reason: 'tmdb_no_romanized_name' })
   }
 
-  // Check for name conflicts with other artists
+  // Verificar se o nome romanizado já existe em outro artista
   const conflict = await prisma.artist.findFirst({
     where: {
       nameRomanized: { equals: tmdb.name, mode: 'insensitive' },
       id: { not: artistId },
     },
-    select: { id: true, nameRomanized: true },
+    select: { id: true, nameRomanized: true, tmdbId: true },
   })
+
   if (conflict) {
-    return NextResponse.json({ ok: false, reason: 'duplicate', conflictName: tmdb.name })
+    if (conflict.tmdbId && conflict.tmdbId !== artist.tmdbId) {
+      // Artistas diferentes com mesmo nome — não é duplicata real, apenas conflito de nome
+      // Tenta corrigir mesmo assim; se unique constraint falhar, retorna name_conflict_unresolvable
+    } else {
+      // Mesmo tmdbId ou sem tmdbId no conflito = duplicata real
+      return NextResponse.json({ ok: false, reason: 'duplicate', conflictId: conflict.id, conflictName: tmdb.name })
+    }
   }
 
   const koreanName = artist.nameHangul || artist.nameRomanized
   const stageNames = extractStageNames(tmdb.also_known_as, tmdb.name)
 
-  await prisma.artist.update({
-    where: { id: artistId },
-    data: {
-      nameRomanized: tmdb.name,
-      nameHangul: koreanName,
-      ...(stageNames.length > 0 ? { stageNames } : {}),
-    },
-  })
+  try {
+    await prisma.artist.update({
+      where: { id: artistId },
+      data: {
+        nameRomanized: tmdb.name,
+        nameHangul: koreanName,
+        ...(stageNames.length > 0 ? { stageNames } : {}),
+      },
+    })
+  } catch {
+    // Unique constraint — dois artistas com exatamente o mesmo nome romanizado
+    return NextResponse.json({ ok: false, reason: 'name_conflict_unresolvable', conflictName: tmdb.name })
+  }
 
-  return NextResponse.json({ ok: true, nameRomanized: tmdb.name, nameHangul: koreanName })
+  return NextResponse.json({
+    ok: true,
+    nameRomanized: tmdb.name,
+    nameHangul: koreanName,
+    hadNameConflict: !!conflict,
+  })
 }

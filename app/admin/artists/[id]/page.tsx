@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, User } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save, RefreshCw, User, Search, CheckCircle, XCircle } from 'lucide-react'
 
 interface Artist {
     id: string
@@ -22,6 +22,20 @@ interface Artist {
     mbid: string | null
 }
 
+interface TMDBPreview {
+    tmdbId: string
+    name: string
+    hangulName: string | null
+    biography: string | null
+    birthday: string | null
+    placeOfBirth: string | null
+    photoUrl: string | null
+    gender: number
+    knownFor: string | null
+    popularity: number
+    alsoKnownAs: string[]
+}
+
 export default function EditArtistPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
@@ -31,6 +45,11 @@ export default function EditArtistPage() {
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Artist>>({})
+
+    // Preview TMDB
+    const [tmdbPreview, setTmdbPreview] = useState<TMDBPreview | null>(null)
+    const [previewLoading, setPreviewLoading] = useState(false)
+    const [previewError, setPreviewError] = useState('')
 
     useEffect(() => {
         fetch(`/api/admin/artists?id=${id}`)
@@ -48,7 +67,36 @@ export default function EditArtistPage() {
 
     const set = (key: keyof Artist, value: unknown) => {
         setForm(prev => ({ ...prev, [key]: value }))
+        // Limpa preview se tmdbId mudou
+        if (key === 'tmdbId') {
+            setTmdbPreview(null)
+            setPreviewError('')
+        }
     }
+
+    const fetchTMDBPreview = useCallback(async () => {
+        const tmdbId = form.tmdbId?.trim()
+        if (!tmdbId || !/^\d+$/.test(tmdbId)) {
+            setPreviewError('TMDB ID deve ser numérico')
+            return
+        }
+        setPreviewLoading(true)
+        setPreviewError('')
+        setTmdbPreview(null)
+        try {
+            const res = await fetch(`/api/admin/artists/tmdb-preview?tmdbId=${tmdbId}`)
+            const data = await res.json()
+            if (!res.ok) {
+                setPreviewError(data.error || 'Erro ao buscar no TMDB')
+                return
+            }
+            setTmdbPreview(data)
+        } catch {
+            setPreviewError('Erro de rede')
+        } finally {
+            setPreviewLoading(false)
+        }
+    }, [form.tmdbId])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -260,13 +308,28 @@ export default function EditArtistPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelCls}>TMDB ID</label>
-                                <input
-                                    type="text"
-                                    value={form.tmdbId ?? ''}
-                                    onChange={e => set('tmdbId', e.target.value)}
-                                    placeholder="12345"
-                                    className={inputCls}
-                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={form.tmdbId ?? ''}
+                                        onChange={e => set('tmdbId', e.target.value)}
+                                        placeholder="12345"
+                                        className={inputCls}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={fetchTMDBPreview}
+                                        disabled={previewLoading || !form.tmdbId}
+                                        title="Verificar no TMDB"
+                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-zinc-300 rounded-lg text-xs font-bold transition-colors"
+                                    >
+                                        {previewLoading
+                                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                            : <Search className="w-3.5 h-3.5" />
+                                        }
+                                        Verificar
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label className={labelCls}>MusicBrainz ID</label>
@@ -279,6 +342,98 @@ export default function EditArtistPage() {
                                 />
                             </div>
                         </div>
+
+                        {/* Preview TMDB */}
+                        {previewError && (
+                            <div className="flex items-center gap-2 text-sm text-red-400">
+                                <XCircle className="w-4 h-4 flex-shrink-0" />
+                                {previewError}
+                            </div>
+                        )}
+                        {tmdbPreview && (
+                            <div className="bg-zinc-800/60 border border-white/10 rounded-xl p-4 space-y-3">
+                                <div className="flex items-center gap-2 text-xs font-bold text-green-400 mb-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    TMDB verificado — confirme se é a pessoa correta
+                                </div>
+                                <div className="flex gap-4 items-start">
+                                    {tmdbPreview.photoUrl ? (
+                                        <Image
+                                            src={tmdbPreview.photoUrl}
+                                            alt={tmdbPreview.name}
+                                            width={64}
+                                            height={96}
+                                            className="rounded-lg object-cover flex-shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-16 h-24 rounded-lg bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                                            <User className="w-6 h-6 text-zinc-500" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 space-y-1.5 text-xs">
+                                        <div>
+                                            <span className="text-zinc-500">Nome TMDB:</span>{' '}
+                                            <span className="text-white font-bold">{tmdbPreview.name}</span>
+                                        </div>
+                                        {tmdbPreview.hangulName && (
+                                            <div>
+                                                <span className="text-zinc-500">Hangul:</span>{' '}
+                                                <span className="text-purple-300">{tmdbPreview.hangulName}</span>
+                                            </div>
+                                        )}
+                                        {tmdbPreview.birthday && (
+                                            <div>
+                                                <span className="text-zinc-500">Nascimento:</span>{' '}
+                                                <span className="text-zinc-300">{tmdbPreview.birthday}{tmdbPreview.placeOfBirth ? ` — ${tmdbPreview.placeOfBirth}` : ''}</span>
+                                            </div>
+                                        )}
+                                        {tmdbPreview.knownFor && (
+                                            <div>
+                                                <span className="text-zinc-500">Conhecido por:</span>{' '}
+                                                <span className="text-zinc-300">{tmdbPreview.knownFor}</span>
+                                            </div>
+                                        )}
+                                        {tmdbPreview.biography && (
+                                            <p className="text-zinc-400 line-clamp-2 mt-1">{tmdbPreview.biography}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Aplicar campos vazios do TMDB */}
+                                <div className="flex flex-wrap gap-2 pt-1 border-t border-white/5">
+                                    <span className="text-[10px] text-zinc-500 self-center">Aplicar ao artista (só campos vazios):</span>
+                                    {tmdbPreview.photoUrl && !form.primaryImageUrl && (
+                                        <button type="button" onClick={() => set('primaryImageUrl', tmdbPreview.photoUrl)}
+                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            + Foto
+                                        </button>
+                                    )}
+                                    {tmdbPreview.hangulName && !form.nameHangul && (
+                                        <button type="button" onClick={() => set('nameHangul', tmdbPreview.hangulName)}
+                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            + Hangul
+                                        </button>
+                                    )}
+                                    {tmdbPreview.biography && !form.bio && (
+                                        <button type="button" onClick={() => set('bio', tmdbPreview.biography)}
+                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            + Bio
+                                        </button>
+                                    )}
+                                    {tmdbPreview.birthday && !form.birthDate && (
+                                        <button type="button" onClick={() => set('birthDate', tmdbPreview.birthday)}
+                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            + Nascimento
+                                        </button>
+                                    )}
+                                    {tmdbPreview.placeOfBirth && !form.placeOfBirth && (
+                                        <button type="button" onClick={() => set('placeOfBirth', tmdbPreview.placeOfBirth)}
+                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            + Local
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Feedback */}
                         {error && <p className="text-sm text-red-400 font-medium">{error}</p>}
