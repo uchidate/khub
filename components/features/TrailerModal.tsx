@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Play } from 'lucide-react'
 
@@ -44,8 +45,8 @@ export function TrailerModal({ trailerUrl, title }: TrailerModalProps) {
             </button>
 
             <AnimatePresence>
-                {isOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
+                {isOpen && createPortal(
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -78,7 +79,8 @@ export function TrailerModal({ trailerUrl, title }: TrailerModalProps) {
                                 allowFullScreen
                             />
                         </motion.div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </AnimatePresence>
         </>
