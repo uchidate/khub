@@ -226,6 +226,7 @@ model Production {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
+  streamingShows     StreamingShow[]
 
   @@index([type])
   @@index([year])
@@ -620,8 +621,32 @@ model UserContentPreferences {
   @@map("user_content_preferences")
 }
 
+// Catálogo de shows populares nos streamings — atualizado diariamente via cron
+// Fonte: TMDB /trending/tv/day (global) + /discover/tv por plataforma
+model StreamingShow {
+  id           String      @id @default(cuid())
+  source       String      // "trending_global" | "netflix_br" | "disney_br" | "prime_br" | "apple_br"
+  rank         Int         // 1–10 (ou mais para trending_global)
+  showTitle    String      // título original do TMDB
+  tmdbId       String      // TMDB show ID
+  posterUrl    String?     // https://image.tmdb.org/t/p/w500{poster_path}
+  year         Int?        // first_air_date year
+  voteAverage  Float?      // TMDB rating
+  isKorean     Boolean     @default(false) // original_language === 'ko'
+  productionId String?     // FK para Production quando tmdbId coincide
+  fetchedAt    DateTime    @default(now())
+  expiresAt    DateTime    // fetchedAt + 2 dias
+
+  production   Production? @relation(fields: [productionId], references: [id])
+
+  @@unique([source, tmdbId])
+  @@index([source, rank])
+  @@index([expiresAt])
+  @@map("streaming_show")
+}
+
 // Sinal de trending baseado em presença de atores em shows populares de streaming
-// Fontes: TMDB trending (extensível para FlixPatrol, JustWatch, etc.)
+// Fonte: TMDB /discover/tv por plataforma (artist-centric, para trendingScore)
 model StreamingTrendSignal {
   id           String   @id @default(cuid())
   artistId     String

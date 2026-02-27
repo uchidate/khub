@@ -14,10 +14,13 @@ import {
 export interface StreamingShow {
     rank: number
     showTitle: string
-    showTmdbId: string
+    tmdbId: string
     source: string
     productionId?: string
-    imageUrl?: string | null
+    posterUrl?: string | null
+    year?: number | null
+    voteAverage?: number | null
+    isKorean?: boolean
 }
 
 export type ShowsByPlatform = Record<string, StreamingShow[]>
@@ -102,10 +105,10 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                             group relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900
                             border border-zinc-800 ${cfg.hoverBorderColor} transition-all duration-300
                         `}>
-                            {/* Poster */}
-                            {show.imageUrl ? (
+                            {/* Poster TMDB */}
+                            {show.posterUrl ? (
                                 <Image
-                                    src={show.imageUrl}
+                                    src={show.posterUrl}
                                     alt={show.showTitle}
                                     fill
                                     className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -129,6 +132,20 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 </span>
                             </div>
 
+                            {/* Badge K-Drama (canto superior direito) */}
+                            {show.isKorean && (
+                                <div className="absolute top-1.5 right-1.5 z-10 px-1 py-0.5 rounded bg-purple-600/90 text-[7px] font-black text-white leading-none">
+                                    K
+                                </div>
+                            )}
+
+                            {/* Nota TMDB (canto inferior direito) */}
+                            {show.voteAverage != null && show.voteAverage > 0 && (
+                                <div className="absolute bottom-1.5 right-1.5 z-10 px-1 py-0.5 rounded bg-black/70 text-[8px] font-bold text-yellow-400 leading-none">
+                                    ★ {show.voteAverage.toFixed(1)}
+                                </div>
+                            )}
+
                             {/* Badge plataforma */}
                             <div className={`absolute bottom-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded text-[8px] font-black ${cfg.bgColor} ${cfg.textColor}`}>
                                 {cfg.label}
@@ -137,13 +154,16 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                     )
 
                     return (
-                        <div key={`${show.source}-${show.showTmdbId}`} className="block">
+                        <div key={`${show.source}-${show.tmdbId}`} className="block">
                             {show.productionId ? (
                                 <Link href={`/productions/${show.productionId}`} className="block">
                                     {card}
                                     <p className="mt-1.5 text-[10px] md:text-xs text-white font-semibold line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">
                                         {show.showTitle}
                                     </p>
+                                    {show.year && (
+                                        <p className="text-[9px] text-zinc-500 leading-none mt-0.5">{show.year}</p>
+                                    )}
                                 </Link>
                             ) : (
                                 <>
@@ -151,6 +171,9 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                     <p className="mt-1.5 text-[10px] md:text-xs text-zinc-400 font-semibold line-clamp-2 leading-tight">
                                         {show.showTitle}
                                     </p>
+                                    {show.year && (
+                                        <p className="text-[9px] text-zinc-500 leading-none mt-0.5">{show.year}</p>
+                                    )}
                                 </>
                             )}
                         </div>
