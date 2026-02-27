@@ -17,9 +17,20 @@ export interface StreamingPlatformConfig {
     dotColor: string
     /** Tailwind class para hover da borda do card */
     hoverBorderColor: string
+    /** TMDB watch provider ID para filtro em /discover/tv (undefined = sem filtro) */
+    tmdbProviderId?: number
 }
 
 export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
+    trending_global: {
+        label:           'Trending',
+        bgColor:         'bg-orange-600',
+        textColor:       'text-white',
+        borderColor:     'border-orange-400',
+        dotColor:        'bg-orange-400',
+        hoverBorderColor: 'hover:border-orange-400/60',
+        tmdbProviderId:  undefined, // /trending/tv/day — sem filtro de provider
+    },
     netflix_br: {
         label:           'Netflix',
         bgColor:         'bg-red-600',
@@ -27,6 +38,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-red-500',
         dotColor:        'bg-red-500',
         hoverBorderColor: 'hover:border-red-500/60',
+        tmdbProviderId:  8,
     },
     disney_br: {
         label:           'Disney+',
@@ -35,6 +47,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-blue-500',
         dotColor:        'bg-blue-500',
         hoverBorderColor: 'hover:border-blue-500/60',
+        tmdbProviderId:  337,
     },
     prime_br: {
         label:           'Prime Video',
@@ -43,6 +56,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-sky-400',
         dotColor:        'bg-sky-400',
         hoverBorderColor: 'hover:border-sky-400/60',
+        tmdbProviderId:  119,
     },
     apple_br: {
         label:           'Apple TV+',
@@ -51,6 +65,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-zinc-400',
         dotColor:        'bg-zinc-400',
         hoverBorderColor: 'hover:border-zinc-400/60',
+        tmdbProviderId:  350,
     },
     tmdb_trending: {
         label:           'K-Drama',
@@ -70,13 +85,13 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
     },
 }
 
-/** Ordem de exibição dos tabs na UI (plataformas externas primeiro) */
+/** Ordem de exibição dos tabs na UI da seção StreamingTopShows */
 export const STREAMING_TAB_ORDER = [
+    'trending_global',
     'netflix_br',
     'disney_br',
     'prime_br',
     'apple_br',
-    'tmdb_trending',
 ]
 
 /** Retorna a config de uma plataforma ou um fallback genérico */

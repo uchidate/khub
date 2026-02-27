@@ -170,51 +170,32 @@ export default async function Home() {
     // Top News para seção de notícias (3 mais recentes)
     const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
-    // Top 10 por streaming (Netflix, Disney+, Prime, Apple TV+)
-    const streamingSignalsRaw = await prisma.streamingTrendSignal.findMany({
-        where: {
-            expiresAt: { gt: new Date() },
-            source: { not: 'internal_production' },
+    // Top 10 por streaming — lê da tabela StreamingShow (atualizada diariamente pelo cron)
+    const streamingShowsRaw = await prisma.streamingShow.findMany({
+        where: { expiresAt: { gt: new Date() } },
+        select: {
+            source: true, rank: true, showTitle: true, tmdbId: true,
+            posterUrl: true, year: true, voteAverage: true, isKorean: true,
+            productionId: true,
         },
-        select: { source: true, showTitle: true, showTmdbId: true, rank: true },
         orderBy: [{ source: 'asc' }, { rank: 'asc' }],
     })
 
-    // Deduplica por (source, showTmdbId) mantendo o menor rank
-    const seenShows = new Map<string, { source: string; showTitle: string; showTmdbId: string; rank: number }>()
-    for (const s of streamingSignalsRaw) {
-        const key = `${s.source}:${s.showTmdbId}`
-        const existing = seenShows.get(key)
-        if (!existing || s.rank < existing.rank) seenShows.set(key, s)
-    }
-
-    // Busca Productions correspondentes por tmdbId para imagens e links
-    const uniqueTmdbIds = Array.from(new Set(Array.from(seenShows.values()).map(s => s.showTmdbId)))
-    const matchedProductions = uniqueTmdbIds.length > 0
-        ? await prisma.production.findMany({
-            where: { tmdbId: { in: uniqueTmdbIds } },
-            select: { id: true, tmdbId: true, imageUrl: true, titlePt: true },
-        })
-        : []
-    const prodByTmdbId = new Map(matchedProductions.map(p => [p.tmdbId!, p]))
-
-    // Monta ShowsByPlatform
+    // Agrupa por source → showsByPlatform
     const showsByPlatform: ShowsByPlatform = {}
-    for (const show of Array.from(seenShows.values())) {
+    for (const show of streamingShowsRaw) {
         if (!showsByPlatform[show.source]) showsByPlatform[show.source] = []
-        const prod = prodByTmdbId.get(show.showTmdbId)
         showsByPlatform[show.source].push({
             rank: show.rank,
-            showTitle: prod?.titlePt ?? show.showTitle,
-            showTmdbId: show.showTmdbId,
+            showTitle: show.showTitle,
+            tmdbId: show.tmdbId,
             source: show.source,
-            productionId: prod?.id,
-            imageUrl: prod?.imageUrl,
+            posterUrl: show.posterUrl,
+            year: show.year,
+            voteAverage: show.voteAverage,
+            isKorean: show.isKorean,
+            productionId: show.productionId ?? undefined,
         })
-    }
-    // Ordena cada plataforma por rank
-    for (const shows of Object.values(showsByPlatform)) {
-        shows.sort((a, b) => a.rank - b.rank)
     }
 
     // Grupos em destaque (10 mais populares entre grupos ativos)

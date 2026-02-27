@@ -6,6 +6,7 @@ import { createLogger } from '@/lib/utils/logger';
 import { getErrorMessage } from '@/lib/utils/error';
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter';
 import { TrendingService } from '@/lib/services/trending-service';
+import { syncStreamingShows } from '@/lib/services/streaming-show-service';
 
 const log = createLogger('CRON');
 
@@ -123,7 +124,7 @@ async function runCronProcessing(lockId: string) {
         // FASE 1: Etapas independentes em paralelo (artists, news, productions)
         // ================================================================
         const fase1Timer = makeTimer();
-        const [artistsResult, newsResult, productionsResult] = await Promise.allSettled([
+        const [artistsResult, newsResult, productionsResult, streamingShowsResult] = await Promise.allSettled([
             // 2.1. Gerar novos artistas (TMDB)
             (async () => {
                 const t = makeTimer();
@@ -286,6 +287,20 @@ async function runCronProcessing(lockId: string) {
                 perf.news_ms = t();
             })(),
 
+            // 2.2b. Sincronizar catálogo de shows nos streamings (StreamingShow)
+            (async () => {
+                const t = makeTimer();
+                log.info('Syncing streaming show catalog...');
+                try {
+                    const results = await syncStreamingShows();
+                    const total = results.reduce((s, r) => s + r.upserted, 0);
+                    log.info(`Streaming shows synced: ${total} shows across ${results.length} sources`);
+                } catch (err) {
+                    log.error('Streaming show sync failed (non-blocking)', { error: getErrorMessage(err) });
+                }
+                perf.streaming_shows_ms = t();
+            })(),
+
             // 2.3. Descobrir K-dramas e filmes coreanos do TMDB
             (async () => {
                 const t = makeTimer();
@@ -356,6 +371,9 @@ async function runCronProcessing(lockId: string) {
         if (productionsResult.status === 'rejected') {
             log.error(`Production discovery failed: ${productionsResult.reason?.message || productionsResult.reason}`);
             results.productions.errors.push(productionsResult.reason?.message || 'Unknown error');
+        }
+        if (streamingShowsResult.status === 'rejected') {
+            log.error(`Streaming show sync failed: ${streamingShowsResult.reason?.message || streamingShowsResult.reason}`);
         }
 
         // ================================================================
