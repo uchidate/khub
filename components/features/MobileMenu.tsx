@@ -48,15 +48,8 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
       {/* Mobile Menu Overlay */}
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] md:hidden animate-fade-in"
-            onClick={() => setIsOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Menu Panel */}
-          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-zinc-900 z-[120] md:hidden animate-slide-in-right">
+          {/* Menu Panel — full screen, no backdrop needed */}
+          <div className="fixed inset-0 bg-zinc-950 z-[120] md:hidden animate-slide-in-right">
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-zinc-800">
