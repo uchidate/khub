@@ -71,20 +71,36 @@ export async function GET(request: NextRequest) {
 
     const filter = searchParams.get('filter')
     // Supported filters (all exclude flaggedAsNonKorean unless the filter IS flagged):
-    //   no_hangul           — nameHangul null
-    //   no_hangul_pending   — nameHangul null + tmdbId set
-    //   no_hangul_no_tmdb   — nameHangul null + tmdbId null
-    //   no_photo            — primaryImageUrl null
-    //   no_photo_pending    — primaryImageUrl null + tmdbId set
-    //   no_photo_no_tmdb    — primaryImageUrl null + tmdbId null
-    //   no_social           — never synced (socialLinksUpdatedAt null)
-    //   no_social_pending   — same as no_social
-    //   no_social_attempted — tried but nothing found (updatedAt set, socialLinks null)
-    //   flagged             — flaggedAsNonKorean true
+    //   no_hangul              — nameHangul null
+    //   no_hangul_pending      — nameHangul null + tmdbId set
+    //   no_hangul_no_tmdb      — nameHangul null + tmdbId null
+    //   no_photo               — primaryImageUrl null
+    //   no_photo_pending       — primaryImageUrl null + tmdbId set
+    //   no_photo_no_tmdb       — primaryImageUrl null + tmdbId null
+    //   no_social              — never synced (socialLinksUpdatedAt null)
+    //   no_social_pending      — same as no_social
+    //   no_social_attempted    — tried but nothing found (updatedAt set, socialLinks null)
+    //   flagged                — flaggedAsNonKorean true
+    //   korean_no_tmdb         — nameRomanized contém Hangul E sem tmdbId (via raw regex)
 
     const active = { flaggedAsNonKorean: false } as const
-    const filterWhere =
-      filter === 'no_hangul'           ? { ...active, nameHangul: null }
+
+    // korean_no_tmdb requer regex SQL — busca IDs via raw e usa como filtro IN
+    let koreanNoTmdbIds: string[] | null = null
+    if (filter === 'korean_no_tmdb') {
+      const raw = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM "Artist"
+        WHERE "flaggedAsNonKorean" = false
+          AND "tmdbId" IS NULL
+          AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
+        ORDER BY "trendingScore" DESC
+      `
+      koreanNoTmdbIds = raw.map(r => r.id)
+    }
+
+    const filterWhere = koreanNoTmdbIds !== null
+      ? { id: { in: koreanNoTmdbIds } }
+      : filter === 'no_hangul'           ? { ...active, nameHangul: null }
       : filter === 'no_hangul_pending'   ? { ...active, nameHangul: null, tmdbId: { not: null } }
       : filter === 'no_hangul_no_tmdb'   ? { ...active, nameHangul: null, tmdbId: null }
       : filter === 'no_photo'            ? { ...active, primaryImageUrl: null }

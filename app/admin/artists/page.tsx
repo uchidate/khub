@@ -43,6 +43,7 @@ interface ArtistStats {
   noSocialTotal: number
   noSocialPending: number
   noSocialAttempted: number
+  koreanNoTmdb: number
 }
 
 type FilterType =
@@ -51,6 +52,7 @@ type FilterType =
   | 'no_photo' | 'no_photo_pending' | 'no_photo_no_tmdb'
   | 'no_social' | 'no_social_pending' | 'no_social_attempted'
   | 'flagged'
+  | 'korean_no_tmdb'
 
 // ─── Social Badges ────────────────────────────────────────────────────────────
 
@@ -228,6 +230,7 @@ function StatsBar({ stats, filter, onFilter }: {
     { label: 'Sem Hangul', value: 'no_hangul' as FilterType, count: stats?.noHangul ?? null, dot: 'bg-purple-400' },
     { label: 'Sem Foto', value: 'no_photo' as FilterType, count: stats?.noPhoto ?? null, dot: 'bg-orange-400' },
     { label: 'Sem Redes', value: 'no_social' as FilterType, count: stats?.noSocialTotal ?? null, dot: 'bg-blue-400' },
+    { label: 'Nome Errado', value: 'korean_no_tmdb' as FilterType, count: stats?.koreanNoTmdb ?? null, dot: 'bg-amber-400' },
     { label: 'Flagged', value: 'flagged' as FilterType, count: stats?.flagged ?? null, dot: 'bg-red-400' },
   ]
 

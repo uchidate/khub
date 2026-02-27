@@ -20,6 +20,8 @@
  *   noGroupUnsynced — no membership + groupSyncAt null (never tried MusicBrainz)
  *   noGroupSolo     — no membership + groupSyncAt set (tried, solo or not found)
  *
+ * koreanNoTmdb: artistas cujo nameRomanized contém Hangul E não têm tmdbId (nome errado, sem ref TMDB).
+ *
  * All counts exclude flaggedAsNonKorean artists.
  */
 import { NextResponse } from 'next/server'
@@ -49,6 +51,7 @@ export async function GET() {
     withGroup,
     noGroupUnsynced,
     noGroupSolo,
+    koreanNoTmdbRaw,
   ] = await Promise.all([
     prisma.artist.count(),
     prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
@@ -74,9 +77,17 @@ export async function GET() {
     prisma.artist.count({ where: { ...active, memberships: { some: { isActive: true } } } }),
     prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null } }),
     prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } } }),
+    // nome errado (Hangul no nameRomanized) E sem tmdbId — requer curadoria manual
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) FROM "Artist"
+      WHERE "flaggedAsNonKorean" = false
+        AND "tmdbId" IS NULL
+        AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
+    `,
   ])
 
   const noGroup = noGroupUnsynced + noGroupSolo
+  const koreanNoTmdb = Number(koreanNoTmdbRaw[0].count)
 
   return NextResponse.json({
     total,
@@ -94,5 +105,6 @@ export async function GET() {
     noGroup,
     noGroupUnsynced,
     noGroupSolo,
+    koreanNoTmdb,
   })
 }

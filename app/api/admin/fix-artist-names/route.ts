@@ -160,6 +160,7 @@ export async function POST(req: NextRequest) {
             let fixed = 0
             let noTmdb = 0
             let duplicates = 0
+            let nameConflicts = 0
             let errors = 0
 
             for (let i = 0; i < artists.length; i++) {
@@ -168,14 +169,14 @@ export async function POST(req: NextRequest) {
 
                 try {
                     if (!artist.tmdbId) {
-                        send(`NO_TMDB:${artist.nameRomanized}`)
+                        send(`NO_TMDB:${artist.nameRomanized}:${artist.id}`)
                         noTmdb++
                         continue
                     }
 
                     const tmdb = await fetchTMDBPerson(artist.tmdbId)
                     if (!tmdb || !tmdb.name || KOREAN_REGEX.test(tmdb.name)) {
-                        send(`NO_TMDB:${artist.nameRomanized}`)
+                        send(`NO_TMDB:${artist.nameRomanized}:${artist.id}`)
                         noTmdb++
                         continue
                     }
@@ -186,28 +187,43 @@ export async function POST(req: NextRequest) {
                             nameRomanized: { equals: tmdb.name, mode: 'insensitive' },
                             id: { not: artist.id },
                         },
-                        select: { id: true, nameRomanized: true },
+                        select: { id: true, nameRomanized: true, tmdbId: true },
                     })
+
                     if (conflict) {
-                        send(`DUPLICATE:${artist.nameRomanized}→${tmdb.name}`)
-                        duplicates++
-                        continue
+                        if (conflict.tmdbId && conflict.tmdbId !== artist.tmdbId) {
+                            // Artistas diferentes com o mesmo nome — não é duplicata
+                            // Tenta corrigir mesmo assim; se o unique constraint falhar, captura abaixo
+                            send(`NAME_CONFLICT:${artist.nameRomanized}→${tmdb.name}:outro=${conflict.id}`)
+                            nameConflicts++
+                            // Não faz continue — tenta aplicar abaixo (pode falhar por unique)
+                        } else {
+                            // Mesmo tmdbId ou sem tmdbId no conflito = duplicata real
+                            send(`DUPLICATE:${artist.nameRomanized}→${tmdb.name}:outro=${conflict.id}`)
+                            duplicates++
+                            continue
+                        }
                     }
 
                     const koreanName = artist.nameHangul || artist.nameRomanized
                     const stageNames = extractStageNames(tmdb.also_known_as, tmdb.name)
 
-                    await prisma.artist.update({
-                        where: { id: artist.id },
-                        data: {
-                            nameRomanized: tmdb.name,
-                            nameHangul: koreanName,
-                            stageNames: stageNames.length > 0 ? stageNames : undefined,
-                        },
-                    })
-
-                    send(`FIXED:${artist.nameRomanized}→${tmdb.name}`)
-                    fixed++
+                    try {
+                        await prisma.artist.update({
+                            where: { id: artist.id },
+                            data: {
+                                nameRomanized: tmdb.name,
+                                nameHangul: koreanName,
+                                stageNames: stageNames.length > 0 ? stageNames : undefined,
+                            },
+                        })
+                        send(`FIXED:${artist.nameRomanized}→${tmdb.name}`)
+                        fixed++
+                    } catch (updateErr) {
+                        // Unique constraint — dois artistas com mesmo nome exato
+                        send(`NAME_CONFLICT_UNRESOLVABLE:${artist.nameRomanized}→${tmdb.name}:${artist.id}`)
+                        nameConflicts++
+                    }
                 } catch (e) {
                     send(`ERROR:${artist.nameRomanized}:${String(e)}`)
                     errors++
@@ -218,7 +234,7 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            send(`DONE:fixed=${fixed},noTmdb=${noTmdb},duplicates=${duplicates},errors=${errors}`)
+            send(`DONE:fixed=${fixed},noTmdb=${noTmdb},duplicates=${duplicates},nameConflicts=${nameConflicts},errors=${errors}`)
             controller.close()
         },
     })

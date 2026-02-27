@@ -1,10 +1,15 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { Languages, RefreshCw, AlertTriangle, CheckCircle, Type } from 'lucide-react'
 
-type LogLine = { text: string; type: 'info' | 'success' | 'warning' | 'error' | 'done' | 'progress' }
+type LogLine = {
+    text: string
+    type: 'info' | 'success' | 'warning' | 'error' | 'done' | 'progress'
+    link?: { href: string; label: string }
+}
 
 function parseLineFixNames(line: string): LogLine {
     const [type, ...rest] = line.split(':')
@@ -21,16 +26,54 @@ function parseLineFixNames(line: string): LogLine {
             const [from, to] = payload.split('→')
             return { text: `✅ ${from} → ${to}`, type: 'success' }
         }
-        case 'NO_TMDB':
-            return { text: `➖ Sem TMDB: ${payload}`, type: 'warning' }
+        case 'NO_TMDB': {
+            // formato: NO_TMDB:{name}:{id}
+            const parts = payload.split(':')
+            const artistId = parts[parts.length - 1]
+            const name = parts.slice(0, -1).join(':')
+            return {
+                text: `➖ Sem TMDB: ${name}`,
+                type: 'warning',
+                link: { href: `/admin/artists/${artistId}`, label: 'Adicionar TMDB ID →' },
+            }
+        }
         case 'DUPLICATE': {
-            const [from, to] = payload.split('→')
-            return { text: `⚠️ Duplicata — nome "${to}" já existe: ${from}`, type: 'warning' }
+            const [fromTo, outroId] = payload.split(':outro=')
+            const [from, to] = (fromTo ?? payload).split('→')
+            return { text: `⚠️ Duplicata real — nome "${to ?? ''}" já existe (outro=${outroId ?? '?'}): ${from}`, type: 'warning' }
+        }
+        case 'NAME_CONFLICT': {
+            // formato: NAME_CONFLICT:{from}→{to}:outro={id}
+            const [fromTo, outroId] = payload.split(':outro=')
+            const [from, to] = (fromTo ?? payload).split('→')
+            return {
+                text: `🔶 Mesmo nome, artistas diferentes — "${to ?? ''}" corrigido (verificar outro: ${outroId ?? '?'}): ${from}`,
+                type: 'warning',
+                link: outroId ? { href: `/admin/artists/${outroId}`, label: 'Ver outro artista →' } : undefined,
+            }
+        }
+        case 'NAME_CONFLICT_UNRESOLVABLE': {
+            // formato: NAME_CONFLICT_UNRESOLVABLE:{from}→{to}:{id}
+            const parts = payload.split(':')
+            const artistId = parts[parts.length - 1]
+            const [from, to] = parts.slice(0, -1).join(':').split('→')
+            return {
+                text: `🔴 Conflito irresolvível — "${to ?? ''}" já existe exatamente igual: ${from} (disambiguação manual necessária)`,
+                type: 'error',
+                link: { href: `/admin/artists/${artistId}`, label: 'Editar artista →' },
+            }
         }
         case 'ERROR':
             return { text: `❌ Erro: ${payload}`, type: 'error' }
-        case 'DONE':
-            return { text: `🎉 Concluído! ${payload.replace('fixed=', 'corrigidos: ').replace(',noTmdb=', ' | sem TMDB: ').replace(',duplicates=', ' | duplicatas: ').replace(',errors=', ' | erros: ')}`, type: 'done' }
+        case 'DONE': {
+            const fmt = payload
+                .replace('fixed=', 'corrigidos: ')
+                .replace(',noTmdb=', ' | sem TMDB: ')
+                .replace(',duplicates=', ' | duplicatas: ')
+                .replace(',nameConflicts=', ' | conflito de nome: ')
+                .replace(',errors=', ' | erros: ')
+            return { text: `🎉 Concluído! ${fmt}`, type: 'done' }
+        }
         default:
             return { text: line, type: 'info' }
     }
@@ -139,7 +182,18 @@ function LogPanel({
                     className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-white/5"
                 >
                     {log.map((line, i) => (
-                        <div key={i} className={lineColor(line.type)}>{line.text}</div>
+                        <div key={i} className={`flex items-center gap-2 ${lineColor(line.type)}`}>
+                            <span>{line.text}</span>
+                            {line.link && (
+                                <Link
+                                    href={line.link.href}
+                                    target="_blank"
+                                    className="ml-1 underline text-amber-400 hover:text-amber-300 whitespace-nowrap"
+                                >
+                                    {line.link.label}
+                                </Link>
+                            )}
+                        </div>
                     ))}
                 </div>
             )}
@@ -222,8 +276,13 @@ export default function FixNamesAdminPage() {
         setFixRunning,
         setFixLog,
         setFixStats,
-        /fixed=(\d+),noTmdb=(\d+),duplicates=(\d+),errors=(\d+)/,
-        (m) => ({ total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]), main: parseInt(m[1]), secondary: parseInt(m[2]) + parseInt(m[3]), errors: parseInt(m[4]) })
+        /fixed=(\d+),noTmdb=(\d+),duplicates=(\d+),nameConflicts=(\d+),errors=(\d+)/,
+        (m) => ({
+            total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]) + parseInt(m[5]),
+            main: parseInt(m[1]),
+            secondary: parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]),
+            errors: parseInt(m[5]),
+        })
     ), [])
 
     const startFillHangul = useCallback(() => runStream(
