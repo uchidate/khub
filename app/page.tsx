@@ -171,6 +171,7 @@ export default async function Home() {
     const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
 
     // Top 10 por streaming — lê da tabela StreamingShow (atualizada diariamente pelo cron)
+    // Falha graciosamente caso a tabela ainda não exista (antes da migration rodar)
     const streamingShowsRaw = await prisma.streamingShow.findMany({
         where: { expiresAt: { gt: new Date() } },
         select: {
@@ -179,7 +180,7 @@ export default async function Home() {
             productionId: true,
         },
         orderBy: [{ source: 'asc' }, { rank: 'asc' }],
-    })
+    }).catch(() => [])
 
     // Agrupa por source → showsByPlatform
     const showsByPlatform: ShowsByPlatform = {}
