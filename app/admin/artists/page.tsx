@@ -154,6 +154,7 @@ function FixNamesButton({ artist, onFixed }: {
   const canFix = needsFixName || needsFillHangul
 
   const [state, setState] = useState<BtnState>('idle')
+  const [tried, setTried] = useState(false)
   const [tooltip, setTooltip] = useState('')
 
   const handleFix = useCallback(async (e: React.MouseEvent) => {
@@ -175,6 +176,7 @@ function FixNamesButton({ artist, onFixed }: {
         setTooltip(mode === 'fix-names' ? `→ ${data.nameRomanized}` : `→ ${data.nameHangul}`)
       } else {
         setState('warn')
+        setTried(true)
         setTooltip(data.reason ?? 'Sem dados no TMDB')
       }
     } catch { setState('err'); setTooltip('Erro de rede') }
@@ -183,18 +185,21 @@ function FixNamesButton({ artist, onFixed }: {
 
   if (!canFix) return null
 
+  // `tried` persists after the timeout — reflects "already attempted, not found"
+  const display = tried && state === 'idle' ? 'warn' : state
+
   const colorClass =
-    state === 'ok'   ? 'text-green-400 border-green-500/30'
-    : state === 'warn' ? 'text-yellow-400 border-yellow-500/30'
-    : state === 'err'  ? 'text-red-400 border-red-500/30'
+    display === 'ok'   ? 'text-green-400 border-green-500/30'
+    : display === 'warn' ? 'text-zinc-500 border-zinc-700'
+    : display === 'err'  ? 'text-red-400 border-red-500/30'
     : needsFixName
       ? 'text-orange-400 border-orange-500/30 hover:bg-orange-500/10'
       : 'text-purple-400 border-purple-500/30 hover:bg-purple-500/10'
 
   const label =
-    state === 'ok' ? '✓'
-    : state === 'warn' ? '—'
-    : state === 'err' ? '!'
+    display === 'ok' ? '✓'
+    : display === 'warn' ? '—'
+    : display === 'err' ? '!'
     : needsFixName ? 'Nome' : 'Hangul'
 
   return (
@@ -203,9 +208,11 @@ function FixNamesButton({ artist, onFixed }: {
       disabled={state === 'loading'}
       title={
         tooltip ||
-        (needsFixName
-          ? 'nameRomanized tem Hangul — corrigir via TMDB'
-          : 'Preencher nameHangul via TMDB also_known_as')
+        (display === 'warn' && tried
+          ? 'Não encontrado no TMDB'
+          : needsFixName
+            ? 'nameRomanized tem Hangul — corrigir via TMDB'
+            : 'Preencher nameHangul via TMDB also_known_as')
       }
       className={`inline-flex items-center gap-1.5 px-2 py-1 border rounded text-xs font-medium transition-colors disabled:cursor-wait ${colorClass}`}
     >
