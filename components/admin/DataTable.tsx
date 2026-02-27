@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { Search, ChevronLeft, ChevronRight, Trash2, ArrowUpDown } from 'lucide-react'
 
 export interface Column<T> {
   key: string
   label: string
   sortable?: boolean
+  /** Tailwind classes applied to both th and td — use for responsive hiding e.g. 'hidden xl:table-cell' */
+  className?: string
   render?: (item: T) => React.ReactNode
 }
 
@@ -14,6 +17,8 @@ interface DataTableProps<T> {
   columns: Column<T>[]
   apiUrl: string
   onEdit?: (item: T) => void
+  /** If provided, renders an anchor link instead of a callback button for editing */
+  editHref?: (item: T) => string
   onDelete?: (ids: string[]) => void
   actions?: (item: T) => React.ReactNode
   searchPlaceholder?: string
@@ -30,6 +35,7 @@ export function DataTable<T extends { id: string }>({
   columns,
   apiUrl,
   onEdit,
+  editHref,
   onDelete,
   actions,
   searchPlaceholder = 'Buscar...',
@@ -106,6 +112,8 @@ export function DataTable<T extends { id: string }>({
     return () => { delete (window as Record<string, unknown>).__adminTableRefetch }
   }, [fetchData])
 
+  const hasActions = onEdit || editHref || actions
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -134,9 +142,9 @@ export function DataTable<T extends { id: string }>({
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table — overflow-x-auto + min-w-max ensures horizontal scroll instead of column squishing */}
       <div className="overflow-x-auto rounded-xl border border-zinc-800">
-        <table className="w-full text-sm">
+        <table className="min-w-max w-full text-sm">
           <thead>
             <tr className="bg-zinc-900/50">
               {onDelete && (
@@ -152,9 +160,9 @@ export function DataTable<T extends { id: string }>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500 ${
+                  className={`px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500 whitespace-nowrap ${
                     col.sortable ? 'cursor-pointer hover:text-white' : ''
-                  }`}
+                  } ${col.className ?? ''}`}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                 >
                   <span className="flex items-center gap-1">
@@ -163,7 +171,11 @@ export function DataTable<T extends { id: string }>({
                   </span>
                 </th>
               ))}
-              {(onEdit || actions) && <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-zinc-500">Ações</th>}
+              {hasActions && (
+                <th className="sticky right-0 bg-zinc-900 px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-zinc-500 shadow-[-8px_0_12px_rgba(0,0,0,0.4)]">
+                  Ações
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800/50">
@@ -193,18 +205,26 @@ export function DataTable<T extends { id: string }>({
                     </td>
                   )}
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-zinc-300">
+                    <td key={col.key} className={`px-4 py-3 text-zinc-300 ${col.className ?? ''}`}>
                       {col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}
-                  {(onEdit || actions) && (
-                    <td className="px-4 py-3 text-right">
+                  {hasActions && (
+                    <td className="sticky right-0 bg-zinc-950 px-4 py-3 text-right shadow-[-8px_0_12px_rgba(0,0,0,0.4)]">
                       <div className="flex items-center justify-end gap-2">
                         {actions?.(item)}
-                        {onEdit && (
+                        {editHref && (
+                          <Link
+                            href={editHref(item)}
+                            className="text-xs px-2 py-1 rounded border border-purple-500/30 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors"
+                          >
+                            Editar
+                          </Link>
+                        )}
+                        {onEdit && !editHref && (
                           <button
                             onClick={() => onEdit(item)}
-                            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                            className="text-xs px-2 py-1 rounded border border-purple-500/30 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors"
                           >
                             Editar
                           </button>
