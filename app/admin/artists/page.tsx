@@ -8,6 +8,7 @@ import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -337,9 +338,9 @@ const formFields: FormField[] = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ArtistsAdminPage() {
+  const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [editingArtist, setEditingArtist] = useState<Artist | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [filter, setFilter] = useState<FilterType>('')
   const [stats, setStats] = useState<ArtistStats | null>(null)
@@ -369,7 +370,10 @@ export default function ArtistsAdminPage() {
     {
       key: 'imageUrl', label: 'Foto',
       render: (artist) => artist.primaryImageUrl ? (
-        <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={40} height={40} className="rounded-lg object-cover" />
+        <Link href={`/artists/${artist.id}`} target="_blank" onClick={e => e.stopPropagation()}>
+          <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={40} height={40}
+            className="rounded-lg object-cover hover:ring-2 hover:ring-purple-500/50 transition-all" />
+        </Link>
       ) : (
         <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-xs text-zinc-500">N/A</div>
       ),
@@ -381,44 +385,54 @@ export default function ArtistsAdminPage() {
         const name = override?.nameRomanized ?? artist.nameRomanized
         const hasKorean = KOREAN_REGEX.test(name)
         return (
-          <span className={hasKorean ? 'text-orange-400 font-semibold' : 'text-white'}>
-            {name}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={hasKorean ? 'text-orange-400 font-semibold' : 'text-white font-medium'}>
+              {name}
+            </span>
+            <Link href={`/artists/${artist.id}`} target="_blank" onClick={e => e.stopPropagation()}
+              className="text-zinc-600 hover:text-zinc-400 transition-colors flex-shrink-0">
+              <ExternalLink size={11} />
+            </Link>
+          </div>
         )
       },
     },
     {
-      key: 'nameHangul', label: 'Nome Original',
+      key: 'nameHangul', label: 'Hangul',
       render: (artist) => {
         const override = nameOverrides[artist.id]
         const hangul = override?.nameHangul ?? artist.nameHangul
         return hangul
-          ? <span className="text-zinc-400">{hangul}</span>
-          : <span className="text-red-900 text-xs font-bold">—</span>
+          ? <span className="text-zinc-400 text-xs">{hangul}</span>
+          : <span className="text-zinc-700 text-xs font-bold">—</span>
       },
     },
     {
       key: 'agencyName', label: 'Agência',
-      render: (artist) => <span className="text-zinc-400">{artist.agencyName || '—'}</span>,
+      className: 'hidden xl:table-cell',
+      render: (artist) => <span className="text-zinc-400 text-xs">{artist.agencyName || '—'}</span>,
     },
     {
       key: 'musicalGroupName', label: 'Grupo',
+      className: 'hidden lg:table-cell',
       render: (artist) => artist.musicalGroupName ? (
-        <span className="text-electric-cyan text-xs font-medium px-2 py-0.5 bg-electric-cyan/10 rounded-full">
+        <span className="text-cyan-400 text-xs font-medium px-2 py-0.5 bg-cyan-400/10 rounded-full whitespace-nowrap">
           {artist.musicalGroupName}
         </span>
-      ) : <span className="text-zinc-600">—</span>,
+      ) : <span className="text-zinc-600 text-xs">—</span>,
     },
     {
-      key: 'socialLinks', label: 'Redes Sociais',
+      key: 'socialLinks', label: 'Redes',
+      className: 'hidden xl:table-cell',
       render: (artist) => <SocialBadges links={socialOverrides[artist.id] ?? artist.socialLinks} />,
     },
     {
-      key: 'productionsCount', label: 'Produções', sortable: true,
-      render: (artist) => <span className="text-purple-400">{artist.productionsCount}</span>,
+      key: 'productionsCount', label: 'Prod.', sortable: true,
+      render: (artist) => <span className="text-purple-400 font-bold">{artist.productionsCount}</span>,
     },
     {
       key: 'albumsCount', label: 'Álbuns', sortable: true,
+      className: 'hidden md:table-cell',
       render: (artist) => (
         <Link href={`/admin/artists/${artist.id}/discography`}
           className="text-pink-400 hover:text-pink-300 hover:underline font-bold">
@@ -428,18 +442,15 @@ export default function ArtistsAdminPage() {
     },
     {
       key: 'createdAt', label: 'Cadastro', sortable: true,
-      render: (artist) => new Date(artist.createdAt).toLocaleDateString('pt-BR'),
+      className: 'hidden lg:table-cell',
+      render: (artist) => <span className="text-zinc-500 text-xs">{new Date(artist.createdAt).toLocaleDateString('pt-BR')}</span>,
     },
   ]
 
-  const handleCreate = () => { setEditingArtist(null); setFormOpen(true) }
-  const handleEdit = (artist: Artist) => { setEditingArtist(artist); setFormOpen(true) }
+  const handleCreate = () => setFormOpen(true)
   const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
-    const url = editingArtist ? `/api/admin/artists?id=${editingArtist.id}` : '/api/admin/artists'
-    const method = editingArtist ? 'PATCH' : 'POST'
-
     if (typeof data.stageNames === 'string') {
       data.stageNames = data.stageNames
         ? data.stageNames.split(',').map((s: string) => s.trim()).filter(Boolean)
@@ -447,19 +458,22 @@ export default function ArtistsAdminPage() {
     }
     if (data.primaryImageUrl === '') data.primaryImageUrl = null
 
-    const res = await fetch(url, {
-      method,
+    const res = await fetch('/api/admin/artists', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
 
     if (!res.ok) {
       const err = await res.json()
-      throw new Error(err.error || 'Erro ao salvar artista')
+      throw new Error(err.error || 'Erro ao criar artista')
     }
 
+    const created = await res.json()
     refetchTable()
     fetchStats()
+    // Navigate to full edit page after creation
+    if (created.id) router.push(`/admin/artists/${created.id}`)
   }
 
   const handleDeleteConfirm = async () => {
@@ -480,10 +494,10 @@ export default function ArtistsAdminPage() {
 
   return (
     <AdminLayout title="Artistas">
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="space-y-3">
-            <p className="text-zinc-400 text-sm">Gerencie artistas de K-Drama e K-Pop</p>
+          <div className="space-y-3 min-w-0 flex-1">
+            <p className="text-zinc-400 text-sm -mt-6">Gerencie artistas de K-Drama e K-Pop</p>
             <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
           </div>
           <button
@@ -499,7 +513,7 @@ export default function ArtistsAdminPage() {
           columns={columns}
           apiUrl="/api/admin/artists"
           extraParams={filter ? { filter } : undefined}
-          onEdit={handleEdit}
+          editHref={(artist) => `/admin/artists/${artist.id}`}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por nome..."
           actions={(artist) => (
@@ -512,15 +526,8 @@ export default function ArtistsAdminPage() {
       </div>
 
       <FormModal
-        title={editingArtist ? 'Editar Artista' : 'Novo Artista'}
+        title="Novo Artista"
         fields={formFields}
-        initialData={editingArtist ? {
-          ...(editingArtist as unknown as Record<string, unknown>),
-          stageNames: Array.isArray((editingArtist as any).stageNames)
-            ? (editingArtist as any).stageNames.join(', ')
-            : '',
-          musicalGroupId: (editingArtist as any).musicalGroupId ?? '',
-        } : undefined}
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSubmit={handleFormSubmit}
