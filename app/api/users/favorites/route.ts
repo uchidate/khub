@@ -28,11 +28,12 @@ export async function GET(request: NextRequest) {
             productionId: true,
             newsId: true,
             groupId: true,
+            createdAt: true,
             ...(full ? {
-                artist: { select: { id: true, nameRomanized: true, primaryImageUrl: true } },
-                production: { select: { id: true, titlePt: true, imageUrl: true } },
-                news: { select: { id: true, title: true, imageUrl: true } },
-                group: { select: { id: true, name: true, profileImageUrl: true } },
+                artist: { select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true } },
+                production: { select: { id: true, titlePt: true, titleKr: true, imageUrl: true, year: true, type: true } },
+                news: { select: { id: true, title: true, imageUrl: true, publishedAt: true, source: true } },
+                group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } },
             } : {}),
         },
         orderBy: { createdAt: 'desc' },
@@ -56,17 +57,22 @@ export async function GET(request: NextRequest) {
     // Full mode: return entity data for rendering cards
     const items = favorites
         .map(f => {
+            const favoritedAt = (f as any).createdAt as Date
             if (f.artistId && (f as any).artist) {
-                return { id: f.artistId, type: 'artist' as const, ...(f as any).artist }
+                const a = (f as any).artist
+                return { id: f.artistId, type: 'artist' as const, nameRomanized: a.nameRomanized, nameHangul: a.nameHangul, primaryImageUrl: a.primaryImageUrl, roles: a.roles, gender: a.gender, favoritedAt }
             }
             if (f.productionId && (f as any).production) {
-                return { id: f.productionId, type: 'production' as const, title: (f as any).production.titlePt, imageUrl: (f as any).production.imageUrl }
+                const p = (f as any).production
+                return { id: f.productionId, type: 'production' as const, title: p.titlePt, titleKr: p.titleKr, imageUrl: p.imageUrl, year: p.year, productionType: p.type, favoritedAt }
             }
             if (f.newsId && (f as any).news) {
-                return { id: f.newsId, type: 'news' as const, ...(f as any).news }
+                const n = (f as any).news
+                return { id: f.newsId, type: 'news' as const, title: n.title, imageUrl: n.imageUrl, publishedAt: n.publishedAt, source: n.source, favoritedAt }
             }
             if (f.groupId && (f as any).group) {
-                return { id: f.groupId, type: 'group' as const, nameRomanized: (f as any).group.name, primaryImageUrl: (f as any).group.profileImageUrl }
+                const g = (f as any).group
+                return { id: f.groupId, type: 'group' as const, nameRomanized: g.name, nameHangul: g.nameHangul, primaryImageUrl: g.profileImageUrl, favoritedAt }
             }
             return null
         })
