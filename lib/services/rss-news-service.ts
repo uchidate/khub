@@ -7,12 +7,12 @@
  * Fontes RSS ativas:
  * - Soompi:      https://www.soompi.com/feed
  * - Koreaboo:    https://www.koreaboo.com/feed/
- * - KpopStarz:   https://www.kpopstarz.com/rss
- * - Dramabeans:  https://www.dramabeans.com/feed/  (K-drama recaps)
+ * - Dramabeans:  https://dramabeans.com/feed/  (K-drama recaps, redireciona sem www)
  * - Asian Junkie: https://www.asianjunkie.com/feed/ (K-pop / J-pop)
  *
  * Fontes descontinuadas:
- * - AllKpop: https://www.allkpop.com/rss (retorna 404)
+ * - AllKpop:   https://www.allkpop.com/rss (retorna 404)
+ * - KpopStarz: https://www.kpopstarz.com/rss (retorna 403 — feed bloqueado)
  */
 
 import { parseStringPromise } from 'xml2js';
@@ -45,14 +45,11 @@ const RSS_FEEDS: RSSFeed[] = [
     url: 'https://www.koreaboo.com/feed/',
     language: 'en',
   },
-  {
-    name: 'KpopStarz',
-    url: 'https://www.kpopstarz.com/rss',
-    language: 'en',
-  },
+  // KpopStarz removido: retorna 403 em todas as URLs de RSS (feed bloqueado)
+  // { name: 'KpopStarz', url: 'https://www.kpopstarz.com/rss', language: 'en' },
   {
     name: 'Dramabeans',
-    url: 'https://www.dramabeans.com/feed/',
+    url: 'https://dramabeans.com/feed/',  // sem www — o www redireciona
     language: 'en',
   },
   {
