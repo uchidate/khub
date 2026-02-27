@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Shield, AlertTriangle, CheckCircle, XCircle, Trash2, RefreshCw, ArrowLeft } from 'lucide-react'
+import { Shield, AlertTriangle, CheckCircle, XCircle, Trash2, RefreshCw } from 'lucide-react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
 
 type Artist = {
   id: string
@@ -127,25 +128,9 @@ export default function ArtistModerationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors mb-4"
-          >
-            <ArrowLeft size={20} />
-            Voltar ao Admin
-          </Link>
-          <div className="flex items-center gap-3 mb-4">
-            <Shield className="text-purple-500" size={40} />
-            <h1 className="text-4xl font-black text-white">Moderação de Artistas</h1>
-          </div>
-          <p className="text-xl text-zinc-400">
-            Revise e gerencie artistas com relevância duvidosa para a cultura coreana
-          </p>
-        </div>
+    <AdminLayout title="Moderação de Artistas">
+      <div className="space-y-6">
+        <p className="text-zinc-400 text-sm -mt-6">Revise e gerencie artistas com relevância duvidosa para a cultura coreana</p>
 
         {/* Message */}
         {message && (
@@ -364,6 +349,6 @@ export default function ArtistModerationPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   )
 }

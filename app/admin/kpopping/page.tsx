@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1279,73 +1280,70 @@ export default function KpoppingCurationPage() {
   ]
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">Curadoria Kpopping</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Confirme idols → artistas e grupos → musicais, depois aplique os vínculos.
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex gap-2">
-            <button
-              onClick={backfill}
-              disabled={backfilling}
-              title="Garante que todas as sugestões APPROVED tenham ArtistGroupMembership no DB"
-              className="text-sm bg-purple-900/50 hover:bg-purple-800/50 disabled:opacity-50 text-purple-300 px-4 py-2 rounded-lg flex items-center gap-2 border border-purple-700/30"
-            >
-              <Star size={14} className={backfilling ? 'animate-pulse' : ''} />
-              {backfilling ? 'Corrigindo...' : 'Backfill Vínculos'}
-            </button>
-            <button
-              onClick={generate}
-              disabled={generating}
-              className="text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2"
-            >
-              <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
-              {generating ? 'Gerando...' : 'Gerar Sugestões'}
-            </button>
+    <AdminLayout title="Curadoria Kpopping">
+      <div className="space-y-6">
+        {/* Actions */}
+        <div className="flex items-start justify-between -mt-6">
+          <p className="text-sm text-zinc-400">Confirme idols → artistas e grupos → musicais, depois aplique os vínculos.</p>
+          <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-4">
+            <div className="flex gap-2">
+              <button
+                onClick={backfill}
+                disabled={backfilling}
+                title="Garante que todas as sugestões APPROVED tenham ArtistGroupMembership no DB"
+                className="text-sm bg-purple-900/50 hover:bg-purple-800/50 disabled:opacity-50 text-purple-300 px-4 py-2 rounded-lg flex items-center gap-2 border border-purple-700/30"
+              >
+                <Star size={14} className={backfilling ? 'animate-pulse' : ''} />
+                {backfilling ? 'Corrigindo...' : 'Backfill Vínculos'}
+              </button>
+              <button
+                onClick={generate}
+                disabled={generating}
+                className="text-sm bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-zinc-200 px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
+                {generating ? 'Gerando...' : 'Gerar Sugestões'}
+              </button>
+            </div>
+            {backfillResult && (
+              <p className="text-xs text-purple-400">
+                {backfillResult.total} candidatos · Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Aprovadas: {backfillResult.suggestionsApproved} · Artistas enriquecidos: {backfillResult.artistsEnriched} · Grupos enriquecidos: {backfillResult.groupsEnriched} · {backfillResult.errors} erros
+              </p>
+            )}
+            {backfillError && (
+              <p className="text-xs text-red-400">Backfill erro: {backfillError}</p>
+            )}
+            {generateStats && (
+              <p className="text-xs text-zinc-500">
+                {generateStats.created} criadas · {generateStats.updated} atualizadas · {generateStats.skipped} ignoradas · {generateStats.errors} erros
+              </p>
+            )}
           </div>
-          {backfillResult && (
-            <p className="text-xs text-purple-400">
-              {backfillResult.total} candidatos · Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Aprovadas: {backfillResult.suggestionsApproved} · Artistas enriquecidos: {backfillResult.artistsEnriched} · Grupos enriquecidos: {backfillResult.groupsEnriched} · {backfillResult.errors} erros
-            </p>
-          )}
-          {backfillError && (
-            <p className="text-xs text-red-400">Backfill erro: {backfillError}</p>
-          )}
-          {generateStats && (
-            <p className="text-xs text-gray-500">
-              {generateStats.created} criadas · {generateStats.updated} atualizadas · {generateStats.skipped} ignoradas · {generateStats.errors} erros
-            </p>
-          )}
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-800">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.key
-                ? 'border-purple-500 text-purple-400'
-                : 'border-transparent text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            <t.icon size={15} />
-            {t.label}
-          </button>
-        ))}
-      </div>
+          {/* Tabs */}
+        <div className="flex gap-1 border-b border-zinc-800">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                tab === t.key
+                  ? 'border-purple-500 text-purple-400'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <t.icon size={15} />
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-      {/* Tab content */}
-      {tab === 'idols' && <IdolsTab />}
-      {tab === 'groups' && <GroupsTab />}
-      {tab === 'memberships' && <MembershipsTab />}
-    </div>
+        {/* Tab content */}
+        {tab === 'idols' && <IdolsTab />}
+        {tab === 'groups' && <GroupsTab />}
+        {tab === 'memberships' && <MembershipsTab />}
+      </div>
+    </AdminLayout>
   )
 }

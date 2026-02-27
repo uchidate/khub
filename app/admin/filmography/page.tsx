@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Film, RefreshCw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react'
-import NavBar from '@/components/NavBar'
+import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
 
 interface Artist {
   id: string
@@ -180,20 +180,11 @@ export default function FilmographyAdminPage() {
   })
 
   return (
-    <>
-      <NavBar />
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black pt-24 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-12 animate-fade-in">
-            <div className="flex items-center gap-3 mb-4">
-              <Film className="text-purple-500" size={40} />
-              <h1 className="text-4xl md:text-5xl font-black text-white">Filmografias</h1>
-            </div>
-            <p className="text-xl text-zinc-400">Gerenciar filmografias de artistas via TMDB</p>
-          </div>
+    <AdminLayout title="Filmografias">
+      <div className="space-y-6">
+        <p className="text-zinc-400 text-sm -mt-6">Gerenciar filmografias de artistas via TMDB</p>
 
-          {/* Stats */}
+        {/* Stats */}
           {stats && (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
@@ -350,8 +341,7 @@ export default function FilmographyAdminPage() {
               </div>
             )}
           </div>
-        </div>
       </div>
-    </>
+    </AdminLayout>
   )
 }
