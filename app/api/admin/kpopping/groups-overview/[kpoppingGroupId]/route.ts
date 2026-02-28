@@ -3,6 +3,47 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
 
+/**
+ * GET /api/admin/kpopping/groups-overview/[kpoppingGroupId]
+ * Retorna os membros (idols) do grupo Kpopping, com status de correspondência HallyuHub.
+ */
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { kpoppingGroupId: string } }
+) {
+  const { error } = await requireAdmin()
+  if (error) return error
+
+  const { kpoppingGroupId } = params
+
+  // Um idol pode ter múltiplos registros (um por grupo). Pegar o mais representativo.
+  const rows = await prisma.kpoppingMembershipSuggestion.findMany({
+    where: { kpoppingGroupId },
+    distinct: ['kpoppingIdolId'],
+    orderBy: [
+      { artistMatchScore: { sort: 'desc', nulls: 'last' } },
+      { idolName: 'asc' },
+    ],
+    select: {
+      kpoppingIdolId: true,
+      idolName: true,
+      idolNameHangul: true,
+      idolBirthday: true,
+      idolImageUrl: true,
+      idolPosition: true,
+      idolIsActive: true,
+      artistId: true,
+      artistMatchScore: true,
+      artistMatchReason: true,
+      artist: {
+        select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true },
+      },
+    },
+  })
+
+  return NextResponse.json({ members: rows })
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { kpoppingGroupId: string } }
