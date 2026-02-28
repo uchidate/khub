@@ -14,6 +14,7 @@ import { ReportButton } from "@/components/ui/ReportButton"
 import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
+import { getTranslation } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -93,7 +94,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function ArtistDetailPage({ params }: { params: { id: string } }) {
-    const [artist, artistNews, instagramPosts, newsCount] = await Promise.all([
+    const [artist, artistNews, instagramPosts, newsCount, bioPt] = await Promise.all([
         prisma.artist.findUnique({
             where: { id: params.id },
             include: {
@@ -128,6 +129,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
             select: { id: true, imageUrl: true, caption: true, permalink: true, postedAt: true },
         }),
         prisma.news.count({ where: { artists: { some: { artistId: params.id } } } }),
+        getTranslation('artist', params.id, 'bio', 'pt-BR'),
     ])
 
     if (!artist) {
@@ -298,10 +300,10 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                     <div className="space-y-8 lg:col-span-1">
 
                         {/* Bio */}
-                        {artist.bio && (
+                        {(bioPt ?? artist.bio) && (
                             <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
                                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Sobre</h3>
-                                <p className="text-zinc-300 leading-relaxed text-sm">{artist.bio}</p>
+                                <p className="text-zinc-300 leading-relaxed text-sm">{bioPt ?? artist.bio}</p>
                             </div>
                         )}
 
