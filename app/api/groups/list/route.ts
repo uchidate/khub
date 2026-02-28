@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 
     if (full) {
         const groups = await prisma.musicalGroup.findMany({
+            where: { isHidden: false },
             select: {
                 id: true,
                 name: true,
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
 
     // Simple list for dropdowns
     const groups = await prisma.musicalGroup.findMany({
+        where: { isHidden: false },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
     })

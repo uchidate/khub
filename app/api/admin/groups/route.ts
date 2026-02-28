@@ -27,6 +27,7 @@ const groupSchema = z.object({
   fanClubName: z.string().optional().nullable(),
   officialColor: z.string().regex(/^#[0-9a-fA-F]{3,8}$/).optional().nullable().or(z.literal('').transform(() => null)),
   videos: videoSchema,
+  isHidden: z.boolean().optional(),
 })
 
 /**

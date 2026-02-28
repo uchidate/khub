@@ -16,8 +16,9 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'popular'
 
     const where: any = {
-        // Filtrar produções marcadas como não-relevantes
+        // Filtrar produções marcadas como não-relevantes ou ocultas pelo admin
         flaggedAsNonKorean: false,
+        isHidden: false,
     }
 
     if (search) {

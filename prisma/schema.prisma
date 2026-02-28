@@ -49,12 +49,14 @@ model MusicalGroup {
   viewCount       Int                     @default(0)
   favoriteCount   Int                     @default(0)
   trendingScore   Float                   @default(0.0)
+  isHidden        Boolean                 @default(false) // Oculto do site público pelo admin
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
 
   @@index([name])
   @@index([agencyId])
   @@index([trendingScore])
+  @@index([isHidden])
 }
 
 model ArtistGroupMembership {
@@ -121,6 +123,7 @@ model Artist {
   // Moderation (filtrar artistas não-relevantes para cultura coreana)
   flaggedAsNonKorean Boolean            @default(false) // Admin marcou como não-relevante
   flaggedAt          DateTime?          // Quando foi flagged
+  isHidden           Boolean            @default(false) // Oculto do site público pelo admin
   placeOfBirth       String?            // Local de nascimento (do TMDB)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -135,6 +138,7 @@ model Artist {
   @@index([birthDate])
   @@index([nameRomanized, createdAt])
   @@index([flaggedAsNonKorean])
+  @@index([isHidden])
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
   @@index([tmdbSyncStatus, tmdbLastSync])
@@ -225,6 +229,7 @@ model Production {
   // Moderation fields
   flaggedAsNonKorean Boolean            @default(false)
   flaggedAt          DateTime?
+  isHidden           Boolean            @default(false) // Oculto do site público pelo admin
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -240,6 +245,7 @@ model Production {
   @@index([castSyncAt])
   @@index([ageRatingSyncAt])
   @@index([flaggedAsNonKorean])
+  @@index([isHidden])
 }
 
 model ArtistProduction {
