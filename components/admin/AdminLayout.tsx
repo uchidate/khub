@@ -32,7 +32,7 @@ const navSections: NavSection[] = [
     items: [
       { href: '/admin/artists', label: 'Gerenciar', icon: Music2, exact: true },
       { href: '/admin/artists/fix-names', label: 'Enriquecimento TMDB', icon: Sparkles },
-      { href: '/admin/artists/duplicates', label: 'Duplicados', icon: GitMerge },
+      { href: '/admin/artists/duplicates', label: 'Enriquecimento MB', icon: GitMerge },
       { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
       { href: '/admin/artists/moderation', label: 'Moderação', icon: AlertTriangle },
     ],
