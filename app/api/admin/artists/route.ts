@@ -6,6 +6,14 @@ import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 
+function handlePrismaError(error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+    const field = (error.meta?.target as string[] | undefined)?.[0] ?? 'campo'
+    return NextResponse.json({ error: `Já existe um artista com este ${field === 'nameRomanized' ? 'nome romanizado' : field}` }, { status: 409 })
+  }
+  return null
+}
+
 const log = createLogger('ADMIN-ARTISTS')
 
 // Force dynamic rendering (uses auth/headers)
@@ -230,7 +238,8 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
     }
-
+    const prismaError = handlePrismaError(error)
+    if (prismaError) return prismaError
     log.error('Create artist error', { error: getErrorMessage(error) })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -316,7 +325,8 @@ export async function PATCH(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
     }
-
+    const prismaError = handlePrismaError(error)
+    if (prismaError) return prismaError
     log.error('Update artist error', { error: getErrorMessage(error) })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
