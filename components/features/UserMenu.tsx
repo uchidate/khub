@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { User, LogOut, Settings, LogIn, UserPlus, LayoutDashboard, Zap } from 'lucide-react'
 
-export function UserMenu() {
+export function UserMenu({ premiumEnabled = false }: { premiumEnabled?: boolean }) {
   const { data: session, status } = useSession()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -100,14 +100,16 @@ export function UserMenu() {
                 Dashboard
               </Link>
 
-              <Link
-                onClick={() => setIsOpen(false)}
-                href="/premium"
-                className="flex items-center gap-3 px-4 py-2 text-sm text-yellow-500 hover:text-yellow-400 hover:bg-zinc-800 rounded-lg transition-colors font-bold"
-              >
-                <Zap size={16} />
-                Hallyu Premium
-              </Link>
+              {premiumEnabled && (
+                <Link
+                  onClick={() => setIsOpen(false)}
+                  href="/premium"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-yellow-500 hover:text-yellow-400 hover:bg-zinc-800 rounded-lg transition-colors font-bold"
+                >
+                  <Zap size={16} />
+                  Hallyu Premium
+                </Link>
+              )}
 
               <Link
                 href="/profile"

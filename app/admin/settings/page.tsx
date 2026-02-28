@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Settings, Shield, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react'
+import { Settings, Shield, AlertTriangle, CheckCircle, RefreshCw, Construction, Zap } from 'lucide-react'
 
 type SystemSettings = {
   id: string
   allowAdultContent: boolean
   allowUnclassifiedContent: boolean
+  betaMode: boolean
+  premiumEnabled: boolean
 }
 
 export default function AdminSettingsPage() {
@@ -46,6 +48,8 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
           allowAdultContent: settings.allowAdultContent,
           allowUnclassifiedContent: settings.allowUnclassifiedContent,
+          betaMode: settings.betaMode,
+          premiumEnabled: settings.premiumEnabled,
         }),
       })
 
@@ -65,7 +69,7 @@ export default function AdminSettingsPage() {
     }
   }
 
-  function toggle(field: 'allowAdultContent' | 'allowUnclassifiedContent') {
+  function toggle(field: keyof Omit<SystemSettings, 'id'>) {
     if (!settings) return
     setSettings({ ...settings, [field]: !settings[field] })
   }
@@ -92,10 +96,67 @@ export default function AdminSettingsPage() {
                 Controle de Conteúdo Global
               </p>
               <p className="text-xs text-zinc-400">
-                Essas configurações controlam quais classificações etárias são permitidas no site.
-                Mesmo que um usuário tente acessar conteúdo bloqueado, ele não será exibido.
+                Essas configurações controlam o comportamento do site globalmente.
+                Mudanças são aplicadas em até 5 minutos (cache).
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Beta & Premium card */}
+        <div className="bg-zinc-900 border border-amber-500/20 rounded-xl p-6 space-y-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Construction className="w-6 h-6 text-amber-400" />
+            <h2 className="text-xl font-bold text-white">Modo Beta & Premium</h2>
+          </div>
+
+          {/* Beta Mode */}
+          <div className="flex items-start justify-between gap-4 py-4 border-t border-zinc-800 first:border-t-0">
+            <div className="flex-1">
+              <p className="text-white font-bold mb-1">Modo Beta</p>
+              <p className="text-sm text-zinc-400">
+                Quando ativo, exibe um banner informando aos usuários que o site está em versão beta.
+                Ideal para o período de construção e testes iniciais.
+              </p>
+            </div>
+            <button
+              onClick={() => toggle('betaMode')}
+              className={`relative w-14 h-7 rounded-full transition-colors flex-shrink-0 ${
+                settings?.betaMode ? 'bg-amber-500' : 'bg-zinc-700'
+              }`}
+            >
+              <div
+                className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  settings?.betaMode ? 'translate-x-7' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Premium Enabled */}
+          <div className="flex items-start justify-between gap-4 py-4 border-t border-zinc-800">
+            <div className="flex-1">
+              <p className="text-white font-bold mb-1 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-400" />
+                Funcionalidades Premium
+              </p>
+              <p className="text-sm text-zinc-400">
+                Quando desativado, a página e o link Premium são ocultados do site.
+                Reative quando o sistema de assinaturas estiver pronto.
+              </p>
+            </div>
+            <button
+              onClick={() => toggle('premiumEnabled')}
+              className={`relative w-14 h-7 rounded-full transition-colors flex-shrink-0 ${
+                settings?.premiumEnabled ? 'bg-yellow-500' : 'bg-zinc-700'
+              }`}
+            >
+              <div
+                className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  settings?.premiumEnabled ? 'translate-x-7' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
         </div>
 
@@ -201,8 +262,7 @@ export default function AdminSettingsPage() {
             <div className="text-sm text-amber-400">
               <p className="font-bold mb-1">Atenção</p>
               <p>
-                Alterações nessas configurações afetam <strong>todo o site</strong> imediatamente,
-                incluindo: home, recém adicionados, bem avaliados, listagem de produções e páginas de grupos.
+                Alterações nessas configurações afetam <strong>todo o site</strong> em até 5 minutos (cache).
               </p>
             </div>
           </div>

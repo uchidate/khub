@@ -23,6 +23,8 @@ export async function GET() {
         id: 'singleton',
         allowAdultContent: false,
         allowUnclassifiedContent: false,
+        betaMode: true,
+        premiumEnabled: false,
       },
     })
   }
@@ -42,11 +44,15 @@ export async function PUT(req: NextRequest) {
     const body = await req.json() as {
       allowAdultContent: boolean
       allowUnclassifiedContent: boolean
+      betaMode: boolean
+      premiumEnabled: boolean
     }
 
     // Validação
     if (typeof body.allowAdultContent !== 'boolean' ||
-        typeof body.allowUnclassifiedContent !== 'boolean') {
+        typeof body.allowUnclassifiedContent !== 'boolean' ||
+        typeof body.betaMode !== 'boolean' ||
+        typeof body.premiumEnabled !== 'boolean') {
       return NextResponse.json(
         { error: 'Invalid settings format' },
         { status: 400 }
@@ -58,11 +64,15 @@ export async function PUT(req: NextRequest) {
       update: {
         allowAdultContent: body.allowAdultContent,
         allowUnclassifiedContent: body.allowUnclassifiedContent,
+        betaMode: body.betaMode,
+        premiumEnabled: body.premiumEnabled,
       },
       create: {
         id: 'singleton',
         allowAdultContent: body.allowAdultContent,
         allowUnclassifiedContent: body.allowUnclassifiedContent,
+        betaMode: body.betaMode,
+        premiumEnabled: body.premiumEnabled,
       },
     })
 
