@@ -25,6 +25,7 @@ interface MusicalGroup {
   videos: Array<{ title: string; url: string }> | null
   membersCount: number
   createdAt: Date
+  isHidden: boolean
 }
 
 const SOCIAL_PLATFORMS = ['website', 'instagram', 'youtube', 'twitter', 'tiktok', 'spotify', 'weverse', 'vlive'] as const
@@ -143,6 +144,7 @@ const formFields: FormField[] = [
   { key: 'mv5_url', label: '🎬 MV 5 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
   { key: 'mv6_title', label: '🎬 MV 6 — Título', type: 'text', placeholder: 'Ex: Fake Love' },
   { key: 'mv6_url', label: '🎬 MV 6 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'isHidden', label: 'Visibilidade', type: 'toggle' },
 ]
 
 export default function GroupsPage() {
@@ -174,7 +176,7 @@ export default function GroupsPage() {
         }
       })
     }
-    setEditingGroup({ ...group, ...socialFlat, ...mvFlat } as unknown as MusicalGroup)
+    setEditingGroup({ ...group, ...socialFlat, ...mvFlat, isHidden: group.isHidden ?? false } as unknown as MusicalGroup)
     setFormOpen(true)
   }
 

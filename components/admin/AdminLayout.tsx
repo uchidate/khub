@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
   Settings, ChevronLeft, Share2, GitMerge, Instagram, AlertTriangle, Link2,
-  UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles,
+  UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff,
 } from 'lucide-react'
 
 type NavItem = {
@@ -67,6 +67,7 @@ const navSections: NavSection[] = [
     label: 'Plataforma',
     items: [
       { href: '/admin/users', label: 'Usuários', icon: Users },
+      { href: '/admin/hidden', label: 'Itens Ocultos', icon: EyeOff },
       { href: '/admin/agencies', label: 'Agências', icon: Building2 },
       { href: '/admin/instagram', label: 'Instagram Feeds', icon: Instagram },
       { href: '/admin/activity', label: 'Atividade', icon: Activity },

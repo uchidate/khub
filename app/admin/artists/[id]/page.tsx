@@ -20,6 +20,7 @@ interface Artist {
     bio: string | null
     tmdbId: string | null
     mbid: string | null
+    isHidden: boolean
 }
 
 interface TMDBPreview {
@@ -120,6 +121,7 @@ export default function EditArtistPage() {
                 bio: form.bio || '',
                 tmdbId: form.tmdbId || '',
                 mbid: form.mbid || '',
+                isHidden: form.isHidden ?? false,
             }
             const res = await fetch(`/api/admin/artists?id=${id}`, {
                 method: 'PATCH',
@@ -434,6 +436,32 @@ export default function EditArtistPage() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Visibilidade */}
+                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/50">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div className="relative flex-shrink-0">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={form.isHidden ?? false}
+                                        onChange={e => set('isHidden' as any, e.target.checked)}
+                                    />
+                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
+                                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-zinc-200">
+                                        {form.isHidden ? 'Oculto do site público' : 'Visível no site público'}
+                                    </p>
+                                    <p className="text-xs text-zinc-500">
+                                        {form.isHidden
+                                            ? 'Este artista não aparece em listagens públicas'
+                                            : 'Este artista aparece normalmente no site'}
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
 
                         {/* Feedback */}
                         {error && <p className="text-sm text-red-400 font-medium">{error}</p>}

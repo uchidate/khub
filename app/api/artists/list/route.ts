@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
 
     // Construir where clause
     const where: any = {
-        // Filtrar artistas marcados como não-relevantes
+        // Filtrar artistas marcados como não-relevantes ou ocultos pelo admin
         flaggedAsNonKorean: false,
+        isHidden: false,
     }
 
     if (search) {

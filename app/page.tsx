@@ -42,7 +42,7 @@ const getHomePublicData = unstable_cache(
                 select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
             }),
             prisma.artist.findMany({
-                where: { flaggedAsNonKorean: false },
+                where: { flaggedAsNonKorean: false, isHidden: false },
                 take: 12,
                 orderBy: { trendingScore: 'desc' },
                 select: {
@@ -74,7 +74,7 @@ const getHomePublicData = unstable_cache(
             }).catch(() => [] as never[]),
             prisma.musicalGroup.findMany({
                 take: 10,
-                where: { disbandDate: null },
+                where: { disbandDate: null, isHidden: false },
                 orderBy: [{ trendingScore: 'desc' }, { favoriteCount: 'desc' }, { viewCount: 'desc' }],
                 select: {
                     id: true, name: true, nameHangul: true, profileImageUrl: true,
@@ -239,7 +239,7 @@ export default async function Home() {
                 {/* Grupos em Destaque */}
                 {trendingGroups.length > 0 && (
                     <ScrollReveal delay={0.05}>
-                        <TrendingGroups groups={trendingGroups} />
+                        <TrendingGroups groups={trendingGroups as any} />
                     </ScrollReveal>
                 )}
 

@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 export interface FormField {
   key: string
   label: string
-  type: 'text' | 'email' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'select-async' | 'tags'
+  type: 'text' | 'email' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'select-async' | 'tags' | 'toggle'
   placeholder?: string
   required?: boolean
   /** Static options for type='select' */
@@ -54,7 +54,8 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
     if (open) {
       const data: Record<string, unknown> = {}
       fields.forEach((f) => {
-        data[f.key] = initialData?.[f.key] ?? ''
+        const val = initialData?.[f.key]
+        data[f.key] = f.type === 'toggle' ? (val ?? false) : (val ?? '')
       })
       setFormData(data)
       setError('')
@@ -152,6 +153,19 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
                   placeholder={field.placeholder || 'Separar por vírgula'}
                   className={inputClass}
                 />
+              ) : field.type === 'toggle' ? (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div className="relative flex-shrink-0">
+                    <input type="checkbox" className="sr-only peer"
+                      checked={!!formData[field.key]}
+                      onChange={(e) => handleChange(field.key, e.target.checked)} />
+                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
+                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+                  </div>
+                  <span className="text-sm text-zinc-300">
+                    {formData[field.key] ? 'Oculto do site público' : 'Visível no site público'}
+                  </span>
+                </label>
               ) : (
                 <input
                   type={field.type}

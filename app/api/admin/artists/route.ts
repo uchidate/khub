@@ -29,6 +29,7 @@ const artistSchema = z.object({
   mbid: z.string().optional(),                  // MusicBrainz artist ID
   agencyId: z.string().optional(),
   musicalGroupId: z.string().optional(),         // '' = remove from group, id = add/update membership
+  isHidden: z.boolean().optional(),             // Ocultar/restaurar visibilidade pública
 })
 
 /**
