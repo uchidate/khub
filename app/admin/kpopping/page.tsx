@@ -616,7 +616,16 @@ function IdolCard({
           <Star size={12} /> TMDB
         </button>
 
-        {(isConfirmed || isRejected) && (
+        {isRejected && (
+          <button
+            onClick={() => doAction('reset')}
+            disabled={pending}
+            className="text-xs text-red-400 hover:text-red-300 border border-red-700/50 hover:border-red-500/70 bg-red-900/20 hover:bg-red-900/30 px-2 py-1.5 flex items-center gap-1 rounded transition-colors"
+          >
+            <RotateCcw size={10} /> Cancelar Rejeição
+          </button>
+        )}
+        {isConfirmed && (
           <button
             onClick={() => doAction('reset')}
             disabled={pending}
@@ -820,7 +829,16 @@ function GroupCard({ group }: { group: GroupItem }) {
           <Star size={12} /> TMDB
         </button>
 
-        {(isConfirmed || isRejected) && (
+        {isRejected && (
+          <button
+            onClick={() => doAction('reset')}
+            disabled={pending}
+            className="text-xs text-red-400 hover:text-red-300 border border-red-700/50 hover:border-red-500/70 bg-red-900/20 hover:bg-red-900/30 px-2 py-1.5 flex items-center gap-1 rounded transition-colors"
+          >
+            <RotateCcw size={10} /> Cancelar Rejeição
+          </button>
+        )}
+        {isConfirmed && (
           <button
             onClick={() => doAction('reset')}
             disabled={pending}

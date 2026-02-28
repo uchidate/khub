@@ -104,10 +104,17 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
       <div className="flex">
         {/* Sidebar */}
         <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-zinc-950 border-r border-zinc-800 fixed">
-          <div className="p-5 border-b border-zinc-800">
+          <div className="p-4 border-b border-zinc-800 space-y-3">
             <Link href="/admin" className="flex items-center gap-2">
               <Shield className="text-red-500" size={22} />
               <span className="text-base font-black text-white">HallyuHub Admin</span>
+            </Link>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 hover:border-zinc-600 px-3 py-1.5 rounded-md transition-colors w-full"
+            >
+              <ChevronLeft size={13} />
+              Voltar ao site
             </Link>
           </div>
 
@@ -128,12 +135,6 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
             ))}
           </nav>
 
-          <div className="p-4 border-t border-zinc-800">
-            <Link href="/" className="flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors">
-              <ChevronLeft size={16} />
-              Voltar ao site
-            </Link>
-          </div>
         </aside>
 
         {/* Main Content */}
