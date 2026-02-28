@@ -37,6 +37,7 @@ interface ArtistStats {
   flagged: number
   noHangul: number
   noHangulPending: number
+  noHangulAttempted: number
   noHangulNoTmdb: number
   noPhoto: number
   noPhotoPending: number
@@ -49,7 +50,7 @@ interface ArtistStats {
 
 type FilterType =
   | ''
-  | 'no_hangul' | 'no_hangul_pending' | 'no_hangul_no_tmdb'
+  | 'no_hangul' | 'no_hangul_pending' | 'no_hangul_attempted' | 'no_hangul_no_tmdb'
   | 'no_photo' | 'no_photo_pending' | 'no_photo_no_tmdb'
   | 'no_social' | 'no_social_pending' | 'no_social_attempted'
   | 'flagged'
@@ -245,7 +246,8 @@ function StatsBar({ stats, filter, onFilter }: {
   type SubTab = { label: string; value: FilterType; count: number | null; title: string; color: string; activeColor: string }
 
   const hangulSubs: SubTab[] = [
-    { label: 'Pendentes', value: 'no_hangul_pending', count: stats?.noHangulPending ?? null, title: 'Tem TMDB — clique "Hangul" para preencher', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
+    { label: 'Pendentes', value: 'no_hangul_pending', count: stats?.noHangulPending ?? null, title: 'Tem TMDB — nunca tentado, clique "Hangul" para preencher', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
+    { label: 'Já tentados', value: 'no_hangul_attempted', count: stats?.noHangulAttempted ?? null, title: 'Já processado — TMDB não encontrou hangul', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
     { label: 'Sem TMDB', value: 'no_hangul_no_tmdb', count: stats?.noHangulNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
   ]
 

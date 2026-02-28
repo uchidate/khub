@@ -111,6 +111,7 @@ model Artist {
   groupSyncAt        DateTime?          // última sincronização de grupo musical
   memberships        ArtistGroupMembership[]
   discographySyncAt  DateTime?          // última sincronização de discografia
+  hangulSyncAt       DateTime?          // última tentativa de preencher nameHangul via TMDB
   socialLinksUpdatedAt DateTime?        // última sincronização de redes sociais
   // Instagram sync (RSS.app)
   instagramFeedUrl    String?           // RSS.app JSON feed URL
