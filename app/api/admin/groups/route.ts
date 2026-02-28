@@ -16,9 +16,9 @@ const videoSchema = z.array(z.object({ title: z.string(), url: z.string().min(1)
 
 const groupSchema = z.object({
   name: z.string().min(1).max(100),
-  nameHangul: z.string().optional(),
-  mbid: z.string().optional(),
-  bio: z.string().optional(),
+  nameHangul: z.string().optional().nullable(),
+  mbid: z.string().optional().nullable(),
+  bio: z.string().optional().nullable(),
   profileImageUrl: z.string().optional().nullable(),
   debutDate: z.string().optional().nullable(),
   disbandDate: z.string().optional().nullable(),
