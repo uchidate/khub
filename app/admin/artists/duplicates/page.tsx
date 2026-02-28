@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search } from 'lucide-react'
 import Image from 'next/image'
 
 interface ArtistCard {
@@ -19,6 +19,8 @@ interface ArtistCard {
     agency: { id: string; name: string } | null
     agencyId: string | null
     musicalGroupName: string | null
+    tmdbId: string | null
+    mbid: string | null
     _count: { productions: number; albums: number }
 }
 
@@ -31,7 +33,7 @@ interface DuplicatePair {
 }
 
 // Fields that can be curated (scalar fields where user can pick A or B)
-type CuratableField = 'nameRomanized' | 'nameHangul' | 'birthName' | 'birthDate' | 'height' | 'bloodType' | 'bio' | 'primaryImageUrl' | 'agencyId'
+type CuratableField = 'nameRomanized' | 'nameHangul' | 'birthName' | 'birthDate' | 'height' | 'bloodType' | 'bio' | 'primaryImageUrl' | 'agencyId' | 'tmdbId' | 'mbid'
 type FieldSelection = 'a' | 'b'
 type PairSelections = Partial<Record<CuratableField, FieldSelection>>
 
@@ -43,7 +45,7 @@ function getFieldValue(artist: ArtistCard, field: CuratableField): string | null
 
 function buildFieldOverrides(a: ArtistCard, b: ArtistCard, selections: PairSelections): Record<string, unknown> {
     const overrides: Record<string, unknown> = {}
-    const fields: CuratableField[] = ['nameRomanized', 'nameHangul', 'birthName', 'birthDate', 'height', 'bloodType', 'bio', 'primaryImageUrl', 'agencyId']
+    const fields: CuratableField[] = ['nameRomanized', 'nameHangul', 'birthName', 'birthDate', 'height', 'bloodType', 'bio', 'primaryImageUrl', 'agencyId', 'tmdbId', 'mbid']
 
     for (const field of fields) {
         const choice = selections[field] ?? 'a'
@@ -69,6 +71,40 @@ const FIELD_LABELS: Record<CuratableField, string> = {
     bio: 'Biografia',
     primaryImageUrl: 'Imagem',
     agencyId: 'Agência',
+    tmdbId: 'TMDB ID',
+    mbid: 'MusicBrainz ID',
+}
+
+// External ID helpers
+function tmdbUrl(tmdbId: string) { return `https://www.themoviedb.org/person/${tmdbId}` }
+function mbUrl(mbid: string) { return `https://musicbrainz.org/artist/${mbid}` }
+function tmdbSearch(name: string) { return `https://www.themoviedb.org/search/person?query=${encodeURIComponent(name)}` }
+function mbSearch(name: string) { return `https://musicbrainz.org/search?query=${encodeURIComponent(name)}&type=artist` }
+
+// Small ID badge shown in pair header
+function IdBadges({ artist }: { artist: ArtistCard }) {
+    return (
+        <div className="flex items-center gap-1">
+            {artist.tmdbId ? (
+                <a href={tmdbUrl(artist.tmdbId)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                    title={`TMDB: ${artist.tmdbId}`}
+                    className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/25 hover:bg-blue-500/25 transition-colors">
+                    TMDB
+                </a>
+            ) : (
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-700 border border-zinc-800">TMDB</span>
+            )}
+            {artist.mbid ? (
+                <a href={mbUrl(artist.mbid)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                    title={`MusicBrainz: ${artist.mbid}`}
+                    className="text-[10px] font-black px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/25 hover:bg-orange-500/25 transition-colors">
+                    MB
+                </a>
+            ) : (
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-700 border border-zinc-800">MB</span>
+            )}
+        </div>
+    )
 }
 
 export default function DuplicatesPage() {
@@ -250,6 +286,7 @@ export default function DuplicatesPage() {
                                                 </div>
                                             )}
                                             <span className="font-bold text-white text-sm truncate">{pair.a.nameRomanized}</span>
+                                            <IdBadges artist={pair.a} />
                                             <span className="text-zinc-600 text-xs flex-shrink-0">↔</span>
                                             {pair.b.primaryImageUrl && (
                                                 <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
@@ -257,6 +294,7 @@ export default function DuplicatesPage() {
                                                 </div>
                                             )}
                                             <span className="font-bold text-zinc-400 text-sm truncate">{pair.b.nameRomanized}</span>
+                                            <IdBadges artist={pair.b} />
                                         </div>
                                         <div className="flex-shrink-0 text-zinc-500">
                                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -286,7 +324,57 @@ export default function DuplicatesPage() {
                                                     return (
                                                         <div key={field} className="flex flex-col gap-2">
                                                             <p className="text-xs font-bold text-zinc-400 uppercase tracking-wide">{FIELD_LABELS[field]}</p>
-                                                            {field === 'primaryImageUrl' ? (
+                                                            {(field === 'tmdbId' || field === 'mbid') ? (
+                                                                // Special rendering: show ID with external link + search fallback
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    {[pair.a, pair.b].map((artist, idx) => {
+                                                                        const side = idx === 0 ? 'a' : 'b'
+                                                                        const rawId = field === 'tmdbId' ? artist.tmdbId : artist.mbid
+                                                                        const isSelected = onlyOne ? !!rawId : selected === side
+                                                                        const href = rawId
+                                                                            ? (field === 'tmdbId' ? tmdbUrl(rawId) : mbUrl(rawId))
+                                                                            : (field === 'tmdbId' ? tmdbSearch(artist.nameRomanized) : mbSearch(artist.nameRomanized))
+                                                                        const hrefLabel = rawId ? 'Ver perfil' : 'Buscar'
+                                                                        return (
+                                                                            <button
+                                                                                key={artist.id}
+                                                                                onClick={() => rawId && !onlyOne && setField(pair.id, field, side)}
+                                                                                disabled={onlyOne || !rawId}
+                                                                                className={`flex flex-col gap-1.5 p-3 rounded-lg border text-left transition-all ${
+                                                                                    isSelected && rawId
+                                                                                        ? 'border-purple-500 bg-purple-500/10'
+                                                                                        : 'border-zinc-800 bg-zinc-900/50'
+                                                                                } ${rawId && !onlyOne ? 'cursor-pointer hover:border-zinc-600' : 'cursor-default'}`}
+                                                                            >
+                                                                                {rawId ? (
+                                                                                    <span className="text-xs font-mono text-zinc-300 truncate">{rawId}</span>
+                                                                                ) : (
+                                                                                    <span className="text-xs text-zinc-700 italic">Sem ID</span>
+                                                                                )}
+                                                                                <a
+                                                                                    href={href}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    onClick={e => e.stopPropagation()}
+                                                                                    className={`flex items-center gap-1 text-[11px] font-bold transition-colors ${
+                                                                                        rawId
+                                                                                            ? field === 'tmdbId'
+                                                                                                ? 'text-blue-400 hover:text-blue-300'
+                                                                                                : 'text-orange-400 hover:text-orange-300'
+                                                                                            : 'text-zinc-600 hover:text-zinc-400'
+                                                                                    }`}
+                                                                                >
+                                                                                    {rawId ? <ExternalLink size={10} /> : <Search size={10} />}
+                                                                                    {hrefLabel} {field === 'tmdbId' ? 'TMDB' : 'MusicBrainz'} ↗
+                                                                                </a>
+                                                                                {isSelected && rawId && (
+                                                                                    <span className="text-[10px] text-purple-400 font-black">✓ selecionado</span>
+                                                                                )}
+                                                                            </button>
+                                                                        )
+                                                                    })}
+                                                                </div>
+                                                            ) : field === 'primaryImageUrl' ? (
                                                                 <div className="flex gap-3">
                                                                     {[pair.a, pair.b].map((artist, idx) => {
                                                                         const side = idx === 0 ? 'a' : 'b'
