@@ -39,6 +39,9 @@ jobs:
             # 2b. Database URL: normalizar antes do genérico staging|production
             "hallyuhub_staging|hallyuhub_production"
 
+            # 2c. Docker image tag: staging usa :staging, production usa :latest (por convenção)
+            "khub:staging|khub:latest"
+
             # 2c. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
             "http://ollama-staging|http://ollama-production"
 

@@ -16,6 +16,11 @@ const prismaClientSingleton = () => {
         connectionTimeoutMillis: 5000,
     })
 
+    // Kill queries running longer than 30s — prevents pool exhaustion from slow/stuck queries
+    pool.on('connect', (client) => {
+        client.query('SET statement_timeout = 30000').catch(() => {})
+    })
+
     const adapter = new PrismaPg(pool)
 
     return new PrismaClient({

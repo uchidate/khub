@@ -96,7 +96,7 @@ jobs:
             echo "================================================"
 
   # ============================================
-  # Notificacao de Falha (opcional)
+  # Notificacao de Falha via Slack
   # ============================================
   notify-failure:
     name: Notify on Failure
@@ -105,8 +105,10 @@ jobs:
     if: failure()
 
     steps:
-      - name: Log failure
+      - name: 🚨 Slack Alert
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_ALERTS }}
         run: |
-          echo "ALERTA: Backup falhou!"
-          echo "Verifique os logs do workflow para mais detalhes."
-          echo "Data: $(date)"
+          curl -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\": \"❌ *BACKUP AUTOMÁTICO FALHOU!*\nO backup diário do banco de produção falhou em $(date -u '+%d/%m/%Y %H:%M UTC').\nVerifique os logs e tome ação manual se necessário.\nhttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"

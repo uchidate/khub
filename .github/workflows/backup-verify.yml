@@ -1,0 +1,84 @@
+name: Verificação de Backup (Semanal)
+
+# ============================================================
+# Verifica semanalmente que o backup de produção é válido,
+# restaurando-o no staging e conferindo a integridade.
+#
+# Roda: Domingo 04:00 UTC (01:00 horário de Brasília)
+# Notifica: Slack (SLACK_WEBHOOK_ALERTS) com resultado
+# ============================================================
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'  # Domingo 04:00 UTC (01:00 Brasilia)
+  workflow_dispatch:
+
+jobs:
+  verify-backup:
+    name: Restaurar backup no Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Restore + verificar integridade
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /var/www/hallyuhub
+
+            echo "================================================"
+            echo "  VERIFICAÇÃO SEMANAL DE BACKUP"
+            echo "  Data: $(date)"
+            echo "================================================"
+
+            # Localizar o backup mais recente de produção
+            LATEST=$(ls -1t backups/production/backup-*.sql.gz 2>/dev/null | head -1)
+
+            if [ -z "$LATEST" ]; then
+              echo "ERRO: Nenhum backup encontrado em backups/production/"
+              exit 1
+            fi
+
+            BACKUP_NAME=$(basename "$LATEST")
+            BACKUP_SIZE=$(du -h "$LATEST" | cut -f1)
+            BACKUP_AGE=$(( ($(date +%s) - $(stat -c %Y "$LATEST")) / 3600 ))
+
+            echo "Backup: $BACKUP_NAME ($BACKUP_SIZE, ${BACKUP_AGE}h atrás)"
+
+            # Verificar que o arquivo pode ser descomprimido (não está corrompido)
+            if ! gunzip -t "$LATEST" 2>/dev/null; then
+              echo "ERRO: Backup corrompido — gunzip -t falhou!"
+              exit 1
+            fi
+
+            echo "✅ Integridade verificada (gunzip -t OK)"
+
+            # Restaurar no staging (--force pula confirmação interativa)
+            echo "Restaurando no staging..."
+            bash scripts/restore-db.sh --staging --force "$LATEST"
+
+            echo "================================================"
+            echo "  VERIFICAÇÃO CONCLUÍDA COM SUCESSO"
+            echo "================================================"
+
+      - name: 📢 Notificar resultado
+        if: always()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_ALERTS }}
+        run: |
+          DATE=$(date -u '+%d/%m/%Y')
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "${{ job.status }}" = "success" ]; then
+            MSG="✅ *Verificação Semanal de Backup* ($DATE) — Backup restaurado com sucesso no staging."
+          else
+            MSG="❌ *VERIFICAÇÃO DE BACKUP FALHOU!* ($DATE) — O backup pode estar corrompido ou o restore falhou. Intervenção manual necessária!\n$RUN_URL"
+          fi
+
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\": \"$MSG\"}"
