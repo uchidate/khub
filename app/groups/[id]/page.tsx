@@ -270,7 +270,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                 <div className="mt-3" style={{ width: '56px', height: '3px', background: accent, borderRadius: '99px', opacity: 0.9 }} />
                             </div>
                             <div className="mb-2 flex items-center gap-2">
-                                <AdminQuickEdit href="/admin/groups" label="Editar" />
+                                <AdminQuickEdit href={`/admin/groups/${group.id}`} label="Editar" />
                                 <ReportButton entityType="group" entityId={group.id} entityName={group.name}
                                     className="bg-black/40 border border-white/10 backdrop-blur-sm" />
                                 <FavoriteButton
