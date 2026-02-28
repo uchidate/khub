@@ -146,9 +146,10 @@ function WikidataSyncButton({ artist, onSynced }: {
   )
 }
 
-function FixNamesButton({ artist, onFixed }: {
+function FixNamesButton({ artist, onFixed, onFailed }: {
   artist: Artist
   onFixed: (id: string, nameRomanized: string, nameHangul: string | null) => void
+  onFailed?: () => void
 }) {
   const needsFixName = KOREAN_REGEX.test(artist.nameRomanized) && !!artist.tmdbId
   const needsFillHangul = !artist.nameHangul && !!artist.tmdbId
@@ -179,10 +180,11 @@ function FixNamesButton({ artist, onFixed }: {
         setState('warn')
         setTried(true)
         setTooltip(data.reason ?? 'Sem dados no TMDB')
+        onFailed?.()
       }
     } catch { setState('err'); setTooltip('Erro de rede') }
     finally { setTimeout(() => { setState('idle'); setTooltip('') }, 4000) }
-  }, [artist.id, canFix, needsFixName, onFixed, artist.nameRomanized, artist.nameHangul])
+  }, [artist.id, canFix, needsFixName, onFixed, onFailed, artist.nameRomanized, artist.nameHangul])
 
   if (!canFix) return null
 
@@ -376,6 +378,11 @@ export default function ArtistsAdminPage() {
     refetchTable()
   }, [fetchStats])
 
+  const handleFixFailed = useCallback(() => {
+    fetchStats()
+    refetchTable()
+  }, [fetchStats])
+
   const columns: Column<Artist>[] = [
     {
       key: 'imageUrl', label: 'Foto',
@@ -528,7 +535,7 @@ export default function ArtistsAdminPage() {
           searchPlaceholder="Buscar por nome..."
           actions={(artist) => (
             <div className="flex items-center gap-1">
-              <FixNamesButton artist={artist} onFixed={handleFixed} />
+              <FixNamesButton artist={artist} onFixed={handleFixed} onFailed={handleFixFailed} />
               <WikidataSyncButton artist={artist} onSynced={handleSynced} />
             </div>
           )}
