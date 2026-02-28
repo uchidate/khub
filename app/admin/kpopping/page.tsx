@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
-import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -49,6 +49,20 @@ interface GroupItem {
     agency?: { name: string }
   }
   memberCount: number
+}
+
+interface GroupMemberItem {
+  kpoppingIdolId: string
+  idolName: string
+  idolNameHangul?: string
+  idolBirthday?: string
+  idolImageUrl?: string
+  idolPosition?: string
+  idolIsActive: boolean
+  artistId?: string
+  artistMatchScore?: number
+  artistMatchReason?: string
+  artist?: { id: string; nameRomanized: string; nameHangul?: string; primaryImageUrl?: string }
 }
 
 interface MembershipItem {
@@ -648,6 +662,9 @@ function GroupCard({ group }: { group: GroupItem }) {
   const [localReason, setLocalReason] = useState(group.groupMatchReason)
   const [showSearch, setShowSearch] = useState(false)
   const [showTMDB, setShowTMDB] = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
+  const [members, setMembers] = useState<GroupMemberItem[] | null>(null)
+  const [membersLoading, setMembersLoading] = useState(false)
 
   const isConfirmed = localReason === 'user_confirmed'
   const isRejected = localReason === 'user_rejected'
@@ -681,6 +698,25 @@ function GroupCard({ group }: { group: GroupItem }) {
     } finally {
       setPending(false)
     }
+  }
+
+  const loadMembers = async () => {
+    if (members !== null) return // já carregado
+    setMembersLoading(true)
+    try {
+      const res = await fetch(`/api/admin/kpopping/groups-overview/${encodeURIComponent(group.kpoppingGroupId)}`)
+      const data = await res.json()
+      setMembers(data.members ?? [])
+    } catch {
+      setMembers([])
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  const toggleMembers = () => {
+    if (!showMembers) loadMembers()
+    setShowMembers(v => !v)
   }
 
   const handleManualSelect = (item: SearchHit) => {
@@ -847,7 +883,79 @@ function GroupCard({ group }: { group: GroupItem }) {
             <RotateCcw size={10} /> Reset
           </button>
         )}
+
+        {/* Toggle membros Kpopping */}
+        {group.memberCount > 0 && (
+          <button
+            onClick={toggleMembers}
+            className="ml-auto text-xs text-gray-400 hover:text-gray-200 border border-gray-700 hover:border-gray-500 bg-gray-800 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors"
+          >
+            <Users size={12} />
+            Membros Kpopping ({group.memberCount})
+            {showMembers ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+          </button>
+        )}
       </div>
+
+      {/* Lista de membros do grupo no Kpopping */}
+      {showMembers && (
+        <div className="border-t border-gray-700 pt-3 space-y-1.5">
+          {membersLoading ? (
+            <div className="text-center py-4 text-gray-500 text-xs flex items-center justify-center gap-2">
+              <RefreshCw size={12} className="animate-spin" /> Carregando membros...
+            </div>
+          ) : !members || members.length === 0 ? (
+            <div className="text-center py-4 text-gray-600 text-xs">Nenhum membro encontrado</div>
+          ) : (
+            members.map(member => {
+              const matchReason = member.artistMatchReason
+              const isConfirmedMember = matchReason === 'user_confirmed'
+              const isAutoMember = matchReason && !isConfirmedMember && matchReason !== 'user_rejected'
+              const img = member.idolImageUrl ?? avatarPlaceholder(member.idolName)
+              return (
+                <div key={member.kpoppingIdolId} className="flex items-center gap-2.5 p-2 rounded-lg bg-gray-900/70 border border-gray-800/50">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+                    <Image src={img} alt={member.idolName} width={32} height={32} className="object-cover w-full h-full" unoptimized />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-semibold text-gray-200 truncate">{member.idolName}</span>
+                      {member.idolNameHangul && (
+                        <span className="text-[10px] text-gray-500">{member.idolNameHangul}</span>
+                      )}
+                      {member.idolPosition && (
+                        <span className="text-[10px] text-gray-600 italic">{member.idolPosition}</span>
+                      )}
+                      {!member.idolIsActive && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-red-900/40 text-red-400 border border-red-800/40">ex</span>
+                      )}
+                    </div>
+                    {member.artist && (
+                      <p className="text-[10px] text-gray-500 truncate">
+                        → {member.artist.nameRomanized}
+                        {member.artist.nameHangul ? ` (${member.artist.nameHangul})` : ''}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0">
+                    {isConfirmedMember ? (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-900/50 text-green-400 border border-green-700/40 font-bold">✓ confirmado</span>
+                    ) : isAutoMember ? (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-mono ${scoreColor(member.artistMatchScore)} border-current/20`}>
+                        {Math.round((member.artistMatchScore ?? 0) * 100)}%
+                      </span>
+                    ) : member.artistMatchReason === 'user_rejected' ? (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-900/30 text-red-500 border border-red-800/30">rejeitado</span>
+                    ) : (
+                      <span className="text-[9px] text-gray-700">sem match</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      )}
     </div>
   )
 }
