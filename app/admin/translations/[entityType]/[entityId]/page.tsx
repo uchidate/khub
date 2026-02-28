@@ -62,11 +62,6 @@ const ENTITY_CONFIG: Record<EntityType, { label: string; backLabel: string; fiel
   },
 }
 
-const STATUS_LABELS: Record<TranslationStatus, string> = {
-  draft: 'Rascunho',
-  approved: 'Aprovado',
-  ai: 'IA (não revisado)',
-}
 
 export default function TranslationEditorPage() {
   const params = useParams()
