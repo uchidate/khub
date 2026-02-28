@@ -30,6 +30,7 @@ interface DuplicatePair {
     b: ArtistCard
     reason: string
     confidence: 'high' | 'medium'
+    score: number
 }
 
 type CuratableField = 'nameRomanized' | 'nameHangul' | 'birthName' | 'birthDate' | 'height' | 'bloodType' | 'bio' | 'primaryImageUrl' | 'agencyId' | 'tmdbId' | 'mbid'
@@ -258,10 +259,13 @@ export default function DuplicatesPage() {
         if (expanded === pairId) setExpanded(null)
     }
 
-    const confidenceBadge = (confidence: 'high' | 'medium') =>
-        confidence === 'high'
-            ? 'bg-red-500/10 border border-red-500/30 text-red-400'
-            : 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-400'
+    const confidenceBadge = (score: number) => {
+        if (score >= 5) return 'bg-red-500/10 border border-red-500/30 text-red-400'
+        if (score === 4) return 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
+        if (score === 3) return 'bg-orange-500/10 border border-orange-500/30 text-orange-400'
+        if (score === 2) return 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-400'
+        return 'bg-zinc-800 border border-zinc-700 text-zinc-400'
+    }
 
     const highCount = pairs.filter(p => p.confidence === 'high').length
 
@@ -291,7 +295,7 @@ export default function DuplicatesPage() {
                 {/* Controls */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <div className="flex gap-2 flex-wrap">
-                        {([['all', 'Todos'], ['high', 'Alta confiança'], ['medium', 'Nome similar']] as const).map(([val, label]) => (
+                        {([['all', 'Todos'], ['high', 'Alta confiança'], ['medium', 'Média confiança']] as const).map(([val, label]) => (
                             <button key={val} onClick={() => setFilter(val)}
                                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${filter === val ? 'bg-purple-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-600'}`}>
                                 {label}
@@ -334,7 +338,7 @@ export default function DuplicatesPage() {
                                             onClick={() => setExpanded(isExpanded ? null : pair.id)}
                                         >
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className={`text-xs font-black px-2.5 py-1 rounded-full flex-shrink-0 ${confidenceBadge(pair.confidence)}`}>
+                                                <span className={`text-xs font-black px-2.5 py-1 rounded-full flex-shrink-0 ${confidenceBadge(pair.score)}`}>
                                                     {pair.reason}
                                                 </span>
 

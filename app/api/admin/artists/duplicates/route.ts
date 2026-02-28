@@ -90,6 +90,12 @@ export async function GET() {
         musicalGroupName: a.memberships[0]?.group.name ?? null,
     }))
 
+    // Confidence scores (higher = shown first)
+    // 5: Same TMDB or MusicBrainz ID (definitive)
+    // 4: Same birthDate + same Hangul (very strong)
+    // 3: Same birthDate + similar romanized name (strong)
+    // 2: Same Hangul only
+    // 1: Similar names only (medium)
     type Confidence = 'high' | 'medium'
     type Pair = {
         id: string
@@ -97,22 +103,24 @@ export async function GET() {
         b: ArtistRow
         reason: string
         confidence: Confidence
+        score: number
     }
 
     const pairs: Pair[] = []
     const seen = new Set<string>()
 
-    const addPair = (a: ArtistRow, b: ArtistRow, reason: string, confidence: Confidence) => {
+    const addPair = (a: ArtistRow, b: ArtistRow, reason: string, confidence: Confidence, score: number) => {
         const key = [a.id, b.id].sort().join(':')
         if (seen.has(key)) return
         seen.add(key)
-        pairs.push({ id: key, a, b, reason, confidence })
+        pairs.push({ id: key, a, b, reason, confidence, score })
     }
 
-    // Index by tmdbId and mbid for fast lookup
+    // Index by tmdbId, mbid, hangul, and birthDate for fast lookup
     const byTmdb = new Map<string, ArtistRow[]>()
     const byMbid = new Map<string, ArtistRow[]>()
     const byHangul = new Map<string, ArtistRow[]>()
+    const byBirthDate = new Map<string, ArtistRow[]>()
 
     for (const artist of artists) {
         if (artist.tmdbId) {
@@ -130,23 +138,54 @@ export async function GET() {
             list.push(artist)
             byHangul.set(artist.nameHangul, list)
         }
+        if (artist.birthDate) {
+            const key = artist.birthDate.toISOString().slice(0, 10)
+            const list = byBirthDate.get(key) ?? []
+            list.push(artist)
+            byBirthDate.set(key, list)
+        }
     }
 
-    const compareGroup = (groups: Map<string, ArtistRow[]>, reason: string) => {
+    const compareGroup = (groups: Map<string, ArtistRow[]>, reason: string, confidence: Confidence, score: number) => {
         Array.from(groups.values()).forEach(group => {
             for (let i = 0; i < group.length; i++) {
                 for (let j = i + 1; j < group.length; j++) {
-                    addPair(group[i], group[j], reason, 'high')
+                    addPair(group[i], group[j], reason, confidence, score)
                 }
             }
         })
     }
 
-    compareGroup(byTmdb, 'Mesmo ID TMDB')
-    compareGroup(byMbid, 'Mesmo MusicBrainz ID')
-    compareGroup(byHangul, 'Mesmo nome hangul')
+    compareGroup(byTmdb, 'Mesmo ID TMDB', 'high', 5)
+    compareGroup(byMbid, 'Mesmo MusicBrainz ID', 'high', 5)
 
-    // name similarity (O(n²) but artists count is manageable, cap at 500)
+    // Same birthDate: check for additional signals
+    Array.from(byBirthDate.values()).forEach(group => {
+        for (let i = 0; i < group.length; i++) {
+            for (let j = i + 1; j < group.length; j++) {
+                const a = group[i]
+                const b = group[j]
+                const key = [a.id, b.id].sort().join(':')
+                if (seen.has(key)) continue
+
+                const sameHangul = a.nameHangul && b.nameHangul && a.nameHangul === b.nameHangul
+                const similarRomanized = nameContainsOther(a.nameRomanized, b.nameRomanized)
+
+                if (sameHangul) {
+                    addPair(a, b, 'Mesma data + hangul igual', 'high', 4)
+                } else if (similarRomanized) {
+                    addPair(a, b, 'Mesma data + nome similar', 'high', 3)
+                } else {
+                    // Same birthdate but different names — still worth reviewing
+                    addPair(a, b, 'Mesma data de nascimento', 'medium', 2)
+                }
+            }
+        }
+    })
+
+    compareGroup(byHangul, 'Mesmo nome hangul', 'high', 2)
+
+    // name similarity (O(n²), cap at 500)
     const sample = artists.slice(0, 500)
     for (let i = 0; i < sample.length; i++) {
         for (let j = i + 1; j < sample.length; j++) {
@@ -155,14 +194,14 @@ export async function GET() {
             const key = [a.id, b.id].sort().join(':')
             if (seen.has(key)) continue
             if (nameContainsOther(a.nameRomanized, b.nameRomanized)) {
-                addPair(a, b, 'Nomes similares', 'medium')
+                addPair(a, b, 'Nomes similares', 'medium', 1)
             }
         }
     }
 
-    // Sort: high confidence first, then by name
+    // Sort by score desc, then alphabetically within same score
     pairs.sort((a, b) => {
-        if (a.confidence !== b.confidence) return a.confidence === 'high' ? -1 : 1
+        if (b.score !== a.score) return b.score - a.score
         return a.a.nameRomanized.localeCompare(b.a.nameRomanized)
     })
 
