@@ -371,6 +371,7 @@ export default function ArtistsAdminPage() {
   const handleFixed = useCallback((artistId: string, nameRomanized: string, nameHangul: string | null) => {
     setNameOverrides(prev => ({ ...prev, [artistId]: { nameRomanized, nameHangul } }))
     fetchStats()
+    refetchTable()
   }, [fetchStats])
 
   const columns: Column<Artist>[] = [
