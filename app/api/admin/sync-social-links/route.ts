@@ -64,6 +64,12 @@ export async function POST(request: NextRequest) {
                     if (Object.keys(links).length === 0) {
                         send(`NOT_FOUND:${artist.nameRomanized}`)
                         notFound++
+                        if (!dryRun) {
+                            await prisma.artist.update({
+                                where: { id: artist.id },
+                                data: { socialLinksUpdatedAt: new Date() },
+                            })
+                        }
                     } else {
                         const platformNames = Object.keys(links).join(',')
                         send(`FOUND:${artist.nameRomanized}:${platformNames}`)
