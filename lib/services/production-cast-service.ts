@@ -207,7 +207,7 @@ export class ProductionCastService {
           }
 
           // Ensure uniqueness — if name exists, append TMDB id
-          const nameExists = await prisma.artist.findUnique({
+          const nameExists = await prisma.artist.findFirst({
             where: { nameRomanized },
             select: { id: true },
           })
