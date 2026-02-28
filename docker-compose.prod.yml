@@ -17,7 +17,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.2'
+          cpus: '0.5'  # Aumentado de 0.2 — banco precisa de CPU para executar queries
           memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hallyuhub"]
@@ -74,7 +74,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.8'
+          cpus: '0.7'  # Reduzido de 0.8 — libera CPU para o banco
           memory: 2G
         reservations:
           memory: 768M

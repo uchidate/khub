@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
+import { unstable_cache } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
@@ -19,6 +20,89 @@ import { Newspaper } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * Dados públicos da home — independentes de usuário/sessão.
+ * Cache de 2 minutos: trending muda a cada 6h, 2min é mais que suficiente.
+ * Em cache hit: zero queries ao banco para visitantes anônimos.
+ */
+const getHomePublicData = unstable_cache(
+    async () => {
+        const [
+            artistCount, productionCount, newsCount, totalViews,
+            featuredNewsRaw, trendingArtists, topNewsRaw, streamingShowsRaw, trendingGroupsRaw,
+        ] = await Promise.all([
+            prisma.artist.count(),
+            prisma.production.count(),
+            prisma.news.count(),
+            prisma.artist.aggregate({ _sum: { viewCount: true } }),
+            prisma.news.findMany({
+                where: { imageUrl: { not: null } },
+                take: 5,
+                orderBy: { publishedAt: 'desc' },
+                select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
+            }),
+            prisma.artist.findMany({
+                where: { flaggedAsNonKorean: false },
+                take: 12,
+                orderBy: { trendingScore: 'desc' },
+                select: {
+                    id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
+                    roles: true, gender: true, trendingScore: true, viewCount: true,
+                    streamingSignals: {
+                        where: { expiresAt: { gt: new Date() } },
+                        select: { showTitle: true, rank: true, source: true },
+                        orderBy: { rank: 'asc' },
+                        take: 1,
+                    },
+                },
+            }),
+            prisma.news.findMany({
+                take: 3,
+                orderBy: { publishedAt: 'desc' },
+                select: {
+                    id: true, title: true, imageUrl: true, publishedAt: true,
+                    contentMd: true, originalContent: true,
+                },
+            }),
+            prisma.streamingShow.findMany({
+                where: { expiresAt: { gt: new Date() } },
+                select: {
+                    source: true, rank: true, showTitle: true, tmdbId: true,
+                    posterUrl: true, year: true, voteAverage: true, isKorean: true, productionId: true,
+                },
+                orderBy: [{ source: 'asc' }, { rank: 'asc' }],
+            }).catch(() => [] as never[]),
+            prisma.musicalGroup.findMany({
+                take: 10,
+                where: { disbandDate: null },
+                orderBy: [{ trendingScore: 'desc' }, { favoriteCount: 'desc' }, { viewCount: 'desc' }],
+                select: {
+                    id: true, name: true, nameHangul: true, profileImageUrl: true,
+                    debutDate: true, disbandDate: true,
+                    _count: { select: { members: true } },
+                },
+            }).catch(() => [] as never[]),
+        ])
+
+        // Serializar publishedAt para string (Dates que já eram serializadas no código original)
+        return {
+            siteStats: {
+                artists: artistCount,
+                productions: productionCount,
+                news: newsCount,
+                views: totalViews._sum.viewCount ?? 0,
+            },
+            featuredNews: featuredNewsRaw.map(n => ({ ...n, publishedAt: n.publishedAt.toISOString() })),
+            trendingArtists,
+            topNews: topNewsRaw.map(n => ({ ...n, publishedAt: n.publishedAt.toISOString() })),
+            streamingShowsRaw,
+            trendingGroups: trendingGroupsRaw,
+        }
+    },
+    ['home-page-public-data'],
+    { revalidate: 120 },
+)
+
 export const metadata: Metadata = {
     title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
     description: 'Explore os perfis mais detalhados de artistas, agências e as melhores produções da Coreia do Sul.',
@@ -27,59 +111,16 @@ export const metadata: Metadata = {
 export default async function Home() {
     const session = await getServerSession(authOptions)
 
-    // Site stats (server-side para evitar loading flash e bugs de isInView)
-    const [artistCount, productionCount, newsCount, totalViews] = await Promise.all([
-        prisma.artist.count(),
-        prisma.production.count(),
-        prisma.news.count(),
-        prisma.artist.aggregate({ _sum: { viewCount: true } }),
-    ])
-    const siteStats = {
-        artists: artistCount,
-        productions: productionCount,
-        news: newsCount,
-        views: totalViews._sum.viewCount ?? 0,
-    }
-
-    // Featured News for Carousel (5 mais recentes com imagem)
-    const featuredNewsRaw = await prisma.news.findMany({
-        where: { imageUrl: { not: null } },
-        take: 5,
-        orderBy: { publishedAt: 'desc' },
-        select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true }
-    })
-
-    const featuredNews = featuredNewsRaw.map(news => ({
-        ...news,
-        publishedAt: news.publishedAt.toISOString()
-    }))
-
-    // Trending Artists (12 artistas em alta)
-    const trendingArtists = await prisma.artist.findMany({
-        where: { flaggedAsNonKorean: false },
-        take: 12,
-        orderBy: { trendingScore: 'desc' },
-        select: {
-            id: true,
-            nameRomanized: true,
-            nameHangul: true,
-            primaryImageUrl: true,
-            roles: true, gender: true,
-            trendingScore: true,
-            viewCount: true,
-            streamingSignals: {
-                where: { expiresAt: { gt: new Date() } },
-                select: { showTitle: true, rank: true, source: true },
-                orderBy: { rank: 'asc' },
-                take: 1,
-            },
-        }
-    })
+    // Dados públicos — cacheados por 2 minutos (zero queries em cache hit)
+    const {
+        siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups,
+    } = await getHomePublicData()
 
     // Aplicar filtro de classificação etária (respeita SystemSettings + UserContentPreferences)
+    // Já usa unstable_cache internamente para system settings
     const ageRatingFilter = await applyAgeRatingFilter()
 
-    // Latest Productions (6 mais recentes)
+    // Latest Productions (6 mais recentes) — depende do filtro etário, não cacheável globalmente
     const latestProductionsRaw = await prisma.production.findMany({
         where: {
             flaggedAsNonKorean: false,
@@ -103,7 +144,7 @@ export default async function Home() {
         createdAt: prod.createdAt.toISOString()
     }))
 
-    // Top Rated Productions (6 com maior nota TMDB ≥ 7.5)
+    // Top Rated Productions (6 com maior nota TMDB ≥ 7.5) — idem
     const topRatedProductions = await prisma.production.findMany({
         where: {
             flaggedAsNonKorean: false,
@@ -167,21 +208,6 @@ export default async function Home() {
         artistsCount: news.artists?.length || 0
     }))
 
-    // Top News para seção de notícias (3 mais recentes)
-    const topNews = await prisma.news.findMany({ take: 3, orderBy: { publishedAt: 'desc' } })
-
-    // Top 10 por streaming — lê da tabela StreamingShow (atualizada diariamente pelo cron)
-    // Falha graciosamente caso a tabela ainda não exista (antes da migration rodar)
-    const streamingShowsRaw = await prisma.streamingShow.findMany({
-        where: { expiresAt: { gt: new Date() } },
-        select: {
-            source: true, rank: true, showTitle: true, tmdbId: true,
-            posterUrl: true, year: true, voteAverage: true, isKorean: true,
-            productionId: true,
-        },
-        orderBy: [{ source: 'asc' }, { rank: 'asc' }],
-    }).catch(() => [])
-
     // Agrupa por source → showsByPlatform
     const showsByPlatform: ShowsByPlatform = {}
     for (const show of streamingShowsRaw) {
@@ -198,22 +224,6 @@ export default async function Home() {
             productionId: show.productionId ?? undefined,
         })
     }
-
-    // Grupos em destaque (10 mais populares entre grupos ativos)
-    const trendingGroups = await prisma.musicalGroup.findMany({
-        take: 10,
-        where: { disbandDate: null }, // Apenas grupos ativos
-        orderBy: [{ trendingScore: 'desc' }, { favoriteCount: 'desc' }, { viewCount: 'desc' }],
-        select: {
-            id: true,
-            name: true,
-            nameHangul: true,
-            profileImageUrl: true,
-            debutDate: true,
-            disbandDate: true,
-            _count: { select: { members: true } },
-        },
-    }).catch(() => [])
 
     return (
         <div className="dark:bg-black min-h-screen pb-20 overflow-x-hidden">

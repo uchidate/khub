@@ -14,6 +14,8 @@
  *   rank 10 numa plataforma = 10 × 200 = 2.000 pts
  *   Ator em rank 1 de 2 plataformas = 12.000 pts — equivalente a ~20k views orgânicos
  *
+ * Implementação: 3 batch UPDATEs via SQL (evita N+1 — era N×3 queries individuais)
+ *
  * Auth: Bearer CRON_SECRET
  * Cron sugerido: a cada 6 horas
  */
@@ -22,16 +24,10 @@ import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
-import { computeStreamingBoost } from '@/lib/services/streaming-signal-service'
 
 export const maxDuration = 120
 
 const log = createLogger('CRON-UPDATE-TRENDING')
-
-// Peso do sinal de streaming relativo ao engajamento orgânico.
-// rank1 numa plataforma = 30 × STREAMING_WEIGHT = 6.000 pts
-// Mantém streaming como fator dominante mesmo com alto viewCount orgânico.
-const STREAMING_WEIGHT = 200
 
 function verifyToken(request: NextRequest): boolean {
     const authToken =
@@ -47,153 +43,124 @@ function verifyToken(request: NextRequest): boolean {
     }
 }
 
-function normalize(scores: Map<string, number>): Map<string, number> {
-    if (scores.size === 0) return scores
-    const values = Array.from(scores.values())
-    const max = Math.max(...values)
-    if (max === 0) return scores
-    const normalized = new Map<string, number>()
-    Array.from(scores.entries()).forEach(([id, score]) => {
-        normalized.set(id, Math.round((score / max) * 100 * 100) / 100)
-    })
-    return normalized
-}
-
+/**
+ * Batch UPDATE Artist.trendingScore — 1 query em vez de N.
+ *
+ * Score = normalize(
+ *   viewCount * 0.6 + favoriteCount * 0.3
+ *   + recentFavs * 0.3            (favoritos nos últimos 7 dias)
+ *   + SUM(signal.score) * 200     (streaming signals não expirados)
+ * )
+ */
 async function updateArtistTrending(since7d: Date): Promise<number> {
-    // Favoritos recentes por artista
-    const recentFavs = await prisma.favorite.groupBy({
-        by: ['artistId'],
-        where: {
-            artistId: { not: null },
-            createdAt: { gte: since7d },
-        },
-        _count: { artistId: true },
-    })
-
-    const scores = new Map<string, number>()
-
-    for (const fav of recentFavs) {
-        if (!fav.artistId) continue
-        const current = scores.get(fav.artistId) ?? 0
-        scores.set(fav.artistId, current + fav._count.artistId * 0.3)
-    }
-
-    // ViewCount + favoriteCount base
-    const artists = await prisma.artist.findMany({
-        select: {
-            id: true,
-            viewCount: true,
-            favoriteCount: true,
-            streamingSignals: {
-                where: { expiresAt: { gt: new Date() } },
-                select: { score: true },
-            },
-        },
-    })
-
-    for (const artist of artists) {
-        const fav = scores.get(artist.id) ?? 0
-        const base = artist.viewCount * 0.6 + artist.favoriteCount * 0.3
-        const streamingBoost = computeStreamingBoost(artist.streamingSignals) * STREAMING_WEIGHT
-        scores.set(artist.id, base + fav + streamingBoost)
-    }
-
-    const normalized = normalize(scores)
-
-    let updated = 0
-    for (const entry of Array.from(normalized.entries())) {
-        await prisma.artist.update({
-            where: { id: entry[0] },
-            data: { trendingScore: entry[1] },
-        })
-        updated++
-    }
-
-    return updated
+    const result = await prisma.$executeRaw`
+        UPDATE "Artist" a
+        SET "trendingScore" = scores.normalized,
+            "updatedAt"     = NOW()
+        FROM (
+            SELECT id,
+                ROUND(
+                    (raw / NULLIF(MAX(raw) OVER (), 0)) * 100 * 100
+                ) / 100.0 AS normalized
+            FROM (
+                SELECT
+                    a.id,
+                    (COALESCE(a."viewCount", 0) * 0.6
+                        + COALESCE(a."favoriteCount", 0) * 0.3
+                        + COALESCE((
+                            SELECT COUNT(*) * 0.3
+                            FROM "Favorite" f
+                            WHERE f."artistId" = a.id
+                              AND f."createdAt" >= ${since7d}
+                          ), 0)
+                        + COALESCE((
+                            SELECT SUM(s.score) * 200
+                            FROM streaming_trend_signal s
+                            WHERE s."artistId" = a.id
+                              AND s."expiresAt" > NOW()
+                          ), 0)
+                    ) AS raw
+                FROM "Artist" a
+            ) raw_scores
+        ) scores
+        WHERE a.id = scores.id
+    `
+    return result
 }
 
+/**
+ * Batch UPDATE MusicalGroup.trendingScore — 1 query em vez de N.
+ *
+ * Score = normalize(viewCount * 0.6 + favoriteCount * 0.3 + recentFavs * 0.3)
+ */
 async function updateGroupTrending(since7d: Date): Promise<number> {
-    const recentFavs = await prisma.favorite.groupBy({
-        by: ['groupId'],
-        where: {
-            groupId: { not: null },
-            createdAt: { gte: since7d },
-        },
-        _count: { groupId: true },
-    })
-
-    const scores = new Map<string, number>()
-
-    for (const fav of recentFavs) {
-        if (!fav.groupId) continue
-        scores.set(fav.groupId, (scores.get(fav.groupId) ?? 0) + fav._count.groupId * 0.3)
-    }
-
-    const groups = await prisma.musicalGroup.findMany({
-        select: { id: true, viewCount: true, favoriteCount: true },
-    })
-
-    for (const group of groups) {
-        const fav = scores.get(group.id) ?? 0
-        scores.set(group.id, group.viewCount * 0.6 + group.favoriteCount * 0.3 + fav)
-    }
-
-    const normalized = normalize(scores)
-
-    let updated = 0
-    for (const entry of Array.from(normalized.entries())) {
-        await prisma.musicalGroup.update({
-            where: { id: entry[0] },
-            data: { trendingScore: entry[1] },
-        })
-        updated++
-    }
-
-    return updated
+    const result = await prisma.$executeRaw`
+        UPDATE "MusicalGroup" g
+        SET "trendingScore" = scores.normalized,
+            "updatedAt"     = NOW()
+        FROM (
+            SELECT id,
+                ROUND(
+                    (raw / NULLIF(MAX(raw) OVER (), 0)) * 100 * 100
+                ) / 100.0 AS normalized
+            FROM (
+                SELECT
+                    g.id,
+                    (COALESCE(g."viewCount", 0) * 0.6
+                        + COALESCE(g."favoriteCount", 0) * 0.3
+                        + COALESCE((
+                            SELECT COUNT(*) * 0.3
+                            FROM "Favorite" f
+                            WHERE f."groupId" = g.id
+                              AND f."createdAt" >= ${since7d}
+                          ), 0)
+                    ) AS raw
+                FROM "MusicalGroup" g
+            ) raw_scores
+        ) scores
+        WHERE g.id = scores.id
+    `
+    return result
 }
 
+/**
+ * Batch UPDATE News.trendingScore — 1 query em vez de N.
+ *
+ * Score = normalize(viewCount * 0.6 + recentFavs * 0.3 + recentComments * 0.1)
+ */
 async function updateNewsTrending(since7d: Date): Promise<number> {
-    const recentFavs = await prisma.favorite.groupBy({
-        by: ['newsId'],
-        where: {
-            newsId: { not: null },
-            createdAt: { gte: since7d },
-        },
-        _count: { newsId: true },
-    })
-
-    const recentComments = await prisma.comment.groupBy({
-        by: ['newsId'],
-        where: { createdAt: { gte: since7d } },
-        _count: { newsId: true },
-    })
-
-    const favMap = new Map(recentFavs.filter(f => f.newsId).map(f => [f.newsId!, f._count.newsId]))
-    const commentMap = new Map(recentComments.map(c => [c.newsId, c._count.newsId]))
-
-    const news = await prisma.news.findMany({
-        select: { id: true, viewCount: true },
-    })
-
-    const scores = new Map<string, number>()
-    for (const item of news) {
-        const fav = favMap.get(item.id) ?? 0
-        const comments = commentMap.get(item.id) ?? 0
-        scores.set(item.id, item.viewCount * 0.6 + fav * 0.3 + comments * 0.1)
-    }
-
-    const normalized = normalize(scores)
-
-    let updated = 0
-    for (const entry of Array.from(normalized.entries())) {
-        await prisma.news.update({
-            where: { id: entry[0] },
-            data: { trendingScore: entry[1] },
-        })
-        updated++
-    }
-
-    return updated
+    const result = await prisma.$executeRaw`
+        UPDATE "News" n
+        SET "trendingScore" = scores.normalized,
+            "updatedAt"     = NOW()
+        FROM (
+            SELECT id,
+                ROUND(
+                    (raw / NULLIF(MAX(raw) OVER (), 0)) * 100 * 100
+                ) / 100.0 AS normalized
+            FROM (
+                SELECT
+                    n.id,
+                    (COALESCE(n."viewCount", 0) * 0.6
+                        + COALESCE((
+                            SELECT COUNT(*) * 0.3
+                            FROM "Favorite" f
+                            WHERE f."newsId" = n.id
+                              AND f."createdAt" >= ${since7d}
+                          ), 0)
+                        + COALESCE((
+                            SELECT COUNT(*) * 0.1
+                            FROM "Comment" c
+                            WHERE c."newsId" = n.id
+                              AND c."createdAt" >= ${since7d}
+                          ), 0)
+                    ) AS raw
+                FROM "News" n
+            ) raw_scores
+        ) scores
+        WHERE n.id = scores.id
+    `
+    return result
 }
 
 async function runUpdateTrending() {
