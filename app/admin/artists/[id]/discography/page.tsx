@@ -8,7 +8,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, RefreshCw, Trash2, ArrowLeft, Music, CheckCircle, Pencil, X, Check, ExternalLink } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, ArrowLeft, Music, CheckCircle, Pencil, X, Check, ExternalLink, Sparkles } from 'lucide-react'
 
 interface Artist {
   id: string
@@ -153,6 +153,7 @@ export default function ArtistDiscographyPage() {
   const [syncLoading, setSyncLoading] = useState(false)
   const [syncClearFirst, setSyncClearFirst] = useState(false)
   const [syncModalOpen, setSyncModalOpen] = useState(false)
+  const [enrichLoading, setEnrichLoading] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
   // Inline ID editors
@@ -188,6 +189,42 @@ export default function ArtistDiscographyPage() {
     } finally {
       setSyncLoading(false)
       setSyncClearFirst(false)
+    }
+  }, [artistId, showToast])
+
+  const handleEnrich = useCallback(async () => {
+    setEnrichLoading(true)
+    try {
+      const res = await fetch('/api/admin/artists/mb-enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artistId }),
+      })
+      const data = await res.json() as {
+        ok?: boolean
+        error?: string
+        applied?: { socialLinksAdded: number; tmdbId: boolean }
+        found?: { socialLinks: Record<string, string>; tmdbId: string | null }
+      }
+      if (!res.ok) {
+        showToast(`❌ ${data.error ?? 'Erro ao enriquecer'}`, false)
+        return
+      }
+      const parts: string[] = []
+      if (data.applied?.socialLinksAdded) parts.push(`${data.applied.socialLinksAdded} rede(s) social(is)`)
+      if (data.applied?.tmdbId) {
+        parts.push(`TMDB ID ${data.found?.tmdbId}`)
+        setArtist(a => a ? { ...a, tmdbId: data.found?.tmdbId ?? a.tmdbId } : a)
+      }
+      if (parts.length === 0) {
+        showToast('ℹ️ Nenhum dado novo encontrado no MusicBrainz')
+      } else {
+        showToast(`✅ Enriquecido via MB: ${parts.join(', ')}`)
+      }
+    } catch {
+      showToast('❌ Erro de rede', false)
+    } finally {
+      setEnrichLoading(false)
     }
   }, [artistId, showToast])
 
@@ -420,6 +457,17 @@ export default function ArtistDiscographyPage() {
               <RefreshCw className={`w-4 h-4 ${syncLoading ? 'animate-spin' : ''}`} />
               {syncLoading ? 'Sincronizando…' : 'Sincronizar'}
             </button>
+            {artist?.mbid && (
+              <button
+                onClick={handleEnrich}
+                disabled={enrichLoading}
+                title="Buscar redes sociais e TMDB ID via MusicBrainz relationships"
+                className="flex items-center gap-2 px-3 py-2 bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/25 text-orange-400 font-bold text-sm rounded-lg transition-all disabled:opacity-50"
+              >
+                <Sparkles className={`w-4 h-4 ${enrichLoading ? 'animate-pulse' : ''}`} />
+                {enrichLoading ? 'Enriquecendo…' : 'Enriquecer'}
+              </button>
+            )}
             <button
               onClick={handleCreate}
               className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
