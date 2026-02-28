@@ -10,7 +10,7 @@ import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
 import { MobileSearchOverlay } from "@/components/features/MobileSearchOverlay"
 
-const NavBar = () => {
+const NavBar = ({ premiumEnabled = false }: { premiumEnabled?: boolean }) => {
     const pathname = usePathname()
     const [isScrolled, setIsScrolled] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
@@ -34,7 +34,7 @@ const NavBar = () => {
         { label: "Grupos", href: "/groups" },
         { label: "Produções", href: "/productions" },
         { label: "Notícias", href: "/news" },
-        { label: "Premium", href: "/premium" },
+        ...(premiumEnabled ? [{ label: "Premium", href: "/premium" }] : []),
     ]
 
     return (
@@ -77,7 +77,7 @@ const NavBar = () => {
 
                             {/* User menu - Always visible */}
                             <div className="hidden md:block">
-                                <UserMenu />
+                                <UserMenu premiumEnabled={premiumEnabled} />
                             </div>
 
                             {/* Mobile actions grouped */}
@@ -91,7 +91,7 @@ const NavBar = () => {
                                     <Search className="w-5 h-5" />
                                 </button>
                                 <ThemeToggle />
-                                <UserMenu />
+                                <UserMenu premiumEnabled={premiumEnabled} />
                                 <div className="pl-2 border-l border-zinc-200 dark:border-zinc-700/50">
                                     <MobileMenu links={navLinks} />
                                 </div>

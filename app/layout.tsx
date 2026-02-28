@@ -12,6 +12,8 @@ import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { BetaBanner } from "@/components/features/BetaBanner"
+import { getSystemSettings } from "@/lib/settings"
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -68,11 +70,13 @@ export const viewport = {
     initialScale: 1,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const settings = await getSystemSettings()
+
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
             <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
@@ -101,8 +105,9 @@ export default function RootLayout({
                     <WebVitalsReporter />
                     {/* Decorative top accent bar */}
                     <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
+                    <BetaBanner />
                     <div className="min-h-screen flex flex-col">
-                        <NavBar />
+                        <NavBar premiumEnabled={settings.premiumEnabled} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>

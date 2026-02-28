@@ -530,6 +530,8 @@ model SystemSettings {
   id                        String   @id @default("singleton")
   allowAdultContent         Boolean  @default(false)   // Permite conteúdo 18+ no site
   allowUnclassifiedContent  Boolean  @default(false)   // Permite produções sem classificação
+  betaMode                  Boolean  @default(true)    // Exibe banner de versão beta no site
+  premiumEnabled            Boolean  @default(false)   // Habilita acesso à página e funcionalidades premium
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
