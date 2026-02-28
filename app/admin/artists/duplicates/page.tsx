@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban } from 'lucide-react'
+import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban, Zap } from 'lucide-react'
 import Image from 'next/image'
 
 interface ArtistCard {
@@ -187,6 +187,8 @@ export default function DuplicatesPage() {
     const [selections, setSelections] = useState<Record<string, PairSelections>>({})
     const [merging, setMerging] = useState(false)
     const [showDone, setShowDone] = useState(false)
+    // MB→TMDB inline lookup state: artistId → 'loading' | 'found' | 'not_found'
+    const [mbLookup, setMbLookup] = useState<Record<string, 'loading' | 'found' | 'not_found'>>({})
 
     const fetchPairs = useCallback(async () => {
         setLoading(true)
@@ -201,6 +203,28 @@ export default function DuplicatesPage() {
     }, [])
 
     useEffect(() => { fetchPairs() }, [fetchPairs])
+
+    // Busca TMDB ID via MusicBrainz relationships para um artista com mbid mas sem tmdbId.
+    const lookupTmdbViaMb = async (artistId: string) => {
+        setMbLookup(prev => ({ ...prev, [artistId]: 'loading' }))
+        try {
+            const res = await fetch('/api/admin/artists/mb-enrich', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ artistId }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error)
+            if (data.applied?.tmdbId) {
+                setMbLookup(prev => ({ ...prev, [artistId]: 'found' }))
+                await fetchPairs()
+            } else {
+                setMbLookup(prev => ({ ...prev, [artistId]: 'not_found' }))
+            }
+        } catch {
+            setMbLookup(prev => ({ ...prev, [artistId]: 'not_found' }))
+        }
+    }
 
     const handled = new Set([...Array.from(merged), ...Array.from(dismissed)])
 
@@ -412,6 +436,7 @@ export default function DuplicatesPage() {
                                                         <div key={field} className="flex flex-col gap-2">
                                                             <p className="text-xs font-bold text-zinc-400 uppercase tracking-wide">{FIELD_LABELS[field]}</p>
                                                             {(field === 'tmdbId' || field === 'mbid') ? (
+                                                                <>
                                                                 <div className="grid grid-cols-2 gap-2">
                                                                     {[pair.a, pair.b].map((artist, idx) => {
                                                                         const side = idx === 0 ? 'a' : 'b'
@@ -451,6 +476,32 @@ export default function DuplicatesPage() {
                                                                         )
                                                                     })}
                                                                 </div>
+                                                                {/* MB→TMDB lookup: botão por artista com mbid mas sem tmdbId */}
+                                                                {field === 'tmdbId' && [pair.a, pair.b].some(a => !a.tmdbId && a.mbid) && (
+                                                                    <div className="flex gap-2 flex-wrap">
+                                                                        {[pair.a, pair.b].map(artist => {
+                                                                            if (!artist.mbid || artist.tmdbId) return null
+                                                                            const status = mbLookup[artist.id]
+                                                                            return (
+                                                                                <button key={artist.id}
+                                                                                    onClick={() => lookupTmdbViaMb(artist.id)}
+                                                                                    disabled={status === 'loading'}
+                                                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all disabled:opacity-50 ${
+                                                                                        status === 'found'     ? 'border-green-500/40 bg-green-500/10 text-green-400' :
+                                                                                        status === 'not_found' ? 'border-zinc-700 text-zinc-600 cursor-default' :
+                                                                                        'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50'
+                                                                                    }`}
+                                                                                >
+                                                                                    {status === 'loading'   ? <><RefreshCw size={10} className="animate-spin" /> Buscando...</> :
+                                                                                     status === 'found'     ? <><CheckCircle size={10} /> TMDB encontrado</> :
+                                                                                     status === 'not_found' ? <>Não encontrado no MB</> :
+                                                                                     <><Zap size={10} /> MB→TMDB · {artist.nameRomanized}</>}
+                                                                                </button>
+                                                                            )
+                                                                        })}
+                                                                    </div>
+                                                                )}
+                                                                </>
                                                             ) : field === 'primaryImageUrl' ? (
                                                                 <div className="flex gap-3">
                                                                     {[pair.a, pair.b].map((artist, idx) => {
