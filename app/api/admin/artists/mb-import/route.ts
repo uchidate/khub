@@ -13,7 +13,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
-import { getMusicBrainzService } from '@/lib/services/musicbrainz-service'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
@@ -50,12 +49,6 @@ export async function POST(request: NextRequest) {
 
   // Fetch artist details from MusicBrainz
   try {
-    const mb = getMusicBrainzService()
-    // Use internal fetch via searchArtistCandidates approach — but here we need direct lookup
-    // Fetch directly via the service's private fetch (workaround: call enrichment which uses same base)
-    // Actually we expose a direct fetch via getArtistGroup which hits /artist/{mbid}
-    // Instead, use getGroupDebutDate as a pattern — it calls /artist/{mbid}?fmt=json
-    // We replicate the same approach here inline:
     const mbUrl = `https://musicbrainz.org/ws/2/artist/${mbid}?fmt=json`
     const mbResponse = await fetch(mbUrl, {
       headers: {
