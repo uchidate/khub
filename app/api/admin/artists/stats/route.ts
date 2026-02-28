@@ -8,8 +8,9 @@
  *   noHangulNoTmdb   — tmdbId null (manual only)
  *
  * noPhoto breakdown:
- *   noPhotoPending — tmdbId set (can sync via TMDB)
- *   noPhotoNoTmdb  — tmdbId null (manual only)
+ *   noPhotoPending  — tmdbId set + photoSyncAt null (never tried)
+ *   noPhotoAttempted — tmdbId set + photoSyncAt set but still no photo (tried, not found)
+ *   noPhotoNoTmdb   — tmdbId null (manual only)
  *
  * noSocial breakdown:
  *   noSocialPending  — socialLinksUpdatedAt null (never tried)
@@ -47,6 +48,7 @@ export async function GET() {
     noHangulNoTmdb,
     noPhoto,
     noPhotoPending,
+    noPhotoAttempted,
     noPhotoNoTmdb,
     noSocialPending,
     noSocialAttempted,
@@ -64,7 +66,8 @@ export async function GET() {
     prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: null } }),
     // no photo
     prisma.artist.count({ where: { ...active, primaryImageUrl: null } }),
-    prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: { not: null } } }),
+    prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: null } }),
+    prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: { not: null } } }),
     prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: null } }),
     // no social links — never tried
     prisma.artist.count({ where: { ...active, socialLinksUpdatedAt: null } }),
@@ -101,6 +104,7 @@ export async function GET() {
     noHangulNoTmdb,
     noPhoto,
     noPhotoPending,
+    noPhotoAttempted,
     noPhotoNoTmdb,
     noSocialTotal: noSocialPending + noSocialAttempted,
     noSocialPending,

@@ -76,7 +76,8 @@ export async function GET(request: NextRequest) {
     //   no_hangul_attempted    — nameHangul null + tmdbId set + hangulSyncAt set (tried, not found)
     //   no_hangul_no_tmdb      — nameHangul null + tmdbId null
     //   no_photo               — primaryImageUrl null
-    //   no_photo_pending       — primaryImageUrl null + tmdbId set
+    //   no_photo_pending       — primaryImageUrl null + tmdbId set + photoSyncAt null (never tried)
+    //   no_photo_attempted     — primaryImageUrl null + tmdbId set + photoSyncAt set (tried, not found)
     //   no_photo_no_tmdb       — primaryImageUrl null + tmdbId null
     //   no_social              — never synced (socialLinksUpdatedAt null)
     //   no_social_pending      — same as no_social
@@ -106,7 +107,8 @@ export async function GET(request: NextRequest) {
       : filter === 'no_hangul_attempted' ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: { not: null } }
       : filter === 'no_hangul_no_tmdb'   ? { ...active, nameHangul: null, tmdbId: null }
       : filter === 'no_photo'            ? { ...active, primaryImageUrl: null }
-      : filter === 'no_photo_pending'    ? { ...active, primaryImageUrl: null, tmdbId: { not: null } }
+      : filter === 'no_photo_pending'    ? { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: null }
+      : filter === 'no_photo_attempted'  ? { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: { not: null } }
       : filter === 'no_photo_no_tmdb'    ? { ...active, primaryImageUrl: null, tmdbId: null }
       : filter === 'no_social' || filter === 'no_social_pending'
                                          ? { ...active, socialLinksUpdatedAt: null }

@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type } from 'lucide-react'
+import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -19,6 +19,7 @@ interface Artist {
   stageName: string | null
   country: string | null
   primaryImageUrl: string | null
+  photoSyncAt: string | null
   gender: string | null
   createdAt: Date
   productionsCount: number
@@ -41,6 +42,7 @@ interface ArtistStats {
   noHangulNoTmdb: number
   noPhoto: number
   noPhotoPending: number
+  noPhotoAttempted: number
   noPhotoNoTmdb: number
   noSocialTotal: number
   noSocialPending: number
@@ -51,7 +53,7 @@ interface ArtistStats {
 type FilterType =
   | ''
   | 'no_hangul' | 'no_hangul_pending' | 'no_hangul_attempted' | 'no_hangul_no_tmdb'
-  | 'no_photo' | 'no_photo_pending' | 'no_photo_no_tmdb'
+  | 'no_photo' | 'no_photo_pending' | 'no_photo_attempted' | 'no_photo_no_tmdb'
   | 'no_social' | 'no_social_pending' | 'no_social_attempted'
   | 'flagged'
   | 'korean_no_tmdb'
@@ -142,6 +144,68 @@ function WikidataSyncButton({ artist, onSynced }: {
     >
       <RefreshCw size={12} className={state === 'loading' ? 'animate-spin' : ''} />
       {state === 'ok' ? '✓' : state === 'warn' ? '—' : state === 'err' ? '!' : 'Wiki'}
+    </button>
+  )
+}
+
+function PhotoSyncButton({ artist, onSynced, onFailed }: {
+  artist: Artist
+  onSynced: (id: string, url: string) => void
+  onFailed?: () => void
+}) {
+  const canSync = !artist.primaryImageUrl && !!artist.tmdbId
+  const [state, setState] = useState<BtnState>('idle')
+  const [tried, setTried] = useState(() => !!(artist.photoSyncAt && !artist.primaryImageUrl))
+
+  const handleSync = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!canSync) return
+    setState('loading')
+    try {
+      const res = await fetch('/api/admin/artists/fix-names', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artistId: artist.id, mode: 'sync-photo' }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setState('err'); return }
+      if (data.ok) {
+        onSynced(artist.id, data.primaryImageUrl)
+        setState('ok')
+      } else {
+        setState('warn')
+        setTried(true)
+        onFailed?.()
+      }
+    } catch { setState('err') }
+    finally { setTimeout(() => setState('idle'), 4000) }
+  }, [artist.id, artist.primaryImageUrl, canSync, onSynced, onFailed])
+
+  if (!canSync) return null
+
+  const display = tried && state === 'idle' ? 'warn' : state
+
+  const colorClass =
+    display === 'ok'   ? 'text-green-400 border-green-500/30'
+    : display === 'warn' ? 'text-zinc-500 border-zinc-700'
+    : display === 'err'  ? 'text-red-400 border-red-500/30'
+    : 'text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10'
+
+  const label =
+    display === 'ok' ? '✓'
+    : display === 'warn' ? '—'
+    : display === 'err' ? '!'
+    : 'Foto'
+
+  return (
+    <button
+      onClick={handleSync}
+      disabled={state === 'loading'}
+      title={display === 'warn' && tried ? 'Foto não encontrada no TMDB' : 'Sincronizar foto via TMDB'}
+      className={`inline-flex items-center gap-1.5 px-2 py-1 border rounded text-xs font-medium transition-colors disabled:cursor-wait ${colorClass}`}
+    >
+      <ImagePlus size={11} className={state === 'loading' ? 'animate-pulse' : ''} />
+      {label}
     </button>
   )
 }
@@ -254,7 +318,8 @@ function StatsBar({ stats, filter, onFilter }: {
   ]
 
   const photoSubs: SubTab[] = [
-    { label: 'Pendentes', value: 'no_photo_pending', count: stats?.noPhotoPending ?? null, title: 'Tem TMDB — sincronizar foto', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
+    { label: 'Pendentes', value: 'no_photo_pending', count: stats?.noPhotoPending ?? null, title: 'Tem TMDB — nunca tentado, clique "Foto" para sincronizar', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
+    { label: 'Já tentados', value: 'no_photo_attempted', count: stats?.noPhotoAttempted ?? null, title: 'Já processado — TMDB não encontrou foto', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
     { label: 'Sem TMDB', value: 'no_photo_no_tmdb', count: stats?.noPhotoNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
   ]
 
@@ -359,6 +424,7 @@ export default function ArtistsAdminPage() {
   // Local overrides for cells updated in-place (avoid full table refetch)
   const [socialOverrides, setSocialOverrides] = useState<Record<string, Record<string, string>>>({})
   const [nameOverrides, setNameOverrides] = useState<Record<string, { nameRomanized: string; nameHangul: string | null }>>({})
+  const [photoOverrides, setPhotoOverrides] = useState<Record<string, string>>({})
 
   const fetchStats = useCallback(async () => {
     const res = await fetch('/api/admin/artists/stats')
@@ -383,17 +449,31 @@ export default function ArtistsAdminPage() {
     refetchTable()
   }, [fetchStats])
 
+  const handlePhotoSynced = useCallback((artistId: string, url: string) => {
+    setPhotoOverrides(prev => ({ ...prev, [artistId]: url }))
+    fetchStats()
+    refetchTable()
+  }, [fetchStats])
+
+  const handlePhotoFailed = useCallback(() => {
+    fetchStats()
+    refetchTable()
+  }, [fetchStats])
+
   const columns: Column<Artist>[] = [
     {
       key: 'imageUrl', label: 'Foto',
-      render: (artist) => artist.primaryImageUrl ? (
-        <Link href={`/artists/${artist.id}`} target="_blank" onClick={e => e.stopPropagation()}>
-          <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={40} height={40}
-            className="rounded-lg object-cover hover:ring-2 hover:ring-purple-500/50 transition-all" />
-        </Link>
-      ) : (
-        <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-xs text-zinc-500">N/A</div>
-      ),
+      render: (artist) => {
+        const url = photoOverrides[artist.id] ?? artist.primaryImageUrl
+        return url ? (
+          <Link href={`/artists/${artist.id}`} target="_blank" onClick={e => e.stopPropagation()}>
+            <Image src={url} alt={artist.nameRomanized} width={40} height={40}
+              className="rounded-lg object-cover hover:ring-2 hover:ring-purple-500/50 transition-all" />
+          </Link>
+        ) : (
+          <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-xs text-zinc-500">N/A</div>
+        )
+      },
     },
     {
       key: 'nameRomanized', label: 'Nome', sortable: true,
@@ -535,6 +615,7 @@ export default function ArtistsAdminPage() {
           searchPlaceholder="Buscar por nome..."
           actions={(artist) => (
             <div className="flex items-center gap-1">
+              <PhotoSyncButton artist={artist} onSynced={handlePhotoSynced} onFailed={handlePhotoFailed} />
               <FixNamesButton artist={artist} onFixed={handleFixed} onFailed={handleFixFailed} />
               <WikidataSyncButton artist={artist} onSynced={handleSynced} />
             </div>
