@@ -25,6 +25,23 @@ export interface MBRelease {
   coverUrl: string | null
 }
 
+export interface MBArtistEnrichment {
+  /** Platform → URL (instagram, twitter, youtube, spotify, weibo, tiktok…) */
+  socialLinks: Record<string, string>
+  /** TMDB person ID extracted from themoviedb.org URL */
+  tmdbId: string | null
+  /** Spotify artist page URL */
+  spotifyArtistUrl: string | null
+  /** Apple Music artist page URL */
+  appleMusicArtistUrl: string | null
+}
+
+// Secondary release types to skip when importing discography.
+// We keep "Remix" (useful), skip only noise types.
+const SKIP_SECONDARY_TYPES = new Set([
+  'Compilation', 'Live', 'DJ-mix', 'Mixtape/Street', 'Demo', 'Broadcast',
+])
+
 interface MBArtistResult {
   id: string
   name: string
@@ -142,8 +159,9 @@ export class MusicBrainzService {
       if (!result) continue
 
       for (const rg of result['release-groups']) {
-        // Skip compilations, live albums, remixes — secondary types
-        if (rg['secondary-types']?.length > 0) continue
+        // Skip noise types (Live, Compilation, etc.) but keep Remix and others
+        const secondary = rg['secondary-types'] ?? []
+        if (secondary.some((t: string) => SKIP_SECONDARY_TYPES.has(t))) continue
 
         const releaseDate = rg['first-release-date'] || null
         const coverUrl = await this.getCoverArt(rg.id)
@@ -239,6 +257,52 @@ export class MusicBrainzService {
     if (!normalized) return null
     const date = new Date(normalized)
     return isNaN(date.getTime()) ? null : date
+  }
+
+  /**
+   * Extract enrichment data from MusicBrainz URL relationships.
+   * Fetches social links (Instagram, Twitter, YouTube, Spotify, Weibo, TikTok),
+   * TMDB ID, and streaming page URLs for the artist.
+   */
+  async getArtistEnrichment(mbid: string): Promise<MBArtistEnrichment> {
+    const url = `${MB_BASE_URL}/artist/${mbid}?inc=url-rels&fmt=json`
+    const data = await this.fetch<{ relations?: Array<{ url?: { resource: string } }> }>(url)
+
+    const result: MBArtistEnrichment = {
+      socialLinks: {},
+      tmdbId: null,
+      spotifyArtistUrl: null,
+      appleMusicArtistUrl: null,
+    }
+
+    if (!data?.relations) return result
+
+    for (const rel of data.relations) {
+      const resource = rel.url?.resource ?? ''
+      if (!resource) continue
+
+      if (/instagram\.com\//i.test(resource)) {
+        result.socialLinks.instagram = resource
+      } else if (/(?:twitter|x)\.com\//i.test(resource)) {
+        result.socialLinks.twitter = resource
+      } else if (/youtube\.com\/(?:channel|c|@)/i.test(resource)) {
+        result.socialLinks.youtube = resource
+      } else if (/weibo\.com\//i.test(resource)) {
+        result.socialLinks.weibo = resource
+      } else if (/tiktok\.com\//i.test(resource)) {
+        result.socialLinks.tiktok = resource
+      } else if (/open\.spotify\.com\/artist\//i.test(resource)) {
+        result.socialLinks.spotify = resource
+        result.spotifyArtistUrl = resource
+      } else if (/music\.apple\.com\//i.test(resource)) {
+        result.appleMusicArtistUrl = resource
+      } else if (/themoviedb\.org\/person\/(\d+)/i.test(resource)) {
+        const match = resource.match(/person\/(\d+)/)
+        if (match) result.tmdbId = match[1]
+      }
+    }
+
+    return result
   }
 
   /**
