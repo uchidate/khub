@@ -77,6 +77,9 @@ jobs:
       - name: 🧪 Run Tests
         run: npx vitest run
 
+      - name: 🔒 Security Audit
+        run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar antes do próximo deploy"
+
       # OTIMIZAÇÃO: Build removido! Docker faz o build uma única vez
       # ❌ ANTES: npm run build (2-3min desperdiçados)
       # ✅ DEPOIS: Docker build faz isso de forma otimizada
@@ -252,6 +255,13 @@ jobs:
           cp -f docker-compose.staging.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
 
+      - name: 💾 Save rollback image
+        id: save-rollback
+        run: |
+          ROLLBACK_ID=$(docker images --no-trunc --format "{{.ID}}" ghcr.io/uchidate/khub:staging 2>/dev/null | head -1)
+          echo "image-id=$ROLLBACK_ID" >> $GITHUB_OUTPUT
+          echo "Rollback image: ${ROLLBACK_ID:0:20}..."
+
       - name: Deploy to Staging
         run: |
           set -e
@@ -322,16 +332,35 @@ jobs:
           ./scripts/export-cron-info.sh staging
           NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test || echo "⚠️ Verification warning (non-blocking)"
 
-      - name: 🔍 Health Check
+      - name: 🔍 Health Check + Auto Rollback
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          ROLLBACK_IMAGE: ${{ steps.save-rollback.outputs.image-id }}
         run: |
-          max_attempts=12
-          attempt=0
+          cd /var/www/hallyuhub
+          COMPOSE_CMD=$(docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+
+          max_attempts=12; attempt=0
           while [ $attempt -lt $max_attempts ]; do
             curl -sf http://31.97.255.107:3001/api/health > /dev/null && echo "✅ OK" && exit 0
-            attempt=$((attempt + 1))
-            sleep 3
+            attempt=$((attempt + 1)); sleep 3
           done
-          echo "❌ Health check falhou"
+
+          echo "❌ Health check falhou após ${max_attempts} tentativas"
+
+          if [ -n "$ROLLBACK_IMAGE" ]; then
+            echo "🔄 Iniciando rollback automático..."
+            docker tag "$ROLLBACK_IMAGE" ghcr.io/uchidate/khub:staging
+            $COMPOSE_CMD -f docker-compose.staging.yml down
+            $COMPOSE_CMD -f docker-compose.staging.yml up -d
+            sleep 5
+            echo "✅ Rollback concluído"
+            curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+              -d "{\"text\": \"🔄 *Rollback automático* em STAGING!\\nDeploy \`${GITHUB_SHA:0:7}\` falhou no health check — revertido para versão anterior.\"}"
+          else
+            curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+              -d '{"text": "❌ *Deploy STAGING falhou!* Health check falhou e sem imagem de rollback disponível."}'
+          fi
           exit 1
 
       - name: 📊 Summary
@@ -418,6 +447,13 @@ jobs:
           cp -f docker-compose.prod.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
 
+      - name: 💾 Save rollback image
+        id: save-rollback
+        run: |
+          ROLLBACK_ID=$(docker images --no-trunc --format "{{.ID}}" ghcr.io/uchidate/khub:latest 2>/dev/null | head -1)
+          echo "image-id=$ROLLBACK_ID" >> $GITHUB_OUTPUT
+          echo "Rollback image: ${ROLLBACK_ID:0:20}..."
+
       - name: Deploy to Production
         run: |
           set -e
@@ -488,16 +524,35 @@ jobs:
           ./scripts/export-cron-info.sh production
           ./scripts/verify-production.sh || echo "⚠️ Verification warning"
 
-      - name: 🔍 Health Check
+      - name: 🔍 Health Check + Auto Rollback
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          ROLLBACK_IMAGE: ${{ steps.save-rollback.outputs.image-id }}
         run: |
-          max_attempts=12
-          attempt=0
+          cd /var/www/hallyuhub
+          COMPOSE_CMD=$(docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+
+          max_attempts=12; attempt=0
           while [ $attempt -lt $max_attempts ]; do
             curl -sf https://www.hallyuhub.com.br/api/health > /dev/null && echo "✅ OK" && exit 0
-            attempt=$((attempt + 1))
-            sleep 3
+            attempt=$((attempt + 1)); sleep 3
           done
-          echo "❌ Health check falhou"
+
+          echo "❌ Health check falhou após ${max_attempts} tentativas"
+
+          if [ -n "$ROLLBACK_IMAGE" ]; then
+            echo "🔄 Iniciando rollback automático..."
+            docker tag "$ROLLBACK_IMAGE" ghcr.io/uchidate/khub:latest
+            $COMPOSE_CMD -f docker-compose.prod.yml down
+            $COMPOSE_CMD -f docker-compose.prod.yml up -d
+            sleep 5
+            echo "✅ Rollback concluído"
+            curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+              -d "{\"text\": \"🔄 *ROLLBACK AUTOMÁTICO* em PRODUCTION!\\nDeploy \`${GITHUB_SHA:0:7}\` falhou no health check — revertido para versão anterior.\"}"
+          else
+            curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+              -d '{"text": "❌ *Deploy PRODUCTION FALHOU!* Health check falhou e sem imagem de rollback. Intervenção manual necessária!"}'
+          fi
           exit 1
 
       - name: 📊 Summary
