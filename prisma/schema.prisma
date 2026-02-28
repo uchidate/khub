@@ -654,6 +654,40 @@ model StreamingShow {
 }
 
 // Sinal de trending baseado em presença de atores em shows populares de streaming
+// Sistema de tradução de conteúdo — camada não-destrutiva sobre os campos originais
+model ContentTranslation {
+  id         String   @id @default(cuid())
+  entityType String   // "artist" | "group" | "production" | "news"
+  entityId   String
+  field      String   // "bio" | "synopsis" | "tagline" | "title" | "contentMd"
+  locale     String   // "pt-BR" (expansível para outros locales)
+  value      String   @db.Text
+  status     String   @default("draft") // "draft" | "approved" | "ai"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, entityId, field, locale])
+  @@index([entityType, entityId])
+  @@index([entityType, status])
+}
+
+// Log imutável de todas as alterações de tradução
+model TranslationLog {
+  id            String   @id @default(cuid())
+  entityType    String
+  entityId      String
+  field         String
+  locale        String
+  previousValue String?  @db.Text
+  newValue      String   @db.Text
+  changedBy     String   // email do admin ou "ai-agent"
+  source        String   @default("manual") // "manual" | "ai"
+  createdAt     DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
 // Fonte: TMDB /discover/tv por plataforma (artist-centric, para trendingScore)
 model StreamingTrendSignal {
   id           String   @id @default(cuid())

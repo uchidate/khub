@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
   Settings, ChevronLeft, Share2, GitMerge, Instagram, AlertTriangle, Link2,
-  UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff,
+  UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
 } from 'lucide-react'
 
 type NavItem = {
@@ -61,6 +61,7 @@ const navSections: NavSection[] = [
       { href: '/admin/tags', label: 'Tags', icon: Tag },
       { href: '/admin/comments', label: 'Comentários', icon: MessageSquare },
       { href: '/admin/reports', label: 'Reportes', icon: Flag },
+      { href: '/admin/translations', label: 'Traduções', icon: Languages },
     ],
   },
   {
