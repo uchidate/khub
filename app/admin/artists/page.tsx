@@ -106,11 +106,16 @@ const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
 
 type BtnState = 'idle' | 'loading' | 'ok' | 'warn' | 'err'
 
-function WikidataSyncButton({ artist, onSynced }: {
+function WikidataSyncButton({ artist, onSynced, onFailed }: {
   artist: Artist
   onSynced: (id: string, links: Record<string, string>) => void
+  onFailed?: () => void
 }) {
   const [state, setState] = useState<BtnState>('idle')
+  const [tried, setTried] = useState(() => {
+    const noLinks = !artist.socialLinks || Object.keys(artist.socialLinks).length === 0
+    return !!(artist.socialLinksUpdatedAt && noLinks)
+  })
 
   const handleSync = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -123,27 +128,35 @@ function WikidataSyncButton({ artist, onSynced }: {
       })
       const data = await res.json()
       if (!res.ok) { setState('err'); return }
-      if (data.updated) { onSynced(artist.id, data.links); setState('ok') }
-      else setState('warn')
+      if (data.updated) {
+        onSynced(artist.id, data.links)
+        setState('ok')
+      } else {
+        setState('warn')
+        setTried(true)
+        onFailed?.()
+      }
     } catch { setState('err') }
     finally { setTimeout(() => setState('idle'), 3000) }
-  }, [artist.id, onSynced])
+  }, [artist.id, artist.socialLinks, onSynced, onFailed])
+
+  const display = tried && state === 'idle' ? 'warn' : state
 
   const colorClass =
-    state === 'ok'   ? 'text-green-400 border-green-500/30'
-    : state === 'warn' ? 'text-zinc-500 border-zinc-700'
-    : state === 'err'  ? 'text-red-400 border-red-500/30'
+    display === 'ok'   ? 'text-green-400 border-green-500/30'
+    : display === 'warn' ? 'text-zinc-500 border-zinc-700'
+    : display === 'err'  ? 'text-red-400 border-red-500/30'
     : 'text-blue-400 border-blue-500/30 hover:text-blue-300 hover:bg-blue-500/10'
 
   return (
     <button
       onClick={handleSync}
       disabled={state === 'loading'}
-      title="Sincronizar redes sociais via Wikidata"
+      title={display === 'warn' && tried ? 'Wikidata não encontrou redes sociais' : 'Sincronizar redes sociais via Wikidata'}
       className={`inline-flex items-center gap-1.5 px-2 py-1 border rounded text-xs font-medium transition-colors disabled:cursor-wait ${colorClass}`}
     >
       <RefreshCw size={12} className={state === 'loading' ? 'animate-spin' : ''} />
-      {state === 'ok' ? '✓' : state === 'warn' ? '—' : state === 'err' ? '!' : 'Wiki'}
+      {display === 'ok' ? '✓' : display === 'warn' ? '—' : display === 'err' ? '!' : 'Wiki'}
     </button>
   )
 }
@@ -436,6 +449,12 @@ export default function ArtistsAdminPage() {
   const handleSynced = useCallback((artistId: string, links: Record<string, string>) => {
     setSocialOverrides(prev => ({ ...prev, [artistId]: links }))
     fetchStats()
+    refetchTable()
+  }, [fetchStats])
+
+  const handleWikiFailed = useCallback(() => {
+    fetchStats()
+    refetchTable()
   }, [fetchStats])
 
   const handleFixed = useCallback((artistId: string, nameRomanized: string, nameHangul: string | null) => {
@@ -617,7 +636,7 @@ export default function ArtistsAdminPage() {
             <div className="flex items-center gap-1">
               <PhotoSyncButton artist={artist} onSynced={handlePhotoSynced} onFailed={handlePhotoFailed} />
               <FixNamesButton artist={artist} onFixed={handleFixed} onFailed={handleFixFailed} />
-              <WikidataSyncButton artist={artist} onSynced={handleSynced} />
+              <WikidataSyncButton artist={artist} onSynced={handleSynced} onFailed={handleWikiFailed} />
             </div>
           )}
         />

@@ -21,6 +21,7 @@ interface Artist {
     nameHangul: string | null
     primaryImageUrl: string | null
     socialLinks: SocialLinks | null
+    socialLinksUpdatedAt: string | null
     instagramFeedUrl: string | null
     instagramLastSync: string | null
 }
@@ -39,6 +40,71 @@ function countLinks(links: SocialLinks | null): number {
     if (!links) return 0
     return Object.values(links).filter(Boolean).length
 }
+
+function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
+// ─── Per-artist Wiki Sync button ─────────────────────────────────────────────
+
+type BtnState = 'idle' | 'loading' | 'ok' | 'warn' | 'err'
+
+function WikiSyncButton({ artist, onSynced, onFailed }: {
+    artist: Artist
+    onSynced: (id: string, links: SocialLinks) => void
+    onFailed?: (id: string) => void
+}) {
+    const [state, setState] = useState<BtnState>('idle')
+    const [tried, setTried] = useState(() => {
+        const noLinks = !artist.socialLinks || Object.keys(artist.socialLinks).length === 0
+        return !!(artist.socialLinksUpdatedAt && noLinks)
+    })
+
+    const handleSync = useCallback(async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setState('loading')
+        try {
+            const res = await fetch('/api/admin/artists/wikidata-sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ artistId: artist.id }),
+            })
+            const data = await res.json()
+            if (!res.ok) { setState('err'); return }
+            if (data.updated) {
+                onSynced(artist.id, data.links)
+                setState('ok')
+            } else {
+                setState('warn')
+                setTried(true)
+                onFailed?.(artist.id)
+            }
+        } catch { setState('err') }
+        finally { setTimeout(() => setState('idle'), 3000) }
+    }, [artist.id, onSynced, onFailed])
+
+    const display = tried && state === 'idle' ? 'warn' : state
+
+    const colorClass =
+        display === 'ok'   ? 'bg-green-500/10 text-green-400 border-green-500/30'
+        : display === 'warn' ? 'bg-zinc-800 text-zinc-500 border-zinc-700'
+        : display === 'err'  ? 'bg-red-500/10 text-red-400 border-red-500/30'
+        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white border-zinc-700'
+
+    return (
+        <button
+            onClick={handleSync}
+            disabled={state === 'loading'}
+            title={display === 'warn' && tried ? 'Wikidata não encontrou redes' : 'Buscar redes no Wikidata'}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border disabled:cursor-wait ${colorClass}`}
+        >
+            <RefreshCw size={12} className={state === 'loading' ? 'animate-spin' : ''} />
+            {display === 'ok' ? 'Encontrado' : display === 'warn' ? 'Não encontrado' : display === 'err' ? 'Erro' : 'Wiki'}
+        </button>
+    )
+}
+
+// ─── Edit modal ───────────────────────────────────────────────────────────────
 
 function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
     artist: Artist
@@ -70,7 +136,6 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
         setSaving(true)
         setError('')
         try {
-            // Remove empty strings
             const cleaned: SocialLinks = Object.fromEntries(
                 Object.entries(links).filter(([, v]) => v && v.trim())
             ) as SocialLinks
@@ -87,7 +152,6 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                {/* Header */}
                 <div className="sticky top-0 bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center gap-4 rounded-t-2xl">
                     {artist.primaryImageUrl ? (
                         <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
@@ -107,7 +171,6 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
                     </button>
                 </div>
 
-                {/* Fields */}
                 <div className="p-6 space-y-4">
                     {error && (
                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{error}</div>
@@ -129,7 +192,6 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
                     ))}
                 </div>
 
-                {/* Instagram RSS.app Feed */}
                 <div className="mx-6 mb-4 p-4 bg-pink-500/5 border border-pink-500/20 rounded-xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Instagram className="w-4 h-4 text-pink-400" />
@@ -161,7 +223,6 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="sticky bottom-0 bg-zinc-900 border-t border-zinc-800 px-6 py-4 flex gap-3 rounded-b-2xl">
                     <button onClick={onClose} className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-zinc-700 transition-colors font-medium text-sm">
                         Cancelar
@@ -175,11 +236,15 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
     )
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+type FilterType = 'all' | 'pending' | 'attempted' | 'complete'
+
 export default function SocialLinksAdminPage() {
     const [artists, setArtists] = useState<Artist[]>([])
     const [filtered, setFiltered] = useState<Artist[]>([])
     const [search, setSearch] = useState('')
-    const [filter, setFilter] = useState<'all' | 'missing' | 'complete'>('all')
+    const [filter, setFilter] = useState<FilterType>('all')
     const [editing, setEditing] = useState<Artist | null>(null)
     const [loading, setLoading] = useState(true)
     const [savedId, setSavedId] = useState<string | null>(null)
@@ -187,7 +252,6 @@ export default function SocialLinksAdminPage() {
     const fetchArtists = useCallback(async () => {
         setLoading(true)
         try {
-            // Dedicated endpoint — returns ALL artists without pagination cap
             const res = await fetch('/api/admin/artists/social-links')
             const data = await res.json()
             setArtists(data.artists || [])
@@ -207,8 +271,9 @@ export default function SocialLinksAdminPage() {
                 (a.nameHangul || '').toLowerCase().includes(q)
             )
         }
-        if (filter === 'missing') list = list.filter(a => !countLinks(a.socialLinks))
-        if (filter === 'complete') list = list.filter(a => countLinks(a.socialLinks) > 0)
+        if (filter === 'pending')   list = list.filter(a => !countLinks(a.socialLinks) && !a.socialLinksUpdatedAt)
+        if (filter === 'attempted') list = list.filter(a => !countLinks(a.socialLinks) && !!a.socialLinksUpdatedAt)
+        if (filter === 'complete')  list = list.filter(a => countLinks(a.socialLinks) > 0)
         setFiltered(list)
     }, [artists, search, filter])
 
@@ -222,7 +287,6 @@ export default function SocialLinksAdminPage() {
             const err = await res.json()
             throw new Error(err.error || 'Erro ao salvar')
         }
-        // Update local state
         setArtists(prev => prev.map(a =>
             a.id === artistId ? { ...a, socialLinks: links } : a
         ))
@@ -242,10 +306,27 @@ export default function SocialLinksAdminPage() {
         ))
     }
 
-    const missing = artists.filter(a => !countLinks(a.socialLinks)).length
-    const complete = artists.filter(a => countLinks(a.socialLinks) > 0).length
+    const handleWikiSynced = useCallback((artistId: string, links: SocialLinks) => {
+        setArtists(prev => prev.map(a =>
+            a.id === artistId
+                ? { ...a, socialLinks: links, socialLinksUpdatedAt: new Date().toISOString() }
+                : a
+        ))
+    }, [])
 
-    // ── Auto-sync via Wikidata ───────────────────────────────────────────────
+    const handleWikiFailed = useCallback((artistId: string) => {
+        setArtists(prev => prev.map(a =>
+            a.id === artistId
+                ? { ...a, socialLinksUpdatedAt: new Date().toISOString() }
+                : a
+        ))
+    }, [])
+
+    const pending   = artists.filter(a => !countLinks(a.socialLinks) && !a.socialLinksUpdatedAt).length
+    const attempted = artists.filter(a => !countLinks(a.socialLinks) && !!a.socialLinksUpdatedAt).length
+    const complete  = artists.filter(a => countLinks(a.socialLinks) > 0).length
+
+    // ── Bulk auto-sync via Wikidata ───────────────────────────────────────────
     const [syncing, setSyncing] = useState(false)
     const [syncLog, setSyncLog] = useState<string[]>([])
     const [syncLimit, setSyncLimit] = useState(30)
@@ -295,7 +376,6 @@ export default function SocialLinksAdminPage() {
                     } else if (type === 'NOT_FOUND') {
                         setSyncLog(prev => [...prev, `➖ ${payload}: não encontrado`])
                     } else if (type === 'SAVED') {
-                        // Silently mark artist as updated in local state
                         const id = payload
                         setArtists(prev => prev.map(a =>
                             a.id === id ? { ...a, socialLinksUpdatedAt: new Date().toISOString() } as Artist : a
@@ -304,11 +384,9 @@ export default function SocialLinksAdminPage() {
                         setSyncLog(prev => [...prev, `❌ Erro: ${payload}`])
                     } else if (type === 'DONE') {
                         setSyncLog(prev => [...prev, `🎉 Concluído! ${payload}`])
-                        // Refresh artist list
                         await fetchArtists()
                     }
 
-                    // Auto-scroll log
                     setTimeout(() => {
                         if (syncLogRef.current) {
                             syncLogRef.current.scrollTop = syncLogRef.current.scrollHeight
@@ -323,33 +401,44 @@ export default function SocialLinksAdminPage() {
         }
     }, [syncLimit, fetchArtists])
 
+    const filterTabs: { value: FilterType; label: string; count: number; color: string; activeColor: string }[] = [
+        { value: 'all',      label: 'Todos',         count: artists.length,  color: 'border-zinc-800 text-zinc-400 hover:border-zinc-600',                    activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
+        { value: 'pending',  label: 'Pendentes',      count: pending,         color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
+        { value: 'attempted',label: 'Já tentados',    count: attempted,       color: 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60',     activeColor: 'border-zinc-500 bg-zinc-700/60 text-zinc-300' },
+        { value: 'complete', label: 'Com links',      count: complete,        color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10', activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },
+    ]
+
     return (
         <AdminLayout title="Redes Sociais dos Artistas">
-            <div className="space-y-6">
+            <div className="space-y-5">
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-3">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-white">{artists.length}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Total</p>
+                    </div>
+                    <div className="bg-zinc-900 border border-orange-500/20 rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-orange-400">{pending}</p>
+                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Pendentes</p>
+                    </div>
+                    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-zinc-400">{attempted}</p>
+                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Já tentados</p>
                     </div>
                     <div className="bg-zinc-900 border border-green-500/20 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-green-400">{complete}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Com links</p>
                     </div>
-                    <div className="bg-zinc-900 border border-red-500/20 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-red-400">{missing}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Sem links</p>
-                    </div>
                 </div>
 
-                {/* Auto-sync panel */}
+                {/* Bulk sync panel */}
                 <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex items-center gap-3 flex-1">
                             <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0" />
                             <div>
-                                <p className="text-sm font-bold text-white">Busca automática via Wikidata</p>
-                                <p className="text-xs text-zinc-500 mt-0.5">Encontra Instagram, Twitter, YouTube e TikTok para artistas sem links</p>
+                                <p className="text-sm font-bold text-white">Busca automática em lote via Wikidata</p>
+                                <p className="text-xs text-zinc-500 mt-0.5">Processa artistas que nunca foram sincronizados ({pending} pendentes)</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
@@ -366,7 +455,7 @@ export default function SocialLinksAdminPage() {
                             </div>
                             <button
                                 onClick={startSync}
-                                disabled={syncing}
+                                disabled={syncing || pending === 0}
                                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
                             >
                                 {syncing
@@ -377,7 +466,6 @@ export default function SocialLinksAdminPage() {
                         </div>
                     </div>
 
-                    {/* Log output */}
                     {syncLog.length > 0 && (
                         <div
                             ref={syncLogRef}
@@ -396,28 +484,29 @@ export default function SocialLinksAdminPage() {
                     )}
                 </div>
 
-                {/* Filters */}
+                {/* Filters + Search */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
+                    <div className="flex gap-1.5 flex-wrap">
+                        {filterTabs.map(tab => (
+                            <button
+                                key={tab.value}
+                                onClick={() => setFilter(tab.value)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${filter === tab.value ? tab.activeColor : tab.color}`}
+                            >
+                                {tab.label}
+                                <span className="font-mono tabular-nums opacity-80">{tab.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="relative flex-1 sm:ml-auto sm:max-w-xs">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Buscar artista..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
+                            className="w-full pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
                         />
-                    </div>
-                    <div className="flex gap-2">
-                        {([['all', 'Todos'], ['missing', 'Sem links'], ['complete', 'Com links']] as const).map(([val, label]) => (
-                            <button
-                                key={val}
-                                onClick={() => setFilter(val)}
-                                className={`px-4 py-2.5 rounded-lg text-sm font-bold transition-colors ${filter === val ? 'bg-purple-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-600'}`}
-                            >
-                                {label}
-                            </button>
-                        ))}
                     </div>
                 </div>
 
@@ -436,10 +525,11 @@ export default function SocialLinksAdminPage() {
                         {filtered.map((artist) => {
                             const linkCount = countLinks(artist.socialLinks)
                             const isSaved = savedId === artist.id
+                            const wasTried = !!artist.socialLinksUpdatedAt && linkCount === 0
                             return (
                                 <div
                                     key={artist.id}
-                                    className="flex items-center gap-4 p-4 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-colors"
+                                    className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-colors"
                                 >
                                     {/* Avatar */}
                                     {artist.primaryImageUrl ? (
@@ -456,22 +546,21 @@ export default function SocialLinksAdminPage() {
                                     <div className="flex-1 min-w-0">
                                         <p className="font-bold text-white text-sm truncate">{artist.nameRomanized}</p>
                                         {artist.nameHangul && <p className="text-xs text-zinc-500 truncate">{artist.nameHangul}</p>}
+                                        {wasTried && artist.socialLinksUpdatedAt && (
+                                            <p className="text-[10px] text-zinc-700 mt-0.5">
+                                                tentado {formatDate(artist.socialLinksUpdatedAt)}
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Platform icons */}
                                     <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
                                         {PLATFORMS.map(({ key, color, icon }) => {
-                                            const hasLink = !!(artist.socialLinks?.[key])
+                                            const url = artist.socialLinks?.[key]
                                             return (
-                                                <span key={key} className={`transition-opacity ${hasLink ? color : 'text-zinc-700'}`} title={key}>
-                                                    {artist.socialLinks?.[key] ? (
-                                                        <a
-                                                            href={artist.socialLinks[key]}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="hover:opacity-80"
-                                                        >
+                                                <span key={key} className={`transition-opacity ${url ? color : 'text-zinc-700'}`} title={key}>
+                                                    {url ? (
+                                                        <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="hover:opacity-80">
                                                             {icon}
                                                         </a>
                                                     ) : icon}
@@ -488,9 +577,18 @@ export default function SocialLinksAdminPage() {
                                     )}
 
                                     {/* Link count badge */}
-                                    <span className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 ${linkCount > 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                    <span className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 ${linkCount > 0 ? 'bg-green-500/10 text-green-400' : wasTried ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/10 text-orange-400'}`}>
                                         {linkCount}/{PLATFORMS.length}
                                     </span>
+
+                                    {/* Per-artist Wiki sync (only for artists without links) */}
+                                    {linkCount === 0 && (
+                                        <WikiSyncButton
+                                            artist={artist}
+                                            onSynced={handleWikiSynced}
+                                            onFailed={handleWikiFailed}
+                                        />
+                                    )}
 
                                     {/* Edit button */}
                                     <button
@@ -506,7 +604,6 @@ export default function SocialLinksAdminPage() {
                 )}
             </div>
 
-            {/* Edit Modal */}
             {editing && (
                 <SocialLinksModal
                     artist={editing}
