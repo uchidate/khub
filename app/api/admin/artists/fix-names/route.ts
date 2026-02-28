@@ -29,8 +29,8 @@ async function fetchTMDBPerson(tmdbId: string) {
       { signal: AbortSignal.timeout(8000) }
     )
     if (!res.ok) return null
-    const data = await res.json() as { name: string; also_known_as: string[] }
-    return { name: data.name, also_known_as: data.also_known_as || [] }
+    const data = await res.json() as { name: string; also_known_as: string[]; profile_path: string | null }
+    return { name: data.name, also_known_as: data.also_known_as || [], profile_path: data.profile_path ?? null }
   } catch {
     return null
   }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}))
   const artistId: string | undefined = body.artistId
-  const mode: 'fix-names' | 'fill-hangul' = body.mode === 'fill-hangul' ? 'fill-hangul' : 'fix-names'
+  const mode: 'fix-names' | 'fill-hangul' | 'sync-photo' = body.mode === 'fill-hangul' ? 'fill-hangul' : body.mode === 'sync-photo' ? 'sync-photo' : 'fix-names'
 
   if (!artistId) {
     return NextResponse.json({ error: 'artistId obrigatório' }, { status: 400 })
@@ -76,6 +76,17 @@ export async function POST(request: NextRequest) {
   const tmdb = await fetchTMDBPerson(artist.tmdbId)
   if (!tmdb) {
     return NextResponse.json({ ok: false, reason: 'tmdb_fetch_failed' })
+  }
+
+  // ── sync-photo ───────────────────────────────────────────────────────────────
+  if (mode === 'sync-photo') {
+    if (!tmdb.profile_path) {
+      await prisma.artist.update({ where: { id: artistId }, data: { photoSyncAt: new Date() } })
+      return NextResponse.json({ ok: false, reason: 'no_photo_in_tmdb' })
+    }
+    const photoUrl = `https://image.tmdb.org/t/p/w500${tmdb.profile_path}`
+    await prisma.artist.update({ where: { id: artistId }, data: { primaryImageUrl: photoUrl, photoSyncAt: new Date() } })
+    return NextResponse.json({ ok: true, primaryImageUrl: photoUrl })
   }
 
   // ── fill-hangul ──────────────────────────────────────────────────────────────
