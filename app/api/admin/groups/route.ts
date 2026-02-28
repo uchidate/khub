@@ -11,21 +11,21 @@ const log = createLogger('ADMIN-GROUPS')
 // Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
 
-const socialLinksSchema = z.record(z.string(), z.string().url().or(z.literal(''))).optional().nullable()
-const videoSchema = z.array(z.object({ title: z.string(), url: z.string().url() })).optional().nullable()
+const socialLinksSchema = z.record(z.string(), z.string()).optional().nullable()
+const videoSchema = z.array(z.object({ title: z.string(), url: z.string().min(1) })).optional().nullable()
 
 const groupSchema = z.object({
   name: z.string().min(1).max(100),
   nameHangul: z.string().optional(),
   mbid: z.string().optional(),
   bio: z.string().optional(),
-  profileImageUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
+  profileImageUrl: z.string().optional().nullable(),
   debutDate: z.string().optional().nullable(),
   disbandDate: z.string().optional().nullable(),
   agencyId: z.string().optional().nullable(),
   socialLinks: socialLinksSchema,
   fanClubName: z.string().optional().nullable(),
-  officialColor: z.string().regex(/^#[0-9a-fA-F]{3,8}$/).optional().nullable().or(z.literal('').transform(() => null)),
+  officialColor: z.string().optional().nullable(),
   videos: videoSchema,
   isHidden: z.boolean().optional(),
 })
