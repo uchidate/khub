@@ -46,10 +46,27 @@ interface MBArtistResult {
   id: string
   name: string
   score: number
+  disambiguation?: string
+  country?: string
+  type?: string
+  'life-span'?: { begin?: string; end?: string; ended?: boolean }
 }
 
 interface MBArtistSearchResponse {
   artists: MBArtistResult[]
+}
+
+export interface MBArtistCandidate {
+  mbid: string
+  name: string
+  disambiguation: string | null
+  country: string | null
+  /** 'Person', 'Group', 'Character', etc. */
+  type: string | null
+  /** MusicBrainz search confidence score (0–100) */
+  score: number
+  /** Birth date or group formation date — YYYY-MM-DD, YYYY-MM, or YYYY */
+  lifeSpanBegin: string | null
 }
 
 interface MBReleaseGroup {
@@ -139,6 +156,39 @@ export class MusicBrainzService {
     if (best.score >= 85) return best.id
 
     return null
+  }
+
+  /**
+   * Search for artists by name, returning multiple candidates with metadata.
+   * Unlike searchArtist(), this returns all results without a score filter
+   * so the admin can choose the correct match.
+   */
+  async searchArtistCandidates(name: string, limit = 10): Promise<MBArtistCandidate[]> {
+    const toCandidate = (a: MBArtistResult): MBArtistCandidate => ({
+      mbid: a.id,
+      name: a.name,
+      disambiguation: a.disambiguation ?? null,
+      country: a.country ?? null,
+      type: a.type ?? null,
+      score: a.score,
+      lifeSpanBegin: a['life-span']?.begin ?? null,
+    })
+
+    // Attempt 1: exact phrase match
+    const exactQuery = encodeURIComponent(`"${name}"`)
+    const exactResult = await this.fetch<MBArtistSearchResponse>(
+      `${MB_BASE_URL}/artist/?query=${exactQuery}&limit=${limit}&fmt=json`
+    )
+    if (exactResult && exactResult.artists.length > 0) {
+      return exactResult.artists.map(toCandidate)
+    }
+
+    // Attempt 2: fuzzy match (better for CJK/Korean names)
+    const fuzzyResult = await this.fetch<MBArtistSearchResponse>(
+      `${MB_BASE_URL}/artist/?query=${encodeURIComponent(name)}&limit=${limit}&fmt=json`
+    )
+    if (!fuzzyResult) return []
+    return fuzzyResult.artists.map(toCandidate)
   }
 
   /**
