@@ -457,17 +457,15 @@ export default function ArtistDiscographyPage() {
               <RefreshCw className={`w-4 h-4 ${syncLoading ? 'animate-spin' : ''}`} />
               {syncLoading ? 'Sincronizando…' : 'Sincronizar'}
             </button>
-            {artist?.mbid && (
-              <button
-                onClick={handleEnrich}
-                disabled={enrichLoading}
-                title="Buscar redes sociais e TMDB ID via MusicBrainz relationships"
-                className="flex items-center gap-2 px-3 py-2 bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/25 text-orange-400 font-bold text-sm rounded-lg transition-all disabled:opacity-50"
-              >
-                <Sparkles className={`w-4 h-4 ${enrichLoading ? 'animate-pulse' : ''}`} />
-                {enrichLoading ? 'Enriquecendo…' : 'Enriquecer'}
-              </button>
-            )}
+            <button
+              onClick={handleEnrich}
+              disabled={enrichLoading || !artist?.mbid}
+              title={artist?.mbid ? 'Buscar redes sociais e TMDB ID via MusicBrainz relationships' : 'Defina o MusicBrainz ID primeiro'}
+              className="flex items-center gap-2 px-3 py-2 bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/25 text-orange-400 font-bold text-sm rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Sparkles className={`w-4 h-4 ${enrichLoading ? 'animate-pulse' : ''}`} />
+              {enrichLoading ? 'Enriquecendo…' : 'Enriquecer'}
+            </button>
             <button
               onClick={handleCreate}
               className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
