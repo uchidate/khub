@@ -3,8 +3,9 @@
  * Returns artist counts for the stats bar, including sub-breakdowns.
  *
  * noHangul breakdown:
- *   noHangulPending — tmdbId set (can auto-fill via TMDB)
- *   noHangulNoTmdb  — tmdbId null (manual only)
+ *   noHangulPending  — tmdbId set + hangulSyncAt null (never tried)
+ *   noHangulAttempted — tmdbId set + hangulSyncAt set but still no hangul (tried, not found)
+ *   noHangulNoTmdb   — tmdbId null (manual only)
  *
  * noPhoto breakdown:
  *   noPhotoPending — tmdbId set (can sync via TMDB)
@@ -42,6 +43,7 @@ export async function GET() {
     flagged,
     noHangul,
     noHangulPending,
+    noHangulAttempted,
     noHangulNoTmdb,
     noPhoto,
     noPhotoPending,
@@ -57,7 +59,8 @@ export async function GET() {
     prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
     // no hangul
     prisma.artist.count({ where: { ...active, nameHangul: null } }),
-    prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: { not: null } } }),
+    prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: null } }),
+    prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: { not: null } } }),
     prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: null } }),
     // no photo
     prisma.artist.count({ where: { ...active, primaryImageUrl: null } }),
@@ -94,6 +97,7 @@ export async function GET() {
     flagged,
     noHangul,
     noHangulPending,
+    noHangulAttempted,
     noHangulNoTmdb,
     noPhoto,
     noPhotoPending,

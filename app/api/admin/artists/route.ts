@@ -72,7 +72,8 @@ export async function GET(request: NextRequest) {
     const filter = searchParams.get('filter')
     // Supported filters (all exclude flaggedAsNonKorean unless the filter IS flagged):
     //   no_hangul              — nameHangul null
-    //   no_hangul_pending      — nameHangul null + tmdbId set
+    //   no_hangul_pending      — nameHangul null + tmdbId set + hangulSyncAt null (never tried)
+    //   no_hangul_attempted    — nameHangul null + tmdbId set + hangulSyncAt set (tried, not found)
     //   no_hangul_no_tmdb      — nameHangul null + tmdbId null
     //   no_photo               — primaryImageUrl null
     //   no_photo_pending       — primaryImageUrl null + tmdbId set
@@ -101,7 +102,8 @@ export async function GET(request: NextRequest) {
     const filterWhere = koreanNoTmdbIds !== null
       ? { id: { in: koreanNoTmdbIds } }
       : filter === 'no_hangul'           ? { ...active, nameHangul: null }
-      : filter === 'no_hangul_pending'   ? { ...active, nameHangul: null, tmdbId: { not: null } }
+      : filter === 'no_hangul_pending'   ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: null }
+      : filter === 'no_hangul_attempted' ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: { not: null } }
       : filter === 'no_hangul_no_tmdb'   ? { ...active, nameHangul: null, tmdbId: null }
       : filter === 'no_photo'            ? { ...active, primaryImageUrl: null }
       : filter === 'no_photo_pending'    ? { ...active, primaryImageUrl: null, tmdbId: { not: null } }

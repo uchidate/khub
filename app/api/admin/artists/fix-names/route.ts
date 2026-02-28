@@ -82,10 +82,12 @@ export async function POST(request: NextRequest) {
   if (mode === 'fill-hangul') {
     const hangul = extractHangul(tmdb.also_known_as)
     if (!hangul) {
+      // Record the attempt so the artist moves to "já tentados" sub-filter
+      await prisma.artist.update({ where: { id: artistId }, data: { hangulSyncAt: new Date() } })
       return NextResponse.json({ ok: false, reason: 'no_hangul_in_tmdb' })
     }
 
-    const updateData: Record<string, unknown> = { nameHangul: hangul }
+    const updateData: Record<string, unknown> = { nameHangul: hangul, hangulSyncAt: new Date() }
     if (!artist.stageNames || artist.stageNames.length === 0) {
       const stageNames = extractStageNames(tmdb.also_known_as, tmdb.name)
       if (stageNames.length > 0) updateData.stageNames = stageNames
