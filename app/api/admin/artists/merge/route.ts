@@ -23,6 +23,8 @@ const mergeSchema = z.object({
         bio: z.string().nullable().optional(),
         primaryImageUrl: z.string().nullable().optional(),
         agencyId: z.string().nullable().optional(),
+        tmdbId: z.string().nullable().optional(),
+        mbid: z.string().nullable().optional(),
     }).optional(),
 })
 
@@ -125,9 +127,11 @@ export async function POST(request: NextRequest) {
             if (!('birthName' in overrides) && !keeper.birthName && deleter.birthName) fillData.birthName = deleter.birthName
             if (!('height' in overrides) && !keeper.height && deleter.height) fillData.height = deleter.height
             if (!('bloodType' in overrides) && !keeper.bloodType && deleter.bloodType) fillData.bloodType = deleter.bloodType
-            // Always transfer identifiers if keeper lacks them
-            if (!keeper.mbid && deleter.mbid) fillData.mbid = deleter.mbid
-            if (!keeper.tmdbId && deleter.tmdbId) fillData.tmdbId = deleter.tmdbId
+            // Identifiers — use explicit curator override, otherwise transfer if keeper lacks them
+            if ('tmdbId' in overrides) fillData.tmdbId = overrides.tmdbId
+            else if (!keeper.tmdbId && deleter.tmdbId) fillData.tmdbId = deleter.tmdbId
+            if ('mbid' in overrides) fillData.mbid = overrides.mbid
+            else if (!keeper.mbid && deleter.mbid) fillData.mbid = deleter.mbid
 
             // Sum metrics
             fillData.viewCount = keeper.viewCount + deleter.viewCount
