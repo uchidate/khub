@@ -356,10 +356,10 @@ jobs:
             sleep 5
             echo "✅ Rollback concluído"
             curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
-              -d "{\"text\": \"🔄 *Rollback automático* em STAGING!\\nDeploy \`${GITHUB_SHA:0:7}\` falhou no health check — revertido para versão anterior.\"}"
+              -d "{\"text\": \"🔄 *ROLLBACK AUTOMÁTICO* em STAGING!\\nDeploy \`${GITHUB_SHA:0:7}\` falhou no health check — revertido para versão anterior.\"}"
           else
             curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
-              -d '{"text": "❌ *Deploy STAGING falhou!* Health check falhou e sem imagem de rollback disponível."}'
+              -d '{"text": "❌ *Deploy STAGING FALHOU!* Health check falhou e sem imagem de rollback. Intervenção manual necessária!"}'
           fi
           exit 1
 
