@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban, Zap, Plus, UserPlus } from 'lucide-react'
+import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban, Zap, UserPlus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import type { MBArtistCandidate } from '@/lib/services/musicbrainz-service'
 
 interface ArtistCard {
     id: string
@@ -192,53 +191,6 @@ export default function DuplicatesPage() {
     // MB→TMDB inline lookup state: artistId → 'loading' | 'found' | 'not_found'
     const [mbLookup, setMbLookup] = useState<Record<string, 'loading' | 'found' | 'not_found'>>({})
 
-    // MB import state
-    const [importOpen, setImportOpen] = useState(false)
-    const [importSearch, setImportSearch] = useState('')
-    const [importResults, setImportResults] = useState<MBArtistCandidate[]>([])
-    const [importLoading, setImportLoading] = useState(false)
-    const [importingMbid, setImportingMbid] = useState<string | null>(null)
-    // mbid → { id, nameRomanized } for successfully imported artists
-    const [importedArtists, setImportedArtists] = useState<Record<string, { id: string; nameRomanized: string }>>({})
-    // mbid → artistId for already-existing artists (409)
-    const [existingArtists, setExistingArtists] = useState<Record<string, string>>({})
-
-    const searchMB = async (e: React.FormEvent) => {
-        e.preventDefault()
-        const name = importSearch.trim()
-        if (!name) return
-        setImportLoading(true)
-        setImportResults([])
-        try {
-            const res = await fetch(`/api/admin/artists/mb-search?name=${encodeURIComponent(name)}`)
-            const data = await res.json()
-            setImportResults(data.artists ?? [])
-        } finally {
-            setImportLoading(false)
-        }
-    }
-
-    const importArtist = async (candidate: MBArtistCandidate) => {
-        setImportingMbid(candidate.mbid)
-        try {
-            const res = await fetch('/api/admin/artists/mb-import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mbid: candidate.mbid }),
-            })
-            const data = await res.json()
-            if (res.status === 409) {
-                setExistingArtists(prev => ({ ...prev, [candidate.mbid]: data.artistId }))
-            } else if (res.ok) {
-                setImportedArtists(prev => ({ ...prev, [candidate.mbid]: data.artist }))
-            } else {
-                alert(data.error || 'Erro ao importar artista')
-            }
-        } finally {
-            setImportingMbid(null)
-        }
-    }
-
     const fetchPairs = useCallback(async () => {
         setLoading(true)
         try {
@@ -346,124 +298,6 @@ export default function DuplicatesPage() {
         <AdminLayout title="Enriquecimento MusicBrainz">
             <div className="space-y-5">
 
-                {/* ── Importar Artista via MusicBrainz ─────────────────────── */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-                    <button
-                        onClick={() => setImportOpen(o => !o)}
-                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-800/50 transition-colors"
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <UserPlus className="w-4 h-4 text-purple-400" />
-                            <span className="text-sm font-bold text-zinc-200">Importar Artista via MusicBrainz</span>
-                        </div>
-                        {importOpen
-                            ? <ChevronUp className="w-4 h-4 text-zinc-500" />
-                            : <ChevronDown className="w-4 h-4 text-zinc-500" />}
-                    </button>
-
-                    {importOpen && (
-                        <div className="px-5 pb-5 space-y-4 border-t border-zinc-800">
-                            <form onSubmit={searchMB} className="flex gap-2 mt-4">
-                                <input
-                                    type="text"
-                                    value={importSearch}
-                                    onChange={e => setImportSearch(e.target.value)}
-                                    placeholder="Nome do artista..."
-                                    className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={importLoading || !importSearch.trim()}
-                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900 disabled:opacity-60 text-white rounded-lg text-sm font-bold transition-colors"
-                                >
-                                    {importLoading
-                                        ? <RefreshCw className="w-4 h-4 animate-spin" />
-                                        : <Search className="w-4 h-4" />}
-                                    Buscar
-                                </button>
-                            </form>
-
-                            {importLoading && (
-                                <div className="text-sm text-zinc-500 text-center py-4">Consultando MusicBrainz...</div>
-                            )}
-
-                            {!importLoading && importResults.length === 0 && importSearch && (
-                                <div className="text-sm text-zinc-600 text-center py-4">Nenhum resultado encontrado.</div>
-                            )}
-
-                            {importResults.length > 0 && (
-                                <div className="space-y-2">
-                                    {importResults.map(c => {
-                                        const imported = importedArtists[c.mbid]
-                                        const existingId = existingArtists[c.mbid]
-                                        const isImporting = importingMbid === c.mbid
-                                        const scoreCls =
-                                            c.score >= 90 ? 'bg-green-500/15 text-green-400 border-green-500/30' :
-                                            c.score >= 70 ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' :
-                                            'bg-zinc-800 text-zinc-400 border-zinc-700'
-
-                                        return (
-                                            <div key={c.mbid} className="flex items-center gap-3 px-4 py-3 bg-zinc-800/50 rounded-lg">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="font-bold text-white text-sm">{c.name}</span>
-                                                        {c.disambiguation && (
-                                                            <span className="text-xs text-zinc-500 truncate">"{c.disambiguation}"</span>
-                                                        )}
-                                                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded border ${scoreCls}`}>
-                                                            {c.score}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 mt-0.5 text-xs text-zinc-500">
-                                                        {c.country && <span>{c.country}</span>}
-                                                        {c.type && <span>{c.type}</span>}
-                                                        {c.lifeSpanBegin && <span>Nasc: {c.lifeSpanBegin}</span>}
-                                                        <a
-                                                            href={`https://musicbrainz.org/artist/${c.mbid}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-orange-400/70 hover:text-orange-400 flex items-center gap-0.5"
-                                                        >
-                                                            MB <ExternalLink className="w-2.5 h-2.5" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-
-                                                {imported ? (
-                                                    <Link
-                                                        href={`/admin/artists/${imported.id}`}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-900/40 border border-green-500/30 text-green-400 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-green-900/60 transition-colors"
-                                                    >
-                                                        <CheckCircle className="w-3.5 h-3.5" /> Ver artista
-                                                    </Link>
-                                                ) : existingId ? (
-                                                    <Link
-                                                        href={`/admin/artists/${existingId}`}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-900/30 border border-yellow-500/30 text-yellow-400 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-yellow-900/50 transition-colors"
-                                                    >
-                                                        <ExternalLink className="w-3.5 h-3.5" /> Já cadastrado
-                                                    </Link>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => importArtist(c)}
-                                                        disabled={isImporting || !!importingMbid}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900 disabled:opacity-60 text-white rounded-lg text-xs font-bold whitespace-nowrap transition-colors"
-                                                    >
-                                                        {isImporting
-                                                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                                            : <Plus className="w-3.5 h-3.5" />}
-                                                        Importar
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-3">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
@@ -494,11 +328,20 @@ export default function DuplicatesPage() {
                             </button>
                         ))}
                     </div>
-                    <button onClick={fetchPairs} disabled={loading}
-                        className="ml-auto flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-bold transition-colors disabled:opacity-50">
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                        Reanalisar
-                    </button>
+                    <div className="ml-auto flex items-center gap-2">
+                        <Link
+                            href="/admin/artists/mb-import"
+                            className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-700 hover:border-purple-500/50 text-zinc-300 hover:text-purple-300 rounded-lg text-sm font-bold transition-colors"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                            Importar artista
+                        </Link>
+                        <button onClick={fetchPairs} disabled={loading}
+                            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-bold transition-colors disabled:opacity-50">
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                            Reanalisar
+                        </button>
+                    </div>
                 </div>
 
                 {/* Pair list */}
