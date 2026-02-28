@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import {
   Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
-  Settings, ChevronLeft, Share2, GitMerge, Instagram, AlertTriangle, Link2,
+  Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
 } from 'lucide-react'
 
@@ -78,6 +79,13 @@ const navSections: NavSection[] = [
   },
 ]
 
+function isSectionActive(section: NavSection, pathname: string | null): boolean {
+  if (!pathname) return false
+  return section.items.some(item =>
+    item.exact ? pathname === item.href : pathname.startsWith(item.href)
+  )
+}
+
 function NavLink({ item, pathname }: { item: NavItem; pathname: string | null }) {
   const isActive = item.exact
     ? pathname === item.href
@@ -95,6 +103,55 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string | null })
       <item.icon size={16} />
       {item.label}
     </Link>
+  )
+}
+
+function NavSectionBlock({
+  section,
+  pathname,
+}: {
+  section: NavSection
+  pathname: string | null
+}) {
+  const active = isSectionActive(section, pathname)
+  const [open, setOpen] = useState(active)
+
+  // Quando a rota muda (ex: navegação), abre a seção correspondente
+  useEffect(() => {
+    if (active) setOpen(true)
+  }, [active])
+
+  if (!section.label) {
+    return (
+      <div className="space-y-0.5">
+        {section.items.map(item => (
+          <NavLink key={item.href} item={item} pathname={pathname} />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-zinc-300 transition-colors rounded"
+      >
+        <span>{section.label}</span>
+        <ChevronDown
+          size={12}
+          className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-0.5 space-y-0.5">
+          {section.items.map(item => (
+            <NavLink key={item.href} item={item} pathname={pathname} />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -120,20 +177,9 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
             </Link>
           </div>
 
-          <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
             {navSections.map((section, i) => (
-              <div key={i}>
-                {section.label && (
-                  <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest px-3 mb-1.5">
-                    {section.label}
-                  </p>
-                )}
-                <div className="space-y-0.5">
-                  {section.items.map((item) => (
-                    <NavLink key={item.href} item={item} pathname={pathname} />
-                  ))}
-                </div>
-              </div>
+              <NavSectionBlock key={i} section={section} pathname={pathname} />
             ))}
           </nav>
 
