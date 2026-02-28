@@ -30,9 +30,22 @@ export async function GET(req: NextRequest) {
     }
 
     if (q) {
+      // Also search by the linked HallyuHub musical group name
+      const matchingGroups = await prisma.musicalGroup.findMany({
+        where: {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' } },
+            { nameHangul: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+      })
+      const matchingGroupIds = matchingGroups.map(g => g.id)
+
       where.OR = [
         { groupName: { contains: q, mode: 'insensitive' } },
         { groupNameHangul: { contains: q, mode: 'insensitive' } },
+        ...(matchingGroupIds.length > 0 ? [{ musicalGroupId: { in: matchingGroupIds } }] : []),
       ]
     }
 
