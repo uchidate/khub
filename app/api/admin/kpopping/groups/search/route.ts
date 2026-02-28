@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
         agency: { select: { name: true } },
       },
       orderBy: { name: 'asc' },
-      take: 30,
     })
 
     return NextResponse.json({ items })

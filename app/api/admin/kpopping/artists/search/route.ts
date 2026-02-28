@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
         bloodType: true,
       },
       orderBy: { nameRomanized: 'asc' },
-      take: 30,
     })
 
     return NextResponse.json({ items })
