@@ -44,7 +44,7 @@ export function HeroSection() {
                     transition={{ duration: 0.8, delay: 0.4 }}
                     className="text-base md:text-xl text-zinc-400 mb-8 max-w-xl mx-auto leading-relaxed"
                 >
-                    K-Pop, K-Dramas e cultura coreana com design premium.
+                    Sinta o Hallyu. Explore artistas, K-Dramas, grupos e notícias da cultura coreana.
                 </motion.p>
 
                 <motion.div
