@@ -146,35 +146,36 @@ async function runCronProcessing(lockId: string) {
                         continue;
                     }
 
-                    const artistUpsertKey = artist.tmdbId
-                        ? { tmdbId: String(artist.tmdbId) }
-                        : { nameRomanized: artist.nameRomanized };
+                    const artistData = {
+                        nameRomanized: artist.nameRomanized,
+                        nameHangul: artist.nameHangul || null,
+                        stageNames: artist.stageNames || [],
+                        birthDate: artist.birthDate || null,
+                        roles: artist.roles || [],
+                        bio: artist.bio || null,
+                        primaryImageUrl: artist.primaryImageUrl || null,
+                        tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
+                        placeOfBirth: artist.placeOfBirth || null,
+                    };
 
-                    await prisma.artist.upsert({
-                        where: artistUpsertKey,
-                        update: {
-                            nameRomanized: artist.nameRomanized,
-                            nameHangul: artist.nameHangul || null,
-                            stageNames: artist.stageNames || [],
-                            birthDate: artist.birthDate || null,
-                            roles: artist.roles || [],
-                            bio: artist.bio || null,
-                            primaryImageUrl: artist.primaryImageUrl || null,
-                            tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
-                            placeOfBirth: artist.placeOfBirth || null,
-                        },
-                        create: {
-                            nameRomanized: artist.nameRomanized,
-                            nameHangul: artist.nameHangul || null,
-                            stageNames: artist.stageNames || [],
-                            birthDate: artist.birthDate || null,
-                            roles: artist.roles || [],
-                            bio: artist.bio || null,
-                            primaryImageUrl: artist.primaryImageUrl || null,
-                            tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
-                            placeOfBirth: artist.placeOfBirth || null,
-                        },
-                    });
+                    if (artist.tmdbId) {
+                        await prisma.artist.upsert({
+                            where: { tmdbId: String(artist.tmdbId) },
+                            update: artistData,
+                            create: artistData,
+                        });
+                    } else {
+                        // Sem tmdbId: cria apenas se não houver artista com mesmo nome
+                        const existing = await prisma.artist.findFirst({
+                            where: { nameRomanized: artist.nameRomanized },
+                            select: { id: true },
+                        });
+                        if (!existing) {
+                            await prisma.artist.create({ data: artistData });
+                        } else {
+                            await prisma.artist.update({ where: { id: existing.id }, data: artistData });
+                        }
+                    }
 
                     results.artists.updated++;
                     log.info(`Saved real artist: ${artist.nameRomanized}`, { tmdbId: artist.tmdbId });

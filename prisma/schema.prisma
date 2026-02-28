@@ -79,7 +79,7 @@ model ArtistGroupMembership {
 
 model Artist {
   id                 String             @id @default(cuid())
-  nameRomanized      String             @unique
+  nameRomanized      String
   nameHangul         String?
   birthDate          DateTime?
   birthName          String?
