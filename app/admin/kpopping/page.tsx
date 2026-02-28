@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
-import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -700,6 +700,29 @@ function GroupCard({ group }: { group: GroupItem }) {
     }
   }
 
+  const createGroup = async () => {
+    setPending(true)
+    try {
+      const res = await fetch('/api/admin/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: group.groupName,
+          nameHangul: group.groupNameHangul ?? undefined,
+          profileImageUrl: group.groupImageUrl ?? undefined,
+          debutDate: group.groupDebutDate ?? undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao criar grupo')
+      // Auto-confirm the match with the newly created group
+      await doAction('confirm', data.id)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao criar grupo')
+      setPending(false)
+    }
+  }
+
   const loadMembers = async () => {
     if (members !== null) return // já carregado
     setMembersLoading(true)
@@ -864,6 +887,17 @@ function GroupCard({ group }: { group: GroupItem }) {
         >
           <Star size={12} /> TMDB
         </button>
+
+        {!isConfirmed && (
+          <button
+            onClick={createGroup}
+            disabled={pending}
+            title={`Criar "${group.groupName}" como novo grupo no HallyuHub`}
+            className="text-xs bg-blue-900 hover:bg-blue-800 disabled:opacity-50 text-blue-300 px-3 py-1.5 rounded flex items-center gap-1"
+          >
+            <Plus size={12} /> Criar no HallyuHub
+          </button>
+        )}
 
         {isRejected && (
           <button

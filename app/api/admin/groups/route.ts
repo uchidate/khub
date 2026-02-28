@@ -40,6 +40,18 @@ export async function GET(request: NextRequest) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
+
+    // Single-group lookup: GET /api/admin/groups?id=<groupId>
+    const idLookup = searchParams.get('id')
+    if (idLookup) {
+      const group = await prisma.musicalGroup.findUnique({
+        where: { id: idLookup },
+        include: { agency: { select: { id: true, name: true } } },
+      })
+      if (!group) return NextResponse.json({ error: 'Grupo não encontrado' }, { status: 404 })
+      return NextResponse.json(group)
+    }
+
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
     const where = search
