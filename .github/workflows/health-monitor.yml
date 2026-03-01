@@ -33,8 +33,27 @@ jobs:
       MAX_RESPONSE_TIME_MS: 5000
 
     steps:
+      - name: 🚀 Verificar deploy em andamento
+        id: check_deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUNNING=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/deploy.yml/runs?per_page=5" \
+            -q '[.workflow_runs[] | select(.status == "in_progress" or .status == "queued" or .status == "waiting")] | length')
+
+          echo "Deploy runs ativos: $RUNNING"
+
+          if [ "$RUNNING" -gt "0" ]; then
+            echo "deploy_running=true" >> $GITHUB_OUTPUT
+            echo "⏭️ Deploy em andamento — health check ignorado para evitar falso positivo" | tee -a $GITHUB_STEP_SUMMARY
+          else
+            echo "deploy_running=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: 🏥 Check Production
         id: health_check
+        if: steps.check_deploy.outputs.deploy_running != 'true'
         run: |
           echo "## Health Check - Production" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -119,7 +138,7 @@ jobs:
           fi
 
       - name: 🔔 Alert Slack - Down
-        if: failure() && env.SLACK_WEBHOOK != ''
+        if: failure() && steps.check_deploy.outputs.deploy_running != 'true' && env.SLACK_WEBHOOK != ''
         run: |
           TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
           ISSUES_TEXT=$(echo -e "$ISSUES")
@@ -157,8 +176,27 @@ jobs:
       MAX_RESPONSE_TIME_MS: 8000
 
     steps:
+      - name: 🚀 Verificar deploy em andamento
+        id: check_deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUNNING=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/deploy.yml/runs?per_page=5" \
+            -q '[.workflow_runs[] | select(.status == "in_progress" or .status == "queued" or .status == "waiting")] | length')
+
+          echo "Deploy runs ativos: $RUNNING"
+
+          if [ "$RUNNING" -gt "0" ]; then
+            echo "deploy_running=true" >> $GITHUB_OUTPUT
+            echo "⏭️ Deploy em andamento — health check ignorado para evitar falso positivo" | tee -a $GITHUB_STEP_SUMMARY
+          else
+            echo "deploy_running=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: 🏥 Check Staging
         id: health_check
+        if: steps.check_deploy.outputs.deploy_running != 'true'
         run: |
           echo "## Health Check - Staging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -238,7 +276,7 @@ jobs:
           fi
 
       - name: 🔔 Alert Slack - Staging Down
-        if: failure() && env.SLACK_WEBHOOK != ''
+        if: failure() && steps.check_deploy.outputs.deploy_running != 'true' && env.SLACK_WEBHOOK != ''
         run: |
           TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
           ISSUES_TEXT=$(echo -e "$ISSUES")
