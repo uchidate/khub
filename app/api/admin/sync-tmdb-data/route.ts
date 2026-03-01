@@ -5,14 +5,13 @@
  * mas possuem campos vazios: foto, bio, data de nascimento, local de nascimento,
  * nome em Hangul e stageNames.
  *
- * Só preenche campos vazios — não sobrescreve dados curados manualmente.
- *
  * Parâmetros body (opcionais):
- *   mode: 'empty_only' (padrão) | 'all'   — processar só incompletos ou todos
- *   fields: string[]                        — quais campos sincronizar (padrão: todos)
- *   limit: number                           — máximo de artistas (padrão: 200)
+ *   mode: 'empty_only' (padrão) | 'all'   — processar só incompletos ou todos (sobrescreve)
+ *   limit: number                           — máximo de artistas por lote (padrão: 200, max: 500)
+ *   offset: number                          — pular N artistas (para paginação de lotes)
  *
  * Retorna stream de texto com progresso linha a linha.
+ * O stream inclui TOTAL_GLOBAL:<n> com o total de artistas elegíveis (sem offset).
  */
 
 import { NextRequest } from 'next/server'
@@ -70,6 +69,7 @@ export async function POST(req: NextRequest) {
 
     let mode: 'empty_only' | 'all' = 'empty_only'
     let limit = 200
+    let offset = 0
 
     try {
         const body = await req.json()
@@ -77,27 +77,35 @@ export async function POST(req: NextRequest) {
         if (body?.limit && typeof body.limit === 'number') {
             limit = Math.min(Math.max(body.limit, 1), 500)
         }
+        if (body?.offset && typeof body.offset === 'number') {
+            offset = Math.max(body.offset, 0)
+        }
     } catch {
         // sem body — usa padrão
     }
 
+    const whereClause = {
+        tmdbId: { not: null },
+        flaggedAsNonKorean: false,
+        ...(mode === 'empty_only'
+            ? {
+                OR: [
+                    { primaryImageUrl: null },
+                    { bio: null },
+                    { birthDate: null },
+                    { placeOfBirth: null },
+                    { nameHangul: null },
+                ],
+            }
+            : {}),
+    }
+
+    // Conta o total elegível (sem offset) para a UI montar o progresso global
+    const totalGlobal = await prisma.artist.count({ where: whereClause })
+
     // Busca artistas com tmdbId, priorizando os com mais campos vazios
     const artists = await prisma.artist.findMany({
-        where: {
-            tmdbId: { not: null },
-            flaggedAsNonKorean: false,
-            ...(mode === 'empty_only'
-                ? {
-                    OR: [
-                        { primaryImageUrl: null },
-                        { bio: null },
-                        { birthDate: null },
-                        { placeOfBirth: null },
-                        { nameHangul: null },
-                    ],
-                }
-                : {}),
-        },
+        where: whereClause,
         select: {
             id: true,
             nameRomanized: true,
@@ -111,6 +119,7 @@ export async function POST(req: NextRequest) {
             stageNames: true,
         },
         orderBy: { trendingScore: 'desc' },
+        skip: offset,
         take: limit,
     })
 
@@ -119,6 +128,7 @@ export async function POST(req: NextRequest) {
         async start(controller) {
             const send = (line: string) => controller.enqueue(encoder.encode(line + '\n'))
 
+            send(`TOTAL_GLOBAL:${totalGlobal}`)
             send(`TOTAL:${artists.length}`)
             let enriched = 0
             let complete = 0
@@ -141,19 +151,19 @@ export async function POST(req: NextRequest) {
                     const updatedFields: string[] = []
 
                     // Foto
-                    if (!artist.primaryImageUrl && tmdb.profile_path) {
+                    if (tmdb.profile_path && (mode === 'all' || !artist.primaryImageUrl)) {
                         updates.primaryImageUrl = `${TMDB_IMG}${tmdb.profile_path}`
                         updatedFields.push('foto')
                     }
 
-                    // Bio
-                    if (!artist.bio && tmdb.biography) {
+                    // Bio — em mode=all sempre sobrescreve; em empty_only só se vazia
+                    if (tmdb.biography && (mode === 'all' || !artist.bio)) {
                         updates.bio = tmdb.biography
                         updatedFields.push('bio')
                     }
 
                     // Data de nascimento
-                    if (!artist.birthDate && tmdb.birthday) {
+                    if (tmdb.birthday && (mode === 'all' || !artist.birthDate)) {
                         const d = new Date(tmdb.birthday)
                         if (!isNaN(d.getTime())) {
                             updates.birthDate = d
@@ -162,12 +172,12 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Local de nascimento
-                    if (!artist.placeOfBirth && tmdb.place_of_birth) {
+                    if (tmdb.place_of_birth && (mode === 'all' || !artist.placeOfBirth)) {
                         updates.placeOfBirth = tmdb.place_of_birth
                         updatedFields.push('local')
                     }
 
-                    // Nome em Hangul (se vazio e TMDB tem no also_known_as)
+                    // Nome em Hangul (se vazio)
                     if (!artist.nameHangul) {
                         const hangul = extractHangul(tmdb.also_known_as)
                         if (hangul) {

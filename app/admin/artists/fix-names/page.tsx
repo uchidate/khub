@@ -112,18 +112,22 @@ function LogPanel({
     log,
     stats,
     onStart,
+    onStartAll,
     title,
     description,
     buttonLabel,
+    buttonAllLabel,
     statLabels,
 }: {
     running: boolean
     log: LogLine[]
     stats: Stats
     onStart: () => void
+    onStartAll?: () => void
     title: string
     description: string
     buttonLabel: string
+    buttonAllLabel?: string
     statLabels: [string, string, string]
 }) {
     const logRef = useRef<HTMLDivElement>(null)
@@ -147,16 +151,30 @@ function LogPanel({
                         <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
                     </div>
                 </div>
-                <button
-                    onClick={onStart}
-                    disabled={running}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors flex-shrink-0"
-                >
-                    {running
-                        ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
-                        : <><CheckCircle className="w-4 h-4" /> {buttonLabel}</>
-                    }
-                </button>
+                <div className="flex gap-2 flex-shrink-0">
+                    <button
+                        onClick={onStart}
+                        disabled={running}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                    >
+                        {running
+                            ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
+                            : <><CheckCircle className="w-4 h-4" /> {buttonLabel}</>
+                        }
+                    </button>
+                    {onStartAll && buttonAllLabel && (
+                        <button
+                            onClick={onStartAll}
+                            disabled={running}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                        >
+                            {running
+                                ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
+                                : <><RefreshCw className="w-4 h-4" /> {buttonAllLabel}</>
+                            }
+                        </button>
+                    )}
+                </div>
             </div>
 
             {stats && (
@@ -254,10 +272,13 @@ export default function FixNamesAdminPage() {
     const [hangulLog, setHangulLog] = useState<LogLine[]>([])
     const [hangulStats, setHangulStats] = useState<Stats>(null)
 
-    // Estado para Sync TMDB
+    // Estado para Sync TMDB (batched)
     const [syncRunning, setSyncRunning] = useState(false)
     const [syncLog, setSyncLog] = useState<LogLine[]>([])
     const [syncStats, setSyncStats] = useState<Stats>(null)
+    const [syncTotalGlobal, setSyncTotalGlobal] = useState(0)
+    const [syncProcessed, setSyncProcessed] = useState(0)
+    const syncAbortRef = useRef(false)
 
     async function runStream(
         endpoint: string,
@@ -345,21 +366,116 @@ export default function FixNamesAdminPage() {
         (m) => ({ total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]), main: parseInt(m[1]), secondary: parseInt(m[2]), errors: parseInt(m[3]) })
     ), [])
 
-    const startSyncTmdb = useCallback(() => runStream(
-        '/api/admin/sync-tmdb-data',
-        { mode: 'empty_only' },
-        parseLineSyncTmdb,
-        setSyncRunning,
-        setSyncLog,
-        setSyncStats,
-        /enriched=(\d+),complete=(\d+),noData=(\d+),errors=(\d+)/,
-        (m) => ({
-            total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]),
-            main: parseInt(m[1]),
-            secondary: parseInt(m[3]),
-            errors: parseInt(m[4]),
-        })
-    ), [])
+    const BATCH_SIZE = 500
+
+    const runSyncBatches = useCallback(async (mode: 'empty_only' | 'all') => {
+        syncAbortRef.current = false
+        setSyncRunning(true)
+        setSyncLog([{ text: '🚀 Iniciando sync em lotes de 500...', type: 'info' }])
+        setSyncStats(null)
+        setSyncTotalGlobal(0)
+        setSyncProcessed(0)
+
+        let offset = 0
+        let totalGlobal = 0
+        let grandEnriched = 0, grandComplete = 0, grandNoData = 0, grandErrors = 0
+
+        try {
+            while (!syncAbortRef.current) {
+                const res = await fetch('/api/admin/sync-tmdb-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode, limit: BATCH_SIZE, offset }),
+                })
+
+                if (!res.ok || !res.body) {
+                    setSyncLog(prev => [...prev, { text: `❌ Erro HTTP ${res.status}`, type: 'error' }])
+                    break
+                }
+
+                const reader = res.body.getReader()
+                const decoder = new TextDecoder()
+                let buffer = ''
+                let batchSize = 0
+
+                for (;;) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    buffer += decoder.decode(value, { stream: true })
+                    const lines = buffer.split('\n')
+                    buffer = lines.pop() || ''
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue
+
+                        if (line.startsWith('TOTAL_GLOBAL:')) {
+                            totalGlobal = parseInt(line.replace('TOTAL_GLOBAL:', ''))
+                            setSyncTotalGlobal(totalGlobal)
+                            continue
+                        }
+                        if (line.startsWith('TOTAL:')) {
+                            batchSize = parseInt(line.replace('TOTAL:', ''))
+                            const batchNum = Math.floor(offset / BATCH_SIZE) + 1
+                            const totalBatches = totalGlobal > 0 ? Math.ceil(totalGlobal / BATCH_SIZE) : '?'
+                            setSyncLog(prev => [...prev, {
+                                text: `📦 Lote ${batchNum}/${totalBatches} — ${batchSize} artistas`,
+                                type: 'info',
+                            }])
+                            continue
+                        }
+                        if (line.startsWith('PROGRESS:')) {
+                            const n = parseInt(line.split(':')[1].split('/')[0])
+                            setSyncProcessed(offset + n)
+                            setSyncLog(prev => [...prev, parseLineSyncTmdb(line)])
+                            continue
+                        }
+                        if (line.startsWith('DONE:')) {
+                            const m = line.match(/enriched=(\d+),complete=(\d+),noData=(\d+),errors=(\d+)/)
+                            if (m) {
+                                grandEnriched += parseInt(m[1])
+                                grandComplete += parseInt(m[2])
+                                grandNoData += parseInt(m[3])
+                                grandErrors += parseInt(m[4])
+                                setSyncStats({
+                                    total: totalGlobal,
+                                    main: grandEnriched,
+                                    secondary: grandNoData,
+                                    errors: grandErrors,
+                                })
+                            }
+                            continue
+                        }
+
+                        setSyncLog(prev => [...prev, parseLineSyncTmdb(line)])
+                    }
+                }
+
+                offset += BATCH_SIZE
+
+                if (batchSize < BATCH_SIZE || offset >= totalGlobal) {
+                    setSyncLog(prev => [...prev, {
+                        text: `🎉 Todos os lotes concluídos! Enriquecidos: ${grandEnriched} | Completos: ${grandComplete} | Sem dados: ${grandNoData} | Erros: ${grandErrors}`,
+                        type: 'done',
+                    }])
+                    setSyncProcessed(totalGlobal)
+                    break
+                }
+
+                await new Promise(r => setTimeout(r, 1500))
+                setSyncLog(prev => [...prev, {
+                    text: `⏭️ Próximo lote — offset ${offset} de ${totalGlobal}...`,
+                    type: 'info',
+                }])
+            }
+        } catch (e) {
+            setSyncLog(prev => [...prev, { text: `❌ Erro: ${e}`, type: 'error' }])
+        } finally {
+            setSyncRunning(false)
+        }
+    }, [BATCH_SIZE])
+
+    const startSyncTmdb = useCallback(() => runSyncBatches('empty_only'), [runSyncBatches])
+    const startSyncTmdbAll = useCallback(() => runSyncBatches('all'), [runSyncBatches])
 
     return (
         <AdminLayout title="Enriquecimento de Artistas via TMDB">
@@ -416,16 +532,109 @@ export default function FixNamesAdminPage() {
                     statLabels={['Preenchidos', 'Sem dados', 'Erros']}
                 />
 
-                <LogPanel
-                    running={syncRunning}
-                    log={syncLog}
-                    stats={syncStats}
-                    onStart={startSyncTmdb}
-                    title="Sincronizar dados biográficos do TMDB"
-                    description="Para artistas com tmdbId: preenche foto, bio, nascimento, local, gênero, Hangul e aliases — apenas campos vazios"
-                    buttonLabel="Iniciar sync"
-                    statLabels={['Enriquecidos', 'Sem dados TMDB', 'Erros']}
-                />
+                {/* Sync TMDB — custom panel com barra de progresso global */}
+                <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center gap-3 flex-1">
+                            <Database className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                            <div>
+                                <p className="text-sm font-bold text-white">Sincronizar dados biográficos do TMDB</p>
+                                <p className="text-xs text-zinc-500 mt-0.5">
+                                    Para artistas com tmdbId: foto, bio, nascimento, local, gênero — processa em lotes de 500
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                            <button
+                                onClick={startSyncTmdb}
+                                disabled={syncRunning}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                            >
+                                {syncRunning
+                                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
+                                    : <><CheckCircle className="w-4 h-4" /> Preencher vazios</>
+                                }
+                            </button>
+                            <button
+                                onClick={startSyncTmdbAll}
+                                disabled={syncRunning}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                            >
+                                {syncRunning
+                                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
+                                    : <><RefreshCw className="w-4 h-4" /> Forçar todos</>
+                                }
+                            </button>
+                            {syncRunning && (
+                                <button
+                                    onClick={() => { syncAbortRef.current = true }}
+                                    className="px-3 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-bold transition-colors"
+                                    title="Parar após o lote atual"
+                                >
+                                    ✕ Parar
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Barra de progresso global */}
+                    {syncTotalGlobal > 0 && (
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-xs text-zinc-400">
+                                <span>Progresso global</span>
+                                <span>{syncProcessed.toLocaleString('pt-BR')} / {syncTotalGlobal.toLocaleString('pt-BR')} artistas</span>
+                            </div>
+                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min(100, Math.round((syncProcessed / syncTotalGlobal) * 100))}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Totais acumulados */}
+                    {syncStats && (
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
+                                <p className="text-xl font-black text-green-400">{syncStats.main}</p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Enriquecidos</p>
+                            </div>
+                            <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
+                                <p className="text-xl font-black text-yellow-400">{syncStats.secondary}</p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Sem dados TMDB</p>
+                            </div>
+                            <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
+                                <p className="text-xl font-black text-red-400">{syncStats.errors}</p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Erros</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Log */}
+                    {syncLog.length > 0 && (
+                        <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-white/5">
+                            {syncLog.map((line, i) => {
+                                const color = line.type === 'success' ? 'text-green-400'
+                                    : line.type === 'error' ? 'text-red-400'
+                                    : line.type === 'warning' ? 'text-yellow-400'
+                                    : line.type === 'done' ? 'text-purple-400 font-bold'
+                                    : line.type === 'progress' ? 'text-zinc-500'
+                                    : 'text-zinc-300'
+                                return (
+                                    <div key={i} className={`flex items-center gap-2 ${color}`}>
+                                        <span>{line.text}</span>
+                                        {line.link && (
+                                            <Link href={line.link.href} target="_blank" className="ml-1 underline text-amber-400 hover:text-amber-300 whitespace-nowrap">
+                                                {line.link.label}
+                                            </Link>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
         </AdminLayout>
     )
