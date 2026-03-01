@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
@@ -11,11 +13,18 @@ export async function POST(
 ) {
     try {
         const { id } = params
+        const session = await getServerSession(authOptions)
 
         await prisma.news.update({
             where: { id },
             data: { viewCount: { increment: 1 } },
         })
+
+        if (session?.user?.id) {
+            await prisma.activity.create({
+                data: { userId: session.user.id, type: 'VIEW', entityId: id, entityType: 'NEWS' },
+            }).catch(() => {})
+        }
 
         return NextResponse.json({ success: true })
     } catch (error) {

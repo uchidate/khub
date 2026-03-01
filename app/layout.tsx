@@ -14,6 +14,7 @@ import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { BetaBanner } from "@/components/features/BetaBanner"
+import { CookieBanner } from "@/components/features/CookieBanner"
 import { getSystemSettings } from "@/lib/settings"
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
@@ -84,6 +85,12 @@ export default async function RootLayout({
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
             <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
+                {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
+                <Script id="ga-consent-defaults" strategy="beforeInteractive">{`
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
+                `}</Script>
                 {process.env.NEXT_PUBLIC_GA_ID && (
                     <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
                 )}
@@ -141,6 +148,7 @@ export default async function RootLayout({
                         <ToastContainer />
                         <AuthGateModal />
                         <PWAInstaller />
+                        <CookieBanner />
                         <footer className="bg-black border-t border-zinc-800 py-12">
                             <div className="max-w-7xl mx-auto px-4">
                                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
