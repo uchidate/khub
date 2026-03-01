@@ -151,7 +151,7 @@ export default async function RootLayout({
                                         <a href="/privacidade" className="hover:text-white underline-offset-4 hover:underline">Privacidade</a>
                                         <a href="/termos" className="hover:text-white underline-offset-4 hover:underline">Termos de Uso</a>
                                     </div>
-                                    <p className="text-zinc-600 text-xs text-center md:text-right">
+                                    <p className="text-zinc-600 text-xs text-center md:text-right pr-20">
                                         &copy; {new Date().getFullYear()} HallyuHub. O portal brasileiro da cultura coreana.
                                     </p>
                                 </div>
