@@ -116,6 +116,18 @@ export const authOptions: AuthOptions = {
         data: { emailVerified: new Date() },
       })
     },
+    async signIn({ user, isNewUser }) {
+      if (!user.id) return
+      await prisma.activity.create({
+        data: { userId: user.id, type: isNewUser ? 'REGISTER' : 'LOGIN' },
+      }).catch(() => {})
+    },
+    async signOut({ token }) {
+      if (!token?.id) return
+      await prisma.activity.create({
+        data: { userId: token.id as string, type: 'LOGOUT' },
+      }).catch(() => {})
+    },
   },
   debug: process.env.NODE_ENV === "development",
 }

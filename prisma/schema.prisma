@@ -339,6 +339,7 @@ model User {
   emailLogs              EmailLog[]
   comments               Comment[]
   contentPreferences     UserContentPreferences?
+  auditLogs              AuditLog[]
 
   @@index([email])
 }
@@ -536,6 +537,37 @@ model Comment {
   @@index([createdAt])
   @@index([status])
   @@index([newsId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  action    String   // CREATE | UPDATE | DELETE | APPROVE | REJECT | RESEND | SEED
+  entity    String   // Artist | News | User | EmailTemplate | Comment | Translation
+  entityId  String?
+  details   String?
+  before    Json?
+  after     Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model SystemEvent {
+  id        String   @id @default(cuid())
+  level     String   @default("INFO") // DEBUG | INFO | WARN | ERROR
+  source    String   // email-service | cron-digest | cron-trending | auth
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([level])
+  @@index([source])
+  @@index([createdAt])
 }
 
 model CronLock {

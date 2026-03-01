@@ -89,6 +89,57 @@ services:
       ollama-production:
         condition: service_started
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hallyuhub-prometheus-production
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-production-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      backend-production:
+        ipv4_address: 172.21.0.4
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+    depends_on:
+      - hallyuhub
+
+  grafana:
+    image: grafana/grafana:11-alpine
+    container_name: hallyuhub-grafana-production
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://31.97.255.107:3002
+      - GF_DB_HOST=postgres-production:5432
+      - GF_DB_NAME=hallyuhub_production
+      - GF_DB_USER=hallyuhub
+      - GF_DB_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - grafana-production-data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - web
+      - backend-production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 512M
+    depends_on:
+      - postgres-production
+      - prometheus
+
 networks:
   web:
     external: true
@@ -107,3 +158,5 @@ volumes:
   ollama-production-data:
     external: true
   instagram-images-production:
+  prometheus-production-data:
+  grafana-production-data:
