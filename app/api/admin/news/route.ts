@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { logAudit } from '@/lib/services/audit-service'
 
 const log = createLogger('ADMIN-NEWS')
 
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const body = await request.json()
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
       data: data as Parameters<typeof prisma.news.create>[0]['data'],
     })
 
+    await logAudit({ adminId: session!.user.id, action: 'CREATE', entity: 'News', entityId: news.id, details: `Criou notícia "${news.title}"` })
     return NextResponse.json(news, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const { searchParams } = new URL(request.url)
@@ -126,6 +128,7 @@ export async function PATCH(request: NextRequest) {
       data: data as Parameters<typeof prisma.news.update>[0]['data'],
     })
 
+    await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'News', entityId: newsId, details: `Editou notícia "${news.title}"` })
     return NextResponse.json(news)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -143,7 +146,7 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const body = await request.json()
@@ -153,6 +156,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: { in: ids } },
     })
 
+    await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'News', details: `Deletou ${result.count} notícia(s)` })
     return NextResponse.json({ message: `${result.count} notícia(s) deletada(s)` })
   } catch (error) {
     if (error instanceof z.ZodError) {

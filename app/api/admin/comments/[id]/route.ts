@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin-helpers'
+import { logAudit } from '@/lib/services/audit-service'
 
 // PATCH /api/admin/comments/[id] — alterar status ou nota
 export async function PATCH(
@@ -35,6 +36,9 @@ export async function PATCH(
         select: { id: true, status: true, moderationNote: true, moderatedAt: true },
     })
 
+    if (body.status) {
+        await logAudit({ adminId: session!.user.id, action: body.status === 'REMOVED' ? 'DELETE' : 'UPDATE', entity: 'Comment', entityId: params.id, details: `Status → ${body.status}` })
+    }
     return NextResponse.json(comment)
 }
 
@@ -43,9 +47,10 @@ export async function DELETE(
     _req: NextRequest,
     { params }: { params: { id: string } }
 ) {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     await prisma.comment.delete({ where: { id: params.id } })
+    await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'Comment', entityId: params.id, details: `Deletou comentário` })
     return NextResponse.json({ success: true })
 }

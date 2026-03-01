@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { logAudit } from '@/lib/services/audit-service'
 
 const log = createLogger('ADMIN-USERS')
 
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const { searchParams } = new URL(request.url)
@@ -204,6 +205,7 @@ export async function PATCH(request: NextRequest) {
       },
     })
 
+    await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'User', entityId: userId, details: `Atualizou usuário "${user.name}" — papel: ${user.role}` })
     return NextResponse.json(user)
   } catch (error) {
     if (error instanceof z.ZodError) {
