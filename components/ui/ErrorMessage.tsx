@@ -24,7 +24,7 @@ export function ErrorMessage({ title, message, retry, showSupport }: ErrorMessag
         )}
         {showSupport && (
           <Button
-            onClick={() => window.open('mailto:suporte@hallyuhub.com.br', '_blank')}
+            onClick={() => window.open('mailto:contato@hallyuhub.com.br', '_blank')}
             variant="outline"
           >
             📧 Contatar Suporte

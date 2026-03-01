@@ -1,3 +1,16 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+    title: 'Sobre nós | HallyuHub',
+    description: 'Conheça o HallyuHub, o maior portal de cultura coreana em português. Nossa missão é conectar fãs brasileiros com artistas K-Pop, K-Dramas e notícias traduzidas.',
+    openGraph: {
+        title: 'Sobre o HallyuHub',
+        description: 'Conheça o HallyuHub, o maior portal de cultura coreana em português. Nossa missão é conectar fãs brasileiros com artistas K-Pop, K-Dramas e notícias traduzidas.',
+        url: 'https://www.hallyuhub.com.br/about',
+        type: 'website',
+    },
+}
+
 export default function AboutPage() {
     return (
         <div className="pt-24 md:pt-40 pb-32 px-4 sm:px-12 md:px-20 overflow-hidden relative">
