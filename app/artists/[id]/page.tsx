@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma"
 import Image from "next/image"
 import Link from "next/link"
-import { getRoleLabel, getRoleLabels } from "@/lib/utils/role-labels"
+import { getRoleLabels } from "@/lib/utils/role-labels"
 import { getStreamingConfig } from "@/lib/config/streaming-platforms"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { ViewTracker } from "@/components/features/ViewTracker"
@@ -271,8 +271,15 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             )}
                         </div>
 
+                        {/* Bio */}
+                        {(bioPt ?? artist.bio) && (
+                            <p className="text-zinc-300 text-sm leading-relaxed line-clamp-3 max-w-xl drop-shadow">
+                                {bioPt ?? artist.bio}
+                            </p>
+                        )}
+
                         {/* Stats */}
-                        <div className="flex items-center gap-4 flex-wrap mt-1">
+                        <div className="flex items-center gap-4 flex-wrap">
                             {age !== null && (
                                 <div className="flex items-center gap-1.5 text-purple-400">
                                     <Sparkles className="w-3.5 h-3.5" />
@@ -298,14 +305,6 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-8 lg:col-span-1">
-
-                        {/* Bio */}
-                        {(bioPt ?? artist.bio) && (
-                            <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Sobre</h3>
-                                <p className="text-zinc-300 leading-relaxed text-sm">{bioPt ?? artist.bio}</p>
-                            </div>
-                        )}
 
                         {/* Informações */}
                         <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
@@ -383,17 +382,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                         )}
 
                         {/* Stats */}
-                        <div className="grid grid-cols-4 gap-2">
-                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Eye className="w-4 h-4 text-cyan-400 mx-auto mb-1" />
-                                <div className="text-sm md:text-lg font-black text-cyan-400">{artist.viewCount.toLocaleString('pt-BR')}</div>
-                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Views</p>
-                            </div>
-                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Heart className="w-4 h-4 text-pink-400 mx-auto mb-1" />
-                                <div className="text-sm md:text-lg font-black text-pink-400">{artist.favoriteCount.toLocaleString('pt-BR')}</div>
-                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Fãs</p>
-                            </div>
+                        <div className="grid grid-cols-2 gap-2">
                             <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
                                 <Film className="w-4 h-4 text-purple-400 mx-auto mb-1" />
                                 <div className="text-sm md:text-lg font-black text-purple-400">{artist.productions.length}</div>
@@ -405,7 +394,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Lançamentos</p>
                             </div>
                             {newsCount > 0 && (
-                                <div className="col-span-4 p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <div className="col-span-2 p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
                                     <Newspaper className="w-4 h-4 text-amber-400 mx-auto mb-1" />
                                     <div className="text-sm md:text-lg font-black text-amber-400">{newsCount}</div>
                                     <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Notícias</p>
@@ -413,37 +402,6 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             )}
                         </div>
 
-                        {/* Artistas Relacionados (membros do grupo) */}
-                        {relatedArtists.length > 0 && activeGroup && (
-                            <div>
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">
-                                    Membros de {activeGroup.name}
-                                </h3>
-                                <div className="flex flex-col gap-2">
-                                    {relatedArtists.map(ra => (
-                                        <Link key={ra.id} href={`/artists/${ra.id}`}
-                                            className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/ra">
-                                            <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-zinc-800">
-                                                {ra.primaryImageUrl ? (
-                                                    <Image src={ra.primaryImageUrl} alt={ra.nameRomanized} fill sizes="40px" className="object-cover group-hover/ra:scale-105 transition-transform" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <span className="text-sm font-black text-zinc-600">{ra.nameRomanized[0]}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-white truncate group-hover/ra:text-purple-300 transition-colors">{ra.nameRomanized}</p>
-                                                {ra.nameHangul && <p className="text-[10px] text-zinc-600 mt-0.5">{ra.nameHangul}</p>}
-                                            </div>
-                                            {ra.roles?.[0] && (
-                                                <span className="text-[9px] font-black uppercase text-zinc-600 flex-shrink-0">{getRoleLabel(ra.roles[0], ra.gender)}</span>
-                                            )}
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     {/* ── MAIN ── */}
@@ -454,11 +412,6 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''}
                             format="horizontal"
                         />
-
-                        {/* Discography */}
-                        {artist.albums.length > 0 && (
-                            <DiscographySection albums={artist.albums} />
-                        )}
 
                         {/* Filmography */}
                         <section>
@@ -522,6 +475,44 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 </div>
                             )}
                         </section>
+
+                        {/* Discography */}
+                        {artist.albums.length > 0 && (
+                            <DiscographySection albums={artist.albums} />
+                        )}
+
+                        {/* Membros do grupo */}
+                        {relatedArtists.length > 0 && activeGroup && (
+                            <section>
+                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <Users className="w-4 h-4" />
+                                    Membros de{' '}
+                                    <Link href={`/groups/${activeGroup.id}`} className="text-purple-400 hover:text-purple-300 transition-colors normal-case tracking-normal font-black">
+                                        {activeGroup.name}
+                                    </Link>
+                                </h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                    {relatedArtists.map(ra => (
+                                        <Link key={ra.id} href={`/artists/${ra.id}`}
+                                            className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/ra">
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-zinc-800">
+                                                {ra.primaryImageUrl ? (
+                                                    <Image src={ra.primaryImageUrl} alt={ra.nameRomanized} fill sizes="32px" className="object-cover group-hover/ra:scale-105 transition-transform" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <span className="text-xs font-black text-zinc-600">{ra.nameRomanized[0]}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-white truncate group-hover/ra:text-purple-300 transition-colors">{ra.nameRomanized}</p>
+                                                {ra.nameHangul && <p className="text-[9px] text-zinc-600 leading-none mt-0.5 truncate">{ra.nameHangul}</p>}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Notícias */}
                         {artistNews.length > 0 && (
