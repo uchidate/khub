@@ -383,17 +383,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                         )}
 
                         {/* Stats */}
-                        <div className="grid grid-cols-4 gap-2">
-                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Eye className="w-4 h-4 text-cyan-400 mx-auto mb-1" />
-                                <div className="text-sm md:text-lg font-black text-cyan-400">{artist.viewCount.toLocaleString('pt-BR')}</div>
-                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Views</p>
-                            </div>
-                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Heart className="w-4 h-4 text-pink-400 mx-auto mb-1" />
-                                <div className="text-sm md:text-lg font-black text-pink-400">{artist.favoriteCount.toLocaleString('pt-BR')}</div>
-                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Fãs</p>
-                            </div>
+                        <div className="grid grid-cols-2 gap-2">
                             <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
                                 <Film className="w-4 h-4 text-purple-400 mx-auto mb-1" />
                                 <div className="text-sm md:text-lg font-black text-purple-400">{artist.productions.length}</div>
@@ -405,7 +395,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Lançamentos</p>
                             </div>
                             {newsCount > 0 && (
-                                <div className="col-span-4 p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <div className="col-span-2 p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
                                     <Newspaper className="w-4 h-4 text-amber-400 mx-auto mb-1" />
                                     <div className="text-sm md:text-lg font-black text-amber-400">{newsCount}</div>
                                     <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Notícias</p>
@@ -454,11 +444,6 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''}
                             format="horizontal"
                         />
-
-                        {/* Discography */}
-                        {artist.albums.length > 0 && (
-                            <DiscographySection albums={artist.albums} />
-                        )}
 
                         {/* Filmography */}
                         <section>
@@ -522,6 +507,11 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                 </div>
                             )}
                         </section>
+
+                        {/* Discography */}
+                        {artist.albums.length > 0 && (
+                            <DiscographySection albums={artist.albums} />
+                        )}
 
                         {/* Notícias */}
                         {artistNews.length > 0 && (
