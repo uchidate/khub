@@ -130,6 +130,10 @@ export async function POST(
             }
         })
 
+        await prisma.activity.create({
+            data: { userId: user.id, type: 'COMMENT_CREATE', entityId: params.id, entityType: 'NEWS' },
+        }).catch(() => {})
+
         return NextResponse.json({ comment }, { status: 201 })
     } catch (error: unknown) {
         log.error('Error creating comment', { error: getErrorMessage(error) })

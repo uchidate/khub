@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ReportButton } from "@/components/ui/ReportButton"
 import { TrailerModal } from "@/components/features/TrailerModal"
+import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { Film } from "lucide-react"
 import type { Metadata } from "next"
@@ -163,6 +164,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
 
     return (
         <div className="min-h-screen">
+            <ViewTracker productionId={production.id} />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": schemaType,

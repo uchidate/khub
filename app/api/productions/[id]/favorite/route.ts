@@ -23,8 +23,8 @@ export async function POST(
             update: {},
         })
 
-        await (prisma as any).activity.create({
-            data: { userId: session.user.id, type: 'LIKE', entityId: params.id, entityType: 'PRODUCTION' },
+        await prisma.activity.create({
+            data: { userId: session.user.id, type: 'FAVORITE_ADD', entityId: params.id, entityType: 'PRODUCTION' },
         }).catch(() => {})
 
         return NextResponse.json({ success: true })
@@ -48,8 +48,8 @@ export async function DELETE(
             where: { userId: session.user.id, productionId: params.id },
         })
 
-        await (prisma as any).activity.create({
-            data: { userId: session.user.id, type: 'UNLIKE', entityId: params.id, entityType: 'PRODUCTION' },
+        await prisma.activity.create({
+            data: { userId: session.user.id, type: 'FAVORITE_REMOVE', entityId: params.id, entityType: 'PRODUCTION' },
         }).catch(() => {})
 
         return NextResponse.json({ success: true })
