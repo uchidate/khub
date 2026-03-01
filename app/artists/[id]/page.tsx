@@ -383,32 +383,32 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                         )}
 
                         {/* Stats */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Eye className="w-5 h-5 text-cyan-400 mx-auto mb-1" />
-                                <div className="text-2xl font-black text-cyan-400">{artist.viewCount.toLocaleString('pt-BR')}</div>
-                                <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Views</p>
+                        <div className="grid grid-cols-4 gap-2">
+                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <Eye className="w-4 h-4 text-cyan-400 mx-auto mb-1" />
+                                <div className="text-sm md:text-lg font-black text-cyan-400">{artist.viewCount.toLocaleString('pt-BR')}</div>
+                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Views</p>
                             </div>
-                            <div className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Heart className="w-5 h-5 text-pink-400 mx-auto mb-1" />
-                                <div className="text-2xl font-black text-pink-400">{artist.favoriteCount.toLocaleString('pt-BR')}</div>
-                                <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Fãs</p>
+                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <Heart className="w-4 h-4 text-pink-400 mx-auto mb-1" />
+                                <div className="text-sm md:text-lg font-black text-pink-400">{artist.favoriteCount.toLocaleString('pt-BR')}</div>
+                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Fãs</p>
                             </div>
-                            <div className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Film className="w-5 h-5 text-purple-400 mx-auto mb-1" />
-                                <div className="text-2xl font-black text-purple-400">{artist.productions.length}</div>
-                                <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Produções</p>
+                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <Film className="w-4 h-4 text-purple-400 mx-auto mb-1" />
+                                <div className="text-sm md:text-lg font-black text-purple-400">{artist.productions.length}</div>
+                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Produções</p>
                             </div>
-                            <div className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Disc3 className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
-                                <div className="text-2xl font-black text-emerald-400">{artist.albums.length}</div>
-                                <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Lançamentos</p>
+                            <div className="p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                <Disc3 className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
+                                <div className="text-sm md:text-lg font-black text-emerald-400">{artist.albums.length}</div>
+                                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Lançamentos</p>
                             </div>
                             {newsCount > 0 && (
-                                <div className="col-span-2 p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                    <Newspaper className="w-5 h-5 text-amber-400 mx-auto mb-1" />
-                                    <div className="text-2xl font-black text-amber-400">{newsCount}</div>
-                                    <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">Notícias</p>
+                                <div className="col-span-4 p-2 md:p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+                                    <Newspaper className="w-4 h-4 text-amber-400 mx-auto mb-1" />
+                                    <div className="text-sm md:text-lg font-black text-amber-400">{newsCount}</div>
+                                    <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Notícias</p>
                                 </div>
                             )}
                         </div>

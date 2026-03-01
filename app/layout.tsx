@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Outfit, Inter } from "next/font/google"
+import Script from "next/script"
 import "../styles/globals.css"
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { SessionProvider } from "@/components/features/SessionProvider"
@@ -85,6 +86,13 @@ export default async function RootLayout({
                 {process.env.NEXT_PUBLIC_GA_ID && (
                     <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
                 )}
+                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
+                    <Script
+                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+                        crossOrigin="anonymous"
+                        strategy="afterInteractive"
+                    />
+                )}
                 <JsonLd data={{
                     "@context": "https://schema.org",
                     "@type": "Organization",
@@ -124,7 +132,7 @@ export default async function RootLayout({
                     <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
                     <BetaBanner />
                     <div className="min-h-screen flex flex-col">
-                        <NavBar premiumEnabled={settings.premiumEnabled} />
+                        <NavBar premiumEnabled={settings.premiumEnabled} betaMode={settings.betaMode} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>
