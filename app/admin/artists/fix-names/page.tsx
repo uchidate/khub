@@ -112,18 +112,22 @@ function LogPanel({
     log,
     stats,
     onStart,
+    onStartAll,
     title,
     description,
     buttonLabel,
+    buttonAllLabel,
     statLabels,
 }: {
     running: boolean
     log: LogLine[]
     stats: Stats
     onStart: () => void
+    onStartAll?: () => void
     title: string
     description: string
     buttonLabel: string
+    buttonAllLabel?: string
     statLabels: [string, string, string]
 }) {
     const logRef = useRef<HTMLDivElement>(null)
@@ -147,16 +151,30 @@ function LogPanel({
                         <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
                     </div>
                 </div>
-                <button
-                    onClick={onStart}
-                    disabled={running}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors flex-shrink-0"
-                >
-                    {running
-                        ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
-                        : <><CheckCircle className="w-4 h-4" /> {buttonLabel}</>
-                    }
-                </button>
+                <div className="flex gap-2 flex-shrink-0">
+                    <button
+                        onClick={onStart}
+                        disabled={running}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                    >
+                        {running
+                            ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
+                            : <><CheckCircle className="w-4 h-4" /> {buttonLabel}</>
+                        }
+                    </button>
+                    {onStartAll && buttonAllLabel && (
+                        <button
+                            onClick={onStartAll}
+                            disabled={running}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                        >
+                            {running
+                                ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</>
+                                : <><RefreshCw className="w-4 h-4" /> {buttonAllLabel}</>
+                            }
+                        </button>
+                    )}
+                </div>
             </div>
 
             {stats && (
@@ -347,7 +365,23 @@ export default function FixNamesAdminPage() {
 
     const startSyncTmdb = useCallback(() => runStream(
         '/api/admin/sync-tmdb-data',
-        { mode: 'empty_only' },
+        { mode: 'empty_only', limit: 500 },
+        parseLineSyncTmdb,
+        setSyncRunning,
+        setSyncLog,
+        setSyncStats,
+        /enriched=(\d+),complete=(\d+),noData=(\d+),errors=(\d+)/,
+        (m) => ({
+            total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]) + parseInt(m[4]),
+            main: parseInt(m[1]),
+            secondary: parseInt(m[3]),
+            errors: parseInt(m[4]),
+        })
+    ), [])
+
+    const startSyncTmdbAll = useCallback(() => runStream(
+        '/api/admin/sync-tmdb-data',
+        { mode: 'all', limit: 500 },
         parseLineSyncTmdb,
         setSyncRunning,
         setSyncLog,
@@ -421,9 +455,11 @@ export default function FixNamesAdminPage() {
                     log={syncLog}
                     stats={syncStats}
                     onStart={startSyncTmdb}
+                    onStartAll={startSyncTmdbAll}
                     title="Sincronizar dados biográficos do TMDB"
-                    description="Para artistas com tmdbId: preenche foto, bio, nascimento, local, gênero, Hangul e aliases — apenas campos vazios"
-                    buttonLabel="Iniciar sync"
+                    description="Para artistas com tmdbId: preenche foto, bio, nascimento, local, gênero, Hangul e aliases"
+                    buttonLabel="Preencher vazios"
+                    buttonAllLabel="Forçar todos (sobrescrever)"
                     statLabels={['Enriquecidos', 'Sem dados TMDB', 'Erros']}
                 />
             </div>

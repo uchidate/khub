@@ -5,12 +5,9 @@
  * mas possuem campos vazios: foto, bio, data de nascimento, local de nascimento,
  * nome em Hangul e stageNames.
  *
- * Só preenche campos vazios — não sobrescreve dados curados manualmente.
- *
  * Parâmetros body (opcionais):
- *   mode: 'empty_only' (padrão) | 'all'   — processar só incompletos ou todos
- *   fields: string[]                        — quais campos sincronizar (padrão: todos)
- *   limit: number                           — máximo de artistas (padrão: 200)
+ *   mode: 'empty_only' (padrão) | 'all'   — processar só incompletos ou todos (sobrescreve)
+ *   limit: number                           — máximo de artistas (padrão: 200, max: 500)
  *
  * Retorna stream de texto com progresso linha a linha.
  */
@@ -141,19 +138,19 @@ export async function POST(req: NextRequest) {
                     const updatedFields: string[] = []
 
                     // Foto
-                    if (!artist.primaryImageUrl && tmdb.profile_path) {
+                    if (tmdb.profile_path && (mode === 'all' || !artist.primaryImageUrl)) {
                         updates.primaryImageUrl = `${TMDB_IMG}${tmdb.profile_path}`
                         updatedFields.push('foto')
                     }
 
-                    // Bio
-                    if (!artist.bio && tmdb.biography) {
+                    // Bio — em mode=all sempre sobrescreve; em empty_only só se vazia
+                    if (tmdb.biography && (mode === 'all' || !artist.bio)) {
                         updates.bio = tmdb.biography
                         updatedFields.push('bio')
                     }
 
                     // Data de nascimento
-                    if (!artist.birthDate && tmdb.birthday) {
+                    if (tmdb.birthday && (mode === 'all' || !artist.birthDate)) {
                         const d = new Date(tmdb.birthday)
                         if (!isNaN(d.getTime())) {
                             updates.birthDate = d
@@ -162,12 +159,12 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Local de nascimento
-                    if (!artist.placeOfBirth && tmdb.place_of_birth) {
+                    if (tmdb.place_of_birth && (mode === 'all' || !artist.placeOfBirth)) {
                         updates.placeOfBirth = tmdb.place_of_birth
                         updatedFields.push('local')
                     }
 
-                    // Nome em Hangul (se vazio e TMDB tem no also_known_as)
+                    // Nome em Hangul (se vazio)
                     if (!artist.nameHangul) {
                         const hangul = extractHangul(tmdb.also_known_as)
                         if (hangul) {
