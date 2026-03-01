@@ -82,6 +82,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
     // ── Aba Usuário ──
     let userLogs: ActivityWithUser[] = []
     let userTotal = 0
+    const entityNameMap = new Map<string, string>()
     if (tab === 'user') {
         const typeFilter = sp.type || ''
         const where = {
@@ -98,6 +99,24 @@ export default async function AdminActivityPage({ searchParams }: Props) {
             }) as Promise<ActivityWithUser[]>,
             prisma.activity.count({ where }),
         ])
+
+        // Resolve entity names by entityType
+        const artistIds = userLogs.filter(l => l.entityType === 'ARTIST' && l.entityId).map(l => l.entityId!)
+        const groupIds = userLogs.filter(l => l.entityType === 'GROUP' && l.entityId).map(l => l.entityId!)
+        const newsIds = userLogs.filter(l => l.entityType === 'NEWS' && l.entityId).map(l => l.entityId!)
+        const productionIds = userLogs.filter(l => l.entityType === 'PRODUCTION' && l.entityId).map(l => l.entityId!)
+
+        const [artists, groups, newsList, productions] = await Promise.all([
+            artistIds.length ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true } }) : [],
+            groupIds.length ? prisma.musicalGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true, name: true } }) : [],
+            newsIds.length ? prisma.news.findMany({ where: { id: { in: newsIds } }, select: { id: true, title: true } }) : [],
+            productionIds.length ? prisma.production.findMany({ where: { id: { in: productionIds } }, select: { id: true, titlePt: true } }) : [],
+        ])
+
+        artists.forEach(a => entityNameMap.set(a.id, a.nameRomanized))
+        groups.forEach(g => entityNameMap.set(g.id, g.name))
+        newsList.forEach(n => entityNameMap.set(n.id, n.title))
+        productions.forEach(p => entityNameMap.set(p.id, p.titlePt))
     }
 
     // ── Aba Admin ──
@@ -264,7 +283,16 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                                     <p className="text-[11px] text-zinc-500">{log.user?.email}</p>
                                                 </td>
                                                 <td className="px-4 py-3"><Badge label={cfg.label} color={cfg.color} /></td>
-                                                <td className="px-4 py-3 text-zinc-400 text-xs">{log.entityType ?? '—'}</td>
+                                                <td className="px-4 py-3 max-w-[200px]">
+                                                    {log.entityId ? (
+                                                        <>
+                                                            <p className="text-zinc-300 text-xs truncate">{entityNameMap.get(log.entityId) ?? log.entityId.slice(-8)}</p>
+                                                            <p className="text-[10px] text-zinc-600">{log.entityType}</p>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-zinc-600 text-xs">—</span>
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-3 text-zinc-500 text-xs max-w-[200px] truncate">
                                                     {meta?.query ?? meta?.context ?? '—'}
                                                 </td>
