@@ -78,22 +78,29 @@ export default async function DashboardPage() {
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12">
 
         {/* Header */}
-        <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <p className="flex items-center gap-2 text-neon-pink mb-2 font-black tracking-widest uppercase text-[10px]">
-              <LayoutDashboard size={14} />
-              Command Center
-            </p>
-            <h1 className="text-4xl md:text-6xl font-display font-black text-white tracking-tight leading-none uppercase italic">
-              Olá, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-electric-cyan animate-gradient">{session.user.name?.split(' ')[0]}</span>
-            </h1>
+        <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {session.user.image && (
+              <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 flex-shrink-0">
+                <Image src={session.user.image} alt={session.user.name ?? ''} fill className="object-cover" sizes="56px" />
+              </div>
+            )}
+            <div>
+              <p className="flex items-center gap-2 text-neon-pink mb-1 font-black tracking-widest uppercase text-[10px]">
+                <LayoutDashboard size={12} />
+                Command Center
+              </p>
+              <h1 className="text-3xl md:text-4xl font-display font-black text-white tracking-tight leading-none">
+                Olá, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-electric-cyan">{session.user.name?.split(' ')[0]}</span>
+              </h1>
+            </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3 sm:flex-shrink-0">
             <Link href="/" className="btn-secondary text-xs uppercase tracking-widest">
               Explorar
             </Link>
-            <Link href="/premium" className="bg-white text-black px-6 py-3 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-              <span className="flex items-center gap-2"><Crown size={14} className="text-cyber-purple" /> Upgrade</span>
+            <Link href="/premium" className="bg-white text-black px-5 py-2.5 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              <span className="flex items-center gap-2"><Crown size={13} className="text-cyber-purple" /> Upgrade</span>
             </Link>
           </div>
         </header>

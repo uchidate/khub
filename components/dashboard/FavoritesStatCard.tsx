@@ -28,7 +28,7 @@ export function FavoritesStatCard({ artistCount, productionCount, newsCount, gro
           </div>
           <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Coleção</p>
         </div>
-        <p className="text-5xl font-display font-black text-white mb-1">{total}</p>
+        <p className="text-3xl font-display font-black text-white mb-1">{total}</p>
         <p className="text-zinc-500 text-xs mb-5">itens favoritos</p>
 
         {/* Breakdown por tipo */}
