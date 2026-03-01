@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ArrowLeft, Save, RefreshCw, Eye, EyeOff } from 'lucide-react'
@@ -17,7 +17,6 @@ interface Template {
 
 export default function AdminTemplateEditorPage() {
     const { slug } = useParams<{ slug: string }>()
-    const router = useRouter()
 
     const [template, setTemplate] = useState<Template | null>(null)
     const [subject, setSubject] = useState('')

@@ -173,7 +173,8 @@ export async function sendManualEmail(
 export class EmailService {
     isEnabled() { return isEmailEnabled() }
 
-    async sendEmail(_opts: unknown): Promise<boolean> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async sendEmail(...args: unknown[]): Promise<boolean> {
         log.warn('sendEmail() direto foi depreciado — use as funções específicas')
         return false
     }
