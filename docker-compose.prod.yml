@@ -10,9 +10,8 @@ services:
     volumes:
       - postgres-production-data:/var/lib/postgresql/data
     networks:
-      web:
-      backend-production:
-        ipv4_address: 172.21.0.2
+      - web
+      - backend-production
     restart: always
     deploy:
       resources:
@@ -33,9 +32,8 @@ services:
     volumes:
       - ollama-production-data:/root/.ollama
     networks:
-      web:
-      backend-production:
-        ipv4_address: 172.21.0.3
+      - web
+      - backend-production
     restart: always
     deploy:
       resources:
@@ -99,8 +97,7 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.retention.time=15d'
     networks:
-      backend-production:
-        ipv4_address: 172.21.0.4
+      - backend-production
     restart: always
     deploy:
       resources:
@@ -145,10 +142,6 @@ networks:
     external: true
   backend-production:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.21.0.0/24
-          gateway: 172.21.0.1
 
 volumes:
   hallyuhub-data:
