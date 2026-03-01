@@ -7,9 +7,11 @@
  *
  * Parâmetros body (opcionais):
  *   mode: 'empty_only' (padrão) | 'all'   — processar só incompletos ou todos (sobrescreve)
- *   limit: number                           — máximo de artistas (padrão: 200, max: 500)
+ *   limit: number                           — máximo de artistas por lote (padrão: 200, max: 500)
+ *   offset: number                          — pular N artistas (para paginação de lotes)
  *
  * Retorna stream de texto com progresso linha a linha.
+ * O stream inclui TOTAL_GLOBAL:<n> com o total de artistas elegíveis (sem offset).
  */
 
 import { NextRequest } from 'next/server'
@@ -67,6 +69,7 @@ export async function POST(req: NextRequest) {
 
     let mode: 'empty_only' | 'all' = 'empty_only'
     let limit = 200
+    let offset = 0
 
     try {
         const body = await req.json()
@@ -74,27 +77,35 @@ export async function POST(req: NextRequest) {
         if (body?.limit && typeof body.limit === 'number') {
             limit = Math.min(Math.max(body.limit, 1), 500)
         }
+        if (body?.offset && typeof body.offset === 'number') {
+            offset = Math.max(body.offset, 0)
+        }
     } catch {
         // sem body — usa padrão
     }
 
+    const whereClause = {
+        tmdbId: { not: null },
+        flaggedAsNonKorean: false,
+        ...(mode === 'empty_only'
+            ? {
+                OR: [
+                    { primaryImageUrl: null },
+                    { bio: null },
+                    { birthDate: null },
+                    { placeOfBirth: null },
+                    { nameHangul: null },
+                ],
+            }
+            : {}),
+    }
+
+    // Conta o total elegível (sem offset) para a UI montar o progresso global
+    const totalGlobal = await prisma.artist.count({ where: whereClause })
+
     // Busca artistas com tmdbId, priorizando os com mais campos vazios
     const artists = await prisma.artist.findMany({
-        where: {
-            tmdbId: { not: null },
-            flaggedAsNonKorean: false,
-            ...(mode === 'empty_only'
-                ? {
-                    OR: [
-                        { primaryImageUrl: null },
-                        { bio: null },
-                        { birthDate: null },
-                        { placeOfBirth: null },
-                        { nameHangul: null },
-                    ],
-                }
-                : {}),
-        },
+        where: whereClause,
         select: {
             id: true,
             nameRomanized: true,
@@ -108,6 +119,7 @@ export async function POST(req: NextRequest) {
             stageNames: true,
         },
         orderBy: { trendingScore: 'desc' },
+        skip: offset,
         take: limit,
     })
 
@@ -116,6 +128,7 @@ export async function POST(req: NextRequest) {
         async start(controller) {
             const send = (line: string) => controller.enqueue(encoder.encode(line + '\n'))
 
+            send(`TOTAL_GLOBAL:${totalGlobal}`)
             send(`TOTAL:${artists.length}`)
             let enriched = 0
             let complete = 0
