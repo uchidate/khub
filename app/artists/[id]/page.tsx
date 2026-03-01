@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma"
 import Image from "next/image"
 import Link from "next/link"
-import { getRoleLabel, getRoleLabels } from "@/lib/utils/role-labels"
+import { getRoleLabels } from "@/lib/utils/role-labels"
 import { getStreamingConfig } from "@/lib/config/streaming-platforms"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { ViewTracker } from "@/components/features/ViewTracker"
