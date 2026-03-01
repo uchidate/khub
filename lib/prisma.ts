@@ -11,14 +11,16 @@ const prismaClientSingleton = () => {
     // Pool with explicit limits to prevent connection exhaustion
     const pool = new Pool({
         connectionString,
-        max: 10,              // max concurrent connections
+        max: 20,                        // Increased from 10 — more headroom under concurrent load
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000,
+        connectionTimeoutMillis: 10000, // Increased from 5s — gives more time to acquire connection
     })
 
-    // Kill queries running longer than 30s — prevents pool exhaustion from slow/stuck queries
+    // Kill stuck queries — prevents pool exhaustion from runaway queries
+    // 60s in production (complex pages have deep JOINs), 30s in development
+    const statementTimeout = process.env.NODE_ENV === 'production' ? 60000 : 30000
     pool.on('connect', (client) => {
-        client.query('SET statement_timeout = 30000').catch(() => {})
+        client.query(`SET statement_timeout = ${statementTimeout}`).catch(() => {})
     })
 
     const adapter = new PrismaPg(pool)

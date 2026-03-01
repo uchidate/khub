@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import prisma from '@/lib/prisma';
+import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
 
 /**
  * Cron Job - Backfill News Images
@@ -63,7 +64,18 @@ export async function POST(request: NextRequest) {
 
     log.info('Starting image backfill job in background', { limit });
 
-    runBackfill(limit, requestId, log).catch(err => {
+    // Lock — evita encavalar execuções simultâneas
+    const lockId = await acquireCronLock('cron-backfill-images');
+    if (!lockId) {
+        return NextResponse.json({
+            success: false,
+            skipped: true,
+            reason: 'already_running',
+            message: 'Image backfill já está em execução. Esta chamada foi ignorada.',
+        }, { status: 409 });
+    }
+
+    runBackfill(limit, lockId, log).catch(err => {
         log.error('Unhandled error in background image backfill', {
             error: err instanceof Error ? err.message : String(err),
         });
@@ -112,49 +124,53 @@ async function extractOgImage(url: string): Promise<string | null> {
 
 async function runBackfill(
     limit: number,
-    requestId: string,
+    lockId: string,
     log: { info: (msg: string, ctx?: any) => void; error: (msg: string, ctx?: any) => void }
 ) {
     const startTime = Date.now();
 
-    const articles = await prisma.news.findMany({
-        where: { imageUrl: null, sourceUrl: { not: '' } },
-        select: { id: true, sourceUrl: true, title: true },
-        take: limit,
-        orderBy: { publishedAt: 'desc' },
-    });
+    try {
+        const articles = await prisma.news.findMany({
+            where: { imageUrl: null, sourceUrl: { not: '' } },
+            select: { id: true, sourceUrl: true, title: true },
+            take: limit,
+            orderBy: { publishedAt: 'desc' },
+        });
 
-    log.info('Found articles without images', { count: articles.length });
+        log.info('Found articles without images', { count: articles.length });
 
-    let updated = 0;
-    let failed = 0;
+        let updated = 0;
+        let failed = 0;
 
-    for (const article of articles) {
-        if (!article.sourceUrl) continue;
+        for (const article of articles) {
+            if (!article.sourceUrl) continue;
 
-        const imageUrl = await extractOgImage(article.sourceUrl);
+            const imageUrl = await extractOgImage(article.sourceUrl);
 
-        if (imageUrl) {
-            await prisma.news.update({
-                where: { id: article.id },
-                data: { imageUrl },
-            });
-            updated++;
-            console.log(`✅ Image found for "${article.title.slice(0, 50)}": ${imageUrl}`);
-        } else {
-            failed++;
-            console.log(`ℹ️  No image found for "${article.title.slice(0, 50)}" (${article.sourceUrl})`);
+            if (imageUrl) {
+                await prisma.news.update({
+                    where: { id: article.id },
+                    data: { imageUrl },
+                });
+                updated++;
+                console.log(`✅ Image found for "${article.title.slice(0, 50)}": ${imageUrl}`);
+            } else {
+                failed++;
+                console.log(`ℹ️  No image found for "${article.title.slice(0, 50)}" (${article.sourceUrl})`);
+            }
+
+            // Small delay between requests to be polite
+            await new Promise(r => setTimeout(r, 300));
         }
 
-        // Small delay between requests to be polite
-        await new Promise(r => setTimeout(r, 300));
+        const duration = Math.round((Date.now() - startTime) / 1000);
+        log.info('Image backfill job completed', {
+            result: { processed: articles.length, updated, failed },
+            duration_s: duration,
+        });
+    } finally {
+        await releaseCronLock('cron-backfill-images', lockId);
     }
-
-    const duration = Math.round((Date.now() - startTime) / 1000);
-    log.info('Image backfill job completed', {
-        result: { processed: articles.length, updated, failed },
-        duration_s: duration,
-    });
 }
 
 export async function GET() {

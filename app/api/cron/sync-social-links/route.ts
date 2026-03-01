@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { getSocialLinksSyncService } from '@/lib/services/social-links-sync-service';
+import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
 
 /**
  * Cron Job - Sync Artist Social Links
@@ -64,8 +65,19 @@ export async function POST(request: NextRequest) {
 
     log.info('Starting social links sync job in background', { limit });
 
+    // Lock — evita encavalar execuções simultâneas
+    const lockId = await acquireCronLock('cron-sync-social-links');
+    if (!lockId) {
+        return NextResponse.json({
+            success: false,
+            skipped: true,
+            reason: 'already_running',
+            message: 'Social links sync já está em execução. Esta chamada foi ignorada.',
+        }, { status: 409 });
+    }
+
     // Fire-and-forget background processing
-    runSocialLinksSync(limit, requestId, log).catch(err => {
+    runSocialLinksSync(limit, lockId, log).catch(err => {
         log.error('Unhandled error in background social links sync', {
             error: err instanceof Error ? err.message : String(err),
         });
@@ -82,7 +94,7 @@ export async function POST(request: NextRequest) {
 
 async function runSocialLinksSync(
     limit: number,
-    requestId: string,
+    lockId: string,
     log: { info: (msg: string, ctx?: any) => void; error: (msg: string, ctx?: any) => void }
 ) {
     const startTime = Date.now();
@@ -100,6 +112,8 @@ async function runSocialLinksSync(
             stack: error.stack,
             duration_s: duration,
         });
+    } finally {
+        await releaseCronLock('cron-sync-social-links', lockId);
     }
 }
 

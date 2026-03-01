@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { getTmdbProductionMatchService } from '@/lib/services/tmdb-production-match-service';
+import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
 
 /**
  * Cron Job - Match Productions to TMDB
@@ -66,14 +67,25 @@ export async function POST(request: NextRequest) {
 
     log.info('Starting production TMDB match job in background', { limit, mode });
 
+    // Lock — evita encavalar execuções simultâneas
+    const lockId = await acquireCronLock('cron-match-productions');
+    if (!lockId) {
+        return NextResponse.json({
+            success: false,
+            skipped: true,
+            reason: 'already_running',
+            message: 'Match productions já está em execução. Esta chamada foi ignorada.',
+        }, { status: 409 });
+    }
+
     if (mode === 'backfill-tv') {
-        runBackfillTvSeries(limit, requestId, log).catch(err => {
+        runBackfillTvSeries(limit, lockId, log).catch(err => {
             log.error('Unhandled error in background TV backfill', {
                 error: err instanceof Error ? err.message : String(err),
             });
         });
     } else {
-        runMatchProductions(limit, requestId, log).catch(err => {
+        runMatchProductions(limit, lockId, log).catch(err => {
             log.error('Unhandled error in background production match', {
                 error: err instanceof Error ? err.message : String(err),
             });
@@ -94,7 +106,7 @@ export async function POST(request: NextRequest) {
 
 async function runMatchProductions(
     limit: number,
-    requestId: string,
+    lockId: string,
     log: { info: (msg: string, ctx?: any) => void; error: (msg: string, ctx?: any) => void }
 ) {
     const startTime = Date.now();
@@ -112,12 +124,14 @@ async function runMatchProductions(
             stack: error.stack,
             duration_s: duration,
         });
+    } finally {
+        await releaseCronLock('cron-match-productions', lockId);
     }
 }
 
 async function runBackfillTvSeries(
     limit: number,
-    requestId: string,
+    lockId: string,
     log: { info: (msg: string, ctx?: any) => void; error: (msg: string, ctx?: any) => void }
 ) {
     const startTime = Date.now();
@@ -133,6 +147,8 @@ async function runBackfillTvSeries(
             stack: error.stack,
             duration_s: duration,
         });
+    } finally {
+        await releaseCronLock('cron-match-productions', lockId);
     }
 }
 

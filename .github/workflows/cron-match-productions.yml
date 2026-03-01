@@ -2,8 +2,8 @@ name: 🔍 Cron Job - Match Productions to TMDB
 
 on:
   schedule:
-    # Runs every 2 hours at :20 — staggered after cron-update (:00) to avoid memory overlap
-    - cron: '20 */2 * * *'
+    # Runs every 6 hours at :20 — staggered after cron-update (:00) to avoid memory overlap
+    - cron: '20 */6 * * *'
 
   # Allow manual trigger with optional limit parameter
   workflow_dispatch:
