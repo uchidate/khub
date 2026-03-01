@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import prisma from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getRoleLabel } from '@/lib/utils/role-labels'
@@ -287,6 +288,19 @@ async function SearchResults({ query }: { query: string }) {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
     const query = searchParams.q || ''
+
+    if (query.trim().length >= 3) {
+        const session = await auth()
+        if (session?.user?.id) {
+            void prisma.activity.create({
+                data: {
+                    userId: session.user.id,
+                    type: 'SEARCH',
+                    metadata: { query: query.trim(), context: 'search-page' },
+                },
+            }).catch(() => {})
+        }
+    }
 
     return (
         <div className="min-h-screen bg-black pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
