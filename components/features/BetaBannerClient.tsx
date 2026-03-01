@@ -14,8 +14,8 @@ export function BetaBannerClient() {
 
     return (
         <div
-            className={`sticky top-0 z-[9997] w-full overflow-hidden transition-all duration-300 ${
-                isVisible ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0'
+            className={`sticky top-0 z-[50] w-full overflow-hidden transition-all duration-300 ${
+                isVisible ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
             }`}
         >
             <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-1.5 text-center">
