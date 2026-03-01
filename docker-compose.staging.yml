@@ -10,15 +10,14 @@ services:
     volumes:
       - postgres-staging-data:/var/lib/postgresql/data
     networks:
-      web:
-      backend-staging:
-        ipv4_address: 172.20.0.2
+      - web
+      - backend-staging
     restart: on-failure
     deploy:
       resources:
         limits:
-          cpus: '0.1'
-          memory: 256M
+          cpus: '0.2'
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hallyuhub"]
       interval: 10s
@@ -33,9 +32,8 @@ services:
     volumes:
       - ollama-staging-data:/root/.ollama
     networks:
-      web:
-      backend-staging:
-        ipv4_address: 172.20.0.3
+      - web
+      - backend-staging
     restart: "no"  # Não reinicia automaticamente - economiza recursos quando não está em uso
     deploy:
       resources:
@@ -97,8 +95,7 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.retention.time=7d'
     networks:
-      backend-staging:
-        ipv4_address: 172.20.0.4
+      - backend-staging
     restart: on-failure
     deploy:
       resources:
@@ -143,10 +140,6 @@ networks:
     external: true
   backend-staging:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/24
-          gateway: 172.20.0.1
 
 volumes:
   hallyuhub-data:
