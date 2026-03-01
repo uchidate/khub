@@ -13,8 +13,6 @@ name: 🚀 Build and Deploy (Optimized)
 on:
   push:
     branches: [main, staging]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
