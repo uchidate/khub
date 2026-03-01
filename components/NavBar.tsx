@@ -39,9 +39,9 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
 
     return (
         <>
-            <nav className={`w-full z-[100] fixed transition-all duration-300 ${betaMode && !isScrolled ? 'top-10' : 'top-0'} ${isScrolled ? 'glass-nav py-2' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent py-4 md:py-6'}`}>
+            <nav className={`w-full z-[100] fixed transition-all duration-300 ${betaMode && !isScrolled ? 'top-10' : 'top-0'} ${isScrolled ? 'glass-nav py-1.5' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent py-3 md:py-4'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between gap-4 md:gap-6 h-16 md:h-20">
+                    <div className="flex items-center justify-between gap-4 md:gap-6 h-12 md:h-14">
                         {/* Logo */}
                         <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase flex-shrink-0 hover:opacity-80 transition-opacity">
                             <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>

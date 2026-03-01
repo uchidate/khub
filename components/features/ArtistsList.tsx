@@ -51,6 +51,8 @@ export function ArtistsList() {
         total: 0,
         pages: 0,
     })
+    const [pageJumpInput, setPageJumpInput] = useState('')
+    const [isEditingPage, setIsEditingPage] = useState(false)
 
     // Extrair filtros da URL
     const getFiltersFromUrl = useCallback((): ArtistFilterValues => {
@@ -183,31 +185,60 @@ export function ArtistsList() {
 
                     {/* Paginação */}
                     {pagination.pages > 1 && (
-                        <div className="mt-12 flex items-center justify-center gap-4">
+                        <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
                             <button
                                 onClick={() => handlePageChange(pagination.page - 1)}
                                 disabled={pagination.page === 1}
-                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-white/10 disabled:hover:text-zinc-300"
+                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft className="w-4 h-4" />
-                                <span>Anterior</span>
+                                Anterior
                             </button>
 
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-zinc-400">
-                                    Página {pagination.page} de {pagination.pages}
-                                </span>
-                                <span className="text-xs text-zinc-600">
-                                    ({pagination.total} artistas)
-                                </span>
+                                <span className="text-sm text-zinc-500">Página</span>
+                                {isEditingPage ? (
+                                    <input
+                                        autoFocus
+                                        type="number"
+                                        min={1}
+                                        max={pagination.pages}
+                                        value={pageJumpInput}
+                                        onChange={e => setPageJumpInput(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                const p = Math.min(pagination.pages, Math.max(1, parseInt(pageJumpInput) || pagination.page))
+                                                handlePageChange(p)
+                                                setIsEditingPage(false)
+                                                setPageJumpInput('')
+                                            }
+                                            if (e.key === 'Escape') {
+                                                setIsEditingPage(false)
+                                                setPageJumpInput('')
+                                            }
+                                        }}
+                                        onBlur={() => { setIsEditingPage(false); setPageJumpInput('') }}
+                                        className="w-14 text-center px-2 py-1 bg-zinc-800 border border-purple-500/50 rounded text-sm text-white focus:outline-none"
+                                    />
+                                ) : (
+                                    <button
+                                        onClick={() => { setIsEditingPage(true); setPageJumpInput(String(pagination.page)) }}
+                                        className="px-2 py-1 rounded text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 hover:text-purple-400 transition-colors min-w-[2rem] text-center"
+                                        title="Clique para ir a uma página específica"
+                                    >
+                                        {pagination.page}
+                                    </button>
+                                )}
+                                <span className="text-sm text-zinc-500">de {pagination.pages}</span>
+                                <span className="text-xs text-zinc-600 hidden sm:inline">({pagination.total.toLocaleString('pt-BR')} artistas)</span>
                             </div>
 
                             <button
                                 onClick={() => handlePageChange(pagination.page + 1)}
                                 disabled={pagination.page === pagination.pages}
-                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-white/10 disabled:hover:text-zinc-300"
+                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                                <span>Próxima</span>
+                                Próxima
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
