@@ -16,6 +16,11 @@ import {
   Heart,
   MessageCircle,
   Sparkles,
+  TrendingUp,
+  Star,
+  Film,
+  Music,
+  CalendarDays,
 } from 'lucide-react'
 import { PageTransition } from '@/components/features/PageTransition'
 import { getDashboardData } from '@/lib/actions/user'
@@ -46,23 +51,34 @@ export default async function DashboardPage() {
   const { activities, latestNews, personalizedNews, hasFollowing, trendingArtists, stats } = data
 
   const quickLinks = [
-    { title: 'Perfil', description: 'Editar Informações', href: '/profile', icon: User },
+    { title: 'Perfil', description: 'Editar informações', href: '/profile', icon: User },
     { title: 'Configurações', description: 'Privacidade', href: '/settings', icon: Settings },
-    ...(session.user.role?.toLowerCase() === 'admin' ? [{ title: 'Admin', description: 'Painel', href: '/admin', icon: Shield }] : []),
+    ...(session.user.role?.toLowerCase() === 'admin' ? [{ title: 'Admin', description: 'Painel admin', href: '/admin', icon: Shield }] : []),
   ]
 
-  // Notícias a exibir: personalizadas (Para você) ou últimas (fallback)
   const newsToShow = hasFollowing && personalizedNews.length > 0 ? personalizedNews : latestNews
   const newsTitle = hasFollowing && personalizedNews.length > 0 ? 'Para você' : 'Últimas Notícias'
   const newsSubtitle = hasFollowing && personalizedNews.length > 0
     ? 'Notícias dos seus artistas favoritos'
     : 'Fique por dentro do universo hallyu'
 
+  const daysSinceJoin = stats.joinDate
+    ? Math.floor((Date.now() - new Date(stats.joinDate).getTime()) / (1000 * 60 * 60 * 24))
+    : null
+
+  const miniStats = [
+    { label: 'Favoritos', value: stats.favoritesCount, icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+    { label: 'Atividades', value: activities.length, icon: History, color: 'text-electric-cyan', bg: 'bg-cyan-400/10' },
+    { label: 'Comentários', value: stats.commentsCount, icon: MessageCircle, color: 'text-neon-pink', bg: 'bg-pink-400/10' },
+    ...(daysSinceJoin !== null ? [{ label: 'Dias de membro', value: daysSinceJoin, icon: CalendarDays, color: 'text-purple-400', bg: 'bg-purple-400/10' }] : []),
+  ]
+
   return (
     <PageTransition>
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12">
+
         {/* Header */}
-        <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <p className="flex items-center gap-2 text-neon-pink mb-2 font-black tracking-widest uppercase text-[10px]">
               <LayoutDashboard size={14} />
@@ -82,10 +98,25 @@ export default async function DashboardPage() {
           </div>
         </header>
 
+        {/* Mini stats strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {miniStats.map(({ label, value, icon: Icon, color, bg }) => (
+            <div key={label} className={`glass-card p-4 flex items-center gap-3 rounded-xl border border-white/5`}>
+              <div className={`p-2 rounded-lg ${bg} ${color}`}>
+                <Icon size={16} />
+              </div>
+              <div>
+                <p className="text-xl font-black text-white leading-none">{value}</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">{label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:grid-rows-[auto_auto_auto]">
 
-          {/* 1. Stats de Coleção (com breakdown por tipo) */}
+          {/* 1. Stats de Coleção */}
           <FavoritesStatCard
             artistCount={stats.artistCount}
             productionCount={stats.productionCount}
@@ -93,14 +124,13 @@ export default async function DashboardPage() {
             groupCount={stats.groupCount}
           />
 
-          {/* 2. Timeline de Atividade (com nomes das entidades) */}
+          {/* 2. Timeline de Atividade */}
           <div className="glass-card p-6 md:col-span-2 md:row-span-2 flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-display font-bold text-xl text-white flex items-center gap-2">
                 <History size={20} className="text-electric-cyan" />
                 Atividade Recente
               </h3>
-              {/* Comentários */}
               {stats.commentsCount > 0 && (
                 <Link href="/profile" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white transition-colors">
                   <MessageCircle size={12} className="text-electric-cyan" />
@@ -151,7 +181,6 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            {/* Membro desde */}
             {stats.joinDate && (
               <p className="text-[10px] text-zinc-700 mt-4 pt-3 border-t border-white/5">
                 Membro desde {new Date(stats.joinDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
@@ -160,7 +189,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* 3. Quick Actions */}
-          <div className="space-y-4 md:col-span-1 md:row-span-2">
+          <div className="space-y-3 md:col-span-1 md:row-span-2">
             {quickLinks.map((link) => (
               <Link key={link.href} href={link.href} className="glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-cyber-purple">
                 <div className="flex items-center gap-3">
@@ -169,22 +198,44 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <p className="font-bold text-sm text-white">{link.title}</p>
+                    <p className="text-[10px] text-zinc-500">{link.description}</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
               </Link>
             ))}
 
-            {/* Favoritos link rápido */}
             <Link href="/favorites" className="glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-pink-500">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-pink-400 transition-colors">
                   <Heart size={18} />
                 </div>
-                <p className="font-bold text-sm text-white">Favoritos</p>
+                <div>
+                  <p className="font-bold text-sm text-white">Favoritos</p>
+                  <p className="text-[10px] text-zinc-500">Sua coleção completa</p>
+                </div>
               </div>
               <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
             </Link>
+
+            {/* Explorar por categoria */}
+            <div className="glass-card p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Explorar</p>
+              <div className="space-y-1">
+                {[
+                  { href: '/artists', label: 'Artistas', icon: User, color: 'text-purple-400' },
+                  { href: '/groups', label: 'Grupos', icon: Music, color: 'text-pink-400' },
+                  { href: '/productions', label: 'Produções', icon: Film, color: 'text-cyan-400' },
+                  { href: '/news', label: 'Notícias', icon: Newspaper, color: 'text-yellow-400' },
+                ].map(({ href, label, icon: Icon, color }) => (
+                  <Link key={href} href={href} className="flex items-center gap-2 py-1.5 text-zinc-400 hover:text-white transition-colors group">
+                    <Icon size={13} className={color} />
+                    <span className="text-xs font-bold">{label}</span>
+                    <ChevronRight size={12} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
+                ))}
+              </div>
+            </div>
 
             <div className="glass-card p-5 bg-gradient-to-br from-cyber-purple/20 to-transparent border-cyber-purple/30 relative overflow-hidden group">
               <div className="flex items-center gap-3 mb-2 relative z-10">
@@ -198,10 +249,10 @@ export default async function DashboardPage() {
 
           {/* 4. Galeria de Favoritos */}
           <div className="md:col-span-4 mt-4">
-            <div className="flex justify-between items-end mb-6">
+            <div className="flex justify-between items-end mb-4">
               <div>
                 <h2 className="text-2xl font-display font-black text-white uppercase italic tracking-tight">Galeria de Coleção</h2>
-                <p className="text-zinc-500 text-sm mt-1">Seus items mais recentes</p>
+                <p className="text-zinc-500 text-sm mt-1">Seus itens mais recentes</p>
               </div>
               <Link href="/favorites" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
                 Ver Tudo <ChevronRight size={14} />
@@ -210,7 +261,50 @@ export default async function DashboardPage() {
             <FavoritesGallery trendingArtists={trendingArtists} />
           </div>
 
-          {/* 5. Notícias (personalizadas ou gerais) */}
+          {/* 5. Em alta — trending artists */}
+          {trendingArtists.length > 0 && (
+            <div className="md:col-span-4 mt-2">
+              <div className="flex justify-between items-end mb-4">
+                <div className="flex items-center gap-2">
+                  <TrendingUp size={16} className="text-neon-pink" />
+                  <h2 className="text-xl font-display font-black text-white uppercase italic tracking-tight">Em Alta Agora</h2>
+                </div>
+                <Link href="/artists" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
+                  Ver Artistas <ChevronRight size={14} />
+                </Link>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+                {trendingArtists.map((artist: any) => (
+                  <Link
+                    key={artist.id}
+                    href={`/artists/${artist.id}`}
+                    className="group flex-shrink-0 flex flex-col items-center gap-2 w-20"
+                  >
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-neon-pink/60 transition-all duration-300 shadow-lg">
+                      {artist.primaryImageUrl ? (
+                        <Image
+                          src={artist.primaryImageUrl}
+                          alt={artist.nameRomanized}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          sizes="64px"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white font-black text-lg">
+                          {artist.nameRomanized[0]}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-400 group-hover:text-white font-bold text-center leading-tight line-clamp-2 transition-colors">
+                      {artist.nameRomanized}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 6. Notícias */}
           {newsToShow.length > 0 && (
             <div className="md:col-span-4 mt-4">
               <div className="flex justify-between items-end mb-6">
