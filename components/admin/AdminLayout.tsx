@@ -7,6 +7,7 @@ import {
   Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
   Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
+  Mail, FileText,
 } from 'lucide-react'
 
 type NavItem = {
@@ -63,6 +64,13 @@ const navSections: NavSection[] = [
       { href: '/admin/comments', label: 'Comentários', icon: MessageSquare },
       { href: '/admin/reports', label: 'Reportes', icon: Flag },
       { href: '/admin/translations', label: 'Traduções', icon: Languages },
+    ],
+  },
+  {
+    label: 'Emails',
+    items: [
+      { href: '/admin/emails', label: 'Histórico', icon: Mail, exact: true },
+      { href: '/admin/emails/templates', label: 'Templates', icon: FileText },
     ],
   },
   {
