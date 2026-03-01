@@ -271,8 +271,15 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                             )}
                         </div>
 
+                        {/* Bio */}
+                        {(bioPt ?? artist.bio) && (
+                            <p className="text-zinc-300 text-sm leading-relaxed line-clamp-3 max-w-xl drop-shadow">
+                                {bioPt ?? artist.bio}
+                            </p>
+                        )}
+
                         {/* Stats */}
-                        <div className="flex items-center gap-4 flex-wrap mt-1">
+                        <div className="flex items-center gap-4 flex-wrap">
                             {age !== null && (
                                 <div className="flex items-center gap-1.5 text-purple-400">
                                     <Sparkles className="w-3.5 h-3.5" />
@@ -298,14 +305,6 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-8 lg:col-span-1">
-
-                        {/* Bio */}
-                        {(bioPt ?? artist.bio) && (
-                            <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Sobre</h3>
-                                <p className="text-zinc-300 leading-relaxed text-sm">{bioPt ?? artist.bio}</p>
-                            </div>
-                        )}
 
                         {/* Informações */}
                         <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
