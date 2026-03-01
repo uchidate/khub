@@ -1,8 +1,10 @@
 'use client'
 
 import { Heart } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useToast } from '@/lib/hooks/useToast'
+import { useAuthGate } from '@/lib/hooks/useAuthGate'
 
 interface FavoriteButtonProps {
   id: string
@@ -12,17 +14,24 @@ interface FavoriteButtonProps {
 }
 
 export function FavoriteButton({ id, className = '', itemName, itemType }: FavoriteButtonProps) {
+  const { status } = useSession()
   const { isFavorite, toggle, isLoaded } = useFavorites()
   const { addToast } = useToast()
+  const openAuthGate = useAuthGate(s => s.open)
 
   const favorited = isLoaded ? isFavorite(id) : false
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+
+    if (status === 'unauthenticated') {
+      openAuthGate('adicionar aos favoritos')
+      return
+    }
+
     toggle(id, itemType)
 
-    // Only show toast if itemType is provided
     if (itemType) {
       const action = favorited ? 'removido' : 'adicionado'
       const preposition = favorited ? 'dos' : 'aos'

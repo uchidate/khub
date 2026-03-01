@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Flag, X } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { useToast } from '@/lib/hooks/useToast'
+import { useAuthGate } from '@/lib/hooks/useAuthGate'
 
 const CATEGORIES = [
   { value: 'wrong_info',    label: 'Informação incorreta' },
@@ -26,10 +28,16 @@ export function ReportButton({ entityType, entityId, entityName, className = '' 
   const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { addToast } = useToast()
+  const { status } = useSession()
+  const openAuthGate = useAuthGate(s => s.open)
 
   const handleOpen = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    if (status === 'unauthenticated') {
+      openAuthGate('reportar um problema')
+      return
+    }
     setOpen(true)
   }
 
