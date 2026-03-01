@@ -24,7 +24,7 @@ jobs:
 
       - name: 🔔 Notify - New PR
         if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review'
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           payload: |
             {
@@ -82,7 +82,7 @@ jobs:
 
       - name: ✅ Notify - PR Approved
         if: github.event.review.state == 'approved'
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           payload: |
             {
@@ -121,7 +121,7 @@ jobs:
 
       - name: ❌ Notify - Changes Requested
         if: github.event.review.state == 'changes_requested'
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           payload: |
             {
