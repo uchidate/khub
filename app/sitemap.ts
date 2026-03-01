@@ -6,21 +6,40 @@ const BASE_URL = 'https://hallyuhub.com.br'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
         // 1. Static Routes
-        const routes = [
+        const primaryRoutes = [
             '',
             '/artists',
             '/groups',
             '/productions',
             '/news',
-            '/about',
-            '/auth/login',
-            '/auth/register',
         ].map((route) => ({
             url: `${BASE_URL}${route}`,
             lastModified: new Date(),
             changeFrequency: 'daily' as const,
             priority: 1,
         }))
+
+        const secondaryRoutes = [
+            '/about',
+            '/faq',
+        ].map((route) => ({
+            url: `${BASE_URL}${route}`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly' as const,
+            priority: 0.6,
+        }))
+
+        const legalRoutes = [
+            '/privacidade',
+            '/termos',
+        ].map((route) => ({
+            url: `${BASE_URL}${route}`,
+            lastModified: new Date(),
+            changeFrequency: 'yearly' as const,
+            priority: 0.3,
+        }))
+
+        const routes = [...primaryRoutes, ...secondaryRoutes, ...legalRoutes]
 
         // Skip DB queries during build
         if (process.env.SKIP_BUILD_STATIC_GENERATION) {
@@ -81,7 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.75,
         }))
 
-        return [...routes, ...artistRoutes, ...productionRoutes, ...newsRoutes, ...groupRoutes]
+        return [...primaryRoutes, ...secondaryRoutes, ...legalRoutes, ...artistRoutes, ...productionRoutes, ...newsRoutes, ...groupRoutes]
     } catch (error) {
         console.error('Error generating sitemap:', error)
         return [

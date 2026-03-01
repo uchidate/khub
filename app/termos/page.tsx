@@ -144,7 +144,7 @@ export default function TermosPage() {
                 <strong className="text-zinc-300">Conteúdo da Plataforma:</strong> Todo o conteúdo original do HallyuHub — incluindo design, textos, código, logotipos e a coleção curada de dados — é de nossa propriedade ou licenciado por terceiros e protegido por leis de propriedade intelectual. É proibida a reprodução, distribuição ou criação de obras derivadas sem autorização prévia.
               </p>
               <p>
-                <strong className="text-zinc-300">Conteúdo de terceiros:</strong> Notícias e imagens de artistas podem ser provenientes de fontes externas (agências, portais especializados). Respeitamos os direitos autorais e removemos conteúdo mediante solicitação fundamentada para: <a href="mailto:dmca@hallyuhub.com.br" className="text-purple-400 hover:underline">dmca@hallyuhub.com.br</a>.
+                <strong className="text-zinc-300">Conteúdo de terceiros:</strong> Notícias e imagens de artistas podem ser provenientes de fontes externas (agências, portais especializados). Respeitamos os direitos autorais e removemos conteúdo mediante solicitação fundamentada para: <a href="mailto:contato@hallyuhub.com.br" className="text-purple-400 hover:underline">contato@hallyuhub.com.br</a>.
               </p>
               <p>
                 <strong className="text-zinc-300">Conteúdo do Usuário:</strong> Ao publicar comentários ou qualquer conteúdo na Plataforma, você nos concede uma licença não exclusiva, gratuita e mundial para exibir e distribuir esse conteúdo no contexto dos nossos serviços. Você declara ter os direitos necessários sobre o conteúdo publicado.
@@ -197,9 +197,7 @@ export default function TermosPage() {
                 Para dúvidas, solicitações relacionadas a estes Termos ou questões de propriedade intelectual, entre em contato:
               </p>
               <ul className="list-none space-y-1">
-                <li><strong className="text-zinc-300">E-mail geral:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-purple-400 hover:underline">contato@hallyuhub.com.br</a></li>
-                <li><strong className="text-zinc-300">DMCA / Direitos autorais:</strong> <a href="mailto:dmca@hallyuhub.com.br" className="text-purple-400 hover:underline">dmca@hallyuhub.com.br</a></li>
-                <li><strong className="text-zinc-300">Proteção de dados (DPO):</strong> <a href="mailto:privacidade@hallyuhub.com.br" className="text-purple-400 hover:underline">privacidade@hallyuhub.com.br</a></li>
+                <li><strong className="text-zinc-300">E-mail:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-purple-400 hover:underline">contato@hallyuhub.com.br</a></li>
               </ul>
               <p>
                 Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da Comarca de São Paulo/SP para dirimir eventuais conflitos, com renúncia a qualquer outro, por mais privilegiado que seja.

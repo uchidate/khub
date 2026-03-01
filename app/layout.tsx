@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     },
     alternates: {
         canonical: BASE_URL,
+        types: {
+            'application/rss+xml': `${BASE_URL}/news/rss`,
+        },
     },
     openGraph: {
         title: "HallyuHub - O Portal da Onda Coreana",
@@ -98,7 +101,29 @@ export default async function RootLayout({
                     "logo": `${BASE_URL}/og-image.jpg`,
                     "description": "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
                     "inLanguage": "pt-BR",
+                    "contactPoint": {
+                        "@type": "ContactPoint",
+                        "email": "contato@hallyuhub.com.br",
+                        "contactType": "customer support",
+                        "availableLanguage": "Portuguese",
+                    },
                     "sameAs": [],
+                }} />
+                <JsonLd data={{
+                    "@context": "https://schema.org",
+                    "@type": "WebSite",
+                    "name": "HallyuHub",
+                    "url": BASE_URL,
+                    "description": "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+                    "inLanguage": "pt-BR",
+                    "potentialAction": {
+                        "@type": "SearchAction",
+                        "target": {
+                            "@type": "EntryPoint",
+                            "urlTemplate": `${BASE_URL}/artists?q={search_term_string}`,
+                        },
+                        "query-input": "required name=search_term_string",
+                    },
                 }} />
                 <SessionProvider>
                     <AnalyticsProvider>
