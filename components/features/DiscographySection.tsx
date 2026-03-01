@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Music, Music2, Youtube } from 'lucide-react'
+import { Music } from 'lucide-react'
 
 type AlbumType = 'ALBUM' | 'EP' | 'SINGLE'
 
@@ -112,44 +112,6 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                                 </div>
                             )}
 
-                            {/* Streaming links overlay */}
-                            {(album.spotifyUrl || album.youtubeUrl || album.appleMusicUrl) && (
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
-                                    {album.spotifyUrl && (
-                                        <a
-                                            href={album.spotifyUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-2 bg-green-500 rounded-full hover:scale-110 transition-transform text-black"
-                                            title="Ouvir no Spotify"
-                                        >
-                                            <Music className="w-4 h-4" />
-                                        </a>
-                                    )}
-                                    {album.appleMusicUrl && (
-                                        <a
-                                            href={album.appleMusicUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-2 bg-pink-500 rounded-full hover:scale-110 transition-transform text-white"
-                                            title="Ouvir no Apple Music"
-                                        >
-                                            <Music2 className="w-4 h-4" />
-                                        </a>
-                                    )}
-                                    {album.youtubeUrl && (
-                                        <a
-                                            href={album.youtubeUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-2 bg-red-600 rounded-full hover:scale-110 transition-transform text-white"
-                                            title="Ver no YouTube"
-                                        >
-                                            <Youtube className="w-4 h-4" />
-                                        </a>
-                                    )}
-                                </div>
-                            )}
                         </div>
 
                         <div className="p-3">
