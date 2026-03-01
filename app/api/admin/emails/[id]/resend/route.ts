@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { sendManualEmail } from '@/lib/services/email-service'
 import { createLogger } from '@/lib/utils/logger'
+import { logAudit } from '@/lib/services/audit-service'
 
 const log = createLogger('ADMIN-EMAIL-RESEND')
 
@@ -37,5 +38,6 @@ export async function POST(
         return NextResponse.json({ error: 'Falha ao reenviar — verifique os logs' }, { status: 500 })
     }
 
+    await logAudit({ adminId: session!.user.id, action: 'RESEND', entity: 'Email', entityId: id, details: `Reenviou email (${original.templateSlug}) para ${original.to}` })
     return NextResponse.json({ ok: true })
 }

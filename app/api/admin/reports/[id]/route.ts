@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { logAudit } from '@/lib/services/audit-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,7 @@ const patchSchema = z.object({
 })
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const { error } = await requireAdmin()
+  const { error, session } = await requireAdmin()
   if (error) return error
 
   try {
@@ -22,6 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       data:  { status },
     })
 
+    await logAudit({ adminId: session!.user.id, action: status === 'DISMISSED' ? 'REJECT' : 'APPROVE', entity: 'Report', entityId: params.id, details: `Status → ${status}` })
     return NextResponse.json(report)
   } catch (err) {
     if (err instanceof z.ZodError) {

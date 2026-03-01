@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { logAudit } from '@/lib/services/audit-service'
 
 function handlePrismaError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -203,7 +204,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const body = await request.json()
@@ -233,6 +234,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    await logAudit({ adminId: session!.user.id, action: 'CREATE', entity: 'Artist', entityId: artist.id, details: `Criou artista "${artist.nameRomanized}"` })
     return NextResponse.json(artist, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -251,7 +253,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const { searchParams } = new URL(request.url)
@@ -320,6 +322,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'Artist', entityId: artistId, details: `Editou artista "${artist.nameRomanized}"` })
     return NextResponse.json({ ...artist, clearedAlbumsCount: clearedAlbumsCount || undefined })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -338,7 +341,7 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const body = await request.json()
@@ -348,6 +351,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: { in: ids } },
     })
 
+    await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'Artist', details: `Deletou ${result.count} artista(s) — IDs: ${ids.join(', ')}` })
     return NextResponse.json({ message: `${result.count} artista(s) deletado(s)` })
   } catch (error) {
     if (error instanceof z.ZodError) {

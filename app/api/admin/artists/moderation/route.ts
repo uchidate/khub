@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { logAudit } from '@/lib/services/audit-service'
 
 const log = createLogger('ARTIST_MODERATION')
 
@@ -181,7 +182,7 @@ export async function GET(request: NextRequest) {
  * Marcar/desmarcar artista como não-relevante
  */
 export async function PUT(request: NextRequest) {
-  const { error } = await requireAdmin()
+  const { error, session } = await requireAdmin()
   if (error) return error
 
   try {
@@ -210,7 +211,7 @@ export async function PUT(request: NextRequest) {
     })
 
     log.info(`Artist ${flaggedAsNonKorean ? 'flagged' : 'unflagged'}`, { artistId, name: artist.nameRomanized })
-
+    await logAudit({ adminId: session!.user.id, action: flaggedAsNonKorean ? 'REJECT' : 'APPROVE', entity: 'Artist', entityId: artistId, details: `${flaggedAsNonKorean ? 'Flagged' : 'Unflagged'} artista "${artist.nameRomanized}"` })
     return NextResponse.json({
       success: true,
       artist,
@@ -229,7 +230,7 @@ export async function PUT(request: NextRequest) {
  * Remover artista permanentemente
  */
 export async function DELETE(request: NextRequest) {
-  const { error } = await requireAdmin()
+  const { error, session } = await requireAdmin()
   if (error) return error
 
   try {
@@ -262,7 +263,7 @@ export async function DELETE(request: NextRequest) {
     })
 
     log.info(`Artist permanently deleted`, { artistId, name: artist.nameRomanized })
-
+    await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'Artist', entityId: artistId, details: `Deletou artista "${artist.nameRomanized}" (moderação)` })
     return NextResponse.json({
       success: true,
       message: `Artist ${artist.nameRomanized} deleted successfully`,

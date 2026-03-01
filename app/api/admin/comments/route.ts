@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin-helpers'
+import { logAudit } from '@/lib/services/audit-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 
 // DELETE /api/admin/comments — exclusão em massa
 export async function DELETE(request: NextRequest) {
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     const body = await request.json() as { ids: string[] }
@@ -88,5 +89,6 @@ export async function DELETE(request: NextRequest) {
         where: { id: { in: body.ids } },
     })
 
+    await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'Comment', details: `Deletou ${result.count} comentário(s)` })
     return NextResponse.json({ deleted: result.count })
 }
