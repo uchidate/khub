@@ -4,7 +4,8 @@ export default function robots(): MetadataRoute.Robots {
     return {
         rules: [
             {
-                userAgent: 'Mediapartners-Google',
+                // AdsBot crawlers não são cobertos pelo wildcard (*) — devem ser explícitos
+                userAgent: ['Mediapartners-Google', 'AdsBot-Google'],
                 allow: '/',
             },
             {
