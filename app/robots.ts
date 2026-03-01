@@ -2,11 +2,18 @@ import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
     return {
-        rules: {
-            userAgent: '*',
-            allow: '/',
-            disallow: ['/admin/', '/dashboard/', '/api/'],
-        },
+        rules: [
+            {
+                // AdsBot crawlers não são cobertos pelo wildcard (*) — devem ser explícitos
+                userAgent: ['Mediapartners-Google', 'AdsBot-Google'],
+                allow: '/',
+            },
+            {
+                userAgent: '*',
+                allow: '/',
+                disallow: ['/admin/', '/dashboard/', '/api/'],
+            },
+        ],
         sitemap: 'https://hallyuhub.com.br/sitemap.xml',
     }
 }
