@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
@@ -11,6 +11,8 @@ import { motion } from 'framer-motion'
 
 function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -50,7 +52,7 @@ function LoginForm() {
         return
       }
 
-      router.push('/')
+      router.push(callbackUrl)
       router.refresh()
     } catch {
       setError('Erro ao fazer login. Tente novamente.')
@@ -62,7 +64,7 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signIn('google', { callbackUrl: '/' })
+      await signIn('google', { callbackUrl })
     } catch {
       setError('Erro ao fazer login com Google')
       setIsLoading(false)
@@ -208,7 +210,7 @@ function LoginForm() {
 
           <p className="mt-8 text-center text-sm text-zinc-400">
             Ainda não é membro?{' '}
-            <Link href="/auth/register" className="text-white hover:text-purple-400 font-bold transition-colors underline underline-offset-4">
+            <Link href={`/auth/register${callbackUrl !== '/' ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} className="text-white hover:text-purple-400 font-bold transition-colors underline underline-offset-4">
               Criar conta gratuita
             </Link>
           </p>
@@ -222,6 +224,12 @@ function LoginForm() {
   )
 }
 
+import { Suspense } from 'react'
+
 export default function LoginPage() {
-  return <LoginForm />
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
 }

@@ -10,6 +10,7 @@ import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
+import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { BetaBanner } from "@/components/features/BetaBanner"
@@ -138,6 +139,7 @@ export default async function RootLayout({
                         </ErrorBoundary>
                         <QuickSearch />
                         <ToastContainer />
+                        <AuthGateModal />
                         <PWAInstaller />
                         <footer className="bg-black border-t border-zinc-800 py-12">
                             <div className="max-w-7xl mx-auto px-4">
