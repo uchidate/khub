@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, X, Loader2, User, Newspaper, Film, TrendingUp } from 'lucide-react'
+import { Search, X, Loader2, User, Newspaper, Film, TrendingUp, Users } from 'lucide-react'
 import { useGlobalSearch } from '@/hooks/useGlobalSearch'
 import { getRoleLabel } from '@/lib/utils/role-labels'
 
@@ -172,9 +172,82 @@ export function GlobalSearch() {
                                 </div>
                             )}
 
+                            {/* Groups */}
+                            {results.groups.length > 0 && (
+                                <div className="p-3 border-b border-white/5">
+                                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-violet-400">
+                                        <Users className="w-4 h-4" />
+                                        Grupos ({results.groups.length})
+                                    </div>
+                                    <div className="space-y-1">
+                                        {results.groups.map((group) => (
+                                            <Link
+                                                key={group.id}
+                                                href={`/groups/${group.id}`}
+                                                onClick={() => setIsOpen(false)}
+                                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                                            >
+                                                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                    {group.profileImageUrl ? (
+                                                        <Image
+                                                            src={group.profileImageUrl}
+                                                            alt={group.name}
+                                                            fill
+                                                            className="object-cover"
+                                                            sizes="40px"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-white font-bold">
+                                                            {group.name[0]}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-white group-hover:text-violet-400 transition-colors truncate">
+                                                        {group.name}
+                                                    </p>
+                                                    {group.nameHangul && (
+                                                        <p className="text-xs text-zinc-500 truncate">{group.nameHangul}</p>
+                                                    )}
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Productions */}
+                            {results.productions.length > 0 && (
+                                <div className="p-3 border-b border-white/5">
+                                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-cyan-400">
+                                        <Film className="w-4 h-4" />
+                                        Produções ({results.productions.length})
+                                    </div>
+                                    <div className="space-y-1">
+                                        {results.productions.map((production) => (
+                                            <Link
+                                                key={production.id}
+                                                href={`/productions/${production.id}`}
+                                                onClick={() => setIsOpen(false)}
+                                                className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                                            >
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-white group-hover:text-cyan-400 transition-colors truncate">
+                                                        {production.titlePt}
+                                                    </p>
+                                                    <p className="text-xs text-zinc-500 truncate">
+                                                        {production.type} {production.year && `• ${production.year}`}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* News */}
                             {results.news.length > 0 && (
-                                <div className="p-3 border-b border-white/5">
+                                <div className="p-3">
                                     <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-pink-400">
                                         <Newspaper className="w-4 h-4" />
                                         Notícias ({results.news.length})
@@ -196,35 +269,6 @@ export function GlobalSearch() {
                                                             day: '2-digit',
                                                             month: 'short'
                                                         })}
-                                                    </p>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Productions */}
-                            {results.productions.length > 0 && (
-                                <div className="p-3">
-                                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-cyan-400">
-                                        <Film className="w-4 h-4" />
-                                        Produções ({results.productions.length})
-                                    </div>
-                                    <div className="space-y-1">
-                                        {results.productions.map((production) => (
-                                            <Link
-                                                key={production.id}
-                                                href={`/productions/${production.id}`}
-                                                onClick={() => setIsOpen(false)}
-                                                className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
-                                            >
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-white group-hover:text-cyan-400 transition-colors truncate">
-                                                        {production.titlePt}
-                                                    </p>
-                                                    <p className="text-xs text-zinc-500 truncate">
-                                                        {production.type} {production.year && `• ${production.year}`}
                                                     </p>
                                                 </div>
                                             </Link>

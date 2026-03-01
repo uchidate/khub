@@ -28,8 +28,17 @@ interface Production {
     voteAverage: number | null
 }
 
+interface Group {
+    id: string
+    name: string
+    nameHangul: string | null
+    profileImageUrl: string | null
+    debutDate: string | null
+}
+
 interface SearchResults {
     artists: Artist[]
+    groups: Group[]
     news: News[]
     productions: Production[]
     total: number
@@ -40,6 +49,7 @@ export function useGlobalSearch() {
     const [query, setQuery] = useState('')
     const [results, setResults] = useState<SearchResults>({
         artists: [],
+        groups: [],
         news: [],
         productions: [],
         total: 0,
@@ -51,7 +61,7 @@ export function useGlobalSearch() {
 
     const search = useCallback(async (searchTerm: string) => {
         if (searchTerm.trim().length < 2) {
-            setResults({ artists: [], news: [], productions: [], total: 0, query: '' })
+            setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: '' })
             setIsLoading(false)
             return
         }
@@ -68,7 +78,7 @@ export function useGlobalSearch() {
 
         try {
             const response = await fetch(
-                `/api/search/global?q=${encodeURIComponent(searchTerm)}&limit=5`,
+                `/api/search/global?q=${encodeURIComponent(searchTerm)}&limit=5&types=artists,groups,productions,news`,
                 { signal: abortControllerRef.current.signal }
             )
 
@@ -82,7 +92,7 @@ export function useGlobalSearch() {
             // Ignorar erro de abort (é esperado quando cancelamos)
             if (error.name !== 'AbortError') {
                 console.error('Search error:', error)
-                setResults({ artists: [], news: [], productions: [], total: 0, query: searchTerm })
+                setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: searchTerm })
             }
         } finally {
             setIsLoading(false)
@@ -95,7 +105,7 @@ export function useGlobalSearch() {
             if (query.trim().length >= 2) {
                 search(query)
             } else {
-                setResults({ artists: [], news: [], productions: [], total: 0, query: '' })
+                setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: '' })
             }
         }, 300)
 
@@ -104,7 +114,7 @@ export function useGlobalSearch() {
 
     const clearSearch = useCallback(() => {
         setQuery('')
-        setResults({ artists: [], news: [], productions: [], total: 0, query: '' })
+        setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: '' })
         setIsOpen(false)
     }, [])
 
