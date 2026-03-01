@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 1.5. Lock de execução — evita encavalar (duas execuções simultâneas)
-        const lockId = await acquireCronLock();
+        const lockId = await acquireCronLock('cron-update');
         if (!lockId) {
             return NextResponse.json({
                 success: false,
@@ -711,7 +711,7 @@ Requisitos:
         const duration = Date.now() - startTime;
         log.error('Fatal error in background processing', { error: getErrorMessage(error), duration: Math.round(duration / 1000) });
     } finally {
-        await releaseCronLock(lockId);
+        await releaseCronLock('cron-update', lockId);
     }
 }
 
