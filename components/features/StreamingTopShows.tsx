@@ -127,14 +127,14 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
 
                             {/* Rank — estilo Netflix (número grande) */}
                             <div className="absolute top-1 left-1.5 z-10">
-                                <span className="text-3xl md:text-4xl font-black text-white/90 leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                <span className="text-2xl md:text-4xl font-black text-white/90 leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                                     {show.rank}
                                 </span>
                             </div>
 
-                            {/* Nota TMDB (canto inferior direito) */}
+                            {/* Nota TMDB (canto superior direito — não colide com badge da plataforma) */}
                             {show.voteAverage != null && show.voteAverage > 0 && (
-                                <div className="absolute bottom-1.5 right-1.5 z-10 px-1 py-0.5 rounded bg-black/70 text-[8px] font-bold text-yellow-400 leading-none">
+                                <div className="absolute top-1 right-1 z-10 px-1 py-0.5 rounded bg-black/70 text-[8px] font-bold text-yellow-400 leading-none">
                                     ★ {show.voteAverage.toFixed(1)}
                                 </div>
                             )}

@@ -10,7 +10,7 @@ import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
 import { MobileSearchOverlay } from "@/components/features/MobileSearchOverlay"
 
-const NavBar = ({ premiumEnabled = false }: { premiumEnabled?: boolean }) => {
+const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?: boolean; betaMode?: boolean }) => {
     const pathname = usePathname()
     const [isScrolled, setIsScrolled] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
@@ -39,7 +39,7 @@ const NavBar = ({ premiumEnabled = false }: { premiumEnabled?: boolean }) => {
 
     return (
         <>
-            <nav className={`w-full z-[100] fixed top-0 transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent py-4 md:py-6'}`}>
+            <nav className={`w-full z-[100] fixed transition-all duration-300 ${betaMode ? 'top-8' : 'top-0'} ${isScrolled ? 'glass-nav py-2' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent py-4 md:py-6'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between gap-4 md:gap-6 h-16 md:h-20">
                         {/* Logo */}

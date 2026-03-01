@@ -132,7 +132,7 @@ export default async function RootLayout({
                     <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
                     <BetaBanner />
                     <div className="min-h-screen flex flex-col">
-                        <NavBar premiumEnabled={settings.premiumEnabled} />
+                        <NavBar premiumEnabled={settings.premiumEnabled} betaMode={settings.betaMode} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>

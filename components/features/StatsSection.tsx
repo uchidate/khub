@@ -20,28 +20,28 @@ export function StatsSection({ stats }: StatsSectionProps) {
         {
             label: 'Artistas',
             value: stats.artists,
-            icon: <Users className="w-8 h-8" />,
+            icon: <Users className="w-5 h-5 md:w-8 md:h-8" />,
             color: 'text-purple-400',
             gradient: 'from-purple-600/20 to-purple-900/20'
         },
         {
             label: 'Produções',
             value: stats.productions,
-            icon: <Film className="w-8 h-8" />,
+            icon: <Film className="w-5 h-5 md:w-8 md:h-8" />,
             color: 'text-pink-400',
             gradient: 'from-pink-600/20 to-pink-900/20'
         },
         {
             label: 'Notícias',
             value: stats.news,
-            icon: <Newspaper className="w-8 h-8" />,
+            icon: <Newspaper className="w-5 h-5 md:w-8 md:h-8" />,
             color: 'text-cyan-400',
             gradient: 'from-cyan-600/20 to-cyan-900/20'
         },
         {
             label: 'Visualizações',
             value: stats.views,
-            icon: <TrendingUp className="w-8 h-8" />,
+            icon: <TrendingUp className="w-5 h-5 md:w-8 md:h-8" />,
             color: 'text-green-400',
             gradient: 'from-green-600/20 to-green-900/20'
         }
@@ -79,21 +79,21 @@ export function StatsSection({ stats }: StatsSectionProps) {
                             transition={{ duration: 0.6, delay: index * 0.1 }}
                             className="group"
                         >
-                            <div className={`relative p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} dark:border-white/10 dark:hover:border-white/20 border border-zinc-200 hover:border-zinc-300 transition-all hover:scale-105 backdrop-blur-sm overflow-hidden`}>
+                            <div className={`relative p-4 md:p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} dark:border-white/10 dark:hover:border-white/20 border border-zinc-200 hover:border-zinc-300 transition-all hover:scale-105 backdrop-blur-sm overflow-hidden`}>
                                 {/* Glow Effect */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
                                 <div className="relative z-10">
-                                    <div className={`${stat.color} mb-4 opacity-80 group-hover:opacity-100 transition-opacity`}>
+                                    <div className={`${stat.color} mb-2 md:mb-4 opacity-80 group-hover:opacity-100 transition-opacity`}>
                                         {stat.icon}
                                     </div>
 
-                                    <div className="space-y-2">
+                                    <div className="space-y-1 md:space-y-2">
                                         <AnimatedCounter
                                             value={stat.value}
-                                            className={`text-4xl md:text-5xl font-black ${stat.color} tracking-tighter`}
+                                            className={`text-2xl md:text-4xl lg:text-5xl font-black ${stat.color} tracking-tighter`}
                                         />
-                                        <p className="text-sm font-bold dark:text-zinc-400 text-zinc-600 uppercase tracking-wider">
+                                        <p className="text-xs md:text-sm font-bold dark:text-zinc-400 text-zinc-600 uppercase tracking-wider">
                                             {stat.label}
                                         </p>
                                     </div>
