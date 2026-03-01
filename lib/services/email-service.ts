@@ -12,6 +12,7 @@ import { Resend } from 'resend'
 import prisma from '@/lib/prisma'
 import { renderTemplate } from '@/lib/email/render-template'
 import { createLogger } from '@/lib/utils/logger'
+import { logSystemEvent } from '@/lib/services/system-event-service'
 
 const log = createLogger('EMAIL')
 
@@ -88,6 +89,7 @@ async function send(opts: SendOptions): Promise<boolean> {
             data: { status: 'FAILED', errorMessage: msg, sentAt: new Date() },
         })
         log.error('Falha ao enviar email', { type: opts.type, to: opts.to, err: msg })
+        await logSystemEvent('ERROR', 'email-service', `Falha ao enviar email (${opts.type}) para ${opts.to}: ${msg}`, { type: opts.type, to: opts.to })
         return false
     }
 }

@@ -250,10 +250,15 @@ jobs:
 
           chmod 600 .env.staging
 
+          # Shared .env for docker-compose variable interpolation (GF_SECURITY_ADMIN_PASSWORD, POSTGRES_PASSWORD)
+          touch .env
+          grep -q "^GF_SECURITY_ADMIN_PASSWORD=" .env && sed -i "s|^GF_SECURITY_ADMIN_PASSWORD=.*|GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}|" .env || echo "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> .env
+
       - name: Copy Files to Deploy Directory
         run: |
           cp -f docker-compose.staging.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
+          cp -rf monitoring /var/www/hallyuhub/
 
       - name: 💾 Save rollback image
         id: save-rollback
@@ -444,10 +449,15 @@ jobs:
 
           chmod 600 .env.production
 
+          # Shared .env for docker-compose variable interpolation (GF_SECURITY_ADMIN_PASSWORD, POSTGRES_PASSWORD)
+          touch .env
+          grep -q "^GF_SECURITY_ADMIN_PASSWORD=" .env && sed -i "s|^GF_SECURITY_ADMIN_PASSWORD=.*|GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}|" .env || echo "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> .env
+
       - name: Copy Files to Deploy Directory
         run: |
           cp -f docker-compose.prod.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
+          cp -rf monitoring /var/www/hallyuhub/
 
       - name: 💾 Save rollback image
         id: save-rollback

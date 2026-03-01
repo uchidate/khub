@@ -1,0 +1,173 @@
+{
+  "title": "HallyuHub — Monitoramento",
+  "uid": "hallyuhub-main",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1m",
+  "timezone": "America/Sao_Paulo",
+  "time": { "from": "now-24h", "to": "now" },
+  "tags": ["hallyuhub"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Uptime",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "hallyuhub_up",
+        "legendFormat": "Status",
+        "refId": "A"
+      }],
+      "options": {
+        "colorMode": "background",
+        "thresholds": {
+          "steps": [
+            { "color": "red", "value": 0 },
+            { "color": "green", "value": 1 }
+          ]
+        },
+        "mappings": [
+          { "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "Memória (MB)",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "hallyuhub_memory_heap_used_bytes / 1024 / 1024",
+        "legendFormat": "Heap Used",
+        "refId": "A"
+      }],
+      "options": {
+        "thresholds": {
+          "steps": [
+            { "color": "green", "value": 0 },
+            { "color": "yellow", "value": 1024 },
+            { "color": "red", "value": 1800 }
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "MB", "min": 0, "max": 2048 }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Latência DB (ms)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "hallyuhub_db_latency_ms",
+        "legendFormat": "DB Latency",
+        "refId": "A"
+      }],
+      "options": {
+        "colorMode": "background",
+        "thresholds": {
+          "steps": [
+            { "color": "green", "value": 0 },
+            { "color": "yellow", "value": 100 },
+            { "color": "red", "value": 500 }
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Erros de Sistema (24h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*) as value FROM \"SystemEvent\" WHERE level = 'ERROR' AND \"createdAt\" >= NOW() - INTERVAL '24 hours'",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": {
+        "colorMode": "background",
+        "thresholds": {
+          "steps": [
+            { "color": "green", "value": 0 },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Atividade por Tipo (24h)",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [{
+        "rawSql": "SELECT type AS metric, COUNT(*) AS value FROM \"Activity\" WHERE \"createdAt\" >= NOW() - INTERVAL '24 hours' GROUP BY type ORDER BY value DESC",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right" }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Eventos ao Longo do Tempo",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [{
+        "rawSql": "SELECT date_trunc('hour', \"createdAt\") AS time, type AS metric, COUNT(*) AS value FROM \"Activity\" WHERE $__timeFilter(\"createdAt\") GROUP BY time, type ORDER BY time",
+        "format": "time_series",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 7,
+      "title": "Emails: Enviados vs Falhas (7d)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [{
+        "rawSql": "SELECT date_trunc('day', \"createdAt\") AS time, status AS metric, COUNT(*) AS value FROM \"EmailLog\" WHERE $__timeFilter(\"createdAt\") GROUP BY time, status ORDER BY time",
+        "format": "time_series",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 8,
+      "title": "Últimos Erros de Sistema",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [{
+        "rawSql": "SELECT \"createdAt\" AS \"Hora\", level AS \"Nível\", source AS \"Serviço\", message AS \"Mensagem\" FROM \"SystemEvent\" WHERE level IN ('ERROR','WARN') ORDER BY \"createdAt\" DESC LIMIT 20",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": {
+        "sortBy": [{ "displayName": "Hora", "desc": true }]
+      }
+    },
+    {
+      "id": 9,
+      "title": "Auditoria Admin (últimas ações)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [{
+        "rawSql": "SELECT a.\"createdAt\" AS \"Hora\", u.name AS \"Admin\", a.action AS \"Ação\", a.entity AS \"Entidade\", a.details AS \"Detalhe\" FROM \"AuditLog\" a LEFT JOIN \"User\" u ON u.id = a.\"adminId\" ORDER BY a.\"createdAt\" DESC LIMIT 30",
+        "format": "table",
+        "refId": "A"
+      }]
+    }
+  ]
+}
