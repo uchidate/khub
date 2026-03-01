@@ -18,7 +18,7 @@ export function BetaBannerClient() {
                 isVisible ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
             }`}
         >
-            <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-1.5 text-center">
+            <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 h-10 flex items-center justify-center">
                 <div className="flex items-center justify-center gap-2 text-xs text-amber-400 font-medium">
                     <Construction size={12} className="flex-shrink-0" />
                     <span className="hidden sm:inline">
