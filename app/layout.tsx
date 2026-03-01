@@ -81,16 +81,6 @@ export default async function RootLayout({
 
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
-            <head>
-                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-                    // eslint-disable-next-line @next/next/no-sync-scripts
-                    <script
-                        async
-                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
-                        crossOrigin="anonymous"
-                    />
-                )}
-            </head>
             <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
                 {process.env.NEXT_PUBLIC_GA_ID && (
                     <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
