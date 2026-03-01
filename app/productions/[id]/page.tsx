@@ -363,23 +363,18 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                         supporting = production.artists.slice(6)
                                     }
 
-                                    const CastCard = ({ artist, role, badge }: { artist: typeof leads[0]['artist'], role: string | null, badge?: { label: string, color: string } }) => (
+                                    const CastCard = ({ artist, role }: { artist: typeof leads[0]['artist'], role: string | null }) => (
                                         <Link href={`/artists/${artist.id}`} className="group">
-                                            <div className={`aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 transition-colors ${badge ? 'border border-purple-500/20 hover:border-purple-500/50' : 'border border-white/5 hover:border-purple-500/30'}`}>
+                                            <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-colors">
                                                 {artist.primaryImageUrl ? (
                                                     <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
                                                 ) : (
                                                     <div className="flex items-center justify-center h-full text-zinc-700 font-black text-sm">{artist.nameRomanized}</div>
                                                 )}
-                                                <div className={`absolute inset-0 bg-gradient-to-t ${badge ? 'from-black/70' : 'from-black/60'} to-transparent`} />
-                                                {badge && (
-                                                    <div className="absolute top-2 left-2">
-                                                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 backdrop-blur-sm rounded text-white ${badge.color}`}>{badge.label}</span>
-                                                    </div>
-                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                 <div className="absolute bottom-0 left-0 right-0 p-3">
                                                     <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
-                                                    {role && <p className={`text-xs font-bold truncate ${badge ? 'text-purple-400' : 'text-purple-500'}`}>{role}</p>}
+                                                    {role && <p className="text-xs font-bold truncate text-purple-500">{role}</p>}
                                                 </div>
                                             </div>
                                         </Link>
@@ -393,7 +388,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                                     <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3">Protagonistas</p>
                                                     <div className={`grid gap-4 ${leads.length <= 2 ? 'grid-cols-2' : leads.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
                                                         {leads.map(({ artist, role }) => (
-                                                            <CastCard key={artist.id} artist={artist} role={role} badge={{ label: 'Protagonista', color: 'bg-purple-600/80' }} />
+                                                            <CastCard key={artist.id} artist={artist} role={role} />
                                                         ))}
                                                     </div>
                                                 </div>
@@ -404,7 +399,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Elenco Secundário</p>
                                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                                         {secondary.map(({ artist, role }) => (
-                                                            <CastCard key={artist.id} artist={artist} role={role} badge={{ label: 'Secundário', color: 'bg-zinc-600/80' }} />
+                                                            <CastCard key={artist.id} artist={artist} role={role} />
                                                         ))}
                                                     </div>
                                                 </div>
