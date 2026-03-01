@@ -386,7 +386,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                                             {leads.length > 0 && (
                                                 <div className="mb-8">
                                                     <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3">Protagonistas</p>
-                                                    <div className={`grid gap-4 ${leads.length <= 2 ? 'grid-cols-2' : leads.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
+                                                    <div className="grid grid-cols-2 gap-4">
                                                         {leads.map(({ artist, role }) => (
                                                             <CastCard key={artist.id} artist={artist} role={role} />
                                                         ))}
