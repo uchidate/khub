@@ -23,16 +23,9 @@ export function GlobalSearch() {
         clearSearch
     } = useGlobalSearch()
 
-    // Atalho de teclado Cmd/Ctrl + K
+    // ESC para fechar o dropdown (Cmd+K é tratado pelo QuickSearch modal)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault()
-                inputRef.current?.focus()
-                setIsOpen(true)
-            }
-
-            // ESC para fechar
             if (e.key === 'Escape') {
                 setIsOpen(false)
                 inputRef.current?.blur()
