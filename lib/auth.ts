@@ -36,7 +36,6 @@ export const authOptions: AuthOptions = {
     signIn: "/auth/login",
     error: "/auth/error",
     verifyRequest: "/auth/verify-request",
-    newUser: "/auth/register",
   },
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
