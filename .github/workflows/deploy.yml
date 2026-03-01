@@ -282,6 +282,7 @@ jobs:
 
           echo "🛑 Parando containers antigos..."
           $COMPOSE_CMD -f docker-compose.staging.yml down || true
+          docker network rm backend-staging 2>/dev/null || true
 
           echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.staging.yml up -d
@@ -481,6 +482,7 @@ jobs:
 
           echo "🛑 Parando containers antigos..."
           $COMPOSE_CMD -f docker-compose.prod.yml down || true
+          docker network rm backend-production 2>/dev/null || true
 
           echo "🚀 Iniciando containers..."
           $COMPOSE_CMD -f docker-compose.prod.yml up -d
