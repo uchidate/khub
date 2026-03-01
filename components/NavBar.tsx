@@ -54,7 +54,7 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
                                     key={link.href}
                                     href={link.href}
                                     className={`text-sm font-medium transition-colors whitespace-nowrap ${pathname === link.href
-                                        ? "text-zinc-900 dark:text-white font-semibold"
+                                        ? "text-purple-600 dark:text-white font-semibold"
                                         : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300"
                                         }`}
                                 >

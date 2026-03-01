@@ -314,7 +314,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                                     <InfoRow icon={<User className="w-3.5 h-3.5" />} label="Nome Real" value={artist.birthName} />
                                 )}
                                 {birthDateFormatted && (
-                                    <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Nascimento" value={`${birthDateFormatted}${age !== null ? ` (${age} anos)` : ''}`} />
+                                    <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Nascimento" value={birthDateFormatted} />
                                 )}
                                 {artist.placeOfBirth && (
                                     <InfoRow icon={<MapPin className="w-3.5 h-3.5" />} label="Naturalidade" value={artist.placeOfBirth} />
@@ -582,7 +582,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
                 {icon}
                 <span className="text-xs font-black uppercase tracking-widest">{label}</span>
             </div>
-            <span className="text-sm font-bold text-zinc-300">{value}</span>
+            <span className="text-sm font-bold text-zinc-300 text-right">{value}</span>
         </div>
     )
 }
