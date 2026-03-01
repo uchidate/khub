@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { X } from 'lucide-react'
 import { GlobalSearch } from '@/components/ui/GlobalSearch'
 
@@ -11,6 +12,13 @@ interface MobileSearchOverlayProps {
 
 export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
     const containerRef = useRef<HTMLDivElement>(null)
+    const pathname = usePathname()
+
+    // Fecha ao navegar para outra página
+    useEffect(() => {
+        if (isOpen) onClose()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname])
 
     // Fecha com ESC
     useEffect(() => {
