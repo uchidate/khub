@@ -56,9 +56,14 @@ jobs:
             # 5. Nomes de containers específicos
             # 5a. Padrões compostos ANTES dos simples (hallyuhub-postgres-X contém postgres-X)
             "hallyuhub-postgres-staging|hallyuhub-postgres-production"
+            "hallyuhub-prometheus-staging|hallyuhub-prometheus-production"
+            "hallyuhub-grafana-staging|hallyuhub-grafana-production"
             "hallyuhub-staging|hallyuhub"
             "postgres-staging|postgres-production"
             "ollama-staging|ollama-production"
+            # 5b. Serviços de monitoramento (staging usa sufixo, production não)
+            "prometheus-staging|prometheus"
+            "grafana-staging|grafana"
 
             # 6. Scripts específicos de cada ambiente (equivalentes funcionais)
             "setup-auto-generation.sh|verify-production.sh"
@@ -168,8 +173,10 @@ jobs:
           # production: hallyuhub (sem sufixo) → hallyuhub-XXX, outros-production → outros-XXX
           staging_services_norm=$(echo "$staging_services" | sed 's/-staging/-XXX/g')
           prod_services_norm=$(echo "$prod_services" | sed 's/-production/-XXX/g')
-          # Caso especial: app container de production é 'hallyuhub' (não 'hallyuhub-production')
+          # Casos especiais: containers de production sem sufixo -production
           prod_services_norm=$(echo "$prod_services_norm" | sed 's/^  hallyuhub:$/  hallyuhub-XXX:/')
+          prod_services_norm=$(echo "$prod_services_norm" | sed 's/^  prometheus:$/  prometheus-XXX:/')
+          prod_services_norm=$(echo "$prod_services_norm" | sed 's/^  grafana:$/  grafana-XXX:/')
 
           if [ "$staging_services_norm" == "$prod_services_norm" ]; then
             echo "✅ Services idênticos em staging e production"

@@ -111,7 +111,7 @@ services:
       - hallyuhub
 
   grafana:
-    image: grafana/grafana:11-alpine
+    image: grafana/grafana:latest
     container_name: hallyuhub-grafana-production
     ports:
       - "3002:3000"
