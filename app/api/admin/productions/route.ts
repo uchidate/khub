@@ -59,6 +59,8 @@ export async function GET(request: NextRequest) {
       : filter === 'no_rating_pending'   ? { ageRating: null, tmdbId: { not: null }, ageRatingSyncAt: null }
       : filter === 'no_rating_attempted' ? { ageRating: null, tmdbId: { not: null }, ageRatingSyncAt: { not: null } }
       : filter === 'no_rating_no_tmdb'   ? { ageRating: null, tmdbId: null }
+      : filter === 'no_tmdb'   ? { tmdbId: null }
+      : filter === 'has_tmdb'  ? { tmdbId: { not: null as null } }
       : {}
 
     const where = search
