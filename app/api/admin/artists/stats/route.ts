@@ -42,6 +42,8 @@ export async function GET() {
   const [
     total,
     flagged,
+    withTmdb,
+    noTmdb,
     noHangul,
     noHangulPending,
     noHangulAttempted,
@@ -52,6 +54,7 @@ export async function GET() {
     noPhotoNoTmdb,
     noSocialPending,
     noSocialAttempted,
+    noSocialNoTmdb,
     withGroup,
     noGroupUnsynced,
     noGroupSolo,
@@ -59,6 +62,9 @@ export async function GET() {
   ] = await Promise.all([
     prisma.artist.count(),
     prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
+    // tmdb presence
+    prisma.artist.count({ where: { ...active, tmdbId: { not: null } } }),
+    prisma.artist.count({ where: { ...active, tmdbId: null } }),
     // no hangul
     prisma.artist.count({ where: { ...active, nameHangul: null } }),
     prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: null } }),
@@ -79,6 +85,8 @@ export async function GET() {
         socialLinks: { equals: Prisma.DbNull },
       },
     }),
+    // no social AND no tmdb — requer curadoria manual
+    prisma.artist.count({ where: { ...active, socialLinksUpdatedAt: null, tmdbId: null } }),
     // groups
     prisma.artist.count({ where: { ...active, memberships: { some: { isActive: true } } } }),
     prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null } }),
@@ -98,6 +106,8 @@ export async function GET() {
   return NextResponse.json({
     total,
     flagged,
+    withTmdb,
+    noTmdb,
     noHangul,
     noHangulPending,
     noHangulAttempted,
@@ -109,6 +119,7 @@ export async function GET() {
     noSocialTotal: noSocialPending + noSocialAttempted,
     noSocialPending,
     noSocialAttempted,
+    noSocialNoTmdb,
     withGroup,
     noGroup,
     noGroupUnsynced,

@@ -114,6 +114,8 @@ export async function GET(request: NextRequest) {
 
     const filterWhere = koreanNoTmdbIds !== null
       ? { id: { in: koreanNoTmdbIds } }
+      : filter === 'with_tmdb'           ? { ...active, tmdbId: { not: null } }
+      : filter === 'no_tmdb'             ? { ...active, tmdbId: null }
       : filter === 'no_hangul'           ? { ...active, nameHangul: null }
       : filter === 'no_hangul_pending'   ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: null }
       : filter === 'no_hangul_attempted' ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: { not: null } }
@@ -125,6 +127,7 @@ export async function GET(request: NextRequest) {
       : filter === 'no_social' || filter === 'no_social_pending'
                                          ? { ...active, socialLinksUpdatedAt: null }
       : filter === 'no_social_attempted' ? { ...active, socialLinksUpdatedAt: { not: null }, socialLinks: { equals: Prisma.DbNull } }
+      : filter === 'no_social_no_tmdb'   ? { ...active, socialLinksUpdatedAt: null, tmdbId: null }
       : filter === 'flagged'             ? { flaggedAsNonKorean: true }
       : filter === 'with_group'          ? { ...active, memberships: { some: { isActive: true } } }
       : filter === 'no_group'            ? { ...active, memberships: { none: { isActive: true } } }
