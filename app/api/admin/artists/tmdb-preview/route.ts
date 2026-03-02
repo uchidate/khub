@@ -29,19 +29,19 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const res = await fetch(
-            `${TMDB_BASE}/person/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US`,
-            { signal: AbortSignal.timeout(8000) }
-        )
+        const [resEn, resPt] = await Promise.all([
+            fetch(`${TMDB_BASE}/person/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US`, { signal: AbortSignal.timeout(8000) }),
+            fetch(`${TMDB_BASE}/person/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`, { signal: AbortSignal.timeout(8000) }),
+        ])
 
-        if (res.status === 404) {
+        if (resEn.status === 404) {
             return NextResponse.json({ error: 'Pessoa não encontrada no TMDB' }, { status: 404 })
         }
-        if (!res.ok) {
-            return NextResponse.json({ error: `Erro TMDB: ${res.status}` }, { status: 502 })
+        if (!resEn.ok) {
+            return NextResponse.json({ error: `Erro TMDB: ${resEn.status}` }, { status: 502 })
         }
 
-        const data = await res.json() as {
+        type PersonData = {
             id: number
             name: string
             biography: string
@@ -54,6 +54,9 @@ export async function GET(req: NextRequest) {
             also_known_as: string[]
         }
 
+        const data = await resEn.json() as PersonData
+        const dataPt = resPt.ok ? await resPt.json() as PersonData : null
+
         const hangulName = data.also_known_as.find(n => KOREAN_REGEX.test(n)) ?? null
         const photoUrl = data.profile_path ? `${TMDB_IMG}${data.profile_path}` : null
 
@@ -62,6 +65,8 @@ export async function GET(req: NextRequest) {
             name: data.name,
             hangulName,
             biography: data.biography || null,
+            biographyPt: dataPt?.biography || null,
+            biographyEn: data.biography || null,
             birthday: data.birthday || null,
             placeOfBirth: data.place_of_birth || null,
             photoUrl,

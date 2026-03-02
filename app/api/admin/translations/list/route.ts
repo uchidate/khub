@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/lib/utils/error'
 export const dynamic = 'force-dynamic'
 
 type TranslationStatus = 'pending' | 'draft' | 'approved'
+type ProductionStatusFilter = '' | 'pending' | 'pt' | 'en' | 'manual'
 
 /**
  * Resolve IDs de entidades que batem com o filtro de status, consultando ContentTranslation.
@@ -88,19 +89,42 @@ export async function GET(req: NextRequest) {
       total = count
 
     } else if (entityType === 'production') {
-      // Para productions, usa 'synopsis' como campo primário determinante de status
-      const idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
+      // Para productions: filtra por synopsisSource diretamente (não usa ContentTranslation)
+      const prodFilter = searchParams.get('status') as ProductionStatusFilter | null
+      const synopsisSourceFilter =
+        prodFilter === 'pending'  ? { synopsis: null as null }
+        : prodFilter === 'pt'     ? { synopsisSource: 'tmdb_pt' }
+        : prodFilter === 'en'     ? { synopsisSource: { in: ['tmdb_en', 'ai'] } }
+        : prodFilter === 'manual' ? { synopsisSource: 'manual' }
+        : {}
       const where = {
-        synopsis: { not: null as null },
         isHidden: false,
-        ...(q ? { titlePt: { contains: q, mode: 'insensitive' as const } } : {}),
-        ...(idFilter ? { id: idFilter } : {}),
+        ...(q ? {
+          OR: [
+            { titlePt: { contains: q, mode: 'insensitive' as const } },
+            { titleKr: { contains: q, mode: 'insensitive' as const } },
+          ],
+        } : {}),
+        ...synopsisSourceFilter,
       }
       const [prods, count] = await Promise.all([
-        prisma.production.findMany({ where, select: { id: true, titlePt: true, tagline: true }, orderBy: { titlePt: 'asc' }, skip, take: limit }),
+        prisma.production.findMany({
+          where,
+          select: { id: true, titlePt: true, titleKr: true, synopsis: true, synopsisSource: true },
+          orderBy: [{ year: 'desc' }, { titlePt: 'asc' }],
+          skip,
+          take: limit,
+        }),
         prisma.production.count({ where }),
       ])
-      items = prods.map(p => ({ id: p.id, label: p.titlePt, fields: p.tagline ? ['synopsis', 'tagline'] : ['synopsis'] }))
+      items = prods.map(p => ({
+        id: p.id,
+        label: p.titlePt,
+        subtitle: p.titleKr ?? undefined,
+        fields: ['synopsis'],
+        synopsisSource: p.synopsisSource,
+        hasSynopsis: !!p.synopsis,
+      }))
       total = count
 
     } else if (entityType === 'news') {
@@ -120,7 +144,12 @@ export async function GET(req: NextRequest) {
       total = count
     }
 
-    // Busca traduções existentes para os IDs retornados
+    // Productions usam synopsisSource diretamente — não precisam de ContentTranslation lookup
+    if (entityType === 'production') {
+      return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit) })
+    }
+
+    // Busca traduções existentes para os IDs retornados (artists, groups, news)
     const ids = items.map(i => i.id)
     const existingTranslations = ids.length > 0
       ? await prisma.contentTranslation.findMany({

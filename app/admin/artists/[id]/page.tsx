@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, User, Search, CheckCircle, XCircle } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save, RefreshCw, User, Search, CheckCircle, XCircle, Download } from 'lucide-react'
 
 interface Artist {
     id: string
@@ -28,6 +28,8 @@ interface TMDBPreview {
     name: string
     hangulName: string | null
     biography: string | null
+    biographyPt: string | null
+    biographyEn: string | null
     birthday: string | null
     placeOfBirth: string | null
     photoUrl: string | null
@@ -51,6 +53,7 @@ export default function EditArtistPage() {
     const [tmdbPreview, setTmdbPreview] = useState<TMDBPreview | null>(null)
     const [previewLoading, setPreviewLoading] = useState(false)
     const [previewError, setPreviewError] = useState('')
+    const [bioSource, setBioSource] = useState<'tmdb_pt' | 'tmdb_en' | null>(null)
 
     useEffect(() => {
         fetch(`/api/admin/artists?id=${id}`)
@@ -75,29 +78,31 @@ export default function EditArtistPage() {
         }
     }
 
-    const fetchTMDBPreview = useCallback(async () => {
+    const fetchTMDBPreview = useCallback(async (): Promise<TMDBPreview | null> => {
+        if (tmdbPreview) return tmdbPreview
         const tmdbId = form.tmdbId?.trim()
         if (!tmdbId || !/^\d+$/.test(tmdbId)) {
             setPreviewError('TMDB ID deve ser numérico')
-            return
+            return null
         }
         setPreviewLoading(true)
         setPreviewError('')
-        setTmdbPreview(null)
         try {
             const res = await fetch(`/api/admin/artists/tmdb-preview?tmdbId=${tmdbId}`)
             const data = await res.json()
             if (!res.ok) {
                 setPreviewError(data.error || 'Erro ao buscar no TMDB')
-                return
+                return null
             }
             setTmdbPreview(data)
+            return data as TMDBPreview
         } catch {
             setPreviewError('Erro de rede')
+            return null
         } finally {
             setPreviewLoading(false)
         }
-    }, [form.tmdbId])
+    }, [form.tmdbId, tmdbPreview])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -296,7 +301,18 @@ export default function EditArtistPage() {
 
                         {/* Bio */}
                         <div>
-                            <label className={labelCls}>Biografia</label>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <label className={labelCls + ' mb-0'}>Biografia</label>
+                                {bioSource && (
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                                        bioSource === 'tmdb_pt'
+                                            ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                                            : 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+                                    }`}>
+                                        {bioSource === 'tmdb_pt' ? 'TMDB · pt-BR' : 'TMDB · en'}
+                                    </span>
+                                )}
+                            </div>
                             <textarea
                                 value={form.bio ?? ''}
                                 onChange={e => set('bio', e.target.value)}
@@ -304,6 +320,26 @@ export default function EditArtistPage() {
                                 rows={4}
                                 className={inputCls + ' resize-none'}
                             />
+                            {form.tmdbId && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        const data = await fetchTMDBPreview()
+                                        if (data?.biographyPt) {
+                                            set('bio', data.biographyPt)
+                                            setBioSource('tmdb_pt')
+                                        } else if (data?.biographyEn) {
+                                            set('bio', data.biographyEn)
+                                            setBioSource('tmdb_en')
+                                        }
+                                    }}
+                                    disabled={previewLoading}
+                                    className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                >
+                                    {previewLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                    Buscar do TMDB
+                                </button>
+                            )}
                         </div>
 
                         {/* TMDB + MBID */}
@@ -320,7 +356,7 @@ export default function EditArtistPage() {
                                     />
                                     <button
                                         type="button"
-                                        onClick={fetchTMDBPreview}
+                                        onClick={() => fetchTMDBPreview()}
                                         disabled={previewLoading || !form.tmdbId}
                                         title="Verificar no TMDB"
                                         className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-zinc-300 rounded-lg text-xs font-bold transition-colors"
@@ -415,8 +451,16 @@ export default function EditArtistPage() {
                                             + Hangul
                                         </button>
                                     )}
-                                    {tmdbPreview.biography && !form.bio && (
-                                        <button type="button" onClick={() => set('bio', tmdbPreview.biography)}
+                                    {(tmdbPreview.biographyPt || tmdbPreview.biographyEn) && !form.bio && (
+                                        <button type="button" onClick={() => {
+                                            if (tmdbPreview.biographyPt) {
+                                                set('bio', tmdbPreview.biographyPt)
+                                                setBioSource('tmdb_pt')
+                                            } else if (tmdbPreview.biographyEn) {
+                                                set('bio', tmdbPreview.biographyEn)
+                                                setBioSource('tmdb_en')
+                                            }
+                                        }}
                                             className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
                                             + Bio
                                         </button>
