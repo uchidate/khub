@@ -539,6 +539,14 @@ export default function ProductionsPage() {
   const [filter, setFilter] = useState<FilterType>('')
   const [stats, setStats] = useState<Stats | null>(null)
 
+  // Backfill pt-BR state
+  const [backfillPanelOpen, setBackfillPanelOpen] = useState(false)
+  const [backfillYear, setBackfillYear] = useState('')
+  const [backfillRunning, setBackfillRunning] = useState(false)
+  const [backfillLog, setBackfillLog] = useState<string[]>([])
+  const [backfillStats, setBackfillStats] = useState<{ updated: number; noChange: number; errors: number } | null>(null)
+  const [backfillProgress, setBackfillProgress] = useState<{ current: number; total: number; totalGlobal: number } | null>(null)
+
   // Import by period state
   const [importPanelOpen, setImportPanelOpen] = useState(false)
   const [importType, setImportType] = useState<'tv' | 'movie'>('tv')
@@ -722,6 +730,73 @@ export default function ProductionsPage() {
       showMsg('❌ Erro de rede durante correção')
     } finally {
       setFixNoTypeSyncing(false)
+    }
+  }
+
+  const handleBackfillPt = async () => {
+    if (backfillRunning) return
+    setBackfillRunning(true)
+    setBackfillLog([])
+    setBackfillStats(null)
+    setBackfillProgress(null)
+
+    const BATCH = 50
+    let offset = 0
+    let totalGlobal = 0
+    let grandUpdated = 0; let grandNoChange = 0; let grandErrors = 0
+
+    try {
+      let keepRunning = true
+      while (keepRunning) {
+        const res = await fetch('/api/admin/productions/backfill-pt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ year: backfillYear ? parseInt(backfillYear) : undefined, limit: BATCH, offset }),
+        })
+        if (!res.ok || !res.body) break
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let batchTotal = 0; let batchDone = false
+
+        while (!batchDone) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value, { stream: true })
+          for (const rawLine of chunk.split('\n')) {
+            const line = rawLine.trim()
+            if (!line) continue
+
+            if (line.startsWith('TOTAL_GLOBAL:')) {
+              totalGlobal = parseInt(line.split(':')[1])
+            } else if (line.startsWith('TOTAL:')) {
+              batchTotal = parseInt(line.split(':')[1])
+              if (batchTotal === 0) { batchDone = true; break }
+            } else if (line.startsWith('PROGRESS:')) {
+              const m = line.match(/PROGRESS:(\d+)\/(\d+):(.+)/)
+              if (m) setBackfillProgress({ current: offset + parseInt(m[1]), total: totalGlobal, totalGlobal })
+            } else if (line.startsWith('DONE:')) {
+              const m = line.match(/updated=(\d+),noChange=(\d+).*errors=(\d+)/)
+              if (m) { grandUpdated += parseInt(m[1]); grandNoChange += parseInt(m[2]); grandErrors += parseInt(m[3]) }
+              batchDone = true
+            } else if (line.startsWith('UPDATED:') || line.startsWith('ERROR:')) {
+              setBackfillLog(prev => [...prev.slice(-199), line])
+            }
+          }
+        }
+
+        if (batchTotal < BATCH) { keepRunning = false; break }
+        offset += BATCH
+      }
+
+      setBackfillStats({ updated: grandUpdated, noChange: grandNoChange, errors: grandErrors })
+      setBackfillProgress(null)
+      refetchTable()
+    } catch {
+      setBackfillLog(prev => [...prev, '❌ Erro de rede'])
+    } finally {
+      setBackfillRunning(false)
     }
   }
 
@@ -940,7 +1015,16 @@ export default function ProductionsPage() {
               {fixNoTypeSyncing ? 'Corrigindo...' : 'Corrigir sem Tipo'}
             </button>
             <button
-              onClick={() => { setImportPanelOpen(v => !v); setImportMsg('') }}
+              onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false) }}
+              className={`flex items-center gap-1.5 px-3 py-2 border font-bold rounded-lg transition-all text-xs ${
+                backfillPanelOpen ? 'bg-green-500/20 border-green-500/40 text-green-300' : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300'
+              }`}
+            >
+              <RefreshCw size={13} className={backfillRunning ? 'animate-spin' : ''} />
+              Atualizar PT-BR
+            </button>
+            <button
+              onClick={() => { setImportPanelOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
               className={`flex items-center gap-1.5 px-3 py-2 border font-bold rounded-lg transition-all text-xs ${
                 importPanelOpen ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300'
               }`}
@@ -968,6 +1052,85 @@ export default function ProductionsPage() {
             {syncMsg.startsWith('🔄') && <RefreshCw size={14} className="animate-spin flex-shrink-0" />}
             {syncMsg.startsWith('❌') && <AlertCircle size={14} className="flex-shrink-0" />}
             {syncMsg}
+          </div>
+        )}
+
+        {/* Backfill PT-BR Panel */}
+        {backfillPanelOpen && (
+          <div className="rounded-xl border border-green-500/20 bg-zinc-900/60 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-green-400 uppercase tracking-widest">Atualizar Traduções PT-BR</h3>
+              <button onClick={() => setBackfillPanelOpen(false)} className="text-zinc-500 hover:text-zinc-300">
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-zinc-400">
+              Busca título, sinopse e outras informações em português do TMDB para productions existentes.
+              Edições manuais <strong className="text-zinc-300">não</strong> são sobrescritas.
+              Filtre por ano para processar ano a ano.
+            </p>
+
+            <div className="flex items-end gap-3 flex-wrap">
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Ano (opcional)</label>
+                <input
+                  type="number"
+                  value={backfillYear}
+                  onChange={e => setBackfillYear(e.target.value)}
+                  placeholder="Todos os anos"
+                  className="w-36 px-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-green-500/50"
+                  min={2000} max={2030}
+                />
+              </div>
+              <button
+                onClick={handleBackfillPt}
+                disabled={backfillRunning}
+                className="flex items-center gap-1.5 px-4 py-2 bg-green-700/30 hover:bg-green-700/50 border border-green-600/40 text-green-300 font-bold rounded-lg transition-all disabled:opacity-50 text-sm"
+              >
+                <RefreshCw size={14} className={backfillRunning ? 'animate-spin' : ''} />
+                {backfillRunning ? 'Atualizando...' : backfillYear ? `Atualizar ${backfillYear}` : 'Atualizar Tudo'}
+              </button>
+            </div>
+
+            {/* Progress */}
+            {backfillProgress && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-zinc-400">
+                  <span>Progresso</span>
+                  <span>{backfillProgress.current} / {backfillProgress.totalGlobal}</span>
+                </div>
+                <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                  <div
+                    className="bg-green-500 h-1.5 rounded-full transition-all"
+                    style={{ width: `${Math.min(100, (backfillProgress.current / backfillProgress.totalGlobal) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Stats */}
+            {backfillStats && (
+              <div className="flex gap-4 text-xs">
+                <span className="text-green-400 font-bold">✓ {backfillStats.updated} atualizados</span>
+                <span className="text-zinc-500">{backfillStats.noChange} sem mudança</span>
+                {backfillStats.errors > 0 && <span className="text-red-400">✗ {backfillStats.errors} erros</span>}
+              </div>
+            )}
+
+            {/* Log */}
+            {backfillLog.length > 0 && (
+              <div className="bg-zinc-950 rounded-lg p-3 max-h-48 overflow-y-auto text-xs font-mono space-y-0.5">
+                {backfillLog.map((line, i) => (
+                  <div key={i} className={
+                    line.startsWith('UPDATED') ? 'text-green-400' :
+                    line.startsWith('ERROR') ? 'text-red-400' :
+                    'text-zinc-500'
+                  }>
+                    {line.replace(/^UPDATED:/, '✓ ').replace(/^ERROR:/, '✗ ')}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
