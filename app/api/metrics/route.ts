@@ -18,17 +18,28 @@ export async function GET() {
             artistCount,
             productionCount,
             newsCount,
-            agencyCount
+            agencyCount,
+            activeUsersRaw,
         ] = await Promise.all([
             prisma.artist.count(),
             prisma.production.count(),
             prisma.news.count(),
-            prisma.agency.count()
+            prisma.agency.count(),
+            prisma.$queryRaw<{ c5m: bigint; c15m: bigint; c1h: bigint }[]>`
+                SELECT
+                    COUNT(DISTINCT CASE WHEN "createdAt" >= NOW() - INTERVAL '5 minutes'  THEN "userId" END) AS c5m,
+                    COUNT(DISTINCT CASE WHEN "createdAt" >= NOW() - INTERVAL '15 minutes' THEN "userId" END) AS c15m,
+                    COUNT(DISTINCT CASE WHEN "createdAt" >= NOW() - INTERVAL '1 hour'     THEN "userId" END) AS c1h
+                FROM "Activity"
+                WHERE "createdAt" >= NOW() - INTERVAL '1 hour'
+                  AND "userId" IS NOT NULL
+            `,
         ]);
 
         const dbLatency = Date.now() - startTime;
         const uptime = process.uptime();
         const memUsage = process.memoryUsage();
+        const { c5m, c15m, c1h } = activeUsersRaw[0];
 
         // Formato Prometheus
         const metrics = `
@@ -66,6 +77,12 @@ hallyuhub_entities_total{type="artist"} ${artistCount}
 hallyuhub_entities_total{type="production"} ${productionCount}
 hallyuhub_entities_total{type="news"} ${newsCount}
 hallyuhub_entities_total{type="agency"} ${agencyCount}
+
+# HELP hallyuhub_active_users Unique logged-in users with activity by time window
+# TYPE hallyuhub_active_users gauge
+hallyuhub_active_users{window="5m"} ${Number(c5m)}
+hallyuhub_active_users{window="15m"} ${Number(c15m)}
+hallyuhub_active_users{window="1h"} ${Number(c1h)}
 `.trim();
 
         return new NextResponse(metrics, {

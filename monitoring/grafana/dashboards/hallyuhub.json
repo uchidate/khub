@@ -168,6 +168,86 @@
         "format": "table",
         "refId": "A"
       }]
+    },
+    {
+      "id": 10,
+      "title": "Online agora (5 min)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "hallyuhub_active_users{window=\"5m\"}",
+        "legendFormat": "Online",
+        "refId": "A"
+      }],
+      "options": {
+        "colorMode": "background",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "steps": [
+            { "color": "blue", "value": 0 },
+            { "color": "green", "value": 1 }
+          ]
+        }
+      },
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 11,
+      "title": "Ativos (última hora)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "hallyuhub_active_users{window=\"1h\"}",
+        "legendFormat": "Ativos",
+        "refId": "A"
+      }],
+      "options": {
+        "colorMode": "background",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "thresholds": {
+          "steps": [
+            { "color": "blue", "value": 0 },
+            { "color": "green", "value": 1 }
+          ]
+        }
+      },
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 12,
+      "title": "Usuários Ativos ao Longo do Tempo",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "hallyuhub_active_users{window=\"5m\"}",
+          "legendFormat": "Últimos 5 min",
+          "refId": "A"
+        },
+        {
+          "expr": "hallyuhub_active_users{window=\"15m\"}",
+          "legendFormat": "Últimos 15 min",
+          "refId": "B"
+        },
+        {
+          "expr": "hallyuhub_active_users{window=\"1h\"}",
+          "legendFormat": "Última hora",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      }
     }
   ]
 }
