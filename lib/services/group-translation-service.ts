@@ -19,9 +19,13 @@ export class GroupTranslationService {
     }
 
     /**
-     * Traduz biografias de grupos pendentes (sem ContentTranslation pt-BR)
+     * Traduz biografias de grupos pendentes, um por vez.
+     * onProgress é chamado após cada item para streaming de progresso.
      */
-    async translatePendingGroups(limit: number = 5): Promise<{
+    async translatePendingGroups(
+        limit: number = 5,
+        onProgress?: (p: { current: number; total: number; name: string; status: 'translated' | 'skipped' | 'failed' }) => void
+    ): Promise<{
         translated: number;
         failed: number;
         skipped: number;
@@ -53,12 +57,15 @@ export class GroupTranslationService {
         let translated = 0;
         let failed = 0;
         let skipped = 0;
+        const total = pending.length;
 
-        for (const group of pending) {
+        for (let i = 0; i < pending.length; i++) {
+            const group = pending[i];
             try {
                 if (this.isAlreadyInPortuguese(group.bio || '')) {
                     console.log(`  ⏭️  ${group.name} - Already in Portuguese`);
                     skipped++;
+                    onProgress?.({ current: i + 1, total, name: group.name, status: 'skipped' });
                     continue;
                 }
 
@@ -95,10 +102,12 @@ export class GroupTranslationService {
 
                 console.log(`  ✅ ${group.name} - Translated successfully`);
                 translated++;
+                onProgress?.({ current: i + 1, total, name: group.name, status: 'translated' });
 
             } catch (error: any) {
                 console.error(`  ❌ ${group.name} - Translation failed: ${error.message}`);
                 failed++;
+                onProgress?.({ current: i + 1, total, name: group.name, status: 'failed' });
             }
         }
 

@@ -61,6 +61,7 @@ export default function TranslationsPage() {
   const [statsLoading, setStatsLoading] = useState(true)
   const [running, setRunning] = useState(false)
   const [runResult, setRunResult] = useState<string | null>(null)
+  const [progress, setProgress] = useState<{ current: number; total: number; name: string; status: string } | null>(null)
 
   const fetchStats = useCallback(async () => {
     setStatsLoading(true)
@@ -96,31 +97,42 @@ export default function TranslationsPage() {
     fetchItems()
   }
 
-  const handleRunBatch = async () => {
+  const handleRunBatch = () => {
     if (!['artist', 'group'].includes(activeTab)) {
       setRunResult('Tradução automática disponível apenas para Artistas e Grupos.')
       return
     }
     setRunning(true)
     setRunResult(null)
-    try {
-      const res = await fetch('/api/admin/translations/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entityType: activeTab, limit: 10 }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setRunResult(`✅ Traduzidos: ${data.translated} | Ignorados: ${data.skipped} | Falhas: ${data.failed}`)
+    setProgress(null)
+
+    const params = new URLSearchParams({ entityType: activeTab, limit: '10' })
+    const es = new EventSource(`/api/admin/translations/run?${params}`)
+
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.type === 'progress') {
+        setProgress(data)
+      } else if (data.type === 'done') {
+        es.close()
+        setRunning(false)
+        setProgress(null)
+        setRunResult(`✅ Traduzidos: ${data.translated ?? 0} | Ignorados: ${data.skipped ?? 0} | Falhas: ${data.failed ?? 0}`)
         fetchStats()
         fetchItems()
-      } else {
-        setRunResult(`❌ Erro: ${data.error}`)
+      } else if (data.type === 'error') {
+        es.close()
+        setRunning(false)
+        setProgress(null)
+        setRunResult(`❌ Erro: ${data.message}`)
       }
-    } catch {
-      setRunResult('❌ Falha ao conectar com o servidor.')
-    } finally {
+    }
+
+    es.onerror = () => {
+      es.close()
       setRunning(false)
+      setProgress(null)
+      setRunResult('❌ Falha ao conectar com o servidor.')
     }
   }
 
@@ -200,6 +212,21 @@ export default function TranslationsPage() {
               )}
             </div>
           </div>
+
+          {running && progress && (
+            <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
+              <div className="flex items-center justify-between text-sm text-blue-700 mb-1">
+                <span>Traduzindo {progress.current}/{progress.total}: <strong>{progress.name}</strong></span>
+                <span>{Math.round((progress.current / progress.total) * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-blue-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {runResult && (
             <div className={`px-4 py-2 text-sm ${runResult.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
