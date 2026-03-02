@@ -496,8 +496,8 @@ function StatsBar({
 // ─── Form fields ──────────────────────────────────────────────────────────────
 
 const formFields: FormField[] = [
-  { key: 'titlePt', label: 'Título em Português', type: 'text', placeholder: 'Ex: Pousando no Amor', required: true },
-  { key: 'titleKr', label: 'Título em Coreano', type: 'text', placeholder: 'Ex: 사랑의 불시착' },
+  { key: 'titleKr', label: 'Título Original (Coreano/Inglês)', type: 'text', placeholder: 'Ex: 사랑의 불시착 ou Crash Landing on You', required: true },
+  { key: 'titlePt', label: 'Título em Português', type: 'text', placeholder: 'Se vazio, usa o título original' },
   { key: 'type', label: 'Tipo', type: 'text', placeholder: 'Ex: Drama, Filme, Reality Show', required: true },
   { key: 'year', label: 'Ano', type: 'number', placeholder: '2024' },
   { key: 'tagline', label: 'Tagline / Slogan', type: 'text', placeholder: 'Ex: "사랑은 눈물이다"' },
