@@ -892,7 +892,6 @@ export default function ProductionsPage() {
   // ─── CRUD ──────────────────────────────────────────────────────────────────
 
   const handleCreate = () => { setEditingProduction(null); setFormOpen(true) }
-  const handleEdit = (p: Production) => { setEditingProduction(p); setFormOpen(true) }
   const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
@@ -1269,7 +1268,7 @@ export default function ProductionsPage() {
           columns={columns}
           apiUrl="/api/admin/productions"
           extraParams={filter ? { filter } : undefined}
-          onEdit={handleEdit}
+          editHref={(p) => `/admin/productions/${p.id}`}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por título..."
           actions={(production) => (
