@@ -531,6 +531,7 @@ export default function ProductionsPage() {
   const [syncingId, setSyncingId] = useState<string | null>(null)
   const [batchSyncing, setBatchSyncing] = useState(false)
   const [resetSyncing, setResetSyncing] = useState(false)
+  const [fixNoTypeSyncing, setFixNoTypeSyncing] = useState(false)
   const [ageSyncing, setAgeSyncing] = useState(false)
   const [ageSyncingId, setAgeSyncingId] = useState<string | null>(null)
   const [syncMsg, setSyncMsg] = useState('')
@@ -683,6 +684,44 @@ export default function ProductionsPage() {
       showMsg('❌ Erro de rede durante o resync')
     } finally {
       setResetSyncing(false)
+    }
+  }
+
+  // Reseta e resincroniza apenas produções com tmdbId mas sem tmdbType
+  const handleFixNoTmdbType = async () => {
+    if (fixNoTypeSyncing || !confirm('Isso vai recuperar produções com TMDB ID mas sem tipo (movie/tv) definido. Continuar?')) return
+    setFixNoTypeSyncing(true)
+    setSyncMsg('Corrigindo produções sem tmdbType...')
+    try {
+      const resetRes = await fetch('/api/admin/productions/sync-cast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reset: true, resetMode: 'no-tmdb-type' }),
+      })
+      const resetData = await resetRes.json()
+      if (!resetRes.ok) { showMsg(`❌ Erro ao resetar: ${resetData.error ?? 'falha'}`); return }
+      const total = resetData.resetCount as number
+      if (total === 0) { showMsg('✅ Nenhuma produção com tmdbType ausente encontrada.'); return }
+      let processed = 0; let totalSynced = 0
+      while (true) {
+        setSyncMsg(`🔄 Corrigindo sem tmdbType... ${processed}/${total} produções`)
+        const batchRes = await fetch('/api/admin/productions/sync-cast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pending: true, limit: 20 }),
+        })
+        const batchData = await batchRes.json()
+        if (!batchRes.ok || batchData.processed === 0) break
+        processed += batchData.processed as number
+        totalSynced += batchData.totalSynced as number
+      }
+      showMsg(`✅ Correção concluída: ${processed}/${total} produções · ${totalSynced} artistas`, 15000)
+      refetchTable()
+      fetchStats()
+    } catch {
+      showMsg('❌ Erro de rede durante correção')
+    } finally {
+      setFixNoTypeSyncing(false)
     }
   }
 
@@ -890,6 +929,15 @@ export default function ProductionsPage() {
             >
               <RotateCcw size={13} className={resetSyncing ? 'animate-spin' : ''} />
               {resetSyncing ? 'Resincronizando...' : 'Resync Completo'}
+            </button>
+            <button
+              onClick={handleFixNoTmdbType}
+              disabled={fixNoTypeSyncing}
+              title="Recupera produções com TMDB ID mas sem tipo (movie/tv) — foram ignoradas pelo sync anterior"
+              className="flex items-center gap-1.5 px-3 py-2 bg-orange-900/30 hover:bg-orange-900/50 border border-orange-700/40 text-orange-400 font-bold rounded-lg transition-all disabled:opacity-50 text-xs"
+            >
+              <RotateCcw size={13} className={fixNoTypeSyncing ? 'animate-spin' : ''} />
+              {fixNoTypeSyncing ? 'Corrigindo...' : 'Corrigir sem Tipo'}
             </button>
             <button
               onClick={() => { setImportPanelOpen(v => !v); setImportMsg('') }}
