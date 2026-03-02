@@ -26,6 +26,8 @@ const artistSchema = z.object({
   nameHangul: z.string().optional(),
   birthDate: z.string().optional(),              // ISO date string, camelCase
   birthName: z.string().optional(),
+  placeOfBirth: z.string().optional(),
+  gender: z.string().optional(),                 // 'MALE', 'FEMALE', '' (não informado)
   stageNames: z.array(z.string()).optional(),    // array de nomes artísticos
   roles: z.array(z.string()).optional(),         // ex: ['IDOL', 'ACTOR']
   height: z.string().optional(),
@@ -280,6 +282,8 @@ export async function PATCH(request: NextRequest) {
       data.primaryImageUrl = null
     }
     if (validated.nameHangul === '') data.nameHangul = null
+    if (validated.gender === '') data.gender = null
+    if (validated.placeOfBirth === '') data.placeOfBirth = null
     if (validated.tmdbId === '') data.tmdbId = null
     if (validated.mbid === '') {
       data.mbid = null
