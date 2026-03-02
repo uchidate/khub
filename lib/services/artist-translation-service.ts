@@ -4,8 +4,8 @@ import { getOrchestrator } from '../ai/orchestrator-factory';
 /**
  * Artist Translation Service
  *
- * Responsável por traduzir biografias de artistas de EN/KR → PT
- * Processo separado do discovery para melhor performance
+ * Responsável por traduzir biografias de artistas de EN/KR → PT-BR.
+ * Preserva o campo `bio` original e salva a tradução em ContentTranslation.
  */
 export class ArtistTranslationService {
     private prisma: PrismaClient;
@@ -14,18 +14,12 @@ export class ArtistTranslationService {
         this.prisma = prisma;
     }
 
-    /**
-     * Retorna o orchestrator singleton
-     */
     private getOrchestrator() {
         return getOrchestrator();
     }
 
     /**
      * Traduz biografias de artistas pendentes (batch)
-     *
-     * @param limit Número máximo de artistas a traduzir
-     * @returns Número de artistas traduzidos com sucesso
      */
     async translatePendingArtists(limit: number = 5): Promise<{
         translated: number;
@@ -34,14 +28,9 @@ export class ArtistTranslationService {
     }> {
         console.log(`🌐 Starting batch translation (limit: ${limit})...`);
 
-        // Buscar artistas com status 'pending'
         const pendingArtists = await this.prisma.artist.findMany({
-            where: {
-                translationStatus: 'pending'
-            },
-            orderBy: {
-                createdAt: 'asc' // Mais antigos primeiro
-            },
+            where: { translationStatus: 'pending' },
+            orderBy: { createdAt: 'asc' },
             take: limit,
             select: {
                 id: true,
@@ -60,7 +49,6 @@ export class ArtistTranslationService {
 
         for (const artist of pendingArtists) {
             try {
-                // Verificar se bio já está em português (skip)
                 if (this.isAlreadyInPortuguese(artist.bio || '')) {
                     console.log(`  ⏭️  ${artist.nameRomanized} - Already in Portuguese`);
                     await this.markAsCompleted(artist.id);
@@ -70,22 +58,37 @@ export class ArtistTranslationService {
 
                 console.log(`  🔄 Translating: ${artist.nameRomanized}...`);
 
-                // Traduzir biografia
                 const translatedBio = await this.translateBioToPortuguese(
                     artist.nameRomanized,
                     artist.bio || '',
                     artist.roles[0] || 'Artista'
                 );
 
-                // Atualizar no banco
-                await this.prisma.artist.update({
-                    where: { id: artist.id },
-                    data: {
-                        bio: translatedBio,
-                        translationStatus: 'completed',
-                        translatedAt: new Date()
-                    }
+                // Salva tradução em ContentTranslation (preserva bio original intacto)
+                await this.prisma.contentTranslation.upsert({
+                    where: {
+                        entityType_entityId_field_locale: {
+                            entityType: 'artist',
+                            entityId: artist.id,
+                            field: 'bio',
+                            locale: 'pt-BR',
+                        },
+                    },
+                    create: {
+                        entityType: 'artist',
+                        entityId: artist.id,
+                        field: 'bio',
+                        locale: 'pt-BR',
+                        value: translatedBio,
+                        status: 'draft',
+                    },
+                    update: {
+                        value: translatedBio,
+                        status: 'draft',
+                    },
                 });
+
+                await this.markAsCompleted(artist.id);
 
                 console.log(`  ✅ ${artist.nameRomanized} - Translated successfully`);
                 translated++;
@@ -93,12 +96,9 @@ export class ArtistTranslationService {
             } catch (error: any) {
                 console.error(`  ❌ ${artist.nameRomanized} - Translation failed: ${error.message}`);
 
-                // Marcar como falha
                 await this.prisma.artist.update({
                     where: { id: artist.id },
-                    data: {
-                        translationStatus: 'failed'
-                    }
+                    data: { translationStatus: 'failed' }
                 }).catch(() => {});
 
                 failed++;
@@ -106,61 +106,39 @@ export class ArtistTranslationService {
         }
 
         console.log(`✅ Translation batch complete: ${translated} translated, ${failed} failed, ${skipped} skipped`);
-
         return { translated, failed, skipped };
     }
 
-    /**
-     * Verifica se o texto já está em português
-     */
     private isAlreadyInPortuguese(text: string): boolean {
-        // Palavras comuns em português brasileiro
         const ptWords = ['é', 'conhecido', 'conhecida', 'brasileiro', 'brasileira', 'artista', 'na', 'do', 'da'];
         const lowerText = text.toLowerCase();
-
-        // Se contém pelo menos 2 palavras em português, assume que já está traduzido
         const matchCount = ptWords.filter(word => lowerText.includes(word)).length;
         return matchCount >= 2;
     }
 
-    /**
-     * Marca artista como traduzido (sem modificar bio)
-     */
     private async markAsCompleted(artistId: string): Promise<void> {
         await this.prisma.artist.update({
             where: { id: artistId },
-            data: {
-                translationStatus: 'completed',
-                translatedAt: new Date()
-            }
+            data: { translationStatus: 'completed', translatedAt: new Date() }
         });
     }
 
-    /**
-     * Traduz biografia para português usando Ollama
-     */
     private async translateBioToPortuguese(
         artistName: string,
         biography: string,
         role: string
     ): Promise<string> {
-        // Se não tem biografia, criar uma simples
         if (!biography || biography.trim().length === 0) {
             return `${artistName} é ${role} conhecido(a) na indústria do entretenimento coreano.`;
         }
 
-        // Se bio é muito curta, enriquecer com AI
         if (biography.length < 100) {
             return this.enrichAndTranslate(artistName, biography, role);
         }
 
-        // Tradução direta para biografias normais
         return this.translateWithAI(artistName, biography);
     }
 
-    /**
-     * Enriquece e traduz bio curta
-     */
     private async enrichAndTranslate(
         artistName: string,
         biography: string,
@@ -184,22 +162,16 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ bio: string }>(
                 prompt,
                 '{ "bio": "string (biografia em português, 2-3 frases)" }',
-                {
-                    preferredProvider: 'ollama', // Gratuito, local
-                }
+                { preferredProvider: 'ollama' }
             );
 
             return result.bio;
         } catch (error: any) {
             console.warn(`⚠️  Enrichment failed: ${error.message}`);
-            // Fallback simples
             return `${artistName} é ${role} de destaque na indústria do entretenimento coreano, reconhecido(a) por seu talento e versatilidade.`;
         }
     }
 
-    /**
-     * Traduz texto diretamente com AI
-     */
     private async translateWithAI(
         artistName: string,
         text: string
@@ -225,37 +197,24 @@ Requisitos:
             return result.translation;
         } catch (error: any) {
             console.warn(`⚠️  Translation failed: ${error.message}`);
-            // Fallback: retornar texto original
             return text;
         }
     }
 
-    /**
-     * Reprocessa artistas com status 'failed'
-     */
     async retryFailedTranslations(limit: number = 5): Promise<number> {
         console.log(`🔄 Retrying failed translations (limit: ${limit})...`);
 
-        // Resetar status de 'failed' para 'pending'
         const result = await this.prisma.artist.updateMany({
-            where: {
-                translationStatus: 'failed'
-            },
-            data: {
-                translationStatus: 'pending'
-            }
+            where: { translationStatus: 'failed' },
+            data: { translationStatus: 'pending' }
         });
 
         console.log(`📊 Reset ${result.count} failed translations to pending`);
 
-        // Processar
         const stats = await this.translatePendingArtists(limit);
         return stats.translated;
     }
 
-    /**
-     * Retorna estatísticas de tradução
-     */
     async getTranslationStats(): Promise<{
         pending: number;
         completed: number;
@@ -273,9 +232,6 @@ Requisitos:
     }
 }
 
-/**
- * Singleton instance
- */
 let translationService: ArtistTranslationService | null = null;
 
 export function getArtistTranslationService(prisma: PrismaClient): ArtistTranslationService {
