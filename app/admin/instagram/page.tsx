@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle } from 'lucide-react'
+import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
 interface Artist {
@@ -22,11 +22,15 @@ function timeAgo(date: string): string {
     return `${Math.floor(diff / 86400)}d atrás`
 }
 
+const LIMIT = 50
+
 export default function InstagramAdminPage() {
     const [artists, setArtists] = useState<Artist[]>([])
-    const [filtered, setFiltered] = useState<Artist[]>([])
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState<'all' | 'configured' | 'missing'>('all')
+    const [page, setPage] = useState(1)
+    const [total, setTotal] = useState(0)
+    const [totalConfigured, setTotalConfigured] = useState(0)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState<string | null>(null)
     const [saved, setSaved] = useState<string | null>(null)
@@ -35,39 +39,43 @@ export default function InstagramAdminPage() {
     const [syncMsg, setSyncMsg] = useState('')
     const [syncDetails, setSyncDetails] = useState<{ name: string; posts: number; error?: string; debug?: { id: string; url: string; external_url?: string }[] }[]>([])
 
-    const fetchArtists = useCallback(async () => {
+    const fetchPage = useCallback(async (p: number, q: string, f: string) => {
         setLoading(true)
         try {
-            const res = await fetch('/api/admin/artists/social-links')
+            const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) })
+            if (q) params.set('search', q)
+            if (f !== 'all') params.set('filter', f)
+            const res = await fetch(`/api/admin/artists/social-links?${params}`)
             const data = await res.json()
             const list: Artist[] = data.artists || []
             setArtists(list)
-            // Inicializar feedValues com os valores atuais
+            setTotal(data.total || 0)
+            setTotalConfigured(data.totalConfigured || 0)
             const vals: Record<string, string> = {}
-            for (const a of list) {
-                vals[a.id] = a.instagramFeedUrl ?? ''
-            }
+            for (const a of list) vals[a.id] = a.instagramFeedUrl ?? ''
             setFeedValues(vals)
         } finally {
             setLoading(false)
         }
     }, [])
 
-    useEffect(() => { fetchArtists() }, [fetchArtists])
+    // Initial load
+    useEffect(() => { fetchPage(1, '', 'all') }, [fetchPage])
 
+    // Search/filter debounce — reset to page 1
     useEffect(() => {
-        let list = artists
-        if (search) {
-            const q = search.toLowerCase()
-            list = list.filter(a =>
-                a.nameRomanized.toLowerCase().includes(q) ||
-                (a.nameHangul ?? '').toLowerCase().includes(q)
-            )
-        }
-        if (filter === 'configured') list = list.filter(a => !!a.instagramFeedUrl)
-        if (filter === 'missing') list = list.filter(a => !a.instagramFeedUrl)
-        setFiltered(list)
-    }, [artists, search, filter])
+        const t = setTimeout(() => {
+            setPage(1)
+            fetchPage(1, search, filter)
+        }, search ? 300 : 0)
+        return () => clearTimeout(t)
+    }, [search, filter, fetchPage])
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage)
+        fetchPage(newPage, search, filter)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     const handleSave = async (artistId: string) => {
         setSaving(artistId)
@@ -101,7 +109,7 @@ export default function InstagramAdminPage() {
             if (res.ok) {
                 setSyncMsg(`✅ ${data.totalPosts} posts sincronizados${data.totalErrors > 0 ? ` · ${data.totalErrors} erros` : ''}`)
                 setSyncDetails(data.results ?? [])
-                await fetchArtists()
+                await fetchPage(page, search, filter)
             } else {
                 setSyncMsg('❌ Erro ao sincronizar')
             }
@@ -113,7 +121,9 @@ export default function InstagramAdminPage() {
         }
     }
 
-    const configured = artists.filter(a => !!a.instagramFeedUrl).length
+    const totalPages = Math.ceil(total / LIMIT)
+    const from = total === 0 ? 0 : (page - 1) * LIMIT + 1
+    const to = Math.min(page * LIMIT, total)
 
     return (
         <AdminLayout title="Instagram Feeds">
@@ -122,17 +132,17 @@ export default function InstagramAdminPage() {
                 {/* Stats + Sync */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-white">{artists.length}</p>
+                        <p className="text-2xl font-black text-white">{total}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Total artistas</p>
                     </div>
                     <div className="bg-zinc-900 border border-pink-500/20 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-pink-400">{configured}</p>
+                        <p className="text-2xl font-black text-pink-400">{totalConfigured}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Com feed RSS.app</p>
                     </div>
                     <div className="sm:col-span-1 col-span-2 bg-zinc-900 border border-zinc-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2">
                         <button
                             onClick={handleSyncAll}
-                            disabled={syncing || configured === 0}
+                            disabled={syncing || totalConfigured === 0}
                             className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-40 text-white rounded-lg text-sm font-bold transition-colors"
                         >
                             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
@@ -221,6 +231,13 @@ export default function InstagramAdminPage() {
                     </div>
                 </div>
 
+                {/* Count */}
+                {!loading && (
+                    <p className="text-xs text-zinc-500">
+                        {total === 0 ? 'Nenhum artista encontrado' : `Mostrando ${from}–${to} de ${total} artistas`}
+                    </p>
+                )}
+
                 {/* Artist list */}
                 {loading ? (
                     <div className="space-y-2">
@@ -230,10 +247,10 @@ export default function InstagramAdminPage() {
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {filtered.length === 0 && (
+                        {artists.length === 0 && (
                             <div className="text-center py-16 text-zinc-500">Nenhum artista encontrado</div>
                         )}
-                        {filtered.map((artist) => {
+                        {artists.map((artist) => {
                             const isSaved = saved === artist.id
                             const isSaving = saving === artist.id
                             const currentFeed = feedValues[artist.id] ?? ''
@@ -335,6 +352,31 @@ export default function InstagramAdminPage() {
                                 </div>
                             )
                         })}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-2">
+                        <button
+                            onClick={() => handlePageChange(page - 1)}
+                            disabled={page <= 1}
+                            className="flex items-center gap-1 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-default transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Anterior
+                        </button>
+                        <span className="text-xs text-zinc-500">
+                            Página {page} de {totalPages}
+                        </span>
+                        <button
+                            onClick={() => handlePageChange(page + 1)}
+                            disabled={page >= totalPages}
+                            className="flex items-center gap-1 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-default transition-colors"
+                        >
+                            Próxima
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 )}
             </div>
