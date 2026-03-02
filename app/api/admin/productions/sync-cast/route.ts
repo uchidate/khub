@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const { error } = await requireAdmin()
   if (error) return error
 
-  const body = await req.json() as { productionId?: string; pending?: boolean; reset?: boolean; limit?: number }
+  const body = await req.json() as { productionId?: string; pending?: boolean; reset?: boolean; resetMode?: 'no-tmdb-type' | 'all'; limit?: number }
   const service = new ProductionCastService()
 
   if (body.productionId) {
@@ -32,10 +32,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.reset) {
-    // Reseta castSyncAt de TODAS as produções com tmdbId (incluindo nunca sincronizadas)
-    // O admin usa "Importar Elenco Pendente" em seguida para processar em lotes
-    const { resetCount, total } = await service.resetCastSyncAt()
-    return NextResponse.json({ ok: true, resetCount, total })
+    // Reseta castSyncAt de produções com tmdbId para reprocessamento
+    // resetMode='no-tmdb-type' → apenas as que foram carimbadas incorretamente (sem tmdbType)
+    const resetMode = body.resetMode === 'no-tmdb-type' ? 'no-tmdb-type' : 'all'
+    const { resetCount, total } = await service.resetCastSyncAt(resetMode)
+    return NextResponse.json({ ok: true, resetCount, total, resetMode })
   }
 
   if (body.pending) {

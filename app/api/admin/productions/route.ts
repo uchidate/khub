@@ -12,8 +12,8 @@ export const dynamic = 'force-dynamic'
 
 
 const productionSchema = z.object({
-  titlePt: z.string().min(1),
-  titleKr: z.string().optional().nullable(),
+  titlePt: z.string().optional().nullable(),
+  titleKr: z.string().min(1),
   type: z.string().min(1),
   year: z.number().int().min(1900).max(2100).optional().nullable(),
   synopsis: z.string().optional().nullable(),
@@ -120,9 +120,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = productionSchema.parse(body)
 
+    // titlePt is the DB unique key — derive from titleKr when not provided
+    const titlePt = (validated.titlePt?.trim() || validated.titleKr).trim()
+
     // Check if titlePt already exists
     const existing = await prisma.production.findUnique({
-      where: { titlePt: validated.titlePt },
+      where: { titlePt },
     })
 
     if (existing) {
@@ -130,7 +133,7 @@ export async function POST(request: NextRequest) {
     }
 
     const production = await prisma.production.create({
-      data: validated,
+      data: { ...validated, titlePt },
     })
 
     return NextResponse.json(production, { status: 201 })
@@ -172,12 +175,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Produção não encontrada' }, { status: 404 })
     }
 
-    // If titlePt is being updated, check for duplicates
-    if (validated.titlePt && validated.titlePt !== existing.titlePt) {
-      const titleExists = await prisma.production.findUnique({
-        where: { titlePt: validated.titlePt },
-      })
+    // Derive titlePt from titleKr when submitted empty (keeps @unique constraint satisfied)
+    const resolvedTitleKr = validated.titleKr ?? existing.titleKr
+    const resolvedTitlePt = (validated.titlePt?.trim() || resolvedTitleKr || existing.titlePt).trim()
 
+    // If titlePt changed, check for duplicates
+    if (resolvedTitlePt !== existing.titlePt) {
+      const titleExists = await prisma.production.findUnique({
+        where: { titlePt: resolvedTitlePt },
+      })
       if (titleExists) {
         return NextResponse.json({ error: 'Título já cadastrado' }, { status: 400 })
       }
@@ -185,7 +191,7 @@ export async function PATCH(request: NextRequest) {
 
     const production = await prisma.production.update({
       where: { id: productionId },
-      data: validated,
+      data: { ...validated, titlePt: resolvedTitlePt },
     })
 
     return NextResponse.json(production)

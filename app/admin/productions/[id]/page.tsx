@@ -142,22 +142,24 @@ export default function EditProductionPage() {
                             </div>
                             <div className="flex-1 space-y-3">
                                 <div>
-                                    <label className={labelCls}>Título em Português *</label>
-                                    <input
-                                        type="text"
-                                        value={form.titlePt ?? ''}
-                                        onChange={e => set('titlePt', e.target.value)}
-                                        className={inputCls}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className={labelCls}>Título em Coreano</label>
+                                    <label className={labelCls}>Título Original (Coreano/Inglês) *</label>
                                     <input
                                         type="text"
                                         value={form.titleKr ?? ''}
                                         onChange={e => set('titleKr', e.target.value)}
                                         className={inputCls}
+                                        required
+                                        placeholder="Ex: 사랑의 불시착 ou Crash Landing on You"
+                                    />
+                                </div>
+                                <div>
+                                    <label className={labelCls}>Título em Português</label>
+                                    <input
+                                        type="text"
+                                        value={form.titlePt ?? ''}
+                                        onChange={e => set('titlePt', e.target.value)}
+                                        className={inputCls}
+                                        placeholder="Se vazio, usa o título original"
                                     />
                                 </div>
                             </div>

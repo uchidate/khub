@@ -17,6 +17,12 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
 
+function mapTypeToTmdb(productionType: string): 'movie' | 'tv' {
+  const t = productionType.toUpperCase()
+  if (t === 'FILME' || t === 'MOVIE') return 'movie'
+  return 'tv' // SERIE, SHOW, VARIETY → tv
+}
+
 // Detects Korean (Hangul) characters
 const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
 
@@ -144,11 +150,11 @@ export class ProductionCastService {
   async syncProductionCast(productionId: string): Promise<{ synced: number; skipped: number }> {
     const production = await prisma.production.findUnique({
       where: { id: productionId },
-      select: { id: true, tmdbId: true, tmdbType: true, titlePt: true },
+      select: { id: true, tmdbId: true, tmdbType: true, type: true, titlePt: true },
     })
 
-    if (!production?.tmdbId || !production?.tmdbType) {
-      // Mark as attempted even without tmdbType so the production leaves "Pendentes"
+    if (!production?.tmdbId) {
+      // Truly no tmdbId — stamp and skip
       if (production) {
         await prisma.production.update({
           where: { id: productionId },
@@ -158,8 +164,17 @@ export class ProductionCastService {
       return { synced: 0, skipped: 1 }
     }
 
+    // Derive tmdbType from production.type when the explicit field is missing
+    const tmdbType: 'movie' | 'tv' = (production.tmdbType as 'movie' | 'tv' | null) || mapTypeToTmdb(production.type)
     const tmdbId = parseInt(production.tmdbId)
-    const tmdbType = production.tmdbType as 'movie' | 'tv'
+
+    // Persist derived tmdbType so future runs don't need to re-derive
+    if (!production.tmdbType) {
+      await prisma.production.update({
+        where: { id: productionId },
+        data: { tmdbType },
+      })
+    }
 
     const castMembers = await this.getProductionCast(tmdbId, tmdbType, 20)
 
@@ -324,12 +339,17 @@ export class ProductionCastService {
   }
 
   /**
-   * Reset castSyncAt for ALL productions with a tmdbId so they get re-processed.
-   * Returns { resetCount, total } where total = all productions eligible for sync.
+   * Reset castSyncAt for productions with a tmdbId so they get re-processed.
+   * mode='all'          → reset all productions with tmdbId (default)
+   * mode='no-tmdb-type' → only reset productions that still have no tmdbType
+   *                       (these were incorrectly stamped when tmdbType was missing)
    */
-  async resetCastSyncAt(): Promise<{ resetCount: number; total: number }> {
+  async resetCastSyncAt(mode: 'all' | 'no-tmdb-type' = 'all'): Promise<{ resetCount: number; total: number }> {
+    const where = mode === 'no-tmdb-type'
+      ? { tmdbId: { not: null }, tmdbType: null }
+      : { tmdbId: { not: null } }
     const result = await prisma.production.updateMany({
-      where: { tmdbId: { not: null } },
+      where,
       data: { castSyncAt: null },
     })
     return { resetCount: result.count, total: result.count }

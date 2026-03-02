@@ -16,6 +16,33 @@ import prisma from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 15
 
+/**
+ * GET /api/admin/artists/fix-names
+ * Retorna estatísticas sobre artistas e cobertura de TMDB IDs.
+ */
+export async function GET() {
+  const { error } = await requireAdmin()
+  if (error) return error
+
+  const [total, withTmdb, withoutTmdb, flagged, complete] = await Promise.all([
+    prisma.artist.count({ where: { isHidden: false } }),
+    prisma.artist.count({ where: { tmdbId: { not: null }, isHidden: false } }),
+    prisma.artist.count({ where: { tmdbId: null, flaggedAsNonKorean: false, isHidden: false } }),
+    prisma.artist.count({ where: { flaggedAsNonKorean: true, isHidden: false } }),
+    prisma.artist.count({
+      where: {
+        tmdbId: { not: null },
+        primaryImageUrl: { not: null },
+        bio: { not: null },
+        nameHangul: { not: null },
+        isHidden: false,
+      },
+    }),
+  ])
+
+  return NextResponse.json({ total, withTmdb, withoutTmdb, flagged, complete })
+}
+
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
