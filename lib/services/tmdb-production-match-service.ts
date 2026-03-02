@@ -289,6 +289,8 @@ export class TmdbProductionMatchService {
 
     if (!production.synopsis && details?.overview) {
       updateData.synopsis = details.overview
+      // ko-KR fetch — synopsis comes in Korean
+      updateData.synopsisSource = 'tmdb_en'
       fieldsUpdated.push('synopsis')
     }
 

@@ -200,6 +200,7 @@ model Production {
   type               String
   year               Int?
   synopsis           String?
+  synopsisSource     String? // 'tmdb_pt' | 'tmdb_en' | 'ai' | 'manual'
   imageUrl           String? // Poster image
   backdropUrl        String? // Banner/backdrop image
   galleryUrls        String[] // Additional images

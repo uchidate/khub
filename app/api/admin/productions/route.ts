@@ -17,6 +17,7 @@ const productionSchema = z.object({
   type: z.string().min(1),
   year: z.number().int().min(1900).max(2100).optional().nullable(),
   synopsis: z.string().optional().nullable(),
+  synopsisSource: z.enum(['tmdb_pt', 'tmdb_en', 'ai', 'manual']).optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
   streamingPlatforms: z.array(z.string()).optional().default([]),
   sourceUrls: z.array(z.string()).optional().default([]),
@@ -189,9 +190,14 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // If synopsis is being manually edited, mark source as 'manual'
+    const resolvedSynopsisSource = validated.synopsis !== undefined && !validated.synopsisSource
+      ? 'manual'
+      : validated.synopsisSource
+
     const production = await prisma.production.update({
       where: { id: productionId },
-      data: { ...validated, titlePt: resolvedTitlePt },
+      data: { ...validated, titlePt: resolvedTitlePt, synopsisSource: resolvedSynopsisSource },
     })
 
     return NextResponse.json(production)
