@@ -15,12 +15,20 @@ interface Production {
     year: number | null
     tagline: string | null
     synopsis: string | null
+    synopsisSource: 'tmdb_pt' | 'tmdb_en' | 'ai' | 'manual' | null
     imageUrl: string | null
     trailerUrl: string | null
     tags: string[]
     ageRating: string | null
     tmdbId: string | null
     isHidden: boolean
+}
+
+const SYNOPSIS_SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
+    tmdb_pt: { label: 'TMDB · pt-BR', cls: 'bg-green-500/15 text-green-400 border-green-500/30' },
+    tmdb_en: { label: 'TMDB · en', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+    ai:      { label: 'IA', cls: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+    manual:  { label: 'Manual', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
 }
 
 const AGE_RATINGS = [
@@ -216,7 +224,14 @@ export default function EditProductionPage() {
 
                         {/* Sinopse */}
                         <div>
-                            <label className={labelCls}>Sinopse</label>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <label className={labelCls + ' mb-0'}>Sinopse</label>
+                                {production.synopsisSource && SYNOPSIS_SOURCE_LABELS[production.synopsisSource] && (
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${SYNOPSIS_SOURCE_LABELS[production.synopsisSource].cls}`}>
+                                        {SYNOPSIS_SOURCE_LABELS[production.synopsisSource].label}
+                                    </span>
+                                )}
+                            </div>
                             <textarea
                                 value={form.synopsis ?? ''}
                                 onChange={e => set('synopsis', e.target.value)}

@@ -87,6 +87,7 @@ export interface DiscoveredProduction {
   titlePt: string
   titleKr: string | null
   synopsis: string
+  synopsisSource: 'tmdb_pt' | 'tmdb_en' | 'ai' | 'manual'
   tagline: string | null
   imageUrl: string | null
   backdropUrl: string | null
@@ -219,15 +220,14 @@ export class TMDBProductionDiscoveryService {
   }
 
   /**
-   * Get TV show details with credits
+   * Get TV show details with credits.
+   * language='pt-BR' gives the localized title and synopsis when available.
    */
-  private async getTVDetails(tmdbId: number): Promise<TMDBProductionDetails | null> {
+  private async getTVDetails(tmdbId: number, language = 'pt-BR'): Promise<TMDBProductionDetails | null> {
     try {
-      const url = `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`
-
+      const url = `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=${language}&append_to_response=videos,credits`
       const response = await fetch(url)
       if (!response.ok) return null
-
       return await response.json()
     } catch (error) {
       console.error(`Failed to fetch TV details for ${tmdbId}:`, error)
@@ -236,15 +236,14 @@ export class TMDBProductionDiscoveryService {
   }
 
   /**
-   * Get movie details with credits
+   * Get movie details with credits.
+   * language='pt-BR' gives the localized title and synopsis when available.
    */
-  private async getMovieDetails(tmdbId: number): Promise<TMDBProductionDetails | null> {
+  private async getMovieDetails(tmdbId: number, language = 'pt-BR'): Promise<TMDBProductionDetails | null> {
     try {
-      const url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`
-
+      const url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=${language}&append_to_response=videos,credits`
       const response = await fetch(url)
       if (!response.ok) return null
-
       return await response.json()
     } catch (error) {
       console.error(`Failed to fetch movie details for ${tmdbId}:`, error)
@@ -255,7 +254,7 @@ export class TMDBProductionDiscoveryService {
   /**
    * Map TV show to DiscoveredProduction
    */
-  private mapTVToDiscoveredProduction(details: TMDBProductionDetails, ageRating: string | null = null): DiscoveredProduction {
+  private mapTVToDiscoveredProduction(details: TMDBProductionDetails, ageRating: string | null = null, synopsisSource: DiscoveredProduction['synopsisSource'] = 'tmdb_pt'): DiscoveredProduction {
     const title = details.name || details.original_name || 'Unknown Title'
     const koreanTitle = details.original_language === 'ko' ? (details.original_name || null) : null
 
@@ -292,7 +291,8 @@ export class TMDBProductionDiscoveryService {
       type: 'K-Drama',
       titlePt: title,
       titleKr: koreanTitle,
-      synopsis: details.overview || 'Sem sinopse disponível.',
+      synopsis: details.overview || '',
+      synopsisSource,
       tagline: details.tagline || null,
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
       backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
@@ -335,7 +335,7 @@ export class TMDBProductionDiscoveryService {
   /**
    * Map movie to DiscoveredProduction
    */
-  private mapMovieToDiscoveredProduction(details: TMDBProductionDetails, ageRating: string | null = null): DiscoveredProduction {
+  private mapMovieToDiscoveredProduction(details: TMDBProductionDetails, ageRating: string | null = null, synopsisSource: DiscoveredProduction['synopsisSource'] = 'tmdb_pt'): DiscoveredProduction {
     const title = details.title || details.original_title || 'Unknown Title'
     const koreanTitle = details.original_language === 'ko' ? (details.original_title || null) : null
 
@@ -372,7 +372,8 @@ export class TMDBProductionDiscoveryService {
       type: 'Filme',
       titlePt: title,
       titleKr: koreanTitle,
-      synopsis: details.overview || 'Sem sinopse disponível.',
+      synopsis: details.overview || '',
+      synopsisSource,
       tagline: details.tagline || null,
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
       backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
@@ -450,21 +451,33 @@ export class TMDBProductionDiscoveryService {
 
   /**
    * Fetch full production data for a specific TMDB ID + type.
-   * Includes all fields used on the site: episodes, network, age rating, etc.
-   * Used for the import step.
+   * Fetches with language=pt-BR first; if synopsis is empty, falls back to en-US.
+   * Sets synopsisSource: 'tmdb_pt' | 'tmdb_en' based on what was found.
    */
   async getFullProductionData(tmdbId: number, type: 'tv' | 'movie'): Promise<DiscoveredProduction | null> {
     const details = type === 'tv'
-      ? await this.getTVDetails(tmdbId)
-      : await this.getMovieDetails(tmdbId)
+      ? await this.getTVDetails(tmdbId, 'pt-BR')
+      : await this.getMovieDetails(tmdbId, 'pt-BR')
 
     if (!details) return null
+
+    // TMDB does not fall back synopsis to en-US — fetch separately when empty
+    let synopsisSource: 'tmdb_pt' | 'tmdb_en' = 'tmdb_pt'
+    if (!details.overview) {
+      const enDetails = type === 'tv'
+        ? await this.getTVDetails(tmdbId, 'en-US')
+        : await this.getMovieDetails(tmdbId, 'en-US')
+      if (enDetails?.overview) {
+        details.overview = enDetails.overview
+        synopsisSource = 'tmdb_en'
+      }
+    }
 
     const ageRating = await this.ageRatingService.fetchAgeRating(tmdbId, type)
 
     return type === 'tv'
-      ? this.mapTVToDiscoveredProduction(details, ageRating)
-      : this.mapMovieToDiscoveredProduction(details, ageRating)
+      ? this.mapTVToDiscoveredProduction(details, ageRating, synopsisSource)
+      : this.mapMovieToDiscoveredProduction(details, ageRating, synopsisSource)
   }
 }
 
