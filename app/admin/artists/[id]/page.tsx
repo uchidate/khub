@@ -63,6 +63,7 @@ export default function EditArtistPage() {
                 setForm({
                     ...data,
                     birthDate: data.birthDate ? new Date(data.birthDate).toISOString().split('T')[0] : '',
+                    gender: data.gender != null ? String(data.gender) : '',
                 })
             })
             .catch(() => setError('Erro ao carregar artista'))
@@ -119,7 +120,7 @@ export default function EditArtistPage() {
                 primaryImageUrl: form.primaryImageUrl || '',
                 birthDate: form.birthDate || '',
                 placeOfBirth: form.placeOfBirth || '',
-                gender: form.gender || '',
+                gender: form.gender ? parseInt(form.gender as string) : null,
                 roles: typeof form.roles === 'string'
                     ? (form.roles as string).split(',').map((s: string) => s.trim()).filter(Boolean)
                     : (form.roles ?? []),
@@ -242,12 +243,12 @@ export default function EditArtistPage() {
                                 <label className={labelCls}>Gênero</label>
                                 <select
                                     value={form.gender ?? ''}
-                                    onChange={e => set('gender', e.target.value || null)}
+                                    onChange={e => set('gender', e.target.value)}
                                     className={inputCls}
                                 >
                                     <option value="">Não informado</option>
-                                    <option value="MALE">Masculino</option>
-                                    <option value="FEMALE">Feminino</option>
+                                    <option value="2">Masculino</option>
+                                    <option value="1">Feminino</option>
                                 </select>
                             </div>
                         </div>
