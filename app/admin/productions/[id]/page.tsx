@@ -50,7 +50,7 @@ export default function EditProductionPage() {
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Production>>({})
-    const [tmdbData, setTmdbData] = useState<{ titlePt: string | null; synopsisPt: string | null; synopsisEn: string | null } | null>(null)
+    const [tmdbData, setTmdbData] = useState<{ titlePt: string | null; titleEn: string | null; synopsisPt: string | null; synopsisEn: string | null } | null>(null)
     const [fetchingTmdb, setFetchingTmdb] = useState(false)
     const [tmdbError, setTmdbError] = useState('')
 
@@ -196,10 +196,11 @@ export default function EditProductionPage() {
                                                 type="button"
                                                 onClick={async () => {
                                                     const data = await handleFetchTmdb()
-                                                    if (data?.titlePt) set('titlePt', data.titlePt)
+                                                    const title = data?.titlePt || data?.titleEn || form.titleKr || null
+                                                    if (title) set('titlePt', title)
                                                 }}
                                                 disabled={fetchingTmdb}
-                                                title="Buscar título do TMDB (pt-BR)"
+                                                title="Buscar título do TMDB (pt-BR → en → original)"
                                                 className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
                                             >
                                                 {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
@@ -207,15 +208,18 @@ export default function EditProductionPage() {
                                             </button>
                                         )}
                                     </div>
-                                    {tmdbData?.titlePt && tmdbData.titlePt !== form.titlePt && (
-                                        <button
-                                            type="button"
-                                            onClick={() => set('titlePt', tmdbData.titlePt!)}
-                                            className="mt-1 text-xs text-purple-400 hover:text-purple-300"
-                                        >
-                                            Usar: &ldquo;{tmdbData.titlePt}&rdquo;
-                                        </button>
-                                    )}
+                                    {(() => {
+                                        const suggested = tmdbData?.titlePt || tmdbData?.titleEn || form.titleKr || null
+                                        return suggested && suggested !== form.titlePt ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => set('titlePt', suggested)}
+                                                className="mt-1 text-xs text-purple-400 hover:text-purple-300"
+                                            >
+                                                Usar: &ldquo;{suggested}&rdquo;
+                                            </button>
+                                        ) : null
+                                    })()}
                                     {tmdbError && <p className="mt-1 text-xs text-red-400">{tmdbError}</p>}
                                 </div>
                             </div>

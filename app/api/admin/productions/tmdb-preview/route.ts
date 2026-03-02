@@ -53,10 +53,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Falha ao buscar dados do TMDB' }, { status: 502 })
   }
 
-  const titlePt = tmdbType === 'movie' ? (pt?.title ?? en?.title ?? null) : (pt?.name ?? en?.name ?? null)
+  const titlePt = tmdbType === 'movie' ? (pt?.title || null) : (pt?.name || null)
+  const titleEn = tmdbType === 'movie' ? (en?.title || null) : (en?.name || null)
 
   return NextResponse.json({
     titlePt: titlePt ?? null,
+    titleEn: titleEn ?? null,
     synopsisPt: pt?.overview || null,
     synopsisEn: en?.overview || null,
   })
