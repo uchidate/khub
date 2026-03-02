@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw, Zap } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
@@ -20,6 +20,13 @@ interface TranslationItem {
   label: string
   fields: string[]
   status: 'pending' | 'draft' | 'approved'
+}
+
+interface ProgressEvent {
+  name: string
+  status: 'processing' | 'translated' | 'skipped' | 'failed'
+  current: number
+  total: number
 }
 
 const ENTITY_LABELS: Record<EntityType, string> = {
@@ -49,6 +56,12 @@ const FIELD_LABELS: Record<string, string> = {
   contentMd: 'conteúdo',
 }
 
+function formatElapsed(seconds: number) {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0')
+  const s = (seconds % 60).toString().padStart(2, '0')
+  return `${m}:${s}`
+}
+
 export default function TranslationsPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [activeTab, setActiveTab] = useState<EntityType>('artist')
@@ -59,9 +72,15 @@ export default function TranslationsPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [statsLoading, setStatsLoading] = useState(true)
+
+  // Estado de tradução em tempo real
   const [running, setRunning] = useState(false)
   const [runResult, setRunResult] = useState<string | null>(null)
-  const [progress, setProgress] = useState<{ current: number; total: number; name: string; status: string } | null>(null)
+  const [progressLog, setProgressLog] = useState<ProgressEvent[]>([])
+  const [currentItem, setCurrentItem] = useState<ProgressEvent | null>(null)
+  const [elapsed, setElapsed] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const logEndRef = useRef<HTMLDivElement>(null)
 
   const fetchStats = useCallback(async () => {
     setStatsLoading(true)
@@ -92,9 +111,26 @@ export default function TranslationsPage() {
   useEffect(() => { setPage(1) }, [activeTab, statusFilter, q])
   useEffect(() => { fetchItems() }, [fetchItems])
 
+  // Auto-scroll para o fim do log conforme cresce
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [progressLog, currentItem])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     fetchItems()
+  }
+
+  const startTimer = () => {
+    setElapsed(0)
+    timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
+  }
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
   }
 
   const handleRunBatch = () => {
@@ -104,37 +140,53 @@ export default function TranslationsPage() {
     }
     setRunning(true)
     setRunResult(null)
-    setProgress(null)
+    setProgressLog([])
+    setCurrentItem(null)
+    startTimer()
 
     const params = new URLSearchParams({ entityType: activeTab, limit: '10' })
     const es = new EventSource(`/api/admin/translations/run?${params}`)
 
     es.onmessage = (event) => {
-      const data = JSON.parse(event.data)
+      const data = JSON.parse(event.data) as ProgressEvent & { type: string; translated?: number; skipped?: number; failed?: number; message?: string }
+
       if (data.type === 'progress') {
-        setProgress(data)
+        if (data.status === 'processing') {
+          setCurrentItem(data)
+        } else {
+          setCurrentItem(null)
+          setProgressLog(prev => [...prev, data])
+        }
       } else if (data.type === 'done') {
         es.close()
+        stopTimer()
         setRunning(false)
-        setProgress(null)
-        setRunResult(`✅ Traduzidos: ${data.translated ?? 0} | Ignorados: ${data.skipped ?? 0} | Falhas: ${data.failed ?? 0}`)
+        setCurrentItem(null)
+        setRunResult(`Traduzidos: ${data.translated ?? 0} · Ignorados: ${data.skipped ?? 0} · Falhas: ${data.failed ?? 0}`)
         fetchStats()
         fetchItems()
       } else if (data.type === 'error') {
         es.close()
+        stopTimer()
         setRunning(false)
-        setProgress(null)
-        setRunResult(`❌ Erro: ${data.message}`)
+        setCurrentItem(null)
+        setRunResult(`erro: ${data.message}`)
       }
     }
 
     es.onerror = () => {
       es.close()
+      stopTimer()
       setRunning(false)
-      setProgress(null)
-      setRunResult('❌ Falha ao conectar com o servidor.')
+      setCurrentItem(null)
+      setRunResult('erro: falha ao conectar com o servidor.')
     }
   }
+
+  const translatedCount = progressLog.filter(e => e.status === 'translated').length
+  const skippedCount = progressLog.filter(e => e.status === 'skipped').length
+  const failedCount = progressLog.filter(e => e.status === 'failed').length
+  const processedCount = progressLog.length
 
   return (
     <AdminLayout title="Traduções">
@@ -176,6 +228,102 @@ export default function TranslationsPage() {
           })}
         </div>
 
+        {/* Painel de tradução em tempo real */}
+        {(running || progressLog.length > 0) && (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            {/* Cabeçalho do painel */}
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                {running ? (
+                  <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                )}
+                <span className="text-sm font-medium text-gray-700">
+                  {running ? 'Tradução em andamento...' : 'Tradução concluída'}
+                </span>
+              </div>
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <span className="font-mono tabular-nums">⏱ {formatElapsed(elapsed)}</span>
+                <span className="text-green-600 font-medium">{translatedCount} ✓</span>
+                {skippedCount > 0 && <span className="text-gray-500">{skippedCount} ignorados</span>}
+                {failedCount > 0 && <span className="text-red-600 font-medium">{failedCount} ✗</span>}
+                {!running && (
+                  <button
+                    onClick={() => { setProgressLog([]); setRunResult(null); setElapsed(0) }}
+                    className="text-gray-400 hover:text-gray-600 text-xs underline"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Barra de progresso geral */}
+            {currentItem && (
+              <div className="h-1 bg-gray-100">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-500"
+                  style={{ width: `${Math.round((processedCount / currentItem.total) * 100)}%` }}
+                />
+              </div>
+            )}
+
+            {/* Log de itens */}
+            <div className="max-h-52 overflow-y-auto px-4 py-2 space-y-1">
+              {progressLog.map((entry, i) => (
+                <div key={i} className="flex items-center gap-2 py-1 text-sm">
+                  {entry.status === 'translated' && <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />}
+                  {entry.status === 'skipped' && <SkipForward className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
+                  {entry.status === 'failed' && <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
+                  <span className={`flex-1 truncate ${
+                    entry.status === 'failed' ? 'text-red-700' :
+                    entry.status === 'skipped' ? 'text-gray-400' : 'text-gray-700'
+                  }`}>
+                    {entry.name}
+                  </span>
+                  <span className="text-xs text-gray-400 flex-shrink-0">
+                    {entry.status === 'translated' ? 'traduzido' :
+                     entry.status === 'skipped' ? 'já em PT' : 'falhou'}
+                  </span>
+                </div>
+              ))}
+
+              {/* Item sendo processado agora */}
+              {currentItem && (
+                <div className="flex items-center gap-2 py-1 text-sm">
+                  <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin flex-shrink-0" />
+                  <span className="flex-1 truncate text-blue-700 font-medium">{currentItem.name}</span>
+                  <span className="text-xs text-blue-400 flex-shrink-0">processando...</span>
+                </div>
+              )}
+              <div ref={logEndRef} />
+            </div>
+
+            {/* Resultado final */}
+            {runResult && (
+              <div className={`px-4 py-2 text-sm border-t ${
+                runResult.startsWith('erro')
+                  ? 'bg-red-50 text-red-700 border-red-100'
+                  : 'bg-green-50 text-green-700 border-green-100'
+              }`}>
+                {runResult.startsWith('erro') ? `❌ ${runResult}` : `✅ ${runResult}`}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Resultado quando não tem log ativo */}
+        {runResult && progressLog.length === 0 && (
+          <div className={`px-4 py-2 rounded-lg text-sm ${
+            runResult.startsWith('erro')
+              ? 'bg-red-50 text-red-700'
+              : 'bg-green-50 text-green-700'
+          }`}>
+            {runResult.startsWith('erro') ? `❌ ${runResult}` : `✅ ${runResult}`}
+          </div>
+        )}
+
         {/* Tabs + filtros */}
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="flex items-center gap-2 px-4 pt-4 border-b border-gray-200 flex-wrap">
@@ -212,27 +360,6 @@ export default function TranslationsPage() {
               )}
             </div>
           </div>
-
-          {running && progress && (
-            <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
-              <div className="flex items-center justify-between text-sm text-blue-700 mb-1">
-                <span>Traduzindo {progress.current}/{progress.total}: <strong>{progress.name}</strong></span>
-                <span>{Math.round((progress.current / progress.total) * 100)}%</span>
-              </div>
-              <div className="h-1.5 bg-blue-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {runResult && (
-            <div className={`px-4 py-2 text-sm ${runResult.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-              {runResult}
-            </div>
-          )}
 
           <div className="p-4 flex flex-wrap gap-3 items-center border-b border-gray-100">
             {/* Busca */}
