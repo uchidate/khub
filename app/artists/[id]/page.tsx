@@ -103,7 +103,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                 productions: {
                     where: { production: { flaggedAsNonKorean: false } },
                     include: { production: true },
-                    orderBy: { production: { year: 'desc' } },
+                    orderBy: { production: { year: { sort: 'desc', nulls: 'last' } } },
                 },
                 memberships: {
                     include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },
