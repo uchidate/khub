@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, Film } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save, RefreshCw, Film, Download } from 'lucide-react'
 
 interface Production {
     id: string
@@ -50,6 +50,9 @@ export default function EditProductionPage() {
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Production>>({})
+    const [tmdbData, setTmdbData] = useState<{ titlePt: string | null; synopsisPt: string | null; synopsisEn: string | null } | null>(null)
+    const [fetchingTmdb, setFetchingTmdb] = useState(false)
+    const [tmdbError, setTmdbError] = useState('')
 
     useEffect(() => {
         fetch(`/api/admin/productions/by-id?id=${id}`)
@@ -64,6 +67,24 @@ export default function EditProductionPage() {
 
     const set = (key: keyof Production, value: unknown) => {
         setForm(prev => ({ ...prev, [key]: value }))
+    }
+
+    const handleFetchTmdb = async (): Promise<typeof tmdbData> => {
+        if (tmdbData) return tmdbData
+        setFetchingTmdb(true)
+        setTmdbError('')
+        try {
+            const res = await fetch(`/api/admin/productions/tmdb-preview?id=${id}`)
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Erro ao buscar do TMDB')
+            setTmdbData(data)
+            return data
+        } catch (err) {
+            setTmdbError(err instanceof Error ? err.message : 'Erro ao buscar do TMDB')
+            return null
+        } finally {
+            setFetchingTmdb(false)
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -162,13 +183,40 @@ export default function EditProductionPage() {
                                 </div>
                                 <div>
                                     <label className={labelCls}>Título em Português</label>
-                                    <input
-                                        type="text"
-                                        value={form.titlePt ?? ''}
-                                        onChange={e => set('titlePt', e.target.value)}
-                                        className={inputCls}
-                                        placeholder="Se vazio, usa o título original"
-                                    />
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={form.titlePt ?? ''}
+                                            onChange={e => set('titlePt', e.target.value)}
+                                            className={inputCls}
+                                            placeholder="Se vazio, usa o título original"
+                                        />
+                                        {production.tmdbId && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    const data = await handleFetchTmdb()
+                                                    if (data?.titlePt) set('titlePt', data.titlePt)
+                                                }}
+                                                disabled={fetchingTmdb}
+                                                title="Buscar título do TMDB (pt-BR)"
+                                                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                            >
+                                                {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                                TMDB
+                                            </button>
+                                        )}
+                                    </div>
+                                    {tmdbData?.titlePt && tmdbData.titlePt !== form.titlePt && (
+                                        <button
+                                            type="button"
+                                            onClick={() => set('titlePt', tmdbData.titlePt!)}
+                                            className="mt-1 text-xs text-purple-400 hover:text-purple-300"
+                                        >
+                                            Usar: &ldquo;{tmdbData.titlePt}&rdquo;
+                                        </button>
+                                    )}
+                                    {tmdbError && <p className="mt-1 text-xs text-red-400">{tmdbError}</p>}
                                 </div>
                             </div>
                         </div>
@@ -222,23 +270,60 @@ export default function EditProductionPage() {
                             />
                         </div>
 
-                        {/* Sinopse */}
+                        {/* Sinopse Original (referência do TMDB) */}
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
-                                <label className={labelCls + ' mb-0'}>Sinopse</label>
-                                {production.synopsisSource && SYNOPSIS_SOURCE_LABELS[production.synopsisSource] && (
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${SYNOPSIS_SOURCE_LABELS[production.synopsisSource].cls}`}>
-                                        {SYNOPSIS_SOURCE_LABELS[production.synopsisSource].label}
+                                <label className={labelCls + ' mb-0'}>Sinopse Original</label>
+                                <span className="text-[10px] text-zinc-600 font-medium">en · referência</span>
+                            </div>
+                            <textarea
+                                value={tmdbData?.synopsisEn ?? ''}
+                                readOnly
+                                rows={3}
+                                placeholder={production.tmdbId ? 'Clique em "Buscar do TMDB" abaixo para carregar...' : 'Sem TMDB ID vinculado'}
+                                className={inputCls + ' resize-none opacity-50 cursor-default'}
+                            />
+                        </div>
+
+                        {/* Sinopse em Português */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <label className={labelCls + ' mb-0'}>Sinopse em Português</label>
+                                {form.synopsisSource && SYNOPSIS_SOURCE_LABELS[form.synopsisSource] && (
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${SYNOPSIS_SOURCE_LABELS[form.synopsisSource].cls}`}>
+                                        {SYNOPSIS_SOURCE_LABELS[form.synopsisSource].label}
                                     </span>
                                 )}
                             </div>
-                            <textarea
-                                value={form.synopsis ?? ''}
-                                onChange={e => set('synopsis', e.target.value)}
-                                placeholder="Breve descrição da produção..."
-                                rows={4}
-                                className={inputCls + ' resize-none'}
-                            />
+                            <div className="relative">
+                                <textarea
+                                    value={form.synopsis ?? ''}
+                                    onChange={e => set('synopsis', e.target.value)}
+                                    placeholder="Breve descrição da produção em português..."
+                                    rows={4}
+                                    className={inputCls + ' resize-none'}
+                                />
+                            </div>
+                            {production.tmdbId && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        const data = await handleFetchTmdb()
+                                        if (data?.synopsisPt) {
+                                            set('synopsis', data.synopsisPt)
+                                            set('synopsisSource', 'tmdb_pt')
+                                        } else if (data?.synopsisEn) {
+                                            set('synopsis', data.synopsisEn)
+                                            set('synopsisSource', 'tmdb_en')
+                                        }
+                                    }}
+                                    disabled={fetchingTmdb}
+                                    className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                >
+                                    {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                    Buscar do TMDB
+                                </button>
+                            )}
                         </div>
 
                         {/* URLs */}

@@ -93,12 +93,15 @@ interface Stats {
   noRatingPending: number
   noRatingAttempted: number
   noRatingNoTmdb: number
+  noTmdb: number
+  hasTmdb: number
 }
 
 type FilterType =
   | ''
   | 'no_cast' | 'no_cast_pending' | 'no_cast_attempted' | 'no_cast_no_tmdb'
   | 'no_rating' | 'no_rating_pending' | 'no_rating_attempted' | 'no_rating_no_tmdb'
+  | 'no_tmdb' | 'has_tmdb'
 
 // ─── Cast Modal ───────────────────────────────────────────────────────────────
 
@@ -370,6 +373,7 @@ function StatsBar({
 }) {
   const isNoCast = filter === 'no_cast' || filter === 'no_cast_pending' || filter === 'no_cast_attempted' || filter === 'no_cast_no_tmdb'
   const isNoRating = filter === 'no_rating' || filter === 'no_rating_pending' || filter === 'no_rating_attempted' || filter === 'no_rating_no_tmdb'
+  const isAll = filter === '' || filter === 'no_tmdb' || filter === 'has_tmdb'
 
   const mainTabs = [
     { label: 'Todas', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-zinc-400' },
@@ -431,7 +435,26 @@ function StatsBar({
     },
   ]
 
-  const subTabs = isNoCast ? castSubTabs : isNoRating ? ratingSubTabs : []
+  const allSubTabs = [
+    {
+      label: 'Com TMDB',
+      value: 'has_tmdb' as FilterType,
+      count: stats?.hasTmdb ?? null,
+      title: 'Produções com TMDB ID vinculado',
+      color: 'text-green-400 border-green-500/30 bg-green-500/10 hover:bg-green-500/20',
+      activeColor: 'text-green-300 border-green-400/50 bg-green-500/20',
+    },
+    {
+      label: 'Sem TMDB',
+      value: 'no_tmdb' as FilterType,
+      count: stats?.noTmdb ?? null,
+      title: 'Produções sem TMDB ID — requer vinculação manual',
+      color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800',
+      activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800',
+    },
+  ]
+
+  const subTabs = isNoCast ? castSubTabs : isNoRating ? ratingSubTabs : isAll ? allSubTabs : []
 
   return (
     <div className="space-y-2">
@@ -439,7 +462,7 @@ function StatsBar({
       <div className="flex items-center gap-2 flex-wrap">
         {mainTabs.map((tab) => {
           const isActive = tab.value === ''
-            ? filter === ''
+            ? isAll
             : tab.value === 'no_cast' ? isNoCast
             : tab.value === 'no_rating' ? isNoRating
             : filter === tab.value
@@ -474,7 +497,7 @@ function StatsBar({
             return (
               <button
                 key={sub.value}
-                onClick={() => onFilter(isActive ? (isNoCast ? 'no_cast' : 'no_rating') : sub.value)}
+                onClick={() => onFilter(isActive ? (isNoCast ? 'no_cast' : isNoRating ? 'no_rating' : '') : sub.value)}
                 title={sub.title}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold transition-all border ${
                   isActive ? sub.activeColor : sub.color

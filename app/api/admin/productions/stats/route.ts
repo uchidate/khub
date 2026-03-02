@@ -32,6 +32,8 @@ export async function GET() {
     noRatingPending,
     noRatingAttempted,
     noRatingNoTmdb,
+    noTmdb,
+    hasTmdb,
   ] = await Promise.all([
     prisma.production.count(),
     prisma.production.count({ where: { artists: { none: {} } } }),
@@ -48,6 +50,10 @@ export async function GET() {
     prisma.production.count({ where: { ageRating: null, tmdbId: { not: null }, ageRatingSyncAt: { not: null } } }),
     // no rating + no tmdbId (manual only)
     prisma.production.count({ where: { ageRating: null, tmdbId: null } }),
+    // sem TMDB ID
+    prisma.production.count({ where: { tmdbId: null } }),
+    // com TMDB ID
+    prisma.production.count({ where: { tmdbId: { not: null } } }),
   ])
 
   return NextResponse.json({
@@ -60,5 +66,7 @@ export async function GET() {
     noRatingPending,
     noRatingAttempted,
     noRatingNoTmdb,
+    noTmdb,
+    hasTmdb,
   })
 }
