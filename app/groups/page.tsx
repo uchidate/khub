@@ -3,6 +3,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +27,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GroupsPage() {
     return (
+        <>
+        <JsonLd data={{
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Grupos K-Pop | HallyuHub",
+            "description": "Explore grupos de K-Pop, suas gerações, formações e trajetórias na indústria coreana.",
+            "url": `${BASE_URL}/groups`,
+            "inLanguage": "pt-BR",
+            "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
+        }} />
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <SectionHeader
                 title="Grupos Musicais"
@@ -35,5 +46,6 @@ export default async function GroupsPage() {
             <GroupsList />
             <ScrollToTop />
         </PageTransition>
+        </>
     )
 }

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { getRoleLabel } from '@/lib/utils/role-labels'
 import { Search, User, Newspaper, Film, ArrowLeft } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
+import type { Metadata } from 'next'
 
 function stripMarkdown(text: string): string {
     return text
@@ -25,6 +26,17 @@ export const dynamic = 'force-dynamic'
 interface SearchPageProps {
     searchParams: {
         q?: string
+    }
+}
+
+export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
+    const q = (searchParams.q ?? '').trim()
+    return {
+        title: q ? `Resultados para "${q}"` : 'Busca',
+        description: q
+            ? `Resultados de busca para "${q}" — artistas, notícias e produções de K-Pop e K-Drama no HallyuHub.`
+            : 'Busque artistas, notícias e produções de K-Pop e K-Drama no HallyuHub.',
+        robots: { index: false, follow: true },
     }
 }
 

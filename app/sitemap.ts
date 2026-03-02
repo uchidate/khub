@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 
-const BASE_URL = 'https://hallyuhub.com.br'
+const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {

@@ -5,6 +5,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { NewsList } from "@/components/features/NewsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { JsonLd } from "@/components/seo/JsonLd"
 
 export const dynamic = 'force-dynamic'
 
@@ -67,6 +68,16 @@ async function NewsContent() {
 
 export default async function NewsPage() {
     return (
+        <>
+        <JsonLd data={{
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Notícias K-Pop & K-Drama | HallyuHub",
+            "description": "Notícias sobre K-Pop, K-Drama e cultura coreana. Fique por dentro de tudo.",
+            "url": `${BASE_URL}/news`,
+            "inLanguage": "pt-BR",
+            "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
+        }} />
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <SectionHeader
                 title="Notícias"
@@ -78,5 +89,6 @@ export default async function NewsPage() {
             </Suspense>
             <ScrollToTop />
         </PageTransition>
+        </>
     )
 }
