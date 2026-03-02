@@ -7,6 +7,7 @@ import { StreamingHighlights } from "@/components/features/StreamingHighlights"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { STREAMING_TAB_ORDER } from "@/lib/config/streaming-platforms"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
+import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
@@ -51,6 +52,16 @@ export default async function ProductionsPage() {
     }
 
     return (
+        <>
+        <JsonLd data={{
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Produções Coreanas | HallyuHub",
+            "description": "Produções coreanas: K-Dramas, filmes e séries. De romances épicos a thrillers de tirar o fôlego.",
+            "url": `${BASE_URL}/productions`,
+            "inLanguage": "pt-BR",
+            "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
+        }} />
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <SectionHeader
                 title="Produções"
@@ -64,5 +75,6 @@ export default async function ProductionsPage() {
             </Suspense>
             <ScrollToTop />
         </PageTransition>
+        </>
     )
 }

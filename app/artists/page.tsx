@@ -3,6 +3,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +27,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ArtistsPage() {
     return (
+        <>
+        <JsonLd data={{
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Artistas K-Pop & K-Drama | HallyuHub",
+            "description": "Explore perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.",
+            "url": `${BASE_URL}/artists`,
+            "inLanguage": "pt-BR",
+            "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
+        }} />
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <SectionHeader
                 title="Artistas"
@@ -35,5 +46,6 @@ export default async function ArtistsPage() {
             <ArtistsList />
             <ScrollToTop />
         </PageTransition>
+        </>
     )
 }

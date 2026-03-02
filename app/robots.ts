@@ -14,6 +14,6 @@ export default function robots(): MetadataRoute.Robots {
                 disallow: ['/admin/', '/dashboard/', '/api/'],
             },
         ],
-        sitemap: 'https://hallyuhub.com.br/sitemap.xml',
+        sitemap: 'https://www.hallyuhub.com.br/sitemap.xml',
     }
 }
