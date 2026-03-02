@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
 import { Activity, Shield, Server, User } from 'lucide-react'
@@ -184,7 +185,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                 {/* Tabs */}
                 <div className="flex items-center gap-1 mb-4 bg-zinc-900 p-1 rounded-xl w-fit">
                     {TABS.map(({ key, label, icon: Icon }) => (
-                        <a
+                        <Link
                             key={key}
                             href={buildUrl({ tab: key, page: '1' })}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
@@ -193,14 +194,14 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                         >
                             <Icon size={14} />
                             {label}
-                        </a>
+                        </Link>
                     ))}
                 </div>
 
                 {/* Filtros de período */}
                 <div className="flex flex-wrap items-center gap-2 mb-4">
                     {[1, 7, 30, 90].map(d => (
-                        <a
+                        <Link
                             key={d}
                             href={buildUrl({ days: String(d), page: '1' })}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
@@ -210,14 +211,14 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                             }`}
                         >
                             {d === 1 ? 'Hoje' : `${d}d`}
-                        </a>
+                        </Link>
                     ))}
 
                     {tab === 'user' && (
                         <>
                             <div className="w-px bg-zinc-700 mx-1 h-5" />
                             {Object.entries(ACTIVITY_TYPE_CONFIG).map(([type, cfg]) => (
-                                <a
+                                <Link
                                     key={type}
                                     href={buildUrl({ type: sp.type === type ? '' : type, page: '1' })}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
@@ -227,7 +228,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                     }`}
                                 >
                                     {cfg.label}
-                                </a>
+                                </Link>
                             ))}
                         </>
                     )}
@@ -236,7 +237,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                         <>
                             <div className="w-px bg-zinc-700 mx-1 h-5" />
                             {(['ERROR', 'WARN', 'INFO', 'DEBUG'] as const).map(l => (
-                                <a
+                                <Link
                                     key={l}
                                     href={buildUrl({ level: sp.level === l ? '' : l, page: '1' })}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
@@ -246,7 +247,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                     }`}
                                 >
                                     {l}
-                                </a>
+                                </Link>
                             ))}
                         </>
                     )}
@@ -375,7 +376,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                 {pages > 1 && (
                     <div className="flex justify-center gap-2 mt-4">
                         {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
-                            <a
+                            <Link
                                 key={p}
                                 href={buildUrl({ page: String(p) })}
                                 className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-colors ${
@@ -383,7 +384,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                 }`}
                             >
                                 {p}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 )}
