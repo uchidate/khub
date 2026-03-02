@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE = 'https://api.themoviedb.org/3'
+const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
 
 async function fetchTmdb(tmdbId: string, tmdbType: string, language: string) {
   const endpoint = tmdbType === 'movie'
@@ -53,8 +54,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Falha ao buscar dados do TMDB' }, { status: 502 })
   }
 
-  const titlePt = tmdbType === 'movie' ? (pt?.title || null) : (pt?.name || null)
-  const titleEn = tmdbType === 'movie' ? (en?.title || null) : (en?.name || null)
+  const titlePtRaw = tmdbType === 'movie' ? (pt?.title || null) : (pt?.name || null)
+  const titleEnRaw = tmdbType === 'movie' ? (en?.title || null) : (en?.name || null)
+  // Se o TMDB devolver coreano como "tradução" em pt ou en (fallback), ignorar
+  const titlePt = titlePtRaw && !KOREAN_REGEX.test(titlePtRaw) ? titlePtRaw : null
+  const titleEn = titleEnRaw && !KOREAN_REGEX.test(titleEnRaw) ? titleEnRaw : null
 
   return NextResponse.json({
     titlePt: titlePt ?? null,

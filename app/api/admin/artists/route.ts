@@ -26,6 +26,8 @@ const artistSchema = z.object({
   nameHangul: z.string().optional(),
   birthDate: z.string().optional(),              // ISO date string, camelCase
   birthName: z.string().optional(),
+  placeOfBirth: z.string().optional(),
+  gender: z.string().optional(),                 // 'MALE', 'FEMALE', '' (não informado)
   stageNames: z.array(z.string()).optional(),    // array de nomes artísticos
   roles: z.array(z.string()).optional(),         // ex: ['IDOL', 'ACTOR']
   height: z.string().optional(),
@@ -112,6 +114,8 @@ export async function GET(request: NextRequest) {
 
     const filterWhere = koreanNoTmdbIds !== null
       ? { id: { in: koreanNoTmdbIds } }
+      : filter === 'with_tmdb'           ? { ...active, tmdbId: { not: null } }
+      : filter === 'no_tmdb'             ? { ...active, tmdbId: null }
       : filter === 'no_hangul'           ? { ...active, nameHangul: null }
       : filter === 'no_hangul_pending'   ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: null }
       : filter === 'no_hangul_attempted' ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: { not: null } }
@@ -123,6 +127,7 @@ export async function GET(request: NextRequest) {
       : filter === 'no_social' || filter === 'no_social_pending'
                                          ? { ...active, socialLinksUpdatedAt: null }
       : filter === 'no_social_attempted' ? { ...active, socialLinksUpdatedAt: { not: null }, socialLinks: { equals: Prisma.DbNull } }
+      : filter === 'no_social_no_tmdb'   ? { ...active, socialLinksUpdatedAt: null, tmdbId: null }
       : filter === 'flagged'             ? { flaggedAsNonKorean: true }
       : filter === 'with_group'          ? { ...active, memberships: { some: { isActive: true } } }
       : filter === 'no_group'            ? { ...active, memberships: { none: { isActive: true } } }
@@ -280,6 +285,8 @@ export async function PATCH(request: NextRequest) {
       data.primaryImageUrl = null
     }
     if (validated.nameHangul === '') data.nameHangul = null
+    if (validated.gender === '') data.gender = null
+    if (validated.placeOfBirth === '') data.placeOfBirth = null
     if (validated.tmdbId === '') data.tmdbId = null
     if (validated.mbid === '') {
       data.mbid = null

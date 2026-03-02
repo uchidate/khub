@@ -36,6 +36,8 @@ interface Artist {
 interface ArtistStats {
   total: number
   flagged: number
+  withTmdb: number
+  noTmdb: number
   noHangul: number
   noHangulPending: number
   noHangulAttempted: number
@@ -47,14 +49,16 @@ interface ArtistStats {
   noSocialTotal: number
   noSocialPending: number
   noSocialAttempted: number
+  noSocialNoTmdb: number
   koreanNoTmdb: number
 }
 
 type FilterType =
   | ''
+  | 'with_tmdb' | 'no_tmdb'
   | 'no_hangul' | 'no_hangul_pending' | 'no_hangul_attempted' | 'no_hangul_no_tmdb'
   | 'no_photo' | 'no_photo_pending' | 'no_photo_attempted' | 'no_photo_no_tmdb'
-  | 'no_social' | 'no_social_pending' | 'no_social_attempted'
+  | 'no_social' | 'no_social_pending' | 'no_social_attempted' | 'no_social_no_tmdb'
   | 'flagged'
   | 'korean_no_tmdb'
 
@@ -309,6 +313,7 @@ function StatsBar({ stats, filter, onFilter }: {
   filter: FilterType
   onFilter: (f: FilterType) => void
 }) {
+  const isTodos = filter === '' || filter === 'with_tmdb' || filter === 'no_tmdb'
   const isNoHangul = filter.startsWith('no_hangul')
   const isNoPhoto = filter.startsWith('no_photo')
   const isNoSocial = filter.startsWith('no_social')
@@ -323,6 +328,11 @@ function StatsBar({ stats, filter, onFilter }: {
   ]
 
   type SubTab = { label: string; value: FilterType; count: number | null; title: string; color: string; activeColor: string }
+
+  const todosSubs: SubTab[] = [
+    { label: 'Com TMDB', value: 'with_tmdb', count: stats?.withTmdb ?? null, title: 'Artistas com TMDB ID cadastrado', color: 'text-green-400 border-green-500/30 bg-green-500/10 hover:bg-green-500/20', activeColor: 'text-green-300 border-green-400/50 bg-green-500/20' },
+    { label: 'Sem TMDB', value: 'no_tmdb', count: stats?.noTmdb ?? null, title: 'Artistas sem TMDB ID — requer curadoria', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
+  ]
 
   const hangulSubs: SubTab[] = [
     { label: 'Pendentes', value: 'no_hangul_pending', count: stats?.noHangulPending ?? null, title: 'Tem TMDB — nunca tentado, clique "Hangul" para preencher', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
@@ -339,17 +349,18 @@ function StatsBar({ stats, filter, onFilter }: {
   const socialSubs: SubTab[] = [
     { label: 'Pendentes', value: 'no_social_pending', count: stats?.noSocialPending ?? null, title: 'Nunca tentado — clique "Wiki" para sincronizar', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
     { label: 'Já tentados', value: 'no_social_attempted', count: stats?.noSocialAttempted ?? null, title: 'Já processado, Wikidata não encontrou redes', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
+    { label: 'Sem TMDB', value: 'no_social_no_tmdb', count: stats?.noSocialNoTmdb ?? null, title: 'Sem redes E sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
   ]
 
-  const subTabs = isNoHangul ? hangulSubs : isNoPhoto ? photoSubs : isNoSocial ? socialSubs : []
-  const parentFilter = isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : 'no_social'
+  const subTabs = isTodos ? todosSubs : isNoHangul ? hangulSubs : isNoPhoto ? photoSubs : isNoSocial ? socialSubs : []
+  const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : 'no_social'
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
         {mainTabs.map((tab) => {
           const isActive = tab.value === ''
-            ? filter === ''
+            ? isTodos
             : tab.value === 'no_hangul' ? isNoHangul
             : tab.value === 'no_photo' ? isNoPhoto
             : tab.value === 'no_social' ? isNoSocial
