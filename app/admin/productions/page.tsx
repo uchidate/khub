@@ -702,8 +702,8 @@ export default function ProductionsPage() {
       if (!resetRes.ok) { showMsg(`❌ Erro ao resetar: ${resetData.error ?? 'falha'}`); return }
       const total = resetData.resetCount as number
       if (total === 0) { showMsg('✅ Nenhuma produção com tmdbType ausente encontrada.'); return }
-      let processed = 0; let totalSynced = 0
-      while (true) {
+      let processed = 0; let totalSynced = 0; let keepGoing = true
+      while (keepGoing) {
         setSyncMsg(`🔄 Corrigindo sem tmdbType... ${processed}/${total} produções`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',
@@ -711,7 +711,7 @@ export default function ProductionsPage() {
           body: JSON.stringify({ pending: true, limit: 20 }),
         })
         const batchData = await batchRes.json()
-        if (!batchRes.ok || batchData.processed === 0) break
+        if (!batchRes.ok || batchData.processed === 0) { keepGoing = false; break }
         processed += batchData.processed as number
         totalSynced += batchData.totalSynced as number
       }
