@@ -34,7 +34,7 @@ const artistSchema = z.object({
   bloodType: z.string().optional(),
   zodiacSign: z.string().optional(),
   bio: z.string().optional(),
-  primaryImageUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
+  primaryImageUrl: z.string().nullable().optional(), // aceita qualquer string ou null — admin-only
   socialLinks: z.record(z.string(), z.string()).optional(),  // JSON: { instagram: "...", etc }
   tmdbId: z.string().optional(),
   mbid: z.string().optional(),                  // MusicBrainz artist ID

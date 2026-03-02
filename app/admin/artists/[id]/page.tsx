@@ -136,7 +136,10 @@ export default function EditArtistPage() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || 'Erro ao salvar')
+                const detail = err.details?.[0]
+                    ? ` (campo: ${err.details[0].path?.join('.') ?? '?'} — ${err.details[0].message})`
+                    : ''
+                throw new Error((err.error || 'Erro ao salvar') + detail)
             }
             setSuccess('Salvo com sucesso!')
             setTimeout(() => setSuccess(''), 3000)
