@@ -892,7 +892,6 @@ export default function ProductionsPage() {
   // ─── CRUD ──────────────────────────────────────────────────────────────────
 
   const handleCreate = () => { setEditingProduction(null); setFormOpen(true) }
-  const handleEdit = (p: Production) => { setEditingProduction(p); setFormOpen(true) }
   const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
