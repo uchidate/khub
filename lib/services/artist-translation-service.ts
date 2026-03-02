@@ -19,9 +19,13 @@ export class ArtistTranslationService {
     }
 
     /**
-     * Traduz biografias de artistas pendentes (batch)
+     * Traduz biografias de artistas pendentes, um por vez.
+     * onProgress é chamado após cada item para streaming de progresso.
      */
-    async translatePendingArtists(limit: number = 5): Promise<{
+    async translatePendingArtists(
+        limit: number = 5,
+        onProgress?: (p: { current: number; total: number; name: string; status: 'translated' | 'skipped' | 'failed' }) => void
+    ): Promise<{
         translated: number;
         failed: number;
         skipped: number;
@@ -46,13 +50,16 @@ export class ArtistTranslationService {
         let translated = 0;
         let failed = 0;
         let skipped = 0;
+        const total = pendingArtists.length;
 
-        for (const artist of pendingArtists) {
+        for (let i = 0; i < pendingArtists.length; i++) {
+            const artist = pendingArtists[i];
             try {
                 if (this.isAlreadyInPortuguese(artist.bio || '')) {
                     console.log(`  ⏭️  ${artist.nameRomanized} - Already in Portuguese`);
                     await this.markAsCompleted(artist.id);
                     skipped++;
+                    onProgress?.({ current: i + 1, total, name: artist.nameRomanized, status: 'skipped' });
                     continue;
                 }
 
@@ -92,6 +99,7 @@ export class ArtistTranslationService {
 
                 console.log(`  ✅ ${artist.nameRomanized} - Translated successfully`);
                 translated++;
+                onProgress?.({ current: i + 1, total, name: artist.nameRomanized, status: 'translated' });
 
             } catch (error: any) {
                 console.error(`  ❌ ${artist.nameRomanized} - Translation failed: ${error.message}`);
@@ -102,6 +110,7 @@ export class ArtistTranslationService {
                 }).catch(() => {});
 
                 failed++;
+                onProgress?.({ current: i + 1, total, name: artist.nameRomanized, status: 'failed' });
             }
         }
 
