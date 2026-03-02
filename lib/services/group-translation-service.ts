@@ -24,7 +24,7 @@ export class GroupTranslationService {
      */
     async translatePendingGroups(
         limit: number = 5,
-        onProgress?: (p: { current: number; total: number; name: string; status: 'translated' | 'skipped' | 'failed' }) => void
+        onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void
     ): Promise<{
         translated: number;
         failed: number;
@@ -69,6 +69,8 @@ export class GroupTranslationService {
                     continue;
                 }
 
+                // Notifica início do processamento ANTES da chamada de IA
+                onProgress?.({ current: i + 1, total, name: group.name, status: 'processing' });
                 console.log(`  🔄 Translating: ${group.name}...`);
 
                 const translatedBio = await this.translateBioToPortuguese(
