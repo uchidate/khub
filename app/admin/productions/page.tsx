@@ -1269,7 +1269,7 @@ export default function ProductionsPage() {
           columns={columns}
           apiUrl="/api/admin/productions"
           extraParams={filter ? { filter } : undefined}
-          onEdit={handleEdit}
+          editHref={(p) => `/admin/productions/${p.id}`}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por título..."
           actions={(production) => (
