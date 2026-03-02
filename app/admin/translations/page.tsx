@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
@@ -59,6 +59,8 @@ export default function TranslationsPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [running, setRunning] = useState(false)
+  const [runResult, setRunResult] = useState<string | null>(null)
 
   const fetchStats = useCallback(async () => {
     setStatsLoading(true)
@@ -92,6 +94,34 @@ export default function TranslationsPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     fetchItems()
+  }
+
+  const handleRunBatch = async () => {
+    if (!['artist', 'group'].includes(activeTab)) {
+      setRunResult('Tradução automática disponível apenas para Artistas e Grupos.')
+      return
+    }
+    setRunning(true)
+    setRunResult(null)
+    try {
+      const res = await fetch('/api/admin/translations/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityType: activeTab, limit: 10 }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setRunResult(`✅ Traduzidos: ${data.translated} | Ignorados: ${data.skipped} | Falhas: ${data.failed}`)
+        fetchStats()
+        fetchItems()
+      } else {
+        setRunResult(`❌ Erro: ${data.error}`)
+      }
+    } catch {
+      setRunResult('❌ Falha ao conectar com o servidor.')
+    } finally {
+      setRunning(false)
+    }
   }
 
   return (
@@ -157,8 +187,25 @@ export default function TranslationsPage() {
               >
                 Log de alterações →
               </Link>
+              {['artist', 'group'].includes(activeTab) && (
+                <button
+                  onClick={handleRunBatch}
+                  disabled={running}
+                  title="Traduzir próximos 10 pendentes com IA"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
+                  {running ? 'Traduzindo...' : 'Traduzir (IA)'}
+                </button>
+              )}
             </div>
           </div>
+
+          {runResult && (
+            <div className={`px-4 py-2 text-sm ${runResult.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {runResult}
+            </div>
+          )}
 
           <div className="p-4 flex flex-wrap gap-3 items-center border-b border-gray-100">
             {/* Busca */}

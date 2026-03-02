@@ -11,6 +11,7 @@ import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
+import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -44,7 +45,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function GroupDetailPage({ params }: { params: { id: string } }) {
-    const group = await prisma.musicalGroup.findUnique({
+    const [group, bioPt] = await Promise.all([
+    prisma.musicalGroup.findUnique({
         where: { id: params.id },
         include: {
             agency: true,
@@ -63,7 +65,9 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                 orderBy: [{ isActive: 'desc' }, { position: 'asc' }, { joinDate: 'asc' }],
             },
         },
-    })
+    }),
+    getTranslation('group', params.id, 'bio', 'pt-BR'),
+    ])
 
     if (!group) {
         return (
@@ -324,14 +328,14 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-8 lg:col-span-1">
                         {/* Bio */}
-                        {group.bio && (
+                        {(bioPt ?? group.bio) && (
                             <div className="p-6 rounded-2xl bg-zinc-900/50 relative overflow-hidden"
                                 style={{ border: `1px solid ${toRgba(accent, 0.2)}`, borderLeft: `3px solid ${accent}` }}>
                                 {/* Decorative quote mark */}
                                 <div className="absolute top-1 right-4 text-8xl font-black leading-none pointer-events-none select-none"
                                     style={{ color: toRgba(accent, 0.1), fontFamily: 'Georgia, serif' }}>❝</div>
                                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Sobre</h3>
-                                <p className="text-zinc-300 leading-relaxed text-sm relative z-10">{group.bio}</p>
+                                <p className="text-zinc-300 leading-relaxed text-sm relative z-10">{bioPt ?? group.bio}</p>
                             </div>
                         )}
 
