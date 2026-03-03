@@ -14,6 +14,7 @@ import {
 export interface StreamingShow {
     rank: number
     showTitle: string
+    productionTitle?: string   // titlePt da produção no DB (quando existir)
     tmdbId: string
     source: string
     productionId?: string
@@ -152,7 +153,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 <Link href={`/productions/${show.productionId}`} className="block">
                                     {card}
                                     <p className="mt-1.5 text-[10px] md:text-xs text-white font-semibold line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">
-                                        {show.showTitle}
+                                        {show.productionTitle ?? show.showTitle}
                                     </p>
                                     {show.year && (
                                         <p className="text-[9px] text-zinc-500 leading-none mt-0.5">{show.year}</p>

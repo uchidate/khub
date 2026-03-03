@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, FlaskConical, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { Plus, FlaskConical, CheckCircle, XCircle, Loader2, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 
 interface News {
@@ -16,6 +16,7 @@ interface News {
   imageUrl: string | null
   publishedAt: Date
   tags: string[]
+  isHidden: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -77,6 +78,13 @@ const columns: Column<News>[] = [
         )}
       </div>
     ),
+  },
+  {
+    key: 'isHidden',
+    label: 'Status',
+    render: (news) => news.isHidden
+      ? <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs font-bold">Oculta</span>
+      : <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-bold">Visível</span>,
   },
   {
     key: 'createdAt',
@@ -163,6 +171,15 @@ export default function NewsAdminPage() {
     }
   }
 
+  const handleToggleHidden = async (news: News) => {
+    await fetch(`/api/admin/news?id=${news.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isHidden: !news.isHidden }),
+    })
+    refetchTable()
+  }
+
   const handleDeleteConfirm = async () => {
     const res = await fetch('/api/admin/news', {
       method: 'DELETE',
@@ -234,6 +251,19 @@ export default function NewsAdminPage() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por título ou conteúdo..."
+          actions={(news) => (
+            <button
+              onClick={() => handleToggleHidden(news)}
+              title={news.isHidden ? 'Tornar visível' : 'Ocultar do site'}
+              className={`p-1.5 rounded transition-colors ${
+                news.isHidden
+                  ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700'
+              }`}
+            >
+              {news.isHidden ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          )}
         />
       </div>
 

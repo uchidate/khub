@@ -31,12 +31,12 @@ const getHomePublicData = unstable_cache(
             artistCount, productionCount, newsCount, totalViews,
             featuredNewsRaw, trendingArtists, topNewsRaw, streamingShowsRaw, trendingGroupsRaw,
         ] = await Promise.all([
-            prisma.artist.count(),
-            prisma.production.count(),
-            prisma.news.count(),
-            prisma.artist.aggregate({ _sum: { viewCount: true } }),
+            prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
+            prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
+            prisma.news.count({ where: { isHidden: false } }),
+            prisma.artist.aggregate({ _sum: { viewCount: true }, where: { isHidden: false } }),
             prisma.news.findMany({
-                where: { imageUrl: { not: null } },
+                where: { imageUrl: { not: null }, isHidden: false },
                 take: 5,
                 orderBy: { publishedAt: 'desc' },
                 select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
@@ -57,6 +57,7 @@ const getHomePublicData = unstable_cache(
                 },
             }),
             prisma.news.findMany({
+                where: { isHidden: false },
                 take: 3,
                 orderBy: { publishedAt: 'desc' },
                 select: {
@@ -69,6 +70,7 @@ const getHomePublicData = unstable_cache(
                 select: {
                     source: true, rank: true, showTitle: true, tmdbId: true,
                     posterUrl: true, year: true, voteAverage: true, isKorean: true, productionId: true,
+                    production: { select: { titlePt: true } },
                 },
                 orderBy: [{ source: 'asc' }, { rank: 'asc' }],
             }).catch(() => [] as never[]),
@@ -215,6 +217,7 @@ export default async function Home() {
         showsByPlatform[show.source].push({
             rank: show.rank,
             showTitle: show.showTitle,
+            productionTitle: (show as any).production?.titlePt ?? undefined,
             tmdbId: show.tmdbId,
             source: show.source,
             posterUrl: show.posterUrl,

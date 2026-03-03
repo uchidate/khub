@@ -176,7 +176,7 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
             {/* Title below */}
             <div className="mt-2 px-0.5">
                 <p className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">
-                    {show.showTitle}
+                    {show.productionTitle ?? show.showTitle}
                 </p>
                 {show.year && (
                     <p className="text-xs text-zinc-500 mt-0.5">{show.year}</p>
@@ -241,7 +241,7 @@ function SmallCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<typeof 
                     ? 'text-zinc-300 group-hover:text-purple-400'
                     : 'text-zinc-500'
             }`}>
-                {show.showTitle}
+                {show.productionTitle ?? show.showTitle}
             </p>
         </div>
     )
