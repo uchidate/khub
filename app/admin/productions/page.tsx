@@ -1045,6 +1045,14 @@ export default function ProductionsPage() {
               <RefreshCw size={13} className={backfillRunning ? 'animate-spin' : ''} />
               Atualizar PT-BR
             </button>
+            <Link
+              href="/admin/productions/sync"
+              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 font-bold rounded-lg transition-all text-xs"
+              title="Sincronizar dados do TMDB em lote para todas as produções"
+            >
+              <Star size={13} />
+              Sync TMDB
+            </Link>
             <button
               onClick={() => { setImportPanelOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
               className={`flex items-center gap-1.5 px-3 py-2 border font-bold rounded-lg transition-all text-xs ${
