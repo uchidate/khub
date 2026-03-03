@@ -7,6 +7,9 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ArrowLeft, ExternalLink, Save, RefreshCw, User, Search, CheckCircle, XCircle, Download } from 'lucide-react'
 
+type FieldSource = { source: 'manual' | 'tmdb' | 'wikidata' | 'system'; at: string; by?: string }
+type FieldSources = Record<string, FieldSource>
+
 interface Artist {
     id: string
     nameRomanized: string
@@ -21,6 +24,7 @@ interface Artist {
     tmdbId: string | null
     mbid: string | null
     isHidden: boolean
+    fieldSources: FieldSources | null
 }
 
 interface TMDBPreview {
@@ -54,6 +58,8 @@ export default function EditArtistPage() {
     const [previewLoading, setPreviewLoading] = useState(false)
     const [previewError, setPreviewError] = useState('')
     const [bioSource, setBioSource] = useState<'tmdb_pt' | 'tmdb_en' | null>(null)
+    // Campos aplicados via TMDB nesta sessão (não serão marcados como manuais ao salvar)
+    const [tmdbAppliedFields, setTmdbAppliedFields] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         fetch(`/api/admin/artists?id=${id}`)
@@ -77,6 +83,16 @@ export default function EditArtistPage() {
             setTmdbPreview(null)
             setPreviewError('')
         }
+    }
+    // Edição manual: remove o campo de tmdbAppliedFields (para ser marcado como manual ao salvar)
+    const setManual = (key: keyof Artist, value: unknown) => {
+        set(key, value)
+        setTmdbAppliedFields(prev => { const s = new Set(Array.from(prev)); s.delete(key as string); return s })
+    }
+    // Aplicação a partir do TMDB: adiciona o campo em tmdbAppliedFields (não será marcado como manual)
+    const applyFromTmdb = (key: keyof Artist, value: unknown) => {
+        set(key, value)
+        setTmdbAppliedFields(prev => new Set(Array.from(prev).concat(key as string)))
     }
 
     const fetchTMDBPreview = useCallback(async (): Promise<TMDBPreview | null> => {
@@ -128,6 +144,7 @@ export default function EditArtistPage() {
                 tmdbId: form.tmdbId || '',
                 mbid: form.mbid || '',
                 isHidden: form.isHidden ?? false,
+                tmdbSyncedFields: Array.from(tmdbAppliedFields),
             }
             const res = await fetch(`/api/admin/artists?id=${id}`, {
                 method: 'PATCH',
@@ -152,6 +169,43 @@ export default function EditArtistPage() {
 
     const inputCls = "w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
     const labelCls = "block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5"
+
+    // Utilitário: badge de origem do campo (manual/tmdb) ao lado do label
+    const sources = (form.fieldSources ?? {}) as FieldSources
+    const SourceBadge = ({ field }: { field: string }) => {
+        const src = sources[field]
+        if (!src) return null
+        if (src.source === 'manual') {
+            const date = new Date(src.at).toLocaleDateString('pt-BR')
+            return (
+                <button type="button"
+                    onClick={() => setTmdbAppliedFields(prev => new Set(Array.from(prev).concat(field)))}
+                    title={`Editado manualmente em ${date} — clique para liberar sync automático do TMDB`}
+                    className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border transition-colors ${
+                        tmdbAppliedFields.has(field)
+                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
+                    }`}>
+                    {tmdbAppliedFields.has(field) ? '🔓 liberado' : '🔒 manual'}
+                </button>
+            )
+        }
+        if (src.source === 'tmdb') {
+            return (
+                <span title={`Sincronizado do TMDB em ${new Date(src.at).toLocaleDateString('pt-BR')}`}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border bg-blue-500/10 text-blue-400 border-blue-500/30">
+                    TMDB
+                </span>
+            )
+        }
+        return null
+    }
+    const FieldLabel = ({ label, field, required: req }: { label: string; field: string; required?: boolean }) => (
+        <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{label}{req ? ' *' : ''}</span>
+            <SourceBadge field={field} />
+        </div>
+    )
 
     return (
         <AdminLayout title={artist ? `Editar: ${artist.nameRomanized}` : 'Editar Artista'}>
@@ -218,11 +272,11 @@ export default function EditArtistPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className={labelCls}>Nome em Hangul</label>
+                                    <FieldLabel label="Nome em Hangul" field="nameHangul" />
                                     <input
                                         type="text"
                                         value={form.nameHangul ?? ''}
-                                        onChange={e => set('nameHangul', e.target.value)}
+                                        onChange={e => setManual('nameHangul', e.target.value)}
                                         placeholder="홍길동"
                                         className={inputCls}
                                     />
@@ -233,20 +287,20 @@ export default function EditArtistPage() {
                         {/* Nomes artísticos + gênero */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className={labelCls}>Nomes Artísticos (separados por vírgula)</label>
+                                <FieldLabel label="Nomes Artísticos (separados por vírgula)" field="stageNames" />
                                 <input
                                     type="text"
                                     value={(form.stageNames ?? []).join(', ')}
-                                    onChange={e => set('stageNames', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    onChange={e => setManual('stageNames', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                                     placeholder="IU, Lee Ji-eun"
                                     className={inputCls}
                                 />
                             </div>
                             <div>
-                                <label className={labelCls}>Gênero</label>
+                                <FieldLabel label="Gênero" field="gender" />
                                 <select
                                     value={form.gender ?? ''}
-                                    onChange={e => set('gender', e.target.value)}
+                                    onChange={e => setManual('gender', e.target.value)}
                                     className={inputCls}
                                 >
                                     <option value="">Não informado</option>
@@ -259,20 +313,20 @@ export default function EditArtistPage() {
                         {/* Nascimento + local */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className={labelCls}>Data de Nascimento</label>
+                                <FieldLabel label="Data de Nascimento" field="birthDate" />
                                 <input
                                     type="date"
                                     value={form.birthDate ?? ''}
-                                    onChange={e => set('birthDate', e.target.value)}
+                                    onChange={e => setManual('birthDate', e.target.value)}
                                     className={inputCls}
                                 />
                             </div>
                             <div>
-                                <label className={labelCls}>Local de Nascimento</label>
+                                <FieldLabel label="Local de Nascimento" field="placeOfBirth" />
                                 <input
                                     type="text"
                                     value={form.placeOfBirth ?? ''}
-                                    onChange={e => set('placeOfBirth', e.target.value)}
+                                    onChange={e => setManual('placeOfBirth', e.target.value)}
                                     placeholder="Seul, Coreia do Sul"
                                     className={inputCls}
                                 />
@@ -293,11 +347,11 @@ export default function EditArtistPage() {
 
                         {/* Foto URL */}
                         <div>
-                            <label className={labelCls}>URL da Foto</label>
+                            <FieldLabel label="URL da Foto" field="primaryImageUrl" />
                             <input
                                 type="text"
                                 value={form.primaryImageUrl ?? ''}
-                                onChange={e => set('primaryImageUrl', e.target.value)}
+                                onChange={e => setManual('primaryImageUrl', e.target.value)}
                                 placeholder="https://..."
                                 className={inputCls}
                             />
@@ -306,7 +360,8 @@ export default function EditArtistPage() {
                         {/* Bio */}
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
-                                <label className={labelCls + ' mb-0'}>Biografia</label>
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Biografia</span>
+                                <SourceBadge field="bio" />
                                 {bioSource && (
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
                                         bioSource === 'tmdb_pt'
@@ -319,7 +374,7 @@ export default function EditArtistPage() {
                             </div>
                             <textarea
                                 value={form.bio ?? ''}
-                                onChange={e => set('bio', e.target.value)}
+                                onChange={e => setManual('bio', e.target.value)}
                                 placeholder="Breve biografia do artista..."
                                 rows={4}
                                 className={inputCls + ' resize-none'}
@@ -330,10 +385,10 @@ export default function EditArtistPage() {
                                     onClick={async () => {
                                         const data = await fetchTMDBPreview()
                                         if (data?.biographyPt) {
-                                            set('bio', data.biographyPt)
+                                            applyFromTmdb('bio', data.biographyPt)
                                             setBioSource('tmdb_pt')
                                         } else if (data?.biographyEn) {
-                                            set('bio', data.biographyEn)
+                                            applyFromTmdb('bio', data.biographyEn)
                                             setBioSource('tmdb_en')
                                         }
                                     }}
@@ -444,13 +499,13 @@ export default function EditArtistPage() {
                                 <div className="flex flex-wrap gap-2 pt-1 border-t border-white/5">
                                     <span className="text-[10px] text-zinc-500 self-center">Aplicar ao artista (só campos vazios):</span>
                                     {tmdbPreview.photoUrl && !form.primaryImageUrl && (
-                                        <button type="button" onClick={() => set('primaryImageUrl', tmdbPreview.photoUrl)}
+                                        <button type="button" onClick={() => applyFromTmdb('primaryImageUrl', tmdbPreview.photoUrl)}
                                             className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
                                             + Foto
                                         </button>
                                     )}
                                     {tmdbPreview.hangulName && !form.nameHangul && (
-                                        <button type="button" onClick={() => set('nameHangul', tmdbPreview.hangulName)}
+                                        <button type="button" onClick={() => applyFromTmdb('nameHangul', tmdbPreview.hangulName)}
                                             className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
                                             + Hangul
                                         </button>
@@ -458,10 +513,10 @@ export default function EditArtistPage() {
                                     {(tmdbPreview.biographyPt || tmdbPreview.biographyEn) && !form.bio && (
                                         <button type="button" onClick={() => {
                                             if (tmdbPreview.biographyPt) {
-                                                set('bio', tmdbPreview.biographyPt)
+                                                applyFromTmdb('bio', tmdbPreview.biographyPt)
                                                 setBioSource('tmdb_pt')
                                             } else if (tmdbPreview.biographyEn) {
-                                                set('bio', tmdbPreview.biographyEn)
+                                                applyFromTmdb('bio', tmdbPreview.biographyEn)
                                                 setBioSource('tmdb_en')
                                             }
                                         }}
@@ -470,13 +525,13 @@ export default function EditArtistPage() {
                                         </button>
                                     )}
                                     {tmdbPreview.birthday && !form.birthDate && (
-                                        <button type="button" onClick={() => set('birthDate', tmdbPreview.birthday)}
+                                        <button type="button" onClick={() => applyFromTmdb('birthDate', tmdbPreview.birthday)}
                                             className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
                                             + Nascimento
                                         </button>
                                     )}
                                     {tmdbPreview.placeOfBirth && !form.placeOfBirth && (
-                                        <button type="button" onClick={() => set('placeOfBirth', tmdbPreview.placeOfBirth)}
+                                        <button type="button" onClick={() => applyFromTmdb('placeOfBirth', tmdbPreview.placeOfBirth)}
                                             className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
                                             + Local
                                         </button>

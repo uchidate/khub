@@ -41,6 +41,7 @@ const artistSchema = z.object({
   agencyId: z.string().optional(),
   musicalGroupId: z.string().optional(),         // '' = remove from group, id = add/update membership
   isHidden: z.boolean().optional(),             // Ocultar/restaurar visibilidade pública
+  tmdbSyncedFields: z.array(z.string()).optional(), // campos aplicados do TMDB (não marcar como manuais)
 })
 
 /**
@@ -73,6 +74,8 @@ export async function GET(request: NextRequest) {
           discographySyncAt: true,
           tmdbId: true,
           mbid: true,
+          isHidden: true,
+          fieldSources: true,
         },
       })
       if (!artist) return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
@@ -271,8 +274,8 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
     const validated = artistSchema.partial().parse(body)
 
-    // Extract musicalGroupId before passing to artist update
-    const { musicalGroupId, ...artistFields } = validated
+    // Extract non-Prisma fields before passing to artist update
+    const { musicalGroupId, tmdbSyncedFields, ...artistFields } = validated
 
     // Convert date strings to Date objects; empty string → null for nullable fields
     const data: Record<string, unknown> = { ...artistFields }
@@ -292,6 +295,53 @@ export async function PATCH(request: NextRequest) {
       // Reset sync timestamp so artist is re-queued for discography sync
       data.discographySyncAt = null
     }
+
+    // ── fieldSources: rastrear origem de campos sincronizáveis ──────────────────
+    // Carrega estado atual para detectar quais campos mudaram
+    const TRACKABLE_FIELDS = ['primaryImageUrl', 'bio', 'birthDate', 'placeOfBirth', 'nameHangul', 'stageNames', 'gender'] as const
+    const current = await prisma.artist.findUnique({
+      where: { id: artistId },
+      select: { primaryImageUrl: true, bio: true, birthDate: true, placeOfBirth: true, nameHangul: true, stageNames: true, gender: true, fieldSources: true },
+    })
+    if (current) {
+      const tmdbSynced = new Set(tmdbSyncedFields ?? [])
+      const sources = (current.fieldSources as Record<string, unknown> | null) ?? {}
+      const now = new Date().toISOString()
+      const byAdmin = session!.user.id
+      // Compare normalized values to detect real changes
+      const newBirthDate = data.birthDate instanceof Date ? data.birthDate.toISOString().split('T')[0] : null
+      const oldBirthDate = current.birthDate ? (current.birthDate as Date).toISOString().split('T')[0] : null
+      const fieldNewVals: Record<string, unknown> = {
+        primaryImageUrl: (data.primaryImageUrl as string | null) ?? null,
+        bio: validated.bio || null,
+        birthDate: newBirthDate,
+        placeOfBirth: validated.placeOfBirth || null,
+        nameHangul: validated.nameHangul || null,
+        stageNames: JSON.stringify(validated.stageNames ?? current.stageNames ?? []),
+        gender: validated.gender ?? null,
+      }
+      const fieldOldVals: Record<string, unknown> = {
+        primaryImageUrl: current.primaryImageUrl,
+        bio: current.bio,
+        birthDate: oldBirthDate,
+        placeOfBirth: current.placeOfBirth,
+        nameHangul: current.nameHangul,
+        stageNames: JSON.stringify(current.stageNames ?? []),
+        gender: current.gender,
+      }
+      const updatedSources = { ...sources }
+      for (const field of TRACKABLE_FIELDS) {
+        if (tmdbSynced.has(field)) {
+          // Campo vem do TMDB — marcar como tmdb e remover lock manual
+          updatedSources[field] = { source: 'tmdb', at: now }
+        } else if (String(fieldNewVals[field]) !== String(fieldOldVals[field])) {
+          // Campo mudou manualmente — marcar como manual
+          updatedSources[field] = { source: 'manual', at: now, by: byAdmin }
+        }
+      }
+      data.fieldSources = updatedSources
+    }
+    // ────────────────────────────────────────────────────────────────────────────
 
     // If mbid is being cleared, also delete all albums (they may be orphaned)
     let clearedAlbumsCount = 0

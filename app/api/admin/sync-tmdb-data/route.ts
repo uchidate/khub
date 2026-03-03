@@ -67,13 +67,14 @@ export async function POST(req: NextRequest) {
     const { error } = await requireAdmin()
     if (error) return error
 
-    let mode: 'empty_only' | 'all' = 'empty_only'
+    let mode: 'empty_only' | 'smart' | 'all' = 'empty_only'
     let limit = 200
     let offset = 0
 
     try {
         const body = await req.json()
         if (body?.mode === 'all') mode = 'all'
+        else if (body?.mode === 'smart') mode = 'smart'
         if (body?.limit && typeof body.limit === 'number') {
             limit = Math.min(Math.max(body.limit, 1), 500)
         }
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
                 ],
             }
             : {}),
+        // smart e all processam todos os artistas com tmdbId
     }
 
     // Conta o total elegível (sem offset) para a UI montar o progresso global
@@ -117,6 +119,7 @@ export async function POST(req: NextRequest) {
             placeOfBirth: true,
             gender: true,
             stageNames: true,
+            fieldSources: true,
         },
         orderBy: { trendingScore: 'desc' },
         skip: offset,
@@ -149,56 +152,80 @@ export async function POST(req: NextRequest) {
 
                     const updates: Record<string, unknown> = {}
                     const updatedFields: string[] = []
+                    const now = new Date().toISOString()
+
+                    // fieldSources: carrega estado atual e respeita edições manuais
+                    const sources = (artist.fieldSources as Record<string, { source: string; at?: string }> | null) ?? {}
+                    const isManual = (field: string) => sources[field]?.source === 'manual'
+                    // Em mode=smart: atualiza se vazio OU se não for manual
+                    // Em mode=empty_only: só atualiza se vazio
+                    // Em mode=all: sempre atualiza (ignora fieldSources)
+                    const canUpdate = (isEmpty: boolean, field: string) => {
+                        if (mode === 'all') return true
+                        if (isManual(field)) return false // smart e empty_only respeitam manual
+                        if (mode === 'smart') return true  // smart atualiza qualquer não-manual
+                        return isEmpty                      // empty_only: só se vazio
+                    }
+                    const updatedSources = { ...sources }
 
                     // Foto
-                    if (tmdb.profile_path && (mode === 'all' || !artist.primaryImageUrl)) {
+                    if (tmdb.profile_path && canUpdate(!artist.primaryImageUrl, 'primaryImageUrl')) {
                         updates.primaryImageUrl = `${TMDB_IMG}${tmdb.profile_path}`
+                        updatedSources.primaryImageUrl = { source: 'tmdb', at: now }
                         updatedFields.push('foto')
                     }
 
-                    // Bio — em mode=all sempre sobrescreve; em empty_only só se vazia
-                    if (tmdb.biography && (mode === 'all' || !artist.bio)) {
+                    // Bio
+                    if (tmdb.biography && canUpdate(!artist.bio, 'bio')) {
                         updates.bio = tmdb.biography
+                        updatedSources.bio = { source: 'tmdb', at: now }
                         updatedFields.push('bio')
                     }
 
                     // Data de nascimento
-                    if (tmdb.birthday && (mode === 'all' || !artist.birthDate)) {
+                    if (tmdb.birthday && canUpdate(!artist.birthDate, 'birthDate')) {
                         const d = new Date(tmdb.birthday)
                         if (!isNaN(d.getTime())) {
                             updates.birthDate = d
+                            updatedSources.birthDate = { source: 'tmdb', at: now }
                             updatedFields.push('nascimento')
                         }
                     }
 
                     // Local de nascimento
-                    if (tmdb.place_of_birth && (mode === 'all' || !artist.placeOfBirth)) {
+                    if (tmdb.place_of_birth && canUpdate(!artist.placeOfBirth, 'placeOfBirth')) {
                         updates.placeOfBirth = tmdb.place_of_birth
+                        updatedSources.placeOfBirth = { source: 'tmdb', at: now }
                         updatedFields.push('local')
                     }
 
-                    // Nome em Hangul (se vazio)
+                    // Nome em Hangul (só se vazio — nunca sobrescreve)
                     if (!artist.nameHangul) {
                         const hangul = extractHangul(tmdb.also_known_as)
                         if (hangul) {
                             updates.nameHangul = hangul
+                            updatedSources.nameHangul = { source: 'tmdb', at: now }
                             updatedFields.push('hangul')
                         }
                     }
 
-                    // stageNames (se vazio)
+                    // stageNames (só se vazio)
                     if (!artist.stageNames || artist.stageNames.length === 0) {
                         const stageNames = extractStageNames(tmdb.also_known_as, tmdb.name)
                         if (stageNames.length > 0) {
                             updates.stageNames = stageNames
+                            updatedSources.stageNames = { source: 'tmdb', at: now }
                             updatedFields.push('aliases')
                         }
                     }
 
                     // Gênero (se 0/null e TMDB tem valor)
                     if ((!artist.gender || artist.gender === 0) && tmdb.gender && tmdb.gender > 0) {
-                        updates.gender = tmdb.gender
-                        updatedFields.push('gênero')
+                        if (canUpdate(!artist.gender, 'gender')) {
+                            updates.gender = tmdb.gender
+                            updatedSources.gender = { source: 'tmdb', at: now }
+                            updatedFields.push('gênero')
+                        }
                     }
 
                     if (Object.keys(updates).length === 0) {
@@ -207,7 +234,8 @@ export async function POST(req: NextRequest) {
                         continue
                     }
 
-                    // Marcar como sincronizado
+                    // Persistir fieldSources atualizado + status TMDB
+                    updates.fieldSources = updatedSources
                     updates.tmdbSyncStatus = 'SYNCED'
                     updates.tmdbLastSync = new Date()
 
