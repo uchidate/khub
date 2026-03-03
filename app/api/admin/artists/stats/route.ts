@@ -24,6 +24,11 @@
  *
  * koreanNoTmdb: artistas cujo nameRomanized contém Hangul E não têm tmdbId (nome errado, sem ref TMDB).
  *
+ * noRomanized breakdown:
+ *   noRomanized          — nameRomanized contém Hangul (nome não romanizado)
+ *   noRomanizedPending   — nameRomanized contém Hangul + tmdbId set (pode corrigir via TMDB)
+ *   noRomanizedNoTmdb    — nameRomanized contém Hangul + tmdbId null (= koreanNoTmdb)
+ *
  * All counts exclude flaggedAsNonKorean artists.
  */
 import { NextResponse } from 'next/server'
@@ -59,6 +64,8 @@ export async function GET() {
     noGroupUnsynced,
     noGroupSolo,
     koreanNoTmdbRaw,
+    noRomanizedRaw,
+    noRomanizedPendingRaw,
   ] = await Promise.all([
     prisma.artist.count(),
     prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
@@ -98,10 +105,26 @@ export async function GET() {
         AND "tmdbId" IS NULL
         AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
     `,
+    // noRomanized: todos com Hangul no nameRomanized (com ou sem tmdbId)
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) FROM "Artist"
+      WHERE "flaggedAsNonKorean" = false
+        AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
+    `,
+    // noRomanizedPending: Hangul no nameRomanized + tem tmdbId (pode corrigir)
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) FROM "Artist"
+      WHERE "flaggedAsNonKorean" = false
+        AND "tmdbId" IS NOT NULL
+        AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
+    `,
   ])
 
   const noGroup = noGroupUnsynced + noGroupSolo
   const koreanNoTmdb = Number(koreanNoTmdbRaw[0].count)
+  const noRomanized = Number(noRomanizedRaw[0].count)
+  const noRomanizedPending = Number(noRomanizedPendingRaw[0].count)
+  const noRomanizedNoTmdb = koreanNoTmdb // mesma condição
 
   return NextResponse.json({
     total,
@@ -125,5 +148,8 @@ export async function GET() {
     noGroupUnsynced,
     noGroupSolo,
     koreanNoTmdb,
+    noRomanized,
+    noRomanizedPending,
+    noRomanizedNoTmdb,
   })
 }

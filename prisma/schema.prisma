@@ -198,7 +198,7 @@ model Album {
 
 model Production {
   id                 String             @id @default(cuid())
-  titlePt            String             @unique
+  titlePt            String
   titleKr            String?
   type               String
   year               Int?

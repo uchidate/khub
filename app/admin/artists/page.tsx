@@ -42,6 +42,9 @@ interface ArtistStats {
   noHangulPending: number
   noHangulAttempted: number
   noHangulNoTmdb: number
+  noRomanized: number
+  noRomanizedPending: number
+  noRomanizedNoTmdb: number
   noPhoto: number
   noPhotoPending: number
   noPhotoAttempted: number
@@ -59,6 +62,7 @@ type FilterType =
   | 'no_hangul' | 'no_hangul_pending' | 'no_hangul_attempted' | 'no_hangul_no_tmdb'
   | 'no_photo' | 'no_photo_pending' | 'no_photo_attempted' | 'no_photo_no_tmdb'
   | 'no_social' | 'no_social_pending' | 'no_social_attempted' | 'no_social_no_tmdb'
+  | 'no_romanized' | 'no_romanized_pending' | 'no_romanized_no_tmdb'
   | 'flagged'
   | 'korean_no_tmdb'
 
@@ -317,13 +321,14 @@ function StatsBar({ stats, filter, onFilter }: {
   const isNoHangul = filter.startsWith('no_hangul')
   const isNoPhoto = filter.startsWith('no_photo')
   const isNoSocial = filter.startsWith('no_social')
+  const isNoRomanized = filter.startsWith('no_romanized')
 
   const mainTabs = [
     { label: 'Todos', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-zinc-400' },
     { label: 'Sem Hangul', value: 'no_hangul' as FilterType, count: stats?.noHangul ?? null, dot: 'bg-purple-400' },
+    { label: 'Sem Romanizado', value: 'no_romanized' as FilterType, count: stats?.noRomanized ?? null, dot: 'bg-amber-400' },
     { label: 'Sem Foto', value: 'no_photo' as FilterType, count: stats?.noPhoto ?? null, dot: 'bg-orange-400' },
     { label: 'Sem Redes', value: 'no_social' as FilterType, count: stats?.noSocialTotal ?? null, dot: 'bg-blue-400' },
-    { label: 'Nome Errado', value: 'korean_no_tmdb' as FilterType, count: stats?.koreanNoTmdb ?? null, dot: 'bg-amber-400' },
     { label: 'Flagged', value: 'flagged' as FilterType, count: stats?.flagged ?? null, dot: 'bg-red-400' },
   ]
 
@@ -352,8 +357,13 @@ function StatsBar({ stats, filter, onFilter }: {
     { label: 'Sem TMDB', value: 'no_social_no_tmdb', count: stats?.noSocialNoTmdb ?? null, title: 'Sem redes E sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
   ]
 
-  const subTabs = isTodos ? todosSubs : isNoHangul ? hangulSubs : isNoPhoto ? photoSubs : isNoSocial ? socialSubs : []
-  const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : 'no_social'
+  const romanizedSubs: SubTab[] = [
+    { label: 'Pendentes', value: 'no_romanized_pending', count: stats?.noRomanizedPending ?? null, title: 'Tem TMDB — pode corrigir via botão "Nome"', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
+    { label: 'Sem TMDB', value: 'no_romanized_no_tmdb', count: stats?.noRomanizedNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
+  ]
+
+  const subTabs = isTodos ? todosSubs : isNoHangul ? hangulSubs : isNoPhoto ? photoSubs : isNoSocial ? socialSubs : isNoRomanized ? romanizedSubs : []
+  const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : isNoSocial ? 'no_social' : 'no_romanized'
 
   return (
     <div className="space-y-2">
@@ -364,6 +374,7 @@ function StatsBar({ stats, filter, onFilter }: {
             : tab.value === 'no_hangul' ? isNoHangul
             : tab.value === 'no_photo' ? isNoPhoto
             : tab.value === 'no_social' ? isNoSocial
+            : tab.value === 'no_romanized' ? isNoRomanized
             : filter === tab.value
           return (
             <button key={tab.value} onClick={() => onFilter(tab.value)}
