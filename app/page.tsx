@@ -69,6 +69,7 @@ const getHomePublicData = unstable_cache(
                 select: {
                     source: true, rank: true, showTitle: true, tmdbId: true,
                     posterUrl: true, year: true, voteAverage: true, isKorean: true, productionId: true,
+                    production: { select: { titlePt: true } },
                 },
                 orderBy: [{ source: 'asc' }, { rank: 'asc' }],
             }).catch(() => [] as never[]),
@@ -215,6 +216,7 @@ export default async function Home() {
         showsByPlatform[show.source].push({
             rank: show.rank,
             showTitle: show.showTitle,
+            productionTitle: (show as any).production?.titlePt ?? undefined,
             tmdbId: show.tmdbId,
             source: show.source,
             posterUrl: show.posterUrl,
