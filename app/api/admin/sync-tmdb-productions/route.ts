@@ -166,10 +166,12 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Título pt (nunca sobrescreve em smart/empty_only — só em all)
+                    // Prioridade: pt-BR não-coreano → en não-coreano → pt-BR coreano → en coreano
                     const titlePtRaw = isMovie ? (pt?.title as string) : (pt?.name as string)
                     const titleEnRaw = isMovie ? (en?.title as string) : (en?.name as string)
                     const newTitle = (titlePtRaw && !KOREAN_REGEX.test(titlePtRaw) ? titlePtRaw : null)
                         || (titleEnRaw && !KOREAN_REGEX.test(titleEnRaw) ? titleEnRaw : null)
+                        || titlePtRaw || titleEnRaw || null
                     if (newTitle && mode === 'all') {
                         updates.titlePt = newTitle
                         updatedFields.push('título')

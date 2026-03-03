@@ -132,11 +132,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = productionSchema.parse(body)
 
-    // titlePt is the DB unique key — derive from titleKr when not provided
+    // Derive titlePt from titleKr when not provided
     const titlePt = (validated.titlePt?.trim() || validated.titleKr).trim()
 
     // Check if titlePt already exists
-    const existing = await prisma.production.findUnique({
+    const existing = await prisma.production.findFirst({
       where: { titlePt },
     })
 
@@ -187,14 +187,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Produção não encontrada' }, { status: 404 })
     }
 
-    // Derive titlePt from titleKr when submitted empty (keeps @unique constraint satisfied)
+    // Derive titlePt from titleKr when submitted empty
     const resolvedTitleKr = validated.titleKr ?? existing.titleKr
     const resolvedTitlePt = (validated.titlePt?.trim() || resolvedTitleKr || existing.titlePt).trim()
 
-    // If titlePt changed, check for duplicates
+    // If titlePt changed, check for duplicates (excluding current record)
     if (resolvedTitlePt !== existing.titlePt) {
-      const titleExists = await prisma.production.findUnique({
-        where: { titlePt: resolvedTitlePt },
+      const titleExists = await prisma.production.findFirst({
+        where: { titlePt: resolvedTitlePt, NOT: { id: productionId } },
       })
       if (titleExists) {
         return NextResponse.json({ error: 'Título já cadastrado' }, { status: 400 })
