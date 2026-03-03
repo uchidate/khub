@@ -274,7 +274,7 @@ export default function SyncProductionsTmdbPage() {
                                 ▶️ Retomar
                             </button>
                             <button
-                                onClick={() => { try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }; setSavedProgress(null) }}
+                                onClick={() => { try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ } setSavedProgress(null) }}
                                 className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg text-sm transition-colors"
                             >
                                 Descartar
