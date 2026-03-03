@@ -60,11 +60,13 @@ export async function GET(req: NextRequest) {
 
     const base = pt ?? en ?? {}
 
-    // Títulos (ignorar coreano como fallback)
+    // Títulos: pt-BR não-coreano → en não-coreano → pt-BR coreano → en coreano
     const titlePtRaw = isMovie ? (pt?.title as string || null) : (pt?.name as string || null)
     const titleEnRaw = isMovie ? (en?.title as string || null) : (en?.name as string || null)
-    const titlePt = titlePtRaw && !KOREAN_REGEX.test(titlePtRaw) ? titlePtRaw : null
-    const titleEn = titleEnRaw && !KOREAN_REGEX.test(titleEnRaw) ? titleEnRaw : null
+    const titlePt = (titlePtRaw && !KOREAN_REGEX.test(titlePtRaw) ? titlePtRaw : null)
+        || (titleEnRaw && !KOREAN_REGEX.test(titleEnRaw) ? titleEnRaw : null)
+        || titlePtRaw || titleEnRaw || null
+    const titleEn = titleEnRaw || null
 
     // Imagens
     const posterPath = (base.poster_path as string) || null
