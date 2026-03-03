@@ -37,11 +37,11 @@ interface TMDBPerson {
     also_known_as: string[]
 }
 
-async function fetchTMDBPerson(tmdbId: string): Promise<TMDBPerson | null> {
+async function fetchTMDBPerson(tmdbId: string, lang = 'en-US'): Promise<TMDBPerson | null> {
     if (!TMDB_API_KEY) return null
     try {
         const res = await fetch(
-            `${TMDB_BASE}/person/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US`,
+            `${TMDB_BASE}/person/${tmdbId}?api_key=${TMDB_API_KEY}&language=${lang}`,
             { signal: AbortSignal.timeout(8000) }
         )
         if (!res.ok) return null
@@ -143,7 +143,10 @@ export async function POST(req: NextRequest) {
                 send(`PROGRESS:${i + 1}/${artists.length}:${artist.nameRomanized}`)
 
                 try {
-                    const tmdb = await fetchTMDBPerson(artist.tmdbId!)
+                    const [tmdb, tmdbPt] = await Promise.all([
+                        fetchTMDBPerson(artist.tmdbId!),
+                        fetchTMDBPerson(artist.tmdbId!, 'pt-BR'),
+                    ])
                     if (!tmdb) {
                         send(`NO_DATA:${artist.nameRomanized}:${artist.id}`)
                         noData++
@@ -175,10 +178,13 @@ export async function POST(req: NextRequest) {
                         updatedFields.push('foto')
                     }
 
-                    // Bio
-                    if (tmdb.biography && canUpdate(!artist.bio, 'bio')) {
-                        updates.bio = tmdb.biography
-                        updatedSources.bio = { source: 'tmdb', at: now }
+                    // Bio — prioridade: pt-BR → en-US → coreano (qualquer coisa)
+                    const bioPt = tmdbPt?.biography?.trim() || null
+                    const bioEn = tmdb.biography?.trim() || null
+                    const bioValue = bioPt || bioEn || null
+                    if (bioValue && canUpdate(!artist.bio, 'bio')) {
+                        updates.bio = bioValue
+                        updatedSources.bio = { source: bioPt ? 'tmdb_pt' : 'tmdb_en', at: now }
                         updatedFields.push('bio')
                     }
 
