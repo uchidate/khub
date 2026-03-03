@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
+import { WatchButton } from "@/components/ui/WatchButton"
 import { ReportButton } from "@/components/ui/ReportButton"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
@@ -283,11 +284,12 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                     {production.tagline && <p className="text-base text-zinc-400 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
                     {!production.tagline && <div className="mb-8" />}
 
-                    {production.trailerUrl && (
-                        <div className="mt-8">
+                    <div className="mt-8 flex flex-wrap items-center gap-3">
+                        {production.trailerUrl && (
                             <TrailerModal trailerUrl={production.trailerUrl} title={production.titlePt} />
-                        </div>
-                    )}
+                        )}
+                        <WatchButton productionId={production.id} productionName={production.titlePt} />
+                    </div>
                 </div>
             </div>
 
