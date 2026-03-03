@@ -33,10 +33,10 @@ const getHomePublicData = unstable_cache(
         ] = await Promise.all([
             prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
             prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
-            prisma.news.count(),
+            prisma.news.count({ where: { isHidden: false } }),
             prisma.artist.aggregate({ _sum: { viewCount: true }, where: { isHidden: false } }),
             prisma.news.findMany({
-                where: { imageUrl: { not: null } },
+                where: { imageUrl: { not: null }, isHidden: false },
                 take: 5,
                 orderBy: { publishedAt: 'desc' },
                 select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
@@ -57,6 +57,7 @@ const getHomePublicData = unstable_cache(
                 },
             }),
             prisma.news.findMany({
+                where: { isHidden: false },
                 take: 3,
                 orderBy: { publishedAt: 'desc' },
                 select: {

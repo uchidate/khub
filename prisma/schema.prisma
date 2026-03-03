@@ -279,6 +279,7 @@ model News {
   source              String?               // nome do feed RSS (ex: 'Soompi', 'Dramabeans')
   viewCount           Int                   @default(0)
   trendingScore       Float                 @default(0.0)
+  isHidden            Boolean               @default(false) // Oculto do site público pelo admin
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   userFavorites       Favorite[]
@@ -293,6 +294,7 @@ model News {
   @@index([translationStatus])
   @@index([translationStatus, createdAt])
   @@index([trendingScore])
+  @@index([isHidden])
 }
 
 model NewsArtist {

@@ -101,7 +101,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
         }
     })
 
-    if (!news) {
+    if (!news || news.isHidden) {
         notFound()
     }
 
