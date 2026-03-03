@@ -31,10 +31,10 @@ const getHomePublicData = unstable_cache(
             artistCount, productionCount, newsCount, totalViews,
             featuredNewsRaw, trendingArtists, topNewsRaw, streamingShowsRaw, trendingGroupsRaw,
         ] = await Promise.all([
-            prisma.artist.count(),
-            prisma.production.count(),
+            prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
+            prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
             prisma.news.count(),
-            prisma.artist.aggregate({ _sum: { viewCount: true } }),
+            prisma.artist.aggregate({ _sum: { viewCount: true }, where: { isHidden: false } }),
             prisma.news.findMany({
                 where: { imageUrl: { not: null } },
                 take: 5,

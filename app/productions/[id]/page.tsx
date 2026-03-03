@@ -2,15 +2,15 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
-import { auth } from "@/lib/auth"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { WatchButton } from "@/components/ui/WatchButton"
 import { ReportButton } from "@/components/ui/ReportButton"
+import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
-import { Film, Pencil } from "lucide-react"
+import { Film } from "lucide-react"
 import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -70,8 +70,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function ProductionDetailPage({ params }: { params: { id: string } }) {
-    const session = await auth()
-    const isAdmin = session?.user?.role === 'admin'
 
     const production = await prisma.production.findUnique({
         where: { id: params.id },
@@ -215,16 +213,7 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
                         { label: production.titlePt }
                     ]} />
                     <div className="flex items-center gap-2">
-                        {isAdmin && (
-                            <Link
-                                href={`/admin/productions/${production.id}`}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white rounded-lg text-xs font-bold transition-colors border border-white/20"
-                                title="Editar produção (admin)"
-                            >
-                                <Pencil className="w-3.5 h-3.5" />
-                                Editar
-                            </Link>
-                        )}
+                        <AdminQuickEdit href={`/admin/productions/${production.id}`} label="Editar" />
                         <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt}
                             className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
                         <FavoriteButton
