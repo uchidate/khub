@@ -125,6 +125,9 @@ model Artist {
   flaggedAt          DateTime?          // Quando foi flagged
   isHidden           Boolean            @default(false) // Oculto do site público pelo admin
   placeOfBirth       String?            // Local de nascimento (do TMDB)
+  // Rastreio de origem dos campos (JSON: { campo: { source: 'manual'|'tmdb'|'wikidata'|'system', at: ISO, by?: adminId } })
+  // Usado para proteger campos editados manualmente do sync automático TMDB/Wikidata
+  fieldSources       Json?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites        Favorite[]

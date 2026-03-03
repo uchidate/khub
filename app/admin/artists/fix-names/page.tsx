@@ -362,7 +362,7 @@ export default function FixNamesAdminPage() {
         (m) => ({ total: parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3]), main: parseInt(m[1]), secondary: parseInt(m[2]), errors: parseInt(m[3]) })
     ), [])
 
-    const runSyncBatches = useCallback(async (mode: 'empty_only' | 'all', resume?: SavedProgress) => {
+    const runSyncBatches = useCallback(async (mode: 'empty_only' | 'smart' | 'all', resume?: SavedProgress) => {
         syncAbortRef.current = false
         setSyncRunning(true)
         setSavedSync(null)
@@ -446,8 +446,9 @@ export default function FixNamesAdminPage() {
     }, [])
 
     const startSyncTmdb = useCallback(() => runSyncBatches('empty_only'), [runSyncBatches])
+    const startSyncTmdbSmart = useCallback(() => runSyncBatches('smart'), [runSyncBatches])
     const startSyncTmdbAll = useCallback(() => runSyncBatches('all'), [runSyncBatches])
-    const resumeSyncTmdb = useCallback(() => savedSync && runSyncBatches((savedSync.mode as 'empty_only' | 'all') ?? 'empty_only', savedSync), [runSyncBatches, savedSync])
+    const resumeSyncTmdb = useCallback(() => savedSync && runSyncBatches((savedSync.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedSync), [runSyncBatches, savedSync])
 
     const runLinkBatches = useCallback(async (resume?: SavedProgress) => {
         linkAbortRef.current = false
@@ -731,6 +732,9 @@ export default function FixNamesAdminPage() {
                                     {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><CheckCircle className="w-4 h-4" /> Preencher vazios</>}
                                 </button>
                             )}
+                            <button onClick={startSyncTmdbSmart} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors" title="Atualiza todos os campos não editados manualmente">
+                                {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> Smart sync</>}
+                            </button>
                             <button onClick={startSyncTmdbAll} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
                                 {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> Forçar todos ({artistStats?.withTmdb.toLocaleString('pt-BR') ?? '…'})</>}
                             </button>
