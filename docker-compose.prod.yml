@@ -49,6 +49,19 @@ services:
       retries: 3
       start_period: 10s
 
+  migrate-production:
+    image: ghcr.io/uchidate/khub:latest
+    container_name: hallyuhub-migrate-production
+    command: ["npx", "prisma", "migrate", "deploy"]
+    env_file:
+      - .env.production
+    networks:
+      - backend-production
+    restart: "no"
+    depends_on:
+      postgres-production:
+        condition: service_healthy
+
   hallyuhub:
     image: ghcr.io/uchidate/khub:latest
     container_name: hallyuhub
@@ -82,6 +95,8 @@ services:
       timeout: 10s
       retries: 3
     depends_on:
+      migrate-production:
+        condition: service_completed_successfully
       postgres-production:
         condition: service_healthy
       ollama-production:
