@@ -237,6 +237,7 @@ model Production {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
+  watchEntries       WatchEntry[]
   streamingShows     StreamingShow[]
 
   @@index([type])
@@ -337,6 +338,7 @@ model User {
   createdAt              DateTime                     @default(now())
   updatedAt              DateTime                     @updatedAt
   favorites              Favorite[]
+  watchEntries           WatchEntry[]
   activities             Activity[]
   notificationSettings   UserNotificationSettings?
   notificationHistory    NotificationHistory[]
@@ -760,6 +762,35 @@ model TranslationLog {
 
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+// Lista de produções que o usuário quer assistir, está assistindo ou já assistiu
+model WatchEntry {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productionId String
+  production   Production  @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  status       WatchStatus
+  rating       Int?        // 1–5 estrelas (null = sem avaliação)
+  notes        String?     @db.Text // Nota privada do usuário
+  watchedAt    DateTime?   // Quando terminou de assistir (WATCHED)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, productionId])
+  @@index([userId])
+  @@index([productionId])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("watch_entries")
+}
+
+enum WatchStatus {
+  WANT_TO_WATCH
+  WATCHING
+  WATCHED
+  DROPPED
 }
 
 // Fonte: TMDB /discover/tv por plataforma (artist-centric, para trendingScore)

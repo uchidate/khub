@@ -21,6 +21,7 @@ import {
   Film,
   Music,
   CalendarDays,
+  BookmarkCheck,
 } from 'lucide-react'
 import { PageTransition } from '@/components/features/PageTransition'
 import { getDashboardData } from '@/lib/actions/user'
@@ -48,7 +49,7 @@ export default async function DashboardPage() {
   const data = await getDashboardData()
   if (!data) return null
 
-  const { activities, latestNews, personalizedNews, hasFollowing, trendingArtists, stats } = data
+  const { activities, latestNews, personalizedNews, hasFollowing, trendingArtists, watchingEntries, stats } = data
 
   const quickLinks = [
     { title: 'Perfil', description: 'Editar informações', href: '/profile', icon: User },
@@ -68,7 +69,7 @@ export default async function DashboardPage() {
 
   const miniStats = [
     { label: 'Favoritos', value: stats.favoritesCount, icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-    { label: 'Atividades', value: activities.length, icon: History, color: 'text-electric-cyan', bg: 'bg-cyan-400/10' },
+    { label: 'Minha Lista', value: stats.watchlistCount, icon: BookmarkCheck, color: 'text-teal-400', bg: 'bg-teal-400/10' },
     { label: 'Comentários', value: stats.commentsCount, icon: MessageCircle, color: 'text-neon-pink', bg: 'bg-pink-400/10' },
     ...(daysSinceJoin !== null ? [{ label: 'Dias de membro', value: daysSinceJoin, icon: CalendarDays, color: 'text-purple-400', bg: 'bg-purple-400/10' }] : []),
   ]
@@ -225,6 +226,19 @@ export default async function DashboardPage() {
               <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
             </Link>
 
+            <Link href="/watchlist" className="glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-teal-500">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-teal-400 transition-colors">
+                  <BookmarkCheck size={18} />
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-white">Minha Lista</p>
+                  <p className="text-[10px] text-zinc-500">{stats.watchlistCount} produç{stats.watchlistCount === 1 ? 'ão' : 'ões'}</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+            </Link>
+
             {/* Explorar por categoria */}
             <div className="glass-card p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Explorar</p>
@@ -268,7 +282,50 @@ export default async function DashboardPage() {
             <FavoritesGallery trendingArtists={trendingArtists} />
           </div>
 
-          {/* 5. Em alta — trending artists */}
+          {/* 5. Continuando — WATCHING entries */}
+          {watchingEntries.length > 0 && (
+            <div className="md:col-span-4 mt-2">
+              <div className="flex justify-between items-end mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">▶️</span>
+                  <h2 className="text-xl font-display font-black text-white uppercase italic tracking-tight">Continuando</h2>
+                </div>
+                <Link href="/watchlist?status=WATCHING" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
+                  Ver Lista <ChevronRight size={14} />
+                </Link>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+                {watchingEntries.map((entry: any) => (
+                  <Link
+                    key={entry.productionId}
+                    href={`/productions/${entry.production.id}`}
+                    className="group flex-shrink-0 flex flex-col gap-2 w-28"
+                  >
+                    <div className="relative w-28 h-40 rounded-xl overflow-hidden border border-white/10 group-hover:border-teal-500/60 transition-all duration-300 shadow-lg bg-zinc-800">
+                      {entry.production.imageUrl ? (
+                        <Image
+                          src={entry.production.imageUrl}
+                          alt={entry.production.titlePt}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="112px"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                          <Film size={24} />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-400 group-hover:text-white font-bold text-center leading-tight line-clamp-2 transition-colors">
+                      {entry.production.titlePt}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 6. Em alta — trending artists */}
           {trendingArtists.length > 0 && (
             <div className="md:col-span-4 mt-2">
               <div className="flex justify-between items-end mb-4">

@@ -79,6 +79,8 @@ export async function getDashboardData() {
         newsCount,
         groupCount,
         commentsCount,
+        watchlistCount,
+        watchingEntries,
     ] = await Promise.all([
         // Atividades recentes (com entityId para resolver nomes)
         (prisma as any).activity.findMany({
@@ -128,6 +130,16 @@ export async function getDashboardData() {
         prisma.favorite.count({ where: { userId, newsId: { not: null } } }),
         prisma.favorite.count({ where: { userId, groupId: { not: null } } }),
         prisma.comment.count({ where: { userId } }),
+        prisma.watchEntry.count({ where: { userId } }),
+        prisma.watchEntry.findMany({
+            where: { userId, status: 'WATCHING' },
+            orderBy: { updatedAt: 'desc' },
+            take: 6,
+            select: {
+                productionId: true,
+                production: { select: { id: true, titlePt: true, imageUrl: true, type: true, year: true } },
+            },
+        }),
     ])
 
     // Resolver nomes das entidades nas atividades
@@ -170,6 +182,7 @@ export async function getDashboardData() {
         newsCount,
         groupCount,
         commentsCount,
+        watchlistCount,
         joinDate: user?.createdAt,
     }
 
@@ -179,6 +192,7 @@ export async function getDashboardData() {
         personalizedNews,
         hasFollowing,
         trendingArtists,
+        watchingEntries,
         stats,
     }
 }
