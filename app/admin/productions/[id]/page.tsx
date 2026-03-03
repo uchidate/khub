@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, Film, Download } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check } from 'lucide-react'
 
 interface Production {
     id: string
@@ -17,11 +17,40 @@ interface Production {
     synopsis: string | null
     synopsisSource: 'tmdb_pt' | 'tmdb_en' | 'ai' | 'manual' | null
     imageUrl: string | null
+    backdropUrl: string | null
     trailerUrl: string | null
     tags: string[]
     ageRating: string | null
     tmdbId: string | null
+    tmdbType: string | null
+    runtime: number | null
+    episodeCount: number | null
+    seasonCount: number | null
+    episodeRuntime: number | null
+    voteAverage: number | null
+    productionStatus: string | null
+    network: string | null
     isHidden: boolean
+}
+
+interface TmdbPreview {
+    titlePt: string | null
+    titleEn: string | null
+    synopsisPt: string | null
+    synopsisEn: string | null
+    taglinePt: string | null
+    taglineEn: string | null
+    imageUrl: string | null
+    backdropUrl: string | null
+    year: number | null
+    voteAverage: number | null
+    runtime: number | null
+    episodeCount: number | null
+    seasonCount: number | null
+    episodeRuntime: number | null
+    network: string | null
+    productionStatus: string | null
+    trailerUrl: string | null
 }
 
 const SYNOPSIS_SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
@@ -50,9 +79,10 @@ export default function EditProductionPage() {
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Production>>({})
-    const [tmdbData, setTmdbData] = useState<{ titlePt: string | null; titleEn: string | null; synopsisPt: string | null; synopsisEn: string | null } | null>(null)
+    const [tmdbData, setTmdbData] = useState<TmdbPreview | null>(null)
     const [fetchingTmdb, setFetchingTmdb] = useState(false)
     const [tmdbError, setTmdbError] = useState('')
+    const [syncedFields, setSyncedFields] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         fetch(`/api/admin/productions/by-id?id=${id}`)
@@ -69,7 +99,7 @@ export default function EditProductionPage() {
         setForm(prev => ({ ...prev, [key]: value }))
     }
 
-    const handleFetchTmdb = async (): Promise<typeof tmdbData> => {
+    const handleFetchTmdb = async (): Promise<TmdbPreview | null> => {
         if (tmdbData) return tmdbData
         setFetchingTmdb(true)
         setTmdbError('')
@@ -87,6 +117,52 @@ export default function EditProductionPage() {
         }
     }
 
+    const handleSyncAll = async () => {
+        const data = await handleFetchTmdb()
+        if (!data) return
+
+        const applied = new Set<string>()
+
+        setForm(prev => {
+            const next = { ...prev }
+
+            const applyIfEmpty = <K extends keyof Production>(
+                key: K,
+                value: Production[K] | null | undefined,
+            ) => {
+                if ((prev[key] === null || prev[key] === undefined || prev[key] === '') && value != null) {
+                    (next as Record<string, unknown>)[key] = value
+                    applied.add(key)
+                }
+            }
+
+            applyIfEmpty('titlePt', (data.titlePt || data.titleEn) as string)
+            applyIfEmpty('tagline', (data.taglinePt || data.taglineEn) as string)
+            applyIfEmpty('imageUrl', data.imageUrl as string)
+            applyIfEmpty('backdropUrl', data.backdropUrl as string)
+            applyIfEmpty('trailerUrl', data.trailerUrl as string)
+            applyIfEmpty('year', data.year as number)
+            applyIfEmpty('voteAverage', data.voteAverage as number)
+            applyIfEmpty('runtime', data.runtime as number)
+            applyIfEmpty('episodeCount', data.episodeCount as number)
+            applyIfEmpty('seasonCount', data.seasonCount as number)
+            applyIfEmpty('episodeRuntime', data.episodeRuntime as number)
+            applyIfEmpty('network', data.network as string)
+            applyIfEmpty('productionStatus', data.productionStatus as string)
+
+            if (!prev.synopsis && (data.synopsisPt || data.synopsisEn)) {
+                next.synopsis = data.synopsisPt || data.synopsisEn
+                next.synopsisSource = data.synopsisPt ? 'tmdb_pt' : 'tmdb_en'
+                applied.add('synopsis')
+            }
+
+            return next
+        })
+
+        setSyncedFields(applied)
+        setTimeout(() => setSyncedFields(new Set()), 3000)
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSaving(true)
@@ -94,7 +170,23 @@ export default function EditProductionPage() {
         setSuccess('')
         try {
             const body: Record<string, unknown> = { ...form }
-            if (body.year && typeof body.year === 'string') body.year = parseInt(body.year as string)
+            // Ensure numeric fields are numbers, not strings
+            for (const key of ['year', 'runtime', 'episodeCount', 'seasonCount', 'episodeRuntime'] as const) {
+                if (body[key] !== undefined && body[key] !== null && body[key] !== '') {
+                    body[key] = parseInt(String(body[key]))
+                } else if (body[key] === '') {
+                    body[key] = null
+                }
+            }
+            if (body.voteAverage !== undefined && body.voteAverage !== null && body.voteAverage !== '') {
+                body.voteAverage = parseFloat(String(body.voteAverage))
+            } else if (body.voteAverage === '') {
+                body.voteAverage = null
+            }
+            // Strip empty URL strings → null
+            for (const key of ['imageUrl', 'backdropUrl', 'trailerUrl'] as const) {
+                if (body[key] === '') body[key] = null
+            }
             const res = await fetch(`/api/admin/productions?id=${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -115,10 +207,11 @@ export default function EditProductionPage() {
 
     const inputCls = "w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
     const labelCls = "block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5"
+    const synced = (key: string) => syncedFields.has(key)
 
     return (
         <AdminLayout title={production ? `Editar: ${production.titlePt}` : 'Editar Produção'}>
-            <div className="max-w-3xl mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-8">
                     <button
@@ -152,9 +245,35 @@ export default function EditProductionPage() {
 
                 {production && (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Poster + título */}
+                        {/* Sincronizar do TMDB — botão principal */}
+                        {production.tmdbId && (
+                            <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-zinc-900/50">
+                                <div>
+                                    <p className="text-sm font-bold text-zinc-200">Sincronizar dados do TMDB</p>
+                                    <p className="text-xs text-zinc-500 mt-0.5">
+                                        Preenche automaticamente todos os campos vazios com dados do TMDB
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleSyncAll}
+                                    disabled={fetchingTmdb}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    {fetchingTmdb ? (
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Wand2 className="w-4 h-4" />
+                                    )}
+                                    Sincronizar do TMDB
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Poster + títulos */}
                         <div className="flex gap-5 items-start">
-                            <div className="w-24 flex-shrink-0">
+                            <div className="flex-shrink-0 space-y-2">
+                                {/* Poster atual */}
                                 {form.imageUrl ? (
                                     <Image
                                         src={form.imageUrl}
@@ -166,6 +285,28 @@ export default function EditProductionPage() {
                                 ) : (
                                     <div className="w-24 h-36 rounded-lg bg-zinc-800 flex items-center justify-center">
                                         <Film className="w-8 h-8 text-zinc-600" />
+                                    </div>
+                                )}
+                                {/* Poster TMDB (se diferente) */}
+                                {tmdbData?.imageUrl && tmdbData.imageUrl !== form.imageUrl && (
+                                    <div className="relative group">
+                                        <Image
+                                            src={tmdbData.imageUrl}
+                                            alt="TMDB"
+                                            width={96}
+                                            height={144}
+                                            className="rounded-lg object-cover w-24 h-36 opacity-70 group-hover:opacity-100 transition-opacity"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => set('imageUrl', tmdbData.imageUrl)}
+                                            className="absolute inset-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <span className="bg-black/80 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                                                Usar TMDB
+                                            </span>
+                                        </button>
+                                        <span className="absolute top-1 left-1 bg-black/70 text-[8px] text-zinc-300 px-1 rounded">TMDB</span>
                                     </div>
                                 )}
                             </div>
@@ -182,7 +323,10 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className={labelCls}>Título em Português</label>
+                                    <label className={labelCls}>
+                                        Título em Português
+                                        {synced('titlePt') && <SyncedBadge />}
+                                    </label>
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
@@ -200,7 +344,7 @@ export default function EditProductionPage() {
                                                     if (title) set('titlePt', title)
                                                 }}
                                                 disabled={fetchingTmdb}
-                                                title="Buscar título do TMDB (pt-BR → en → original)"
+                                                title="Buscar título do TMDB"
                                                 className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
                                             >
                                                 {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
@@ -208,18 +352,29 @@ export default function EditProductionPage() {
                                             </button>
                                         )}
                                     </div>
-                                    {(() => {
-                                        const suggested = tmdbData?.titlePt || tmdbData?.titleEn || form.titleKr || null
-                                        return suggested && suggested !== form.titlePt ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => set('titlePt', suggested)}
-                                                className="mt-1 text-xs text-purple-400 hover:text-purple-300"
-                                            >
-                                                Usar: &ldquo;{suggested}&rdquo;
-                                            </button>
-                                        ) : null
-                                    })()}
+                                    {/* Sugestões de título do TMDB */}
+                                    {tmdbData && (
+                                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                            {tmdbData.titlePt && tmdbData.titlePt !== form.titlePt && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => set('titlePt', tmdbData.titlePt)}
+                                                    className="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20"
+                                                >
+                                                    pt-BR: &ldquo;{tmdbData.titlePt}&rdquo;
+                                                </button>
+                                            )}
+                                            {tmdbData.titleEn && tmdbData.titleEn !== form.titlePt && tmdbData.titleEn !== tmdbData.titlePt && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => set('titlePt', tmdbData.titleEn)}
+                                                    className="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20"
+                                                >
+                                                    en: &ldquo;{tmdbData.titleEn}&rdquo;
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                     {tmdbError && <p className="mt-1 text-xs text-red-400">{tmdbError}</p>}
                                 </div>
                             </div>
@@ -239,7 +394,10 @@ export default function EditProductionPage() {
                                 />
                             </div>
                             <div>
-                                <label className={labelCls}>Ano</label>
+                                <label className={labelCls}>
+                                    Ano
+                                    {synced('year') && <SyncedBadge />}
+                                </label>
                                 <input
                                     type="number"
                                     value={form.year ?? ''}
@@ -264,42 +422,186 @@ export default function EditProductionPage() {
 
                         {/* Tagline */}
                         <div>
-                            <label className={labelCls}>Tagline / Slogan</label>
-                            <input
-                                type="text"
-                                value={form.tagline ?? ''}
-                                onChange={e => set('tagline', e.target.value)}
-                                placeholder='Ex: "사랑은 눈물이다"'
-                                className={inputCls}
-                            />
-                        </div>
-
-                        {/* Sinopse Original (referência do TMDB) */}
-                        <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                                <label className={labelCls + ' mb-0'}>Sinopse Original</label>
-                                <span className="text-[10px] text-zinc-600 font-medium">en · referência</span>
-                            </div>
-                            <textarea
-                                value={tmdbData?.synopsisEn ?? ''}
-                                readOnly
-                                rows={3}
-                                placeholder={production.tmdbId ? 'Clique em "Buscar do TMDB" abaixo para carregar...' : 'Sem TMDB ID vinculado'}
-                                className={inputCls + ' resize-none opacity-50 cursor-default'}
-                            />
-                        </div>
-
-                        {/* Sinopse em Português */}
-                        <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                                <label className={labelCls + ' mb-0'}>Sinopse em Português</label>
-                                {form.synopsisSource && SYNOPSIS_SOURCE_LABELS[form.synopsisSource] && (
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${SYNOPSIS_SOURCE_LABELS[form.synopsisSource].cls}`}>
-                                        {SYNOPSIS_SOURCE_LABELS[form.synopsisSource].label}
-                                    </span>
+                            <label className={labelCls}>
+                                Tagline / Slogan
+                                {synced('tagline') && <SyncedBadge />}
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={form.tagline ?? ''}
+                                    onChange={e => set('tagline', e.target.value)}
+                                    placeholder='Ex: "사랑은 눈물이다"'
+                                    className={inputCls}
+                                />
+                                {production.tmdbId && (
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            const data = await handleFetchTmdb()
+                                            const tagline = data?.taglinePt || data?.taglineEn
+                                            if (tagline) set('tagline', tagline)
+                                        }}
+                                        disabled={fetchingTmdb}
+                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                    >
+                                        {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                        TMDB
+                                    </button>
                                 )}
                             </div>
-                            <div className="relative">
+                            {tmdbData && (tmdbData.taglinePt || tmdbData.taglineEn) && (
+                                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                    {tmdbData.taglinePt && tmdbData.taglinePt !== form.tagline && (
+                                        <button
+                                            type="button"
+                                            onClick={() => set('tagline', tmdbData.taglinePt)}
+                                            className="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20"
+                                        >
+                                            pt-BR: &ldquo;{tmdbData.taglinePt}&rdquo;
+                                        </button>
+                                    )}
+                                    {tmdbData.taglineEn && tmdbData.taglineEn !== form.tagline && tmdbData.taglineEn !== tmdbData.taglinePt && (
+                                        <button
+                                            type="button"
+                                            onClick={() => set('tagline', tmdbData.taglineEn)}
+                                            className="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20"
+                                        >
+                                            en: &ldquo;{tmdbData.taglineEn}&rdquo;
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Imagens */}
+                        <div className="space-y-3">
+                            <div>
+                                <label className={labelCls}>
+                                    URL do Poster
+                                    {synced('imageUrl') && <SyncedBadge />}
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={form.imageUrl ?? ''}
+                                        onChange={e => set('imageUrl', e.target.value)}
+                                        placeholder="https://image.tmdb.org/t/p/w500/..."
+                                        className={inputCls}
+                                    />
+                                    {production.tmdbId && (
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const data = await handleFetchTmdb()
+                                                if (data?.imageUrl) set('imageUrl', data.imageUrl)
+                                            }}
+                                            disabled={fetchingTmdb}
+                                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                        >
+                                            {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                            TMDB
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <label className={labelCls}>
+                                    URL do Backdrop / Banner
+                                    {synced('backdropUrl') && <SyncedBadge />}
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={form.backdropUrl ?? ''}
+                                        onChange={e => set('backdropUrl', e.target.value)}
+                                        placeholder="https://image.tmdb.org/t/p/original/..."
+                                        className={inputCls}
+                                    />
+                                    {production.tmdbId && (
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const data = await handleFetchTmdb()
+                                                if (data?.backdropUrl) set('backdropUrl', data.backdropUrl)
+                                            }}
+                                            disabled={fetchingTmdb}
+                                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                        >
+                                            {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                            TMDB
+                                        </button>
+                                    )}
+                                </div>
+                                {/* Preview do backdrop */}
+                                {form.backdropUrl && (
+                                    <div className="mt-2 relative w-full h-20 rounded-lg overflow-hidden">
+                                        <Image
+                                            src={form.backdropUrl}
+                                            alt="Backdrop"
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Sinopse */}
+                        <div className="space-y-3">
+                            {/* Referências TMDB (somente quando carregado) */}
+                            {tmdbData && (tmdbData.synopsisPt || tmdbData.synopsisEn) && (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {tmdbData.synopsisPt && (
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={labelCls + ' mb-0'}>TMDB · pt-BR</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { set('synopsis', tmdbData.synopsisPt); set('synopsisSource', 'tmdb_pt') }}
+                                                    className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20"
+                                                >
+                                                    Usar
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-zinc-400 bg-zinc-900 rounded-lg p-2.5 border border-white/5 leading-relaxed line-clamp-6">
+                                                {tmdbData.synopsisPt}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {tmdbData.synopsisEn && (
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={labelCls + ' mb-0'}>TMDB · en</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { set('synopsis', tmdbData.synopsisEn); set('synopsisSource', 'tmdb_en') }}
+                                                    className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20"
+                                                >
+                                                    Usar
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-zinc-400 bg-zinc-900 rounded-lg p-2.5 border border-white/5 leading-relaxed line-clamp-6">
+                                                {tmdbData.synopsisEn}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Sinopse editável */}
+                            <div>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <label className={labelCls + ' mb-0'}>
+                                        Sinopse em Português
+                                        {synced('synopsis') && <SyncedBadge />}
+                                    </label>
+                                    {form.synopsisSource && SYNOPSIS_SOURCE_LABELS[form.synopsisSource] && (
+                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${SYNOPSIS_SOURCE_LABELS[form.synopsisSource].cls}`}>
+                                            {SYNOPSIS_SOURCE_LABELS[form.synopsisSource].label}
+                                        </span>
+                                    )}
+                                </div>
                                 <textarea
                                     value={form.synopsis ?? ''}
                                     onChange={e => set('synopsis', e.target.value)}
@@ -307,50 +609,158 @@ export default function EditProductionPage() {
                                     rows={4}
                                     className={inputCls + ' resize-none'}
                                 />
+                                {production.tmdbId && !tmdbData && (
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            const data = await handleFetchTmdb()
+                                            if (data?.synopsisPt) {
+                                                set('synopsis', data.synopsisPt)
+                                                set('synopsisSource', 'tmdb_pt')
+                                            } else if (data?.synopsisEn) {
+                                                set('synopsis', data.synopsisEn)
+                                                set('synopsisSource', 'tmdb_en')
+                                            }
+                                        }}
+                                        disabled={fetchingTmdb}
+                                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                    >
+                                        {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                        Buscar do TMDB
+                                    </button>
+                                )}
                             </div>
-                            {production.tmdbId && (
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        const data = await handleFetchTmdb()
-                                        if (data?.synopsisPt) {
-                                            set('synopsis', data.synopsisPt)
-                                            set('synopsisSource', 'tmdb_pt')
-                                        } else if (data?.synopsisEn) {
-                                            set('synopsis', data.synopsisEn)
-                                            set('synopsisSource', 'tmdb_en')
-                                        }
-                                    }}
-                                    disabled={fetchingTmdb}
-                                    className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
-                                >
-                                    {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                                    Buscar do TMDB
-                                </button>
-                            )}
                         </div>
 
-                        {/* URLs */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelCls}>URL da Imagem / Poster</label>
-                                <input
-                                    type="text"
-                                    value={form.imageUrl ?? ''}
-                                    onChange={e => set('imageUrl', e.target.value)}
-                                    placeholder="https://..."
-                                    className={inputCls}
-                                />
+                        {/* Metadados */}
+                        <div>
+                            <label className={labelCls}>Metadados</label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-xl border border-white/10 bg-zinc-900/30">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                        Duração (filme, min)
+                                        {synced('runtime') && <SyncedBadge />}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={form.runtime ?? ''}
+                                        onChange={e => set('runtime', e.target.value)}
+                                        placeholder="120"
+                                        className={inputCls}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                        Episódios
+                                        {synced('episodeCount') && <SyncedBadge />}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={form.episodeCount ?? ''}
+                                        onChange={e => set('episodeCount', e.target.value)}
+                                        placeholder="16"
+                                        className={inputCls}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                        Temporadas
+                                        {synced('seasonCount') && <SyncedBadge />}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={form.seasonCount ?? ''}
+                                        onChange={e => set('seasonCount', e.target.value)}
+                                        placeholder="1"
+                                        className={inputCls}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                        Duração/ep (min)
+                                        {synced('episodeRuntime') && <SyncedBadge />}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={form.episodeRuntime ?? ''}
+                                        onChange={e => set('episodeRuntime', e.target.value)}
+                                        placeholder="60"
+                                        className={inputCls}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                        Nota TMDB
+                                        {synced('voteAverage') && <SyncedBadge />}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        value={form.voteAverage ?? ''}
+                                        onChange={e => set('voteAverage', e.target.value)}
+                                        placeholder="8.5"
+                                        className={inputCls}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                        Canal / Rede
+                                        {synced('network') && <SyncedBadge />}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={form.network ?? ''}
+                                        onChange={e => set('network', e.target.value)}
+                                        placeholder="tvN, JTBC, Netflix..."
+                                        className={inputCls}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                        Status de Produção
+                                        {synced('productionStatus') && <SyncedBadge />}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={form.productionStatus ?? ''}
+                                        onChange={e => set('productionStatus', e.target.value)}
+                                        placeholder="Returning Series, Ended, Cancelled..."
+                                        className={inputCls}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className={labelCls}>URL do Trailer</label>
+                        </div>
+
+                        {/* Trailer */}
+                        <div>
+                            <label className={labelCls}>
+                                URL do Trailer
+                                {synced('trailerUrl') && <SyncedBadge />}
+                            </label>
+                            <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value={form.trailerUrl ?? ''}
                                     onChange={e => set('trailerUrl', e.target.value)}
-                                    placeholder="https://youtube.com/..."
+                                    placeholder="https://youtube.com/watch?v=..."
                                     className={inputCls}
                                 />
+                                {production.tmdbId && (
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            const data = await handleFetchTmdb()
+                                            if (data?.trailerUrl) set('trailerUrl', data.trailerUrl)
+                                        }}
+                                        disabled={fetchingTmdb}
+                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                    >
+                                        {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                        TMDB
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -369,7 +779,7 @@ export default function EditProductionPage() {
                         {/* TMDB ID (readonly info) */}
                         {production.tmdbId && (
                             <div className="text-xs text-zinc-600 font-mono">
-                                TMDB ID: {production.tmdbId}
+                                TMDB ID: {production.tmdbId} · tipo: {production.tmdbType ?? 'não definido'}
                             </div>
                         )}
 
@@ -379,7 +789,7 @@ export default function EditProductionPage() {
                                 <div className="relative flex-shrink-0">
                                     <input type="checkbox" className="sr-only peer"
                                         checked={form.isHidden ?? false}
-                                        onChange={e => set('isHidden' as any, e.target.checked)} />
+                                        onChange={e => set('isHidden' as keyof Production, e.target.checked)} />
                                     <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
@@ -421,5 +831,14 @@ export default function EditProductionPage() {
                 )}
             </div>
         </AdminLayout>
+    )
+}
+
+function SyncedBadge() {
+    return (
+        <span className="inline-flex items-center gap-0.5 ml-1.5 text-[9px] font-bold px-1 py-0.5 rounded bg-green-500/15 text-green-400 border border-green-500/30 normal-case tracking-normal">
+            <Check className="w-2.5 h-2.5" />
+            sync
+        </span>
     )
 }
