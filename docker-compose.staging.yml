@@ -49,6 +49,19 @@ services:
       retries: 3
       start_period: 10s
 
+  migrate-staging:
+    image: ghcr.io/uchidate/khub:staging
+    container_name: hallyuhub-migrate-staging
+    command: ["npx", "prisma", "migrate", "deploy"]
+    env_file:
+      - .env.staging
+    networks:
+      - backend-staging
+    restart: "no"
+    depends_on:
+      postgres-staging:
+        condition: service_healthy
+
   hallyuhub-staging:
     image: ghcr.io/uchidate/khub:staging
     container_name: hallyuhub-staging
@@ -80,6 +93,8 @@ services:
       timeout: 10s
       retries: 2
     depends_on:
+      migrate-staging:
+        condition: service_completed_successfully
       postgres-staging:
         condition: service_healthy
       ollama-staging:

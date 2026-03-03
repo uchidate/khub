@@ -58,7 +58,9 @@ jobs:
             "hallyuhub-postgres-staging|hallyuhub-postgres-production"
             "hallyuhub-prometheus-staging|hallyuhub-prometheus-production"
             "hallyuhub-grafana-staging|hallyuhub-grafana-production"
+            "hallyuhub-migrate-staging|hallyuhub-migrate-production"
             "hallyuhub-staging|hallyuhub"
+            "migrate-staging|migrate-production"
             "postgres-staging|postgres-production"
             "ollama-staging|ollama-production"
             # 5b. Serviços de monitoramento (staging usa sufixo, production não)
