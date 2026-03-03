@@ -117,7 +117,7 @@ export default function EditProductionPage() {
         }
     }
 
-    const handleSyncAll = async () => {
+    const handleSyncAll = async (mode: 'empty_only' | 'all') => {
         const data = await handleFetchTmdb()
         if (!data) return
 
@@ -126,32 +126,31 @@ export default function EditProductionPage() {
         setForm(prev => {
             const next = { ...prev }
 
-            const applyIfEmpty = <K extends keyof Production>(
-                key: K,
-                value: Production[K] | null | undefined,
-            ) => {
-                if ((prev[key] === null || prev[key] === undefined || prev[key] === '') && value != null) {
+            const apply = <K extends keyof Production>(key: K, value: Production[K] | null | undefined) => {
+                if (value == null) return
+                if (mode === 'all' || prev[key] === null || prev[key] === undefined || prev[key] === '') {
                     (next as Record<string, unknown>)[key] = value
                     applied.add(key)
                 }
             }
 
-            applyIfEmpty('titlePt', (data.titlePt || data.titleEn) as string)
-            applyIfEmpty('tagline', (data.taglinePt || data.taglineEn) as string)
-            applyIfEmpty('imageUrl', data.imageUrl as string)
-            applyIfEmpty('backdropUrl', data.backdropUrl as string)
-            applyIfEmpty('trailerUrl', data.trailerUrl as string)
-            applyIfEmpty('year', data.year as number)
-            applyIfEmpty('voteAverage', data.voteAverage as number)
-            applyIfEmpty('runtime', data.runtime as number)
-            applyIfEmpty('episodeCount', data.episodeCount as number)
-            applyIfEmpty('seasonCount', data.seasonCount as number)
-            applyIfEmpty('episodeRuntime', data.episodeRuntime as number)
-            applyIfEmpty('network', data.network as string)
-            applyIfEmpty('productionStatus', data.productionStatus as string)
+            apply('titlePt', (data.titlePt || data.titleEn) as string)
+            apply('tagline', (data.taglinePt || data.taglineEn) as string)
+            apply('imageUrl', data.imageUrl as string)
+            apply('backdropUrl', data.backdropUrl as string)
+            apply('trailerUrl', data.trailerUrl as string)
+            apply('year', data.year as number)
+            apply('voteAverage', data.voteAverage as number)
+            apply('runtime', data.runtime as number)
+            apply('episodeCount', data.episodeCount as number)
+            apply('seasonCount', data.seasonCount as number)
+            apply('episodeRuntime', data.episodeRuntime as number)
+            apply('network', data.network as string)
+            apply('productionStatus', data.productionStatus as string)
 
-            if (!prev.synopsis && (data.synopsisPt || data.synopsisEn)) {
-                next.synopsis = data.synopsisPt || data.synopsisEn
+            const synopsisValue = data.synopsisPt || data.synopsisEn
+            if (synopsisValue && (mode === 'all' || !prev.synopsis)) {
+                next.synopsis = synopsisValue
                 next.synopsisSource = data.synopsisPt ? 'tmdb_pt' : 'tmdb_en'
                 applied.add('synopsis')
             }
@@ -245,28 +244,35 @@ export default function EditProductionPage() {
 
                 {production && (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Sincronizar do TMDB — botão principal */}
+                        {/* Sincronizar do TMDB — botões principal */}
                         {production.tmdbId && (
-                            <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-zinc-900/50">
+                            <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-white/10 bg-zinc-900/50">
                                 <div>
                                     <p className="text-sm font-bold text-zinc-200">Sincronizar dados do TMDB</p>
                                     <p className="text-xs text-zinc-500 mt-0.5">
-                                        Preenche automaticamente todos os campos vazios com dados do TMDB
+                                        Preencher vazios: só campos em branco · Forçar: sobrescreve tudo
                                     </p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={handleSyncAll}
-                                    disabled={fetchingTmdb}
-                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
-                                >
-                                    {fetchingTmdb ? (
-                                        <RefreshCw className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        <Wand2 className="w-4 h-4" />
-                                    )}
-                                    Sincronizar do TMDB
-                                </button>
+                                <div className="flex gap-2 flex-shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSyncAll('empty_only')}
+                                        disabled={fetchingTmdb}
+                                        className="flex items-center gap-2 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                                    >
+                                        {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                                        Preencher vazios
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSyncAll('all')}
+                                        disabled={fetchingTmdb}
+                                        className="flex items-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                                    >
+                                        {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                                        Forçar todos
+                                    </button>
+                                </div>
                             </div>
                         )}
 
