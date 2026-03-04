@@ -1,6 +1,4 @@
 import prisma from "@/lib/prisma"
-import Link from "next/link"
-import Image from "next/image"
 import type { Metadata } from "next"
 import { unstable_cache } from "next/cache"
 import { getServerSession } from "next-auth"
@@ -14,16 +12,27 @@ import { TrendingGroups } from "@/components/features/TrendingGroups"
 import { LatestProductions } from "@/components/features/LatestProductions"
 import { RecommendedForYou } from "@/components/features/RecommendedForYou"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
+import { LatestNews } from "@/components/features/LatestNews"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { Newspaper } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
+function stripMarkdown(text: string | null | undefined): string {
+    if (!text) return ''
+    return text
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\n+/g, ' ')
+        .trim()
+        .slice(0, 150)
+}
+
 /**
  * Dados públicos da home — independentes de usuário/sessão.
- * Cache de 2 minutos: trending muda a cada 6h, 2min é mais que suficiente.
- * Em cache hit: zero queries ao banco para visitantes anônimos.
+ * Cache de 2 minutos. Em cache hit: zero queries ao banco para visitantes anônimos.
  */
 const getHomePublicData = unstable_cache(
     async () => {
@@ -60,6 +69,7 @@ const getHomePublicData = unstable_cache(
                 where: { isHidden: false },
                 take: 3,
                 orderBy: { publishedAt: 'desc' },
+                // Busca apenas os campos necessários — excerpt processado server-side
                 select: {
                     id: true, title: true, imageUrl: true, publishedAt: true,
                     contentMd: true, originalContent: true,
@@ -73,7 +83,7 @@ const getHomePublicData = unstable_cache(
                     production: { select: { titlePt: true } },
                 },
                 orderBy: [{ source: 'asc' }, { rank: 'asc' }],
-            }).catch(() => [] as never[]),
+            }).catch(() => [] as { source: string; rank: number; showTitle: string; tmdbId: number | null; posterUrl: string | null; year: number | null; voteAverage: number | null; isKorean: boolean; productionId: string | null; production: { titlePt: string | null } | null }[]),
             prisma.musicalGroup.findMany({
                 take: 10,
                 where: { disbandDate: null, isHidden: false },
@@ -83,10 +93,9 @@ const getHomePublicData = unstable_cache(
                     debutDate: true, disbandDate: true,
                     _count: { select: { members: true } },
                 },
-            }).catch(() => [] as never[]),
+            }).catch(() => [] as { id: string; name: string; nameHangul: string | null; profileImageUrl: string | null; debutDate: Date | null; disbandDate: Date | null; _count: { members: number } }[]),
         ])
 
-        // Serializar publishedAt para string (Dates que já eram serializadas no código original)
         return {
             siteStats: {
                 artists: artistCount,
@@ -96,7 +105,14 @@ const getHomePublicData = unstable_cache(
             },
             featuredNews: featuredNewsRaw.map(n => ({ ...n, publishedAt: n.publishedAt.toISOString() })),
             trendingArtists,
-            topNews: topNewsRaw.map(n => ({ ...n, publishedAt: n.publishedAt.toISOString() })),
+            // Excerpt processado server-side: não enviamos contentMd completo ao cliente
+            topNews: topNewsRaw.map(n => ({
+                id: n.id,
+                title: n.title,
+                imageUrl: n.imageUrl,
+                publishedAt: n.publishedAt.toISOString(),
+                excerpt: stripMarkdown(n.originalContent || n.contentMd),
+            })),
             streamingShowsRaw,
             trendingGroups: trendingGroupsRaw,
         }
@@ -113,112 +129,94 @@ export const metadata: Metadata = {
 export default async function Home() {
     const session = await getServerSession(authOptions)
 
-    // Dados públicos — cacheados por 2 minutos (zero queries em cache hit)
-    const {
-        siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups,
-    } = await getHomePublicData()
+    // Paraleliza dados públicos + filtro etário (independentes entre si)
+    const [publicData, ageRatingFilter] = await Promise.all([
+        getHomePublicData(),
+        applyAgeRatingFilter(),
+    ])
 
-    // Aplicar filtro de classificação etária (respeita SystemSettings + UserContentPreferences)
-    // Já usa unstable_cache internamente para system settings
-    const ageRatingFilter = await applyAgeRatingFilter()
+    const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups } = publicData
 
-    // Latest Productions (6 mais recentes) — depende do filtro etário, não cacheável globalmente
-    const latestProductionsRaw = await prisma.production.findMany({
-        where: {
-            flaggedAsNonKorean: false,
-            ...ageRatingFilter,
-        },
-        take: 6,
-        orderBy: { createdAt: 'desc' },
-        select: {
-            id: true,
-            titlePt: true,
-            type: true,
-            year: true,
-            imageUrl: true,
-            voteAverage: true,
-            createdAt: true
-        }
-    })
-
-    const latestProductions = latestProductionsRaw.map(prod => ({
-        ...prod,
-        createdAt: prod.createdAt.toISOString()
-    }))
-
-    // Top Rated Productions (6 com maior nota TMDB ≥ 7.5) — idem
-    const topRatedProductions = await prisma.production.findMany({
-        where: {
-            flaggedAsNonKorean: false,
-            voteAverage: { gte: 7.5 },
-            ...ageRatingFilter,
-        },
-        take: 6,
-        orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
-        select: {
-            id: true,
-            titlePt: true,
-            type: true,
-            year: true,
-            imageUrl: true,
-            voteAverage: true,
-        }
-    })
-
-    // Recommended News (apenas para usuários autenticados)
-    let recommendedNews: any[] = []
-    let favoritesCount = 0
-
-    if (session?.user?.email) {
-        const user = await prisma.user.findUnique({
-            where: { email: session.user.email },
-            include: {
-                favorites: {
-                    where: { artistId: { not: null } },
-                    select: { artistId: true }
-                }
-            }
-        })
-
-        const favoriteArtistIds = user?.favorites.map(f => f.artistId).filter(Boolean) || []
-        favoritesCount = favoriteArtistIds.length
-
-        if (favoriteArtistIds.length > 0) {
-            recommendedNews = await prisma.news.findMany({
-                where: {
-                    artists: {
-                        some: { artistId: { in: favoriteArtistIds as string[] } }
-                    }
-                },
-                take: 3,
-                orderBy: { publishedAt: 'desc' },
+    // Paraleliza as 3 queries que dependem do ageRatingFilter e da sessão
+    const [latestProductionsRaw, topRatedProductions, userWithFavorites] = await Promise.all([
+        prisma.production.findMany({
+            where: {
+                isHidden: false,
+                flaggedAsNonKorean: false,
+                ...ageRatingFilter,
+            },
+            take: 6,
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true, titlePt: true, type: true, year: true,
+                imageUrl: true, voteAverage: true, createdAt: true,
+            },
+        }),
+        prisma.production.findMany({
+            where: {
+                isHidden: false,
+                flaggedAsNonKorean: false,
+                voteAverage: { gte: 7.5 },
+                ...ageRatingFilter,
+            },
+            take: 6,
+            orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
+            select: {
+                id: true, titlePt: true, type: true, year: true,
+                imageUrl: true, voteAverage: true,
+            },
+        }),
+        session?.user?.email
+            ? prisma.user.findUnique({
+                where: { email: session.user.email },
                 select: {
-                    id: true,
-                    title: true,
-                    imageUrl: true,
-                    publishedAt: true,
-                    tags: true,
-                    artists: { select: { artistId: true } }
-                }
+                    favorites: {
+                        where: { artistId: { not: null } },
+                        select: { artistId: true },
+                    },
+                },
             })
-        }
-    }
+            : Promise.resolve(null),
+    ])
 
-    const recommendedNewsFormatted = recommendedNews.map(news => ({
-        ...news,
-        publishedAt: news.publishedAt.toISOString(),
-        artistsCount: news.artists?.length || 0
+    const latestProductions = latestProductionsRaw.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
+
+    const favoriteArtistIds = (userWithFavorites?.favorites ?? [])
+        .map(f => f.artistId)
+        .filter((id): id is string => !!id)
+    const favoritesCount = favoriteArtistIds.length
+
+    // Busca recommended news apenas se houver favoritos
+    const recommendedNewsRaw = favoritesCount > 0
+        ? await prisma.news.findMany({
+            where: {
+                isHidden: false,
+                artists: { some: { artistId: { in: favoriteArtistIds } } },
+            },
+            take: 3,
+            orderBy: { publishedAt: 'desc' },
+            select: {
+                id: true, title: true, imageUrl: true, publishedAt: true,
+                tags: true, artists: { select: { artistId: true } },
+            },
+        })
+        : []
+
+    const recommendedNews = recommendedNewsRaw.map(n => ({
+        ...n,
+        publishedAt: n.publishedAt.toISOString(),
+        artistsCount: n.artists?.length ?? 0,
     }))
 
-    // Agrupa por source → showsByPlatform
+    // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
     for (const show of streamingShowsRaw) {
         if (!showsByPlatform[show.source]) showsByPlatform[show.source] = []
         showsByPlatform[show.source].push({
             rank: show.rank,
             showTitle: show.showTitle,
-            productionTitle: (show as any).production?.titlePt ?? undefined,
-            tmdbId: show.tmdbId,
+            productionTitle: show.production?.titlePt ?? undefined,
+            tmdbId: show.tmdbId?.toString() ?? '',
             source: show.source,
             posterUrl: show.posterUrl,
             year: show.year,
@@ -227,6 +225,8 @@ export default async function Home() {
             productionId: show.productionId ?? undefined,
         })
     }
+
+    const hasStreaming = Object.keys(showsByPlatform).length > 0
 
     return (
         <div className="dark:bg-black min-h-screen pb-20 overflow-x-hidden">
@@ -239,124 +239,67 @@ export default async function Home() {
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-12">
 
-                {/* Grupos em Destaque */}
-                {trendingGroups.length > 0 && (
+                {/* 1. Top 10 nos Streamings — o que está quente agora */}
+                {hasStreaming && (
                     <ScrollReveal delay={0.05}>
+                        <StreamingTopShows showsByPlatform={showsByPlatform} />
+                    </ScrollReveal>
+                )}
+
+                {/* 2. Trending Artists */}
+                {trendingArtists.length > 0 && (
+                    <ScrollReveal delay={0.1}>
+                        <TrendingArtists artists={trendingArtists} />
+                    </ScrollReveal>
+                )}
+
+                {/* 3. Trending Groups */}
+                {trendingGroups.length > 0 && (
+                    <ScrollReveal delay={0.15}>
                         <TrendingGroups groups={trendingGroups as any} />
                     </ScrollReveal>
                 )}
 
-                {/* Featured News Carousel */}
+                {/* 4. Featured News Carousel */}
                 {featuredNews.length > 0 && (
-                    <ScrollReveal delay={0.1}>
+                    <ScrollReveal delay={0.2}>
                         <section>
                             <FeaturedCarousel news={featuredNews} />
                         </section>
                     </ScrollReveal>
                 )}
 
-                {/* Top 10 nos Streamings */}
-                {Object.keys(showsByPlatform).length > 0 && (
-                    <ScrollReveal delay={0.15}>
-                        <StreamingTopShows showsByPlatform={showsByPlatform} />
-                    </ScrollReveal>
-                )}
-
-                {/* Trending Artists */}
-                {trendingArtists.length > 0 && (
+                {/* 5. Recommended For You — personalizado, apenas usuários autenticados */}
+                {session && recommendedNews.length > 0 && (
                     <ScrollReveal delay={0.2}>
-                        <TrendingArtists artists={trendingArtists} />
-                    </ScrollReveal>
-                )}
-
-                {/* Recommended For You (apenas para usuários autenticados) */}
-                {session && recommendedNewsFormatted.length > 0 && (
-                    <ScrollReveal delay={0.3}>
                         <RecommendedForYou
-                            news={recommendedNewsFormatted}
+                            news={recommendedNews}
                             isAuthenticated={!!session}
                             favoritesCount={favoritesCount}
                         />
                     </ScrollReveal>
                 )}
 
-                {/* Latest Productions */}
+                {/* 6. Latest Productions */}
                 {latestProductions.length > 0 && (
-                    <ScrollReveal delay={0.2}>
+                    <ScrollReveal delay={0.25}>
                         <LatestProductions productions={latestProductions} />
                     </ScrollReveal>
                 )}
 
-                {/* Top Rated Productions */}
+                {/* 7. Top Rated Productions */}
                 {topRatedProductions.length > 0 && (
                     <ScrollReveal delay={0.25}>
-                        <LatestProductions
-                            productions={topRatedProductions}
-                            variant="top"
-                        />
+                        <LatestProductions productions={topRatedProductions} variant="top" />
                     </ScrollReveal>
                 )}
 
-                {/* Section: Latest News (Glass List) */}
+                {/* 8. Últimas Notícias */}
                 <ScrollReveal delay={0.3}>
-                    <section className="relative">
-                        <div className="absolute -inset-10 bg-cyber-purple/10 blur-[100px] rounded-full z-0 pointer-events-none" />
-                        <div className="relative z-10 glass-card p-8 md:p-12 dark:border-white/10 dark:bg-black/60">
-                            <div className="flex flex-col md:flex-row gap-12">
-                                <div className="md:w-1/3">
-                                    <div className="flex items-center gap-2 text-neon-pink font-black uppercase tracking-widest text-xs mb-4">
-                                        <Newspaper size={14} /> News Feed
-                                    </div>
-                                    <h2 className="text-4xl md:text-6xl font-display font-black dark:text-white text-zinc-900 italic tracking-tighter leading-none mb-6">
-                                        ÚLTIMAS<br />
-                                        DO HALLYU
-                                    </h2>
-                                    <p className="dark:text-zinc-400 text-zinc-600 text-sm leading-relaxed mb-8">
-                                        Fique por dentro dos comebacks, lançamentos de dramas e notícias exclusivas da indústria.
-                                    </p>
-                                    <Link href="/news" className="btn-primary text-xs uppercase tracking-widest hover:shadow-2xl hover:shadow-purple-500/50 transition-all hover:scale-105 active:scale-95">
-                                        Ler Todas
-                                    </Link>
-                                </div>
-
-                                <div className="md:w-2/3 grid gap-4">
-                                    {topNews.map((item: any) => (
-                                        <Link key={item.id} href={`/news/${item.id}`} className="group flex flex-col md:flex-row gap-6 p-6 rounded-2xl dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/5 dark:hover:border-white/20 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 transition-all hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1">
-                                            <div className="relative w-full md:w-32 aspect-video rounded-lg overflow-hidden dark:bg-zinc-800 bg-zinc-200 flex-shrink-0">
-                                                {item.imageUrl ? (
-                                                    <Image src={item.imageUrl} alt={item.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full dark:bg-zinc-800 bg-zinc-300" />
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col justify-center">
-                                                <span className="text-[10px] text-cyber-purple font-black uppercase tracking-widest mb-2">
-                                                    {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
-                                                </span>
-                                                <h3 className="text-lg font-bold dark:text-white text-zinc-900 group-hover:text-neon-pink transition-colors leading-tight mb-2">
-                                                    {item.title}
-                                                </h3>
-                                                <p className="text-xs dark:text-zinc-500 text-zinc-600 line-clamp-2 md:line-clamp-1">
-                                                    {(item.originalContent || item.contentMd)
-                                                        .replace(/#{1,6}\s+/g, '')
-                                                        .replace(/\*\*([^*]+)\*\*/g, '$1')
-                                                        .replace(/\*([^*]+)\*/g, '$1')
-                                                        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-                                                        .replace(/\n+/g, ' ')
-                                                        .trim()
-                                                        .slice(0, 150)}
-                                                </p>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    <LatestNews news={topNews} />
                 </ScrollReveal>
             </div>
 
-            {/* Scroll to Top Button */}
             <ScrollToTop />
         </div>
     )
