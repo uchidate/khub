@@ -84,8 +84,9 @@ export async function GET(req: NextRequest) {
     const taglinePt = (pt?.tagline as string) || null
     const taglineEn = (en?.tagline as string) || null
 
-    // Nota TMDB
-    const voteAverage = (base.vote_average as number) || null
+    // Nota TMDB (arredondado para 1 decimal — TMDB retorna muitos dígitos)
+    const voteAverageRaw = (base.vote_average as number) || null
+    const voteAverage = voteAverageRaw ? Math.round(voteAverageRaw * 10) / 10 : null
 
     // Status de produção
     const productionStatus = (base.status as string) || null
