@@ -4,8 +4,30 @@ import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
 
 export const dynamic = 'force-dynamic'
 
+const TYPE_MAP: Record<string, string[]> = {
+    MOVIE:       ['FILME', 'Filme', 'MOVIE'],
+    SERIES:      ['SERIE', 'serie', 'SERIES', 'K-Drama', 'SHOW'],
+    SPECIAL:     ['SPECIAL', 'ESPECIAL'],
+    DOCUMENTARY: ['DOCUMENTARY', 'DOCUMENTARIO', 'DOCUMENTÁRIO'],
+}
+
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
+
+    // ?typeCounts=1 — retorna contagem de produções por tipo (sem paginação)
+    if (searchParams.get('typeCounts') === '1') {
+        const baseWhere = { flaggedAsNonKorean: false, isHidden: false }
+        const counts = await Promise.all(
+            Object.entries(TYPE_MAP).map(async ([key, values]) => {
+                const count = await prisma.production.count({ where: { ...baseWhere, type: { in: values } } })
+                return [key, count] as const
+            })
+        )
+        return NextResponse.json(Object.fromEntries(counts), {
+            headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
+        })
+    }
+
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '18')))
     const skip = (page - 1) * limit
@@ -31,12 +53,6 @@ export async function GET(request: NextRequest) {
 
     if (type) {
         // Map filter values to the actual DB values (legacy data uses PT names)
-        const TYPE_MAP: Record<string, string[]> = {
-            MOVIE:       ['FILME', 'Filme', 'MOVIE'],
-            SERIES:      ['SERIE', 'serie', 'SERIES', 'K-Drama', 'SHOW'],
-            SPECIAL:     ['SPECIAL', 'ESPECIAL'],
-            DOCUMENTARY: ['DOCUMENTARY', 'DOCUMENTARIO', 'DOCUMENTÁRIO'],
-        }
         const dbValues = TYPE_MAP[type]
         where.type = dbValues ? { in: dbValues } : type
     }

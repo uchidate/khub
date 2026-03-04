@@ -90,6 +90,14 @@ export function ProductionsList() {
     const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
     const [pageJumpInput, setPageJumpInput] = useState('')
     const [isEditingPage, setIsEditingPage] = useState(false)
+    const [typeCounts, setTypeCounts] = useState<Record<string, number> | null>(null)
+
+    useEffect(() => {
+        fetch('/api/productions/list?typeCounts=1')
+            .then(r => r.json())
+            .then(setTypeCounts)
+            .catch(() => {})
+    }, [])
 
     const getFilters = useCallback(() => ({
         search: searchParams.get('search') || '',
@@ -185,7 +193,7 @@ export function ProductionsList() {
                 <div className="flex flex-col sm:flex-row gap-3">
                     {/* Type filter */}
                     <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto">
-                        {TYPE_OPTIONS.map(opt => (
+                        {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => handleType(opt.value)}
@@ -196,6 +204,11 @@ export function ProductionsList() {
                                 }`}
                             >
                                 {opt.label}
+                                {opt.value && typeCounts && (
+                                    <span className="ml-1 opacity-50 font-normal normal-case tracking-normal">
+                                        {typeCounts[opt.value] ?? 0}
+                                    </span>
+                                )}
                             </button>
                         ))}
                     </div>
