@@ -59,6 +59,9 @@ export async function POST(request: NextRequest) {
                 imageUrl: newsData.imageUrl || null,
                 tags: newsData.tags || null,
                 publishedAt: newsData.publishedAt,
+                author:         newsData.author         ?? null,
+                contentType:    newsData.contentType    ?? null,
+                readingTimeMin: newsData.readingTimeMin ?? null,
             },
         });
 

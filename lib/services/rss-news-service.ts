@@ -1,14 +1,16 @@
 /**
  * RSS News Service
  *
- * Busca notícias reais de feeds RSS de sites K-pop / K-drama
- * Estratégia: Dados 100% reais ao invés de gerados por AI
+ * Busca notícias reais de feeds RSS de sites K-pop / K-drama.
+ * Estratégia: dados 100% reais ao invés de gerados por AI.
  *
  * Fontes RSS ativas:
  * - Soompi:      https://www.soompi.com/feed
  * - Koreaboo:    https://www.koreaboo.com/feed/
- * - Dramabeans:  https://dramabeans.com/feed/  (K-drama recaps, redireciona sem www)
- * - Asian Junkie: https://www.asianjunkie.com/feed/ (K-pop / J-pop)
+ * - Dramabeans:  https://dramabeans.com/feed/  (K-drama recaps)
+ * - Asian Junkie: https://www.asianjunkie.com/feed/
+ * - HelloKpop:   https://www.hellokpop.com/feed/
+ * - Kpopmap:     https://kpopmap.com/feed/
  *
  * Fontes descontinuadas:
  * - AllKpop:   https://www.allkpop.com/rss (retorna 404)
@@ -32,46 +34,57 @@ export interface RSSNewsItem {
   imageUrl?: string;
   source: string;
   categories?: string[];
+  author?: string;
+  contentType?: string;
+  readingTimeMin?: number;
 }
 
-const RSS_FEEDS: RSSFeed[] = [
-  {
-    name: 'Soompi',
-    url: 'https://www.soompi.com/feed',
-    language: 'en',
-  },
-  {
-    name: 'Koreaboo',
-    url: 'https://www.koreaboo.com/feed/',
-    language: 'en',
-  },
-  // KpopStarz removido: retorna 403 em todas as URLs de RSS (feed bloqueado)
-  // { name: 'KpopStarz', url: 'https://www.kpopstarz.com/rss', language: 'en' },
-  {
-    name: 'Dramabeans',
-    url: 'https://dramabeans.com/feed/',  // sem www — o www redireciona
-    language: 'en',
-  },
-  {
-    name: 'Asian Junkie',
-    url: 'https://www.asianjunkie.com/feed/',
-    language: 'en',
-  },
-  // AllKpop removido temporariamente (retorna 404)
-  // {
-  //   name: 'AllKpop',
-  //   url: 'https://www.allkpop.com/rss',
-  //   language: 'en',
-  // },
+// ─── Classificação de tipos de conteúdo ──────────────────────────────────────
+
+const CONTENT_TYPE_RULES: { type: string; pattern: RegExp }[] = [
+  // Debut antes de comeback (debut pode conter "album" também)
+  { type: 'debut',         pattern: /\b(debut|debuts|debuting|pre-debut|predebut|new (idol |kpop )?group)\b/i },
+  { type: 'comeback',      pattern: /\b(comeback|returns? with|new (mini |full |studio )?album|repackage|ep release|title track release)\b/i },
+  { type: 'mv',            pattern: /\b(music video|lyric video|performance video|official\s+mv|m\/v|teaser video|mv teaser|dance video)\b/i },
+  { type: 'concert',       pattern: /\b(concert|world tour|dome tour|arena tour|fanmeeting|fan meet|showcase|live concert|stadium)\b/i },
+  { type: 'award',         pattern: /\b(wins|winner|awarded|bonsang|daesang|mama awards?|golden disc|gaon chart|melon music|mnet|inkigayo|music bank|the show champion)\b/i },
+  { type: 'collaboration', pattern: /\b(feat\.|featuring|collab(oration)?|ost|original soundtrack|duet|joint|co-write)\b/i },
+  { type: 'drama',         pattern: /\b(drama|k-drama|kdrama|webtoon|series|season\s+\d|episode|cast|filming|viewer ratings|broadcast|air(s|ing)?)\b/i },
+  { type: 'interview',     pattern: /\b(interview|opens up|talks (about|with)|reveals|shares|speaks (out|with)|discusses|tells|admits)\b/i },
+  { type: 'scandal',       pattern: /\b(scandal|controversy|dating|relationship confirmed|breakup|military|enlist(ment)?|hiatus|leave|lawsuit|apology|apologizes)\b/i },
 ];
 
-/**
- * Service para buscar notícias reais de RSS feeds K-pop
- */
+function classifyContentType(title: string, content: string): string {
+  const text = `${title} ${content.substring(0, 500)}`;
+  for (const { type, pattern } of CONTENT_TYPE_RULES) {
+    if (pattern.test(text)) return type;
+  }
+  return 'general';
+}
+
+function estimateReadingTime(text: string): number {
+  const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
+// ─── Feeds ───────────────────────────────────────────────────────────────────
+
+const RSS_FEEDS: RSSFeed[] = [
+  { name: 'Soompi',       url: 'https://www.soompi.com/feed',           language: 'en' },
+  { name: 'Koreaboo',     url: 'https://www.koreaboo.com/feed/',        language: 'en' },
+  { name: 'Dramabeans',   url: 'https://dramabeans.com/feed/',          language: 'en' }, // sem www — o www redireciona
+  { name: 'Asian Junkie', url: 'https://www.asianjunkie.com/feed/',     language: 'en' },
+  { name: 'HelloKpop',    url: 'https://www.hellokpop.com/feed/',       language: 'en' },
+  { name: 'Kpopmap',      url: 'https://kpopmap.com/feed/',             language: 'en' },
+  // AllKpop removido temporariamente (retorna 404)
+  // KpopStarz removido: retorna 403 em todas as URLs de RSS
+];
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
 export class RSSNewsService {
-  /**
-   * Busca notícias recentes de todos os feeds
-   */
+
+  /** Busca notícias recentes de todos os feeds */
   async fetchRecentNews(maxPerFeed: number = 5): Promise<RSSNewsItem[]> {
     console.log(`📰 Fetching recent news from ${RSS_FEEDS.length} RSS feeds...`);
 
@@ -87,92 +100,93 @@ export class RSSNewsService {
       }
     }
 
-    // Ordenar por data (mais recente primeiro)
     allNews.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-
     console.log(`✅ Total: ${allNews.length} news items fetched`);
     return allNews;
   }
 
-  /**
-   * Busca items de um feed específico
-   */
-  private async fetchFeed(feed: RSSFeed, maxItems: number): Promise<RSSNewsItem[]> {
-    try {
-      const response = await fetch(feed.url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0; +https://hallyuhub.com)',
-          'Accept': 'application/rss+xml, application/xml, text/xml',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const xmlText = await response.text();
-      const parsed = await parseStringPromise(xmlText);
-
-      // RSS 2.0 format
-      if (parsed.rss?.channel?.[0]?.item) {
-        return await this.parseRSS2Items(parsed.rss.channel[0].item, feed, maxItems);
-      }
-
-      // Atom format
-      if (parsed.feed?.entry) {
-        return this.parseAtomEntries(parsed.feed.entry, feed, maxItems);
-      }
-
-      throw new Error('Unknown RSS format');
-    } catch (error: any) {
-      throw new Error(`Failed to fetch ${feed.name}: ${error.message}`);
+  /** Busca items de um feed específico por nome */
+  async fetchFromSource(sourceName: string, maxItems: number = 5): Promise<RSSNewsItem[]> {
+    const feed = RSS_FEEDS.find(f => f.name.toLowerCase() === sourceName.toLowerCase());
+    if (!feed) {
+      throw new Error(`Unknown RSS feed: ${sourceName}. Available: ${RSS_FEEDS.map(f => f.name).join(', ')}`);
     }
+    return this.fetchFeed(feed, maxItems);
   }
 
-  /**
-   * Parse RSS 2.0 items
-   */
+  /** Lista feeds disponíveis */
+  getAvailableFeeds(): Array<{ name: string; language: string }> {
+    return RSS_FEEDS.map(f => ({ name: f.name, language: f.language }));
+  }
+
+  // ── Private: fetch & parse ─────────────────────────────────────────────────
+
+  private async fetchFeed(feed: RSSFeed, maxItems: number): Promise<RSSNewsItem[]> {
+    const response = await fetch(feed.url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0; +https://hallyuhub.com.br)',
+        'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml',
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const xmlText = await response.text();
+    const parsed = await parseStringPromise(xmlText);
+
+    if (parsed.rss?.channel?.[0]?.item) {
+      return this.parseRSS2Items(parsed.rss.channel[0].item, feed, maxItems);
+    }
+    if (parsed.feed?.entry) {
+      return this.parseAtomEntries(parsed.feed.entry, feed, maxItems);
+    }
+
+    throw new Error('Unknown RSS format');
+  }
+
   private async parseRSS2Items(items: any[], feed: RSSFeed, maxItems: number): Promise<RSSNewsItem[]> {
     const newsItems: RSSNewsItem[] = [];
 
     for (const item of items.slice(0, maxItems)) {
       try {
-        // Título
         const title = this.extractText(item.title);
         if (!title) continue;
 
-        // Link
         const link = this.extractText(item.link);
         if (!link) continue;
 
-        // Descrição
         const description = this.extractText(item.description) || '';
-
-        // Conteúdo completo (se disponível)
-        const content =
+        const rawContent =
           this.extractText(item['content:encoded']) ||
           this.extractText(item.content) ||
           '';
 
-        // Data de publicação
         const pubDate = this.parseDate(
           this.extractText(item.pubDate) || this.extractText(item.published)
         );
 
-        // Imagem (tentar múltiplos campos)
+        // Autor: dc:creator (WordPress padrão) ou author
+        const author =
+          this.extractText(item['dc:creator']) ||
+          this.extractText(item.author) ||
+          undefined;
+
+        // Imagem: múltiplos campos em ordem de preferência
         let imageUrl =
           this.extractImageUrl(item.enclosure) ||
           this.extractImageUrl(item['media:content']) ||
           this.extractImageUrl(item['media:thumbnail']) ||
-          this.extractImageFromContent(content || description);
+          this.extractImageFromHtml(rawContent || description);
 
-        // Conteúdo limpo do RSS
-        const cleanContent = content ? this.cleanHtml(content) : '';
+        // Conteúdo: preservar estrutura HTML como Markdown
+        const markdownContent = rawContent ? this.htmlToMarkdown(rawContent) : '';
         const cleanDescription = this.cleanHtml(description);
 
-        // Se o conteúdo RSS for curto (<300 chars), tentar scrape do artigo completo
-        // (busca imagem e texto em uma única requisição)
-        let fullContent = cleanContent || cleanDescription;
+        // Se conteúdo RSS for curto (<300 chars), scrape o artigo completo
+        let fullContent = markdownContent || cleanDescription;
         if (fullContent.length < 300 && link) {
           const articleData = await this.fetchArticleData(link);
           if (!imageUrl && articleData.imageUrl) imageUrl = articleData.imageUrl;
@@ -180,12 +194,13 @@ export class RSSNewsService {
             fullContent = articleData.content;
           }
         } else if (!imageUrl && link) {
-          // Tem conteúdo mas não tem imagem — buscar só a imagem
           imageUrl = await this.fetchImageFromArticle(link);
         }
 
-        // Categorias
         const categories = this.extractCategories(item.category);
+
+        const contentType = classifyContentType(this.cleanHtml(title), fullContent);
+        const readingTimeMin = fullContent ? estimateReadingTime(fullContent) : undefined;
 
         newsItems.push({
           title: this.cleanHtml(title),
@@ -196,9 +211,12 @@ export class RSSNewsService {
           imageUrl,
           source: feed.name,
           categories,
+          author,
+          contentType,
+          readingTimeMin,
         });
       } catch (error) {
-        console.warn(`Failed to parse RSS item:`, error);
+        console.warn(`Failed to parse RSS item from ${feed.name}:`, error);
         continue;
       }
     }
@@ -206,9 +224,6 @@ export class RSSNewsService {
     return newsItems;
   }
 
-  /**
-   * Parse Atom entries
-   */
   private parseAtomEntries(entries: any[], feed: RSSFeed, maxItems: number): RSSNewsItem[] {
     const newsItems: RSSNewsItem[] = [];
 
@@ -217,33 +232,43 @@ export class RSSNewsService {
         const title = this.extractText(entry.title);
         if (!title) continue;
 
-        // Link pode estar em formato diferente no Atom
         let link = '';
         if (Array.isArray(entry.link)) {
-          const linkObj = entry.link.find((l: any) => l.$.rel === 'alternate');
-          link = linkObj?.$.href || entry.link[0]?.$.href || '';
+          const alternate = entry.link.find((l: any) => l.$.rel === 'alternate');
+          link = alternate?.$.href || entry.link[0]?.$.href || '';
         } else if (entry.link?.$?.href) {
           link = entry.link.$.href;
         }
-
         if (!link) continue;
 
         const description = this.extractText(entry.summary) || '';
-        const content = this.extractText(entry.content) || '';
+        const rawContent = this.extractText(entry.content) || '';
         const pubDate = this.parseDate(
           this.extractText(entry.published) || this.extractText(entry.updated)
         );
+
+        const author =
+          this.extractText(entry.author?.[0]?.name) ||
+          this.extractText(entry['dc:creator']) ||
+          undefined;
+
+        const content = rawContent ? this.htmlToMarkdown(rawContent) : this.cleanHtml(description);
+        const contentType = classifyContentType(this.cleanHtml(title), content);
+        const readingTimeMin = content ? estimateReadingTime(content) : undefined;
 
         newsItems.push({
           title: this.cleanHtml(title),
           link,
           description: this.cleanHtml(description),
-          content: content ? this.cleanHtml(content) : undefined,
+          content: content || undefined,
           publishedAt: pubDate,
           source: feed.name,
+          author,
+          contentType,
+          readingTimeMin,
         });
       } catch (error) {
-        console.warn(`Failed to parse Atom entry:`, error);
+        console.warn(`Failed to parse Atom entry from ${feed.name}:`, error);
         continue;
       }
     }
@@ -251,9 +276,170 @@ export class RSSNewsService {
     return newsItems;
   }
 
+  // ── Private: article scraping ─────────────────────────────────────────────
+
   /**
-   * Extrai texto de um campo XML (pode ser string ou objeto)
+   * Busca imagem e texto completo do artigo em uma única requisição.
+   * Retorna Markdown formatado preservando estrutura (negrito, listas, links).
    */
+  async fetchArticleData(articleUrl: string): Promise<{ imageUrl?: string; content?: string }> {
+    try {
+      const response = await fetch(articleUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0; +https://hallyuhub.com.br)',
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (!response.ok) return {};
+
+      const html = await response.text();
+      return {
+        imageUrl: this.extractImageFromHtml(html),
+        content: this.extractArticleText(html),
+      };
+    } catch (error) {
+      console.warn(`Failed to fetch article data from ${articleUrl}: ${error}`);
+      return {};
+    }
+  }
+
+  /**
+   * Extrai o texto principal do artigo como Markdown.
+   * Pré-processa HTML removendo scripts, styles e comentários.
+   * Corrige bug anterior: usa posição do div de abertura em vez de regex com </div>.
+   */
+  private extractArticleText(html: string): string {
+    // Pré-processar: remover noise (scripts, styles, comentários)
+    const stripped = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+
+    // 1. Tag <article>
+    const articleMatch = stripped.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+    if (articleMatch) {
+      const text = this.htmlToMarkdown(articleMatch[1]).trim();
+      if (text.length > 200) return text;
+    }
+
+    // 2. Divs com classes de conteúdo conhecidas
+    // Fix: captura posição do div de abertura e extrai chunk após ele (evita </div> aninhado)
+    const contentClasses = [
+      'entry-content', 'post-content', 'article-content', 'article-body',
+      'story-content', 'td-post-content', 'post__content', 'single-content',
+      'entry__body', 'article__body', 'article-text', 'article_body',
+      'news-content', 'news_content', 'post-entry', 'content-area',
+    ];
+
+    for (const cls of contentClasses) {
+      const regex = new RegExp(`<div[^>]*class="[^"]*\\b${cls}\\b[^"]*"[^>]*>`, 'i');
+      const match = regex.exec(stripped);
+      if (match) {
+        const startIdx = match.index + match[0].length;
+        const chunk = stripped.substring(startIdx, startIdx + 10000);
+        const text = this.htmlToMarkdown(chunk).trim();
+        if (text.length > 200) return text;
+      }
+    }
+
+    return '';
+  }
+
+  private async fetchImageFromArticle(articleUrl: string): Promise<string | undefined> {
+    const data = await this.fetchArticleData(articleUrl);
+    return data.imageUrl;
+  }
+
+  // ── Private: HTML helpers ─────────────────────────────────────────────────
+
+  /**
+   * Converte HTML para Markdown, preservando estrutura:
+   * headings, negrito, itálico, links, listas, parágrafos, blockquotes.
+   * Remove scripts, styles, imagens (tratadas separadamente).
+   * Usado para conteúdo completo de artigos.
+   */
+  private htmlToMarkdown(html: string): string {
+    if (!html) return '';
+
+    return html
+      // Remover noise
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<img[^>]*>/gi, '')
+      .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      // Headings → ## / ###
+      .replace(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi, '\n\n## $1\n\n')
+      .replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n\n### $1\n\n')
+      // Negrito e itálico
+      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '**$1**')
+      .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '**$1**')
+      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '*$1*')
+      .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '*$1*')
+      // Links → [text](url)
+      .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
+      // Blockquote → > quote
+      .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, '\n\n> $1\n\n')
+      // Listas
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '\n- $1')
+      .replace(/<\/?[uo]l[^>]*>/gi, '\n')
+      // Parágrafos e quebras
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<p[^>]*>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      // Remover tags restantes
+      .replace(/<[^>]+>/g, '')
+      // Decodificar entidades HTML
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&#8217;|&#x2019;|&rsquo;/g, "'")
+      .replace(/&#8216;|&lsquo;/g, "'")
+      .replace(/&#8220;|&ldquo;/g, '"')
+      .replace(/&#8221;|&rdquo;/g, '"')
+      .replace(/&#8230;|&hellip;/g, '...')
+      // Limpar markdown vazio: ****, **, []() sem link útil
+      .replace(/\*{2,4}\s*\*{2,4}/g, '')
+      .replace(/\[([^\]]*)\]\(\s*\)/g, '$1')
+      // Normalizar múltiplas linhas em branco
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /**
+   * Remove HTML e retorna texto puro.
+   * Usado para títulos, descrições curtas e comparações.
+   */
+  private cleanHtml(html: string): string {
+    if (!html) return '';
+
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&#8217;|&#x2019;|&rsquo;/g, "'")
+      .replace(/&#8216;|&lsquo;/g, "'")
+      .replace(/&#8220;|&ldquo;/g, '"')
+      .replace(/&#8221;|&rdquo;/g, '"')
+      .replace(/&#8230;|&hellip;/g, '...')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // ── Private: field extractors ─────────────────────────────────────────────
+
   private extractText(field: any): string {
     if (!field) return '';
     if (typeof field === 'string') return field;
@@ -263,9 +449,6 @@ export class RSSNewsService {
     return '';
   }
 
-  /**
-   * Extrai URL de imagem de campos de mídia
-   */
   private extractImageUrl(field: any): string | undefined {
     if (!field) return undefined;
 
@@ -287,84 +470,33 @@ export class RSSNewsService {
   }
 
   /**
-   * Extrai primeira imagem do conteúdo HTML
+   * Extrai URL de imagem de HTML (og:image, twitter:image, primeira <img>).
    */
-  private extractImageFromContent(html: string): string | undefined {
-    // Tentar encontrar og:image primeiro (melhor qualidade)
-    const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-    if (ogImageMatch) return ogImageMatch[1];
+  private extractImageFromHtml(html: string): string | undefined {
+    if (!html) return undefined;
 
-    // Tentar twitter:image
-    const twitterImageMatch = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
-    if (twitterImageMatch) return twitterImageMatch[1];
+    // og:image (melhor qualidade)
+    const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+    if (ogImage) return ogImage[1];
 
-    // Fallback: primeira tag img
-    const imgMatch = html.match(/<img[^>]+src="([^">]+)"/);
-    return imgMatch ? imgMatch[1] : undefined;
-  }
+    // twitter:image
+    const twitterImage = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i);
+    if (twitterImage) return twitterImage[1];
 
-  /**
-   * Busca imagem e texto completo do artigo em uma única requisição
-   */
-  async fetchArticleData(articleUrl: string): Promise<{ imageUrl?: string; content?: string }> {
-    try {
-      const response = await fetch(articleUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)' },
-        signal: AbortSignal.timeout(8000),
-      });
-
-      if (!response.ok) return {};
-
-      const html = await response.text();
-
-      return {
-        imageUrl: this.extractImageFromContent(html),
-        content: this.extractArticleText(html),
-      };
-    } catch (error) {
-      console.warn(`Failed to fetch article data: ${error}`);
-      return {};
-    }
-  }
-
-  /**
-   * Extrai texto principal do artigo a partir do HTML da página
-   */
-  private extractArticleText(html: string): string {
-    // 1. Tentar tag <article>
-    const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-    if (articleMatch) {
-      const text = this.cleanHtml(articleMatch[1]).trim();
-      if (text.length > 200) return text;
+    // Primeira <img> relevante (excluindo ícones/logos/data URIs)
+    const imgPattern = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let imgMatch: RegExpExecArray | null;
+    while ((imgMatch = imgPattern.exec(html)) !== null) {
+      const src = imgMatch[1];
+      if (src.includes('data:') || src.includes('icon') || src.includes('logo') || src.includes('avatar')) continue;
+      if (src.length > 10) return src;
     }
 
-    // 2. Tentar divs com classes de conteúdo comuns (Soompi, Koreaboo, KpopStarz)
-    const contentClasses = [
-      'entry-content', 'post-content', 'article-content',
-      'article-body', 'story-content', 'td-post-content', 'post__content',
-    ];
-    for (const cls of contentClasses) {
-      const match = html.match(new RegExp(`<div[^>]*class="[^"]*${cls}[^"]*"[^>]*>([\\s\\S]{200,}?)<\\/div>`, 'i'));
-      if (match) {
-        const text = this.cleanHtml(match[1]).trim();
-        if (text.length > 200) return text;
-      }
-    }
-
-    return '';
+    return undefined;
   }
 
-  /**
-   * @deprecated Usar fetchArticleData
-   */
-  private async fetchImageFromArticle(articleUrl: string): Promise<string | undefined> {
-    const data = await this.fetchArticleData(articleUrl);
-    return data.imageUrl;
-  }
-
-  /**
-   * Extrai categorias/tags
-   */
   private extractCategories(field: any): string[] | undefined {
     if (!field) return undefined;
 
@@ -383,83 +515,20 @@ export class RSSNewsService {
     return categories.length > 0 ? categories : undefined;
   }
 
-  /**
-   * Parse date string para Date object
-   */
   private parseDate(dateStr: string): Date {
     if (!dateStr) return new Date();
-
     try {
       const date = new Date(dateStr);
-      if (!isNaN(date.getTime())) {
-        return date;
-      }
-    } catch (error) {
-      console.warn(`Failed to parse date: ${dateStr}`);
+      if (!isNaN(date.getTime())) return date;
+    } catch {
+      // fall through
     }
-
     return new Date();
-  }
-
-  /**
-   * Remove HTML tags e limpa texto
-   */
-  private cleanHtml(html: string): string {
-    if (!html) return '';
-
-    return (
-      html
-        // Remove tags HTML
-        .replace(/<[^>]*>/g, '')
-        // Decodifica entidades HTML comuns
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&apos;/g, "'")
-        .replace(/&#x27;/g, "'")
-        // Smart quotes e ellipsis (muito comuns em feeds RSS)
-        .replace(/&#8217;/g, "'")  // Right single quote
-        .replace(/&#8216;/g, "'")  // Left single quote
-        .replace(/&#8220;/g, '"')  // Left double quote
-        .replace(/&#8221;/g, '"')  // Right double quote
-        .replace(/&#8230;/g, '...') // Horizontal ellipsis
-        .replace(/&hellip;/g, '...')
-        .replace(/&#x2019;/g, "'")  // Right single quote (hex)
-        .replace(/&rsquo;/g, "'")   // Right single quote (named)
-        .replace(/&lsquo;/g, "'")   // Left single quote (named)
-        .replace(/&rdquo;/g, '"')   // Right double quote (named)
-        .replace(/&ldquo;/g, '"')   // Left double quote (named)
-        // Remove espaços extras
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
-  }
-
-  /**
-   * Busca notícias de um feed específico por nome
-   */
-  async fetchFromSource(sourceName: string, maxItems: number = 5): Promise<RSSNewsItem[]> {
-    const feed = RSS_FEEDS.find(f => f.name.toLowerCase() === sourceName.toLowerCase());
-
-    if (!feed) {
-      throw new Error(`Unknown RSS feed: ${sourceName}`);
-    }
-
-    return this.fetchFeed(feed, maxItems);
-  }
-
-  /**
-   * Lista feeds disponíveis
-   */
-  getAvailableFeeds(): Array<{ name: string; language: string }> {
-    return RSS_FEEDS.map(f => ({ name: f.name, language: f.language }));
   }
 }
 
-// Singleton
+// ─── Singleton ────────────────────────────────────────────────────────────────
+
 let instance: RSSNewsService | null = null;
 
 export function getRSSNewsService(): RSSNewsService {

@@ -10,6 +10,9 @@ export interface NewsData {
     imageUrl?: string;
     tags?: string[];         // extraídas por keywords, sem AI
     source?: string;         // nome do feed RSS (ex: 'Soompi', 'Dramabeans')
+    author?: string;         // autor do artigo original
+    contentType?: string;    // comeback | mv | concert | award | ...
+    readingTimeMin?: number; // tempo de leitura estimado
 }
 
 /**
@@ -79,6 +82,9 @@ export class NewsGeneratorV2 {
             imageUrl: item.imageUrl,
             tags,
             source: item.source,
+            author: item.author,
+            contentType: item.contentType,
+            readingTimeMin: item.readingTimeMin,
         };
     }
 

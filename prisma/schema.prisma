@@ -277,6 +277,9 @@ model News {
   originalTitle       String?               // título original EN/KR do RSS
   originalContent     String?               // conteúdo original EN/KR do RSS
   source              String?               // nome do feed RSS (ex: 'Soompi', 'Dramabeans')
+  author              String?               // autor do artigo original (ex: "Hana Kim", "Staff Reporter")
+  contentType         String?               // comeback | mv | concert | award | collaboration | interview | drama | debut | scandal | general
+  readingTimeMin      Int?                  // tempo de leitura estimado (palavras ÷ 200)
   viewCount           Int                   @default(0)
   trendingScore       Float                 @default(0.0)
   isHidden            Boolean               @default(false) // Oculto do site público pelo admin
@@ -295,6 +298,7 @@ model News {
   @@index([translationStatus, createdAt])
   @@index([trendingScore])
   @@index([isHidden])
+  @@index([contentType])
 }
 
 model NewsArtist {
