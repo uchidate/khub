@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { revalidatePath } from 'next/cache'
 
 const log = createLogger('ADMIN-PRODUCTIONS')
 
@@ -210,6 +211,9 @@ export async function PATCH(request: NextRequest) {
       where: { id: productionId },
       data: { ...validated, titlePt: resolvedTitlePt, synopsisSource: resolvedSynopsisSource },
     })
+
+    // Invalidar ISR da página pública para refletir edições imediatamente
+    revalidatePath(`/productions/${productionId}`)
 
     return NextResponse.json(production)
   } catch (error) {
