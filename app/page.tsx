@@ -132,7 +132,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { siteStats, trendingArtists, topNews, streamingShowsRaw, trendingGroups } = publicData
+    const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups } = publicData
 
     // Paraleliza as 3 queries que dependem do ageRatingFilter e da sessão
     const [latestProductionsRaw, topRatedProductions, userWithFavorites] = await Promise.all([
@@ -227,7 +227,11 @@ export default async function Home() {
 
     return (
         <div className="dark:bg-black min-h-screen pb-20 overflow-x-hidden">
-            <HeroSection stats={siteStats} />
+            <HeroSection
+                trendingArtists={trendingArtists}
+                latestNews={featuredNews}
+                stats={siteStats}
+            />
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 space-y-6 md:space-y-8">
 
