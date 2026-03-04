@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { ArrowRight, Users, Music2, Film, Newspaper } from 'lucide-react'
+import { ArrowRight, Users, Music2, Film, Newspaper, TrendingUp } from 'lucide-react'
 import { GlobalSearch } from '@/components/ui/GlobalSearch'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,9 +22,17 @@ interface LatestNewsItem {
     publishedAt: string
 }
 
+interface SiteStats {
+    artists: number
+    productions: number
+    news: number
+    views: number
+}
+
 interface HeroSectionProps {
     trendingArtists: TrendingArtist[]
     latestNews: LatestNewsItem | null
+    stats: SiteStats
 }
 
 // ─── CTAs rotativos ───────────────────────────────────────────────────────────
@@ -38,7 +46,7 @@ const ROTATING_CTAS = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function HeroSection({ trendingArtists, latestNews }: HeroSectionProps) {
+export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionProps) {
     const [ctaIndex, setCtaIndex] = useState(0)
 
     useEffect(() => {
@@ -238,6 +246,31 @@ export function HeroSection({ trendingArtists, latestNews }: HeroSectionProps) {
 
                 </div>
             </div>
+
+            {/* ── Stats strip ───────────────────────────────────────────── */}
+            <div className="relative z-30 container mx-auto px-4 mt-8 pt-5 border-t border-white/5">
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                    {[
+                        { icon: Users,      href: '/artists',     label: 'Artistas',  value: stats.artists },
+                        { icon: Film,       href: '/productions', label: 'Produções', value: stats.productions },
+                        { icon: Newspaper,  href: '/news',        label: 'Notícias',  value: stats.news },
+                        { icon: TrendingUp, href: '/artists',     label: 'Views',     value: stats.views },
+                    ].map(({ icon: Icon, href, label, value }) => (
+                        <a
+                            key={label}
+                            href={href}
+                            className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 transition-colors group"
+                        >
+                            <Icon className="w-3 h-3 group-hover:text-neon-pink transition-colors" />
+                            <span className="text-sm font-black text-white tabular-nums">
+                                {value.toLocaleString('pt-BR')}
+                            </span>
+                            <span className="text-xs text-zinc-600">{label}</span>
+                        </a>
+                    ))}
+                </div>
+            </div>
+
         </section>
     )
 }

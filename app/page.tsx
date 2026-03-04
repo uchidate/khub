@@ -5,11 +5,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { HeroSection } from "@/components/features/HeroSection"
-import { StatsSection } from "@/components/features/StatsSection"
 import { FeaturedCarousel } from "@/components/features/FeaturedCarousel"
 import { TrendingArtists } from "@/components/features/TrendingArtists"
 import { TrendingGroups } from "@/components/features/TrendingGroups"
-import { LatestProductions } from "@/components/features/LatestProductions"
+import { ProductionsTabs } from "@/components/features/ProductionsTabs"
 import { RecommendedForYou } from "@/components/features/RecommendedForYou"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { LatestNews } from "@/components/features/LatestNews"
@@ -233,12 +232,8 @@ export default async function Home() {
             <HeroSection
                 trendingArtists={trendingArtists}
                 latestNews={featuredNews[0] ?? null}
+                stats={siteStats}
             />
-
-            {/* Stats Section */}
-            <div className="relative z-20 px-4 sm:px-6 lg:px-12 -mt-10">
-                <StatsSection stats={siteStats} />
-            </div>
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-12">
 
@@ -283,17 +278,10 @@ export default async function Home() {
                     </ScrollReveal>
                 )}
 
-                {/* 6. Latest Productions */}
-                {latestProductions.length > 0 && (
+                {/* 6 + 7. Produções — tabs (Recentes | Mais Bem Avaliados) */}
+                {(latestProductions.length > 0 || topRatedProductions.length > 0) && (
                     <ScrollReveal delay={0.25}>
-                        <LatestProductions productions={latestProductions} />
-                    </ScrollReveal>
-                )}
-
-                {/* 7. Top Rated Productions */}
-                {topRatedProductions.length > 0 && (
-                    <ScrollReveal delay={0.25}>
-                        <LatestProductions productions={topRatedProductions} variant="top" />
+                        <ProductionsTabs latest={latestProductions} topRated={topRatedProductions} />
                     </ScrollReveal>
                 )}
 
