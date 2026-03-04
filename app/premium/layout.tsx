@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import { ReactNode } from "react"
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 }
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default function PremiumLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>
 }

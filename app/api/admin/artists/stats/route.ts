@@ -26,7 +26,8 @@
  *
  * noRomanized breakdown:
  *   noRomanized          — nameRomanized contém Hangul (nome não romanizado)
- *   noRomanizedPending   — nameRomanized contém Hangul + tmdbId set (pode corrigir via TMDB)
+ *   noRomanizedPending   — nameRomanized contém Hangul + tmdbId set + nameSyncAt null (nunca tentado)
+ *   noRomanizedAttempted — nameRomanized contém Hangul + tmdbId set + nameSyncAt set (tentado, não encontrado)
  *   noRomanizedNoTmdb    — nameRomanized contém Hangul + tmdbId null (= koreanNoTmdb)
  *
  * All counts exclude flaggedAsNonKorean artists.
@@ -66,6 +67,7 @@ export async function GET() {
     koreanNoTmdbRaw,
     noRomanizedRaw,
     noRomanizedPendingRaw,
+    noRomanizedAttemptedRaw,
   ] = await Promise.all([
     prisma.artist.count(),
     prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
@@ -111,11 +113,20 @@ export async function GET() {
       WHERE "flaggedAsNonKorean" = false
         AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
     `,
-    // noRomanizedPending: Hangul no nameRomanized + tem tmdbId (pode corrigir)
+    // noRomanizedPending: Hangul no nameRomanized + tem tmdbId + nunca tentado
     prisma.$queryRaw<[{ count: bigint }]>`
       SELECT COUNT(*) FROM "Artist"
       WHERE "flaggedAsNonKorean" = false
         AND "tmdbId" IS NOT NULL
+        AND "nameSyncAt" IS NULL
+        AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
+    `,
+    // noRomanizedAttempted: Hangul no nameRomanized + tem tmdbId + já tentado (nameSyncAt set)
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) FROM "Artist"
+      WHERE "flaggedAsNonKorean" = false
+        AND "tmdbId" IS NOT NULL
+        AND "nameSyncAt" IS NOT NULL
         AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
     `,
   ])
@@ -124,6 +135,7 @@ export async function GET() {
   const koreanNoTmdb = Number(koreanNoTmdbRaw[0].count)
   const noRomanized = Number(noRomanizedRaw[0].count)
   const noRomanizedPending = Number(noRomanizedPendingRaw[0].count)
+  const noRomanizedAttempted = Number(noRomanizedAttemptedRaw[0].count)
   const noRomanizedNoTmdb = koreanNoTmdb // mesma condição
 
   return NextResponse.json({
@@ -150,6 +162,7 @@ export async function GET() {
     koreanNoTmdb,
     noRomanized,
     noRomanizedPending,
+    noRomanizedAttempted,
     noRomanizedNoTmdb,
   })
 }

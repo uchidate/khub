@@ -5,9 +5,11 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
     Bot, Search, RefreshCw, ChevronLeft, ChevronRight,
     Globe, TrendingUp, FileText, BarChart2, Clock,
-    ChevronDown, ChevronUp, X,
+    ChevronDown, ChevronUp, X, ExternalLink,
 } from 'lucide-react'
 import { getBotGroup, BOT_GROUPS } from '@/lib/utils/bot-detector'
+
+const BASE_URL = 'https://www.hallyuhub.com.br'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -395,23 +397,39 @@ export default function BotLogsPage() {
                         ) : (
                             <div className="space-y-1 max-h-56 overflow-y-auto pr-1 -mr-1">
                                 {(stats?.topPaths ?? []).map(({ path, count }) => (
-                                    <button
-                                        key={path}
-                                        onClick={() => handlePathClick(path)}
-                                        title={`Filtrar por: ${path}`}
-                                        className="w-full px-2 py-1.5 rounded hover:bg-zinc-800 transition-colors text-left space-y-1"
-                                    >
-                                        <div className="flex items-center justify-between gap-2">
-                                            <span className="text-zinc-400 font-mono text-[10px] truncate">{path}</span>
+                                    <div key={path} className="group rounded hover:bg-zinc-800 transition-colors">
+                                        <div className="flex items-center gap-1 px-2 pt-1.5">
+                                            <button
+                                                onClick={() => handlePathClick(path)}
+                                                title={`Filtrar por: ${path}`}
+                                                className="flex-1 text-left min-w-0"
+                                            >
+                                                <span className="text-zinc-400 font-mono text-[10px] truncate block">{path}</span>
+                                            </button>
+                                            <a
+                                                href={`${BASE_URL}${path}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title={`Abrir ${BASE_URL}${path}`}
+                                                onClick={e => e.stopPropagation()}
+                                                className="shrink-0 text-zinc-600 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                <ExternalLink className="w-3 h-3" />
+                                            </a>
                                             <span className="text-zinc-300 font-mono text-xs shrink-0">{count}</span>
                                         </div>
-                                        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full rounded-full bg-emerald-600/50 transition-all"
-                                                style={{ width: `${topPathMax ? (count / topPathMax) * 100 : 0}%` }}
-                                            />
-                                        </div>
-                                    </button>
+                                        <button
+                                            onClick={() => handlePathClick(path)}
+                                            className="w-full px-2 pb-1.5"
+                                        >
+                                            <div className="h-1 bg-zinc-800 rounded-full overflow-hidden mt-1">
+                                                <div
+                                                    className="h-full rounded-full bg-emerald-600/50 transition-all"
+                                                    style={{ width: `${topPathMax ? (count / topPathMax) * 100 : 0}%` }}
+                                                />
+                                            </div>
+                                        </button>
+                                    </div>
                                 ))}
                                 {!stats?.topPaths?.length && <p className="text-zinc-500 text-xs">Nenhum dado</p>}
                             </div>
@@ -517,7 +535,19 @@ export default function BotLogsPage() {
                                                 <p className="text-[10px] text-zinc-600 mt-0.5">{getBotGroup(log.bot)}</p>
                                             </td>
                                             <td className="px-4 py-3 font-mono text-xs text-zinc-300 max-w-[280px]">
-                                                <span className="truncate block" title={log.path}>{log.path}</span>
+                                                <div className="flex items-center gap-1.5 group/path min-w-0">
+                                                    <span className="truncate" title={log.path}>{log.path}</span>
+                                                    <a
+                                                        href={`${BASE_URL}${log.path}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={`Abrir ${BASE_URL}${log.path}`}
+                                                        onClick={e => e.stopPropagation()}
+                                                        className="shrink-0 text-zinc-600 hover:text-emerald-400 transition-colors opacity-0 group-hover/path:opacity-100"
+                                                    >
+                                                        <ExternalLink className="w-3 h-3" />
+                                                    </a>
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3 font-mono text-xs text-zinc-400">
                                                 {log.ip ?? '—'}
