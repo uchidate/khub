@@ -132,7 +132,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups } = publicData
+    const { siteStats, trendingArtists, topNews, streamingShowsRaw, trendingGroups } = publicData
 
     // Paraleliza as 3 queries que dependem do ageRatingFilter e da sessão
     const [latestProductionsRaw, topRatedProductions, userWithFavorites] = await Promise.all([
