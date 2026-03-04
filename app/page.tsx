@@ -84,7 +84,7 @@ const getHomePublicData = unstable_cache(
                 orderBy: [{ source: 'asc' }, { rank: 'asc' }],
             }).catch(() => [] as { source: string; rank: number; showTitle: string; tmdbId: number | null; posterUrl: string | null; year: number | null; voteAverage: number | null; isKorean: boolean; productionId: string | null; production: { titlePt: string | null } | null }[]),
             prisma.musicalGroup.findMany({
-                take: 10,
+                take: 8,
                 where: { disbandDate: null, isHidden: false },
                 orderBy: [{ trendingScore: 'desc' }, { favoriteCount: 'desc' }, { viewCount: 'desc' }],
                 select: {
@@ -231,7 +231,7 @@ export default async function Home() {
         <div className="dark:bg-black min-h-screen pb-20 overflow-x-hidden">
             <HeroSection
                 trendingArtists={trendingArtists}
-                latestNews={featuredNews[0] ?? null}
+                latestNews={featuredNews}
                 stats={siteStats}
             />
 
