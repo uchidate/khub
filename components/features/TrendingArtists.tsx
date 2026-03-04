@@ -31,7 +31,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
     if (artists.length === 0) return null
 
     return (
-        <section className="py-4">
+        <section>
             {/* Header */}
             <div className="flex items-center justify-between mb-7">
                 <div className="flex items-center gap-3">

@@ -37,10 +37,10 @@ interface HeroSectionProps {
 // ─── CTAs rotativos ───────────────────────────────────────────────────────────
 
 const ROTATING_CTAS = [
-    { href: '/artists',    label: 'Explorar Artistas', icon: Users },
-    { href: '/productions',label: 'Ver K-Dramas',      icon: Film },
-    { href: '/groups',     label: 'Descobrir Grupos',   icon: Music2 },
-    { href: '/news',       label: 'Últimas Notícias',   icon: Newspaper },
+    { href: '/artists',     label: 'Explorar Artistas', icon: Users },
+    { href: '/productions', label: 'Ver K-Dramas',      icon: Film },
+    { href: '/groups',      label: 'Descobrir Grupos',   icon: Music2 },
+    { href: '/news',        label: 'Últimas Notícias',   icon: Newspaper },
 ]
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -65,11 +65,10 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
     }, [latestNews.length])
 
     const currentNews = latestNews[newsIndex] ?? null
-
     const currentCta = ROTATING_CTAS[ctaIndex]
 
     return (
-        <section className="relative w-full overflow-hidden pt-24 pb-6 md:pt-28 md:pb-8">
+        <section className="relative w-full overflow-hidden pt-24 pb-8 md:pt-28 md:pb-10">
 
             {/* Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
@@ -81,16 +80,15 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                     priority
                     className="object-cover opacity-25"
                 />
-                {/* Ambient glow */}
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyber-purple/20 blur-[120px] rounded-full z-20" />
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-neon-pink/10 blur-[120px] rounded-full z-20" />
             </div>
 
             <div className="relative z-30 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
-                <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_288px] gap-8 lg:gap-10 items-start">
 
-                    {/* ── Left: headline + search + CTA ─────────────────── */}
-                    <div className="flex-1 text-center lg:text-left">
+                    {/* ── Left: headline + CTA ── */}
+                    <div className="min-w-0 text-center lg:text-left">
 
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -101,7 +99,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 ✦ A plataforma Hallyu do Brasil
                             </p>
 
-                            <h1 className="text-4xl md:text-6xl xl:text-7xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
+                            <h1 className="text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
                                 A ONDA{' '}
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-neon-cyan animate-gradient bg-[length:200%_auto]">
                                     HALLYU
@@ -110,7 +108,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 NO SEU RITMO.
                             </h1>
 
-                            <p className="text-sm text-zinc-400 mb-3 max-w-sm mx-auto lg:mx-0 leading-relaxed">
+                            <p className="text-sm text-zinc-400 mb-3 max-w-lg mx-auto lg:mx-0 leading-relaxed">
                                 Artistas, K-Dramas, grupos e notícias da cultura coreana — tudo em um lugar.
                             </p>
 
@@ -165,7 +163,6 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 </AnimatePresence>
                             </div>
 
-                            {/* Dots indicator — clicáveis */}
                             <div className="flex gap-1 items-center">
                                 {ROTATING_CTAS.map((_, i) => (
                                     <button
@@ -182,12 +179,12 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         </motion.div>
                     </div>
 
-                    {/* ── Right: live content ────────────────────────────── */}
+                    {/* ── Right: live content ── */}
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.7, delay: 0.3 }}
-                        className="w-full lg:w-72 xl:w-80 flex-shrink-0 space-y-3"
+                        className="space-y-3 hidden lg:block"
                     >
                         {/* Trending artists card */}
                         {trendingArtists.length > 0 && (

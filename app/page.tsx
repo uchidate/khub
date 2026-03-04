@@ -233,7 +233,7 @@ export default async function Home() {
                 stats={siteStats}
             />
 
-            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-1 space-y-6 md:space-y-10">
+            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 space-y-6 md:space-y-8">
 
                 {/* 1. Top 10 nos Streamings — o que está quente agora */}
                 {hasStreaming && (
