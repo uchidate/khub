@@ -64,7 +64,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
             </div>
 
             {/* Grade única — todos os cards do mesmo tamanho */}
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-2 md:gap-2.5">
+            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 md:gap-2.5">
                 {artists.map((artist, index) => {
                     const signal = artist.streamingSignals?.[0]
                     const hasSignal = signal && signal.source !== 'internal_production'
