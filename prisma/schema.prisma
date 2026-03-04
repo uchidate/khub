@@ -813,5 +813,6 @@ model StreamingTrendSignal {
   @@index([artistId])
   @@index([expiresAt])
   @@index([source])
+  @@index([expiresAt, source])
   @@map("streaming_trend_signal")
 }

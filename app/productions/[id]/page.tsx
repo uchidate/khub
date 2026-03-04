@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
+import { cache } from "react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { WatchButton } from "@/components/ui/WatchButton"
@@ -15,11 +16,13 @@ import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
-export const dynamic = 'force-dynamic'
+// ISR: página cacheada 1h no servidor — revalidada sob demanda via revalidatePath no admin
+export const revalidate = 3600
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-    const production = await prisma.production.findUnique({
-        where: { id: params.id },
+// React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page component)
+const getProduction = cache(async (id: string) => {
+    return prisma.production.findUnique({
+        where: { id },
         include: {
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
@@ -28,6 +31,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
             }
         }
     })
+})
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+    const production = await getProduction(params.id)
 
     if (!production) {
         return {
@@ -71,19 +78,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function ProductionDetailPage({ params }: { params: { id: string } }) {
 
-    const production = await prisma.production.findUnique({
-        where: { id: params.id },
-        include: {
-            artists: {
-                where: { artist: { flaggedAsNonKorean: false } },
-                include: { artist: true },
-                orderBy: [
-                    { castOrder: 'asc' },
-                    { role: 'asc' },
-                ],
-            }
-        }
-    })
+    const production = await getProduction(params.id)
 
     if (!production) {
         notFound()
