@@ -8,9 +8,8 @@ import { HeroSection } from "@/components/features/HeroSection"
 import { TrendingArtists } from "@/components/features/TrendingArtists"
 import { TrendingGroups } from "@/components/features/TrendingGroups"
 import { ProductionsTabs } from "@/components/features/ProductionsTabs"
-import { RecommendedForYou } from "@/components/features/RecommendedForYou"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
-import { LatestNews } from "@/components/features/LatestNews"
+import { NewsTabs } from "@/components/features/NewsTabs"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 
@@ -257,27 +256,20 @@ export default async function Home() {
                     </ScrollReveal>
                 )}
 
-                {/* 4. Recommended For You — personalizado, apenas usuários autenticados */}
-                {session && recommendedNews.length > 0 && (
-                    <ScrollReveal delay={0.2}>
-                        <RecommendedForYou
-                            news={recommendedNews}
-                            isAuthenticated={!!session}
-                            favoritesCount={favoritesCount}
-                        />
-                    </ScrollReveal>
-                )}
-
-                {/* 6 + 7. Produções — tabs (Recentes | Mais Bem Avaliados) */}
+                {/* 4 + 5. Produções — tabs (Recentes | Mais Bem Avaliados) */}
                 {(latestProductions.length > 0 || topRatedProductions.length > 0) && (
-                    <ScrollReveal delay={0.25}>
+                    <ScrollReveal delay={0.2}>
                         <ProductionsTabs latest={latestProductions} topRated={topRatedProductions} />
                     </ScrollReveal>
                 )}
 
-                {/* 8. Últimas Notícias */}
-                <ScrollReveal delay={0.3}>
-                    <LatestNews news={topNews} />
+                {/* 6. Notícias — tabs (Últimas | Para Você) */}
+                <ScrollReveal delay={0.25}>
+                    <NewsTabs
+                        latest={topNews}
+                        recommended={session ? recommendedNews.map(n => ({ ...n, isRecommended: true })) : []}
+                        favoritesCount={favoritesCount}
+                    />
                 </ScrollReveal>
             </div>
 
