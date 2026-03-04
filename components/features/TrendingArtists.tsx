@@ -43,11 +43,11 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                     </div>
                     <div>
                         <div className="flex items-baseline gap-2">
-                            <h2 className="text-3xl md:text-4xl font-black dark:text-white text-zinc-900 tracking-tighter">
-                                TRENDING
+                            <h2 className="text-xl font-black dark:text-white text-zinc-900 tracking-tight uppercase">
+                                Trending
                             </h2>
-                            <span className="text-3xl md:text-4xl font-black text-orange-500 tracking-tighter italic">
-                                NOW
+                            <span className="text-xl font-black text-orange-500 tracking-tight italic uppercase">
+                                Now
                             </span>
                         </div>
                         <p className="dark:text-zinc-500 text-zinc-600 text-xs mt-0.5">

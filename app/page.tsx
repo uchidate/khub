@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { HeroSection } from "@/components/features/HeroSection"
-import { FeaturedCarousel } from "@/components/features/FeaturedCarousel"
 import { TrendingArtists } from "@/components/features/TrendingArtists"
 import { TrendingGroups } from "@/components/features/TrendingGroups"
 import { ProductionsTabs } from "@/components/features/ProductionsTabs"
@@ -235,7 +234,7 @@ export default async function Home() {
                 stats={siteStats}
             />
 
-            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-12">
+            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 mt-4 space-y-8 md:space-y-12">
 
                 {/* 1. Top 10 nos Streamings — o que está quente agora */}
                 {hasStreaming && (
@@ -258,16 +257,7 @@ export default async function Home() {
                     </ScrollReveal>
                 )}
 
-                {/* 4. Featured News Carousel */}
-                {featuredNews.length > 0 && (
-                    <ScrollReveal delay={0.2}>
-                        <section>
-                            <FeaturedCarousel news={featuredNews} />
-                        </section>
-                    </ScrollReveal>
-                )}
-
-                {/* 5. Recommended For You — personalizado, apenas usuários autenticados */}
+                {/* 4. Recommended For You — personalizado, apenas usuários autenticados */}
                 {session && recommendedNews.length > 0 && (
                     <ScrollReveal delay={0.2}>
                         <RecommendedForYou

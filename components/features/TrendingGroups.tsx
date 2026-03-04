@@ -33,7 +33,7 @@ export function TrendingGroups({ groups }: TrendingGroupsProps) {
                         <Music2 className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-black dark:text-white text-zinc-900">Grupos em Alta</h2>
+                        <h2 className="text-xl font-black dark:text-white text-zinc-900 uppercase tracking-tight">Grupos em Alta</h2>
                         <p className="dark:text-zinc-500 text-zinc-600 text-xs mt-0.5">Os mais populares da cena K-Pop</p>
                     </div>
                 </div>
