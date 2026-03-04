@@ -70,9 +70,10 @@ export async function middleware(request: NextRequest) {
         || request.headers.get('x-real-ip')
         || undefined
     const secret = process.env.NEXTAUTH_SECRET
+    // Usar NEXTAUTH_URL (variável de servidor fixo) para evitar SSRF via header Host
+    const baseUrl = (process.env.NEXTAUTH_URL ?? 'http://localhost:3000').replace(/\/$/, '')
     if (secret) {
-      const origin = request.nextUrl.origin
-      fetch(`${origin}/api/internal/bot-log`, {
+      fetch(`${baseUrl}/api/internal/bot-log`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
