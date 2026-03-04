@@ -114,6 +114,9 @@ async function fetchAndSaveNewsFromSource(
           publishedAt: item.publishedAt,
           source: sourceName,
           translationStatus: 'pending',
+          author:         item.author         ?? null,
+          contentType:    item.contentType    ?? null,
+          readingTimeMin: item.readingTimeMin ?? null,
         },
       })
 

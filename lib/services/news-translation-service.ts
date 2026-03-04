@@ -45,6 +45,7 @@ export class NewsTranslationService {
                 originalContent: true,
                 sourceUrl: true,
                 tags: true,
+                contentType: true,
             }
         });
 
@@ -73,7 +74,7 @@ export class NewsTranslationService {
                 // Traduzir título e conteúdo em paralelo
                 const [translatedTitle, translatedContent] = await Promise.all([
                     this.translateTitle(sourceTitle),
-                    this.translateAndFormatContent(sourceTitle, sourceContent),
+                    this.translateAndFormatContent(sourceTitle, sourceContent, news.contentType ?? undefined),
                 ]);
 
                 // Extrair/melhorar tags após tradução
@@ -313,9 +314,10 @@ Retorne apenas a tradução, sem aspas ou formatação extra.`;
     }
 
     /**
-     * Traduz e expande conteúdo para markdown PT-BR completo
+     * Traduz e expande conteúdo para markdown PT-BR completo.
+     * @param contentType Tipo de conteúdo (comeback, mv, concert, award, etc.) para contexto extra
      */
-    async translateAndFormatContent(title: string, content: string): Promise<string> {
+    async translateAndFormatContent(title: string, content: string, contentType?: string): Promise<string> {
         if (!content || content.trim().length < 20) {
             return `**${title}**\n\n*Conteúdo não disponível.*`;
         }
@@ -325,29 +327,46 @@ Retorne apenas a tradução, sem aspas ou formatação extra.`;
             ? content.substring(0, maxLength)
             : content;
 
+        const typeContext: Record<string, string> = {
+            comeback:      'Este artigo é sobre o comeback (retorno/lançamento de álbum) de um artista ou grupo.',
+            mv:            'Este artigo é sobre um novo clipe (MV), teaser ou vídeo musical.',
+            concert:       'Este artigo é sobre shows, world tours, fan meetings ou eventos ao vivo.',
+            award:         'Este artigo é sobre premiações, conquistas, recordes ou rankings.',
+            collaboration: 'Este artigo é sobre uma colaboração musical, participação especial (feat.) ou trilha sonora (OST).',
+            interview:     'Este artigo é sobre uma entrevista, revelações ou declarações do artista.',
+            drama:         'Este artigo é sobre um K-drama, série ou produção coreana.',
+            debut:         'Este artigo é sobre o debut (estreia) de um novo artista ou grupo.',
+            scandal:       'Este artigo cobre uma polêmica, controvérsia ou notícia sensível.',
+        }
+        const typeHint = contentType && typeContext[contentType]
+            ? `\n**Contexto:** ${typeContext[contentType]}`
+            : ''
+
         try {
             const prompt = `Você é um jornalista especializado em cultura coreana escrevendo para o portal HallyuHub, maior comunidade brasileira de K-pop e K-drama.
 
 Com base no título e no conteúdo original abaixo, escreva um artigo completo e envolvente em português brasileiro:
 
-**Título original (EN):** ${title}
+**Título original (EN):** ${title}${typeHint}
 
 **Conteúdo original:**
 ${sourceText}
 
 **INSTRUÇÕES OBRIGATÓRIAS:**
-- Escreva mínimo 4 parágrafos bem desenvolvidos (objetivo: 350-500 palavras)
-- Traduza o conteúdo original fielmente, depois EXPANDA com contexto relevante:
+- Traduza o conteúdo original com fidelidade — NÃO invente fatos que não estejam no original
+- Mínimo 4 parágrafos bem desenvolvidos (objetivo: 350-500 palavras)
+- Após traduzir, EXPANDA com contexto relevante quando o original for curto:
   - Histórico do artista/grupo mencionado
   - Impacto e relevância para os fãs brasileiros
   - Contexto dentro da indústria K-pop/K-drama
-- Se o conteúdo original for curto, use o que você sabe sobre o assunto para enriquecer
-- Mantenha nomes próprios em inglês/coreano (artistas, grupos, programas, filmes, álbuns)
+- Mantenha nomes próprios no original (artistas, grupos, programas, álbuns, prêmios)
+- Preserve termos técnicos do K-pop/K-drama: MAMA, Gaon, Melon, Hanteo, daesang, bonsang, comeback, debut, MV
 - Use **negrito** para nomes de artistas/grupos na primeira menção e datas importantes
+- Em artigos com múltiplos tópicos, use ## Subtítulo para separar seções
 - Tom: jornalístico, apaixonado e acessível para fãs brasileiros
 - Parágrafos separados por linha em branco
-- NÃO adicione título no início (ele já aparece separado)
-- NÃO adicione rodapé de fonte`;
+- NÃO adicione título no início (ele já aparece separado na página)
+- NÃO adicione rodapé ou crédito de fonte`;
 
             const result = await this.getOrchestrator().generateStructured<{ content: string }>(
                 prompt,
