@@ -1,9 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, Fragment } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Bot, Search, RefreshCw, ChevronLeft, ChevronRight, Globe, TrendingUp, FileText } from 'lucide-react'
-import { getBotGroup } from '@/lib/utils/bot-detector'
+import {
+    Bot, Search, RefreshCw, ChevronLeft, ChevronRight,
+    Globe, TrendingUp, FileText, BarChart2, Clock,
+    ChevronDown, ChevronUp, X,
+} from 'lucide-react'
+import { getBotGroup, BOT_GROUPS } from '@/lib/utils/bot-detector'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -17,10 +21,16 @@ interface BotLog {
     createdAt: string
 }
 
+interface TimelinePoint {
+    date: string
+    count: number
+}
+
 interface Stats {
     total: number
     byBot: { bot: string; count: number }[]
     topPaths: { path: string; count: number }[]
+    timeline: TimelinePoint[]
     days: number
 }
 
@@ -47,6 +57,14 @@ const BOT_COLORS: Record<string, string> = {
     'AhrefsBot':             'text-orange-500 bg-orange-500/10 border-orange-500/20',
 }
 
+const GROUP_BAR_COLORS: Record<string, string> = {
+    'Google': 'bg-blue-500',
+    'Bing':   'bg-teal-500',
+    'Social': 'bg-indigo-500',
+    'SEO':    'bg-amber-500',
+    'Outros': 'bg-zinc-500',
+}
+
 const DEFAULT_BOT_COLOR = 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'
 
 function botColor(bot: string) {
@@ -55,7 +73,7 @@ function botColor(bot: string) {
 
 function formatDate(iso: string) {
     return new Date(iso).toLocaleString('pt-BR', {
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit'
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit',
     })
 }
 
@@ -67,40 +85,98 @@ function timeAgo(iso: string) {
     return `${Math.floor(diff / 86400)}d atrás`
 }
 
+// ─── Timeline Chart ──────────────────────────────────────────────────────────
+
+function TimelineChart({ data, days }: { data: TimelinePoint[]; days: number }) {
+    if (!data.length) return <p className="text-zinc-500 text-xs py-4">Sem dados no período</p>
+
+    const max = Math.max(...data.map(d => d.count), 1)
+
+    function showLabel(i: number, total: number) {
+        if (total <= 7)  return true
+        if (total <= 14) return i % 2 === 0
+        return i % 5 === 0 || i === total - 1
+    }
+
+    return (
+        <div>
+            <div className="flex items-end gap-0.5 h-24">
+                {data.map(({ date, count }) => (
+                    <div
+                        key={date}
+                        className="flex-1 group relative flex flex-col items-center justify-end"
+                    >
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 border border-zinc-700">
+                            {count.toLocaleString('pt-BR')}
+                        </div>
+                        <div
+                            className="w-full bg-violet-500/60 hover:bg-violet-400 rounded-sm transition-colors min-h-[2px]"
+                            style={{ height: `${(count / max) * 100}%` }}
+                        />
+                    </div>
+                ))}
+            </div>
+            {/* X-axis labels */}
+            <div className="flex gap-0.5 mt-1.5">
+                {data.map(({ date }, i) => (
+                    <div key={date} className="flex-1 text-center overflow-hidden">
+                        {showLabel(i, data.length) ? (
+                            <span className="text-[9px] text-zinc-600">
+                                {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                            </span>
+                        ) : null}
+                    </div>
+                ))}
+            </div>
+            <p className="text-[10px] text-zinc-600 mt-1">
+                Pico: {Math.max(...data.map(d => d.count)).toLocaleString('pt-BR')} crawls num dia
+                {' · '}Média: {Math.round(data.reduce((s, d) => s + d.count, 0) / data.length).toLocaleString('pt-BR')}/dia
+                {' · '}Período: {days}d
+            </p>
+        </div>
+    )
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function BotLogsPage() {
-    const [stats, setStats] = useState<Stats | null>(null)
-    const [logs, setLogs] = useState<BotLog[]>([])
-    const [total, setTotal] = useState(0)
-    const [page, setPage] = useState(1)
-    const [pages, setPages] = useState(1)
-    const [loading, setLoading] = useState(true)
+    const [stats, setStats]           = useState<Stats | null>(null)
+    const [logs, setLogs]             = useState<BotLog[]>([])
+    const [total, setTotal]           = useState(0)
+    const [page, setPage]             = useState(1)
+    const [pages, setPages]           = useState(1)
+    const [loading, setLoading]       = useState(true)
     const [statsLoading, setStatsLoading] = useState(true)
+    const [expandedId, setExpandedId] = useState<string | null>(null)
+    const [autoRefresh, setAutoRefresh] = useState(false)
 
-    const [days, setDays] = useState(7)
-    const [botFilter, setBotFilter] = useState('')
-    const [pathFilter, setPathFilter] = useState('')
-    const pathInput = useRef('')
+    const [days, setDays]                 = useState(7)
+    const [botFilter, setBotFilter]       = useState('')
+    const [pathFilter, setPathFilter]     = useState('')
+    const [pathInputValue, setPathInputValue] = useState('')
+
+    const debounceTimer = useRef<ReturnType<typeof setTimeout>>()
+
+    // ── Fetch ────────────────────────────────────────────────────────────────
 
     const fetchStats = useCallback(async () => {
         setStatsLoading(true)
         try {
-            const r = await fetch(`/api/admin/bot-logs?stats=1&days=${days}${botFilter ? `&bot=${encodeURIComponent(botFilter)}` : ''}`)
+            const params = new URLSearchParams({ stats: '1', days: String(days) })
+            if (botFilter) params.set('bot', botFilter)
+            if (pathFilter) params.set('path', pathFilter)
+            const r = await fetch(`/api/admin/bot-logs?${params}`)
             if (r.ok) setStats(await r.json())
         } finally {
             setStatsLoading(false)
         }
-    }, [days, botFilter])
+    }, [days, botFilter, pathFilter])
 
     const fetchLogs = useCallback(async (p = 1) => {
         setLoading(true)
         try {
-            const params = new URLSearchParams({
-                days: String(days),
-                page: String(p),
-                limit: '50',
-            })
+            const params = new URLSearchParams({ days: String(days), page: String(p), limit: '50' })
             if (botFilter) params.set('bot', botFilter)
             if (pathFilter) params.set('path', pathFilter)
             const r = await fetch(`/api/admin/bot-logs?${params}`)
@@ -121,16 +197,65 @@ export default function BotLogsPage() {
         fetchLogs(1)
     }, [fetchStats, fetchLogs])
 
+    // Auto-refresh every 30s
+    useEffect(() => {
+        if (!autoRefresh) return
+        const id = setInterval(() => {
+            fetchStats()
+            fetchLogs(page)
+        }, 30_000)
+        return () => clearInterval(id)
+    }, [autoRefresh, fetchStats, fetchLogs, page])
+
+    // ── Handlers ─────────────────────────────────────────────────────────────
+
     function handleBotFilter(bot: string) {
         setBotFilter(prev => prev === bot ? '' : bot)
-        setPage(1)
     }
+
+    function handlePathChange(value: string) {
+        setPathInputValue(value)
+        clearTimeout(debounceTimer.current)
+        debounceTimer.current = setTimeout(() => setPathFilter(value), 300)
+    }
+
+    function handlePathClick(path: string) {
+        clearTimeout(debounceTimer.current)
+        setPathInputValue(path)
+        setPathFilter(path)
+    }
+
+    function clearPath() {
+        clearTimeout(debounceTimer.current)
+        setPathInputValue('')
+        setPathFilter('')
+    }
+
+    // ── Derived ──────────────────────────────────────────────────────────────
+
+    const groupTotals = stats
+        ? Object.entries(BOT_GROUPS)
+            .map(([group, bots]) => ({
+                group,
+                count: (stats.byBot ?? [])
+                    .filter(b => bots.includes(b.bot))
+                    .reduce((sum, b) => sum + b.count, 0),
+            }))
+            .filter(g => g.count > 0)
+            .sort((a, b) => b.count - a.count)
+        : []
+
+    const byBotMax   = stats?.byBot?.length   ? Math.max(...stats.byBot.map(b => b.count))   : 1
+    const topPathMax = stats?.topPaths?.length ? Math.max(...stats.topPaths.map(p => p.count)) : 1
+
+    // ── Render ───────────────────────────────────────────────────────────────
 
     return (
         <AdminLayout title="Robôs de Busca">
             <div className="p-6 space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between gap-4">
+
+                {/* ── Header ─────────────────────────────────────────────── */}
+                <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-3">
                         <Bot className="w-6 h-6 text-violet-400" />
                         <div>
@@ -138,17 +263,24 @@ export default function BotLogsPage() {
                             <p className="text-xs text-zinc-400">Crawls detectados passivamente por User-Agent</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {/* Days filter */}
+                    <div className="flex items-center gap-2 flex-wrap">
                         {([7, 14, 30] as const).map(d => (
                             <button
                                 key={d}
-                                onClick={() => { setDays(d); setPage(1) }}
+                                onClick={() => setDays(d)}
                                 className={`px-3 py-1 rounded text-xs font-medium transition-colors ${days === d ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
                             >
                                 {d}d
                             </button>
                         ))}
+                        <button
+                            onClick={() => setAutoRefresh(prev => !prev)}
+                            title={autoRefresh ? 'Auto-refresh ativo (30s) — clique para pausar' : 'Ativar auto-refresh'}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium border transition-colors ${autoRefresh ? 'bg-green-600/10 text-green-400 border-green-600/30' : 'bg-zinc-800 text-zinc-400 border-transparent hover:bg-zinc-700'}`}
+                        >
+                            <Clock className="w-3.5 h-3.5" />
+                            {autoRefresh ? 'Ao vivo' : '30s'}
+                        </button>
                         <button
                             onClick={() => { fetchStats(); fetchLogs(1) }}
                             className="p-2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
@@ -159,83 +291,164 @@ export default function BotLogsPage() {
                     </div>
                 </div>
 
-                {/* Stats cards */}
+                {/* ── Stats cards ────────────────────────────────────────── */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Total */}
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-4">
-                        <div className="p-3 rounded-lg bg-violet-500/10">
-                            <Globe className="w-5 h-5 text-violet-400" />
+
+                    {/* Total + Group Breakdown */}
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Globe className="w-4 h-4 text-violet-400" />
+                            <p className="text-xs font-medium text-zinc-300">Total de crawls</p>
                         </div>
-                        <div>
-                            <p className="text-xs text-zinc-400">Total de crawls</p>
-                            <p className="text-2xl font-bold text-white">
-                                {statsLoading ? '—' : (stats?.total ?? 0).toLocaleString('pt-BR')}
-                            </p>
-                            <p className="text-xs text-zinc-500">últimos {days} dias</p>
+                        <p className="text-3xl font-bold text-white mb-1">
+                            {statsLoading ? '—' : (stats?.total ?? 0).toLocaleString('pt-BR')}
+                        </p>
+                        <p className="text-xs text-zinc-500 mb-4">últimos {days} dias</p>
+
+                        {/* Group bars */}
+                        <div className="space-y-2.5">
+                            {statsLoading ? (
+                                [1, 2, 3].map(i => <div key={i} className="h-5 bg-zinc-800 rounded animate-pulse" />)
+                            ) : groupTotals.map(({ group, count }) => {
+                                const pct = stats?.total ? Math.round(count / stats.total * 100) : 0
+                                return (
+                                    <div key={group}>
+                                        <div className="flex justify-between text-[10px] mb-1">
+                                            <span className="text-zinc-400 font-medium">{group}</span>
+                                            <span className="text-zinc-300 font-mono">
+                                                {count.toLocaleString('pt-BR')}
+                                                <span className="text-zinc-600 ml-1">({pct}%)</span>
+                                            </span>
+                                        </div>
+                                        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all ${GROUP_BAR_COLORS[group] ?? 'bg-zinc-500'}`}
+                                                style={{ width: `${pct}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                            {!statsLoading && !groupTotals.length && (
+                                <p className="text-zinc-600 text-xs">Sem dados no período</p>
+                            )}
                         </div>
                     </div>
 
-                    {/* By Bot */}
+                    {/* By Bot (with progress bars, clickable) */}
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
                             <Bot className="w-4 h-4 text-violet-400" />
                             <p className="text-xs font-medium text-zinc-300">Por robô</p>
+                            {botFilter && (
+                                <button
+                                    onClick={() => setBotFilter('')}
+                                    className="ml-auto text-[10px] text-zinc-500 hover:text-white flex items-center gap-0.5"
+                                >
+                                    <X className="w-3 h-3" /> limpar
+                                </button>
+                            )}
                         </div>
                         {statsLoading ? (
-                            <div className="space-y-1">
-                                {[1, 2, 3].map(i => <div key={i} className="h-4 bg-zinc-800 rounded animate-pulse" />)}
+                            <div className="space-y-2">
+                                {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-zinc-800 rounded animate-pulse" />)}
                             </div>
                         ) : (
-                            <div className="space-y-1 max-h-40 overflow-y-auto">
+                            <div className="space-y-1 max-h-56 overflow-y-auto pr-1 -mr-1">
                                 {(stats?.byBot ?? []).map(({ bot, count }) => (
                                     <button
                                         key={bot}
                                         onClick={() => handleBotFilter(bot)}
-                                        className={`w-full flex items-center justify-between gap-2 px-2 py-1 rounded text-xs transition-colors ${botFilter === bot ? 'bg-violet-600/20' : 'hover:bg-zinc-800'}`}
+                                        className={`w-full px-2 py-1.5 rounded transition-colors text-left space-y-1 ${botFilter === bot ? 'bg-violet-600/20 ring-1 ring-violet-600/30' : 'hover:bg-zinc-800'}`}
                                     >
-                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold ${botColor(bot)}`}>
-                                            {bot}
-                                        </span>
-                                        <span className="text-zinc-300 font-mono">{count.toLocaleString('pt-BR')}</span>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold ${botColor(bot)}`}>
+                                                {bot}
+                                            </span>
+                                            <span className="text-zinc-300 font-mono text-xs shrink-0">
+                                                {count.toLocaleString('pt-BR')}
+                                            </span>
+                                        </div>
+                                        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all ${botFilter === bot ? 'bg-violet-400' : 'bg-violet-600/50'}`}
+                                                style={{ width: `${byBotMax ? (count / byBotMax) * 100 : 0}%` }}
+                                            />
+                                        </div>
                                     </button>
                                 ))}
-                                {(!stats?.byBot?.length) && <p className="text-zinc-500 text-xs">Nenhum dado</p>}
+                                {!stats?.byBot?.length && <p className="text-zinc-500 text-xs">Nenhum dado</p>}
                             </div>
                         )}
                     </div>
 
-                    {/* Top paths */}
+                    {/* Top Paths (with bars, clickable to filter) */}
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
                             <TrendingUp className="w-4 h-4 text-violet-400" />
                             <p className="text-xs font-medium text-zinc-300">Páginas mais rastreadas</p>
                         </div>
                         {statsLoading ? (
-                            <div className="space-y-1">
-                                {[1, 2, 3].map(i => <div key={i} className="h-4 bg-zinc-800 rounded animate-pulse" />)}
+                            <div className="space-y-2">
+                                {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-zinc-800 rounded animate-pulse" />)}
                             </div>
                         ) : (
-                            <div className="space-y-1 max-h-40 overflow-y-auto">
+                            <div className="space-y-1 max-h-56 overflow-y-auto pr-1 -mr-1">
                                 {(stats?.topPaths ?? []).map(({ path, count }) => (
-                                    <div key={path} className="flex items-center justify-between gap-2 text-xs">
-                                        <span className="text-zinc-400 truncate font-mono text-[10px]">{path}</span>
-                                        <span className="text-zinc-300 font-mono shrink-0">{count}</span>
-                                    </div>
+                                    <button
+                                        key={path}
+                                        onClick={() => handlePathClick(path)}
+                                        title={`Filtrar por: ${path}`}
+                                        className="w-full px-2 py-1.5 rounded hover:bg-zinc-800 transition-colors text-left space-y-1"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-zinc-400 font-mono text-[10px] truncate">{path}</span>
+                                            <span className="text-zinc-300 font-mono text-xs shrink-0">{count}</span>
+                                        </div>
+                                        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full bg-emerald-600/50 transition-all"
+                                                style={{ width: `${topPathMax ? (count / topPathMax) * 100 : 0}%` }}
+                                            />
+                                        </div>
+                                    </button>
                                 ))}
-                                {(!stats?.topPaths?.length) && <p className="text-zinc-500 text-xs">Nenhum dado</p>}
+                                {!stats?.topPaths?.length && <p className="text-zinc-500 text-xs">Nenhum dado</p>}
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Filters */}
+                {/* ── Timeline chart ─────────────────────────────────────── */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                        <BarChart2 className="w-4 h-4 text-violet-400" />
+                        <p className="text-xs font-medium text-zinc-300">Atividade por dia</p>
+                    </div>
+                    {statsLoading ? (
+                        <div className="flex items-end gap-0.5 h-24">
+                            {Array.from({ length: days }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="flex-1 bg-zinc-800 rounded-sm animate-pulse"
+                                    style={{ height: `${20 + Math.random() * 80}%` }}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <TimelineChart data={stats?.timeline ?? []} days={days} />
+                    )}
+                </div>
+
+                {/* ── Filters ────────────────────────────────────────────── */}
                 <div className="flex flex-wrap gap-2 items-center">
                     {botFilter && (
                         <button
                             onClick={() => setBotFilter('')}
-                            className={`inline-flex items-center gap-1.5 px-2 py-1 rounded border text-xs font-bold ${botColor(botFilter)}`}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded border text-xs font-bold ${botColor(botFilter)}`}
                         >
-                            {botFilter} ×
+                            {botFilter}
+                            <X className="w-3 h-3 ml-0.5" />
                         </button>
                     )}
                     <div className="relative">
@@ -243,21 +456,23 @@ export default function BotLogsPage() {
                         <input
                             type="text"
                             placeholder="Filtrar por path..."
-                            defaultValue={pathFilter}
-                            onChange={e => { pathInput.current = e.target.value }}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                    setPathFilter(pathInput.current)
-                                    setPage(1)
-                                }
-                            }}
-                            className="bg-zinc-900 border border-zinc-700 rounded pl-8 pr-3 py-1.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 w-56"
+                            value={pathInputValue}
+                            onChange={e => handlePathChange(e.target.value)}
+                            className="bg-zinc-900 border border-zinc-700 rounded pl-8 pr-8 py-1.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 w-60"
                         />
+                        {pathInputValue && (
+                            <button
+                                onClick={clearPath}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        )}
                     </div>
                     <span className="text-xs text-zinc-500">{total.toLocaleString('pt-BR')} resultado(s)</span>
                 </div>
 
-                {/* Table */}
+                {/* ── Table ──────────────────────────────────────────────── */}
                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -268,13 +483,14 @@ export default function BotLogsPage() {
                                     <th className="text-left px-4 py-3 text-xs font-medium text-zinc-400">IP</th>
                                     <th className="text-left px-4 py-3 text-xs font-medium text-zinc-400">Quando</th>
                                     <th className="text-left px-4 py-3 text-xs font-medium text-zinc-400">Referer</th>
+                                    <th className="w-8" />
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     Array.from({ length: 10 }).map((_, i) => (
                                         <tr key={i} className="border-b border-zinc-800/50">
-                                            {Array.from({ length: 5 }).map((_, j) => (
+                                            {Array.from({ length: 6 }).map((_, j) => (
                                                 <td key={j} className="px-4 py-3">
                                                     <div className="h-4 bg-zinc-800 rounded animate-pulse" />
                                                 </td>
@@ -283,14 +499,17 @@ export default function BotLogsPage() {
                                     ))
                                 ) : logs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-12 text-center text-zinc-500">
+                                        <td colSpan={6} className="px-4 py-12 text-center text-zinc-500">
                                             <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
                                             Nenhum crawl registrado nos últimos {days} dias
                                         </td>
                                     </tr>
-                                ) : (
-                                    logs.map(log => (
-                                        <tr key={log.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+                                ) : logs.map(log => (
+                                    <Fragment key={log.id}>
+                                        <tr
+                                            className={`border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors cursor-pointer select-none ${expandedId === log.id ? 'bg-zinc-800/20' : ''}`}
+                                            onClick={() => setExpandedId(prev => prev === log.id ? null : log.id)}
+                                        >
                                             <td className="px-4 py-3">
                                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold whitespace-nowrap ${botColor(log.bot)}`}>
                                                     {log.bot}
@@ -311,9 +530,35 @@ export default function BotLogsPage() {
                                                     <span className="truncate block font-mono text-[10px]" title={log.referer}>{log.referer}</span>
                                                 ) : '—'}
                                             </td>
+                                            <td className="px-2 py-3 text-zinc-600">
+                                                {expandedId === log.id
+                                                    ? <ChevronUp className="w-3.5 h-3.5" />
+                                                    : <ChevronDown className="w-3.5 h-3.5" />}
+                                            </td>
                                         </tr>
-                                    ))
-                                )}
+                                        {expandedId === log.id && (
+                                            <tr className="border-b border-zinc-800/50 bg-zinc-950/50">
+                                                <td colSpan={6} className="px-4 py-3">
+                                                    <div className="space-y-2">
+                                                        <div>
+                                                            <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-1">User-Agent</p>
+                                                            <p className="font-mono text-[11px] text-zinc-300 break-all leading-relaxed">
+                                                                {log.userAgent || '—'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-600">
+                                                            <span>ID: <span className="text-zinc-500 font-mono">{log.id}</span></span>
+                                                            <span>Data exata: <span className="text-zinc-500">{formatDate(log.createdAt)}</span></span>
+                                                            {log.referer && (
+                                                                <span className="break-all">Referer: <span className="text-zinc-500 font-mono">{log.referer}</span></span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </Fragment>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -322,7 +567,7 @@ export default function BotLogsPage() {
                     {pages > 1 && (
                         <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
                             <span className="text-xs text-zinc-500">
-                                Página {page} de {pages}
+                                Página {page} de {pages} · {total.toLocaleString('pt-BR')} total
                             </span>
                             <div className="flex items-center gap-1">
                                 <button
@@ -343,6 +588,7 @@ export default function BotLogsPage() {
                         </div>
                     )}
                 </div>
+
             </div>
         </AdminLayout>
     )

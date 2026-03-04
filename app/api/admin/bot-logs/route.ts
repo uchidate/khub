@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,7 +39,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (statsOnly) {
-        const [total, byBot, topPaths] = await Promise.all([
+        const botCondition = bot ? Prisma.sql`AND bot = ${bot}` : Prisma.empty
+        const pathCondition = path ? Prisma.sql`AND path ILIKE ${`%${path}%`}` : Prisma.empty
+
+        const [total, byBot, topPaths, timeline] = await Promise.all([
             prisma.botCrawlLog.count({ where }),
             prisma.botCrawlLog.groupBy({
                 by: ['bot'],
@@ -53,12 +57,25 @@ export async function GET(request: NextRequest) {
                 orderBy: { _count: { path: 'desc' } },
                 take: 10,
             }),
+            prisma.$queryRaw<{ date: Date; count: bigint }[]>(
+                Prisma.sql`
+                    SELECT DATE_TRUNC('day', "createdAt")::date AS date, COUNT(*) AS count
+                    FROM bot_crawl_log
+                    WHERE "createdAt" >= ${since} ${botCondition} ${pathCondition}
+                    GROUP BY 1
+                    ORDER BY 1 ASC
+                `
+            ),
         ])
 
         return NextResponse.json({
             total,
             byBot: byBot.map((r: { bot: string; _count: { bot: number } }) => ({ bot: r.bot, count: r._count.bot })),
             topPaths: topPaths.map((r: { path: string; _count: { path: number } }) => ({ path: r.path, count: r._count.path })),
+            timeline: timeline.map(r => ({
+                date: r.date.toISOString().split('T')[0],
+                count: Number(r.count),
+            })),
             days,
         })
     }
