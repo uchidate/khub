@@ -74,7 +74,7 @@ export function ProductionsTabs({ latest, topRated }: ProductionsTabsProps) {
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
                 {productions.map((prod) => (
                     <Link
                         key={prod.id}

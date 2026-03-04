@@ -143,7 +143,7 @@ export default async function Home() {
                 flaggedAsNonKorean: false,
                 ...ageRatingFilter,
             },
-            take: 6,
+            take: 8,
             orderBy: { createdAt: 'desc' },
             select: {
                 id: true, titlePt: true, type: true, year: true,
@@ -157,7 +157,7 @@ export default async function Home() {
                 voteAverage: { gte: 7.5 },
                 ...ageRatingFilter,
             },
-            take: 6,
+            take: 8,
             orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
             select: {
                 id: true, titlePt: true, type: true, year: true,
