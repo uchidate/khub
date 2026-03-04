@@ -5,7 +5,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { ArrowRight, Users, Music2, Film, Newspaper, TrendingUp } from 'lucide-react'
-import { GlobalSearch } from '@/components/ui/GlobalSearch'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,26 +99,38 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 NO SEU RITMO.
                             </h1>
 
-                            <p className="text-sm text-zinc-400 mb-6 max-w-sm mx-auto lg:mx-0 leading-relaxed">
+                            <p className="text-sm text-zinc-400 mb-3 max-w-sm mx-auto lg:mx-0 leading-relaxed">
                                 Artistas, K-Dramas, grupos e notícias da cultura coreana — tudo em um lugar.
                             </p>
-                        </motion.div>
 
-                        {/* Search */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.15 }}
-                            className="flex justify-center lg:justify-start mb-5"
-                        >
-                            <GlobalSearch />
+                            {/* Stats inline */}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-6 justify-center lg:justify-start">
+                                {[
+                                    { icon: Users,      href: '/artists',     label: 'Artistas',  value: stats.artists },
+                                    { icon: Film,       href: '/productions', label: 'Produções', value: stats.productions },
+                                    { icon: Newspaper,  href: '/news',        label: 'Notícias',  value: stats.news },
+                                    { icon: TrendingUp, href: '/artists',     label: 'Views',     value: stats.views },
+                                ].map(({ icon: Icon, href, label, value }) => (
+                                    <a
+                                        key={label}
+                                        href={href}
+                                        className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors group"
+                                    >
+                                        <Icon className="w-3 h-3 group-hover:text-neon-pink transition-colors" />
+                                        <span className="text-xs font-black text-white tabular-nums">
+                                            {value.toLocaleString('pt-BR')}
+                                        </span>
+                                        <span className="text-[11px] text-zinc-600">{label}</span>
+                                    </a>
+                                ))}
+                            </div>
                         </motion.div>
 
                         {/* Rotating CTA + dots */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.25 }}
+                            transition={{ duration: 0.6, delay: 0.15 }}
                             className="flex gap-3 justify-center lg:justify-start items-center"
                         >
                             <div className="h-10 flex items-center">
@@ -244,30 +255,6 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         )}
                     </motion.div>
 
-                </div>
-            </div>
-
-            {/* ── Stats strip ───────────────────────────────────────────── */}
-            <div className="relative z-30 container mx-auto px-4 mt-8 pt-5 border-t border-white/5">
-                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-                    {[
-                        { icon: Users,      href: '/artists',     label: 'Artistas',  value: stats.artists },
-                        { icon: Film,       href: '/productions', label: 'Produções', value: stats.productions },
-                        { icon: Newspaper,  href: '/news',        label: 'Notícias',  value: stats.news },
-                        { icon: TrendingUp, href: '/artists',     label: 'Views',     value: stats.views },
-                    ].map(({ icon: Icon, href, label, value }) => (
-                        <a
-                            key={label}
-                            href={href}
-                            className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 transition-colors group"
-                        >
-                            <Icon className="w-3 h-3 group-hover:text-neon-pink transition-colors" />
-                            <span className="text-sm font-black text-white tabular-nums">
-                                {value.toLocaleString('pt-BR')}
-                            </span>
-                            <span className="text-xs text-zinc-600">{label}</span>
-                        </a>
-                    ))}
                 </div>
             </div>
 

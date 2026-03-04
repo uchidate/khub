@@ -51,7 +51,7 @@ const getHomePublicData = unstable_cache(
             }),
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false },
-                take: 12,
+                take: 10,
                 orderBy: { trendingScore: 'desc' },
                 select: {
                     id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
