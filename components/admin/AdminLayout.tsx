@@ -7,7 +7,7 @@ import {
   Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
   Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
-  Mail, FileText,
+  Mail, FileText, Bot,
 } from 'lucide-react'
 
 type NavItem = {
@@ -81,6 +81,7 @@ const navSections: NavSection[] = [
       { href: '/admin/agencies', label: 'Agências', icon: Building2 },
       { href: '/admin/instagram', label: 'Instagram Feeds', icon: Instagram },
       { href: '/admin/activity', label: 'Atividade', icon: Activity },
+      { href: '/admin/bot-logs', label: 'Robôs de Busca', icon: Bot },
       { href: '/admin/cron', label: 'Cron Jobs', icon: RefreshCw },
       { href: '/admin/settings', label: 'Configurações', icon: Settings },
     ],

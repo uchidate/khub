@@ -22,10 +22,30 @@ export interface ArtistMention {
  * 3. nameHangul indexado:
  *    - Artistas e grupos com nome em Hangul são encontrados em notícias coreanas
  *
- * 4. Sem AI fallback por enquanto:
+ * 4. Proteção contra falsos positivos:
+ *    - Nomes curtos (≤ 2 chars) → apenas combinam com o título
+ *    - Nomes ambíguos (palavras comuns em inglês) → apenas no título
+ *    - Possessivos stripped antes do match ("BTS's" → "BTS")
+ *    - Variantes com hífen indexadas ("Stray Kids" ↔ "Stray-Kids")
+ *
+ * 5. Sem AI fallback por enquanto:
  *    - Exact matching é confiável e rápido
  *    - AI pode sugerir nomes errados (false positives)
  */
+
+/**
+ * Palavras em inglês que também são nomes de artistas/grupos.
+ * Apenas combinadas no título — nunca no corpo da notícia.
+ */
+const AMBIGUOUS_NAMES = new Set([
+    'joy', 'rain', 'solar', 'dawn', 'snow', 'wind', 'dream',
+    'light', 'star', 'sun', 'moon', 'cloud', 'once', 'twice',
+    'wish', 'blue', 'red', 'black', 'pink', 'gold', 'amber',
+    'love', 'hope', 'fire', 'ash', 'wave', 'rise', 'shine',
+    'honey', 'crystal', 'leo', 'leo', 'n', 'ken', 'ravi',
+    'rap', 'monster', 'rookie',
+])
+
 export class NewsArtistExtractionService {
     private prisma: PrismaClient;
 
@@ -39,19 +59,51 @@ export class NewsArtistExtractionService {
     }
 
     /**
-     * Extrai artistas mencionados no título e conteúdo de uma notícia
+     * Extrai artistas mencionados no título e conteúdo de uma notícia.
+     * O título recebe tratamento mais permissivo (inclui nomes curtos e ambíguos).
+     * O corpo da notícia só combina nomes longos e não ambíguos.
      */
     async extractArtists(title: string, content: string): Promise<ArtistMention[]> {
         await this.refreshCacheIfStale();
 
-        const text = `${title} ${content}`;
-        const mentions = this.findExactMatches(text);
+        const cleanTitle = this.preprocessText(title);
+        const cleanContent = this.preprocessText(content);
 
-        if (mentions.length > 0) {
-            console.log(`  🎤 Found ${mentions.length} artist(s): ${mentions.map(m => m.name).join(', ')}`);
+        // Fase 1: busca no título (todos os nomes, incluindo curtos/ambíguos)
+        const titleMatches = this.findMatches(cleanTitle, { restrictAmbiguous: false });
+
+        // Fase 2: busca no corpo (exclui curtos/ambíguos para evitar falsos positivos)
+        const bodyMatches = this.findMatches(`${cleanTitle} ${cleanContent}`, { restrictAmbiguous: true });
+
+        // Merge: título tem prioridade; body adiciona novos artistas
+        const seen = new Set<string>(titleMatches.map(m => m.artistId));
+        const result = [...titleMatches];
+        for (const m of bodyMatches) {
+            if (!seen.has(m.artistId)) {
+                seen.add(m.artistId);
+                result.push(m);
+            }
         }
 
-        return mentions;
+        if (result.length > 0) {
+            console.log(`  🎤 Found ${result.length} artist(s): ${result.map(m => m.name).join(', ')}`);
+        }
+
+        return result;
+    }
+
+    /**
+     * Pré-processa o texto antes do matching:
+     * - Remove possessivos: "BTS's" → "BTS", "aespa's" → "aespa"
+     * - Normaliza hífens: "Stray-Kids'" → "Stray Kids"
+     * - Normaliza espaços
+     */
+    private preprocessText(text: string): string {
+        return text
+            .replace(/[''']s\b/gi, '')      // possessivos: BTS's → BTS
+            .replace(/\u2019s\b/gi, '')      // right single quotation mark possessive
+            .replace(/\s+/g, ' ')
+            .trim();
     }
 
     /**
@@ -60,6 +112,9 @@ export class NewsArtistExtractionService {
      * Para artistas individuais: indexa nameRomanized, nameHangul e stageNames.
      * Para grupos musicais: indexa name e nameHangul apontando para TODOS os membros
      * via ArtistGroupMembership — fonte autoritativa, independente de stageNames.
+     *
+     * Para cada nome multi-palavra, também indexa a variante com hífen,
+     * e vice-versa (ex: "Stray Kids" ↔ "Stray-Kids").
      */
     private async refreshCacheIfStale(): Promise<void> {
         const now = new Date();
@@ -82,24 +137,22 @@ export class NewsArtistExtractionService {
 
         for (const artist of artists) {
             // Nome romanizado (ex: "Jennie", "Lisa")
-            this.addToCache(artist.nameRomanized, artist.id);
+            this.addWithVariants(artist.nameRomanized, [artist.id]);
 
             // Nome em Hangul (ex: "제니", "리사") — para notícias em coreano
             if (artist.nameHangul) {
-                this.addToCache(artist.nameHangul, artist.id);
+                this.addWithVariants(artist.nameHangul, [artist.id]);
             }
 
             // Stage names individuais (ex: "RM", "V", "Suga")
             for (const stageName of artist.stageNames) {
                 if (stageName.trim().length >= 2) {
-                    this.addToCache(stageName, artist.id);
+                    this.addWithVariants(stageName.trim(), [artist.id]);
                 }
             }
         }
 
         // ── Grupos musicais → todos os membros (fonte autoritativa) ──
-        // Resolve o problema: "BLACKPINK" mencionado → retorna os 4 membros,
-        // não apenas os que têm "BLACKPINK" em seus stageNames individualmente.
         const groups = await this.prisma.musicalGroup.findMany({
             select: {
                 name: true,
@@ -115,17 +168,33 @@ export class NewsArtistExtractionService {
             if (memberIds.length === 0) continue;
 
             // Nome romanizado do grupo (ex: "BLACKPINK", "BTS", "aespa")
-            this.addManyToCache(group.name, memberIds);
+            this.addWithVariants(group.name, memberIds);
 
             // Nome em Hangul do grupo (ex: "블랙핑크", "방탄소년단")
             if (group.nameHangul) {
-                this.addManyToCache(group.nameHangul, memberIds);
+                this.addWithVariants(group.nameHangul, memberIds);
             }
         }
 
         this.cacheLoadedAt = now;
         const totalVariants = Array.from(this.nameCache.values()).reduce((sum, ids) => sum + ids.length, 0);
         console.log(`  📚 Artist cache refreshed: ${artists.length} artists, ${groups.length} groups, ${this.nameCache.size} name variants (${totalVariants} total associations)`);
+    }
+
+    /**
+     * Indexa um nome e sua variante com hífen/espaço.
+     * Ex: "Stray Kids" → também indexa "Stray-Kids"
+     *     "G-Dragon"   → também indexa "G Dragon"
+     */
+    private addWithVariants(name: string, artistIds: string[]): void {
+        this.addManyToCache(name, artistIds);
+
+        // Variante: espaços ↔ hífens
+        if (name.includes(' ')) {
+            this.addManyToCache(name.replace(/ /g, '-'), artistIds);
+        } else if (name.includes('-')) {
+            this.addManyToCache(name.replace(/-/g, ' '), artistIds);
+        }
     }
 
     /**
@@ -158,10 +227,11 @@ export class NewsArtistExtractionService {
 
     /**
      * Busca exact matches de nomes de artistas no texto.
-     * Usa word boundary matching para evitar falsos positivos.
-     * Retorna TODOS os artistas que compartilham um nome/grupo (ex: todos os membros do BTS).
+     *
+     * @param text Texto pré-processado para busca
+     * @param opts.restrictAmbiguous Se true, ignora nomes curtos (≤2 chars) e ambíguos
      */
-    private findExactMatches(text: string): ArtistMention[] {
+    private findMatches(text: string, opts: { restrictAmbiguous: boolean }): ArtistMention[] {
         const foundArtistIds = new Set<string>();
         const mentions: ArtistMention[] = [];
 
@@ -175,9 +245,16 @@ export class NewsArtistExtractionService {
         for (const [normalizedName, artistIds] of sortedEntries) {
             if (normalizedName.length < 2) continue;
 
-            // Word boundary: nome deve ser precedido/seguido por separador (não letra/número)
+            // Com restrição: pula nomes curtos (≤ 2 chars) e palavras ambíguas
+            if (opts.restrictAmbiguous) {
+                if (normalizedName.length <= 2) continue;
+                if (AMBIGUOUS_NAMES.has(normalizedName)) continue;
+            }
+
+            // Word boundary: nome deve ser precedido/seguido por separador
+            // [^a-z0-9가-힣] cobre tanto ASCII quanto Hangul como separadores válidos
             const escaped = normalizedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const pattern = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`, 'i');
+            const pattern = new RegExp(`(?:^|[^a-z0-9가-힣])${escaped}(?:[^a-z0-9가-힣]|$)`, 'i');
 
             if (pattern.test(normalizedText)) {
                 for (const artistId of artistIds) {
@@ -185,11 +262,11 @@ export class NewsArtistExtractionService {
                     foundArtistIds.add(artistId);
 
                     const displayName = this.getDisplayName(normalizedName);
-                    mentions.push({
-                        artistId,
-                        name: displayName,
-                        confidence: 0.95,
-                    });
+                    const confidence = normalizedName.length <= 2 ? 0.85
+                        : AMBIGUOUS_NAMES.has(normalizedName) ? 0.80
+                        : 0.95;
+
+                    mentions.push({ artistId, name: displayName, confidence });
                 }
             }
         }

@@ -48,6 +48,16 @@ export async function GET(request: NextRequest) {
         skip,
         take,
         orderBy,
+        include: {
+          artists: {
+            include: {
+              artist: {
+                select: { id: true, nameRomanized: true, primaryImageUrl: true },
+              },
+            },
+            take: 6,
+          },
+        },
       }),
       prisma.news.count({ where }),
     ])

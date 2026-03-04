@@ -816,3 +816,20 @@ model StreamingTrendSignal {
   @@index([expiresAt, source])
   @@map("streaming_trend_signal")
 }
+
+// Registro de crawls de robôs de busca (Googlebot, Bingbot, etc.)
+model BotCrawlLog {
+  id        String   @id @default(cuid())
+  bot       String   // "Googlebot", "Bingbot", "YandexBot", etc.
+  path      String   // pathname visitado
+  ip        String?  // IP do robô
+  userAgent String   @db.Text
+  referer   String?  // Referer header (se presente)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([bot])
+  @@index([path])
+  @@index([bot, createdAt])
+  @@map("bot_crawl_log")
+}
