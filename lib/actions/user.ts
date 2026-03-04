@@ -197,6 +197,87 @@ export async function getDashboardData() {
     }
 }
 
+export async function getProfileData() {
+    const session = await auth()
+    if (!session?.user?.id) return null
+
+    const userId = session.user.id
+
+    const [
+        favoriteArtists,
+        favoriteProductions,
+        favoriteNews,
+        totalComments,
+        recentComments,
+        recentFavoriteArtistsRaw,
+        recentFavoriteProductionsRaw,
+        user,
+        heroFavorite,
+        trendingArtists,
+    ] = await Promise.all([
+        prisma.favorite.count({ where: { userId, artistId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, productionId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, newsId: { not: null } } }),
+        prisma.comment.count({ where: { userId } }),
+        prisma.comment.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+            select: {
+                id: true, content: true, createdAt: true,
+                news: { select: { id: true, title: true, imageUrl: true } },
+            },
+        }),
+        prisma.favorite.findMany({
+            where: { userId, artistId: { not: null } },
+            orderBy: { createdAt: 'desc' },
+            take: 6,
+            select: {
+                createdAt: true,
+                artist: { select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true } },
+            },
+        }),
+        prisma.favorite.findMany({
+            where: { userId, productionId: { not: null } },
+            orderBy: { createdAt: 'desc' },
+            take: 4,
+            select: {
+                createdAt: true,
+                production: { select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true } },
+            },
+        }),
+        prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } }),
+        // Primeira artista favoritada (mais antiga) para o hero banner
+        prisma.favorite.findFirst({
+            where: { userId, artistId: { not: null } },
+            orderBy: { createdAt: 'asc' },
+            select: { artist: { select: { primaryImageUrl: true } } },
+        }),
+        // Trending artists para o fallback da FavoritesGallery
+        prisma.artist.findMany({
+            orderBy: { trendingScore: 'desc' },
+            take: 6,
+            select: { id: true, nameRomanized: true, primaryImageUrl: true },
+        }),
+    ])
+
+    return {
+        stats: { favoriteArtists, favoriteProductions, favoriteNews, totalComments },
+        recentComments: recentComments
+            .filter(c => c.news)
+            .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), news: c.news! })),
+        recentFavoriteArtists: recentFavoriteArtistsRaw
+            .filter(f => f.artist)
+            .map(f => ({ ...f.artist!, favoritedAt: f.createdAt.toISOString() })),
+        recentFavoriteProductions: recentFavoriteProductionsRaw
+            .filter(f => f.production)
+            .map(f => ({ ...f.production!, favoritedAt: f.createdAt.toISOString() })),
+        memberSince: user?.createdAt.toISOString() ?? null,
+        heroImageUrl: heroFavorite?.artist?.primaryImageUrl ?? null,
+        trendingArtists,
+    }
+}
+
 export async function registerInterest(tierName: string) {
     try {
         const session = await auth()
