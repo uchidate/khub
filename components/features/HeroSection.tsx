@@ -85,11 +85,10 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
             </div>
 
             <div className="relative z-30 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
-                {/* max-w-5xl limita a largura total do layout de 2 colunas */}
-                <div className="max-w-5xl flex flex-col lg:flex-row items-start gap-8 lg:gap-12">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_288px] gap-8 lg:gap-10 items-start">
 
                     {/* ── Left: headline + CTA ── */}
-                    <div className="flex-1 min-w-0 text-center lg:text-left">
+                    <div className="min-w-0 text-center lg:text-left">
 
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -100,7 +99,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 ✦ A plataforma Hallyu do Brasil
                             </p>
 
-                            <h1 className="text-4xl md:text-6xl xl:text-7xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
+                            <h1 className="text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
                                 A ONDA{' '}
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-neon-cyan animate-gradient bg-[length:200%_auto]">
                                     HALLYU
@@ -109,7 +108,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 NO SEU RITMO.
                             </h1>
 
-                            <p className="text-sm text-zinc-400 mb-3 max-w-sm mx-auto lg:mx-0 leading-relaxed">
+                            <p className="text-sm text-zinc-400 mb-3 max-w-lg mx-auto lg:mx-0 leading-relaxed">
                                 Artistas, K-Dramas, grupos e notícias da cultura coreana — tudo em um lugar.
                             </p>
 
@@ -185,7 +184,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.7, delay: 0.3 }}
-                        className="w-full lg:w-72 flex-shrink-0 space-y-3 hidden lg:block"
+                        className="space-y-3 hidden lg:block"
                     >
                         {/* Trending artists card */}
                         {trendingArtists.length > 0 && (
