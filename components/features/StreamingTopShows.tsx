@@ -54,11 +54,10 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                         <Tv2 className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-black dark:text-white text-zinc-900 tracking-tight">
-                            Top 10 nos <span className={`${activeCfg.textColor}`} style={{ color: 'inherit' }}>
-                                <span className={`${activeTab === 'netflix_br' ? 'text-red-500' : activeTab === 'disney_br' ? 'text-blue-400' : activeTab === 'prime_br' ? 'text-sky-400' : activeTab === 'apple_br' ? 'text-zinc-300' : 'text-purple-400'}`}>
-                                    Streamings
-                                </span>
+                        <h2 className="text-xl font-black dark:text-white text-zinc-900 tracking-tight uppercase">
+                            Top 10 nos{' '}
+                            <span className={`${activeTab === 'netflix_br' ? 'text-red-500' : activeTab === 'disney_br' ? 'text-blue-400' : activeTab === 'prime_br' ? 'text-sky-400' : activeTab === 'apple_br' ? 'text-zinc-300' : 'text-purple-400'}`}>
+                                Streamings
                             </span>
                         </h2>
                     </div>
