@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2 } from 'lucide-react'
+import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
 interface SocialLinks {
@@ -344,42 +344,71 @@ function ModeCard({
 
 type FilterType = 'all' | 'pending' | 'attempted' | 'complete'
 
+interface GlobalStats { total: number; pending: number; attempted: number; complete: number }
+
 export default function SocialLinksAdminPage() {
     const [artists, setArtists] = useState<Artist[]>([])
-    const [filtered, setFiltered] = useState<Artist[]>([])
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState<FilterType>('all')
+    const [page, setPage] = useState(1)
+    const [pages, setPages] = useState(1)
+    const [totalFiltered, setTotalFiltered] = useState(0)
+    const [globalStats, setGlobalStats] = useState<GlobalStats>({ total: 0, pending: 0, attempted: 0, complete: 0 })
     const [editing, setEditing] = useState<Artist | null>(null)
     const [loading, setLoading] = useState(true)
     const [savedId, setSavedId] = useState<string | null>(null)
 
-    const fetchArtists = useCallback(async () => {
+    // Fetch state kept in refs so batch sync callbacks can refresh with current params
+    const filterRef  = useRef<FilterType>('all')
+    const searchRef  = useRef('')
+    const pageRef    = useRef(1)
+    const searchTimer = useRef<ReturnType<typeof setTimeout>>()
+
+    const doFetch = useCallback(async (f: FilterType, s: string, p: number) => {
+        filterRef.current = f
+        searchRef.current = s
+        pageRef.current   = p
         setLoading(true)
         try {
-            const res = await fetch('/api/admin/artists/social-links')
+            const params = new URLSearchParams({ filter: f, page: String(p), limit: '50' })
+            if (s) params.set('search', s)
+            const res  = await fetch(`/api/admin/artists/social-links?${params}`)
             const data = await res.json()
             setArtists(data.artists || [])
+            setTotalFiltered(data.total || 0)
+            setPages(data.pages || 1)
+            setGlobalStats(data.globalStats || { total: 0, pending: 0, attempted: 0, complete: 0 })
         } finally {
             setLoading(false)
         }
     }, [])
 
-    useEffect(() => { fetchArtists() }, [fetchArtists])
+    // Refresh current page (used after batch sync)
+    const fetchArtists = useCallback(() => {
+        return doFetch(filterRef.current, searchRef.current, pageRef.current)
+    }, [doFetch])
 
-    useEffect(() => {
-        let list = artists
-        if (search) {
-            const q = search.toLowerCase()
-            list = list.filter(a =>
-                a.nameRomanized.toLowerCase().includes(q) ||
-                (a.nameHangul || '').toLowerCase().includes(q)
-            )
-        }
-        if (filter === 'pending')   list = list.filter(a => !countLinks(a.socialLinks) && !a.socialLinksUpdatedAt)
-        if (filter === 'attempted') list = list.filter(a => !countLinks(a.socialLinks) && !!a.socialLinksUpdatedAt)
-        if (filter === 'complete')  list = list.filter(a => countLinks(a.socialLinks) > 0)
-        setFiltered(list)
-    }, [artists, search, filter])
+    useEffect(() => { doFetch('all', '', 1) }, [doFetch])
+
+    const handleFilterChange = (f: FilterType) => {
+        setFilter(f)
+        setPage(1)
+        doFetch(f, searchRef.current, 1)
+    }
+
+    const handleSearch = (s: string) => {
+        setSearch(s)
+        clearTimeout(searchTimer.current)
+        searchTimer.current = setTimeout(() => {
+            setPage(1)
+            doFetch(filterRef.current, s, 1)
+        }, 400)
+    }
+
+    const handlePage = (p: number) => {
+        setPage(p)
+        doFetch(filterRef.current, searchRef.current, p)
+    }
 
     const handleSave = async (artistId: string, links: SocialLinks) => {
         const res = await fetch(`/api/admin/artists?id=${artistId}`, {
@@ -425,10 +454,6 @@ export default function SocialLinksAdminPage() {
                 : a
         ))
     }, [])
-
-    const pending   = artists.filter(a => !countLinks(a.socialLinks) && !a.socialLinksUpdatedAt).length
-    const attempted = artists.filter(a => !countLinks(a.socialLinks) && !!a.socialLinksUpdatedAt).length
-    const complete  = artists.filter(a => countLinks(a.socialLinks) > 0).length
 
     // ── Bulk sync via Wikidata ─────────────────────────────────────────────────
     const [savedProgress, setSavedProgress] = useState<SavedProgress | null>(null)
@@ -596,10 +621,10 @@ export default function SocialLinksAdminPage() {
     const pct = totalGlobal > 0 ? Math.round((processed / totalGlobal) * 100) : 0
 
     const filterTabs: { value: FilterType; label: string; count: number; color: string; activeColor: string }[] = [
-        { value: 'all',      label: 'Todos',      count: artists.length, color: 'border-zinc-800 text-zinc-400 hover:border-zinc-600',                         activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
-        { value: 'pending',  label: 'Pendentes',  count: pending,        color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
-        { value: 'attempted',label: 'Já tentados',count: attempted,      color: 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60',           activeColor: 'border-zinc-500 bg-zinc-700/60 text-zinc-300' },
-        { value: 'complete', label: 'Com links',  count: complete,       color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',     activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },
+        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-zinc-800 text-zinc-400 hover:border-zinc-600',                         activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
+        { value: 'pending',  label: 'Pendentes',   count: globalStats.pending,  color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
+        { value: 'attempted',label: 'Já tentados', count: globalStats.attempted,color: 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60',           activeColor: 'border-zinc-500 bg-zinc-700/60 text-zinc-300' },
+        { value: 'complete', label: 'Com links',   count: globalStats.complete, color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',     activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },
     ]
 
     return (
@@ -609,19 +634,19 @@ export default function SocialLinksAdminPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-3">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-white">{artists.length}</p>
+                        <p className="text-2xl font-black text-white">{globalStats.total.toLocaleString('pt-BR')}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Total</p>
                     </div>
                     <div className="bg-zinc-900 border border-orange-500/20 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-orange-400">{pending}</p>
+                        <p className="text-2xl font-black text-orange-400">{globalStats.pending.toLocaleString('pt-BR')}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Pendentes</p>
                     </div>
                     <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-zinc-400">{attempted}</p>
+                        <p className="text-2xl font-black text-zinc-400">{globalStats.attempted.toLocaleString('pt-BR')}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Já tentados</p>
                     </div>
                     <div className="bg-zinc-900 border border-green-500/20 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-green-400">{complete}</p>
+                        <p className="text-2xl font-black text-green-400">{globalStats.complete.toLocaleString('pt-BR')}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Com links</p>
                     </div>
                 </div>
@@ -757,11 +782,11 @@ export default function SocialLinksAdminPage() {
                         {filterTabs.map(tab => (
                             <button
                                 key={tab.value}
-                                onClick={() => setFilter(tab.value)}
+                                onClick={() => handleFilterChange(tab.value)}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${filter === tab.value ? tab.activeColor : tab.color}`}
                             >
                                 {tab.label}
-                                <span className="font-mono tabular-nums opacity-80">{tab.count}</span>
+                                <span className="font-mono tabular-nums opacity-80">{tab.count.toLocaleString('pt-BR')}</span>
                             </button>
                         ))}
                     </div>
@@ -770,7 +795,7 @@ export default function SocialLinksAdminPage() {
                         <input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => handleSearch(e.target.value)}
                             placeholder="Buscar artista..."
                             className="w-full pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
                         />
@@ -786,10 +811,10 @@ export default function SocialLinksAdminPage() {
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {filtered.length === 0 && (
+                        {artists.length === 0 && (
                             <div className="text-center py-16 text-zinc-500">Nenhum artista encontrado</div>
                         )}
-                        {filtered.map((artist) => {
+                        {artists.map((artist) => {
                             const linkCount = countLinks(artist.socialLinks)
                             const isSaved = savedId === artist.id
                             const wasTried = !!artist.socialLinksUpdatedAt && linkCount === 0
@@ -867,6 +892,31 @@ export default function SocialLinksAdminPage() {
                                 </div>
                             )
                         })}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {pages > 1 && (
+                    <div className="flex items-center justify-between py-2">
+                        <span className="text-xs text-zinc-500">
+                            {totalFiltered.toLocaleString('pt-BR')} artistas · página {page} de {pages}
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => handlePage(page - 1)}
+                                disabled={page === 1 || loading}
+                                className="p-2 rounded hover:bg-zinc-800 disabled:opacity-30 text-zinc-400 transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => handlePage(page + 1)}
+                                disabled={page === pages || loading}
+                                className="p-2 rounded hover:bg-zinc-800 disabled:opacity-30 text-zinc-400 transition-colors"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
