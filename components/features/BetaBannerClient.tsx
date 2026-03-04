@@ -28,8 +28,8 @@ export function BetaBannerClient() {
                         <span className="hidden sm:inline">
                             O HallyuHub está em versão beta — alguns recursos ainda estão em desenvolvimento. Sua experiência pode mudar.
                         </span>
-                        <span className="sm:hidden text-center">
-                            HallyuHub em versão beta — recursos em desenvolvimento.
+                        <span className="sm:hidden">
+                            O HallyuHub está em versão beta.
                         </span>
                     </div>
                 </div>
