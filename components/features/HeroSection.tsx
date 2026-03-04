@@ -69,7 +69,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
     const currentCta = ROTATING_CTAS[ctaIndex]
 
     return (
-        <section className="relative w-full overflow-hidden pt-24 pb-10 md:pt-28 md:pb-14">
+        <section className="relative w-full overflow-hidden pt-24 pb-6 md:pt-28 md:pb-8">
 
             {/* Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
