@@ -38,6 +38,7 @@ export default async function ProductionsPage() {
         select: {
             source: true, rank: true, showTitle: true, tmdbId: true,
             posterUrl: true, year: true, voteAverage: true, isKorean: true, productionId: true,
+            production: { select: { titlePt: true } },
         },
         orderBy: [{ source: 'asc' }, { rank: 'asc' }],
     }).catch(() => [] as never[])
@@ -48,6 +49,7 @@ export default async function ProductionsPage() {
         showsByPlatform[show.source].push({
             ...show,
             productionId: show.productionId ?? undefined,
+            productionTitle: show.production?.titlePt ?? undefined,
         })
     }
 
