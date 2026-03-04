@@ -69,7 +69,7 @@ export interface PeriodPreviewItem {
   originalName: string | null
   date: string | null
   posterUrl: string | null
-  voteAverage: number
+  voteAverage: number | null
   voteCount: number
 }
 
@@ -94,7 +94,7 @@ export interface DiscoveredProduction {
   galleryUrls: string[]
   releaseDate: Date | null
   runtime: number | null
-  voteAverage: number
+  voteAverage: number | null
   trailerUrl: string | null
   tags: string[]
   ageRating: string | null
@@ -299,7 +299,7 @@ export class TMDBProductionDiscoveryService {
       galleryUrls,
       releaseDate: details.first_air_date ? new Date(details.first_air_date) : null,
       runtime: details.episode_run_time?.[0] || null,
-      voteAverage: details.vote_average,
+      voteAverage: details.vote_average ? Math.round(details.vote_average * 10) / 10 : null,
       trailerUrl,
       tags,
       ageRating,
@@ -380,7 +380,7 @@ export class TMDBProductionDiscoveryService {
       galleryUrls,
       releaseDate: details.release_date ? new Date(details.release_date) : null,
       runtime: details.runtime || null,
-      voteAverage: details.vote_average,
+      voteAverage: details.vote_average ? Math.round(details.vote_average * 10) / 10 : null,
       trailerUrl,
       tags,
       ageRating,
@@ -437,7 +437,7 @@ export class TMDBProductionDiscoveryService {
         : null,
       date: (type === 'tv' ? item.first_air_date : item.release_date) || null,
       posterUrl: item.poster_path ? `${TMDB_IMAGE_BASE}${item.poster_path}` : null,
-      voteAverage: item.vote_average,
+      voteAverage: item.vote_average ? Math.round(item.vote_average * 10) / 10 : null,
       voteCount: item.vote_count,
     }))
 

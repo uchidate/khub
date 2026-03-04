@@ -218,8 +218,9 @@ export async function POST(req: NextRequest) {
                         updatedFields.push('ano')
                     }
 
-                    // Nota
-                    const voteAverage = (base.vote_average as number) || null
+                    // Nota (arredondado para 1 decimal — TMDB retorna muitos dígitos)
+                    const voteAverageRaw = (base.vote_average as number) || null
+                    const voteAverage = voteAverageRaw ? Math.round(voteAverageRaw * 10) / 10 : null
                     if (voteAverage && canUpdate(!prod.voteAverage)) {
                         updates.voteAverage = voteAverage
                         updatedFields.push('nota')

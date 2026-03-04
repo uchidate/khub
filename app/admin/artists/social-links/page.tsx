@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink, Sparkles, RefreshCw } from 'lucide-react'
+import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2 } from 'lucide-react'
 import Image from 'next/image'
 
 interface SocialLinks {
@@ -43,6 +43,70 @@ function countLinks(links: SocialLinks | null): number {
 
 function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
+// ─── Batch sync types ─────────────────────────────────────────────────────────
+
+const SYNC_BATCH_SIZE = 50  // 50 × ~1.2s = ~60s por lote (dentro do timeout de 300s)
+const STORAGE_KEY = 'khub-sync-social-links-progress'
+
+interface SavedProgress {
+    offset: number
+    totalGlobal: number
+    grandFound: number
+    grandNotFound: number
+    grandErrors: number
+    mode: string
+}
+
+type LogLine = {
+    text: string
+    type: 'info' | 'success' | 'warning' | 'error' | 'done' | 'progress'
+}
+
+function parseSyncLine(line: string): LogLine | null {
+    const [type, ...rest] = line.split(':')
+    const payload = rest.join(':')
+    switch (type) {
+        case 'TOTAL_GLOBAL':
+            return { text: `🌍 Total elegível: ${Number(payload).toLocaleString('pt-BR')} artistas`, type: 'info' }
+        case 'TOTAL':
+            return { text: `📋 ${payload} artistas neste lote`, type: 'info' }
+        case 'PROGRESS': {
+            const parts = payload.split(':')
+            return { text: `⏳ [${parts[0]}] ${parts.slice(1).join(':')}...`, type: 'progress' }
+        }
+        case 'FOUND': {
+            const colonIdx = payload.indexOf(':')
+            const name = colonIdx > -1 ? payload.slice(0, colonIdx) : payload
+            const platforms = colonIdx > -1 ? payload.slice(colonIdx + 1) : ''
+            return { text: `✅ ${name} → ${platforms}`, type: 'success' }
+        }
+        case 'NOT_FOUND':
+            return { text: `➖ Não encontrado: ${payload}`, type: 'warning' }
+        case 'SAVED':
+            return null  // só atualiza estado local; não exibe no log
+        case 'ERROR':
+            return { text: `❌ Erro: ${payload}`, type: 'error' }
+        case 'DONE': {
+            const fmt = payload
+                .replace('found=', 'encontrados: ')
+                .replace(',notFound=', ' | não encontrados: ')
+                .replace(',errors=', ' | erros: ')
+            return { text: `🎉 Concluído! ${fmt}`, type: 'done' }
+        }
+        default:
+            return { text: line, type: 'info' }
+    }
+}
+
+const lineColor = (type: LogLine['type']) => {
+    if (type === 'success') return 'text-green-400'
+    if (type === 'error') return 'text-red-400'
+    if (type === 'warning') return 'text-yellow-400'
+    if (type === 'done') return 'text-purple-400 font-bold'
+    if (type === 'progress') return 'text-zinc-500'
+    return 'text-zinc-300'
 }
 
 // ─── Per-artist Wiki Sync button ─────────────────────────────────────────────
@@ -236,6 +300,46 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
     )
 }
 
+// ─── ModeCard ─────────────────────────────────────────────────────────────────
+
+function ModeCard({
+    title, description, color, disabled, onClick, icon,
+}: {
+    title: string
+    description: string
+    color: 'purple' | 'teal' | 'amber'
+    disabled: boolean
+    onClick: () => void
+    icon: React.ReactNode
+}) {
+    const colors = {
+        purple: 'border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400',
+        teal:   'border-teal-500/30 bg-teal-500/5 hover:bg-teal-500/10 text-teal-400',
+        amber:  'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400',
+    }
+    const btnColors = {
+        purple: 'bg-purple-600 hover:bg-purple-500',
+        teal:   'bg-teal-600 hover:bg-teal-500',
+        amber:  'bg-amber-600 hover:bg-amber-500',
+    }
+    return (
+        <div className={`rounded-xl border p-4 space-y-3 transition-colors ${colors[color]}`}>
+            <div>
+                <p className="text-sm font-black text-white">{title}</p>
+                <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{description}</p>
+            </div>
+            <button
+                onClick={onClick}
+                disabled={disabled}
+                className={`w-full flex items-center justify-center gap-2 py-2 ${btnColors[color]} disabled:opacity-40 text-white rounded-lg text-sm font-bold transition-colors`}
+            >
+                {disabled ? <RefreshCw className="w-4 h-4 animate-spin" /> : icon}
+                {disabled ? 'Processando...' : title}
+            </button>
+        </div>
+    )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 type FilterType = 'all' | 'pending' | 'attempted' | 'complete'
@@ -326,91 +430,182 @@ export default function SocialLinksAdminPage() {
     const attempted = artists.filter(a => !countLinks(a.socialLinks) && !!a.socialLinksUpdatedAt).length
     const complete  = artists.filter(a => countLinks(a.socialLinks) > 0).length
 
-    // ── Bulk auto-sync via Wikidata ───────────────────────────────────────────
-    const [syncing, setSyncing] = useState(false)
-    const [syncLog, setSyncLog] = useState<string[]>([])
-    const [syncLimit, setSyncLimit] = useState(30)
-    const syncLogRef = useRef<HTMLDivElement>(null)
+    // ── Bulk sync via Wikidata ─────────────────────────────────────────────────
+    const [savedProgress, setSavedProgress] = useState<SavedProgress | null>(null)
+    const [running, setRunning] = useState(false)
+    const [log, setLog] = useState<LogLine[]>([])
+    const [totalGlobal, setTotalGlobal] = useState(0)
+    const [processed, setProcessed] = useState(0)
+    const [syncStats, setSyncStats] = useState<{ found: number; notFound: number; errors: number } | null>(null)
+    const abortRef = useRef(false)
+    const logEndRef = useRef<HTMLDivElement>(null)
 
-    const startSync = useCallback(async () => {
-        setSyncing(true)
-        setSyncLog(['🚀 Iniciando busca no Wikidata...'])
+    useEffect(() => {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY)
+            if (saved) setSavedProgress(JSON.parse(saved))
+        } catch { /* ignore */ }
+    }, [])
+
+    useEffect(() => {
+        logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [log])
+
+    const runBatches = useCallback(async (mode: 'empty_only' | 'smart' | 'all', resume?: SavedProgress) => {
+        abortRef.current = false
+        setRunning(true)
+        setSavedProgress(null)
+        setSyncStats(null)
+
+        let offset = resume?.offset ?? 0
+        let total = resume?.totalGlobal ?? 0
+        let grandFound = resume?.grandFound ?? 0
+        let grandNotFound = resume?.grandNotFound ?? 0
+        let grandErrors = resume?.grandErrors ?? 0
+
+        if (resume) {
+            setTotalGlobal(total)
+            setProcessed(offset)
+            setLog([{
+                text: `▶️ Retomando do offset ${offset.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} (${grandFound} encontrados até agora)`,
+                type: 'info',
+            }])
+            setSyncStats({ found: grandFound, notFound: grandNotFound, errors: grandErrors })
+        } else {
+            setLog([{ text: `🚀 Iniciando busca Wikidata (modo: ${mode}) em lotes de ${SYNC_BATCH_SIZE}...`, type: 'info' }])
+            setTotalGlobal(0)
+            setProcessed(0)
+        }
 
         try {
-            const res = await fetch('/api/admin/sync-social-links', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ limit: syncLimit, dryRun: false }),
-            })
+            while (!abortRef.current) {
+                const res = await fetch('/api/admin/sync-social-links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode, limit: SYNC_BATCH_SIZE, offset }),
+                })
 
-            if (!res.ok || !res.body) {
-                setSyncLog(prev => [...prev, `❌ Erro HTTP ${res.status}`])
-                return
+                if (!res.ok || !res.body) {
+                    setLog(prev => [...prev, { text: `❌ Erro HTTP ${res.status}`, type: 'error' }])
+                    break
+                }
+
+                const reader = res.body.getReader()
+                const decoder = new TextDecoder()
+                let buffer = ''
+                let batchSize = 0
+
+                for (;;) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    buffer += decoder.decode(value, { stream: true })
+                    const lines = buffer.split('\n')
+                    buffer = lines.pop() || ''
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue
+
+                        if (line.startsWith('TOTAL_GLOBAL:')) {
+                            total = parseInt(line.replace('TOTAL_GLOBAL:', ''))
+                            setTotalGlobal(total)
+                            continue
+                        }
+                        if (line.startsWith('TOTAL:')) {
+                            batchSize = parseInt(line.replace('TOTAL:', ''))
+                            const batchNum = Math.floor(offset / SYNC_BATCH_SIZE) + 1
+                            const totalBatches = total > 0 ? Math.ceil(total / SYNC_BATCH_SIZE) : '?'
+                            setLog(prev => [...prev, {
+                                text: `📦 Lote ${batchNum}/${totalBatches} — ${batchSize} artistas`,
+                                type: 'info',
+                            }])
+                            continue
+                        }
+                        if (line.startsWith('PROGRESS:')) {
+                            setProcessed(offset + parseInt(line.split(':')[1].split('/')[0]))
+                        }
+                        if (line.startsWith('SAVED:')) {
+                            // Atualiza estado local sem re-fetch
+                            const artistId = line.replace('SAVED:', '').trim()
+                            setArtists(prev => prev.map(a =>
+                                a.id === artistId
+                                    ? { ...a, socialLinksUpdatedAt: new Date().toISOString() }
+                                    : a
+                            ))
+                            continue
+                        }
+                        if (line.startsWith('DONE:')) {
+                            const m = line.match(/found=(\d+),notFound=(\d+),errors=(\d+)/)
+                            if (m) {
+                                grandFound += parseInt(m[1])
+                                grandNotFound += parseInt(m[2])
+                                grandErrors += parseInt(m[3])
+                                setSyncStats({ found: grandFound, notFound: grandNotFound, errors: grandErrors })
+                            }
+                            continue
+                        }
+
+                        const parsed = parseSyncLine(line)
+                        if (parsed) setLog(prev => [...prev, parsed])
+                    }
+                }
+
+                offset += SYNC_BATCH_SIZE
+
+                const progress: SavedProgress = { offset, totalGlobal: total, grandFound, grandNotFound, grandErrors, mode }
+                try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progress)) } catch { /* ignore */ }
+
+                if (batchSize < SYNC_BATCH_SIZE || offset >= total) {
+                    setLog(prev => [...prev, {
+                        text: `🎉 Todos os lotes concluídos! Encontrados: ${grandFound} | Não encontrados: ${grandNotFound} | Erros: ${grandErrors}`,
+                        type: 'done',
+                    }])
+                    setProcessed(total)
+                    try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+                    await fetchArtists()
+                    break
+                }
+
+                await new Promise(r => setTimeout(r, 2000))
+                setLog(prev => [...prev, {
+                    text: `⏭️ Próximo lote — offset ${offset.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')}...`,
+                    type: 'info',
+                }])
             }
 
-            const reader = res.body.getReader()
-            const decoder = new TextDecoder()
-            let buffer = ''
-            let reading = true
-
-            while (reading) {
-                const { done, value } = await reader.read()
-                if (done) { reading = false; break }
-                buffer += decoder.decode(value, { stream: true })
-                const lines = buffer.split('\n')
-                buffer = lines.pop() || ''
-
-                for (const line of lines) {
-                    if (!line.trim()) continue
-                    const [type, ...rest] = line.split(':')
-                    const payload = rest.join(':')
-
-                    if (type === 'TOTAL') {
-                        setSyncLog(prev => [...prev, `📋 ${payload} artistas para processar`])
-                    } else if (type === 'PROGRESS') {
-                        const [pos, name] = payload.split(':')
-                        setSyncLog(prev => [...prev, `⏳ [${pos}] ${name}...`])
-                    } else if (type === 'FOUND') {
-                        const [name, platforms] = payload.split(':')
-                        setSyncLog(prev => [...prev, `✅ ${name} → ${platforms}`])
-                    } else if (type === 'NOT_FOUND') {
-                        setSyncLog(prev => [...prev, `➖ ${payload}: não encontrado`])
-                    } else if (type === 'SAVED') {
-                        const id = payload
-                        setArtists(prev => prev.map(a =>
-                            a.id === id ? { ...a, socialLinksUpdatedAt: new Date().toISOString() } as Artist : a
-                        ))
-                    } else if (type === 'ERROR') {
-                        setSyncLog(prev => [...prev, `❌ Erro: ${payload}`])
-                    } else if (type === 'DONE') {
-                        setSyncLog(prev => [...prev, `🎉 Concluído! ${payload}`])
-                        await fetchArtists()
-                    }
-
-                    setTimeout(() => {
-                        if (syncLogRef.current) {
-                            syncLogRef.current.scrollTop = syncLogRef.current.scrollHeight
-                        }
-                    }, 50)
-                }
+            if (abortRef.current) {
+                const progress: SavedProgress = { offset, totalGlobal: total, grandFound, grandNotFound, grandErrors, mode }
+                try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); setSavedProgress(progress) } catch { /* ignore */ }
+                setLog(prev => [...prev, {
+                    text: `⏸️ Pausado no offset ${offset.toLocaleString('pt-BR')}. Clique "Retomar" para continuar.`,
+                    type: 'info',
+                }])
             }
         } catch (e) {
-            setSyncLog(prev => [...prev, `❌ Erro: ${e}`])
+            setLog(prev => [...prev, { text: `❌ Erro inesperado: ${e}`, type: 'error' }])
+            const progress: SavedProgress = { offset, totalGlobal: total, grandFound, grandNotFound, grandErrors, mode }
+            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); setSavedProgress(progress) } catch { /* ignore */ }
+            setLog(prev => [...prev, {
+                text: `💾 Progresso salvo. Use "Retomar" para continuar do offset ${offset.toLocaleString('pt-BR')}.`,
+                type: 'info',
+            }])
         } finally {
-            setSyncing(false)
+            setRunning(false)
         }
-    }, [syncLimit, fetchArtists])
+    }, [fetchArtists])
+
+    const pct = totalGlobal > 0 ? Math.round((processed / totalGlobal) * 100) : 0
 
     const filterTabs: { value: FilterType; label: string; count: number; color: string; activeColor: string }[] = [
-        { value: 'all',      label: 'Todos',         count: artists.length,  color: 'border-zinc-800 text-zinc-400 hover:border-zinc-600',                    activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
-        { value: 'pending',  label: 'Pendentes',      count: pending,         color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
-        { value: 'attempted',label: 'Já tentados',    count: attempted,       color: 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60',     activeColor: 'border-zinc-500 bg-zinc-700/60 text-zinc-300' },
-        { value: 'complete', label: 'Com links',      count: complete,        color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10', activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },
+        { value: 'all',      label: 'Todos',      count: artists.length, color: 'border-zinc-800 text-zinc-400 hover:border-zinc-600',                         activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
+        { value: 'pending',  label: 'Pendentes',  count: pending,        color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
+        { value: 'attempted',label: 'Já tentados',count: attempted,      color: 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60',           activeColor: 'border-zinc-500 bg-zinc-700/60 text-zinc-300' },
+        { value: 'complete', label: 'Com links',  count: complete,       color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',     activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },
     ]
 
     return (
         <AdminLayout title="Redes Sociais dos Artistas">
             <div className="space-y-5">
+
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-3">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
@@ -431,55 +626,127 @@ export default function SocialLinksAdminPage() {
                     </div>
                 </div>
 
-                {/* Bulk sync panel */}
-                <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div className="flex items-center gap-3 flex-1">
-                            <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                            <div>
-                                <p className="text-sm font-bold text-white">Busca automática em lote via Wikidata</p>
-                                <p className="text-xs text-zinc-500 mt-0.5">Processa artistas que nunca foram sincronizados ({pending} pendentes)</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-zinc-500 font-medium">Artistas:</span>
-                                <select
-                                    value={syncLimit}
-                                    onChange={e => setSyncLimit(Number(e.target.value))}
-                                    disabled={syncing}
-                                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
-                                >
-                                    {[10, 20, 30, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-                                </select>
-                            </div>
-                            <button
-                                onClick={startSync}
-                                disabled={syncing || pending === 0}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
-                            >
-                                {syncing
-                                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Buscando...</>
-                                    : <><Sparkles className="w-4 h-4" /> Buscar agora</>
-                                }
-                            </button>
+                {/* Bulk sync via Wikidata */}
+                <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                        <div>
+                            <p className="text-sm font-black text-white">Busca automática em lote via Wikidata</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                                Lotes de {SYNC_BATCH_SIZE} artistas · progresso salvo automaticamente
+                            </p>
                         </div>
                     </div>
 
-                    {syncLog.length > 0 && (
-                        <div
-                            ref={syncLogRef}
-                            className="mt-4 bg-black/40 rounded-lg p-4 max-h-48 overflow-y-auto font-mono text-xs space-y-1 border border-white/5"
-                        >
-                            {syncLog.map((line, i) => (
-                                <div key={i} className={
-                                    line.startsWith('✅') ? 'text-green-400' :
-                                    line.startsWith('❌') ? 'text-red-400' :
-                                    line.startsWith('🎉') ? 'text-purple-400 font-bold' :
-                                    line.startsWith('⏳') ? 'text-zinc-500' :
-                                    'text-zinc-300'
-                                }>{line}</div>
+                    {/* Retomar progresso salvo */}
+                    {savedProgress && !running && (
+                        <div className="flex items-center justify-between p-3 rounded-xl border border-amber-500/30 bg-amber-500/5">
+                            <div>
+                                <p className="text-sm font-bold text-amber-400">Sync pausado — progresso salvo</p>
+                                <p className="text-xs text-zinc-400 mt-0.5">
+                                    Offset {savedProgress.offset.toLocaleString('pt-BR')} de {savedProgress.totalGlobal.toLocaleString('pt-BR')} ·
+                                    modo: {savedProgress.mode} · {savedProgress.grandFound} encontrados
+                                </p>
+                            </div>
+                            <div className="flex gap-2 flex-shrink-0">
+                                <button
+                                    onClick={() => runBatches((savedProgress.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedProgress)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    ▶️ Retomar
+                                </button>
+                                <button
+                                    onClick={() => { try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ } setSavedProgress(null) }}
+                                    className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg text-sm transition-colors"
+                                >
+                                    Descartar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Mode cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <ModeCard
+                            title="Pendentes"
+                            description="Busca apenas artistas que nunca foram sincronizados."
+                            color="purple"
+                            disabled={running}
+                            onClick={() => runBatches('empty_only')}
+                            icon={<Wand2 className="w-4 h-4" />}
+                        />
+                        <ModeCard
+                            title="Re-tentar não encontrados"
+                            description="Inclui artistas já tentados que não tiveram links encontrados."
+                            color="teal"
+                            disabled={running}
+                            onClick={() => runBatches('smart')}
+                            icon={<RefreshCw className="w-4 h-4" />}
+                        />
+                        <ModeCard
+                            title="Forçar todos"
+                            description="Processa todos os artistas. Wikidata sobrescreve links existentes."
+                            color="amber"
+                            disabled={running}
+                            onClick={() => runBatches('all')}
+                            icon={<RefreshCw className="w-4 h-4" />}
+                        />
+                    </div>
+
+                    {/* Progresso geral */}
+                    {(running || processed > 0) && (
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs text-zinc-400">
+                                <span>{processed.toLocaleString('pt-BR')} / {totalGlobal.toLocaleString('pt-BR')} artistas</span>
+                                <span>{pct}%</span>
+                            </div>
+                            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${pct}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stats acumuladas */}
+                    {syncStats && (
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-black/30 border border-green-500/20 rounded-lg p-2 text-center">
+                                <p className="text-xl font-black text-green-400">{syncStats.found}</p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Encontrados</p>
+                            </div>
+                            <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-2 text-center">
+                                <p className="text-xl font-black text-yellow-400">{syncStats.notFound}</p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Não encontrados</p>
+                            </div>
+                            <div className="bg-black/30 border border-red-500/20 rounded-lg p-2 text-center">
+                                <p className="text-xl font-black text-red-400">{syncStats.errors}</p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Erros</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Parar */}
+                    {running && (
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => { abortRef.current = true }}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors"
+                            >
+                                <Square className="w-4 h-4" />
+                                Parar (salva progresso)
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Log */}
+                    {log.length > 0 && (
+                        <div className="bg-black/40 rounded-xl p-4 max-h-64 overflow-y-auto font-mono text-xs space-y-1 border border-white/5">
+                            {log.map((line, i) => (
+                                <div key={i} className={lineColor(line.type)}>{line.text}</div>
                             ))}
+                            <div ref={logEndRef} />
                         </div>
                     )}
                 </div>
