@@ -227,11 +227,7 @@ export default async function Home() {
 
     return (
         <div className="dark:bg-black min-h-screen pb-20 overflow-x-hidden">
-            <HeroSection
-                trendingArtists={trendingArtists}
-                latestNews={featuredNews}
-                stats={siteStats}
-            />
+            <HeroSection stats={siteStats} />
 
             <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 space-y-6 md:space-y-8">
 
