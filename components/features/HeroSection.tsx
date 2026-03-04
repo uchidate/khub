@@ -30,7 +30,7 @@ interface SiteStats {
 
 interface HeroSectionProps {
     trendingArtists: TrendingArtist[]
-    latestNews: LatestNewsItem | null
+    latestNews: LatestNewsItem[]
     stats: SiteStats
 }
 
@@ -47,6 +47,7 @@ const ROTATING_CTAS = [
 
 export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionProps) {
     const [ctaIndex, setCtaIndex] = useState(0)
+    const [newsIndex, setNewsIndex] = useState(0)
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -54,6 +55,16 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
         }, 3000)
         return () => clearInterval(timer)
     }, [])
+
+    useEffect(() => {
+        if (latestNews.length <= 1) return
+        const timer = setInterval(() => {
+            setNewsIndex(i => (i + 1) % latestNews.length)
+        }, 4000)
+        return () => clearInterval(timer)
+    }, [latestNews.length])
+
+    const currentNews = latestNews[newsIndex] ?? null
 
     const currentCta = ROTATING_CTAS[ctaIndex]
 
@@ -75,7 +86,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-neon-pink/10 blur-[120px] rounded-full z-20" />
             </div>
 
-            <div className="relative z-30 container mx-auto px-4">
+            <div className="relative z-30 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12">
                 <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
 
                     {/* ── Left: headline + search + CTA ─────────────────── */}
@@ -223,35 +234,64 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                             </div>
                         )}
 
-                        {/* Latest news snippet */}
-                        {latestNews && (
-                            <Link
-                                href={`/news/${latestNews.id}`}
-                                className="glass-card p-3 rounded-2xl border border-white/10 flex gap-3 items-center group hover:border-white/20 transition-all"
-                            >
-                                {latestNews.imageUrl && (
-                                    <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-zinc-800">
-                                        <Image
-                                            src={latestNews.imageUrl}
-                                            alt={latestNews.title}
-                                            fill
-                                            className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                            sizes="56px"
-                                        />
-                                    </div>
-                                )}
-                                <div className="min-w-0">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-                                        📰 Última Notícia
+                        {/* Latest news carousel */}
+                        {latestNews.length > 0 && currentNews && (
+                            <div className="glass-card rounded-2xl border border-white/10 overflow-hidden">
+                                <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                                        📰 Últimas Notícias
                                     </p>
-                                    <p className="text-xs font-bold text-white group-hover:text-neon-cyan transition-colors line-clamp-2 leading-tight">
-                                        {latestNews.title}
-                                    </p>
-                                    <p className="text-[9px] text-zinc-600 mt-1">
-                                        {new Date(latestNews.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                                    </p>
+                                    {latestNews.length > 1 && (
+                                        <div className="flex gap-1">
+                                            {latestNews.map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setNewsIndex(i)}
+                                                    className={`rounded-full transition-all duration-300 ${
+                                                        i === newsIndex
+                                                            ? 'bg-neon-cyan w-3 h-1'
+                                                            : 'bg-zinc-700 hover:bg-zinc-500 w-1 h-1'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            </Link>
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={currentNews.id}
+                                        initial={{ opacity: 0, x: 8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -8 }}
+                                        transition={{ duration: 0.25 }}
+                                    >
+                                        <Link
+                                            href={`/news/${currentNews.id}`}
+                                            className="flex gap-3 items-center p-3 pt-1.5 group"
+                                        >
+                                            {currentNews.imageUrl && (
+                                                <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-zinc-800">
+                                                    <Image
+                                                        src={currentNews.imageUrl}
+                                                        alt={currentNews.title}
+                                                        fill
+                                                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        sizes="56px"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-white group-hover:text-neon-cyan transition-colors line-clamp-2 leading-tight">
+                                                    {currentNews.title}
+                                                </p>
+                                                <p className="text-[9px] text-zinc-600 mt-1">
+                                                    {new Date(currentNews.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                </p>
+                                            </div>
+                                        </Link>
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
                         )}
                     </motion.div>
 

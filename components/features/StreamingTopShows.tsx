@@ -61,9 +61,6 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 </span>
                             </span>
                         </h2>
-                        <p className="dark:text-zinc-500 text-zinc-600 text-xs mt-0.5">
-                            K-dramas em destaque por plataforma
-                        </p>
                     </div>
                 </div>
                 <Link

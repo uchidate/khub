@@ -45,7 +45,7 @@ export function TrendingGroups({ groups }: TrendingGroupsProps) {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 gap-3 md:gap-4">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 md:gap-4">
                 {groups.map((group, index) => {
                     const ringClass = RANK_RING[index] ?? ''
                     const debutYear = group.debutDate ? new Date(group.debutDate).getUTCFullYear() : null
