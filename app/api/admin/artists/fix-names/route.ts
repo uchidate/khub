@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!tmdb.name || KOREAN_REGEX.test(tmdb.name)) {
+    await prisma.artist.update({ where: { id: artistId }, data: { nameSyncAt: new Date() } })
     return NextResponse.json({ ok: false, reason: 'tmdb_no_romanized_name' })
   }
 
@@ -172,6 +173,7 @@ export async function POST(request: NextRequest) {
       data: {
         nameRomanized: tmdb.name,
         nameHangul: koreanName,
+        nameSyncAt: new Date(),
         ...(stageNames.length > 0 ? { stageNames } : {}),
       },
     })

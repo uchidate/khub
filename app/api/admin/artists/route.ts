@@ -100,13 +100,14 @@ export async function GET(request: NextRequest) {
     //   flagged                — flaggedAsNonKorean true
     //   korean_no_tmdb         — nameRomanized contém Hangul E sem tmdbId (via raw regex)
     //   no_romanized           — nameRomanized contém Hangul (todos — via raw regex)
-    //   no_romanized_pending   — nameRomanized contém Hangul + tmdbId set (pode corrigir)
+    //   no_romanized_pending   — nameRomanized contém Hangul + tmdbId set + nameSyncAt null (nunca tentado)
+    //   no_romanized_attempted — nameRomanized contém Hangul + tmdbId set + nameSyncAt set (tentado)
     //   no_romanized_no_tmdb   — nameRomanized contém Hangul + tmdbId null (= korean_no_tmdb)
 
     const active = { flaggedAsNonKorean: false } as const
 
     // Filtros com regex Korean requerem raw SQL — busca IDs e usa como filtro IN
-    const koreanRegexFilters = ['korean_no_tmdb', 'no_romanized', 'no_romanized_pending', 'no_romanized_no_tmdb']
+    const koreanRegexFilters = ['korean_no_tmdb', 'no_romanized', 'no_romanized_pending', 'no_romanized_attempted', 'no_romanized_no_tmdb']
     let rawKoreanIds: string[] | null = null
     if (koreanRegexFilters.includes(filter ?? '')) {
       let raw: { id: string }[]
@@ -122,6 +123,16 @@ export async function GET(request: NextRequest) {
           SELECT id FROM "Artist"
           WHERE "flaggedAsNonKorean" = false
             AND "tmdbId" IS NOT NULL
+            AND "nameSyncAt" IS NULL
+            AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
+          ORDER BY "trendingScore" DESC
+        `
+      } else if (filter === 'no_romanized_attempted') {
+        raw = await prisma.$queryRaw<{ id: string }[]>`
+          SELECT id FROM "Artist"
+          WHERE "flaggedAsNonKorean" = false
+            AND "tmdbId" IS NOT NULL
+            AND "nameSyncAt" IS NOT NULL
             AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
           ORDER BY "trendingScore" DESC
         `

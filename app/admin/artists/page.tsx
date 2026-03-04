@@ -44,6 +44,7 @@ interface ArtistStats {
   noHangulNoTmdb: number
   noRomanized: number
   noRomanizedPending: number
+  noRomanizedAttempted: number
   noRomanizedNoTmdb: number
   noPhoto: number
   noPhotoPending: number
@@ -62,7 +63,7 @@ type FilterType =
   | 'no_hangul' | 'no_hangul_pending' | 'no_hangul_attempted' | 'no_hangul_no_tmdb'
   | 'no_photo' | 'no_photo_pending' | 'no_photo_attempted' | 'no_photo_no_tmdb'
   | 'no_social' | 'no_social_pending' | 'no_social_attempted' | 'no_social_no_tmdb'
-  | 'no_romanized' | 'no_romanized_pending' | 'no_romanized_no_tmdb'
+  | 'no_romanized' | 'no_romanized_pending' | 'no_romanized_attempted' | 'no_romanized_no_tmdb'
   | 'flagged'
   | 'korean_no_tmdb'
 
@@ -358,7 +359,8 @@ function StatsBar({ stats, filter, onFilter }: {
   ]
 
   const romanizedSubs: SubTab[] = [
-    { label: 'Pendentes', value: 'no_romanized_pending', count: stats?.noRomanizedPending ?? null, title: 'Tem TMDB — pode corrigir via botão "Nome"', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
+    { label: 'Pendentes', value: 'no_romanized_pending', count: stats?.noRomanizedPending ?? null, title: 'Tem TMDB — nunca tentado, clique "Nome" para corrigir', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
+    { label: 'Já tentados', value: 'no_romanized_attempted', count: stats?.noRomanizedAttempted ?? null, title: 'Já processado — TMDB não encontrou nome romanizado', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
     { label: 'Sem TMDB', value: 'no_romanized_no_tmdb', count: stats?.noRomanizedNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
   ]
 
