@@ -7,7 +7,6 @@ import {
     Globe, TrendingUp, FileText, BarChart2, Clock,
     ChevronDown, ChevronUp, X, ExternalLink,
 } from 'lucide-react'
-import Link from 'next/link'
 import { getBotGroup, BOT_GROUPS } from '@/lib/utils/bot-detector'
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
