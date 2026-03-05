@@ -200,23 +200,23 @@ export class ArtistGeneratorV2 {
         const dept = department.toLowerCase();
 
         if (dept.includes('acting')) {
-            return ['Ator/Atriz', 'Artista'];
+            return ['ATOR', 'ARTISTA'];
         }
 
         if (dept.includes('music') || dept.includes('singing')) {
-            return ['Cantor/Cantora', 'Artista'];
+            return ['CANTOR', 'ARTISTA'];
         }
 
         if (dept.includes('directing')) {
-            return ['Diretor/Diretora', 'Artista'];
+            return ['ARTISTA'];
         }
 
         if (dept.includes('writing')) {
-            return ['Roteirista', 'Artista'];
+            return ['ARTISTA'];
         }
 
-        // Padrão: assumir ator/atriz (mais comum)
-        return ['Ator/Atriz', 'Artista'];
+        // Padrão: assumir ator (mais comum)
+        return ['ATOR', 'ARTISTA'];
     }
 
     /**

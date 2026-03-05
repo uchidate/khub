@@ -38,7 +38,16 @@ async function handler(request: NextRequest) {
     }
 
     if (role) {
-        where.roles = { has: role }
+        // Tolerância a inconsistências históricas de formato nos dados importados
+        const ROLE_VARIANTS: Record<string, string[]> = {
+            ATOR:       ['ATOR', 'Ator', 'Ator/Atriz', 'ACTOR'],
+            CANTOR:     ['CANTOR', 'Cantor', 'Cantor/Cantora', 'SINGER'],
+            MODELO:     ['MODELO', 'Modelo', 'MODEL'],
+            RAPPER:     ['RAPPER', 'Rapper'],
+            DANÇARINO:  ['DANÇARINO', 'Dançarino', 'DANCER', 'Dancer'],
+        }
+        const variants = ROLE_VARIANTS[role] ?? [role]
+        where.roles = { hasSome: variants }
     }
 
     if (groupId) {

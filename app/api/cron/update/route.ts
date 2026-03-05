@@ -125,63 +125,8 @@ async function runCronProcessing(lockId: string) {
         // ================================================================
         const fase1Timer = makeTimer();
         const [artistsResult, newsResult, productionsResult, streamingShowsResult] = await Promise.allSettled([
-            // 2.1. Gerar novos artistas (TMDB)
-            (async () => {
-                const t = makeTimer();
-                log.info('Discovering real artists from TMDB...');
-                const { ArtistGeneratorV2 } = require('@/lib/ai/generators/artist-generator-v2');
-
-                const artistGenerator = new ArtistGeneratorV2(prisma);
-                const existingArtists = await prisma.artist.findMany({
-                    select: { nameRomanized: true }
-                });
-                const excludeArtists = existingArtists.map((a: { nameRomanized: string }) => a.nameRomanized);
-
-                const artists = await artistGenerator.generateMultipleArtists(5, {
-                    excludeList: excludeArtists
-                });
-
-                for (const artist of artists) {
-                    if (!artist.nameRomanized || artist.nameRomanized.trim().length === 0) {
-                        continue;
-                    }
-
-                    const artistData = {
-                        nameRomanized: artist.nameRomanized,
-                        nameHangul: artist.nameHangul || null,
-                        stageNames: artist.stageNames || [],
-                        birthDate: artist.birthDate || null,
-                        roles: artist.roles || [],
-                        bio: artist.bio || null,
-                        primaryImageUrl: artist.primaryImageUrl || null,
-                        tmdbId: artist.tmdbId ? String(artist.tmdbId) : undefined,
-                        placeOfBirth: artist.placeOfBirth || null,
-                    };
-
-                    if (artist.tmdbId) {
-                        await prisma.artist.upsert({
-                            where: { tmdbId: String(artist.tmdbId) },
-                            update: artistData,
-                            create: artistData,
-                        });
-                    } else {
-                        // Sem tmdbId: cria apenas se não houver artista com mesmo nome
-                        const existing = await prisma.artist.findFirst({
-                            where: { nameRomanized: artist.nameRomanized },
-                            select: { id: true },
-                        });
-                        if (!existing) {
-                            await prisma.artist.create({ data: artistData });
-                        } else {
-                            await prisma.artist.update({ where: { id: existing.id }, data: artistData });
-                        }
-                    }
-
-                    results.artists.updated++;
-                    log.info(`Saved real artist: ${artist.nameRomanized}`, { tmdbId: artist.tmdbId });
-                }
-                perf.artists_ms = t();
-            })(),
+            // 2.1. Geração automática de artistas desativada — artistas são adicionados manualmente
+            Promise.resolve(),
 
             // 2.2. Gerar notícias (RSS feeds)
             (async () => {
