@@ -12,7 +12,7 @@
  */
 
 import prisma from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession, type Session } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { unstable_cache } from 'next/cache'
 
@@ -46,7 +46,8 @@ const getCachedSystemSettings = unstable_cache(
 )
 
 export async function applyAgeRatingFilter(
-  overrideRating?: string
+  overrideRating?: string,
+  existingSession?: Session | null
 ): Promise<AgeRatingWhereClause> {
   // 1. Buscar configurações globais (cached 5 min)
   const systemSettings = await getCachedSystemSettings()
@@ -91,7 +92,8 @@ export async function applyAgeRatingFilter(
   }
 
   // 3. Buscar preferências do usuário logado (se houver)
-  const session = await getServerSession(authOptions)
+  // Reutiliza sessão existente se fornecida, evita double JWT verification
+  const session = existingSession !== undefined ? existingSession : await getServerSession(authOptions)
   let userPreferences: string[] | null = null
 
   if (session?.user?.email) {
