@@ -1,23 +1,31 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import { Construction } from 'lucide-react'
 
 export function BetaBannerClient() {
-    const [isVisible, setIsVisible] = useState(true)
+    const wrapperRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        const handleScroll = () => setIsVisible(window.scrollY < 1)
+        const el = wrapperRef.current
+        if (!el) return
+
+        const handleScroll = () => {
+            // Manipula DOM diretamente — sem useState, sem re-render
+            el.style.gridTemplateRows = window.scrollY < 1 ? '1fr' : '0fr'
+        }
+
         window.addEventListener('scroll', handleScroll, { passive: true })
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
 
     return (
         <div
+            ref={wrapperRef}
             className="sticky top-0 z-[50] w-full"
             style={{
                 display: 'grid',
-                gridTemplateRows: isVisible ? '1fr' : '0fr',
+                gridTemplateRows: '1fr',
                 transition: 'grid-template-rows 300ms ease-in-out',
             }}
         >
