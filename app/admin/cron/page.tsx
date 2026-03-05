@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { RefreshCw, Clock, CheckCircle2, XCircle, Activity, Terminal, Calendar } from 'lucide-react'
-import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
 interface CronStats {
