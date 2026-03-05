@@ -13,7 +13,6 @@ import { ToastContainer } from "@/components/features/ToastContainer"
 import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
-import { BetaBanner } from "@/components/features/BetaBanner"
 import { CookieBanner } from "@/components/features/CookieBanner"
 import { getSystemSettings } from "@/lib/settings"
 
@@ -138,7 +137,6 @@ export default async function RootLayout({
                     <WebVitalsReporter />
                     {/* Decorative top accent bar */}
                     <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
-                    <BetaBanner />
                     <div className="min-h-screen flex flex-col">
                         <NavBar premiumEnabled={settings.premiumEnabled} betaMode={settings.betaMode} />
                         <ErrorBoundary>

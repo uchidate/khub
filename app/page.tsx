@@ -74,6 +74,7 @@ const getHomePublicData = unstable_cache(
             }),
             prisma.streamingShow.findMany({
                 where: { expiresAt: { gt: new Date() } },
+                take: 100,
                 select: {
                     source: true, rank: true, showTitle: true, tmdbId: true,
                     posterUrl: true, year: true, voteAverage: true, isKorean: true, productionId: true,
@@ -124,12 +125,13 @@ export const metadata: Metadata = {
 }
 
 export default async function Home() {
+    // Chamada única de getServerSession — reutilizada em applyAgeRatingFilter para evitar dupla verificação JWT
     const session = await getServerSession(authOptions)
 
     // Paraleliza dados públicos + filtro etário (independentes entre si)
     const [publicData, ageRatingFilter] = await Promise.all([
         getHomePublicData(),
-        applyAgeRatingFilter(),
+        applyAgeRatingFilter(undefined, session),
     ])
 
     const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups } = publicData

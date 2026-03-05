@@ -97,13 +97,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
+     * Roda apenas em rotas de página — não em /api/* nem arquivos estáticos.
+     * Isso evita o overhead de getToken() em cada chamada de API.
+     * As rotas de API admin já protegem a si mesmas via auth() dentro do handler.
+     * Bot detection cobre apenas páginas (bots raramente precisam de APIs).
      */
-    '/((?!api/auth|api/internal|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
