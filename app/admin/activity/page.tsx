@@ -256,8 +256,8 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                 <p className="text-xs text-zinc-500 mb-3">{total} registros encontrados</p>
 
                 {/* Tabela */}
-                <div className="glass-card rounded-xl overflow-hidden border border-white/5">
-                    <table className="w-full text-sm">
+                <div className="glass-card rounded-xl overflow-hidden overflow-x-auto border border-white/5">
+                    <table className="w-full min-w-[640px] text-sm">
 
                         {tab === 'user' && (
                             <>

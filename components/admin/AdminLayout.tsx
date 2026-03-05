@@ -7,7 +7,7 @@ import {
   Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
   Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
-  Mail, FileText, Bot,
+  Mail, FileText, Bot, Menu, X,
 } from 'lucide-react'
 
 type NavItem = {
@@ -164,50 +164,97 @@ function NavSectionBlock({
   )
 }
 
+// Conteúdo da sidebar — reutilizado no desktop e no drawer mobile
+function SidebarContent({ pathname, onNav }: { pathname: string | null; onNav?: () => void }) {
+  return (
+    <>
+      <div className="p-4 border-b border-zinc-800 space-y-3">
+        <Link href="/admin" className="flex items-center gap-2" onClick={onNav}>
+          <Shield className="text-red-500" size={22} />
+          <span className="text-base font-black text-white">HallyuHub Admin</span>
+        </Link>
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 hover:border-zinc-600 px-3 py-1.5 rounded-md transition-colors w-full"
+          onClick={onNav}
+        >
+          <ChevronLeft size={13} />
+          Voltar ao site
+        </Link>
+      </div>
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto" onClick={onNav}>
+        {navSections.map((section, i) => (
+          <NavSectionBlock key={i} section={section} pathname={pathname} />
+        ))}
+      </nav>
+    </>
+  )
+}
+
 export function AdminLayout({ children, title }: { children: React.ReactNode; title: string }) {
   const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Fecha o drawer ao navegar
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
 
   return (
     <div className="min-h-screen bg-black">
       <div className="flex">
-        {/* Sidebar */}
+
+        {/* Sidebar desktop */}
         <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-zinc-950 border-r border-zinc-800 fixed">
-          <div className="p-4 border-b border-zinc-800 space-y-3">
-            <Link href="/admin" className="flex items-center gap-2">
-              <Shield className="text-red-500" size={22} />
-              <span className="text-base font-black text-white">HallyuHub Admin</span>
-            </Link>
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 hover:border-zinc-600 px-3 py-1.5 rounded-md transition-colors w-full"
-            >
-              <ChevronLeft size={13} />
-              Voltar ao site
-            </Link>
-          </div>
-
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {navSections.map((section, i) => (
-              <NavSectionBlock key={i} section={section} pathname={pathname} />
-            ))}
-          </nav>
-
+          <SidebarContent pathname={pathname} />
         </aside>
+
+        {/* Drawer mobile — overlay + slide */}
+        {mobileOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
+            {/* Drawer */}
+            <aside className="relative flex flex-col w-72 max-w-[85vw] bg-zinc-950 border-r border-zinc-800 h-full overflow-y-auto">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                aria-label="Fechar menu"
+              >
+                <X size={18} />
+              </button>
+              <SidebarContent pathname={pathname} onNav={() => setMobileOpen(false)} />
+            </aside>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="flex-1 lg:ml-60">
           {/* Mobile header */}
-          <div className="lg:hidden sticky top-0 z-50 bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="text-red-500" size={20} />
-              <span className="font-bold text-white">{title}</span>
+          <div className="lg:hidden sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                aria-label="Abrir menu"
+              >
+                <Menu size={20} />
+              </button>
+              <div className="flex items-center gap-2">
+                <Shield className="text-red-500" size={18} />
+                <span className="font-bold text-white text-sm">{title}</span>
+              </div>
             </div>
-            <Link href="/" className="text-sm text-zinc-500">
+            <Link href="/" className="text-xs text-zinc-500 hover:text-white transition-colors">
               ← Site
             </Link>
           </div>
-          <div className="p-6 lg:p-8">
-            <h1 className="text-3xl font-black text-white mb-8">{title}</h1>
+
+          <div className="p-4 lg:p-8">
+            <h1 className="text-2xl lg:text-3xl font-black text-white mb-6 lg:mb-8">{title}</h1>
             {children}
           </div>
         </main>

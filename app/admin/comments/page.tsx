@@ -294,7 +294,8 @@ export default function AdminCommentsPage() {
                     <p className="text-zinc-600 text-sm mt-1">Tente ajustar os filtros</p>
                 </div>
             ) : (
-                <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden">
+                <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto">
+                  <div className="min-w-[700px]">
                     {/* Table header */}
                     <div className="grid grid-cols-[auto_1fr_200px_100px_110px] gap-4 px-4 py-3 border-b border-white/5 bg-zinc-900/50 text-xs font-black text-zinc-500 uppercase tracking-wider">
                         <div className="flex items-center">
@@ -409,6 +410,7 @@ export default function AdminCommentsPage() {
                             </div>
                         </div>
                     ))}
+                  </div>
                 </div>
             )}
 
