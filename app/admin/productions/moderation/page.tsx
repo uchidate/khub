@@ -205,7 +205,7 @@ export default function ProductionModerationPage() {
                 key={prod.id}
                 className={`border rounded-2xl p-6 ${getSuspicionColor(prod.suspicionScore)}`}
               >
-                <div className="flex gap-6">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   {/* Image */}
                   <div className="flex-shrink-0">
                     {prod.imageUrl ? (

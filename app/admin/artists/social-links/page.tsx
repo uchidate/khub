@@ -632,7 +632,7 @@ export default function SocialLinksAdminPage() {
             <div className="space-y-5">
 
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-white">{globalStats.total.toLocaleString('pt-BR')}</p>
                         <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Total</p>
