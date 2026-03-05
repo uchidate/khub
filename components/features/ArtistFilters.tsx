@@ -19,11 +19,11 @@ interface ArtistFiltersProps {
 
 const ROLES = [
     { value: '', label: 'Todos os Tipos' },
-    { value: 'Cantor', label: '🎤 Cantores' },
-    { value: 'Ator', label: '🎬 Atores' },
-    { value: 'Dançarino', label: '💃 Dançarinos' },
-    { value: 'Rapper', label: '🎵 Rappers' },
-    { value: 'Modelo', label: '📸 Modelos' },
+    { value: 'CANTOR', label: '🎤 Cantores' },
+    { value: 'ATOR', label: '🎬 Atores' },
+    { value: 'DANÇARINO', label: '💃 Dançarinos' },
+    { value: 'RAPPER', label: '🎵 Rappers' },
+    { value: 'MODELO', label: '📸 Modelos' },
 ]
 
 const SORT_OPTIONS = [
