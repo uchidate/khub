@@ -143,8 +143,8 @@ export default function ProductionModerationPage() {
         <p className="text-zinc-400 text-sm -mt-6">Revisar produções para relevância à cultura coreana</p>
 
         {/* Filters */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
-          <div className="flex gap-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('suspicious')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -203,9 +203,9 @@ export default function ProductionModerationPage() {
             productions.map((prod) => (
               <div
                 key={prod.id}
-                className={`border rounded-2xl p-6 ${getSuspicionColor(prod.suspicionScore)}`}
+                className={`border rounded-xl p-4 ${getSuspicionColor(prod.suspicionScore)}`}
               >
-                <div className="flex gap-6">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   {/* Image */}
                   <div className="flex-shrink-0">
                     {prod.imageUrl ? (

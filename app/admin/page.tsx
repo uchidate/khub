@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   Users, Activity, Film, Newspaper, Music2, Building2,
-  Mic2, ImageOff, UserX, AlertTriangle,
+  Mic2, ImageOff, UserX, AlertTriangle, Plus, Settings,
+  RefreshCw, ChevronRight,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
@@ -36,7 +37,6 @@ export default async function AdminPage() {
     prisma.production.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.news.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.musicalGroup.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
-    // Recent activity — 5 most recent per type
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' }, take: 5,
       select: { email: true, name: true, createdAt: true },
@@ -53,11 +53,9 @@ export default async function AdminPage() {
       orderBy: { createdAt: 'desc' }, take: 5,
       select: { id: true, titlePt: true, createdAt: true },
     }),
-    // Attention: missing images
     prisma.artist.count({ where: { primaryImageUrl: null } }),
     prisma.musicalGroup.count({ where: { profileImageUrl: null } }),
     prisma.news.count({ where: { imageUrl: null } }),
-    // Attention: missing bio
     prisma.artist.count({ where: { bio: null } }),
     prisma.musicalGroup.count({ where: { bio: null } }),
   ])
@@ -66,117 +64,169 @@ export default async function AdminPage() {
   const activityEvents: ActivityEvent[] = [
     ...recentUsers.map(u => ({
       type: 'Usuário', label: u.name || u.email || 'Sem nome', href: '/admin/users',
-      time: u.createdAt, color: 'text-purple-400',
+      time: u.createdAt, color: 'purple',
     })),
     ...recentNews.map(n => ({
       type: 'Notícia', label: n.title, href: `/news/${n.id}`,
-      time: n.createdAt, color: 'text-pink-400',
+      time: n.createdAt, color: 'pink',
     })),
     ...recentArtists.map(a => ({
       type: 'Artista', label: a.nameRomanized, href: `/artists/${a.id}`,
-      time: a.createdAt, color: 'text-cyan-400',
+      time: a.createdAt, color: 'cyan',
     })),
     ...recentProductions.map(p => ({
       type: 'Produção', label: p.titlePt, href: `/productions/${p.id}`,
-      time: p.createdAt, color: 'text-yellow-400',
+      time: p.createdAt, color: 'yellow',
     })),
   ].sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 10)
 
   function timeAgo(date: Date): string {
     const diff = Math.floor((Date.now() - date.getTime()) / 1000)
-    if (diff < 60) return `${diff}s atrás`
-    if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`
-    return `${Math.floor(diff / 86400)}d atrás`
+    if (diff < 60) return `${diff}s`
+    if (diff < 3600) return `${Math.floor(diff / 60)}min`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`
+    return `${Math.floor(diff / 86400)}d`
+  }
+
+  const colorMap: Record<string, { dot: string; badge: string }> = {
+    purple: { dot: 'bg-purple-500', badge: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
+    pink:   { dot: 'bg-pink-500',   badge: 'text-pink-400 bg-pink-500/10 border-pink-500/30' },
+    cyan:   { dot: 'bg-cyan-500',   badge: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30' },
+    yellow: { dot: 'bg-yellow-500', badge: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
   }
 
   const stats = [
-    { label: 'Usuários', value: totalUsers, new: newUsers, icon: Users, href: '/admin/users' },
-    { label: 'Artistas', value: totalArtists, new: newArtists, icon: Mic2, href: '/admin/artists' },
-    { label: 'Produções', value: totalProductions, new: newProductions, icon: Film, href: '/admin/productions' },
-    { label: 'Notícias', value: totalNews, new: newNews, icon: Newspaper, href: '/admin/news' },
-    { label: 'Grupos', value: totalGroups, new: newGroups, icon: Music2, href: '/admin/groups' },
-    { label: 'Agências', value: totalAgencies, new: 0, icon: Building2, href: '/admin/agencies' },
+    { label: 'Usuários',  value: totalUsers,      new: newUsers,      icon: Users,     href: '/admin/users' },
+    { label: 'Artistas',  value: totalArtists,    new: newArtists,    icon: Mic2,      href: '/admin/artists' },
+    { label: 'Produções', value: totalProductions, new: newProductions, icon: Film,     href: '/admin/productions' },
+    { label: 'Notícias',  value: totalNews,        new: newNews,       icon: Newspaper, href: '/admin/news' },
+    { label: 'Grupos',    value: totalGroups,      new: newGroups,     icon: Music2,    href: '/admin/groups' },
+    { label: 'Agências',  value: totalAgencies,    new: 0,             icon: Building2, href: '/admin/agencies' },
   ]
 
   const attentionItems = [
-    { label: 'Artistas sem foto', count: artistsWithoutImage, href: '/admin/artists?filter=no_photo', icon: ImageOff, severity: artistsWithoutImage > 20 ? 'high' : 'medium' },
-    { label: 'Artistas sem bio', count: artistsWithoutBio, href: '/admin/artists', icon: UserX, severity: artistsWithoutBio > 30 ? 'high' : 'low' },
-    { label: 'Grupos sem foto', count: groupsWithoutImage, href: '/admin/groups', icon: ImageOff, severity: groupsWithoutImage > 5 ? 'high' : 'medium' },
-    { label: 'Grupos sem bio', count: groupsWithoutBio, href: '/admin/groups', icon: UserX, severity: 'low' },
-    { label: 'Notícias sem imagem', count: newsWithoutImage, href: '/admin/news', icon: Newspaper, severity: newsWithoutImage > 10 ? 'medium' : 'low' },
+    { label: 'Artistas sem foto',    count: artistsWithoutImage, href: '/admin/artists?filter=no_photo', icon: ImageOff,  severity: artistsWithoutImage > 20 ? 'high' : 'medium' },
+    { label: 'Artistas sem bio',     count: artistsWithoutBio,   href: '/admin/artists',                 icon: UserX,     severity: artistsWithoutBio > 30 ? 'high' : 'low' },
+    { label: 'Grupos sem foto',      count: groupsWithoutImage,  href: '/admin/groups',                  icon: ImageOff,  severity: groupsWithoutImage > 5 ? 'high' : 'medium' },
+    { label: 'Grupos sem bio',       count: groupsWithoutBio,    href: '/admin/groups',                  icon: UserX,     severity: 'low' },
+    { label: 'Notícias sem imagem',  count: newsWithoutImage,    href: '/admin/news',                    icon: Newspaper, severity: newsWithoutImage > 10 ? 'medium' : 'low' },
   ].filter(i => i.count > 0)
 
   const severityColors = {
-    high: 'border-red-500/30 bg-red-500/5 text-red-400',
+    high:   'border-red-500/30 bg-red-500/5 text-red-400',
     medium: 'border-yellow-500/30 bg-yellow-500/5 text-yellow-400',
-    low: 'border-zinc-700 bg-zinc-900/50 text-zinc-400',
+    low:    'border-zinc-700/50 bg-zinc-800/30 text-zinc-400',
   }
+
+  const quickActions = [
+    { label: 'Novo Artista',   href: '/admin/artists/new',    icon: Plus },
+    { label: 'Nova Notícia',   href: '/admin/news/new',       icon: Plus },
+    { label: 'Moderar',        href: '/admin/artists/moderation', icon: RefreshCw },
+    { label: 'Configurações',  href: '/admin/settings',       icon: Settings },
+  ]
 
   return (
     <AdminLayout title="Dashboard">
-      <div className="space-y-6">
-        <p className="text-zinc-400 text-sm -mt-6">
-          Bem-vindo, <span className="text-white font-semibold">{session.user.name}</span>
+      <div className="space-y-4">
+
+        {/* Greeting */}
+        <p className="text-zinc-400 text-sm -mt-4">
+          Olá, <span className="text-white font-semibold">{session.user.name}</span>
         </p>
 
-        {/* Stats Grid — 6 clickable cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* Stats — lista no mobile, grid no desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
           {stats.map((stat) => (
             <Link key={stat.label} href={stat.href}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 hover:border-zinc-700 transition-colors group">
-              <div className="flex items-center justify-between mb-3">
-                <stat.icon className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+              className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 hover:border-zinc-700 transition-colors group flex items-center gap-3 lg:flex-col lg:items-start lg:p-4">
+              {/* mobile: icon + label + number in a row */}
+              <stat.icon className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors flex-shrink-0" />
+              <span className="text-sm text-zinc-400 flex-1 lg:hidden">{stat.label}</span>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-black text-white">{stat.value.toLocaleString('pt-BR')}</p>
                 {stat.new > 0 && (
-                  <span className="text-[10px] font-black text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[9px] font-black text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full">
                     +{stat.new}
                   </span>
                 )}
               </div>
-              <p className="text-2xl font-black text-white">{stat.value.toLocaleString('pt-BR')}</p>
-              <p className="text-xs text-zinc-500 mt-1 font-medium">{stat.label}</p>
-              {stat.new > 0 && (
-                <p className="text-[10px] text-zinc-700 mt-0.5">{stat.new} este mês</p>
-              )}
+              {/* desktop: label below number */}
+              <p className="hidden lg:block text-xs text-zinc-500 font-medium">{stat.label}</p>
             </Link>
           ))}
         </div>
 
-        {/* Activity + Attention */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        {/* Quick Actions — mobile-prominent, desktop can skip */}
+        <div className="grid grid-cols-4 gap-2">
+          {quickActions.map(({ label, href, icon: Icon }) => (
+            <Link key={href} href={href}
+              className="flex flex-col items-center gap-1.5 p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors text-center group">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                <Icon className="w-4 h-4 text-purple-400" />
+              </div>
+              <span className="text-[10px] text-zinc-400 font-medium leading-tight group-hover:text-white transition-colors">{label}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Atenção — shown first on mobile (actionable), alongside activity on desktop */}
+        {attentionItems.length > 0 && (
+          <div className="lg:hidden bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+              <h2 className="text-xs font-black text-white uppercase tracking-wider">Atenção</h2>
+            </div>
+            <div className="grid grid-cols-1 gap-1.5">
+              {attentionItems.map((item) => (
+                <Link key={item.label} href={item.href}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all hover:opacity-80 ${severityColors[item.severity as keyof typeof severityColors]}`}>
+                  <div className="flex items-center gap-2">
+                    <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="text-xs font-medium">{item.label}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-black">{item.count}</span>
+                    <ChevronRight className="w-3 h-3 opacity-50" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Activity + Attention side-by-side on desktop */}
+        <div className="grid lg:grid-cols-3 gap-4">
 
           {/* Atividade Recente */}
-          <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-6">
+          <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
               <Activity className="w-4 h-4 text-zinc-500" />
-              <h2 className="text-sm font-black text-white uppercase tracking-wider">Atividade Recente</h2>
+              <h2 className="text-xs font-black text-white uppercase tracking-wider">Atividade Recente</h2>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {activityEvents.length > 0 ? activityEvents.map((event, i) => (
                 <Link key={i} href={event.href}
-                  className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-zinc-800/50 transition-colors group">
-                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border w-16 text-center flex-shrink-0 ${
-                    event.color === 'text-purple-400' ? 'border-purple-500/30 bg-purple-500/10 text-purple-400' :
-                    event.color === 'text-pink-400' ? 'border-pink-500/30 bg-pink-500/10 text-pink-400' :
-                    event.color === 'text-cyan-400' ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400' :
-                    'border-yellow-500/30 bg-yellow-500/10 text-yellow-400'
-                  }`}>
+                  className="flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-zinc-800/50 transition-colors group">
+                  {/* colored dot */}
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colorMap[event.color]?.dot ?? 'bg-zinc-500'}`} />
+                  {/* type label — hidden on very small, shown from sm */}
+                  <span className={`hidden sm:inline text-[9px] font-black uppercase px-1.5 py-0.5 rounded border flex-shrink-0 ${colorMap[event.color]?.badge ?? ''}`}>
                     {event.type}
                   </span>
-                  <span className="text-sm text-zinc-300 truncate flex-1 group-hover:text-white transition-colors">
+                  <span className="text-xs text-zinc-300 truncate flex-1 group-hover:text-white transition-colors">
                     {event.label}
                   </span>
-                  <span className="text-[10px] text-zinc-600 flex-shrink-0">{timeAgo(event.time)}</span>
+                  <span className="text-[10px] text-zinc-600 flex-shrink-0 tabular-nums">{timeAgo(event.time)}</span>
                 </Link>
               )) : (
-                <p className="text-center text-zinc-600 py-6">Nenhuma atividade recente</p>
+                <p className="text-center text-zinc-600 py-6 text-sm">Nenhuma atividade recente</p>
               )}
             </div>
           </div>
 
-          {/* Atenção Necessária */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-6">
+          {/* Atenção — desktop only (mobile version shown above) */}
+          <div className="hidden lg:block bg-zinc-900 border border-zinc-800 rounded-xl p-4 lg:p-6">
+            <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 text-yellow-500" />
               <h2 className="text-sm font-black text-white uppercase tracking-wider">Atenção</h2>
             </div>
@@ -204,6 +254,7 @@ export default async function AdminPage() {
             )}
           </div>
         </div>
+
       </div>
     </AdminLayout>
   )

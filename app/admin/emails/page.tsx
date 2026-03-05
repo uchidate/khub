@@ -92,7 +92,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                     {(['SENT', 'FAILED', 'PENDING'] as const).map(s => {
                         const cfg = STATUS_CONFIG[s]
                         const Icon = cfg.icon

@@ -257,8 +257,8 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
             </Link>
           </div>
 
-          <div className="p-4 lg:p-8">
-            <h1 className="text-2xl lg:text-3xl font-black text-white mb-6 lg:mb-8">{title}</h1>
+          <div className="p-3 sm:p-4 lg:p-8">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white mb-4 lg:mb-8">{title}</h1>
             {children}
           </div>
         </main>

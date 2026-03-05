@@ -39,7 +39,7 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
 
     return (
         <>
-            <nav className={`w-full z-[100] fixed transition-all duration-300 ${betaMode && !isScrolled ? 'top-10' : 'top-0'} ${isScrolled ? 'glass-nav py-1.5' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent py-3 md:py-4'}`}>
+            <nav className={`w-full z-[100] fixed top-0 py-3 transition-[background-color,backdrop-filter,border-color] duration-300 ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/5' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between gap-4 md:gap-6 h-12 md:h-14">
                         {/* Logo */}
