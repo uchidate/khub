@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { withLogging } from '@/lib/server/withLogging';
 
 const newsInclude = {
     artists: {
@@ -84,7 +85,7 @@ function buildWhereClause(filters: {
     return where;
 }
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')));
@@ -209,3 +210,5 @@ export async function GET(request: NextRequest) {
         filters: { search, artistId, source, from, to },
     });
 }
+
+export const GET = withLogging(handler)

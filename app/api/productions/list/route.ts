@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
+import { withLogging } from '@/lib/server/withLogging'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,7 @@ const TYPE_MAP: Record<string, string[]> = {
     DOCUMENTARY: ['DOCUMENTARY', 'DOCUMENTARIO', 'DOCUMENTÁRIO'],
 }
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
     const { searchParams } = new URL(request.url)
 
     // ?typeCounts=1 — retorna contagem de produções por tipo (sem paginação)
@@ -181,3 +182,5 @@ export async function GET(request: NextRequest) {
         },
     }, { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' } })
 }
+
+export const GET = withLogging(handler)

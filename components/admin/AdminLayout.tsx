@@ -82,6 +82,7 @@ const navSections: NavSection[] = [
       { href: '/admin/instagram', label: 'Instagram Feeds', icon: Instagram },
       { href: '/admin/activity', label: 'Atividade', icon: Activity },
       { href: '/admin/bot-logs', label: 'Robôs de Busca', icon: Bot },
+      { href: '/admin/server-logs', label: 'Server Logs', icon: AlertTriangle },
       { href: '/admin/cron', label: 'Cron Jobs', icon: RefreshCw },
       { href: '/admin/settings', label: 'Configurações', icon: Settings },
     ],
