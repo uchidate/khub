@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowLeft, RefreshCw, Clock, CheckCircle2, XCircle, Activity, Terminal, Calendar } from 'lucide-react'
+import { RefreshCw, Clock, CheckCircle2, XCircle, Activity, Terminal, Calendar } from 'lucide-react'
 import Link from 'next/link'
+import { AdminLayout } from '@/components/admin/AdminLayout'
 
 interface CronStats {
   totalNews: number
@@ -83,32 +84,32 @@ export default function AdminCronPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-500" />
-          <p className="text-zinc-400">Carregando informações...</p>
+      <AdminLayout title="Cron Jobs">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-500" />
+            <p className="text-zinc-400">Carregando informações...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-red-950/50 border border-red-800/50 rounded-xl p-6 text-center backdrop-blur-sm">
-            <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <p className="text-red-400 font-medium mb-2">Erro ao carregar dados</p>
-            <p className="text-red-300 text-sm">{error}</p>
-            <button
-              onClick={fetchCronData}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Tentar Novamente
-            </button>
-          </div>
+      <AdminLayout title="Cron Jobs">
+        <div className="bg-red-950/50 border border-red-800/50 rounded-xl p-6 text-center">
+          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-400 font-medium mb-2">Erro ao carregar dados</p>
+          <p className="text-red-300 text-sm">{error}</p>
+          <button
+            onClick={fetchCronData}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Tentar Novamente
+          </button>
         </div>
-      </div>
+      </AdminLayout>
     )
   }
 
@@ -116,47 +117,25 @@ export default function AdminCronPage() {
   const config = data!.config
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8 animate-fade-in">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin"
-              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors group"
-            >
-              <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
-            </Link>
-            <div>
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8 text-indigo-500" />
-                <h1 className="text-3xl font-bold text-white">Cron Jobs</h1>
-              </div>
-              <p className="text-zinc-400 mt-1">
-                Monitoramento e estatísticas do sistema
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-zinc-400 bg-zinc-800/50 px-3 py-2 rounded-lg backdrop-blur-sm">
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="rounded border-zinc-600 bg-zinc-700 text-indigo-600 focus:ring-indigo-500"
-              />
-              Auto-refresh (10s)
-            </label>
-            <button
-              onClick={fetchCronData}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all hover:scale-105"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Atualizar
-            </button>
-          </div>
-        </div>
+    <AdminLayout title="Cron Jobs">
+      <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
+        <label className="flex items-center gap-2 text-sm text-zinc-400 bg-zinc-800/50 px-3 py-2 rounded-lg backdrop-blur-sm">
+          <input
+            type="checkbox"
+            checked={autoRefresh}
+            onChange={(e) => setAutoRefresh(e.target.checked)}
+            className="rounded border-zinc-600 bg-zinc-700 text-indigo-600 focus:ring-indigo-500"
+          />
+          Auto-refresh (10s)
+        </label>
+        <button
+          onClick={fetchCronData}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all hover:scale-105"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Atualizar
+        </button>
+      </div>
 
         {/* Environment Badge */}
         <div className="mb-8 flex flex-wrap items-center gap-3">
@@ -310,7 +289,6 @@ export default function AdminCronPage() {
         <p className="text-center text-sm text-zinc-500 mt-8 pb-8">
           Última atualização: <span className="text-zinc-400">{new Date(data!.timestamp).toLocaleString('pt-BR')}</span>
         </p>
-      </div>
-    </div>
+    </AdminLayout>
   )
 }

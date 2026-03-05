@@ -127,8 +127,8 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 </div>
 
                 {/* Tabela */}
-                <div className="glass-card rounded-xl overflow-hidden border border-white/5">
-                    <table className="w-full text-sm">
+                <div className="glass-card rounded-xl overflow-hidden overflow-x-auto border border-white/5">
+                    <table className="w-full min-w-[600px] text-sm">
                         <thead>
                             <tr className="border-b border-white/5 text-[11px] uppercase tracking-wider text-zinc-500">
                                 <th className="text-left px-4 py-3">Para</th>
