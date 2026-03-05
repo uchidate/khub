@@ -121,11 +121,11 @@ export default async function AdminPage() {
         </p>
 
         {/* Stats Grid — 6 clickable cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {stats.map((stat) => (
             <Link key={stat.label} href={stat.href}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 hover:border-zinc-700 transition-colors group">
-              <div className="flex items-center justify-between mb-3">
+              className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 sm:p-5 hover:border-zinc-700 transition-colors group">
+              <div className="flex items-center justify-between mb-2">
                 <stat.icon className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                 {stat.new > 0 && (
                   <span className="text-[10px] font-black text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full">
@@ -133,21 +133,21 @@ export default async function AdminPage() {
                   </span>
                 )}
               </div>
-              <p className="text-2xl font-black text-white">{stat.value.toLocaleString('pt-BR')}</p>
+              <p className="text-xl sm:text-2xl font-black text-white">{stat.value.toLocaleString('pt-BR')}</p>
               <p className="text-xs text-zinc-500 mt-1 font-medium">{stat.label}</p>
               {stat.new > 0 && (
-                <p className="text-[10px] text-zinc-700 mt-0.5">{stat.new} este mês</p>
+                <p className="text-[10px] text-zinc-700 mt-0.5 hidden sm:block">{stat.new} este mês</p>
               )}
             </Link>
           ))}
         </div>
 
         {/* Activity + Attention */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4">
 
           {/* Atividade Recente */}
-          <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-6">
+          <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-4 lg:p-6">
+            <div className="flex items-center gap-2 mb-4">
               <Activity className="w-4 h-4 text-zinc-500" />
               <h2 className="text-sm font-black text-white uppercase tracking-wider">Atividade Recente</h2>
             </div>
@@ -175,8 +175,8 @@ export default async function AdminPage() {
           </div>
 
           {/* Atenção Necessária */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-6">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 lg:p-6">
+            <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 text-yellow-500" />
               <h2 className="text-sm font-black text-white uppercase tracking-wider">Atenção</h2>
             </div>

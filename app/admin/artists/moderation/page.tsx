@@ -157,8 +157,8 @@ export default function ArtistModerationPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
-          <div className="flex flex-wrap gap-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4">
+          <div className="flex flex-wrap gap-2">
             {[
               { value: 'suspicious', label: 'Suspeitos', icon: AlertTriangle },
               { value: 'recent', label: 'Recentes (7 dias)', icon: RefreshCw },
@@ -208,7 +208,7 @@ export default function ArtistModerationPage() {
             {artists.map((artist) => (
               <div
                 key={artist.id}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors"
+                className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
               >
                 <div className="flex items-start gap-4">
                   {/* Image */}
