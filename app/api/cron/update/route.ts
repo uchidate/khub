@@ -7,6 +7,16 @@ import { getErrorMessage } from '@/lib/utils/error';
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter';
 import { TrendingService } from '@/lib/services/trending-service';
 import { syncStreamingShows } from '@/lib/services/streaming-show-service';
+import { NewsGeneratorV2 } from '@/lib/ai/generators/news-generator-v2';
+import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service';
+import { getTMDBProductionDiscoveryService } from '@/lib/services/tmdb-production-discovery-service';
+import { getFilmographySyncService } from '@/lib/services/filmography-sync-service';
+import { getProductionCastService } from '@/lib/services/production-cast-service';
+import { getSocialLinksSyncService } from '@/lib/services/social-links-sync-service';
+import { getTMDBDiscoveryService } from '@/lib/services/tmdb-discovery-service';
+import { getOrchestrator } from '@/lib/ai/orchestrator-factory';
+import { getSlackService } from '@/lib/services/slack-notification-service';
+import { getNewsNotificationService } from '@/lib/services/news-notification-service';
 
 const log = createLogger('CRON');
 
@@ -132,9 +142,6 @@ async function runCronProcessing(lockId: string) {
             (async () => {
                 const t = makeTimer();
                 log.info('Fetching real news from RSS feeds...');
-                const { NewsGeneratorV2 } = require('@/lib/ai/generators/news-generator-v2');
-                const { getNewsArtistExtractionService } = require('@/lib/services/news-artist-extraction-service');
-
                 const newsGenerator = new NewsGeneratorV2();
                 const extractionService = getNewsArtistExtractionService(prisma);
                 const existingNews = await prisma.news.findMany({
@@ -216,7 +223,6 @@ async function runCronProcessing(lockId: string) {
 
                         if (isNewNews && artistMentions.length > 0) {
                             try {
-                                const { getNewsNotificationService } = await import('@/lib/services/news-notification-service');
                                 const notificationService = getNewsNotificationService();
                                 await notificationService.notifyUsersAboutNews(savedNews.id);
                             } catch (notifError: any) {
@@ -251,8 +257,6 @@ async function runCronProcessing(lockId: string) {
             (async () => {
                 const t = makeTimer();
                 log.info('Discovering Korean productions from TMDB...');
-                const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
-
                 const productionDiscovery = getTMDBProductionDiscoveryService();
 
                 const existingProductions = await prisma.production.findMany({
@@ -330,7 +334,6 @@ async function runCronProcessing(lockId: string) {
         const filmographyTimer = makeTimer();
         try {
             log.info('Syncing filmographies...');
-            const { getFilmographySyncService } = require('@/lib/services/filmography-sync-service');
             const filmographyService = getFilmographySyncService();
 
             const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 dias
@@ -371,7 +374,6 @@ async function runCronProcessing(lockId: string) {
         const castTimer = makeTimer();
         try {
             log.info('Syncing production cast...');
-            const { getProductionCastService } = require('@/lib/services/production-cast-service');
             const castService = getProductionCastService();
             const castResult = await castService.syncPendingProductionCasts(2);
             log.info(`Cast sync: ${castResult.processed} productions, ${castResult.totalSynced} actors synced`);
@@ -385,7 +387,6 @@ async function runCronProcessing(lockId: string) {
         const socialLinksTimer = makeTimer();
         try {
             log.info('Syncing artist social links...');
-            const { getSocialLinksSyncService } = require('@/lib/services/social-links-sync-service');
             const socialLinksService = getSocialLinksSyncService();
             const socialResult = await socialLinksService.syncPendingArtistSocialLinks(3);
             log.info(`Social links sync: ${socialResult.processed} artists, ${socialResult.withLinks} with links`);
@@ -422,7 +423,6 @@ async function runCronProcessing(lockId: string) {
             });
 
             if (artistWithoutPhoto?.tmdbId) {
-                const { getTMDBDiscoveryService } = require('@/lib/services/tmdb-discovery-service');
                 const tmdbService = getTMDBDiscoveryService();
                 const photo = await tmdbService.fetchPersonPhoto(Number(artistWithoutPhoto.tmdbId));
                 if (photo) {
@@ -447,7 +447,6 @@ async function runCronProcessing(lockId: string) {
                 });
 
                 if (productionWithoutPhoto?.tmdbId && productionWithoutPhoto?.tmdbType) {
-                    const { getTMDBProductionDiscoveryService } = require('@/lib/services/tmdb-production-discovery-service');
                     const tmdbService = getTMDBProductionDiscoveryService();
                     const images = await tmdbService.fetchProductionImages(
                         Number(productionWithoutPhoto.tmdbId),
@@ -475,8 +474,7 @@ async function runCronProcessing(lockId: string) {
                 });
 
                 if (artistWithEnglishBio?.bio && isLikelyEnglish(artistWithEnglishBio.bio)) {
-                    const { getOrchestrator: getOrc } = require('@/lib/ai/orchestrator-factory');
-                    const orchestrator = getOrc();
+                    const orchestrator = getOrchestrator();
                     const result: any = await orchestrator.generateStructured(
                         `Traduza a seguinte biografia para português brasileiro de forma natural e profissional. Mantenha 2-3 frases, tom acessível:\n\n${artistWithEnglishBio.bio}`,
                         '{ "bio": "string (biografia em português brasileiro)" }',
@@ -501,8 +499,7 @@ async function runCronProcessing(lockId: string) {
                 });
 
                 if (productionWithEnglishSynopsis?.synopsis && isLikelyEnglish(productionWithEnglishSynopsis.synopsis)) {
-                    const { getOrchestrator: getOrc2 } = require('@/lib/ai/orchestrator-factory');
-                    const orchestrator = getOrc2();
+                    const orchestrator = getOrchestrator();
                     const result: any = await orchestrator.generateStructured(
                         `Traduza a seguinte sinopse para português brasileiro de forma natural. Mantenha 2-3 frases, sem spoilers:\n\n${productionWithEnglishSynopsis.synopsis}`,
                         '{ "synopsis": "string (sinopse em português brasileiro)" }',
@@ -536,8 +533,7 @@ async function runCronProcessing(lockId: string) {
                     (isLikelyEnglish(oldNewsWithoutMarkdown.contentMd) ||
                      !hasMarkdownFormatting(oldNewsWithoutMarkdown.contentMd))) {
 
-                    const { getOrchestrator: getOrc3 } = require('@/lib/ai/orchestrator-factory');
-                    const orchestrator = getOrc3();
+                    const orchestrator = getOrchestrator();
 
                     const prompt = `Reformate e traduza a seguinte notícia sobre K-pop/K-drama para português brasileiro:
 
@@ -636,7 +632,6 @@ Requisitos:
         // 4. Enviar notificação Slack se configurado
         if (totalUpdates > 0 || totalErrors > 0) {
             try {
-                const { getSlackService } = require('@/lib/services/slack-notification-service');
                 const slackService = getSlackService();
 
                 if (slackService.isEnabled()) {

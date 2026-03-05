@@ -164,5 +164,5 @@ export async function GET() {
     noRomanizedPending,
     noRomanizedAttempted,
     noRomanizedNoTmdb,
-  })
+  }, { headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' } })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Search, ChevronLeft, ChevronRight, Trash2, ArrowUpDown } from 'lucide-react'
 
@@ -50,6 +50,12 @@ export function DataTable<T extends { id: string }>({
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
+  // Ref keeps extraParams current inside fetchData without triggering re-creation
+  const extraParamsRef = useRef(extraParams)
+  extraParamsRef.current = extraParams
+  // Serialize for stable dependency comparison (avoids infinite loop when parent passes inline objects)
+  const extraParamsKey = JSON.stringify(extraParams ?? null)
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
@@ -59,7 +65,7 @@ export function DataTable<T extends { id: string }>({
         search,
         sortBy,
         sortOrder,
-        ...extraParams,
+        ...(extraParamsRef.current ?? {}),
       })
       const res = await fetch(`${apiUrl}?${params}`)
       if (res.ok) {
@@ -72,7 +78,8 @@ export function DataTable<T extends { id: string }>({
     } finally {
       setLoading(false)
     }
-  }, [apiUrl, pagination.page, pagination.limit, search, sortBy, sortOrder, extraParams])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiUrl, pagination.page, pagination.limit, search, sortBy, sortOrder, extraParamsKey])
 
   useEffect(() => {
     fetchData()

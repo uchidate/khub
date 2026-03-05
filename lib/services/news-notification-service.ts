@@ -9,6 +9,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { getEmailService } from './email-service';
+import prismaSingleton from '@/lib/prisma';
 
 interface NewsItem {
     id: string;
@@ -520,13 +521,12 @@ https://www.hallyuhub.com.br
     }
 }
 
-// Singleton
+// Singleton — always uses the shared prisma singleton to avoid extra connection pools
 let instance: NewsNotificationService | null = null;
 
 export function getNewsNotificationService(prisma?: PrismaClient): NewsNotificationService {
     if (!instance || prisma) {
-        const { PrismaClient: PC } = require('@prisma/client');
-        instance = new NewsNotificationService(prisma || new PC());
+        instance = new NewsNotificationService(prisma ?? prismaSingleton);
     }
     return instance;
 }
