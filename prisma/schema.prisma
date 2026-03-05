@@ -838,3 +838,21 @@ model BotCrawlLog {
   @@index([bot, createdAt])
   @@map("bot_crawl_log")
 }
+
+model ServerLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  method     String   @db.VarChar(10)
+  path       String   @db.VarChar(2000)
+  status     Int
+  duration   Int      // ms
+  error      String?  @db.Text
+  body       String?  @db.Text // request body truncado (apenas 4xx/5xx)
+  userAgent  String?  @db.VarChar(500)
+  ip         String?  @db.VarChar(45)
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([path])
+  @@map("server_log")
+}

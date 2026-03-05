@@ -138,7 +138,7 @@ export default async function RootLayout({
                     {/* Decorative top accent bar */}
                     <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
                     <div className="min-h-screen flex flex-col">
-                        <NavBar premiumEnabled={settings.premiumEnabled} betaMode={settings.betaMode} />
+                        <NavBar premiumEnabled={settings.premiumEnabled} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>

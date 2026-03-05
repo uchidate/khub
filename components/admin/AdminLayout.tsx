@@ -82,6 +82,7 @@ const navSections: NavSection[] = [
       { href: '/admin/instagram', label: 'Instagram Feeds', icon: Instagram },
       { href: '/admin/activity', label: 'Atividade', icon: Activity },
       { href: '/admin/bot-logs', label: 'Robôs de Busca', icon: Bot },
+      { href: '/admin/server-logs', label: 'Server Logs', icon: AlertTriangle },
       { href: '/admin/cron', label: 'Cron Jobs', icon: RefreshCw },
       { href: '/admin/settings', label: 'Configurações', icon: Settings },
     ],
@@ -95,7 +96,7 @@ function isSectionActive(section: NavSection, pathname: string | null): boolean 
   )
 }
 
-function NavLink({ item, pathname }: { item: NavItem; pathname: string | null }) {
+function NavLink({ item, pathname, onNav }: { item: NavItem; pathname: string | null; onNav?: () => void }) {
   const isActive = item.exact
     ? pathname === item.href
     : pathname?.startsWith(item.href) ?? false
@@ -103,6 +104,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string | null })
   return (
     <Link
       href={item.href}
+      onClick={onNav}
       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
         isActive
           ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
@@ -118,9 +120,11 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string | null })
 function NavSectionBlock({
   section,
   pathname,
+  onNav,
 }: {
   section: NavSection
   pathname: string | null
+  onNav?: () => void
 }) {
   const active = isSectionActive(section, pathname)
   const [open, setOpen] = useState(active)
@@ -134,7 +138,7 @@ function NavSectionBlock({
     return (
       <div className="space-y-0.5">
         {section.items.map(item => (
-          <NavLink key={item.href} item={item} pathname={pathname} />
+          <NavLink key={item.href} item={item} pathname={pathname} onNav={onNav} />
         ))}
       </div>
     )
@@ -156,7 +160,7 @@ function NavSectionBlock({
       {open && (
         <div className="mt-0.5 space-y-0.5">
           {section.items.map(item => (
-            <NavLink key={item.href} item={item} pathname={pathname} />
+            <NavLink key={item.href} item={item} pathname={pathname} onNav={onNav} />
           ))}
         </div>
       )}
@@ -182,9 +186,9 @@ function SidebarContent({ pathname, onNav }: { pathname: string | null; onNav?: 
           Voltar ao site
         </Link>
       </div>
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto" onClick={onNav}>
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navSections.map((section, i) => (
-          <NavSectionBlock key={i} section={section} pathname={pathname} />
+          <NavSectionBlock key={i} section={section} pathname={pathname} onNav={onNav} />
         ))}
       </nav>
     </>
