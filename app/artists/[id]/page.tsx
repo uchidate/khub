@@ -14,6 +14,7 @@ import { ReportButton } from "@/components/ui/ReportButton"
 import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
+import { ExpandableBio } from "@/components/ui/ExpandableBio"
 import { getTranslation } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
@@ -216,7 +217,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
                     )}
                 </div>
                 {/* Gradients */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black from-0% via-black/60 via-[35%] to-transparent to-[65%]" />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
 
                 {/* Breadcrumbs + Favorite */}
@@ -233,7 +234,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                 {/* Hero content */}
                 <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-12 md:px-20 pb-10 md:pb-14">
-                    <div className="flex flex-col gap-3 max-w-3xl">
+                    <div className="flex flex-col gap-2 max-w-3xl">
                         {/* Roles + group + birthday countdown */}
                         <div className="flex items-center gap-2 flex-wrap">
                             {getRoleLabels(roles, artist.gender).map(role => (
@@ -273,9 +274,7 @@ export default async function ArtistDetailPage({ params }: { params: { id: strin
 
                         {/* Bio */}
                         {(bioPt ?? artist.bio) && (
-                            <p className="text-zinc-300 text-sm leading-relaxed line-clamp-3 max-w-xl drop-shadow">
-                                {bioPt ?? artist.bio}
-                            </p>
+                            <ExpandableBio bio={bioPt ?? artist.bio!} />
                         )}
 
                         {/* Stats */}
