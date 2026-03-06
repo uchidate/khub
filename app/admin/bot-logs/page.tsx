@@ -77,6 +77,10 @@ const SECTION_COLORS: Record<string, { bar: string; text: string; bg: string; bo
     'Outros':    { bar: 'bg-zinc-500',   text: 'text-zinc-400',   bg: 'bg-zinc-400/10',   border: 'border-zinc-400/20' },
 }
 
+const SECTION_PATH_MAP: Record<string, string> = {
+    'News': '/news', 'Artistas': '/artists', 'Produções': '/productions', 'Grupos': '/groups', 'Home': '/',
+}
+
 const DEFAULT_BOT_COLOR = 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'
 
 function botColor(bot: string) {
@@ -114,11 +118,7 @@ function TimelineChart({ data, days }: { data: TimelinePoint[]; days: number }) 
         <div>
             <div className="flex items-end gap-0.5 h-24">
                 {data.map(({ date, count }) => (
-                    <div
-                        key={date}
-                        className="flex-1 group relative flex flex-col items-center justify-end"
-                    >
-                        {/* Tooltip */}
+                    <div key={date} className="flex-1 group relative flex flex-col items-center justify-end">
                         <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 border border-zinc-700">
                             {count.toLocaleString('pt-BR')}
                         </div>
@@ -129,7 +129,6 @@ function TimelineChart({ data, days }: { data: TimelinePoint[]; days: number }) 
                     </div>
                 ))}
             </div>
-            {/* X-axis labels */}
             <div className="flex gap-0.5 mt-1.5">
                 {data.map(({ date }, i) => (
                     <div key={date} className="flex-1 text-center overflow-hidden">
@@ -150,23 +149,76 @@ function TimelineChart({ data, days }: { data: TimelinePoint[]; days: number }) 
     )
 }
 
+// ─── Log Card (mobile) ───────────────────────────────────────────────────────
+
+function LogCard({ log, expanded, onToggle }: { log: BotLog; expanded: boolean; onToggle: () => void }) {
+    return (
+        <div
+            className={`border-b border-zinc-800/50 transition-colors ${expanded ? 'bg-zinc-800/20' : ''}`}
+        >
+            <button
+                className="w-full text-left px-4 py-3 flex items-start gap-3"
+                onClick={onToggle}
+            >
+                <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold whitespace-nowrap ${botColor(log.bot)}`}>
+                            {log.bot}
+                        </span>
+                        <span className="text-[10px] text-zinc-600">{getBotGroup(log.bot)}</span>
+                        <span className="text-[10px] text-zinc-500 ml-auto">{timeAgo(log.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-mono text-xs text-zinc-300 truncate">{log.path}</span>
+                        <a
+                            href={`${BASE_URL}${log.path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="shrink-0 text-zinc-600 hover:text-emerald-400 transition-colors"
+                        >
+                            <ExternalLink className="w-3 h-3" />
+                        </a>
+                    </div>
+                </div>
+                <div className="shrink-0 text-zinc-600 mt-0.5">
+                    {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </div>
+            </button>
+            {expanded && (
+                <div className="px-4 pb-3 space-y-2 bg-zinc-950/50">
+                    <div>
+                        <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-1">User-Agent</p>
+                        <p className="font-mono text-[11px] text-zinc-300 break-all leading-relaxed">{log.userAgent || '—'}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-600">
+                        {log.ip && <span>IP: <span className="text-zinc-500 font-mono">{log.ip}</span></span>}
+                        <span>Data: <span className="text-zinc-500">{formatDate(log.createdAt)}</span></span>
+                        {log.referer && <span className="break-all">Referer: <span className="text-zinc-500 font-mono">{log.referer}</span></span>}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function BotLogsPage() {
-    const [stats, setStats]           = useState<Stats | null>(null)
-    const [logs, setLogs]             = useState<BotLog[]>([])
-    const [total, setTotal]           = useState(0)
-    const [page, setPage]             = useState(1)
-    const [pages, setPages]           = useState(1)
-    const [loading, setLoading]       = useState(true)
+    const [stats, setStats]               = useState<Stats | null>(null)
+    const [logs, setLogs]                 = useState<BotLog[]>([])
+    const [total, setTotal]               = useState(0)
+    const [page, setPage]                 = useState(1)
+    const [pages, setPages]               = useState(1)
+    const [loading, setLoading]           = useState(true)
     const [statsLoading, setStatsLoading] = useState(true)
-    const [expandedId, setExpandedId] = useState<string | null>(null)
-    const [autoRefresh, setAutoRefresh] = useState(false)
+    const [expandedId, setExpandedId]     = useState<string | null>(null)
+    const [autoRefresh, setAutoRefresh]   = useState(false)
 
-    const [days, setDays]                 = useState(7)
-    const [botFilter, setBotFilter]       = useState('')
-    const [pathFilter, setPathFilter]     = useState('')
-    const [pathInputValue, setPathInputValue] = useState('')
+    const [days, setDays]                         = useState(7)
+    const [botFilter, setBotFilter]               = useState('')
+    const [pathFilter, setPathFilter]             = useState('')
+    const [pathInputValue, setPathInputValue]     = useState('')
 
     const debounceTimer = useRef<ReturnType<typeof setTimeout>>()
 
@@ -209,7 +261,6 @@ export default function BotLogsPage() {
         fetchLogs(1)
     }, [fetchStats, fetchLogs])
 
-    // Auto-refresh every 30s
     useEffect(() => {
         if (!autoRefresh) return
         const id = setInterval(() => {
@@ -232,6 +283,7 @@ export default function BotLogsPage() {
     }
 
     function handlePathClick(path: string) {
+        if (!path) return
         clearTimeout(debounceTimer.current)
         setPathInputValue(path)
         setPathFilter(path)
@@ -264,47 +316,47 @@ export default function BotLogsPage() {
 
     return (
         <AdminLayout title="Robôs de Busca">
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
 
                 {/* ── Header ─────────────────────────────────────────────── */}
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-3">
-                        <Bot className="w-6 h-6 text-violet-400" />
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-2.5">
+                        <Bot className="w-5 h-5 text-violet-400 shrink-0" />
                         <div>
-                            <h1 className="text-xl font-bold text-white">Robôs de Busca</h1>
-                            <p className="text-xs text-zinc-400">Crawls detectados passivamente por User-Agent</p>
+                            <h1 className="text-base sm:text-xl font-bold text-white leading-tight">Robôs de Busca</h1>
+                            <p className="text-[10px] sm:text-xs text-zinc-400">Crawls detectados por User-Agent</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                         {([7, 14, 30] as const).map(d => (
                             <button
                                 key={d}
                                 onClick={() => setDays(d)}
-                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${days === d ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
+                                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${days === d ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
                             >
                                 {d}d
                             </button>
                         ))}
                         <button
                             onClick={() => setAutoRefresh(prev => !prev)}
-                            title={autoRefresh ? 'Auto-refresh ativo (30s) — clique para pausar' : 'Ativar auto-refresh'}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium border transition-colors ${autoRefresh ? 'bg-green-600/10 text-green-400 border-green-600/30' : 'bg-zinc-800 text-zinc-400 border-transparent hover:bg-zinc-700'}`}
+                            title={autoRefresh ? 'Auto-refresh ativo — clique para pausar' : 'Ativar auto-refresh'}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium border transition-colors ${autoRefresh ? 'bg-green-600/10 text-green-400 border-green-600/30' : 'bg-zinc-800 text-zinc-400 border-transparent hover:bg-zinc-700'}`}
                         >
-                            <Clock className="w-3.5 h-3.5" />
-                            {autoRefresh ? 'Ao vivo' : '30s'}
+                            <Clock className="w-3 h-3" />
+                            <span className="hidden sm:inline">{autoRefresh ? 'Ao vivo' : '30s'}</span>
                         </button>
                         <button
                             onClick={() => { fetchStats(); fetchLogs(1) }}
-                            className="p-2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+                            className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
                             title="Recarregar"
                         >
-                            <RefreshCw className="w-4 h-4" />
+                            <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
 
                 {/* ── Stats cards ────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
 
                     {/* Total + Group Breakdown */}
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
@@ -316,8 +368,6 @@ export default function BotLogsPage() {
                             {statsLoading ? '—' : (stats?.total ?? 0).toLocaleString('pt-BR')}
                         </p>
                         <p className="text-xs text-zinc-500 mb-4">últimos {days} dias</p>
-
-                        {/* Group bars */}
                         <div className="space-y-2.5">
                             {statsLoading ? (
                                 [1, 2, 3].map(i => <div key={i} className="h-5 bg-zinc-800 rounded animate-pulse" />)
@@ -347,7 +397,7 @@ export default function BotLogsPage() {
                         </div>
                     </div>
 
-                    {/* By Bot (with progress bars, clickable) */}
+                    {/* By Bot */}
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
                             <Bot className="w-4 h-4 text-violet-400" />
@@ -412,7 +462,7 @@ export default function BotLogsPage() {
                                     return (
                                         <button
                                             key={section}
-                                            onClick={() => handlePathClick(`/${section === 'News' ? 'news' : section === 'Artistas' ? 'artists' : section === 'Produções' ? 'productions' : section === 'Grupos' ? 'groups' : ''}`)}
+                                            onClick={() => handlePathClick(SECTION_PATH_MAP[section] ?? '')}
                                             className="w-full px-2 py-1.5 rounded hover:bg-zinc-800 transition-colors text-left space-y-1"
                                         >
                                             <div className="flex items-center justify-between gap-2">
@@ -438,7 +488,7 @@ export default function BotLogsPage() {
                         )}
                     </div>
 
-                    {/* Top Paths (with bars, clickable to filter) */}
+                    {/* Top Paths */}
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
                             <TrendingUp className="w-4 h-4 text-violet-400" />
@@ -472,10 +522,7 @@ export default function BotLogsPage() {
                                             </a>
                                             <span className="text-zinc-300 font-mono text-xs shrink-0">{count}</span>
                                         </div>
-                                        <button
-                                            onClick={() => handlePathClick(path)}
-                                            className="w-full px-2 pb-1.5"
-                                        >
+                                        <button onClick={() => handlePathClick(path)} className="w-full px-2 pb-1.5">
                                             <div className="h-1 bg-zinc-800 rounded-full overflow-hidden mt-1">
                                                 <div
                                                     className="h-full rounded-full bg-emerald-600/50 transition-all"
@@ -523,14 +570,14 @@ export default function BotLogsPage() {
                             <X className="w-3 h-3 ml-0.5" />
                         </button>
                     )}
-                    <div className="relative">
+                    <div className="relative flex-1 min-w-[160px] max-w-xs">
                         <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"
                             placeholder="Filtrar por path..."
                             value={pathInputValue}
                             onChange={e => handlePathChange(e.target.value)}
-                            className="bg-zinc-900 border border-zinc-700 rounded pl-8 pr-8 py-1.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 w-60"
+                            className="w-full bg-zinc-900 border border-zinc-700 rounded pl-8 pr-8 py-1.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500"
                         />
                         {pathInputValue && (
                             <button
@@ -544,9 +591,35 @@ export default function BotLogsPage() {
                     <span className="text-xs text-zinc-500">{total.toLocaleString('pt-BR')} resultado(s)</span>
                 </div>
 
-                {/* ── Table ──────────────────────────────────────────────── */}
+                {/* ── Log list ───────────────────────────────────────────── */}
                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-                    <div className="overflow-x-auto">
+
+                    {/* Mobile: cards */}
+                    <div className="md:hidden">
+                        {loading ? (
+                            Array.from({ length: 8 }).map((_, i) => (
+                                <div key={i} className="px-4 py-3 border-b border-zinc-800/50 space-y-2">
+                                    <div className="h-4 bg-zinc-800 rounded animate-pulse w-1/2" />
+                                    <div className="h-3 bg-zinc-800 rounded animate-pulse w-3/4" />
+                                </div>
+                            ))
+                        ) : logs.length === 0 ? (
+                            <div className="px-4 py-12 text-center text-zinc-500">
+                                <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                                Nenhum crawl nos últimos {days} dias
+                            </div>
+                        ) : logs.map(log => (
+                            <LogCard
+                                key={log.id}
+                                log={log}
+                                expanded={expandedId === log.id}
+                                onToggle={() => setExpandedId(prev => prev === log.id ? null : log.id)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Desktop: table */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-zinc-800">
@@ -651,7 +724,7 @@ export default function BotLogsPage() {
                     {pages > 1 && (
                         <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
                             <span className="text-xs text-zinc-500">
-                                Página {page} de {pages} · {total.toLocaleString('pt-BR')} total
+                                Pág. {page}/{pages} · {total.toLocaleString('pt-BR')} total
                             </span>
                             <div className="flex items-center gap-1">
                                 <button
