@@ -225,54 +225,75 @@ export default async function ProductionDetailPage({ params }: { params: { id: s
 
                 {/* Hero content */}
                 <div className="relative z-10 px-4 sm:px-12 md:px-20 pb-10 md:pb-16">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-4">
-                        {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
-                        <span className="w-1 h-1 bg-zinc-700 rounded-full" />
-                        <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
-                        {production.episodeCount && (
-                            <span className="text-xs font-bold text-zinc-400">{production.episodeCount} ep.</span>
-                        )}
-                        {production.episodeRuntime && (
-                            <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.episodeRuntime)}/ep</span>
-                        )}
-                        {!production.episodeCount && production.runtime && (
-                            <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.runtime)}</span>
-                        )}
-                        {production.ageRating && (
-                            <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
-                                production.ageRating === 'L'  ? 'bg-green-700/60 text-green-300 border border-green-600/40' :
-                                production.ageRating === '10' ? 'bg-blue-700/60 text-blue-300 border border-blue-600/40' :
-                                production.ageRating === '12' ? 'bg-yellow-700/60 text-yellow-300 border border-yellow-600/40' :
-                                production.ageRating === '14' ? 'bg-orange-700/60 text-orange-300 border border-orange-600/40' :
-                                production.ageRating === '16' ? 'bg-red-700/60 text-red-300 border border-red-600/40' :
-                                'bg-red-950/80 text-red-400 border border-red-800/60'
-                            }`}>
-                                {production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+`}
-                            </span>
-                        )}
-                        {production.voteAverage && production.voteAverage > 0 && (
-                            <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
-                                production.voteAverage >= 7 ? 'text-green-400 bg-green-950/50 border border-green-800/40' :
-                                production.voteAverage >= 5 ? 'text-yellow-400 bg-yellow-950/50 border border-yellow-800/40' :
-                                'text-red-400 bg-red-950/50 border border-red-800/40'
-                            }`}>
-                                ★ {production.voteAverage.toFixed(1)}
-                            </span>
-                        )}
-                        {production.streamingPlatforms && production.streamingPlatforms.map(p => (
-                            <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
-                        ))}
-                    </div>
-                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
-                    {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1">{production.titleKr}</p>}
-                    {production.tagline && <p className="text-base text-zinc-400 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
-                    {!production.tagline && <div className="mb-8" />}
+                    <div className="flex items-end gap-6 md:gap-10">
+                        {/* Main info — fills remaining space */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-4">
+                                {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
+                                <span className="w-1 h-1 bg-zinc-700 rounded-full" />
+                                <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
+                                {production.episodeCount && (
+                                    <span className="text-xs font-bold text-zinc-400">{production.episodeCount} ep.</span>
+                                )}
+                                {production.episodeRuntime && (
+                                    <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.episodeRuntime)}/ep</span>
+                                )}
+                                {!production.episodeCount && production.runtime && (
+                                    <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.runtime)}</span>
+                                )}
+                                {production.ageRating && (
+                                    <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
+                                        production.ageRating === 'L'  ? 'bg-green-700/60 text-green-300 border border-green-600/40' :
+                                        production.ageRating === '10' ? 'bg-blue-700/60 text-blue-300 border border-blue-600/40' :
+                                        production.ageRating === '12' ? 'bg-yellow-700/60 text-yellow-300 border border-yellow-600/40' :
+                                        production.ageRating === '14' ? 'bg-orange-700/60 text-orange-300 border border-orange-600/40' :
+                                        production.ageRating === '16' ? 'bg-red-700/60 text-red-300 border border-red-600/40' :
+                                        'bg-red-950/80 text-red-400 border border-red-800/60'
+                                    }`}>
+                                        {production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+`}
+                                    </span>
+                                )}
+                                {production.voteAverage && production.voteAverage > 0 && (
+                                    <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
+                                        production.voteAverage >= 7 ? 'text-green-400 bg-green-950/50 border border-green-800/40' :
+                                        production.voteAverage >= 5 ? 'text-yellow-400 bg-yellow-950/50 border border-yellow-800/40' :
+                                        'text-red-400 bg-red-950/50 border border-red-800/40'
+                                    }`}>
+                                        ★ {production.voteAverage.toFixed(1)}
+                                    </span>
+                                )}
+                                {production.streamingPlatforms && production.streamingPlatforms.map(p => (
+                                    <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
+                                ))}
+                            </div>
+                            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
+                            {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1">{production.titleKr}</p>}
+                            {production.tagline && <p className="text-base text-zinc-400 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
+                            {!production.tagline && <div className="mb-6" />}
 
-                    <div className="mt-8 flex flex-wrap items-center gap-3">
-                        {production.trailerUrl && (
-                            <TrailerModal trailerUrl={production.trailerUrl} title={production.titlePt} />
+                            <div className="mt-6 flex flex-wrap items-center gap-3">
+                                {production.trailerUrl && (
+                                    <TrailerModal trailerUrl={production.trailerUrl} title={production.titlePt} />
+                                )}
+                                <WatchButton productionId={production.id} productionName={production.titlePt} />
+                            </div>
+                        </div>
+
+                        {/* Poster — shown on md+ only when a separate poster exists alongside a backdrop */}
+                        {production.backdropUrl && production.imageUrl && production.backdropUrl !== production.imageUrl && (
+                            <div className="hidden md:block flex-shrink-0 self-end pb-1">
+                                <div className="w-36 lg:w-44 aspect-[2/3] relative rounded-xl overflow-hidden border-2 border-white/10 shadow-2xl ring-1 ring-white/5">
+                                    <Image
+                                        src={production.imageUrl}
+                                        alt={`Poster — ${production.titlePt}`}
+                                        fill
+                                        sizes="176px"
+                                        className="object-cover"
+                                        priority
+                                    />
+                                </div>
+                            </div>
                         )}
-                        <WatchButton productionId={production.id} productionName={production.titlePt} />
                     </div>
                 </div>
             </div>

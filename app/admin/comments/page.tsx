@@ -43,6 +43,88 @@ const STATUS_LABEL: Record<string, string> = {
     ACTIVE: 'Ativo', FLAGGED: 'Sinalizado', REMOVED: 'Removido',
 }
 
+function CommentCard({
+    comment, selected, onToggle, onPatch, onDelete, onNote,
+}: {
+    comment: Comment
+    selected: boolean
+    onToggle: () => void
+    onPatch: (id: string, body: object) => void
+    onDelete: (id: string) => void
+    onNote: (id: string, current: string | null) => void
+}) {
+    return (
+        <div className={`p-4 border-b border-white/5 last:border-0 ${selected ? 'bg-purple-500/5' : ''}`}>
+            <div className="flex items-start gap-3">
+                {/* Checkbox + Avatar */}
+                <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
+                    <input type="checkbox" checked={selected} onChange={onToggle}
+                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-purple-500 cursor-pointer" />
+                    {comment.user.image ? (
+                        <img src={comment.user.image} alt="" className="w-6 h-6 rounded-full object-cover" />
+                    ) : (
+                        <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center">
+                            <span className="text-[10px] font-black text-zinc-400">
+                                {(comment.user.name ?? comment.user.email)[0]?.toUpperCase()}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-xs font-bold text-zinc-300 truncate">{comment.user.name ?? comment.user.email}</span>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black border flex-shrink-0 ${STATUS_BADGE[comment.status] ?? ''}`}>
+                            {STATUS_LABEL[comment.status] ?? comment.status}
+                        </span>
+                        <span className="text-[10px] text-zinc-600 ml-auto flex-shrink-0">
+                            {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
+                        </span>
+                    </div>
+                    <p className="text-sm text-zinc-300 leading-relaxed line-clamp-3 break-words mb-2">{comment.content}</p>
+                    {comment.moderationNote && (
+                        <p className="text-[11px] text-yellow-500/80 italic mb-2">📝 {comment.moderationNote}</p>
+                    )}
+                    <Link href={`/news/${comment.news.id}`} target="_blank"
+                        className="text-xs text-zinc-500 hover:text-purple-400 flex items-center gap-1 transition-colors mb-3">
+                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{comment.news.title}</span>
+                    </Link>
+                    <div className="flex items-center gap-1">
+                        {comment.status !== 'ACTIVE' && (
+                            <button onClick={() => onPatch(comment.id, { status: 'ACTIVE' })} title="Ativar"
+                                className="p-1.5 rounded-lg text-green-500 hover:bg-green-500/10 transition-colors">
+                                <CheckCircle className="w-4 h-4" />
+                            </button>
+                        )}
+                        {comment.status !== 'FLAGGED' && (
+                            <button onClick={() => onPatch(comment.id, { status: 'FLAGGED' })} title="Sinalizar"
+                                className="p-1.5 rounded-lg text-yellow-500 hover:bg-yellow-500/10 transition-colors">
+                                <Flag className="w-4 h-4" />
+                            </button>
+                        )}
+                        {comment.status !== 'REMOVED' && (
+                            <button onClick={() => onPatch(comment.id, { status: 'REMOVED' })} title="Remover"
+                                className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-500/10 transition-colors">
+                                <AlertTriangle className="w-4 h-4" />
+                            </button>
+                        )}
+                        <button onClick={() => onNote(comment.id, comment.moderationNote)} title="Nota de moderação"
+                            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-700 hover:text-white transition-colors text-[11px] font-black">
+                            📝
+                        </button>
+                        <button onClick={() => onDelete(comment.id)} title="Excluir permanentemente"
+                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
     return (
         <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 text-center">
@@ -294,7 +376,35 @@ export default function AdminCommentsPage() {
                     <p className="text-zinc-600 text-sm mt-1">Tente ajustar os filtros</p>
                 </div>
             ) : (
-                <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto">
+                <>
+                {/* Mobile cards */}
+                <div className="md:hidden bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden">
+                    {/* Header com select-all */}
+                    <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-zinc-900/50">
+                        <input type="checkbox"
+                            checked={selected.size === comments.length && comments.length > 0}
+                            onChange={toggleAll}
+                            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-purple-500 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-zinc-500 uppercase tracking-wider">
+                            {selected.size > 0 ? `${selected.size} selecionado(s)` : 'Selecionar todos'}
+                        </span>
+                    </div>
+                    {comments.map(comment => (
+                        <CommentCard
+                            key={comment.id}
+                            comment={comment}
+                            selected={selected.has(comment.id)}
+                            onToggle={() => toggleSelect(comment.id)}
+                            onPatch={patch}
+                            onDelete={deleteSingle}
+                            onNote={openNote}
+                        />
+                    ))}
+                </div>
+
+                {/* Desktop grid */}
+                <div className="hidden md:block bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto">
                   <div className="min-w-[700px]">
                     {/* Table header */}
                     <div className="grid grid-cols-[auto_1fr_200px_100px_110px] gap-4 px-4 py-3 border-b border-white/5 bg-zinc-900/50 text-xs font-black text-zinc-500 uppercase tracking-wider">
@@ -412,6 +522,7 @@ export default function AdminCommentsPage() {
                     ))}
                   </div>
                 </div>
+                </>
             )}
 
             {/* Pagination */}

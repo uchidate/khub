@@ -60,6 +60,64 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+// ─── Mobile Card ─────────────────────────────────────────────────────────────
+
+function ReportCard({ report, onUpdate, updatingId }: {
+  report: Report
+  onUpdate: (id: string, status: 'REVIEWED' | 'RESOLVED' | 'DISMISSED') => void
+  updatingId: string | null
+}) {
+  const entity = ENTITY_LABELS[report.entityType]
+  return (
+    <div className="p-4 border-b border-white/5 last:border-0">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={`px-2 py-0.5 rounded text-xs font-bold ${entity?.color ?? 'text-zinc-400'}`}>
+            {entity?.label ?? report.entityType}
+          </span>
+          <span className={`px-2 py-0.5 rounded text-xs font-bold border ${STATUS_STYLES[report.status] ?? ''}`}>
+            {STATUS_LABELS[report.status] ?? report.status}
+          </span>
+        </div>
+        <span className="text-[10px] text-zinc-600 whitespace-nowrap flex-shrink-0">{formatDate(report.createdAt)}</span>
+      </div>
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="text-white font-medium text-sm truncate">{report.entityName}</span>
+        {entity && (
+          <Link href={entity.href(report.entityId)} target="_blank" className="text-zinc-600 hover:text-zinc-400 flex-shrink-0">
+            <ExternalLink size={12} />
+          </Link>
+        )}
+      </div>
+      <p className="text-xs text-zinc-500 mb-1">{CATEGORY_LABELS[report.category] ?? report.category}</p>
+      {report.description && <p className="text-xs text-zinc-600 italic line-clamp-2">{report.description}</p>}
+      <div className="flex items-center gap-1 mt-3">
+        {report.status === 'PENDING' && (
+          <button onClick={() => onUpdate(report.id, 'REVIEWED')} disabled={updatingId === report.id}
+            title="Marcar como em revisão"
+            className="p-1.5 rounded hover:bg-blue-500/20 text-zinc-600 hover:text-blue-400 transition-colors disabled:opacity-40">
+            <Eye size={14} />
+          </button>
+        )}
+        {report.status !== 'RESOLVED' && report.status !== 'DISMISSED' && (
+          <button onClick={() => onUpdate(report.id, 'RESOLVED')} disabled={updatingId === report.id}
+            title="Marcar como resolvido"
+            className="p-1.5 rounded hover:bg-green-500/20 text-zinc-600 hover:text-green-400 transition-colors disabled:opacity-40">
+            <CheckCircle size={14} />
+          </button>
+        )}
+        {report.status !== 'DISMISSED' && (
+          <button onClick={() => onUpdate(report.id, 'DISMISSED')} disabled={updatingId === report.id}
+            title="Descartar report"
+            className="p-1.5 rounded hover:bg-red-500/20 text-zinc-600 hover:text-red-400 transition-colors disabled:opacity-40">
+            <XCircle size={14} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
@@ -162,7 +220,16 @@ export default function ReportsPage() {
         ) : reports.length === 0 ? (
           <div className="text-center py-20 text-zinc-600">Nenhum report encontrado</div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-white/5">
+          <>
+            {/* Mobile cards */}
+            <div className="md:hidden rounded-xl border border-white/5 overflow-hidden bg-zinc-900/30">
+              {reports.map(report => (
+                <ReportCard key={report.id} report={report} onUpdate={handleUpdateStatus} updatingId={updatingId} />
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-white/5">
             <table className="w-full text-sm">
               <thead className="bg-zinc-900/80 text-zinc-500 text-xs uppercase tracking-wider">
                 <tr>
@@ -249,6 +316,7 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Pagination */}

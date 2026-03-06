@@ -236,7 +236,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
         )}
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-60">
+        <main className="flex-1 lg:ml-60 min-w-0 overflow-x-hidden">
           {/* Mobile header */}
           <div className="lg:hidden sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">

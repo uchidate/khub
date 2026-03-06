@@ -134,37 +134,34 @@ export default async function AdminPage() {
           Olá, <span className="text-white font-semibold">{session.user.name}</span>
         </p>
 
-        {/* Stats — lista no mobile, grid no desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+        {/* Stats — 2 cols no mobile, 3 no tablet, 6 no desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {stats.map((stat) => (
             <Link key={stat.label} href={stat.href}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 hover:border-zinc-700 transition-colors group flex items-center gap-3 lg:flex-col lg:items-start lg:p-4">
-              {/* mobile: icon + label + number in a row */}
-              <stat.icon className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors flex-shrink-0" />
-              <span className="text-sm text-zinc-400 flex-1 lg:hidden">{stat.label}</span>
-              <div className="flex items-center gap-2">
-                <p className="text-lg font-black text-white">{stat.value.toLocaleString('pt-BR')}</p>
+              className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 lg:p-4 hover:border-zinc-700 transition-colors group flex flex-col items-start gap-1">
+              <stat.icon className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+              <div className="flex items-center gap-1.5 mt-1">
+                <p className="text-xl font-black text-white">{stat.value.toLocaleString('pt-BR')}</p>
                 {stat.new > 0 && (
                   <span className="text-[9px] font-black text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full">
                     +{stat.new}
                   </span>
                 )}
               </div>
-              {/* desktop: label below number */}
-              <p className="hidden lg:block text-xs text-zinc-500 font-medium">{stat.label}</p>
+              <p className="text-xs text-zinc-500 font-medium">{stat.label}</p>
             </Link>
           ))}
         </div>
 
-        {/* Quick Actions — mobile-prominent, desktop can skip */}
-        <div className="grid grid-cols-4 gap-2">
+        {/* Quick Actions — 2 cols no mobile, 4 no tablet+ */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {quickActions.map(({ label, href, icon: Icon }) => (
             <Link key={href} href={href}
-              className="flex flex-col items-center gap-1.5 p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors text-center group">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+              className="flex items-center gap-3 sm:flex-col sm:items-center p-3 sm:p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors sm:text-center group">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors flex-shrink-0">
                 <Icon className="w-4 h-4 text-purple-400" />
               </div>
-              <span className="text-[10px] text-zinc-400 font-medium leading-tight group-hover:text-white transition-colors">{label}</span>
+              <span className="text-xs sm:text-[10px] text-zinc-400 font-medium leading-tight group-hover:text-white transition-colors">{label}</span>
             </Link>
           ))}
         </div>
@@ -213,7 +210,7 @@ export default async function AdminPage() {
                   <span className={`hidden sm:inline text-[9px] font-black uppercase px-1.5 py-0.5 rounded border flex-shrink-0 ${colorMap[event.color]?.badge ?? ''}`}>
                     {event.type}
                   </span>
-                  <span className="text-xs text-zinc-300 truncate flex-1 group-hover:text-white transition-colors">
+                  <span className="text-xs text-zinc-300 truncate flex-1 min-w-0 group-hover:text-white transition-colors">
                     {event.label}
                   </span>
                   <span className="text-[10px] text-zinc-600 flex-shrink-0 tabular-nums">{timeAgo(event.time)}</span>

@@ -144,8 +144,12 @@ async function runCronProcessing(lockId: string) {
                 log.info('Fetching real news from RSS feeds...');
                 const newsGenerator = new NewsGeneratorV2();
                 const extractionService = getNewsArtistExtractionService(prisma);
+                // Limitar a 90 dias: RSS feeds nunca têm artigos mais antigos que isso,
+                // e carregar TODOS os sourceUrls cresce indefinidamente com o banco
+                const since90d = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
                 const existingNews = await prisma.news.findMany({
-                    select: { sourceUrl: true }
+                    select: { sourceUrl: true },
+                    where: { createdAt: { gte: since90d } },
                 });
                 const excludeNews = existingNews.map((n: { sourceUrl: string }) => n.sourceUrl);
 
