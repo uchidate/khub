@@ -126,8 +126,45 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                     ))}
                 </div>
 
-                {/* Tabela */}
-                <div className="glass-card rounded-xl overflow-hidden overflow-x-auto border border-white/5">
+                {/* Mobile cards */}
+                <div className="md:hidden glass-card rounded-xl border border-white/5 overflow-hidden divide-y divide-white/5">
+                    {logs.length === 0 && (
+                        <p className="text-center py-12 text-zinc-600">Nenhum email encontrado</p>
+                    )}
+                    {logs.map(log => {
+                        const cfg = STATUS_CONFIG[log.status] ?? STATUS_CONFIG.PENDING
+                        const Icon = cfg.icon
+                        return (
+                            <div key={log.id} className="p-4">
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                    <p className="text-white font-medium text-sm truncate">{log.to}</p>
+                                    <span className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded text-[10px] font-black ${cfg.color}`}>
+                                        <Icon size={10} />
+                                        {cfg.label}
+                                    </span>
+                                </div>
+                                {log.user?.name && <p className="text-[11px] text-zinc-500 mb-1">{log.user.name}</p>}
+                                <p className="text-xs text-zinc-400 truncate mb-2">{log.subject}</p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-zinc-800 text-zinc-400">
+                                            {TYPE_LABELS[log.type] ?? log.type}
+                                        </span>
+                                        <span className="text-[10px] text-zinc-600">
+                                            {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <Link href={`/admin/emails/${log.id}`} className="text-xs text-purple-400 hover:text-purple-300 font-bold shrink-0">
+                                        Ver →
+                                    </Link>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* Tabela — desktop */}
+                <div className="hidden md:block glass-card rounded-xl overflow-hidden overflow-x-auto border border-white/5">
                     <table className="w-full min-w-[600px] text-sm">
                         <thead>
                             <tr className="border-b border-white/5 text-[11px] uppercase tracking-wider text-zinc-500">

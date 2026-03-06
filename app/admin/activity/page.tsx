@@ -255,8 +255,80 @@ export default async function AdminActivityPage({ searchParams }: Props) {
 
                 <p className="text-xs text-zinc-500 mb-3">{total} registros encontrados</p>
 
-                {/* Tabela */}
-                <div className="glass-card rounded-xl overflow-hidden overflow-x-auto border border-white/5">
+                {/* Mobile cards */}
+                <div className="md:hidden glass-card rounded-xl border border-white/5 overflow-hidden divide-y divide-white/5">
+                    {tab === 'user' && (
+                        userLogs.length === 0
+                            ? <p className="text-center py-12 text-zinc-600">Nenhuma atividade no período</p>
+                            : userLogs.map((log: ActivityWithUser) => {
+                                const cfg = ACTIVITY_TYPE_CONFIG[log.type] ?? { label: log.type, color: 'text-zinc-400 bg-zinc-400/10' }
+                                const meta = log.metadata as Record<string, string> | null
+                                const entityName = log.entityId ? (entityNameMap.get(log.entityId) ?? log.entityId.slice(-8)) : null
+                                return (
+                                    <div key={log.id} className="p-4">
+                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                            <div className="min-w-0">
+                                                <p className="text-white font-medium text-sm truncate">{log.user?.name ?? '—'}</p>
+                                                <p className="text-[11px] text-zinc-500 truncate">{log.user?.email}</p>
+                                            </div>
+                                            <span className="text-[10px] text-zinc-500 whitespace-nowrap shrink-0">{formatTimeAgo(log.createdAt)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Badge label={cfg.label} color={cfg.color} />
+                                            {entityName && <span className="text-xs text-zinc-400 truncate max-w-[140px]">{entityName}</span>}
+                                            {(meta?.query ?? meta?.context) && (
+                                                <span className="text-xs text-zinc-500 truncate max-w-[140px]">{meta?.query ?? meta?.context}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })
+                    )}
+                    {tab === 'admin' && (
+                        auditLogs.length === 0
+                            ? <p className="text-center py-12 text-zinc-600">Nenhuma ação administrativa no período</p>
+                            : auditLogs.map((log: AuditLogWithAdmin) => {
+                                const cfg = AUDIT_ACTION_CONFIG[log.action] ?? { label: log.action, color: 'text-zinc-400 bg-zinc-400/10' }
+                                return (
+                                    <div key={log.id} className="p-4">
+                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                            <div className="min-w-0">
+                                                <p className="text-white font-medium text-sm truncate">{log.admin?.name ?? '—'}</p>
+                                                <p className="text-[11px] text-zinc-500 truncate">{log.admin?.email}</p>
+                                            </div>
+                                            <span className="text-[10px] text-zinc-500 whitespace-nowrap shrink-0">{formatTimeAgo(log.createdAt)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Badge label={cfg.label} color={cfg.color} />
+                                            <span className="text-xs font-mono text-zinc-400">{log.entity}</span>
+                                            {log.entityId && <span className="text-[10px] text-zinc-600">#{log.entityId.slice(-6)}</span>}
+                                        </div>
+                                        {log.details && <p className="text-xs text-zinc-500 truncate mt-1">{log.details}</p>}
+                                    </div>
+                                )
+                            })
+                    )}
+                    {tab === 'system' && (
+                        systemEvents.length === 0
+                            ? <p className="text-center py-12 text-zinc-600">Nenhum evento de sistema no período</p>
+                            : systemEvents.map((ev: SystemEvent) => {
+                                const cfg = LEVEL_CONFIG[ev.level] ?? LEVEL_CONFIG.INFO
+                                return (
+                                    <div key={ev.id} className="p-4">
+                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                            <Badge label={cfg.label} color={cfg.color} />
+                                            <span className="text-[10px] text-zinc-500 whitespace-nowrap shrink-0">{formatTimeAgo(ev.createdAt)}</span>
+                                        </div>
+                                        <p className="text-xs font-mono text-zinc-400 mb-1">{ev.source}</p>
+                                        <p className="text-xs text-zinc-300 line-clamp-3">{ev.message}</p>
+                                    </div>
+                                )
+                            })
+                    )}
+                </div>
+
+                {/* Tabela — desktop */}
+                <div className="hidden md:block glass-card rounded-xl overflow-hidden overflow-x-auto border border-white/5">
                     <table className="w-full min-w-[640px] text-sm">
 
                         {tab === 'user' && (
