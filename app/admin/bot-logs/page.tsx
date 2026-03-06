@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
     Bot, Search, RefreshCw, ChevronLeft, ChevronRight,
     Globe, TrendingUp, FileText, BarChart2, Clock,
-    ChevronDown, ChevronUp, X, ExternalLink,
+    ChevronDown, ChevronUp, X, ExternalLink, Layers,
 } from 'lucide-react'
 import { getBotGroup, BOT_GROUPS } from '@/lib/utils/bot-detector'
 
@@ -32,6 +32,7 @@ interface Stats {
     total: number
     byBot: { bot: string; count: number }[]
     topPaths: { path: string; count: number }[]
+    bySection: { section: string; count: number }[]
     timeline: TimelinePoint[]
     days: number
 }
@@ -65,6 +66,15 @@ const GROUP_BAR_COLORS: Record<string, string> = {
     'Social': 'bg-indigo-500',
     'SEO':    'bg-amber-500',
     'Outros': 'bg-zinc-500',
+}
+
+const SECTION_COLORS: Record<string, { bar: string; text: string; bg: string; border: string }> = {
+    'News':      { bar: 'bg-purple-500', text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/20' },
+    'Artistas':  { bar: 'bg-pink-500',   text: 'text-pink-400',   bg: 'bg-pink-400/10',   border: 'border-pink-400/20' },
+    'Produções': { bar: 'bg-blue-500',   text: 'text-blue-400',   bg: 'bg-blue-400/10',   border: 'border-blue-400/20' },
+    'Grupos':    { bar: 'bg-cyan-500',   text: 'text-cyan-400',   bg: 'bg-cyan-400/10',   border: 'border-cyan-400/20' },
+    'Home':      { bar: 'bg-green-500',  text: 'text-green-400',  bg: 'bg-green-400/10',  border: 'border-green-400/20' },
+    'Outros':    { bar: 'bg-zinc-500',   text: 'text-zinc-400',   bg: 'bg-zinc-400/10',   border: 'border-zinc-400/20' },
 }
 
 const DEFAULT_BOT_COLOR = 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'
@@ -294,7 +304,7 @@ export default function BotLogsPage() {
                 </div>
 
                 {/* ── Stats cards ────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
                     {/* Total + Group Breakdown */}
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
@@ -380,6 +390,50 @@ export default function BotLogsPage() {
                                     </button>
                                 ))}
                                 {!stats?.byBot?.length && <p className="text-zinc-500 text-xs">Nenhum dado</p>}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* By Section */}
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Layers className="w-4 h-4 text-violet-400" />
+                            <p className="text-xs font-medium text-zinc-300">Por seção</p>
+                        </div>
+                        {statsLoading ? (
+                            <div className="space-y-2">
+                                {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-zinc-800 rounded animate-pulse" />)}
+                            </div>
+                        ) : (
+                            <div className="space-y-1 max-h-56 overflow-y-auto pr-1 -mr-1">
+                                {(stats?.bySection ?? []).map(({ section, count }) => {
+                                    const colors = SECTION_COLORS[section] ?? SECTION_COLORS['Outros']
+                                    const pct = stats?.total ? Math.round(count / stats.total * 100) : 0
+                                    return (
+                                        <button
+                                            key={section}
+                                            onClick={() => handlePathClick(`/${section === 'News' ? 'news' : section === 'Artistas' ? 'artists' : section === 'Produções' ? 'productions' : section === 'Grupos' ? 'groups' : ''}`)}
+                                            className="w-full px-2 py-1.5 rounded hover:bg-zinc-800 transition-colors text-left space-y-1"
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold ${colors.text} ${colors.bg} ${colors.border}`}>
+                                                    {section}
+                                                </span>
+                                                <span className="text-zinc-300 font-mono text-xs shrink-0">
+                                                    {count.toLocaleString('pt-BR')}
+                                                    <span className="text-zinc-600 ml-1">({pct}%)</span>
+                                                </span>
+                                            </div>
+                                            <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all ${colors.bar}`}
+                                                    style={{ width: `${stats?.total ? (count / stats.total) * 100 : 0}%` }}
+                                                />
+                                            </div>
+                                        </button>
+                                    )
+                                })}
+                                {!stats?.bySection?.length && <p className="text-zinc-500 text-xs">Nenhum dado</p>}
                             </div>
                         )}
                     </div>

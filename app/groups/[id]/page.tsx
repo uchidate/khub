@@ -458,36 +458,6 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                             <StatCard icon={<Heart className="w-5 h-5" />} label="Fãs" value={group.favoriteCount.toLocaleString('pt-BR')} color="text-pink-400" />
                         </div>
 
-                        {/* Grupos Relacionados */}
-                        {relatedGroups.length > 0 && (
-                            <div>
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">
-                                    {group.agencyId ? 'Mesma Agência' : 'Mesma Geração'}
-                                </h3>
-                                <div className="flex flex-col gap-2">
-                                    {relatedGroups.map(rg => (
-                                        <Link key={rg.id} href={`/groups/${rg.id}`}
-                                            className="related-group-link flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/rg">
-                                            <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
-                                                {rg.profileImageUrl ? (
-                                                    <Image src={rg.profileImageUrl} alt={rg.name} fill sizes="40px" className="object-cover group-hover/rg:scale-105 transition-transform" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <span className="text-sm font-black text-zinc-600">{rg.name[0]}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="related-group-name text-sm font-bold text-white truncate transition-colors">{rg.name}</p>
-                                                {rg.disbandDate && (
-                                                    <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Disbandado</p>
-                                                )}
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     {/* ── MAIN ── */}
@@ -543,6 +513,35 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                                         style={{ color: accent }}>
                                         Ver todas as notícias →
                                     </Link>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Grupos Relacionados */}
+                        {relatedGroups.length > 0 && (
+                            <section>
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title={group.agencyId ? 'Mesma Agência' : 'Mesma Geração'} count={relatedGroups.length} accent={accent} />
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {relatedGroups.map(rg => (
+                                        <Link key={rg.id} href={`/groups/${rg.id}`}
+                                            className="related-group-link flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/rg">
+                                            <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                                                {rg.profileImageUrl ? (
+                                                    <Image src={rg.profileImageUrl} alt={rg.name} fill sizes="40px" className="object-cover group-hover/rg:scale-105 transition-transform" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <span className="text-sm font-black text-zinc-600">{rg.name[0]}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="related-group-name text-sm font-bold text-white truncate transition-colors">{rg.name}</p>
+                                                {rg.disbandDate && (
+                                                    <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Disbandado</p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    ))}
                                 </div>
                             </section>
                         )}

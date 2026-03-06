@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         const botCondition = bot ? Prisma.sql`AND bot = ${bot}` : Prisma.empty
         const pathCondition = path ? Prisma.sql`AND path ILIKE ${`%${path}%`}` : Prisma.empty
 
-        const [total, byBot, topPaths, timeline] = await Promise.all([
+        const [total, byBot, topPaths, timeline, bySection] = await Promise.all([
             prisma.botCrawlLog.count({ where }),
             prisma.botCrawlLog.groupBy({
                 by: ['bot'],
@@ -66,6 +66,24 @@ export async function GET(request: NextRequest) {
                     ORDER BY 1 ASC
                 `
             ),
+            prisma.$queryRaw<{ section: string; count: bigint }[]>(
+                Prisma.sql`
+                    SELECT
+                        CASE
+                            WHEN path LIKE '/news/%' OR path = '/news' THEN 'News'
+                            WHEN path LIKE '/artists/%' OR path = '/artists' THEN 'Artistas'
+                            WHEN path LIKE '/productions/%' OR path = '/productions' THEN 'Produções'
+                            WHEN path LIKE '/groups/%' OR path = '/groups' THEN 'Grupos'
+                            WHEN path = '/' THEN 'Home'
+                            ELSE 'Outros'
+                        END AS section,
+                        COUNT(*) AS count
+                    FROM bot_crawl_log
+                    WHERE "createdAt" >= ${since} ${botCondition} ${pathCondition}
+                    GROUP BY 1
+                    ORDER BY 2 DESC
+                `
+            ),
         ])
 
         return NextResponse.json({
@@ -76,6 +94,7 @@ export async function GET(request: NextRequest) {
                 date: r.date.toISOString().split('T')[0],
                 count: Number(r.count),
             })),
+            bySection: bySection.map(r => ({ section: r.section, count: Number(r.count) })),
             days,
         })
     }
