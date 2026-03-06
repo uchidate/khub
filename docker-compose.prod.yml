@@ -73,6 +73,9 @@ services:
       # Ollama: phi3:mini (3.8B) tem melhor instruction following que gemma:2b (2B)
       # Melhora significativamente qualidade de traduções PT-BR e structured JSON
       - OLLAMA_MODEL=phi3:mini
+      # Limitar heap do Node.js a 2.5GB — permite GC agressivo antes de atingir o
+      # limite Docker de 3GB, evitando OOM kill e consequente 502 Bad Gateway
+      - NODE_OPTIONS=--max-old-space-size=2560
     env_file:
       - .env.production
     volumes:
@@ -86,9 +89,9 @@ services:
       resources:
         limits:
           cpus: '0.7'  # Reduzido de 0.8 — libera CPU para o banco
-          memory: 2G
+          memory: 3G   # Aumentado de 2G — cron + web traffic podem atingir 2.5GB
         reservations:
-          memory: 768M
+          memory: 1G
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
