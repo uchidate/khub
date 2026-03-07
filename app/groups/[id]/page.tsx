@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { cache } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
@@ -16,11 +17,36 @@ import type { Metadata } from 'next'
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
-export const dynamic = 'force-dynamic'
+// ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
+export const revalidate = 3600
+
+// React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
+const getGroup = cache(async (id: string) => {
+    return prisma.musicalGroup.findUnique({
+        where: { id },
+        include: {
+            agency: true,
+            members: {
+                include: {
+                    artist: {
+                        select: {
+                            id: true,
+                            nameRomanized: true,
+                            nameHangul: true,
+                            primaryImageUrl: true,
+                            roles: true, gender: true,
+                        },
+                    },
+                },
+                orderBy: [{ isActive: 'desc' }, { position: 'asc' }, { joinDate: 'asc' }],
+            },
+        },
+    })
+})
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const group = await prisma.musicalGroup.findUnique({ where: { id: params.id } })
+    const group = await getGroup(params.id)
     if (!group) return { title: 'Grupo não encontrado - HallyuHub' }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
     const isThinContent = !group.profileImageUrl && !group.bio
@@ -47,29 +73,8 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
 
 export default async function GroupDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const [group, bioPt] = await Promise.all([
-    prisma.musicalGroup.findUnique({
-        where: { id: params.id },
-        include: {
-            agency: true,
-            members: {
-                include: {
-                    artist: {
-                        select: {
-                            id: true,
-                            nameRomanized: true,
-                            nameHangul: true,
-                            primaryImageUrl: true,
-                            roles: true, gender: true,
-                        },
-                    },
-                },
-                orderBy: [{ isActive: 'desc' }, { position: 'asc' }, { joinDate: 'asc' }],
-            },
-        },
-    }),
-    getTranslation('group', params.id, 'bio', 'pt-BR'),
-    ])
+    // Step 1: fetch group (deduplica com generateMetadata via React.cache)
+    const group = await getGroup(params.id)
 
     if (!group) {
         return (
@@ -95,48 +100,47 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
     const fanClubName = group.fanClubName ?? null
     const officialColorRaw = group.officialColor ?? null
     const videos = (group.videos as Array<{ title: string; url: string }>) || []
-
-    // Tema visual: officialColor > cor do site > fallback purple
     const websiteUrl = socialLinks.website ?? socialLinks.Website ?? socialLinks.official ?? null
-    const themeColor = officialColorRaw ?? (websiteUrl ? await fetchGroupThemeColor(websiteUrl) : null)
+
+    // Step 2: queries secundárias todas em paralelo
+    const [bioPt, themeColorFetched, relatedGroups, relatedNews, recentAlbums] = await Promise.all([
+        getTranslation('group', params.id, 'bio', 'pt-BR'),
+        !officialColorRaw && websiteUrl ? fetchGroupThemeColor(websiteUrl) : Promise.resolve(null),
+        prisma.musicalGroup.findMany({
+            where: {
+                id: { not: group.id },
+                ...(group.agencyId
+                    ? { agencyId: group.agencyId }
+                    : debutYear
+                        ? { debutDate: { gte: new Date(`${debutYear - 3}-01-01`), lte: new Date(`${debutYear + 3}-12-31`) } }
+                        : { id: 'never' }
+                ),
+            },
+            take: 6,
+            orderBy: { trendingScore: 'desc' },
+            select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
+        }),
+        memberArtistIds.length > 0
+            ? prisma.news.findMany({
+                where: { artists: { some: { artistId: { in: memberArtistIds } } } },
+                take: 6,
+                orderBy: { publishedAt: 'desc' },
+                select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true, contentMd: true },
+            })
+            : Promise.resolve([]),
+        memberArtistIds.length > 0
+            ? prisma.album.findMany({
+                where: { artistId: { in: memberArtistIds } },
+                take: 6,
+                orderBy: { releaseDate: 'desc' },
+                select: { id: true, title: true, type: true, coverUrl: true, releaseDate: true, spotifyUrl: true, artist: { select: { nameRomanized: true } } },
+            })
+            : Promise.resolve([]),
+    ])
+
+    const themeColor = officialColorRaw ?? themeColorFetched
     const accent = themeColor ?? '#9333ea'
     const themeVars = buildGroupThemeVars(themeColor)
-
-    // Grupos relacionados: mesma agência (excluindo este) ou mesma geração
-    const relatedGroups = await prisma.musicalGroup.findMany({
-        where: {
-            id: { not: group.id },
-            ...(group.agencyId
-                ? { agencyId: group.agencyId }
-                : debutYear
-                    ? { debutDate: { gte: new Date(`${debutYear - 3}-01-01`), lte: new Date(`${debutYear + 3}-12-31`) } }
-                    : { id: 'never' }
-            ),
-        },
-        take: 6,
-        orderBy: { trendingScore: 'desc' },
-        select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
-    })
-
-    // Notícias relacionadas aos membros do grupo
-    const relatedNews = memberArtistIds.length > 0
-        ? await prisma.news.findMany({
-            where: { artists: { some: { artistId: { in: memberArtistIds } } } },
-            take: 6,
-            orderBy: { publishedAt: 'desc' },
-            select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true, contentMd: true },
-        })
-        : []
-
-    // Discografia recente dos membros
-    const recentAlbums = memberArtistIds.length > 0
-        ? await prisma.album.findMany({
-            where: { artistId: { in: memberArtistIds } },
-            take: 6,
-            orderBy: { releaseDate: 'desc' },
-            select: { id: true, title: true, type: true, coverUrl: true, releaseDate: true, spotifyUrl: true, artist: { select: { nameRomanized: true } } },
-        })
-        : []
 
     const memberPersons = activeMembers.slice(0, 15).map(m => ({
         "@type": "Person",

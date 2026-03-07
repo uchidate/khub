@@ -6,7 +6,7 @@ import type { Metadata } from "next"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 export const metadata: Metadata = {
     title: 'Agências',
@@ -66,7 +66,7 @@ async function AgenciesGrid() {
             _count: { select: { artists: true, musicalGroups: true } },
         },
         orderBy: [{ musicalGroups: { _count: 'desc' } }, { artists: { _count: 'desc' } }],
-    })
+    }).catch(() => [] as never[])
 
     return (
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">

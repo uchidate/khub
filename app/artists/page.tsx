@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
@@ -6,7 +7,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
@@ -43,7 +44,9 @@ export default async function ArtistsPage() {
                 subtitle="Os ícones, as vozes e o talento. Explore perfis detalhados das estrelas que definem a cultura coreana."
             />
 
-            <ArtistsList />
+            <Suspense>
+                <ArtistsList />
+            </Suspense>
             <ScrollToTop />
         </PageTransition>
         </>

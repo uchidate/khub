@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { logAudit } from '@/lib/services/audit-service'
+import { revalidatePath } from 'next/cache'
 
 function handlePrismaError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -413,6 +414,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'Artist', entityId: artistId, details: `Editou artista "${artist.nameRomanized}"` })
+    revalidatePath(`/artists/${artistId}`)
+    revalidatePath('/artists')
     return NextResponse.json({ ...artist, clearedAlbumsCount: clearedAlbumsCount || undefined })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -442,6 +445,7 @@ export async function DELETE(request: NextRequest) {
     })
 
     await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'Artist', details: `Deletou ${result.count} artista(s) — IDs: ${ids.join(', ')}` })
+    revalidatePath('/artists')
     return NextResponse.json({ message: `${result.count} artista(s) deletado(s)` })
   } catch (error) {
     if (error instanceof z.ZodError) {

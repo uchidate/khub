@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { revalidatePath } from 'next/cache'
 
 const log = createLogger('ADMIN-GROUPS')
 
@@ -257,6 +258,8 @@ export async function PATCH(request: NextRequest) {
       data: updateData as Parameters<typeof prisma.musicalGroup.update>[0]['data'],
     })
 
+    revalidatePath(`/groups/${groupId}`)
+    revalidatePath('/groups')
     return NextResponse.json(group)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -303,6 +306,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: { in: ids } },
     })
 
+    revalidatePath('/groups')
     return NextResponse.json({ message: `${result.count} grupo(s) deletado(s)` })
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useDeferredValue, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -73,6 +73,9 @@ function SearchContent() {
 
     const [data, setData] = useState<SearchData | null>(null)
     const [loading, setLoading] = useState(false)
+    // useDeferredValue: mantém resultados anteriores visíveis enquanto nova busca carrega
+    const deferredData = useDeferredValue(data)
+    const isStale = loading && deferredData !== null
 
     const fetchResults = useCallback(async (q: string) => {
         if (!q || q.trim().length < 2) {
@@ -101,10 +104,10 @@ function SearchContent() {
         router.replace(`/search?${params.toString()}`, { scroll: false })
     }
 
-    const artists = data?.artists ?? []
-    const groups = data?.groups ?? []
-    const news = data?.news ?? []
-    const productions = data?.productions ?? []
+    const artists = deferredData?.artists ?? []
+    const groups = deferredData?.groups ?? []
+    const news = deferredData?.news ?? []
+    const productions = deferredData?.productions ?? []
     const total = artists.length + groups.length + news.length + productions.length
 
     const tabs: { key: FilterType; label: string; count: number; icon: React.ReactNode; color: string }[] = [
@@ -123,7 +126,7 @@ function SearchContent() {
     return (
         <>
             {/* Filter tabs — only shown when there are results */}
-            {data && total > 0 && (
+            {deferredData && total > 0 && (
                 <div className="flex flex-wrap gap-2 mb-8">
                     {tabs.map(tab => (
                         <button
@@ -155,7 +158,7 @@ function SearchContent() {
                     <Search className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
                     <p className="text-zinc-400 text-lg">Digite pelo menos 2 caracteres para buscar</p>
                 </div>
-            ) : loading ? (
+            ) : loading && !deferredData ? (
                 <div className="space-y-8">
                     {[1, 2].map(i => (
                         <div key={i} className="space-y-4">
@@ -166,7 +169,7 @@ function SearchContent() {
                         </div>
                     ))}
                 </div>
-            ) : data && total === 0 ? (
+            ) : deferredData && total === 0 ? (
                 <div className="text-center py-20">
                     <Search className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
                     <p className="text-zinc-400 text-lg mb-2">
@@ -174,8 +177,8 @@ function SearchContent() {
                     </p>
                     <p className="text-zinc-600">Tente buscar por artistas, grupos, notícias ou produções</p>
                 </div>
-            ) : data ? (
-                <div className="space-y-12">
+            ) : deferredData ? (
+                <div className={`space-y-12 transition-opacity duration-200 ${isStale ? 'opacity-50' : 'opacity-100'}`}>
                     {/* Summary */}
                     <div>
                         <p className="text-zinc-400">

@@ -7,7 +7,7 @@ import { NewsList } from "@/components/features/NewsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
@@ -49,7 +49,7 @@ async function NewsContent() {
             where: { flaggedAsNonKorean: false, news: { some: {} } },
             select: { id: true, nameRomanized: true },
             orderBy: { nameRomanized: 'asc' },
-        }),
+        }).catch(() => []),
         prisma.musicalGroup.findMany({
             where: {
                 members: {
@@ -60,7 +60,7 @@ async function NewsContent() {
             },
             select: { id: true, name: true },
             orderBy: { name: 'asc' },
-        }),
+        }).catch(() => []),
     ])
 
     return <NewsList initialArtists={artists} initialGroups={groups} />
