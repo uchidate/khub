@@ -63,8 +63,8 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'tags footer', pattern: /\n+Tags:?\s*[^\n]+/gi },
     // "Ratings: ..." linha isolada
     { description: 'ratings note', pattern: /\n+(?:\*{0,2})Ratings?:?\*{0,2}\s*[^\n]+(?:\n+[^\n]+)?\n+/gi },
-    // "RELATED POSTS" sections (início de linha ou após newline)
-    { description: 'related posts', pattern: /(?:\n+|\A)(?:\*{0,2})?RELATED POSTS:?\*{0,2}[\s\S]*$/gim },
+    // "RELATED POSTS" sections — tudo a partir daí até o fim
+    { description: 'related posts', pattern: /\n*^(?:\*{0,2})?RELATED POSTS:?\*{0,2}[\s\S]*$/gim },
     // Navegação entre episódios "[← Previous Episode] [Next Episode →]"
     { description: 'episode nav', pattern: /\n+\[?←?\s*(?:Previous|Prev)\.?\s*Episode\]?[^\n]*\n*/gi },
     { description: 'episode nav next', pattern: /\[?Next\s*Episode\s*→?\]?/gi },
