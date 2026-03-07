@@ -63,11 +63,16 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'tags footer', pattern: /\n+Tags:?\s*[^\n]+/gi },
     // "Ratings: ..." linha isolada
     { description: 'ratings note', pattern: /\n+(?:\*{0,2})Ratings?:?\*{0,2}\s*[^\n]+(?:\n+[^\n]+)?\n+/gi },
-    // "RELATED POSTS" sections
-    { description: 'related posts', pattern: /\n+(?:\*{0,2})?RELATED POSTS:?\*{0,2}\n(?:[-*]\s*.+\n)*/gi },
+    // "RELATED POSTS" sections — tudo a partir daí até o fim
+    { description: 'related posts', pattern: /\n*^(?:\*{0,2})?RELATED POSTS:?\*{0,2}[\s\S]*$/gim },
     // Navegação entre episódios "[← Previous Episode] [Next Episode →]"
     { description: 'episode nav', pattern: /\n+\[?←?\s*(?:Previous|Prev)\.?\s*Episode\]?[^\n]*\n*/gi },
     { description: 'episode nav next', pattern: /\[?Next\s*Episode\s*→?\]?/gi },
+    // Links de navegação interna do site (tabs: recaps, reviews, news, cast, episodes, videos)
+    // Aparecem em Drama Hangout/Open Thread como lista de links de seção
+    { description: 'site nav tabs', pattern: /^-\s*\[(?:recaps?|reviews?|news|videos?|cast|episodes?)\][^\n]*\n/gim },
+    // Linhas que são só links de âncora interna (#anchor) — navegação da página
+    { description: 'anchor nav links', pattern: /^-\s*\[[^\]]{1,30}\]\(#[^)]+\)\s*\n/gim },
   ],
 
   'Asian Junkie': [
