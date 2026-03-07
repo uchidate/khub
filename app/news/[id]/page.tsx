@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { cache } from "react"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -19,7 +20,31 @@ import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
-export const dynamic = 'force-dynamic'
+// ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
+export const revalidate = 3600
+
+// React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
+const getNews = cache(async (id: string) => {
+    return prisma.news.findUnique({
+        where: { id },
+        include: {
+            artists: {
+                include: {
+                    artist: {
+                        select: {
+                            id: true,
+                            nameRomanized: true,
+                            nameHangul: true,
+                            stageNames: true,
+                            primaryImageUrl: true,
+                            roles: true, gender: true
+                        }
+                    }
+                }
+            }
+        }
+    })
+})
 
 interface NewsDetailPageProps {
     params: Promise<{
@@ -29,9 +54,7 @@ interface NewsDetailPageProps {
 
 export async function generateMetadata(props: NewsDetailPageProps): Promise<Metadata> {
     const params = await props.params;
-    const news = await prisma.news.findUnique({
-        where: { id: params.id }
-    })
+    const news = await getNews(params.id)
 
     if (!news) {
         return {
@@ -83,25 +106,8 @@ export async function generateMetadata(props: NewsDetailPageProps): Promise<Meta
 
 export default async function NewsDetailPage(props: NewsDetailPageProps) {
     const params = await props.params;
-    const news = await prisma.news.findUnique({
-        where: { id: params.id },
-        include: {
-            artists: {
-                include: {
-                    artist: {
-                        select: {
-                            id: true,
-                            nameRomanized: true,
-                            nameHangul: true,
-                            stageNames: true,
-                            primaryImageUrl: true,
-                            roles: true, gender: true
-                        }
-                    }
-                }
-            }
-        }
-    })
+    // Deduplica com generateMetadata via React.cache
+    const news = await getNews(params.id)
 
     if (!news || news.isHidden) {
         notFound()

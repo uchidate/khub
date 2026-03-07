@@ -5,7 +5,8 @@ import { notFound } from "next/navigation"
 import { getRoleLabel } from "@/lib/utils/role-labels"
 import { ExternalLink, Users, Music2 } from "lucide-react"
 
-export const dynamic = 'force-dynamic'
+// ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
+export const revalidate = 3600
 
 export default async function AgencyDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;

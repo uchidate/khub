@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { cache } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { getRoleLabels } from "@/lib/utils/role-labels"
@@ -21,7 +22,33 @@ import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
-export const dynamic = 'force-dynamic'
+// ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
+export const revalidate = 3600
+
+// React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
+const getArtist = cache(async (id: string) => {
+    return prisma.artist.findUnique({
+        where: { id },
+        include: {
+            agency: true,
+            albums: { orderBy: { releaseDate: 'desc' } },
+            productions: {
+                where: { production: { flaggedAsNonKorean: false } },
+                include: { production: true },
+                orderBy: { production: { year: { sort: 'desc', nulls: 'last' } } },
+            },
+            memberships: {
+                include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },
+                orderBy: { isActive: 'desc' },
+            },
+            streamingSignals: {
+                where: { expiresAt: { gt: new Date() } },
+                select: { showTitle: true, showTmdbId: true, rank: true, source: true },
+                orderBy: { rank: 'asc' },
+            },
+        }
+    })
+})
 
 interface SocialPlatform {
     icon: React.ElementType | string
@@ -58,10 +85,7 @@ function getSocialPlatform(key: string): SocialPlatform {
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const artist = await prisma.artist.findUnique({
-        where: { id: params.id },
-        include: { agency: true }
-    })
+    const artist = await getArtist(params.id)
 
     if (!artist) {
         return {
@@ -97,28 +121,25 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
 
 export default async function ArtistDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const [artist, artistNews, instagramPosts, newsCount, bioPt] = await Promise.all([
-        prisma.artist.findUnique({
-            where: { id: params.id },
-            include: {
-                agency: true,
-                albums: { orderBy: { releaseDate: 'desc' } },
-                productions: {
-                    where: { production: { flaggedAsNonKorean: false } },
-                    include: { production: true },
-                    orderBy: { production: { year: { sort: 'desc', nulls: 'last' } } },
-                },
-                memberships: {
-                    include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },
-                    orderBy: { isActive: 'desc' },
-                },
-                streamingSignals: {
-                    where: { expiresAt: { gt: new Date() } },
-                    select: { showTitle: true, showTmdbId: true, rank: true, source: true },
-                    orderBy: { rank: 'asc' },
-                },
-            }
-        }),
+    // Step 1: fetch artist (deduplica com generateMetadata via React.cache)
+    const artist = await getArtist(params.id)
+
+    if (!artist) {
+        return (
+            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+                <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: 'Não Encontrado' }]} />
+                <ErrorMessage
+                    title="Artista não encontrado"
+                    message="Este artista pode ter sido removido ou o link está incorreto."
+                    showSupport={true}
+                />
+            </div>
+        )
+    }
+
+    // Step 2: queries secundárias todas em paralelo (incluindo relatedArtists)
+    const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
+    const [artistNews, instagramPosts, newsCount, bioPt, relatedArtists] = await Promise.all([
         prisma.news.findMany({
             where: { artists: { some: { artistId: params.id } } },
             select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
@@ -133,20 +154,19 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
         }),
         prisma.news.count({ where: { artists: { some: { artistId: params.id } } } }),
         getTranslation('artist', params.id, 'bio', 'pt-BR'),
+        activeGroupId
+            ? prisma.artist.findMany({
+                where: {
+                    id: { not: artist.id },
+                    flaggedAsNonKorean: false,
+                    memberships: { some: { groupId: activeGroupId, isActive: true } },
+                },
+                take: 8,
+                select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
+                orderBy: { trendingScore: 'desc' },
+            })
+            : Promise.resolve([]),
     ])
-
-    if (!artist) {
-        return (
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: 'Não Encontrado' }]} />
-                <ErrorMessage
-                    title="Artista não encontrado"
-                    message="Este artista pode ter sido removido ou o link está incorreto."
-                    showSupport={true}
-                />
-            </div>
-        )
-    }
 
     // Mapa de tmdbId → sinal de streaming (melhor rank por produção)
     const streamingByTmdbId = new Map(
@@ -162,20 +182,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
     const allGroups = artist.memberships
-
-    // Artistas relacionados: outros membros do grupo principal
-    const relatedArtists = activeGroup
-        ? await prisma.artist.findMany({
-            where: {
-                id: { not: artist.id },
-                flaggedAsNonKorean: false,
-                memberships: { some: { groupId: activeGroup.id, isActive: true } },
-            },
-            take: 8,
-            select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
-            orderBy: { trendingScore: 'desc' },
-        })
-        : []
 
     return (
         <div className="min-h-screen bg-black">
