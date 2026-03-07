@@ -136,7 +136,7 @@ export default function ForgotPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="flex-1 px-3 py-3 bg-transparent text-white placeholder-zinc-500 focus:outline-none"
+                  className="flex-1 px-3 py-3 bg-transparent border-0 text-white placeholder-zinc-500 focus:outline-none"
                   placeholder="seu@email.com"
                 />
               </div>

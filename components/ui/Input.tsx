@@ -44,7 +44,7 @@ export function Input({
           id={inputId}
           className={`
             flex-1 px-4 py-3 text-sm
-            bg-transparent text-white
+            bg-transparent border-0 text-white
             placeholder:text-zinc-500
             disabled:opacity-50 disabled:cursor-not-allowed
             focus:outline-none

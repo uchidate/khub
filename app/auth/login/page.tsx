@@ -177,7 +177,7 @@ function LoginForm() {
                   onChange={e => setValues(v => ({ ...v, email: e.target.value }))}
                   required
                   disabled={isLoading}
-                  className="flex-1 px-3 py-2.5 text-sm bg-transparent text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
+                  className="flex-1 px-3 py-2.5 text-sm bg-transparent border-0 text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -201,7 +201,7 @@ function LoginForm() {
                   onChange={e => setValues(v => ({ ...v, password: e.target.value }))}
                   required
                   disabled={isLoading}
-                  className="flex-1 px-3 py-2.5 text-sm bg-transparent text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
+                  className="flex-1 px-3 py-2.5 text-sm bg-transparent border-0 text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
                   placeholder="••••••••"
                 />
               </div>

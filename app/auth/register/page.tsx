@@ -106,7 +106,7 @@ function FieldInput({
           onChange={onChange}
           required
           disabled={disabled}
-          className="flex-1 px-3 py-2.5 text-sm bg-transparent text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
+          className="flex-1 px-3 py-2.5 text-sm bg-transparent border-0 text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
           placeholder={placeholder}
         />
       </div>

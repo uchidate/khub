@@ -142,7 +142,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={!token}
-                  className="flex-1 px-3 py-3 bg-transparent text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-3 bg-transparent border-0 text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Mínimo 6 caracteres"
                 />
               </div>
@@ -162,7 +162,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   disabled={!token}
-                  className="flex-1 px-3 py-3 bg-transparent text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-3 bg-transparent border-0 text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Digite a senha novamente"
                 />
               </div>
