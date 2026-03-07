@@ -134,10 +134,9 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                     <button
                         key={s}
                         onClick={() => handleSelectStatus(s)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${entry?.status === s ? 'bg-zinc-700 text-white' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${entry?.status === s ? 'bg-zinc-700 text-white' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
                     >
-                        <span className="text-base">{WATCH_STATUS_ICONS[s]}</span>
-                        <span>{WATCH_STATUS_LABELS[s]}</span>
+                        {WATCH_STATUS_LABELS[s]}
                     </button>
                 ))}
             </div>

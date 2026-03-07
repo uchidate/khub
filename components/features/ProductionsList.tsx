@@ -177,7 +177,7 @@ export function ProductionsList() {
                         onChange={(e) => setSearchInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(searchInput) }}
                         onBlur={() => handleSearch(searchInput)}
-                        placeholder="Buscar filme, série ou drama..."
+                        placeholder="Buscar filme, série ou drama"
                         className="w-full px-4 pr-10 py-3.5 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                     />
                     {searchInput ? (

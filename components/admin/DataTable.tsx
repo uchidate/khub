@@ -40,7 +40,7 @@ export function DataTable<T extends { id: string }>({
   editHref,
   onDelete,
   actions,
-  searchPlaceholder = 'Buscar...',
+  searchPlaceholder = 'Buscar',
   filters,
   extraParams,
   renderMobileCard,

@@ -105,7 +105,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                 <div className="flex-1 relative">
                     <input
                         type="text"
-                        placeholder="Buscar por nome..."
+                        placeholder="Buscar por nome"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full px-4 pr-12 py-4 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
