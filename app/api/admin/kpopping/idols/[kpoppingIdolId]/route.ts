@@ -3,10 +3,8 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { kpoppingIdolId: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ kpoppingIdolId: string }> }) {
+  const params = await props.params;
   const { error } = await requireAdmin()
   if (error) return error
 

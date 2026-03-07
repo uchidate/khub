@@ -10,10 +10,8 @@ const log = createLogger('ARTISTS')
 // POST → adicionar favorito
 // - Incrementa favoriteCount no Artist (para trending)
 // - Cria registro em Favorite se autenticado (para perfil)
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions)
 
@@ -48,10 +46,8 @@ export async function POST(
 // DELETE → remover favorito
 // - Decrementa favoriteCount no Artist (para trending)
 // - Remove registro de Favorite se autenticado (para perfil)
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions)
 

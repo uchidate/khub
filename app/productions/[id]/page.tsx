@@ -33,7 +33,8 @@ const getProduction = cache(async (id: string) => {
     })
 })
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const params = await props.params;
     const production = await getProduction(params.id)
 
     if (!production) {
@@ -76,7 +77,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     }
 }
 
-export default async function ProductionDetailPage({ params }: { params: { id: string } }) {
+export default async function ProductionDetailPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
 
     const production = await getProduction(params.id)
 

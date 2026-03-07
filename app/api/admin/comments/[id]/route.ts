@@ -4,10 +4,8 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import { logAudit } from '@/lib/services/audit-service'
 
 // PATCH /api/admin/comments/[id] — alterar status ou nota
-export async function PATCH(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const { error, session } = await requireAdmin()
     if (error) return error
 
@@ -43,10 +41,8 @@ export async function PATCH(
 }
 
 // DELETE /api/admin/comments/[id] — exclusão individual
-export async function DELETE(
-    _req: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const { error, session } = await requireAdmin()
     if (error) return error
 

@@ -7,10 +7,8 @@ import { getErrorMessage } from '@/lib/utils/error'
 
 const log = createLogger('NEWS-VIEW')
 
-export async function POST(
-    _request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const { id } = params
         const session = await getServerSession(authOptions)

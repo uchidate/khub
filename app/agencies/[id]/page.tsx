@@ -7,7 +7,8 @@ import { ExternalLink, Users, Music2 } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
-export default async function AgencyDetailPage({ params }: { params: { id: string } }) {
+export default async function AgencyDetailPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const agency = await prisma.agency.findUnique({
         where: { id: params.id },
         include: {

@@ -7,10 +7,8 @@ import { getErrorMessage } from '@/lib/utils/error'
 
 const log = createLogger('PRODUCTIONS-FAVORITE')
 
-export async function POST(
-    _request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) {
@@ -34,10 +32,8 @@ export async function POST(
     }
 }
 
-export async function DELETE(
-    _request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) {

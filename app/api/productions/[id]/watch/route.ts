@@ -11,10 +11,8 @@ const log = createLogger('PRODUCTIONS-WATCH')
  * GET /api/productions/[id]/watch
  * Returns the current user's WatchEntry for this production (or null).
  */
-export async function GET(
-    _request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
         return NextResponse.json({ entry: null })
@@ -33,10 +31,8 @@ export async function GET(
  * Upserts a WatchEntry for the current user.
  * Body: { status, rating?, notes?, watchedAt? }
  */
-export async function POST(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) {
@@ -79,10 +75,8 @@ export async function POST(
  * DELETE /api/productions/[id]/watch
  * Removes the current user's WatchEntry for this production.
  */
-export async function DELETE(
-    _request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) {

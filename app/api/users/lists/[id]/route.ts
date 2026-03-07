@@ -25,7 +25,8 @@ async function getOwnedList(userId: string, listId: string) {
  * GET /api/users/lists/[id]
  * Returns a list with its items
  */
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await auth()
         if (!session?.user?.id) {
@@ -52,7 +53,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
  * PATCH /api/users/lists/[id]
  * Update list name/description/visibility
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await auth()
         if (!session?.user?.id) {
@@ -80,7 +82,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * DELETE /api/users/lists/[id]
  * Delete a list and all its items
  */
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await auth()
         if (!session?.user?.id) {

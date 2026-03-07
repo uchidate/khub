@@ -18,7 +18,8 @@ const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export const dynamic = 'force-dynamic'
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const params = await props.params;
     const group = await prisma.musicalGroup.findUnique({ where: { id: params.id } })
     if (!group) return { title: 'Grupo não encontrado - HallyuHub' }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
@@ -44,7 +45,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     }
 }
 
-export default async function GroupDetailPage({ params }: { params: { id: string } }) {
+export default async function GroupDetailPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const [group, bioPt] = await Promise.all([
     prisma.musicalGroup.findUnique({
         where: { id: params.id },
@@ -177,7 +179,6 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                     { "@type": "ListItem", "position": 2, "name": group.name, "item": `${BASE_URL}/groups/${group.id}` },
                 ],
             }} />
-
             {/* ── HERO ── */}
             <div className="relative h-[60vh] md:h-[75vh] overflow-hidden">
                 {/* Background image com blur */}
@@ -320,7 +321,6 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                     </div>
                 </div>
             </div>
-
             {/* ── CONTEÚDO ── */}
             <div className="px-4 sm:px-12 md:px-20 py-12">
                 <div className="grid lg:grid-cols-3 gap-12 max-w-[1600px] mx-auto">
@@ -649,7 +649,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
 /* ── Helpers ── */
