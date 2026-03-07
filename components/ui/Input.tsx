@@ -33,9 +33,9 @@ export function Input({
         </label>
       )}
 
-      <div className={`flex items-center bg-zinc-900 border rounded-lg transition-all duration-200 ${error ? 'border-red-500 focus-within:ring-red-500' : 'border-zinc-800 focus-within:ring-purple-500'} focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-black`}>
+      <div className="relative">
         {icon && (
-          <div className="pl-3 text-zinc-400 pointer-events-none flex items-center justify-center shrink-0">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none z-10 flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -43,11 +43,13 @@ export function Input({
         <input
           id={inputId}
           className={`
-            flex-1 px-4 py-3 text-sm
-            bg-transparent border-0 text-white
+            w-full ${icon ? 'pl-10' : 'px-4'} pr-4 py-3 text-sm
+            bg-zinc-900 [color-scheme:dark] text-white
+            border rounded-lg transition-all duration-200
             placeholder:text-zinc-500
             disabled:opacity-50 disabled:cursor-not-allowed
-            focus:outline-none
+            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black
+            ${error ? 'border-red-500 focus:ring-red-500' : 'border-zinc-800 focus:ring-purple-500'}
             ${className}
           `}
           aria-invalid={error ? 'true' : 'false'}
@@ -58,7 +60,7 @@ export function Input({
         />
 
         {error && (
-          <div className="pr-3 text-red-500 shrink-0">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none z-10">
             <AlertCircle size={20} />
           </div>
         )}

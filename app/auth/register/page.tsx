@@ -96,8 +96,8 @@ function FieldInput({
       <label htmlFor={id} className="block text-sm font-medium text-zinc-300 mb-1.5">
         {label}
       </label>
-      <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl focus-within:border-purple-500/60 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
-        <span className="pl-3.5 text-zinc-500 shrink-0"><Icon size={16} /></span>
+      <div className="relative">
+        <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none z-10" size={16} />
         <input
           id={id}
           name={name}
@@ -106,7 +106,7 @@ function FieldInput({
           onChange={onChange}
           required
           disabled={disabled}
-          className="flex-1 px-3 py-2.5 text-sm bg-transparent border-0 text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
+          className="w-full pl-10 pr-4 py-2.5 text-sm bg-zinc-900 [color-scheme:dark] border border-zinc-800 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/20 transition-all disabled:opacity-50"
           placeholder={placeholder}
         />
       </div>
