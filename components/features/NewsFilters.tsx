@@ -72,19 +72,20 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
     return (
         <div className="mb-8 space-y-4">
             {/* Barra de Busca Principal */}
-            <div className="flex items-center gap-2 bg-zinc-900/50 border border-white/10 rounded-xl px-4 focus-within:border-purple-500/50 focus-within:ring-2 focus-within:ring-purple-500/20 transition-all">
-                <Search className="w-5 h-5 text-zinc-500 shrink-0" />
+            <div className="relative">
                 <input
                     type="text"
                     placeholder="Buscar"
                     value={filters.search || ''}
                     onChange={(e) => updateFilter('search', e.target.value || undefined)}
-                    className="flex-1 bg-zinc-900 py-4 text-white placeholder:text-zinc-500 focus:outline-none"
+                    className="w-full px-4 pr-12 py-4 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
                 />
-                {filters.search && (
-                    <button onClick={() => updateFilter('search', undefined)} className="text-zinc-500 hover:text-white transition-colors shrink-0">
+                {filters.search ? (
+                    <button onClick={() => updateFilter('search', undefined)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors z-10">
                         <X className="w-5 h-5" />
                     </button>
+                ) : (
+                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 pointer-events-none" />
                 )}
             </div>
 
