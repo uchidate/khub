@@ -22,6 +22,7 @@ const newsSchema = z.object({
   imageUrl: z.string().url().optional(),
   publishedAt: z.string().optional(), // ISO date string
   tags: z.array(z.string()).optional(),
+  isHidden: z.boolean().optional(),
 })
 
 /**

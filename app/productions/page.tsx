@@ -1,13 +1,9 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
-import { unstable_cache } from 'next/cache'
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
-import { StreamingHighlights } from "@/components/features/StreamingHighlights"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { STREAMING_TAB_ORDER } from "@/lib/config/streaming-platforms"
-import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 
@@ -30,36 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     }
 }
 
-const getStreamingShows = unstable_cache(
-    async () => prisma.streamingShow.findMany({
-        where: {
-            source: { in: STREAMING_TAB_ORDER },
-            expiresAt: { gt: new Date() },
-        },
-        select: {
-            source: true, rank: true, showTitle: true, tmdbId: true,
-            posterUrl: true, year: true, voteAverage: true, isKorean: true, productionId: true,
-            production: { select: { titlePt: true } },
-        },
-        orderBy: [{ source: 'asc' }, { rank: 'asc' }],
-    }).catch(() => []),
-    ['streaming-shows'],
-    { revalidate: 300 }
-)
-
 export default async function ProductionsPage() {
-    const streamingShowsRaw = await getStreamingShows()
-
-    const showsByPlatform: ShowsByPlatform = {}
-    for (const show of streamingShowsRaw) {
-        if (!showsByPlatform[show.source]) showsByPlatform[show.source] = []
-        showsByPlatform[show.source].push({
-            ...show,
-            productionId: show.productionId ?? undefined,
-            productionTitle: show.production?.titlePt ?? undefined,
-        })
-    }
-
     return (
         <>
         <JsonLd data={{
@@ -76,8 +43,6 @@ export default async function ProductionsPage() {
                 title="Produções"
                 subtitle="De romances épicos a thrillers de tirar o fôlego. O melhor do entretenimento coreano selecionado para você."
             />
-
-            <StreamingHighlights showsByPlatform={showsByPlatform} />
 
             <Suspense>
                 <ProductionsList />
