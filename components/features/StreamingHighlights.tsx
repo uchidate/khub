@@ -37,7 +37,7 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                         <h2 className="text-xl md:text-2xl font-black dark:text-white text-zinc-900 tracking-tight">
                             Top 10 nos Streamings
                         </h2>
-                        <p className="text-zinc-500 text-xs">K-dramas em destaque por plataforma</p>
+                        <p className="text-zinc-500 text-xs">Produções em destaque por plataforma</p>
                     </div>
                 </div>
             </div>
