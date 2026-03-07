@@ -89,7 +89,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         transition={{ duration: 0.6 }}
                     >
                         <p className="inline-flex items-center gap-1.5 text-neon-pink font-black tracking-widest uppercase text-[10px] mb-4 px-3 py-1 rounded-full border border-neon-pink/30 bg-neon-pink/10">
-                            ✦ A plataforma Hallyu do Brasil
+                            A plataforma Hallyu do Brasil
                         </p>
 
                         <h1 className="text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
