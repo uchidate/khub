@@ -70,11 +70,13 @@ export async function middleware(request: NextRequest) {
         || request.headers.get('x-real-ip')
         || undefined
     const secret = process.env.NEXTAUTH_SECRET
-    // Usar NEXTAUTH_URL (variável de servidor fixo) para evitar SSRF via header Host
-    const baseUrl = (process.env.NEXTAUTH_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+    // Usar http://localhost:3000 para chamadas internas do middleware (Edge runtime).
+    // NEXTAUTH_URL aponta para a URL pública (https://...) — fetch HTTPS no Edge runtime
+    // pode falhar silenciosamente por restrições de TLS/DNS dentro do container Docker.
     if (secret) {
-      fetch(`${baseUrl}/api/internal/bot-log`, {
+      fetch('http://localhost:3000/api/internal/bot-log', {
         method: 'POST',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
           'x-internal-secret': secret,
@@ -86,7 +88,9 @@ export async function middleware(request: NextRequest) {
           userAgent: ua ?? '',
           referer: request.headers.get('referer') ?? undefined,
         }),
-      }).catch(() => { /* ignorar erros de log */ })
+      }).catch((err: unknown) => {
+        console.error('[bot-log]', err instanceof Error ? err.message : err)
+      })
     }
   }
 
