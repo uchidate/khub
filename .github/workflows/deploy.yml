@@ -373,7 +373,7 @@ jobs:
         if: success()
         run: |
           BASE=http://31.97.255.107:3001
-          PAGES="/productions /groups /artists /news"
+          PAGES="/groups /artists /news"
           echo "Aquecendo cache ISR..."
           for page in $PAGES; do
             curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page} (ignorado)"
@@ -587,7 +587,7 @@ jobs:
         if: success()
         run: |
           BASE=https://www.hallyuhub.com.br
-          PAGES="/productions /groups /artists /news"
+          PAGES="/groups /artists /news"
           echo "Aquecendo cache ISR..."
           for page in $PAGES; do
             curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page} (ignorado)"
