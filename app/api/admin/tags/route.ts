@@ -9,9 +9,26 @@ export const dynamic = 'force-dynamic'
 
 const log = createLogger('ADMIN-TAGS')
 
+/** Normalize a tag for duplicate detection (lowercase, remove spaces/hyphens/underscores) */
+function normalize(tag: string): string {
+    return tag.toLowerCase().replace(/[\s\-_]/g, '')
+}
+
+/** Find groups of tags that normalize to the same string (probable duplicates) */
+function findDuplicateGroups(tags: string[]): string[][] {
+    const normMap = new Map<string, string[]>()
+    for (const tag of tags) {
+        const key = normalize(tag)
+        const group = normMap.get(key) ?? []
+        group.push(tag)
+        normMap.set(key, group)
+    }
+    return Array.from(normMap.values()).filter(g => g.length > 1)
+}
+
 /**
  * GET /api/admin/tags
- * Returns all unique tags across News and Productions with usage counts.
+ * Returns all unique tags across News and Productions with usage counts + duplicate groups.
  */
 export async function GET() {
     const { error } = await requireAdmin()
@@ -23,8 +40,6 @@ export async function GET() {
             prisma.production.findMany({ select: { tags: true } }),
         ])
 
-        // Aggregate tags keeping original casing but grouping case-insensitively
-        // to surface inconsistencies
         const tagMap = new Map<string, { newsCount: number; productionCount: number }>()
 
         for (const n of newsList) {
@@ -56,7 +71,9 @@ export async function GET() {
             }))
             .sort((a, b) => b.total - a.total || a.tag.localeCompare(b.tag))
 
-        return NextResponse.json({ tags, total: tags.length })
+        const duplicateGroups = findDuplicateGroups(Array.from(tagMap.keys()))
+
+        return NextResponse.json({ tags, total: tags.length, duplicateGroups })
     } catch (error) {
         log.error('Error fetching tags', { error: getErrorMessage(error) })
         return NextResponse.json({ error: 'Erro ao buscar tags' }, { status: 500 })
@@ -66,11 +83,14 @@ export async function GET() {
 const renameSchema = z.object({
     oldTag: z.string().min(1),
     newTag: z.string().min(1),
+    merge: z.boolean().optional().default(false),
 })
 
 /**
  * PATCH /api/admin/tags
- * Rename a tag across all News and Productions.
+ * Rename (or merge) a tag across all News and Productions.
+ * If `merge: true`, allows renaming to an existing tag (merges them).
+ * Always deduplicates the tags array after update.
  */
 export async function PATCH(request: NextRequest) {
     const { error } = await requireAdmin()
@@ -78,43 +98,53 @@ export async function PATCH(request: NextRequest) {
 
     try {
         const body = await request.json()
-        const { oldTag, newTag } = renameSchema.parse(body)
+        const { oldTag, newTag, merge } = renameSchema.parse(body)
 
         if (oldTag === newTag) {
             return NextResponse.json({ error: 'Tag nova deve ser diferente da atual' }, { status: 400 })
         }
 
-        // Update News: replace oldTag with newTag in tags array
-        const newsToUpdate = await prisma.news.findMany({
-            where: { tags: { has: oldTag } },
-            select: { id: true, tags: true },
-        })
+        // Check if target already exists (merge scenario)
+        const targetExists = await prisma.news.count({ where: { tags: { has: newTag } } })
+            .then(n => n > 0)
+            .catch(() => false)
+        const targetExistsProd = await prisma.production.count({ where: { tags: { has: newTag } } })
+            .then(n => n > 0)
+            .catch(() => false)
 
-        // Update Productions: replace oldTag with newTag in tags array
-        const prodsToUpdate = await prisma.production.findMany({
-            where: { tags: { has: oldTag } },
-            select: { id: true, tags: true },
-        })
+        if ((targetExists || targetExistsProd) && !merge) {
+            return NextResponse.json({ error: `Tag "${newTag}" já existe. Use merge: true para mesclar.`, conflict: true }, { status: 409 })
+        }
+
+        const [newsToUpdate, prodsToUpdate] = await Promise.all([
+            prisma.news.findMany({ where: { tags: { has: oldTag } }, select: { id: true, tags: true } }),
+            prisma.production.findMany({ where: { tags: { has: oldTag } }, select: { id: true, tags: true } }),
+        ])
 
         await prisma.$transaction(async (tx) => {
             for (const n of newsToUpdate) {
-                await tx.news.update({
-                    where: { id: n.id },
-                    data: { tags: n.tags.map(t => t === oldTag ? newTag : t) },
-                })
+                const updated = n.tags.map(t => t === oldTag ? newTag : t)
+                // Dedup: remove duplicates that may arise from merging
+                const deduped = Array.from(new Set(updated))
+                await tx.news.update({ where: { id: n.id }, data: { tags: deduped } })
             }
             for (const p of prodsToUpdate) {
-                await tx.production.update({
-                    where: { id: p.id },
-                    data: { tags: p.tags.map(t => t === oldTag ? newTag : t) },
-                })
+                const updated = p.tags.map(t => t === oldTag ? newTag : t)
+                const deduped = Array.from(new Set(updated))
+                await tx.production.update({ where: { id: p.id }, data: { tags: deduped } })
             }
         })
 
-        log.info('Tag renamed', { oldTag, newTag, newsUpdated: newsToUpdate.length, prodsUpdated: prodsToUpdate.length })
+        log.info(merge ? 'Tag merged' : 'Tag renamed', {
+            oldTag, newTag,
+            newsUpdated: newsToUpdate.length,
+            prodsUpdated: prodsToUpdate.length,
+        })
 
         return NextResponse.json({
-            message: `Tag "${oldTag}" renomeada para "${newTag}"`,
+            message: merge
+                ? `Tag "${oldTag}" mesclada em "${newTag}"`
+                : `Tag "${oldTag}" renomeada para "${newTag}"`,
             newsUpdated: newsToUpdate.length,
             productionsUpdated: prodsToUpdate.length,
         })
@@ -150,16 +180,10 @@ export async function DELETE(request: NextRequest) {
 
         await prisma.$transaction(async (tx) => {
             for (const n of newsToUpdate) {
-                await tx.news.update({
-                    where: { id: n.id },
-                    data: { tags: n.tags.filter(t => t !== tag) },
-                })
+                await tx.news.update({ where: { id: n.id }, data: { tags: n.tags.filter(t => t !== tag) } })
             }
             for (const p of prodsToUpdate) {
-                await tx.production.update({
-                    where: { id: p.id },
-                    data: { tags: p.tags.filter(t => t !== tag) },
-                })
+                await tx.production.update({ where: { id: p.id }, data: { tags: p.tags.filter(t => t !== tag) } })
             }
         })
 
