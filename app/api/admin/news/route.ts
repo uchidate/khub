@@ -6,6 +6,7 @@ import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { logAudit } from '@/lib/services/audit-service'
 import { getNewsNotificationService } from '@/lib/services/news-notification-service'
+import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service'
 import { revalidatePath } from 'next/cache'
 
 const log = createLogger('ADMIN-NEWS')
@@ -99,10 +100,22 @@ export async function POST(request: NextRequest) {
     })
 
     await logAudit({ adminId: session!.user.id, action: 'CREATE', entity: 'News', entityId: news.id, details: `Criou notícia "${news.title}"` })
-    // Fire-and-forget IN_APP notifications
-    void getNewsNotificationService().notifyInAppForNews(news.id).catch(
-      (e: Error) => log.warn('IN_APP notify failed (non-blocking)', { error: e.message })
-    )
+    // Fire-and-forget: extrair artistas e notificar IN_APP
+    void (async () => {
+      try {
+        const content = (data as { contentMd?: string }).contentMd ?? ''
+        const mentions = await getNewsArtistExtractionService(prisma).extractArtists(news.title, content)
+        if (mentions.length > 0) {
+          await prisma.newsArtist.createMany({
+            data: mentions.map(m => ({ newsId: news.id, artistId: m.artistId })),
+            skipDuplicates: true,
+          })
+          void getNewsNotificationService().notifyInAppForNews(news.id).catch(() => {})
+        }
+      } catch (e: unknown) {
+        log.warn('Post-create artist extraction failed (non-blocking)', { error: e instanceof Error ? e.message : e })
+      }
+    })()
     revalidatePath(`/news/${news.id}`)
     revalidatePath('/news')
     return NextResponse.json(news, { status: 201 })
