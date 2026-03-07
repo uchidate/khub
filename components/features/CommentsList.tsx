@@ -71,7 +71,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
 
     const canDelete = (comment: Comment) => {
         if (!session?.user) return false
-        return session.user.email === comment.user.id || session.user.role === 'admin'
+        return session.user.id === comment.user.id || session.user.role === 'admin'
     }
 
     const getRoleBadgeColor = (role: string | null) => {
