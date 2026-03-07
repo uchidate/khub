@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
+import { onCronError } from '@/lib/utils/cron-logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import {
     getSignalProviders,
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     runFetchStreamingSignals()
         .then(result => log.info('Fetch streaming signals completed', { requestId, ...result }))
-        .catch(err => log.error('Fetch streaming signals failed', { requestId, error: getErrorMessage(err) }))
+        .catch(onCronError(log, 'cron-fetch-streaming-signals', 'Fetch streaming signals failed'))
 
     return NextResponse.json({ success: true, status: 'accepted', requestId }, { status: 202 })
 }

@@ -14,7 +14,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getNewsNotificationService } from '@/lib/services/news-notification-service';
-import { createLogger } from '@/lib/utils/logger';
+import { createLogger } from '@/lib/utils/logger'
+import { logSystemEvent } from '@/lib/services/system-event-service';
 import { getErrorMessage } from '@/lib/utils/error';
 
 const log = createLogger('DIGEST');
@@ -138,6 +139,7 @@ export async function GET(request: NextRequest) {
     } catch (error: unknown) {
         const duration = Date.now() - startTime;
         log.error('Digest job failed', { error: getErrorMessage(error), duration });
+        logSystemEvent('ERROR', 'cron-digest', `Digest job failed: ${getErrorMessage(error)}`, { duration }).catch(() => {});
 
         return NextResponse.json(
             {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import prisma from '@/lib/prisma';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
@@ -75,11 +76,7 @@ export async function POST(request: NextRequest) {
         }, { status: 409 });
     }
 
-    runBackfill(limit, lockId, log).catch(err => {
-        log.error('Unhandled error in background image backfill', {
-            error: err instanceof Error ? err.message : String(err),
-        });
-    });
+    runBackfill(limit, lockId, log).catch(onCronError(log, 'cron-backfill-images', 'Unhandled error in background job'));
 
     return NextResponse.json({
         status: 'accepted',

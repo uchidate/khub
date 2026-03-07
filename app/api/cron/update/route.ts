@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import prisma from '@/lib/prisma';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
-import { createLogger } from '@/lib/utils/logger';
+import { createLogger } from '@/lib/utils/logger'
+import { onCronError } from '@/lib/utils/cron-logger';
 import { getErrorMessage } from '@/lib/utils/error';
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter';
 import { TrendingService } from '@/lib/services/trending-service';
@@ -81,9 +82,7 @@ export async function GET(request: NextRequest) {
 
         // 2. Disparar processamento em background (fire-and-forget)
         // O Node.js standalone mantém o processo vivo, então a Promise executa até o fim
-        runCronProcessing(lockId).catch(err => {
-            log.error('Unhandled error in background processing', { error: getErrorMessage(err) });
-        });
+        runCronProcessing(lockId).catch(onCronError(log, 'cron-update', 'Unhandled error in background processing'));
 
         // 3. Retornar 202 imediatamente (antes do timeout do nginx de 60s)
         return NextResponse.json({

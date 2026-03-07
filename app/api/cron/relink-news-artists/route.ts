@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import prisma from '@/lib/prisma';
 import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service';
@@ -58,11 +59,7 @@ export async function POST(request: NextRequest) {
 
     log.info('Starting news artist relink job', { limit, offset, mode });
 
-    runRelinkJob(prisma, limit, offset, mode, requestId, log).catch(err => {
-        log.error('Unhandled error in background relink job', {
-            error: err instanceof Error ? err.message : String(err)
-        });
-    });
+    runRelinkJob(prisma, limit, offset, mode, requestId, log).catch(onCronError(log, 'cron-relink-news-artists', 'Unhandled error in background job'));
 
     return NextResponse.json({
         status: 'accepted',
