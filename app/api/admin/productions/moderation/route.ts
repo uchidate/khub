@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 
@@ -8,67 +9,120 @@ const log = createLogger('PRODUCTION_MODERATION')
 
 export const dynamic = 'force-dynamic'
 
+function buildWhere(filter: string, search?: string) {
+  const titleFilter = search
+    ? {
+        OR: [
+          { titlePt: { contains: search, mode: 'insensitive' as const } },
+          { titleKr: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+    : {}
+
+  switch (filter) {
+    case 'suspicious':
+      return {
+        AND: [
+          { flaggedAsNonKorean: false },
+          { OR: [{ titleKr: null }, { tmdbId: null }] },
+          ...(search ? [titleFilter] : []),
+        ],
+      }
+    case 'recent': {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      return {
+        createdAt: { gte: sevenDaysAgo },
+        flaggedAsNonKorean: false,
+        ...titleFilter,
+      }
+    }
+    case 'flagged':
+      return { flaggedAsNonKorean: true, ...titleFilter }
+    case 'all':
+    default:
+      return { flaggedAsNonKorean: false, ...titleFilter }
+  }
+}
+
+function calcSuspicion(production: {
+  titlePt: string | null
+  titleKr: string | null
+  tmdbId: string | null
+  streamingPlatforms: string[]
+  _count: { artists: number }
+}) {
+  let suspicionScore = 0
+  const reasons: string[] = []
+
+  if (!production.titleKr) {
+    suspicionScore += 3
+    reasons.push('Sem título em coreano')
+  }
+  if (!production.tmdbId) {
+    suspicionScore += 2
+    reasons.push('Sem TMDB ID')
+  }
+  if (production.titlePt) {
+    const hasCoreano = /[\uAC00-\uD7AF]/.test(production.titlePt)
+    const hasCommonKoreanWords = /(king|queen|princess|prince|doctor|mr\.|mrs\.|love|heart|secret|moon|sun|sky|flower|spring|summer|autumn|winter|school|hospital|palace)/i.test(production.titlePt)
+    if (!hasCoreano && !hasCommonKoreanWords) {
+      suspicionScore += 2
+      reasons.push('Título não parece coreano')
+    }
+  }
+  if (production._count.artists === 0) {
+    suspicionScore += 3
+    reasons.push('Sem artistas vinculados')
+  }
+  if (production.streamingPlatforms.length === 0) {
+    suspicionScore += 1
+    reasons.push('Sem plataformas de streaming')
+  }
+
+  return { suspicionScore, suspicionReasons: reasons }
+}
+
 /**
  * GET /api/admin/productions/moderation
- * Lista produções para revisão/moderação
- *
- * Query params:
- * - filter: 'all' | 'suspicious' | 'recent' | 'flagged'
- * - page: número da página (padrão: 1)
- * - limit: itens por página (padrão: 20)
+ * - ?stats=1 → contagens por categoria
+ * - ?filter=suspicious|recent|flagged|all
+ * - ?search=texto
+ * - ?page=1&limit=20
  */
 export async function GET(request: NextRequest) {
   const { error } = await requireAdmin()
   if (error) return error
 
   const searchParams = request.nextUrl.searchParams
+
+  // Stats endpoint
+  if (searchParams.get('stats') === '1') {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const [suspicious, recent, flagged, all] = await Promise.all([
+      prisma.production.count({
+        where: {
+          flaggedAsNonKorean: false,
+          OR: [{ titleKr: null }, { tmdbId: null }],
+        },
+      }),
+      prisma.production.count({
+        where: { createdAt: { gte: sevenDaysAgo }, flaggedAsNonKorean: false },
+      }),
+      prisma.production.count({ where: { flaggedAsNonKorean: true } }),
+      prisma.production.count({ where: { flaggedAsNonKorean: false } }),
+    ])
+    return NextResponse.json({ suspicious, recent, flagged, all })
+  }
+
   const filter = searchParams.get('filter') || 'suspicious'
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '20')
+  const search = searchParams.get('search')?.trim() || undefined
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')))
   const skip = (page - 1) * limit
 
   try {
-    let where: any = {}
+    const where = buildWhere(filter, search)
 
-    switch (filter) {
-      case 'suspicious':
-        // Produções sem título coreano OU sem TMDB ID
-        where = {
-          AND: [
-            { flaggedAsNonKorean: false },
-            {
-              OR: [
-                { titleKr: null },
-                { tmdbId: null },
-              ],
-            },
-          ],
-        }
-        break
-
-      case 'recent': {
-        // Produções adicionadas nos últimos 7 dias
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        where = {
-          createdAt: { gte: sevenDaysAgo },
-          flaggedAsNonKorean: false,
-        }
-        break
-      }
-
-      case 'flagged':
-        // Produções já flagged
-        where = { flaggedAsNonKorean: true }
-        break
-
-      case 'all':
-      default:
-        // Todas as produções (sem flagged)
-        where = { flaggedAsNonKorean: false }
-        break
-    }
-
-    // Buscar produções com contagem total
     const [productions, total] = await Promise.all([
       prisma.production.findMany({
         where,
@@ -86,12 +140,7 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           flaggedAsNonKorean: true,
           flaggedAt: true,
-          _count: {
-            select: {
-              artists: true,
-              userFavorites: true,
-            },
-          },
+          _count: { select: { artists: true, userFavorites: true } },
         },
         skip,
         take: limit,
@@ -100,80 +149,35 @@ export async function GET(request: NextRequest) {
       prisma.production.count({ where }),
     ])
 
-    // Calcular métricas de suspeição para cada produção
-    const productionsWithScore = productions.map(production => {
-      let suspicionScore = 0
-      const reasons: string[] = []
+    const productionsWithScore = productions.map(p => ({
+      ...p,
+      ...calcSuspicion(p),
+    }))
 
-      // Sem título coreano
-      if (!production.titleKr) {
-        suspicionScore += 3
-        reasons.push('Sem título em coreano')
-      }
-
-      // Sem TMDB ID
-      if (!production.tmdbId) {
-        suspicionScore += 2
-        reasons.push('Sem TMDB ID')
-      }
-
-      // Título português não parece coreano (heurística básica)
-      if (production.titlePt) {
-        const hasCoreano = /[\uAC00-\uD7AF]/.test(production.titlePt)
-        const hasCommonKoreanWords = /(king|queen|princess|prince|doctor|mr\.|mrs\.|love|heart|secret|moon|sun|sky|flower|spring|summer|autumn|winter|school|hospital|palace)/i.test(production.titlePt)
-
-        if (!hasCoreano && !hasCommonKoreanWords) {
-          suspicionScore += 2
-          reasons.push('Título não parece coreano')
-        }
-      }
-
-      // Sem artistas coreanos
-      if (production._count.artists === 0) {
-        suspicionScore += 3
-        reasons.push('Sem artistas vinculados')
-      }
-
-      // Plataformas de streaming suspeitas
-      if (production.streamingPlatforms.length === 0) {
-        suspicionScore += 1
-        reasons.push('Sem plataformas de streaming')
-      }
-
-      return {
-        ...production,
-        suspicionScore,
-        suspicionReasons: reasons,
-      }
-    })
-
-    // Ordenar por suspicionScore (decrescente) se filter=suspicious
     if (filter === 'suspicious') {
       productionsWithScore.sort((a, b) => b.suspicionScore - a.suspicionScore)
     }
 
     return NextResponse.json({
       productions: productionsWithScore,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
       filter,
     })
   } catch (err) {
     log.error('Failed to fetch productions for moderation', { error: getErrorMessage(err) })
-    return NextResponse.json(
-      { error: 'Failed to fetch productions' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch productions' }, { status: 500 })
   }
 }
 
+const flagSchema = z.object({
+  productionId: z.string().optional(),
+  ids: z.array(z.string()).optional(),
+  flaggedAsNonKorean: z.boolean(),
+})
+
 /**
  * PUT /api/admin/productions/moderation
- * Marcar/desmarcar produção como não-relevante
+ * Marcar/desmarcar — single (productionId) ou bulk (ids[])
  */
 export async function PUT(request: NextRequest) {
   const { error } = await requireAdmin()
@@ -181,92 +185,69 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { productionId, flaggedAsNonKorean } = body
+    const parsed = flagSchema.parse(body)
 
-    if (!productionId || typeof flaggedAsNonKorean !== 'boolean') {
-      return NextResponse.json(
-        { error: 'Invalid request body. Required: { productionId: string, flaggedAsNonKorean: boolean }' },
-        { status: 400 }
-      )
+    const ids = parsed.ids ?? (parsed.productionId ? [parsed.productionId] : [])
+    if (ids.length === 0) {
+      return NextResponse.json({ error: 'productionId or ids[] required' }, { status: 400 })
     }
 
-    // Atualizar produção
-    const production = await prisma.production.update({
-      where: { id: productionId },
+    await prisma.production.updateMany({
+      where: { id: { in: ids } },
       data: {
-        flaggedAsNonKorean,
-        flaggedAt: flaggedAsNonKorean ? new Date() : null,
-      },
-      select: {
-        id: true,
-        titlePt: true,
-        flaggedAsNonKorean: true,
+        flaggedAsNonKorean: parsed.flaggedAsNonKorean,
+        flaggedAt: parsed.flaggedAsNonKorean ? new Date() : null,
       },
     })
 
-    log.info(`Production ${flaggedAsNonKorean ? 'flagged' : 'unflagged'}`, { productionId, title: production.titlePt })
+    log.info(`${ids.length} production(s) ${parsed.flaggedAsNonKorean ? 'flagged' : 'unflagged'}`, { ids })
 
-    return NextResponse.json({
-      success: true,
-      production,
-    })
+    return NextResponse.json({ success: true, updated: ids.length })
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
+    }
     log.error('Failed to update production flag', { error: getErrorMessage(err) })
-    return NextResponse.json(
-      { error: 'Failed to update production' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update production' }, { status: 500 })
   }
 }
 
+const deleteSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+})
+
 /**
  * DELETE /api/admin/productions/moderation
- * Remover produção permanentemente
+ * Remover permanentemente — single (?productionId=) ou bulk (body.ids[])
  */
 export async function DELETE(request: NextRequest) {
   const { error } = await requireAdmin()
   if (error) return error
 
   try {
-    const searchParams = request.nextUrl.searchParams
-    const productionId = searchParams.get('productionId')
+    // Support both query param (single) and body (bulk)
+    const productionIdParam = request.nextUrl.searchParams.get('productionId')
+    let ids: string[]
 
-    if (!productionId) {
-      return NextResponse.json(
-        { error: 'Missing productionId query parameter' },
-        { status: 400 }
-      )
+    if (productionIdParam) {
+      ids = [productionIdParam]
+    } else {
+      const body = await request.json()
+      ids = deleteSchema.parse(body).ids
     }
 
-    // Buscar produção antes de deletar (para log)
-    const production = await prisma.production.findUnique({
-      where: { id: productionId },
-      select: { titlePt: true },
+    const result = await prisma.production.deleteMany({
+      where: { id: { in: ids } },
     })
 
-    if (!production) {
-      return NextResponse.json(
-        { error: 'Production not found' },
-        { status: 404 }
-      )
-    }
+    log.info(`${result.count} production(s) permanently deleted`, { ids })
 
-    // Deletar produção (cascade deleta relações)
-    await prisma.production.delete({
-      where: { id: productionId },
-    })
-
-    log.info(`Production permanently deleted`, { productionId, title: production.titlePt })
-
-    return NextResponse.json({
-      success: true,
-      message: `Production ${production.titlePt} deleted successfully`,
-    })
+    return NextResponse.json({ success: true, deleted: result.count })
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
+    }
     log.error('Failed to delete production', { error: getErrorMessage(err) })
-    return NextResponse.json(
-      { error: 'Failed to delete production' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to delete production' }, { status: 500 })
   }
 }
