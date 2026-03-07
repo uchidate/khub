@@ -415,7 +415,7 @@ export default function ReportsPage() {
               value={searchInput}
               onChange={e => handleSearchChange(e.target.value)}
               placeholder="Buscar por nome da entidade..."
-              className="flex-1 bg-transparent py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none"
+              className="flex-1 bg-zinc-900 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none"
             />
           </div>
 

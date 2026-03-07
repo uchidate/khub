@@ -135,7 +135,7 @@ export function DataTable<T extends { id: string }>({
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
             placeholder={searchPlaceholder}
-            className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none"
+            className="flex-1 bg-zinc-900 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none"
           />
           {search && (
             <button onClick={() => { setSearch(''); setPagination(p => ({ ...p, page: 1 })) }} className="text-zinc-500 hover:text-white shrink-0">

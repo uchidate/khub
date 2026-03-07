@@ -109,7 +109,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                         placeholder="Buscar por nome..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="flex-1 bg-transparent py-4 text-white placeholder:text-zinc-500 focus:outline-none"
+                        className="flex-1 bg-zinc-900 py-4 text-white placeholder:text-zinc-500 focus:outline-none"
                     />
                     {search && (
                         <button

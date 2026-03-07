@@ -79,7 +79,7 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
                     placeholder="Buscar"
                     value={filters.search || ''}
                     onChange={(e) => updateFilter('search', e.target.value || undefined)}
-                    className="flex-1 bg-transparent py-4 text-white placeholder:text-zinc-500 focus:outline-none"
+                    className="flex-1 bg-zinc-900 py-4 text-white placeholder:text-zinc-500 focus:outline-none"
                 />
                 {filters.search && (
                     <button onClick={() => updateFilter('search', undefined)} className="text-zinc-500 hover:text-white transition-colors shrink-0">
