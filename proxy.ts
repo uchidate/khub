@@ -21,7 +21,7 @@ const adminRoutes = [
   '/admin',
 ]
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Get token from request
@@ -70,9 +70,9 @@ export async function middleware(request: NextRequest) {
         || request.headers.get('x-real-ip')
         || undefined
     const secret = process.env.NEXTAUTH_SECRET
-    // Usar http://localhost:3000 para chamadas internas do middleware (Edge runtime).
-    // NEXTAUTH_URL aponta para a URL pública (https://...) — fetch HTTPS no Edge runtime
-    // pode falhar silenciosamente por restrições de TLS/DNS dentro do container Docker.
+    // Usar http://localhost:3000 para chamadas internas do proxy (Node.js runtime).
+    // NEXTAUTH_URL aponta para a URL pública (https://...) — fetch HTTPS dentro do container
+    // pode falhar silenciosamente por restrições de TLS/DNS.
     if (secret) {
       fetch('http://localhost:3000/api/internal/bot-log', {
         method: 'POST',
