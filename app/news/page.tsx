@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import prisma from "@/lib/prisma"
 import type { Metadata } from "next"
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { NewsList } from "@/components/features/NewsList"
@@ -12,6 +13,9 @@ export const revalidate = 3600
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export async function generateMetadata(): Promise<Metadata> {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return { title: 'Notícias', description: 'Notícias sobre K-Pop, K-Drama e cultura coreana. Fique por dentro de tudo.' }
+    }
     const total = await prisma.news.count().catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}notícias sobre K-Pop, K-Drama e cultura coreana. Fique por dentro de tudo.`
     return {
@@ -43,6 +47,9 @@ function LoadingSkeleton() {
 }
 
 async function NewsContent() {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return <NewsList initialArtists={[]} initialGroups={[]} />
+    }
     // Buscar artistas e grupos com notícias para popular os filtros
     const [artists, groups] = await Promise.all([
         prisma.artist.findMany({

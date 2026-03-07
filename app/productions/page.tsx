@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
@@ -15,6 +16,9 @@ export const revalidate = 3600
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export async function generateMetadata(): Promise<Metadata> {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return { title: 'Produções', description: 'Produções coreanas. De romances épicos a thrillers de tirar o fôlego.' }
+    }
     const total = await prisma.production.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}produções coreanas. De romances épicos a thrillers de tirar o fôlego.`
     return {
@@ -30,6 +34,32 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProductionsPage() {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return (
+            <>
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                "name": "Produções Coreanas | HallyuHub",
+                "description": "Produções coreanas: K-Dramas, filmes e séries. De romances épicos a thrillers de tirar o fôlego.",
+                "url": `${BASE_URL}/productions`,
+                "inLanguage": "pt-BR",
+                "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
+            }} />
+            <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+                <SectionHeader
+                    title="Produções"
+                    subtitle="De romances épicos a thrillers de tirar o fôlego. O melhor do entretenimento coreano selecionado para você."
+                />
+                <Suspense>
+                    <ProductionsList />
+                </Suspense>
+                <ScrollToTop />
+            </PageTransition>
+            </>
+        )
+    }
+
     const streamingShowsRaw = await prisma.streamingShow.findMany({
         where: {
             source: { in: STREAMING_TAB_ORDER },
