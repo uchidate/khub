@@ -17,21 +17,24 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
         p => (showsByPlatform[p]?.length ?? 0) > 0
     )
     const [activeTab, setActiveTab] = useState(availablePlatforms[0] ?? '')
-    const [featuredSmallIndex, setFeaturedSmallIndex] = useState(0)
+    // featuredIndex cicla por TODOS os shows (0-9), não só os pequenos
+    const [featuredIndex, setFeaturedIndex] = useState(0)
 
     const shows = showsByPlatform[activeTab] ?? []
-    const featured = shows[0]
-    const rest = shows.slice(1, 10)
+    const top10 = shows.slice(0, 10)
+    const featured = top10[featuredIndex] ?? top10[0]
+    // strip = todos exceto o featured atual
+    const strip = top10.filter((_, i) => i !== featuredIndex)
     const cfg = getStreamingConfig(activeTab)
 
     useEffect(() => {
-        if (rest.length === 0) return
-        setFeaturedSmallIndex(0)
+        if (top10.length === 0) return
+        setFeaturedIndex(0)
         const timer = setInterval(() => {
-            setFeaturedSmallIndex(i => (i + 1) % rest.length)
+            setFeaturedIndex(i => (i + 1) % top10.length)
         }, 2500)
         return () => clearInterval(timer)
-    }, [rest.length, activeTab])
+    }, [top10.length, activeTab])
 
     if (availablePlatforms.length === 0) return null
 
@@ -106,21 +109,39 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                     {/* Content grid */}
                     <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row gap-5 md:gap-6">
 
-                        {/* Featured #1 */}
+                        {/* Featured — cicla por todos os shows */}
                         {featured && (
-                            <FeaturedCard show={featured} cfg={cfg} />
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={featured.tmdbId ?? featuredIndex}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                                >
+                                    <FeaturedCard show={featured} cfg={cfg} />
+                                </motion.div>
+                            </AnimatePresence>
                         )}
 
-                        {/* #2–10 scrollable strip */}
-                        {rest.length > 0 && (
+                        {/* Strip — os demais (excluindo o featured) */}
+                        {strip.length > 0 && (
                             <div className="flex flex-col flex-1 min-w-0 gap-3">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
                                     Também em destaque
                                 </p>
                                 <div className="flex gap-3 overflow-x-auto pb-1"
                                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                                    {rest.map((show, index) => (
-                                        <SmallCard key={`${show.source}-${show.tmdbId}`} show={show} cfg={cfg} isActive={index === featuredSmallIndex} />
+                                    {strip.map((show) => (
+                                        <SmallCard
+                                            key={`${show.source}-${show.tmdbId}`}
+                                            show={show}
+                                            cfg={cfg}
+                                            onClick={() => {
+                                                const idx = top10.findIndex(s => s.tmdbId === show.tmdbId && s.source === show.source)
+                                                if (idx !== -1) setFeaturedIndex(idx)
+                                            }}
+                                        />
                                     ))}
                                 </div>
                             </div>
@@ -162,10 +183,10 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
-                {/* Rank #1 — large */}
+                {/* Rank — large */}
                 <div className="absolute top-2 left-3 z-10">
                     <span className="text-6xl font-black text-white leading-none drop-shadow-[0_3px_8px_rgba(0,0,0,1)]">
-                        1
+                        {show.rank ?? 1}
                     </span>
                 </div>
 
@@ -179,7 +200,7 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
 
                 {/* Platform badge */}
                 <div className={`absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded text-[10px] font-black ${cfg.bgColor} ${cfg.textColor}`}>
-                    #{1} {cfg.label}
+                    #{show.rank ?? 1} {cfg.label}
                 </div>
             </div>
 
@@ -205,11 +226,16 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
         : inner
 }
 
-// ─── Small card: shows #2–10 ─────────────────────────────────────────────────
+// ─── Small card: shows no strip ──────────────────────────────────────────────
 
-function SmallCard({ show, cfg, isActive = false }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig>; isActive?: boolean }) {
-    const inner = (
-        <div className={`group flex-shrink-0 w-[72px] md:w-[80px] transition-all duration-500 ease-in-out ${isActive ? 'scale-[1.15] z-10 drop-shadow-2xl' : 'scale-100'}`}>
+function SmallCard({ show, cfg, onClick }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig>; onClick?: () => void }) {
+    // Clique seleciona como featured — não navega diretamente
+    return (
+        <div
+            className="group flex-shrink-0 w-[72px] md:w-[80px] cursor-pointer"
+            onClick={onClick}
+            title={show.productionTitle ?? show.showTitle}
+        >
             <div className={`
                 relative aspect-[2/3] rounded-lg overflow-hidden
                 border border-zinc-700/60 ${cfg.hoverBorderColor}
@@ -246,17 +272,9 @@ function SmallCard({ show, cfg, isActive = false }: { show: StreamingShow; cfg: 
             </div>
 
             {/* Title */}
-            <p className={`mt-1 text-[9px] md:text-[10px] font-medium line-clamp-2 leading-tight transition-colors ${
-                show.productionId
-                    ? 'text-zinc-300 group-hover:text-purple-400'
-                    : 'text-zinc-500'
-            }`}>
+            <p className="mt-1 text-[9px] md:text-[10px] font-medium line-clamp-2 leading-tight text-zinc-500 group-hover:text-zinc-300 transition-colors">
                 {show.productionTitle ?? show.showTitle}
             </p>
         </div>
     )
-
-    return show.productionId
-        ? <Link href={`/productions/${show.productionId}`}>{inner}</Link>
-        : inner
 }
