@@ -8,7 +8,6 @@ import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
 import { Plus, Users, Music2, EyeOff, Instagram, Twitter, Youtube, ExternalLink, Globe } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
