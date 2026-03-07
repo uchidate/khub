@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
@@ -11,6 +12,9 @@ export const revalidate = 3600
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export async function generateMetadata(): Promise<Metadata> {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return { title: 'Grupos Musicais', description: 'Explore grupos de K-Pop, suas gerações, formações e trajetórias na indústria coreana.' }
+    }
     const total = await prisma.musicalGroup.count().catch(() => 0)
     const desc = `Explore ${total > 0 ? `${total} ` : ''}grupos de K-Pop, suas gerações, formações e trajetórias na indústria coreana.`
     return {

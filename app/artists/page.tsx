@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
@@ -12,6 +13,9 @@ export const revalidate = 3600
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
 export async function generateMetadata(): Promise<Metadata> {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return { title: 'Artistas', description: 'Explore perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.' }
+    }
     const total = await prisma.artist.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)
     const desc = `Explore ${total > 0 ? `${total} ` : ''}perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.`
     return {

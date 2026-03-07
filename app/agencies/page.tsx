@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import prisma from "@/lib/prisma"
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
@@ -51,6 +52,9 @@ function AgenciesGridSkeleton() {
 }
 
 async function AgenciesGrid() {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return <AgenciesGridSkeleton />
+    }
     const agencies = await prisma.agency.findMany({
         include: {
             artists: {
