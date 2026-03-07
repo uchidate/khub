@@ -102,7 +102,7 @@ export function GroupsList() {
                     <div className="flex-1 relative">
                         <input
                             type="text"
-                            placeholder="Buscar grupo ou agência..."
+                            placeholder="Buscar grupo ou agência"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             className="w-full px-4 pr-10 py-3.5 dark:bg-zinc-900/50 bg-zinc-100 dark:border-white/10 border border-zinc-200 rounded-xl dark:text-white text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
