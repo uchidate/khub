@@ -17,7 +17,7 @@ import prisma from '@/lib/prisma'
 const logger = createLogger('API')
 
 // NextJS 15: second argument is always present (even for non-dynamic routes)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type Handler = (req: NextRequest, ctx: any) => Promise<NextResponse | Response>
 
 const MAX_BODY_LENGTH = 500  // chars
