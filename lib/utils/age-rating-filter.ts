@@ -15,6 +15,7 @@ import prisma from '@/lib/prisma'
 import { getServerSession, type Session } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { unstable_cache } from 'next/cache'
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 
 export type AgeRatingWhereClause = {
   ageRating?: any
@@ -43,6 +44,7 @@ const DEFAULT_AGE_RATING_SETTINGS = {
 // Cache system settings for 5 minutes — changes only via admin panel
 const getCachedSystemSettings = unstable_cache(
   async () => {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return DEFAULT_AGE_RATING_SETTINGS
     try {
       let settings = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
       if (!settings) {
