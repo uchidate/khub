@@ -110,17 +110,19 @@ jobs:
       - name: Recriar banco de staging
         run: |
           set -e
+          # Conectar em template1 (sempre existe) pois não podemos dropar o banco em uso
+          # O superuser é hallyuhub (não postgres) — o container foi criado com POSTGRES_USER=hallyuhub
           echo "🗑️  Encerrando conexões ativas com hallyuhub_staging..."
-          docker exec hallyuhub-postgres-staging psql -U postgres \
+          docker exec hallyuhub-postgres-staging psql -U hallyuhub -d template1 \
             -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'hallyuhub_staging' AND pid <> pg_backend_pid();" \
             2>/dev/null || true
 
           echo "🗑️  Removendo banco de staging..."
-          docker exec hallyuhub-postgres-staging psql -U postgres \
+          docker exec hallyuhub-postgres-staging psql -U hallyuhub -d template1 \
             -c "DROP DATABASE IF EXISTS hallyuhub_staging;"
 
           echo "➕ Criando banco de staging limpo..."
-          docker exec hallyuhub-postgres-staging psql -U postgres \
+          docker exec hallyuhub-postgres-staging psql -U hallyuhub -d template1 \
             -c "CREATE DATABASE hallyuhub_staging OWNER hallyuhub;"
 
           echo "✅ Banco de staging recriado"
