@@ -116,9 +116,9 @@ function TimelineChart({ data, days }: { data: TimelinePoint[]; days: number }) 
 
     return (
         <div>
-            <div className="flex items-end gap-0.5 h-24">
+            <div className="flex gap-0.5 h-24">
                 {data.map(({ date, count }) => (
-                    <div key={date} className="flex-1 group relative flex flex-col items-center justify-end">
+                    <div key={date} className="flex-1 group relative flex flex-col justify-end h-full">
                         <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 border border-zinc-700">
                             {count.toLocaleString('pt-BR')}
                         </div>
