@@ -123,7 +123,7 @@ describe('RateLimiter', () => {
     })
 
     it('all presets can create valid RateLimiter instances', () => {
-      for (const [name, config] of Object.entries(RateLimiterPresets)) {
+      for (const [_name, config] of Object.entries(RateLimiterPresets)) {
         const rl = new RateLimiter(config)
         expect(rl.getStats().maxAllowed).toBe(config.maxRequests)
       }
