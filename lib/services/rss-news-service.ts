@@ -188,6 +188,13 @@ export class RSSNewsService {
         const markdownContent = rawContent ? this.htmlToMarkdown(rawContent) : '';
         const cleanDescription = this.cleanHtml(description);
 
+        // Dramabeans: Drama Hangout / Open Thread são posts de discussão sem corpo de artigo.
+        // A página contém apenas tabs de navegação (recaps, reviews, cast, etc.) — scraping
+        // retorna lixo. Usar descrição do RSS diretamente nesses casos.
+        const isDramabeansDiscussion =
+          feed.name === 'Dramabeans' &&
+          /drama-hangout|open-thread/i.test(link);
+
         // Scrape artigo completo se:
         // - conteúdo curto (<1500 chars), OU
         // - termina com "..." / "…" (truncado pelo feed), OU
@@ -198,7 +205,13 @@ export class RSSNewsService {
           /(\.\.\.|…)\s*$/.test(fullContent) ||
           /\[(\.\.\.|…|read more|continue reading|more)\]/i.test(fullContent);
 
-        if (isTruncated && link) {
+        if (isDramabeansDiscussion) {
+          // Usar apenas a descrição do RSS — não scraping
+          fullContent = cleanDescription;
+          if (!imageUrl && link) {
+            imageUrl = await this.fetchImageFromArticle(link, feed.name);
+          }
+        } else if (isTruncated && link) {
           const articleData = await this.fetchArticleData(link, feed.name);
           if (!imageUrl && articleData.imageUrl) imageUrl = articleData.imageUrl;
           if (articleData.content && articleData.content.length > fullContent.length) {

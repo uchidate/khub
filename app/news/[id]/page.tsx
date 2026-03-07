@@ -164,6 +164,11 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
     // Usar conteúdo original quando disponível (traduções via Ollama tinham baixa qualidade)
     const mainContent = news.originalContent || news.contentMd
 
+    // Dramabeans: Drama Hangout e Open Thread são posts de discussão sem corpo de artigo
+    const isDiscussionPost =
+        news.source === 'Dramabeans' &&
+        /drama-hangout|open-thread/i.test(news.sourceUrl)
+
     // Calcular tempo de leitura (média de 200 palavras por minuto)
     const wordCount = mainContent.split(/\s+/).length
     const readingTime = Math.ceil(wordCount / 200)
@@ -287,7 +292,24 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
 
                 {/* Conteúdo */}
                 <article className="max-w-none">
-                    <MarkdownRenderer content={mainContent} coverImageUrl={news.imageUrl ?? undefined} source={news.source} />
+                    {isDiscussionPost ? (
+                        <div className="py-10 flex flex-col items-center text-center gap-4">
+                            <p className="text-zinc-400 text-lg leading-relaxed max-w-md">
+                                Este é um post de discussão do Dramabeans. O conteúdo principal são os comentários dos fãs, disponíveis no site original.
+                            </p>
+                            <a
+                                href={news.sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors"
+                            >
+                                Participar da discussão no Dramabeans
+                                <ExternalLink className="w-4 h-4" />
+                            </a>
+                        </div>
+                    ) : (
+                        <MarkdownRenderer content={mainContent} coverImageUrl={news.imageUrl ?? undefined} source={news.source} />
+                    )}
                 </article>
 
                 {/* Artistas — após o conteúdo */}
