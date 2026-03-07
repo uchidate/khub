@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import { unstable_cache } from 'next/cache'
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 
 const DEFAULT_SETTINGS = {
   id: 'singleton',
@@ -18,6 +19,7 @@ const DEFAULT_SETTINGS = {
  */
 export const getSystemSettings = unstable_cache(
   async () => {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return DEFAULT_SETTINGS
     try {
       let settings = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
       if (!settings) {
