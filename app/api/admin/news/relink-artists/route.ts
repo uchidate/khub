@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service'
+import { getNewsNotificationService } from '@/lib/services/news-notification-service'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -59,6 +60,8 @@ export async function POST(request: NextRequest) {
             data: mentions.map(m => ({ newsId, artistId: m.artistId })),
             skipDuplicates: true,
         })
+        // Disparar notificações IN_APP agora que os artistas estão vinculados
+        void getNewsNotificationService().notifyInAppForNews(newsId).catch(() => {})
     }
 
     // Retorna notícia com artistas atualizados
