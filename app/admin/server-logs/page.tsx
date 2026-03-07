@@ -117,8 +117,7 @@ export default function ServerLogsPage() {
     }, [filter, search, page])
 
     useEffect(() => { fetchLogs(1) }, [filter, search])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { fetchLogs(page) }, [page])
+    useEffect(() => { fetchLogs(page) }, [page]) // eslint-disable-line
 
     // Auto-refresh a cada 30s
     useEffect(() => {
