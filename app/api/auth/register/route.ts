@@ -6,6 +6,7 @@ import { getEmailService } from '@/lib/services/email-service'
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { withLogging } from '@/lib/server/withLogging'
 
 const log = createLogger('AUTH')
 
@@ -15,7 +16,7 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async function POST(request: NextRequest) {
   const limited = checkRateLimit(request, RateLimitPresets.AUTH_REGISTER)
   if (limited) return limited
 
@@ -93,4 +94,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

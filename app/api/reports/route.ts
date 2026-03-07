@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
+import { withLogging } from '@/lib/server/withLogging'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +13,7 @@ const reportSchema = z.object({
   description: z.string().max(500).optional(),
 })
 
-export async function POST(req: NextRequest) {
+export const POST = withLogging(async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const data = reportSchema.parse(body)
@@ -36,4 +37,4 @@ export async function POST(req: NextRequest) {
     console.error('Failed to create report:', err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
-}
+})

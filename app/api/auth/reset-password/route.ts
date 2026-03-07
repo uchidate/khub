@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { withLogging } from '@/lib/server/withLogging'
 
 const log = createLogger('AUTH')
 
@@ -12,7 +13,7 @@ const resetPasswordSchema = z.object({
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { token, password } = resetPasswordSchema.parse(body)
@@ -73,4 +74,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
