@@ -30,16 +30,30 @@ export type AgeRatingWhereClause = {
  * @param overrideRating - Permite override manual (ex: filtro "all" ou rating específico na UI)
  * @returns Objeto where clause do Prisma para filtrar por ageRating
  */
+const DEFAULT_AGE_RATING_SETTINGS = {
+  id: 'singleton',
+  allowAdultContent: false,
+  allowUnclassifiedContent: false,
+  betaMode: false,
+  premiumEnabled: false,
+  createdAt: new Date(0),
+  updatedAt: new Date(0),
+}
+
 // Cache system settings for 5 minutes — changes only via admin panel
 const getCachedSystemSettings = unstable_cache(
   async () => {
-    let settings = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
-    if (!settings) {
-      settings = await prisma.systemSettings.create({
-        data: { id: 'singleton', allowAdultContent: false, allowUnclassifiedContent: false },
-      })
+    try {
+      let settings = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
+      if (!settings) {
+        settings = await prisma.systemSettings.create({
+          data: { id: 'singleton', allowAdultContent: false, allowUnclassifiedContent: false },
+        })
+      }
+      return settings
+    } catch {
+      return DEFAULT_AGE_RATING_SETTINGS
     }
-    return settings
   },
   ['system-settings'],
   { revalidate: 300, tags: ['system-settings'] }
