@@ -70,9 +70,6 @@ jobs:
             # 6. Scripts específicos de cada ambiente (equivalentes funcionais)
             "setup-auto-generation.sh|verify-production.sh"
 
-            # 6b. Paths que contêm a palavra "production" mas são URLs reais (não ambiente)
-            "/productions|/productions"
-
             # 7. Nomes genéricos de ambiente (APÓS padrões específicos)
             "deploy-staging|deploy-production"
             "Deploy Staging|Deploy Production"
