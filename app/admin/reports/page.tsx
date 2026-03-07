@@ -233,7 +233,7 @@ export default function ReportsPage() {
   const [selected,       setSelected]       = useState<Set<string>>(new Set())
   const [bulkLoading,    setBulkLoading]    = useState(false)
   const [confirmModal,   setConfirmModal]   = useState<ConfirmState>({ open: false, message: '', onConfirm: () => {} })
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const debounceRef = useRef<NodeJS.Timeout>(undefined)
 
   const fetchStats = useCallback(async () => {
     try {

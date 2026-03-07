@@ -220,7 +220,7 @@ export default function BotLogsPage() {
     const [pathFilter, setPathFilter]             = useState('')
     const [pathInputValue, setPathInputValue]     = useState('')
 
-    const debounceTimer = useRef<ReturnType<typeof setTimeout>>()
+    const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
     // ── Fetch ────────────────────────────────────────────────────────────────
 
