@@ -21,7 +21,7 @@ export interface NewsData {
  * ESTRATÉGIA ATUAL (separada da tradução):
  * 1. Busca notícias reais de RSS feeds (Soompi, Koreaboo)
  * 2. Salva conteúdo original EN/KR com translationStatus='pending'
- * 3. Tradução para PT-BR é feita em processo separado (NewsTranslationService)
+ * 3. Enriquecimento de tags é feito em processo separado (NewsTaggingService)
  *
  * BENEFÍCIOS:
  * - Discovery rápido sem esperar Ollama (~2s vs 616s antes)
@@ -33,7 +33,7 @@ export class NewsGeneratorV2 {
 
     /**
      * Busca e retorna notícias reais sem tradução
-     * Tradução é feita depois pelo NewsTranslationService
+     * Tags são enriquecidas depois pelo NewsTaggingService
      */
     async generateMultipleNews(
         count: number,
