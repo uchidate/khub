@@ -219,7 +219,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 {/* Main image — blurred backdrop (not crisp, portrait card handles crisp) */}
                 <div className="absolute inset-0">
                     {artist.primaryImageUrl ? (
-                        <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover object-top blur-sm brightness-[0.25]" />
+                        <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover object-[50%_15%] blur-sm brightness-[0.25]" />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-900/30 via-zinc-900 to-black" />
                     )}
@@ -308,12 +308,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     {/* Portrait card — só desktop, igual ao poster das produções */}
                     {artist.primaryImageUrl && (
                         <div className="hidden md:block shrink-0 pb-1">
-                            <div className="w-36 lg:w-44 aspect-[3/4] relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
+                            <div className="w-44 lg:w-52 aspect-[3/4] relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
                                 <Image
                                     src={artist.primaryImageUrl}
                                     alt={artist.nameRomanized}
                                     fill
-                                    sizes="(max-width: 1024px) 144px, 176px"
+                                    sizes="(max-width: 1024px) 176px, 208px"
                                     className="object-cover object-top"
                                 />
                             </div>

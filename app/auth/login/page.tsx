@@ -169,15 +169,15 @@ function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
-              <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl focus-within:border-purple-500/60 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
-                <span className="pl-3.5 text-zinc-500 shrink-0"><Mail size={16} /></span>
+              <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-3 focus-within:border-purple-500/60 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
+                <Mail className="text-zinc-500 shrink-0" size={16} />
                 <input
                   type="email"
                   value={values.email}
                   onChange={e => setValues(v => ({ ...v, email: e.target.value }))}
                   required
                   disabled={isLoading}
-                  className="flex-1 px-3 py-2.5 text-sm bg-transparent border-0 text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
+                  className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -193,15 +193,15 @@ function LoginForm() {
                   Esqueceu?
                 </Link>
               </div>
-              <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl focus-within:border-purple-500/60 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
-                <span className="pl-3.5 text-zinc-500 shrink-0"><Lock size={16} /></span>
+              <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-3 focus-within:border-purple-500/60 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
+                <Lock className="text-zinc-500 shrink-0" size={16} />
                 <input
                   type="password"
                   value={values.password}
                   onChange={e => setValues(v => ({ ...v, password: e.target.value }))}
                   required
                   disabled={isLoading}
-                  className="flex-1 px-3 py-2.5 text-sm bg-transparent border-0 text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
+                  className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
                   placeholder="••••••••"
                 />
               </div>
