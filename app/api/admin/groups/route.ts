@@ -52,16 +52,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(group)
     }
 
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+    // Stats endpoint
+    if (searchParams.get('stats') === '1') {
+      const [total, active, disbanded, noMembers, hidden] = await Promise.all([
+        prisma.musicalGroup.count(),
+        prisma.musicalGroup.count({ where: { disbandDate: null, isHidden: false } }),
+        prisma.musicalGroup.count({ where: { disbandDate: { not: null } } }),
+        prisma.musicalGroup.count({ where: { members: { none: {} } } }),
+        prisma.musicalGroup.count({ where: { isHidden: true } }),
+      ])
+      return NextResponse.json({ total, active, disbanded, noMembers, hidden })
+    }
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { nameHangul: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {}
+    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+    const status = searchParams.get('status') ?? ''
+
+    const statusWhere =
+      status === 'active'    ? { disbandDate: null, isHidden: false } :
+      status === 'disbanded' ? { disbandDate: { not: null } } :
+      status === 'hidden'    ? { isHidden: true } :
+      {}
+
+    const where = {
+      ...statusWhere,
+      ...(search ? {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { nameHangul: { contains: search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
+    }
 
     const [groups, total] = await Promise.all([
       prisma.musicalGroup.findMany({
@@ -97,6 +117,7 @@ export async function GET(request: NextRequest) {
       videos: group.videos,
       membersCount: group._count.members,
       createdAt: group.createdAt,
+      isHidden: group.isHidden,
     }))
 
     return paginatedResponse(
