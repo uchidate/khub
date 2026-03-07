@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
     RefreshCw, Trash2, AlertTriangle, CheckCircle2, ServerCrash,
-    ChevronDown, ChevronRight, Search, X, Globe, Clock, Layers,
+    ChevronDown, ChevronRight, Search, X, Globe, Clock, Layers, Info,
 } from 'lucide-react'
 
 interface ServerLogEntry {
@@ -155,6 +155,22 @@ export default function ServerLogsPage() {
     return (
         <AdminLayout title="Server Logs">
             <div className="space-y-5">
+
+                {/* Coverage note */}
+                <div className="flex items-start gap-3 bg-blue-950/30 border border-blue-800/40 rounded-xl px-4 py-3 text-xs text-blue-300">
+                    <Info size={14} className="flex-shrink-0 mt-0.5 text-blue-400" />
+                    <div className="space-y-1">
+                        <p className="font-bold text-blue-200">Cobertura de logs</p>
+                        <p className="text-blue-300/80">
+                            Este painel captura erros 4xx/5xx das rotas monitoradas com <code className="bg-blue-900/40 px-1 rounded font-mono">withLogging</code>.
+                            Erros <strong>502 / 504</strong> são gerados pelo nginx (proxy reverso) antes de chegar ao app — <strong>não aparecem aqui</strong>.
+                        </p>
+                        <p className="text-blue-400/70 font-mono mt-1">
+                            Para 502/504:{' '}
+                            <span className="text-blue-300/70">ssh root@31.97.255.107 &quot;tail -50 /var/log/nginx/error.log&quot;</span>
+                        </p>
+                    </div>
+                </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

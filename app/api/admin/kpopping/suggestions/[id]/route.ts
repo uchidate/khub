@@ -32,10 +32,8 @@ const revokeSchema = z.object({
 
 const bodySchema = z.discriminatedUnion('action', [approveSchema, rejectSchema, revokeSchema])
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { error } = await requireAdmin()
   if (error) return error
 

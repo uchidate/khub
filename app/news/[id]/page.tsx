@@ -22,12 +22,13 @@ const BASE_URL = 'https://www.hallyuhub.com.br'
 export const dynamic = 'force-dynamic'
 
 interface NewsDetailPageProps {
-    params: {
+    params: Promise<{
         id: string
-    }
+    }>
 }
 
-export async function generateMetadata({ params }: NewsDetailPageProps): Promise<Metadata> {
+export async function generateMetadata(props: NewsDetailPageProps): Promise<Metadata> {
+    const params = await props.params;
     const news = await prisma.news.findUnique({
         where: { id: params.id }
     })
@@ -80,7 +81,8 @@ export async function generateMetadata({ params }: NewsDetailPageProps): Promise
     }
 }
 
-export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
+export default async function NewsDetailPage(props: NewsDetailPageProps) {
+    const params = await props.params;
     const news = await prisma.news.findUnique({
         where: { id: params.id },
         include: {

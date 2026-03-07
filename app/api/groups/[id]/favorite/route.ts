@@ -8,10 +8,8 @@ import { getErrorMessage } from '@/lib/utils/error'
 const log = createLogger('GROUPS')
 
 // POST → adicionar favorito de grupo
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions)
 
@@ -44,10 +42,8 @@ export async function POST(
 }
 
 // DELETE → remover favorito de grupo
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions)
 

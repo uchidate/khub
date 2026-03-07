@@ -16,12 +16,14 @@ import prisma from '@/lib/prisma'
 
 const logger = createLogger('API')
 
-type Handler = (req: NextRequest, ctx?: { params: Record<string, string> }) => Promise<NextResponse | Response>
+// NextJS 15: second argument is always present (even for non-dynamic routes)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Handler = (req: NextRequest, ctx: any) => Promise<NextResponse | Response>
 
 const MAX_BODY_LENGTH = 500  // chars
 const MAX_LOGS_IN_DB = 500
 
-async function persistError(data: {
+export async function persistServerError(data: {
     method: string
     path: string
     status: number
@@ -74,7 +76,7 @@ export function withLogging(handler: Handler): Handler {
             const duration = Date.now() - start
             errorText = err instanceof Error ? err.message : String(err)
             logger.error('Unhandled exception', { method, path, duration, error: errorText })
-            await persistError({ method, path, status: 500, duration, error: errorText, userAgent, ip })
+            await persistServerError({ method, path, status: 500, duration, error: errorText, userAgent, ip })
             return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
         }
 
@@ -93,7 +95,7 @@ export function withLogging(handler: Handler): Handler {
             } catch { /* body não legível */ }
 
             logger.warn(`Error response: ${method} ${path} → ${status}`, { body: bodyText, userAgent })
-            await persistError({ method, path, status, duration, error: bodyText, body: bodyText, userAgent, ip })
+            await persistServerError({ method, path, status, duration, error: bodyText, body: bodyText, userAgent, ip })
         }
 
         return response

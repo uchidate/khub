@@ -10,7 +10,8 @@ const patchSchema = z.object({
   status: z.enum(['REVIEWED', 'RESOLVED', 'DISMISSED']),
 })
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { error, session } = await requireAdmin()
   if (error) return error
 

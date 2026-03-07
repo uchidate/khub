@@ -24,7 +24,8 @@ const removeItemSchema = z.object({
  * POST /api/users/lists/[id]/items
  * Add an item to a list
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await auth()
         if (!session?.user?.id) {
@@ -63,7 +64,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
  * Remove an item from a list
  * Body: { entityType, entityId }
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await auth()
         if (!session?.user?.id) {

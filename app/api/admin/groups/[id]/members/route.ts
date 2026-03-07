@@ -26,10 +26,8 @@ const updateMemberSchema = z.object({
 })
 
 /** GET /api/admin/groups/[id]/members — lista membros do grupo */
-export async function GET(
-    _request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const { error } = await requireAdmin()
     if (error) return error
 
@@ -57,10 +55,8 @@ export async function GET(
 }
 
 /** POST /api/admin/groups/[id]/members — adiciona membro ao grupo */
-export async function POST(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const { error } = await requireAdmin()
     if (error) return error
 
@@ -102,10 +98,8 @@ export async function POST(
 }
 
 /** PATCH /api/admin/groups/[id]/members — atualiza membro (ex: marcar como ex-membro) */
-export async function PATCH(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const { error } = await requireAdmin()
     if (error) return error
 
@@ -135,10 +129,8 @@ export async function PATCH(
 }
 
 /** DELETE /api/admin/groups/[id]/members?artistId=xxx — remove membro do grupo */
-export async function DELETE(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const { error } = await requireAdmin()
     if (error) return error
 

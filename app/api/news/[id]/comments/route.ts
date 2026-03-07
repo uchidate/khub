@@ -11,16 +11,14 @@ const log = createLogger('COMMENTS')
 export const dynamic = 'force-dynamic'
 
 interface RouteContext {
-    params: {
+    params: Promise<{
         id: string
-    }
+    }>
 }
 
 // GET - Buscar comentários de uma notícia
-export async function GET(
-    request: NextRequest,
-    { params }: RouteContext
-) {
+export async function GET(request: NextRequest, props: RouteContext) {
+    const params = await props.params;
     try {
         const comments = await prisma.comment.findMany({
             where: {
@@ -53,10 +51,8 @@ export async function GET(
 }
 
 // POST - Criar novo comentário
-export async function POST(
-    request: NextRequest,
-    { params }: RouteContext
-) {
+export async function POST(request: NextRequest, props: RouteContext) {
+    const params = await props.params;
     const limited = checkRateLimit(request, RateLimitPresets.COMMENTS)
     if (limited) return limited
 

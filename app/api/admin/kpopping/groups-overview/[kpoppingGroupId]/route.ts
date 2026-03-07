@@ -7,10 +7,8 @@ import { getErrorMessage } from '@/lib/utils/error'
  * GET /api/admin/kpopping/groups-overview/[kpoppingGroupId]
  * Retorna os membros (idols) do grupo Kpopping, com status de correspondência HallyuHub.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { kpoppingGroupId: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ kpoppingGroupId: string }> }) {
+  const params = await props.params;
   const { error } = await requireAdmin()
   if (error) return error
 
@@ -44,10 +42,8 @@ export async function GET(
   return NextResponse.json({ members: rows })
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { kpoppingGroupId: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ kpoppingGroupId: string }> }) {
+  const params = await props.params;
   const { error } = await requireAdmin()
   if (error) return error
 
