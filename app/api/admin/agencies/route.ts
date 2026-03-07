@@ -27,6 +27,19 @@ export async function GET(request: NextRequest) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
+
+    // Return artists for a specific agency
+    const artistsFor = searchParams.get('artists')
+    if (artistsFor) {
+      const artists = await prisma.artist.findMany({
+        where: { agencyId: artistsFor },
+        select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
+        orderBy: { nameRomanized: 'asc' },
+        take: 50,
+      })
+      return NextResponse.json({ artists })
+    }
+
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
     const where = search

@@ -228,6 +228,9 @@ async function runCronProcessing(lockId: string) {
                             try {
                                 const notificationService = getNewsNotificationService();
                                 await notificationService.notifyUsersAboutNews(savedNews.id);
+                                void notificationService.notifyInAppForNews(savedNews.id).catch(
+                                    (e: Error) => log.warn(`IN_APP notification failed (non-blocking): ${e.message}`)
+                                );
                             } catch (notifError: any) {
                                 log.warn(`Notification failed (non-blocking): ${notifError.message}`);
                             }

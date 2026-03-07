@@ -10,6 +10,7 @@ import {
 import { PageTransition } from '@/components/features/PageTransition'
 import { getProfileData } from '@/lib/actions/user'
 import { FavoritesGallery } from '@/components/dashboard/FavoritesGallery'
+import { EditProfileForm } from '@/components/profile/EditProfileForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ export default async function ProfilePage() {
   const data = await getProfileData()
   if (!data) return null
 
-  const { stats, recentComments, recentFavoriteArtists, recentFavoriteProductions, memberSince, heroImageUrl, trendingArtists } = data
+  const { stats, recentComments, recentFavoriteArtists, recentFavoriteProductions, memberSince, heroImageUrl, trendingArtists, bio } = data
 
   const roleBadge = getRoleBadge(session.user.role ?? '')
   const achievements = getAchievements(stats)
@@ -137,10 +138,14 @@ export default async function ProfilePage() {
                   <Mail size={14} />
                   {session.user.email}
                 </p>
+                {bio && (
+                  <p className="text-zinc-400 text-sm mt-2 max-w-md">{bio}</p>
+                )}
               </div>
 
               {/* Actions */}
               <div className="flex gap-3 flex-shrink-0">
+                <EditProfileForm name={session.user.name ?? null} bio={bio} />
                 <Link
                   href="/settings"
                   className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl transition-colors border border-white/10 uppercase tracking-widest"

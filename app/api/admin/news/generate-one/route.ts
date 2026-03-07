@@ -7,7 +7,7 @@ import { getErrorMessage } from '@/lib/utils/error';
 
 const log = createLogger('ADMIN-NEWS');
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (session?.user?.role !== 'admin') {

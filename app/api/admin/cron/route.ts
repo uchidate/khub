@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import fs from 'fs';
-import path from 'path';
 import { createLogger } from '@/lib/utils/logger';
 import { getErrorMessage } from '@/lib/utils/error';
 
@@ -20,7 +19,7 @@ const log = createLogger('ADMIN-CRON');
  * - Variáveis de ambiente
  * - Informações do sistema disponíveis no container
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const session = await auth();
 
   // Verificar autenticação
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const env = process.env.DEPLOY_ENV || 'production';
-    const isProduction = env === 'production';
+    
 
     // Buscar estatísticas do banco de dados
     const now = new Date();
@@ -148,6 +147,7 @@ function loadCronJobs(env: string): Array<{name: string; schedule: string; descr
 
   // Fallback: valores hardcoded
   const isProduction = env === 'production';
+  
   return isProduction ? [
     {
       name: 'Auto-generate Content',

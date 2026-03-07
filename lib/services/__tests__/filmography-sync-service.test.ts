@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { stringSimilarity } from '../filmography-sync-service'
 
 vi.mock('../../prisma', () => import('../../__mocks__/prisma'))
