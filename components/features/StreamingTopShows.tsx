@@ -158,7 +158,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                     return (
                         <div
                             key={`${show.source}-${show.tmdbId}`}
-                            className={`relative transition-all duration-500 ease-in-out ${isFeatured ? 'scale-[1.15] z-10 drop-shadow-2xl' : 'scale-100 z-0'}`}
+                            className="relative"
                         >
                             {show.productionId ? (
                                 <Link href={`/productions/${show.productionId}`} className="block">

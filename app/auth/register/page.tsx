@@ -97,7 +97,7 @@ function FieldInput({
         {label}
       </label>
       <div className="relative">
-        <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none z-10" size={16} />
+        <Icon className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none z-10" size={16} />
         <input
           id={id}
           name={name}
@@ -106,7 +106,7 @@ function FieldInput({
           onChange={onChange}
           required
           disabled={disabled}
-          className="w-full pl-10 pr-4 py-2.5 text-sm bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/20 transition-all disabled:opacity-50"
+          className="w-full pl-4 pr-10 py-2.5 text-sm bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/20 transition-all disabled:opacity-50"
           placeholder={placeholder}
         />
       </div>
