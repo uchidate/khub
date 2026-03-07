@@ -7,7 +7,7 @@
  * Retorna as últimas N entradas em ordem decrescente (mais recentes primeiro).
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
@@ -27,7 +27,7 @@ interface NginxGatewayEntry {
     ua: string
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     const session = await auth()
     if (!session || session.user.role?.toLowerCase() !== 'admin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
