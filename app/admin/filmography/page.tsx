@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react'
+import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
 interface Artist {
@@ -24,41 +22,51 @@ interface Stats {
   needsUpdate: number
 }
 
+type FilterType = 'all' | 'without' | 'outdated'
+
+const STATUS_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string; badge: string }> = {
+  SYNCED:    { icon: CheckCircle,  label: 'Sincronizado',           color: 'text-green-400',  badge: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  NOT_FOUND: { icon: XCircle,      label: 'Não encontrado no TMDB', color: 'text-yellow-400', badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  ERROR:     { icon: AlertCircle,  label: 'Erro',                   color: 'text-red-400',    badge: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  PENDING:   { icon: Clock,        label: 'Pendente',               color: 'text-zinc-500',   badge: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+}
+
+function getStatus(status: string | null) {
+  return STATUS_CONFIG[status ?? ''] ?? STATUS_CONFIG.PENDING
+}
+
+function timeAgoOrDate(date: Date | string | null): string | null {
+  if (!date) return null
+  const d = new Date(date)
+  const diff = Math.floor((Date.now() - d.getTime()) / 1000)
+  if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`
+  if (diff < 86400 * 7) return `há ${Math.floor(diff / 86400)}d`
+  return d.toLocaleDateString('pt-BR')
+}
+
 export default function FilmographyAdminPage() {
-  const router = useRouter()
   const [artists, setArtists] = useState<Artist[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState<string | null>(null)
   const [batchSyncing, setBatchSyncing] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'without' | 'outdated'>('all')
+  const [batchResult, setBatchResult] = useState<string | null>(null)
+  const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
   async function loadData() {
     try {
       setLoading(true)
-
-      // Load stats
-      const statsRes = await fetch('/api/admin/filmography')
-      if (statsRes.ok) {
-        const data = await statsRes.json()
-        setStats(data.stats)
-      }
-
-      // Load artists with filmography info
-      const artistsRes = await fetch('/api/admin/artists?limit=100')
-      if (artistsRes.ok) {
-        const data = await artistsRes.json()
-        setArtists(data.items || [])
-      } else {
-        console.error('Failed to load artists')
-      }
-    } catch (error) {
-      console.error('Failed to load data:', error)
+      const [statsRes, artistsRes] = await Promise.all([
+        fetch('/api/admin/filmography'),
+        fetch('/api/admin/artists?limit=100'),
+      ])
+      if (statsRes.ok) setStats((await statsRes.json()).stats)
+      if (artistsRes.ok) setArtists((await artistsRes.json()).items || [])
+    } catch (e) {
+      console.error(e)
     } finally {
       setLoading(false)
     }
@@ -66,28 +74,17 @@ export default function FilmographyAdminPage() {
 
   async function syncArtist(artistId: string) {
     if (syncing) return
-
     try {
       setSyncing(artistId)
-      const response = await fetch('/api/admin/filmography', {
+      const res = await fetch('/api/admin/filmography', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          artistIds: [artistId],
-          strategy: 'SMART_MERGE',
-        }),
+        body: JSON.stringify({ artistIds: [artistId], strategy: 'SMART_MERGE' }),
       })
-
-      const result = await response.json()
-
-      if (result.success) {
-        alert(`Filmografia sincronizada!\n\n${result.message}`)
-        await loadData()
-      } else {
-        alert(`Erro: ${result.message || 'Falha na sincronização'}`)
-      }
-    } catch (error) {
-      console.error('Sync error:', error)
+      const result = await res.json()
+      if (!result.success) alert(`Erro: ${result.message || 'Falha na sincronização'}`)
+      await loadData()
+    } catch {
       alert('Erro ao sincronizar filmografia')
     } finally {
       setSyncing(null)
@@ -96,251 +93,186 @@ export default function FilmographyAdminPage() {
 
   async function syncOutdated() {
     if (batchSyncing) return
-
-    if (!confirm('Sincronizar filmografias desatualizadas?\n\nIsso pode levar alguns minutos.')) {
-      return
-    }
-
+    if (!confirm('Sincronizar filmografias desatualizadas?\n\nIsso pode levar alguns minutos.')) return
     try {
       setBatchSyncing(true)
-      const response = await fetch('/api/admin/filmography', {
+      setBatchResult(null)
+      const res = await fetch('/api/admin/filmography', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          strategy: 'INCREMENTAL',
-          concurrency: 3,
-        }),
+        body: JSON.stringify({ strategy: 'INCREMENTAL', concurrency: 3 }),
       })
-
-      const result = await response.json()
-
+      const result = await res.json()
       if (result.success) {
-        alert(
-          `Sincronização em lote completa!\n\n` +
-          `Sucesso: ${result.result.successCount}/${result.result.total}\n` +
-          `Falhas: ${result.result.failureCount}\n` +
-          `Duração: ${(result.result.duration / 1000).toFixed(1)}s`
-        )
+        setBatchResult(`✓ ${result.result.successCount}/${result.result.total} sincronizados · ${result.result.failureCount} falhas · ${(result.result.duration / 1000).toFixed(1)}s`)
         await loadData()
       } else {
         alert(`Erro: ${result.message || 'Falha na sincronização em lote'}`)
       }
-    } catch (error) {
-      console.error('Batch sync error:', error)
+    } catch {
       alert('Erro ao sincronizar filmografias')
     } finally {
       setBatchSyncing(false)
     }
   }
 
-  function getStatusIcon(status: string | null) {
-    switch (status) {
-      case 'SYNCED':
-        return <CheckCircle className="text-green-500" size={20} />
-      case 'NOT_FOUND':
-        return <XCircle className="text-yellow-500" size={20} />
-      case 'ERROR':
-        return <AlertCircle className="text-red-500" size={20} />
-      default:
-        return <Clock className="text-gray-500" size={20} />
-    }
-  }
-
-  function getStatusText(status: string | null): string {
-    switch (status) {
-      case 'SYNCED':
-        return 'Sincronizado'
-      case 'NOT_FOUND':
-        return 'Não encontrado no TMDB'
-      case 'ERROR':
-        return 'Erro'
-      default:
-        return 'Pendente'
-    }
-  }
-
   const filteredArtists = artists.filter(artist => {
     if (filter === 'without' && artist.productionsCount > 0) return false
     if (filter === 'outdated' && artist.tmdbLastSync) {
-      const daysSinceSync = Math.floor(
-        (Date.now() - new Date(artist.tmdbLastSync).getTime()) / (1000 * 60 * 60 * 24)
-      )
-      if (daysSinceSync < 30) return false
+      const days = Math.floor((Date.now() - new Date(artist.tmdbLastSync).getTime()) / 86400000)
+      if (days < 30) return false
     }
-
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return (
-        artist.nameRomanized.toLowerCase().includes(query) ||
-        artist.nameHangul?.toLowerCase().includes(query)
-      )
+      const q = searchQuery.toLowerCase()
+      return artist.nameRomanized.toLowerCase().includes(q) || !!artist.nameHangul?.toLowerCase().includes(q)
     }
-
     return true
   })
 
+  const filters: { value: FilterType; label: string; count?: number }[] = [
+    { value: 'all',      label: 'Todos',          count: artists.length },
+    { value: 'without',  label: 'Sem filmografia', count: stats?.withoutFilmography },
+    { value: 'outdated', label: 'Desatualizados',  count: stats?.needsUpdate },
+  ]
+
   return (
     <AdminLayout title="Filmografias">
-      <div className="space-y-6">
-        <p className="text-zinc-400 text-sm -mt-6">Gerenciar filmografias de artistas via TMDB</p>
+      <div className="space-y-4">
+        <p className="text-zinc-500 text-xs -mt-6 flex items-center gap-1.5">
+          <Info size={12} />
+          Sync automático a cada 15 min via cron · Use para forçar manualmente
+        </p>
 
         {/* Stats */}
-          {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                <p className="text-sm text-zinc-500 mb-1">Total Artistas</p>
-                <p className="text-3xl font-bold text-white">{stats.totalArtists}</p>
+        {stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {[
+              { label: 'Total',            value: stats.totalArtists,     color: 'text-white' },
+              { label: 'Com filmografia',  value: stats.withFilmography,  color: 'text-green-400' },
+              { label: 'Sem filmografia',  value: stats.withoutFilmography, color: 'text-yellow-400' },
+              { label: 'Atualizados (7d)', value: stats.syncedRecently,   color: 'text-blue-400' },
+              { label: 'Precisam sync',    value: stats.needsUpdate,      color: 'text-orange-400' },
+            ].map(s => (
+              <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
+                <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-zinc-500 font-medium mt-0.5">{s.label}</p>
               </div>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                <p className="text-sm text-zinc-500 mb-1">Com Filmografia</p>
-                <p className="text-3xl font-bold text-green-500">{stats.withFilmography}</p>
-              </div>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                <p className="text-sm text-zinc-500 mb-1">Sem Filmografia</p>
-                <p className="text-3xl font-bold text-yellow-500">{stats.withoutFilmography}</p>
-              </div>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                <p className="text-sm text-zinc-500 mb-1">Atualizados (7d)</p>
-                <p className="text-3xl font-bold text-blue-500">{stats.syncedRecently}</p>
-              </div>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                <p className="text-sm text-zinc-500 mb-1">Precisam Atualizar</p>
-                <p className="text-3xl font-bold text-orange-500">{stats.needsUpdate}</p>
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
+        )}
 
-          {/* Actions */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex gap-4">
-                <button
-                  onClick={syncOutdated}
-                  disabled={batchSyncing}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <RefreshCw size={20} className={batchSyncing ? 'animate-spin' : ''} />
-                  {batchSyncing ? 'Sincronizando...' : 'Sincronizar Desatualizados'}
-                </button>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    filter === 'all'
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                  }`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => setFilter('without')}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    filter === 'without'
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                  }`}
-                >
-                  Sem Filmografia
-                </button>
-                <button
-                  onClick={() => setFilter('outdated')}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    filter === 'outdated'
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                  }`}
-                >
-                  Desatualizados
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-4">
+        {/* Toolbar */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[180px]">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Buscar artista..."
-                className="w-full px-4 py-3 bg-black border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                className="w-full pl-8 pr-3 py-2 bg-black border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
               />
             </div>
+
+            {/* Batch sync */}
+            <button
+              onClick={syncOutdated}
+              disabled={batchSyncing}
+              className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            >
+              <RefreshCw size={14} className={batchSyncing ? 'animate-spin' : ''} />
+              {batchSyncing ? 'Sincronizando...' : 'Sync Desatualizados'}
+            </button>
           </div>
 
-          {/* Info Message */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6 mb-8">
-            <p className="text-blue-400 text-center">
-              <strong>Sistema Ativo:</strong> Filmografias são atualizadas automaticamente a cada 15 minutos via cron.
-              <br />
-              Use esta página para forçar sincronização manual quando necessário.
-            </p>
+          {/* Filters */}
+          <div className="flex flex-wrap gap-1.5">
+            {filters.map(f => (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  filter === f.value
+                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                    : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-zinc-600'
+                }`}
+              >
+                {f.label}
+                {f.count !== undefined && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                    filter === f.value ? 'bg-purple-500/30' : 'bg-zinc-700'
+                  }`}>{f.count}</span>
+                )}
+              </button>
+            ))}
           </div>
 
-          {/* Artist List */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-4">
-              Lista de Artistas ({filteredArtists.length})
+          {/* Batch result */}
+          {batchResult && (
+            <p className="text-xs text-green-400 font-medium">{batchResult}</p>
+          )}
+        </div>
+
+        {/* Artist list */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+            <h2 className="text-xs font-black text-zinc-400 uppercase tracking-wider">
+              Artistas
             </h2>
+            <span className="text-xs text-zinc-600 tabular-nums">{filteredArtists.length} resultado{filteredArtists.length !== 1 ? 's' : ''}</span>
+          </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-              </div>
-            ) : filteredArtists.length === 0 ? (
-              <p className="text-zinc-400 text-center py-8">
-                Nenhum artista encontrado com os filtros selecionados
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {filteredArtists.map((artist) => (
-                  <div
-                    key={artist.id}
-                    className="flex items-center justify-between p-4 bg-black/50 border border-zinc-700 rounded-lg hover:border-purple-500/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      {getStatusIcon(artist.tmdbSyncStatus)}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-white">{artist.nameRomanized}</h3>
-                          {artist.nameHangul && (
-                            <span className="text-sm text-zinc-500">({artist.nameHangul})</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-zinc-500">
-                          <span>{getStatusText(artist.tmdbSyncStatus)}</span>
-                          <span>•</span>
-                          <span>{artist.productionsCount} produções</span>
-                          {artist.tmdbLastSync && (
-                            <>
-                              <span>•</span>
-                              <span>
-                                Última sync:{' '}
-                                {new Date(artist.tmdbLastSync).toLocaleDateString('pt-BR')}
-                              </span>
-                            </>
-                          )}
-                        </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
+            </div>
+          ) : filteredArtists.length === 0 ? (
+            <p className="text-zinc-600 text-sm text-center py-12">Nenhum artista encontrado</p>
+          ) : (
+            <div className="divide-y divide-zinc-800/60">
+              {filteredArtists.map(artist => {
+                const status = getStatus(artist.tmdbSyncStatus)
+                const StatusIcon = status.icon
+                const lastSync = timeAgoOrDate(artist.tmdbLastSync)
+                const isSyncing = syncing === artist.id
+
+                return (
+                  <div key={artist.id} className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/30 transition-colors group">
+                    <StatusIcon size={15} className={`flex-shrink-0 ${status.color}`} />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-white">{artist.nameRomanized}</span>
+                        {artist.nameHangul && (
+                          <span className="text-xs text-zinc-500">{artist.nameHangul}</span>
+                        )}
+                        <span className={`hidden sm:inline text-[10px] font-black px-1.5 py-0.5 rounded border ${status.badge}`}>
+                          {status.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5 text-[11px] text-zinc-600">
+                        <span>{artist.productionsCount} prod.</span>
+                        {lastSync && <span>sync {lastSync}</span>}
+                        {!artist.tmdbId && <span className="text-red-400/70">sem TMDB ID</span>}
                       </div>
                     </div>
 
                     <button
                       onClick={() => syncArtist(artist.id)}
-                      disabled={syncing === artist.id}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={!!syncing}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-400 border border-zinc-700 rounded-lg hover:border-purple-500/50 hover:text-purple-400 hover:bg-purple-500/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      <RefreshCw
-                        size={16}
-                        className={syncing === artist.id ? 'animate-spin' : ''}
-                      />
-                      {syncing === artist.id ? 'Sincronizando...' : 'Sincronizar'}
+                      <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} />
+                      {isSyncing ? 'Sync...' : 'Sync'}
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </AdminLayout>
   )
