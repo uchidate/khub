@@ -80,6 +80,7 @@ services:
     volumes:
       - hallyuhub-data:/app/data
       - instagram-images-staging:/app/public/instagram
+      - /var/log/nginx:/app/nginx-logs:ro
     networks:
       - web
       - backend-staging

@@ -5,6 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
     RefreshCw, Trash2, AlertTriangle, CheckCircle2, ServerCrash,
     ChevronDown, ChevronRight, Search, X, Globe, Clock, Layers, Info,
+    ShieldAlert,
 } from 'lucide-react'
 
 interface ServerLogEntry {
@@ -26,6 +27,29 @@ interface Counts {
     fourxx: number
     all: number
 }
+
+interface NginxGatewayEntry {
+    ts: string
+    status: number
+    method: string
+    path: string
+    duration: number
+    ip: string
+    ua: string
+}
+
+interface NginxLogsResponse {
+    logs: NginxGatewayEntry[]
+    counts: { total: number; s502: number; s504: number }
+    available: boolean
+    message?: string
+    error?: string
+}
+
+const TABS = [
+    { value: 'app',     label: 'App Logs' },
+    { value: 'gateway', label: 'Gateway (502/504)' },
+]
 
 const STATUS_FILTERS = [
     { value: 'errors', label: 'Todos erros' },
@@ -84,6 +108,9 @@ function parseUserAgent(ua: string | null): string {
 }
 
 export default function ServerLogsPage() {
+    const [activeTab, setActiveTab] = useState<'app' | 'gateway'>('app')
+
+    // App logs state
     const [logs, setLogs]         = useState<ServerLogEntry[]>([])
     const [total, setTotal]       = useState(0)
     const [pages, setPages]       = useState(1)
@@ -98,6 +125,14 @@ export default function ServerLogsPage() {
     const [clearMenu, setClearMenu] = useState(false)
     const [autoRefresh, setAutoRefresh] = useState(false)
     const clearMenuRef = useRef<HTMLDivElement>(null)
+
+    // Gateway logs state
+    const [gwLogs, setGwLogs]         = useState<NginxGatewayEntry[]>([])
+    const [gwCounts, setGwCounts]     = useState({ total: 0, s502: 0, s504: 0 })
+    const [gwLoading, setGwLoading]   = useState(false)
+    const [gwAvailable, setGwAvailable] = useState<boolean | null>(null)
+    const [gwMessage, setGwMessage]   = useState<string | undefined>()
+    const [gwExpanded, setGwExpanded] = useState<number | null>(null)
 
     const fetchLogs = useCallback(async (p = page) => {
         setLoading(true)
@@ -116,15 +151,33 @@ export default function ServerLogsPage() {
         }
     }, [filter, search, page])
 
+    const fetchGwLogs = useCallback(async () => {
+        setGwLoading(true)
+        try {
+            const res  = await fetch('/api/admin/nginx-logs')
+            const json = await res.json() as NginxLogsResponse
+            setGwLogs(json.logs ?? [])
+            setGwCounts(json.counts ?? { total: 0, s502: 0, s504: 0 })
+            setGwAvailable(json.available)
+            setGwMessage(json.message)
+        } finally {
+            setGwLoading(false)
+        }
+    }, [])
+
     useEffect(() => { fetchLogs(1) }, [filter, search])
-    useEffect(() => { fetchLogs(page) }, [page])  
+    useEffect(() => { fetchLogs(page) }, [page])
+    useEffect(() => { if (activeTab === 'gateway') fetchGwLogs() }, [activeTab, fetchGwLogs])
 
     // Auto-refresh a cada 30s
     useEffect(() => {
         if (!autoRefresh) return
-        const id = setInterval(() => fetchLogs(page), 30000)
+        const id = setInterval(() => {
+            if (activeTab === 'app') fetchLogs(page)
+            else fetchGwLogs()
+        }, 30000)
         return () => clearInterval(id)
-    }, [autoRefresh, fetchLogs, page])
+    }, [autoRefresh, fetchLogs, fetchGwLogs, activeTab, page])
 
     // Fechar menu ao clicar fora
     useEffect(() => {
@@ -156,21 +209,26 @@ export default function ServerLogsPage() {
         <AdminLayout title="Server Logs">
             <div className="space-y-5">
 
-                {/* Coverage note */}
-                <div className="flex items-start gap-3 bg-blue-950/30 border border-blue-800/40 rounded-xl px-4 py-3 text-xs text-blue-300">
-                    <Info size={14} className="flex-shrink-0 mt-0.5 text-blue-400" />
-                    <div className="space-y-1">
-                        <p className="font-bold text-blue-200">Cobertura de logs</p>
-                        <p className="text-blue-300/80">
-                            Este painel captura erros 4xx/5xx das rotas monitoradas com <code className="bg-blue-900/40 px-1 rounded font-mono">withLogging</code>.
-                            Erros <strong>502 / 504</strong> são gerados pelo nginx (proxy reverso) antes de chegar ao app — <strong>não aparecem aqui</strong>.
-                        </p>
-                        <p className="text-blue-400/70 font-mono mt-1">
-                            Para 502/504:{' '}
-                            <span className="text-blue-300/70">ssh root@31.97.255.107 &quot;tail -50 /var/log/nginx/error.log&quot;</span>
-                        </p>
-                    </div>
+                {/* Tabs */}
+                <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden w-fit">
+                    {TABS.map(tab => (
+                        <button
+                            key={tab.value}
+                            onClick={() => setActiveTab(tab.value as 'app' | 'gateway')}
+                            className={`px-4 py-2 text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                                activeTab === tab.value
+                                    ? 'bg-purple-600 text-white'
+                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                            }`}
+                        >
+                            {tab.value === 'gateway' && <ShieldAlert size={12} />}
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
+
+                {/* ── APP LOGS TAB ── */}
+                {activeTab === 'app' && (<>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -445,6 +503,157 @@ export default function ServerLogsPage() {
                         </button>
                     </div>
                 )}
+                </>)}
+
+                {/* ── GATEWAY ERRORS TAB ── */}
+                {activeTab === 'gateway' && (<>
+
+                {/* Info note */}
+                <div className="flex items-start gap-3 bg-red-950/20 border border-red-800/30 rounded-xl px-4 py-3 text-xs text-red-300">
+                    <Info size={14} className="flex-shrink-0 mt-0.5 text-red-400" />
+                    <div className="space-y-1">
+                        <p className="font-bold text-red-200">Erros de Gateway — nginx</p>
+                        <p className="text-red-300/80">
+                            Registros de <strong>502 Bad Gateway</strong> e <strong>504 Gateway Timeout</strong> capturados diretamente
+                            pelo nginx antes de chegar ao app. Lidos do arquivo{' '}
+                            <code className="bg-red-900/40 px-1 rounded font-mono">/var/log/nginx/gateway-errors.log</code>.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs text-zinc-500 font-medium">Total</p>
+                            <Layers size={14} className="text-zinc-600" />
+                        </div>
+                        <p className="text-2xl font-black text-white">{gwCounts.total.toLocaleString('pt-BR')}</p>
+                        <p className="text-[11px] text-zinc-600 mt-0.5">últimas {gwCounts.total > 0 ? gwCounts.total : '—'} entradas</p>
+                    </div>
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs text-zinc-500 font-medium">502 Bad Gateway</p>
+                            <ServerCrash size={14} className="text-red-500" />
+                        </div>
+                        <p className="text-2xl font-black text-red-400">{gwCounts.s502.toLocaleString('pt-BR')}</p>
+                        <p className="text-[11px] text-zinc-600 mt-0.5">app inacessível</p>
+                    </div>
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs text-zinc-500 font-medium">504 Timeout</p>
+                            <Clock size={14} className="text-orange-500" />
+                        </div>
+                        <p className="text-2xl font-black text-orange-400">{gwCounts.s504.toLocaleString('pt-BR')}</p>
+                        <p className="text-[11px] text-zinc-600 mt-0.5">resposta lenta</p>
+                    </div>
+                </div>
+
+                {/* Toolbar */}
+                <div className="flex items-center gap-2 justify-end">
+                    <button
+                        onClick={() => setAutoRefresh(v => !v)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${
+                            autoRefresh
+                                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                        }`}
+                    >
+                        <RefreshCw size={12} className={autoRefresh ? 'animate-spin' : ''} />
+                        {autoRefresh ? '30s' : 'Auto'}
+                    </button>
+                    <button
+                        onClick={fetchGwLogs}
+                        disabled={gwLoading}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                        <RefreshCw size={12} className={gwLoading ? 'animate-spin' : ''} />
+                        Atualizar
+                    </button>
+                </div>
+
+                {/* Gateway log list */}
+                {gwAvailable === false ? (
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 text-center py-16">
+                        <ShieldAlert size={36} className="mx-auto mb-3 text-zinc-700 opacity-60" />
+                        <p className="text-zinc-500 text-sm font-bold">Log não disponível</p>
+                        <p className="text-zinc-600 text-xs mt-1 max-w-sm mx-auto">{gwMessage ?? 'Arquivo de log nginx não encontrado. Verifique o bind mount e a configuração do nginx.'}</p>
+                    </div>
+                ) : gwLoading ? (
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800/50 last:border-0">
+                                <div className="w-10 h-5 rounded bg-zinc-800 animate-pulse" />
+                                <div className="w-10 h-4 rounded bg-zinc-800 animate-pulse" />
+                                <div className="flex-1 h-4 rounded bg-zinc-800 animate-pulse" />
+                                <div className="w-12 h-4 rounded bg-zinc-800 animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
+                ) : gwLogs.length === 0 ? (
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 text-center py-16">
+                        <CheckCircle2 size={36} className="mx-auto mb-3 text-green-700 opacity-60" />
+                        <p className="text-zinc-500 text-sm">Nenhum erro de gateway registrado</p>
+                    </div>
+                ) : (
+                    <div className="rounded-xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/50">
+                        {gwLogs.map((log, idx) => (
+                            <div key={idx} className="border-l-2 border-l-red-600/60">
+                                <button
+                                    onClick={() => setGwExpanded(e => e === idx ? null : idx)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-zinc-900/60 transition-colors"
+                                >
+                                    <span className="text-zinc-700 flex-shrink-0">
+                                        {gwExpanded === idx ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                                    </span>
+                                    <span className={`flex-shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded tabular-nums ${statusBadge(log.status)}`}>
+                                        {log.status}
+                                    </span>
+                                    <span className={`flex-shrink-0 text-[10px] font-black w-10 ${METHOD_COLORS[log.method] ?? 'text-zinc-400'}`}>
+                                        {log.method}
+                                    </span>
+                                    <span className="flex-1 text-xs text-zinc-300 font-mono truncate min-w-0">
+                                        {log.path}
+                                    </span>
+                                    <span className={`flex-shrink-0 text-[10px] tabular-nums font-mono ${durationColor(Math.round(log.duration * 1000))}`}>
+                                        {(log.duration * 1000).toFixed(0)}ms
+                                    </span>
+                                    <span className="hidden lg:block flex-shrink-0 text-[10px] text-zinc-600 w-16 truncate text-right">
+                                        {parseUserAgent(log.ua)}
+                                    </span>
+                                    <span
+                                        className="flex-shrink-0 text-[10px] text-zinc-600 w-10 text-right"
+                                        title={new Date(log.ts).toLocaleString('pt-BR')}
+                                    >
+                                        {formatTimeAgo(log.ts)}
+                                    </span>
+                                </button>
+                                {gwExpanded === idx && (
+                                    <div className="border-t border-zinc-800/60 px-4 py-4 bg-black/20">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                                            <div className="flex items-center gap-2">
+                                                <Globe size={11} className="text-zinc-600 flex-shrink-0" />
+                                                <span className="text-zinc-600">IP:</span>
+                                                <span className="text-zinc-300 font-mono">{log.ip || '—'}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={11} className="text-zinc-600 flex-shrink-0" />
+                                                <span className="text-zinc-600">Data:</span>
+                                                <span className="text-zinc-300">{new Date(log.ts).toLocaleString('pt-BR')}</span>
+                                            </div>
+                                            <div className="flex items-start gap-2 sm:col-span-2">
+                                                <span className="text-zinc-600 flex-shrink-0">UA:</span>
+                                                <span className="text-zinc-400 break-all">{log.ua || '—'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+                </>)}
+
             </div>
         </AdminLayout>
     )
