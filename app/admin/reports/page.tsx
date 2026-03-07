@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { CheckCircle, Eye, XCircle, ExternalLink, RefreshCw, Flag } from 'lucide-react'
+import { CheckCircle, Eye, XCircle, ExternalLink, RefreshCw, Flag, Search, Trash2 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +24,12 @@ interface Stats {
   reviewed: number
   resolved: number
   dismissed: number
+}
+
+interface ConfirmState {
+  open: boolean
+  message: string
+  onConfirm: () => void
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,6 +71,29 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
+// ─── Confirm Modal ────────────────────────────────────────────────────────────
+
+function ConfirmModal({ state, onClose }: { state: ConfirmState; onClose: () => void }) {
+  if (!state.open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+        <p className="text-white text-sm mb-6 leading-relaxed">{state.message}</p>
+        <div className="flex gap-3 justify-end">
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors text-sm">
+            Cancelar
+          </button>
+          <button onClick={() => { state.onConfirm(); onClose() }}
+            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors text-sm font-medium">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Action buttons ───────────────────────────────────────────────────────────
 
 function ActionButtons({ report, onUpdate, updatingId }: {
@@ -102,40 +131,48 @@ function ActionButtons({ report, onUpdate, updatingId }: {
 
 // ─── Mobile Card ─────────────────────────────────────────────────────────────
 
-function ReportCard({ report, onUpdate, updatingId }: {
+function ReportCard({ report, selected, onToggle, onUpdate, updatingId }: {
   report: Report
+  selected: boolean
+  onToggle: (id: string) => void
   onUpdate: (id: string, status: 'REVIEWED' | 'RESOLVED' | 'DISMISSED') => void
   updatingId: string | null
 }) {
   const entity = ENTITY_META[report.entityType]
   return (
-    <div className="p-4 border-b border-white/5 last:border-0">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {entity && (
-            <span className={`px-2 py-0.5 rounded text-xs font-bold ${entity.color}`}>{entity.label}</span>
+    <div className={`p-4 border-b border-white/5 last:border-0 transition-colors ${selected ? 'bg-purple-500/5' : ''}`}>
+      <div className="flex items-start gap-3">
+        <input type="checkbox" checked={selected} onChange={() => onToggle(report.id)}
+          className="mt-0.5 rounded border-zinc-700 bg-zinc-800 accent-purple-600 cursor-pointer shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {entity && (
+                <span className={`px-2 py-0.5 rounded text-xs font-bold ${entity.color}`}>{entity.label}</span>
+              )}
+              <span className={`px-2 py-0.5 rounded text-xs font-bold border ${STATUS_STYLES[report.status] ?? ''}`}>
+                {STATUS_LABELS[report.status] ?? report.status}
+              </span>
+              <span className={`px-2 py-0.5 rounded text-xs border ${CATEGORY_COLORS[report.category] ?? 'text-zinc-400'}`}>
+                {CATEGORY_LABELS[report.category] ?? report.category}
+              </span>
+            </div>
+            <span className="text-[10px] text-zinc-600 whitespace-nowrap shrink-0">{formatDate(report.createdAt)}</span>
+          </div>
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="text-white font-medium text-sm">{report.entityName}</span>
+            {entity && (
+              <Link href={entity.href(report.entityId)} target="_blank" className="text-zinc-600 hover:text-zinc-400 shrink-0">
+                <ExternalLink size={12} />
+              </Link>
+            )}
+          </div>
+          {report.description && (
+            <p className="text-xs text-zinc-500 italic line-clamp-2 mb-2">{report.description}</p>
           )}
-          <span className={`px-2 py-0.5 rounded text-xs font-bold border ${STATUS_STYLES[report.status] ?? ''}`}>
-            {STATUS_LABELS[report.status] ?? report.status}
-          </span>
-          <span className={`px-2 py-0.5 rounded text-xs border ${CATEGORY_COLORS[report.category] ?? 'text-zinc-400'}`}>
-            {CATEGORY_LABELS[report.category] ?? report.category}
-          </span>
+          <ActionButtons report={report} onUpdate={onUpdate} updatingId={updatingId} />
         </div>
-        <span className="text-[10px] text-zinc-600 whitespace-nowrap shrink-0">{formatDate(report.createdAt)}</span>
       </div>
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-white font-medium text-sm">{report.entityName}</span>
-        {entity && (
-          <Link href={entity.href(report.entityId)} target="_blank" className="text-zinc-600 hover:text-zinc-400 shrink-0">
-            <ExternalLink size={12} />
-          </Link>
-        )}
-      </div>
-      {report.description && (
-        <p className="text-xs text-zinc-500 italic line-clamp-2 mb-2">{report.description}</p>
-      )}
-      <ActionButtons report={report} onUpdate={onUpdate} updatingId={updatingId} />
     </div>
   )
 }
@@ -152,9 +189,9 @@ function Skeleton() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Filters ──────────────────────────────────────────────────────────────────
 
-const FILTER_TABS = [
+const STATUS_TABS = [
   { key: '',          label: 'Todos' },
   { key: 'PENDING',   label: 'Pendentes' },
   { key: 'REVIEWED',  label: 'Em revisão' },
@@ -169,16 +206,34 @@ const ENTITY_TABS = [
   { key: 'group',      label: 'Grupos' },
 ]
 
+const CATEGORY_TABS = [
+  { key: '',            label: 'Todas' },
+  { key: 'wrong_info',  label: 'Info errada' },
+  { key: 'wrong_image', label: 'Imagem errada' },
+  { key: 'duplicate',   label: 'Duplicado' },
+  { key: 'missing_info',label: 'Info ausente' },
+  { key: 'other',       label: 'Outro' },
+]
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function ReportsPage() {
-  const [statusFilter, setStatusFilter]   = useState('')
-  const [entityFilter, setEntityFilter]   = useState('')
-  const [reports, setReports]             = useState<Report[]>([])
-  const [stats, setStats]                 = useState<Stats | null>(null)
-  const [total, setTotal]                 = useState(0)
-  const [page, setPage]                   = useState(1)
-  const [totalPages, setTotalPages]       = useState(1)
-  const [loading, setLoading]             = useState(true)
-  const [updatingId, setUpdatingId]       = useState<string | null>(null)
+  const [statusFilter,   setStatusFilter]   = useState('')
+  const [entityFilter,   setEntityFilter]   = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [search,         setSearch]         = useState('')
+  const [searchInput,    setSearchInput]    = useState('')
+  const [reports,        setReports]        = useState<Report[]>([])
+  const [stats,          setStats]          = useState<Stats | null>(null)
+  const [total,          setTotal]          = useState(0)
+  const [page,           setPage]           = useState(1)
+  const [totalPages,     setTotalPages]     = useState(1)
+  const [loading,        setLoading]        = useState(true)
+  const [updatingId,     setUpdatingId]     = useState<string | null>(null)
+  const [selected,       setSelected]       = useState<Set<string>>(new Set())
+  const [bulkLoading,    setBulkLoading]    = useState(false)
+  const [confirmModal,   setConfirmModal]   = useState<ConfirmState>({ open: false, message: '', onConfirm: () => {} })
+  const debounceRef = useRef<NodeJS.Timeout>()
 
   const fetchStats = useCallback(async () => {
     try {
@@ -187,18 +242,21 @@ export default function ReportsPage() {
     } catch { /* ignore */ }
   }, [])
 
-  const fetchReports = useCallback(async (p: number, status: string, entity: string) => {
+  const fetchReports = useCallback(async (p: number, status: string, entity: string, category: string, q: string) => {
     setLoading(true)
     try {
       const params = new URLSearchParams({ page: String(p), limit: '20' })
-      if (status) params.set('status', status)
-      if (entity) params.set('entityType', entity)
+      if (status)   params.set('status',     status)
+      if (entity)   params.set('entityType', entity)
+      if (category) params.set('category',   category)
+      if (q)        params.set('search',     q)
       const res = await fetch(`/api/admin/reports?${params}`)
       if (res.ok) {
         const data = await res.json()
         setReports(data.items)
         setTotal(data.total)
         setTotalPages(data.totalPages)
+        setSelected(new Set())
       }
     } finally {
       setLoading(false)
@@ -206,11 +264,47 @@ export default function ReportsPage() {
   }, [])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-  useEffect(() => { fetchReports(page, statusFilter, entityFilter) }, [fetchReports, page, statusFilter, entityFilter])
+  useEffect(() => {
+    fetchReports(page, statusFilter, entityFilter, categoryFilter, search)
+  }, [fetchReports, page, statusFilter, entityFilter, categoryFilter, search])
 
-  const handleFilterChange = (status: string) => { setStatusFilter(status); setPage(1) }
-  const handleEntityChange = (entity: string) => { setEntityFilter(entity); setPage(1) }
+  // Debounced search
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setSearch(value)
+      setPage(1)
+    }, 400)
+  }
 
+  const handleStatusChange   = (v: string) => { setStatusFilter(v);   setPage(1); setSelected(new Set()) }
+  const handleEntityChange   = (v: string) => { setEntityFilter(v);   setPage(1); setSelected(new Set()) }
+  const handleCategoryChange = (v: string) => { setCategoryFilter(v); setPage(1); setSelected(new Set()) }
+
+  // Selection
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(Array.from(prev))
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+  const allSelected   = reports.length > 0 && reports.every(r => selected.has(r.id))
+  const someSelected  = selected.size > 0
+  const toggleAll     = () => {
+    if (allSelected) {
+      setSelected(prev => {
+        const next = new Set(Array.from(prev))
+        reports.forEach(r => next.delete(r.id))
+        return next
+      })
+    } else {
+      setSelected(prev => new Set(Array.from(prev).concat(reports.map(r => r.id))))
+    }
+  }
+
+  // Single update
   const handleUpdateStatus = async (id: string, status: 'REVIEWED' | 'RESOLVED' | 'DISMISSED') => {
     if (updatingId) return
     setUpdatingId(id)
@@ -221,21 +315,66 @@ export default function ReportsPage() {
         body: JSON.stringify({ status }),
       })
       if (res.ok) {
-        await fetchReports(page, statusFilter, entityFilter)
-        await fetchStats()
+        await Promise.all([fetchReports(page, statusFilter, entityFilter, categoryFilter, search), fetchStats()])
       }
     } finally {
       setUpdatingId(null)
     }
   }
 
+  // Bulk actions
+  const bulkUpdateStatus = async (status: 'RESOLVED' | 'DISMISSED') => {
+    const ids = Array.from(selected)
+    setBulkLoading(true)
+    try {
+      const res = await fetch('/api/admin/reports', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, status }),
+      })
+      if (res.ok) {
+        await Promise.all([fetchReports(page, statusFilter, entityFilter, categoryFilter, search), fetchStats()])
+      }
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selected)
+    setBulkLoading(true)
+    try {
+      const res = await fetch('/api/admin/reports', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      if (res.ok) {
+        await Promise.all([fetchReports(page, statusFilter, entityFilter, categoryFilter, search), fetchStats()])
+      }
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  const confirmBulk = (label: string, action: () => void) => {
+    setConfirmModal({
+      open: true,
+      message: `${label} ${selected.size} reporte${selected.size !== 1 ? 's' : ''}?`,
+      onConfirm: action,
+    })
+  }
+
   return (
     <AdminLayout title="Reportes">
+      <ConfirmModal state={confirmModal} onClose={() => setConfirmModal(s => ({ ...s, open: false }))} />
+
       <div className="space-y-4">
+        {/* Header */}
         <div className="flex items-center justify-between gap-4 -mt-6 flex-wrap">
           <p className="text-zinc-400 text-sm">Problemas reportados por usuários nas páginas públicas</p>
           <button
-            onClick={() => { fetchReports(page, statusFilter, entityFilter); fetchStats() }}
+            onClick={() => { fetchReports(page, statusFilter, entityFilter, categoryFilter, search); fetchStats() }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors text-sm"
           >
             <RefreshCw size={14} /> Atualizar
@@ -245,29 +384,47 @@ export default function ReportsPage() {
         {/* Stats bar */}
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {[
-              { label: 'Total',       value: stats.total,     color: 'text-zinc-300' },
-              { label: 'Pendentes',   value: stats.pending,   color: 'text-orange-400' },
-              { label: 'Em revisão',  value: stats.reviewed,  color: 'text-blue-400' },
-              { label: 'Resolvidos',  value: stats.resolved,  color: 'text-green-400' },
-              { label: 'Descartados', value: stats.dismissed, color: 'text-zinc-500' },
-            ].map(s => (
-              <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+            {([
+              { key: '',          label: 'Total',       value: stats.total,     color: 'text-zinc-300' },
+              { key: 'PENDING',   label: 'Pendentes',   value: stats.pending,   color: 'text-orange-400' },
+              { key: 'REVIEWED',  label: 'Em revisão',  value: stats.reviewed,  color: 'text-blue-400' },
+              { key: 'RESOLVED',  label: 'Resolvidos',  value: stats.resolved,  color: 'text-green-400' },
+              { key: 'DISMISSED', label: 'Descartados', value: stats.dismissed, color: 'text-zinc-500' },
+            ] as Array<{ key: string; label: string; value: number; color: string }>).map(s => (
+              <button
+                key={s.label}
+                onClick={() => handleStatusChange(s.key)}
+                className={`bg-zinc-900 border rounded-xl p-3 text-center transition-colors cursor-pointer ${
+                  statusFilter === s.key ? 'border-purple-500/50 bg-purple-500/5' : 'border-zinc-800 hover:border-zinc-700'
+                }`}
+              >
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
                 <div className="text-xs text-zinc-500 mt-0.5">{s.label}</div>
-              </div>
+              </button>
             ))}
           </div>
         )}
 
         {/* Filters */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={e => handleSearchChange(e.target.value)}
+              placeholder="Buscar por nome da entidade..."
+              className="w-full pl-8 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors"
+            />
+          </div>
+
           {/* Status tabs */}
           <div className="flex gap-1 flex-wrap">
-            {FILTER_TABS.map(tab => (
+            {STATUS_TABS.map(tab => (
               <button
                 key={tab.key}
-                onClick={() => handleFilterChange(tab.key)}
+                onClick={() => handleStatusChange(tab.key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   statusFilter === tab.key
                     ? 'bg-purple-600 text-white'
@@ -284,24 +441,74 @@ export default function ReportsPage() {
             ))}
           </div>
 
-          {/* Entity type tabs */}
-          <div className="flex gap-1 flex-wrap">
-            <span className="text-xs text-zinc-600 self-center mr-1">Tipo:</span>
-            {ENTITY_TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => handleEntityChange(tab.key)}
-                className={`px-3 py-1 rounded-lg text-xs transition-colors ${
-                  entityFilter === tab.key
-                    ? 'bg-zinc-700 text-white'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Entity + Category filters */}
+          <div className="flex flex-wrap gap-4">
+            <div className="flex gap-1 flex-wrap items-center">
+              <span className="text-xs text-zinc-600 mr-1">Tipo:</span>
+              {ENTITY_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => handleEntityChange(tab.key)}
+                  className={`px-3 py-1 rounded-lg text-xs transition-colors ${
+                    entityFilter === tab.key
+                      ? 'bg-zinc-700 text-white'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1 flex-wrap items-center">
+              <span className="text-xs text-zinc-600 mr-1">Categoria:</span>
+              {CATEGORY_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => handleCategoryChange(tab.key)}
+                  className={`px-3 py-1 rounded-lg text-xs transition-colors ${
+                    categoryFilter === tab.key
+                      ? 'bg-zinc-700 text-white'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* Bulk action bar */}
+        {someSelected && (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-purple-600/10 border border-purple-500/30 rounded-xl">
+            <span className="text-sm text-purple-300 font-medium">
+              {selected.size} selecionado{selected.size !== 1 ? 's' : ''}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => confirmBulk('Resolver', () => bulkUpdateStatus('RESOLVED'))}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 text-xs font-medium transition-colors disabled:opacity-40"
+              >
+                <CheckCircle size={13} /> Resolver
+              </button>
+              <button
+                onClick={() => confirmBulk('Descartar', () => bulkUpdateStatus('DISMISSED'))}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-700/50 hover:bg-zinc-700 text-zinc-400 text-xs font-medium transition-colors disabled:opacity-40"
+              >
+                <XCircle size={13} /> Descartar
+              </button>
+              <button
+                onClick={() => confirmBulk('Deletar permanentemente', () => bulkDelete())}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-medium transition-colors disabled:opacity-40"
+              >
+                <Trash2 size={13} /> Deletar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (
@@ -317,7 +524,14 @@ export default function ReportsPage() {
             {/* Mobile cards */}
             <div className="md:hidden rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900/30">
               {reports.map(report => (
-                <ReportCard key={report.id} report={report} onUpdate={handleUpdateStatus} updatingId={updatingId} />
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  selected={selected.has(report.id)}
+                  onToggle={toggleSelect}
+                  onUpdate={handleUpdateStatus}
+                  updatingId={updatingId}
+                />
               ))}
             </div>
 
@@ -326,6 +540,10 @@ export default function ReportsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-zinc-900/80 text-zinc-500 text-xs uppercase tracking-wider border-b border-zinc-800">
                   <tr>
+                    <th className="px-4 py-3">
+                      <input type="checkbox" checked={allSelected} onChange={toggleAll}
+                        className="rounded border-zinc-700 bg-zinc-800 accent-purple-600 cursor-pointer" />
+                    </th>
                     <th className="px-4 py-3 text-left font-bold">Tipo</th>
                     <th className="px-4 py-3 text-left font-bold">Entidade</th>
                     <th className="px-4 py-3 text-left font-bold">Categoria</th>
@@ -338,10 +556,19 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-zinc-800">
                   {reports.map(report => {
                     const entity = ENTITY_META[report.entityType]
+                    const isSelected = selected.has(report.id)
                     return (
                       <tr key={report.id} className={`hover:bg-white/[0.02] transition-colors ${
-                        report.status === 'PENDING' ? 'bg-orange-500/[0.03]' : ''
+                        isSelected
+                          ? 'bg-purple-500/5'
+                          : report.status === 'PENDING'
+                            ? 'bg-orange-500/[0.03]'
+                            : ''
                       }`}>
+                        <td className="px-4 py-3">
+                          <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(report.id)}
+                            className="rounded border-zinc-700 bg-zinc-800 accent-purple-600 cursor-pointer" />
+                        </td>
                         <td className="px-4 py-3">
                           {entity && (
                             <span className={`px-2 py-0.5 rounded text-xs font-bold ${entity.color}`}>
