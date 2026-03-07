@@ -278,24 +278,36 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                     </div>
                 )}
 
-                {/* Artistas */}
+                {/* Ad: topo do artigo */}
+                <AdBanner
+                    slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_ARTICLE_TOP ?? ''}
+                    format="horizontal"
+                    className="mb-10"
+                />
+
+                {/* Conteúdo */}
+                <article className="max-w-none">
+                    <MarkdownRenderer content={mainContent} coverImageUrl={news.imageUrl ?? undefined} source={news.source} />
+                </article>
+
+                {/* Artistas — após o conteúdo */}
                 {news.artists.length > 0 && (
-                    <section className="mb-12 p-6 rounded-2xl bg-gradient-to-br from-purple-900/10 to-pink-900/10 border border-purple-500/20">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-purple-400 mb-4 flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            {protagonistArtists.length > 0 ? 'Sobre' : 'Artistas Mencionados'}
+                    <section className="mt-12 pt-10 border-t border-white/5">
+                        <h2 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
+                            <User className="w-3.5 h-3.5" />
+                            {protagonistArtists.length > 0 ? 'Artistas nesta notícia' : 'Artistas mencionados'}
                         </h2>
 
                         {/* Protagonistas — mencionados no título */}
                         {protagonistArtists.length > 0 && (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {protagonistArtists.map(({ artist }) => (
+                            <div className="flex flex-wrap gap-3 mb-5">
+                                {protagonistArtists.slice(0, 6).map(({ artist }) => (
                                     <Link
                                         key={artist.id}
                                         href={`/artists/${artist.id}`}
-                                        className="group flex flex-col items-center gap-3 p-4 rounded-xl bg-black/40 hover:bg-black/60 border border-white/5 hover:border-purple-500/30 transition-all hover:scale-105"
+                                        className="group flex items-center gap-3 px-4 py-2.5 rounded-full bg-zinc-900/70 hover:bg-zinc-800 border border-white/8 hover:border-purple-500/40 transition-all"
                                     >
-                                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-zinc-800 ring-2 ring-purple-500/20 group-hover:ring-purple-500/50 transition-all">
+                                        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800 ring-1 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all shrink-0">
                                             {artist.primaryImageUrl ? (
                                                 <Image
                                                     src={artist.primaryImageUrl}
@@ -304,17 +316,17 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                                     className="object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-xl">
+                                                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-xs">
                                                     {artist.nameRomanized[0]}
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="text-center">
-                                            <p className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">
+                                        <div>
+                                            <p className="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors leading-none">
                                                 {artist.nameRomanized}
                                             </p>
                                             {artist.roles && artist.roles.length > 0 && (
-                                                <p className="text-xs text-zinc-500 mt-1">
+                                                <p className="text-[11px] text-zinc-500 mt-0.5">
                                                     {getRoleLabel(artist.roles[0], artist.gender)}
                                                 </p>
                                             )}
@@ -326,20 +338,20 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
 
                         {/* Secundários — apenas mencionados no corpo */}
                         {secondaryArtists.length > 0 && (
-                            <div className={protagonistArtists.length > 0 ? 'mt-4 pt-4 border-t border-white/5' : ''}>
+                            <div className={protagonistArtists.length > 0 ? 'pt-3 border-t border-white/5' : ''}>
                                 {protagonistArtists.length > 0 && (
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-3 mt-3">
                                         Também mencionados
                                     </p>
                                 )}
                                 <div className="flex flex-wrap gap-2">
-                                    {secondaryArtists.map(({ artist }) => (
+                                    {secondaryArtists.slice(0, 12).map(({ artist }) => (
                                         <Link
                                             key={artist.id}
                                             href={`/artists/${artist.id}`}
-                                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-white/5 hover:border-purple-500/30 hover:bg-zinc-800 transition-all group"
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 border border-white/5 hover:border-zinc-600 hover:bg-zinc-800 transition-all group text-xs text-zinc-400 hover:text-zinc-200"
                                         >
-                                            <div className="relative w-5 h-5 rounded-full overflow-hidden bg-zinc-800 shrink-0">
+                                            <div className="relative w-4 h-4 rounded-full overflow-hidden bg-zinc-800 shrink-0">
                                                 {artist.primaryImageUrl ? (
                                                     <Image
                                                         src={artist.primaryImageUrl}
@@ -348,33 +360,24 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                                         className="object-cover"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-600 flex items-center justify-center text-white font-bold text-[8px]">
+                                                    <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-600 flex items-center justify-center text-white font-bold text-[7px]">
                                                         {artist.nameRomanized[0]}
                                                     </div>
                                                 )}
                                             </div>
-                                            <span className="text-xs text-zinc-400 group-hover:text-white transition-colors font-medium">
-                                                {artist.nameRomanized}
-                                            </span>
+                                            {artist.nameRomanized}
                                         </Link>
                                     ))}
+                                    {secondaryArtists.length > 12 && (
+                                        <span className="flex items-center px-2.5 py-1 rounded-full bg-zinc-900 border border-white/5 text-xs text-zinc-600">
+                                            +{secondaryArtists.length - 12} mais
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}
                     </section>
                 )}
-
-                {/* Ad: topo do artigo */}
-                <AdBanner
-                    slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_ARTICLE_TOP ?? ''}
-                    format="horizontal"
-                    className="mb-10"
-                />
-
-                {/* Conteúdo */}
-                <article className="max-w-none">
-                    <MarkdownRenderer content={mainContent} />
-                </article>
 
                 {/* Ad: após artigo */}
                 <AdBanner
@@ -392,19 +395,29 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                 </div>
 
                 {/* Rodapé da Notícia */}
-                <footer className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="text-sm text-zinc-500 font-medium italic">
-                        Fonte original: <span className="text-zinc-300 underline underline-offset-4">{(() => { try { return new URL(news.sourceUrl).hostname } catch { return news.sourceUrl } })()}</span>
-                    </div>
-                    <a
-                        href={news.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-bold hover:bg-purple-500 hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl uppercase text-xs tracking-widest"
-                    >
-                        Ver fonte original
-                        <ExternalLink className="w-4 h-4" />
-                    </a>
+                <footer className="mt-12">
+                    {(() => {
+                        let hostname = news.sourceUrl
+                        try { hostname = new URL(news.sourceUrl).hostname.replace(/^www\./, '') } catch { /* keep raw */ }
+                        return (
+                            <a
+                                href={news.sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl bg-zinc-900/60 border border-white/8 hover:border-purple-500/30 hover:bg-zinc-900 transition-all"
+                            >
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Fonte original</p>
+                                    <p className="text-base font-bold text-zinc-200 group-hover:text-purple-300 transition-colors">{news.source || hostname}</p>
+                                    <p className="text-xs text-zinc-600 mt-0.5">{hostname}</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0 px-4 py-2 rounded-full border border-white/10 group-hover:border-purple-500/40 transition-all text-xs font-semibold text-zinc-400 group-hover:text-purple-300">
+                                    Ler lá
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                </div>
+                            </a>
+                        )
+                    })()}
                 </footer>
 
                 {/* Seção de Comentários */}

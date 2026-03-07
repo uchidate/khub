@@ -54,7 +54,10 @@ const CONTENT_TYPE_RULES: { type: string; pattern: RegExp }[] = [
   { type: 'scandal',       pattern: /\b(scandal|controversy|dating|relationship confirmed|breakup|military|enlist(ment)?|hiatus|leave|lawsuit|apology|apologizes)\b/i },
 ];
 
-function classifyContentType(title: string, content: string): string {
+function classifyContentType(title: string, content: string, sourceName?: string): string {
+  // Dramabeans é 100% drama/kdrama — skip classification
+  if (sourceName === 'Dramabeans') return 'drama';
+
   const text = `${title} ${content.substring(0, 500)}`;
   for (const { type, pattern } of CONTENT_TYPE_RULES) {
     if (pattern.test(text)) return type;
@@ -196,18 +199,18 @@ export class RSSNewsService {
           /\[(\.\.\.|…|read more|continue reading|more)\]/i.test(fullContent);
 
         if (isTruncated && link) {
-          const articleData = await this.fetchArticleData(link);
+          const articleData = await this.fetchArticleData(link, feed.name);
           if (!imageUrl && articleData.imageUrl) imageUrl = articleData.imageUrl;
           if (articleData.content && articleData.content.length > fullContent.length) {
             fullContent = articleData.content;
           }
         } else if (!imageUrl && link) {
-          imageUrl = await this.fetchImageFromArticle(link);
+          imageUrl = await this.fetchImageFromArticle(link, feed.name);
         }
 
         const categories = this.extractCategories(item.category);
 
-        const contentType = classifyContentType(this.cleanHtml(title), fullContent);
+        const contentType = classifyContentType(this.cleanHtml(title), fullContent, feed.name);
         const readingTimeMin = fullContent ? estimateReadingTime(fullContent) : undefined;
 
         newsItems.push({
@@ -289,8 +292,9 @@ export class RSSNewsService {
   /**
    * Busca imagem e texto completo do artigo em uma única requisição.
    * Retorna Markdown formatado preservando estrutura (negrito, listas, links).
+   * Usa lógica específica por fonte quando `sourceName` é fornecido.
    */
-  async fetchArticleData(articleUrl: string): Promise<{ imageUrl?: string; content?: string }> {
+  async fetchArticleData(articleUrl: string, sourceName?: string): Promise<{ imageUrl?: string; content?: string }> {
     try {
       const response = await fetch(articleUrl, {
         headers: {
@@ -303,8 +307,8 @@ export class RSSNewsService {
 
       const html = await response.text();
       return {
-        imageUrl: this.extractImageFromHtml(html),
-        content: this.extractArticleText(html),
+        imageUrl: this.extractImageBySource(html, sourceName),
+        content: this.extractArticleText(html, sourceName),
       };
     } catch (error) {
       console.warn(`Failed to fetch article data from ${articleUrl}: ${error}`);
@@ -314,15 +318,35 @@ export class RSSNewsService {
 
   /**
    * Extrai o texto principal do artigo como Markdown.
-   * Pré-processa HTML removendo scripts, styles e comentários.
-   * Corrige bug anterior: usa posição do div de abertura em vez de regex com </div>.
+   * Tenta seletores específicos da fonte antes dos genéricos.
    */
-  private extractArticleText(html: string): string {
+  private extractArticleText(html: string, sourceName?: string): string {
     // Pré-processar: remover noise (scripts, styles, comentários)
     const stripped = html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
       .replace(/<!--[\s\S]*?-->/g, '');
+
+    // Seletores específicos por fonte (tentados primeiro)
+    const SOURCE_CONTENT_SELECTORS: Record<string, string[]> = {
+      Soompi:        ['sp-detail__content', 'article-container', 'entry-content'],
+      Koreaboo:      ['entry-content', 'post-content', 'article__body'],
+      Dramabeans:    ['entry-content', 'post-content', 'entry__content'],
+      'Asian Junkie':['entry-content', 'post-content', 'article-content'],
+      HelloKpop:     ['td-post-content', 'entry-content', 'tdb-block-inner'],
+      Kpopmap:       ['entry-content', 'post-content', 'article-content', 'td-post-content'],
+    };
+
+    const priorityClasses = sourceName ? (SOURCE_CONTENT_SELECTORS[sourceName] ?? []) : [];
+    // Genéricos de fallback (sem repetir os já tentados)
+    const genericClasses = [
+      'entry-content', 'post-content', 'article-content', 'article-body',
+      'story-content', 'td-post-content', 'post__content', 'single-content',
+      'entry__body', 'article__body', 'article-text', 'article_body',
+      'news-content', 'news_content', 'post-entry', 'content-area',
+    ].filter(c => !priorityClasses.includes(c));
+
+    const allClasses = [...priorityClasses, ...genericClasses];
 
     // 1. Tag <article>
     const articleMatch = stripped.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
@@ -331,16 +355,8 @@ export class RSSNewsService {
       if (text.length > 200) return text;
     }
 
-    // 2. Divs com classes de conteúdo conhecidas
-    // Fix: captura posição do div de abertura e extrai chunk após ele (evita </div> aninhado)
-    const contentClasses = [
-      'entry-content', 'post-content', 'article-content', 'article-body',
-      'story-content', 'td-post-content', 'post__content', 'single-content',
-      'entry__body', 'article__body', 'article-text', 'article_body',
-      'news-content', 'news_content', 'post-entry', 'content-area',
-    ];
-
-    for (const cls of contentClasses) {
+    // 2. Divs com classes de conteúdo (específicos primeiro, depois genéricos)
+    for (const cls of allClasses) {
       const regex = new RegExp(`<div[^>]*class="[^"]*\\b${cls}\\b[^"]*"[^>]*>`, 'i');
       const match = regex.exec(stripped);
       if (match) {
@@ -354,8 +370,60 @@ export class RSSNewsService {
     return '';
   }
 
-  private async fetchImageFromArticle(articleUrl: string): Promise<string | undefined> {
-    const data = await this.fetchArticleData(articleUrl);
+  /**
+   * Extrai imagem de capa com prioridades por fonte.
+   * Algumas fontes têm og:image de qualidade baixa; outras usem twitter:image.
+   */
+  private extractImageBySource(html: string, sourceName?: string): string | undefined {
+    if (!html) return undefined;
+
+    // Soompi e HelloKpop: og:image é confiável e de alta qualidade
+    // Koreaboo: twitter:image costuma ser melhor
+    // Dramabeans: og:image às vezes é thumbnail pequeno — tentar primeiro img no article
+    // Kpopmap: og:image funciona bem
+
+    const ogImage =
+      html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+
+    const twitterImage =
+      html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i);
+
+    if (sourceName === 'Koreaboo') {
+      // Koreaboo: twitter:image first, then og:image
+      if (twitterImage) return twitterImage[1];
+      if (ogImage) return ogImage[1];
+    } else if (sourceName === 'Dramabeans') {
+      // Dramabeans: first relevant <img> inside article body (higher quality than og:image)
+      const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+      if (articleMatch) {
+        const imgMatch = articleMatch[1].match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+        if (imgMatch && !imgMatch[1].startsWith('data:') && imgMatch[1].length > 10) {
+          return imgMatch[1];
+        }
+      }
+      if (ogImage) return ogImage[1];
+    } else {
+      // Default: og:image primeiro
+      if (ogImage) return ogImage[1];
+      if (twitterImage) return twitterImage[1];
+    }
+
+    // Fallback: primeira <img> relevante
+    const imgPattern = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let imgMatch: RegExpExecArray | null;
+    while ((imgMatch = imgPattern.exec(html)) !== null) {
+      const src = imgMatch[1];
+      if (src.includes('data:') || /\b(icon|logo|avatar|emoji|pixel|1x1|spacer)\b/i.test(src)) continue;
+      if (src.length > 10) return src;
+    }
+
+    return undefined;
+  }
+
+  private async fetchImageFromArticle(articleUrl: string, sourceName?: string): Promise<string | undefined> {
+    const data = await this.fetchArticleData(articleUrl, sourceName);
     return data.imageUrl;
   }
 
