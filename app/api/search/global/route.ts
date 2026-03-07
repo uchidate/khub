@@ -4,12 +4,13 @@ import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
+import { withLogging } from '@/lib/server/withLogging'
 
 const log = createLogger('SEARCH')
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export const GET = withLogging(async function GET(request: NextRequest) {
     const limited = checkRateLimit(request, RateLimitPresets.SEARCH_GLOBAL)
     if (limited) return limited
 
@@ -145,4 +146,4 @@ export async function GET(request: NextRequest) {
             { status: 500 }
         )
     }
-}
+})

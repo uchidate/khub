@@ -6,6 +6,7 @@ import { getEmailService } from '@/lib/services/email-service'
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { withLogging } from '@/lib/server/withLogging'
 
 const log = createLogger('AUTH')
 
@@ -13,7 +14,7 @@ const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido'),
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async function POST(request: NextRequest) {
   const limited = checkRateLimit(request, RateLimitPresets.AUTH_FORGOT_PASSWORD)
   if (limited) return limited
 
@@ -100,4 +101,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
