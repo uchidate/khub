@@ -145,6 +145,7 @@ export default function AdminCommentsPage() {
     const [noteModal, setNoteModal]   = useState<{ id: string; current: string } | null>(null)
     const [noteInput, setNoteInput]   = useState('')
     const [bulkWorking, setBulkWorking] = useState(false)
+    const [confirmModal, setConfirmModal] = useState<{ open: boolean; message: string; onConfirm: () => void }>({ open: false, message: '', onConfirm: () => {} })
 
     // Filters
     const [search,  setSearch]  = useState('')
@@ -185,38 +186,49 @@ export default function AdminCommentsPage() {
         fetchComments()
     }
 
-    const deleteSingle = async (id: string) => {
-        if (!confirm('Excluir este comentário permanentemente?')) return
-        await fetch(`/api/admin/comments/${id}`, { method: 'DELETE' })
-        fetchComments()
+    const deleteSingle = (id: string) => {
+        setConfirmModal({
+            open: true,
+            message: 'Excluir este comentário permanentemente?',
+            onConfirm: async () => {
+                await fetch(`/api/admin/comments/${id}`, { method: 'DELETE' })
+                fetchComments()
+            },
+        })
     }
 
     /* ── Bulk actions ── */
-    const bulkAction = async (action: 'flag' | 'remove' | 'activate' | 'delete') => {
+    const bulkAction = (action: 'flag' | 'remove' | 'activate' | 'delete') => {
         if (selected.size === 0) return
-        setBulkWorking(true)
-        try {
-            const ids = Array.from(selected)
-            if (action === 'delete') {
-                if (!confirm(`Excluir ${ids.length} comentário(s) permanentemente?`)) return
-                await fetch('/api/admin/comments', {
-                    method: 'DELETE',
+        const ids = Array.from(selected)
+        if (action === 'delete') {
+            setConfirmModal({
+                open: true,
+                message: `Excluir ${ids.length} comentário(s) permanentemente?`,
+                onConfirm: async () => {
+                    setBulkWorking(true)
+                    try {
+                        await fetch('/api/admin/comments', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ids }),
+                        })
+                        fetchComments()
+                    } finally {
+                        setBulkWorking(false)
+                    }
+                },
+            })
+        } else {
+            setBulkWorking(true)
+            const statusMap = { flag: 'FLAGGED', remove: 'REMOVED', activate: 'ACTIVE' } as const
+            Promise.all(ids.map(id =>
+                fetch(`/api/admin/comments/${id}`, {
+                    method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids }),
+                    body: JSON.stringify({ status: statusMap[action as keyof typeof statusMap] }),
                 })
-            } else {
-                const statusMap = { flag: 'FLAGGED', remove: 'REMOVED', activate: 'ACTIVE' }
-                await Promise.all(ids.map(id =>
-                    fetch(`/api/admin/comments/${id}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ status: statusMap[action] }),
-                    })
-                ))
-            }
-            fetchComments()
-        } finally {
-            setBulkWorking(false)
+            )).then(() => fetchComments()).finally(() => setBulkWorking(false))
         }
     }
 
@@ -260,6 +272,23 @@ export default function AdminCommentsPage() {
 
     return (
         <AdminLayout title="Comentários">
+        {/* Confirm modal */}
+        {confirmModal.open && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setConfirmModal(m => ({ ...m, open: false }))}>
+                <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-white font-bold text-lg mb-2">Confirmar ação</h3>
+                    <p className="text-zinc-400 text-sm mb-6">{confirmModal.message}</p>
+                    <div className="flex gap-3 justify-end">
+                        <button onClick={() => setConfirmModal(m => ({ ...m, open: false }))} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors">
+                            Cancelar
+                        </button>
+                        <button onClick={() => { setConfirmModal(m => ({ ...m, open: false })); confirmModal.onConfirm() }} className="px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-500 text-white transition-colors">
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         <div className="space-y-6">
             {/* Header row: description + refresh */}
             <div className="flex items-center justify-between flex-wrap gap-3 -mt-6">
