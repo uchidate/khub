@@ -216,10 +216,10 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover blur-sm brightness-30" />
                     </div>
                 )}
-                {/* Main image */}
+                {/* Main image — blurred backdrop (not crisp, portrait card handles crisp) */}
                 <div className="absolute inset-0">
                     {artist.primaryImageUrl ? (
-                        <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill priority sizes="100vw" className="object-cover object-top" />
+                        <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover object-top blur-sm brightness-[0.25]" />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-900/30 via-zinc-900 to-black" />
                     )}
@@ -242,7 +242,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                 {/* Hero content */}
                 <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-12 md:px-20 pb-10 md:pb-14">
-                    <div className="flex flex-col gap-2 max-w-3xl">
+                    <div className="flex items-end gap-8">
+                    <div className="flex flex-col gap-2 flex-1 max-w-2xl">
                         {/* Roles + group + birthday countdown */}
                         <div className="flex items-center gap-2 flex-wrap">
                             {getRoleLabels(roles, artist.gender).map(role => (
@@ -302,6 +303,22 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 <span className="text-sm font-bold">{artist.favoriteCount.toLocaleString('pt-BR')} fãs</span>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Portrait card — só desktop, igual ao poster das produções */}
+                    {artist.primaryImageUrl && (
+                        <div className="hidden md:block shrink-0 pb-1">
+                            <div className="w-36 lg:w-44 aspect-[3/4] relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
+                                <Image
+                                    src={artist.primaryImageUrl}
+                                    alt={artist.nameRomanized}
+                                    fill
+                                    sizes="(max-width: 1024px) 144px, 176px"
+                                    className="object-cover object-top"
+                                />
+                            </div>
+                        </div>
+                    )}
                     </div>
                 </div>
             </div>

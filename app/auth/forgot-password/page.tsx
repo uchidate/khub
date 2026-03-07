@@ -128,15 +128,15 @@ export default function ForgotPasswordPage() {
               <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
                 Email
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+              <div className="flex items-center bg-black border border-zinc-700 rounded-lg focus-within:border-purple-500 transition-colors">
+                <span className="pl-3 text-zinc-500 shrink-0"><Mail size={20} /></span>
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-11 pr-4 py-3 bg-black border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  className="flex-1 px-3 py-3 bg-transparent border-0 text-white placeholder-zinc-500 focus:outline-none"
                   placeholder="seu@email.com"
                 />
               </div>
