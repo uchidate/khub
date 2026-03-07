@@ -89,14 +89,6 @@ function Avatar({ name, size = 'sm' }: { name?: string | null; size?: 'sm' | 'md
     )
 }
 
-function Badge({ label, color }: { label: string; color: string }) {
-    return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide ${color}`}>
-            {label}
-        </span>
-    )
-}
-
 function StatCard({ label, value, sub, color = 'text-white' }: { label: string; value: number | string; sub?: string; color?: string }) {
     return (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
