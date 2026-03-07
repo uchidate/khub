@@ -24,6 +24,8 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   filters?: React.ReactNode
   extraParams?: Record<string, string>
+  /** If provided, renders a mobile-friendly card (md:hidden) instead of the horizontal-scroll table */
+  renderMobileCard?: (item: T) => React.ReactNode
 }
 
 interface PaginatedResponse<T> {
@@ -41,6 +43,7 @@ export function DataTable<T extends { id: string }>({
   searchPlaceholder = 'Buscar...',
   filters,
   extraParams,
+  renderMobileCard,
 }: DataTableProps<T>) {
   const [data, setData] = useState<T[]>([])
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
@@ -149,8 +152,36 @@ export function DataTable<T extends { id: string }>({
         </div>
       </div>
 
+      {/* Mobile cards (only when renderMobileCard is provided) */}
+      {renderMobileCard && (
+        <div className="md:hidden rounded-xl border border-zinc-800 overflow-hidden">
+          {loading ? (
+            <div className="divide-y divide-zinc-800/50">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-3">
+                  <div className="w-10 h-14 rounded bg-zinc-800 animate-pulse flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-zinc-800 rounded animate-pulse w-2/3" />
+                    <div className="h-3 bg-zinc-800 rounded animate-pulse w-1/2" />
+                    <div className="h-3 bg-zinc-800 rounded animate-pulse w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : data.length === 0 ? (
+            <div className="p-8 text-center text-zinc-500 text-sm">Nenhum resultado encontrado</div>
+          ) : (
+            <div className="divide-y divide-zinc-800/50">
+              {data.map(item => (
+                <div key={item.id}>{renderMobileCard(item)}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table — overflow-x-auto + min-w-max ensures horizontal scroll instead of column squishing */}
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <div className={`overflow-x-auto rounded-xl border border-zinc-800 ${renderMobileCard ? 'hidden md:block' : ''}`}>
         <table className="min-w-max w-full text-sm">
           <thead>
             <tr className="bg-zinc-900/50">

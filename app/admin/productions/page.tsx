@@ -9,7 +9,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import {
   Plus, Users, RefreshCw, ShieldCheck, RotateCcw, CalendarSearch,
-  ChevronLeft, ChevronRight, X, ExternalLink, Pencil, Trash2,
+  ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
   Check, AlertCircle, Film, Star,
 } from 'lucide-react'
 
@@ -570,6 +570,9 @@ export default function ProductionsPage() {
   const [backfillStats, setBackfillStats] = useState<{ updated: number; noChange: number; errors: number } | null>(null)
   const [backfillProgress, setBackfillProgress] = useState<{ current: number; total: number; totalGlobal: number } | null>(null)
 
+  // Mobile "more actions" dropdown
+  const [moreActionsOpen, setMoreActionsOpen] = useState(false)
+
   // Import by period state
   const [importPanelOpen, setImportPanelOpen] = useState(false)
   const [importType, setImportType] = useState<'tv' | 'movie'>('tv')
@@ -1001,7 +1004,8 @@ export default function ProductionsPage() {
             <p className="text-zinc-400 text-sm">Gerencie dramas, filmes e outras produções da plataforma</p>
             <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+          {/* Desktop: all buttons in a row */}
+          <div className="hidden sm:flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
             <button
               onClick={handleSyncAgeRating}
               disabled={ageSyncing}
@@ -1069,6 +1073,88 @@ export default function ProductionsPage() {
               <Plus size={13} />
               Nova
             </button>
+          </div>
+
+          {/* Mobile: primary actions + "Mais" dropdown */}
+          <div className="sm:hidden flex items-center gap-1.5 w-full">
+            <button
+              onClick={handleSyncPending}
+              disabled={batchSyncing}
+              className="flex items-center gap-1.5 px-2.5 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 font-bold rounded-lg transition-all disabled:opacity-50 text-xs flex-1 justify-center"
+            >
+              <RefreshCw size={12} className={batchSyncing ? 'animate-spin' : ''} />
+              Elenco
+            </button>
+            <button
+              onClick={handleSyncAgeRating}
+              disabled={ageSyncing}
+              className="flex items-center gap-1.5 px-2.5 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 font-bold rounded-lg transition-all disabled:opacity-50 text-xs flex-1 justify-center"
+            >
+              <ShieldCheck size={12} className={ageSyncing ? 'animate-pulse' : ''} />
+              Classificar
+            </button>
+            <button
+              onClick={() => { setImportPanelOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
+              className={`flex items-center gap-1.5 px-2.5 py-2 border font-bold rounded-lg transition-all text-xs flex-1 justify-center ${
+                importPanelOpen ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300'
+              }`}
+            >
+              <CalendarSearch size={12} />
+              Importar
+            </button>
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-1.5 px-2.5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all text-xs flex-1 justify-center"
+            >
+              <Plus size={12} />
+              Nova
+            </button>
+            {/* More actions dropdown */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setMoreActionsOpen(v => !v)}
+                className="flex items-center gap-1 px-2.5 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 font-bold rounded-lg transition-all text-xs"
+              >
+                <ChevronDown size={14} className={`transition-transform ${moreActionsOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {moreActionsOpen && (
+                <div className="absolute right-0 top-full mt-1 z-30 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden w-48">
+                  <button
+                    onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false); setMoreActionsOpen(false) }}
+                    className={`w-full flex items-center gap-2 px-4 py-3 text-xs font-bold transition-colors border-b border-zinc-800 ${
+                      backfillPanelOpen ? 'text-green-300 bg-green-500/10' : 'text-zinc-300 hover:bg-zinc-800'
+                    }`}
+                  >
+                    <RefreshCw size={12} className={backfillRunning ? 'animate-spin' : ''} />
+                    Atualizar PT-BR
+                  </button>
+                  <Link
+                    href="/admin/productions/sync"
+                    onClick={() => setMoreActionsOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-zinc-300 hover:bg-zinc-800 transition-colors border-b border-zinc-800"
+                  >
+                    <Star size={12} />
+                    Sync TMDB
+                  </Link>
+                  <button
+                    onClick={() => { handleResetResync(); setMoreActionsOpen(false) }}
+                    disabled={resetSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-amber-400 hover:bg-amber-900/20 transition-colors border-b border-zinc-800 disabled:opacity-50"
+                  >
+                    <RotateCcw size={12} className={resetSyncing ? 'animate-spin' : ''} />
+                    Resync Completo
+                  </button>
+                  <button
+                    onClick={() => { handleFixNoTmdbType(); setMoreActionsOpen(false) }}
+                    disabled={fixNoTypeSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-orange-400 hover:bg-orange-900/20 transition-colors disabled:opacity-50"
+                  >
+                    <RotateCcw size={12} className={fixNoTypeSyncing ? 'animate-spin' : ''} />
+                    Corrigir sem Tipo
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1279,6 +1365,81 @@ export default function ProductionsPage() {
           editHref={(p) => `/admin/productions/${p.id}`}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por título..."
+          renderMobileCard={(production) => (
+            <div className="flex items-start gap-3 p-3 hover:bg-zinc-900/30 transition-colors">
+              {/* Poster */}
+              <div className="flex-shrink-0">
+                {production.imageUrl ? (
+                  <img src={production.imageUrl} alt={production.titlePt} className="w-10 h-14 rounded object-cover" />
+                ) : (
+                  <div className="w-10 h-14 rounded bg-zinc-800 flex items-center justify-center">
+                    <Film size={14} className="text-zinc-600" />
+                  </div>
+                )}
+              </div>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <p className="font-semibold text-white text-sm truncate">{production.titlePt}</p>
+                      <Link href={`/productions/${production.id}`} target="_blank" className="text-zinc-600 hover:text-zinc-400 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        <ExternalLink size={10} />
+                      </Link>
+                    </div>
+                    {production.titleKr && <p className="text-xs text-zinc-500 truncate">{production.titleKr}</p>}
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => setCastModalProduction(production)}
+                      title="Gerenciar elenco"
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+                        production.artistsCount === 0
+                          ? 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
+                          : 'bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/20 text-cyan-400'
+                      }`}
+                    >
+                      <Users size={11} />
+                      <span>{production.artistsCount}</span>
+                    </button>
+                    <button
+                      onClick={() => handleSyncAgeRatingOne(production)}
+                      disabled={ageSyncingId === production.id || !production.tmdbId}
+                      title={production.tmdbId ? (production.ageRating ? `Reclassificar (atual: ${production.ageRating})` : 'Classificar no TMDB') : 'Sem TMDB ID'}
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-bold transition-all disabled:opacity-40 ${
+                        production.ageRating
+                          ? AGE_RATING_STYLES[production.ageRating] ?? 'bg-zinc-700 text-zinc-400 border-zinc-600'
+                          : 'bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/20 text-yellow-400'
+                      }`}
+                    >
+                      <ShieldCheck size={11} className={ageSyncingId === production.id ? 'animate-pulse' : ''} />
+                      <span>{ageSyncingId === production.id ? '...' : production.ageRating ? (production.ageRating === 'L' ? 'L' : `${production.ageRating}+`) : '—'}</span>
+                    </button>
+                    <Link
+                      href={`/admin/productions/${production.id}`}
+                      className="text-xs px-2 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors font-bold"
+                    >
+                      Editar
+                    </Link>
+                  </div>
+                </div>
+                {/* Badges */}
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-purple-500/20 text-purple-400 border border-purple-500/20">{production.type}</span>
+                  {production.year && <span className="text-xs text-zinc-500">{production.year}</span>}
+                  {production.ageRating && (
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-black border ${AGE_RATING_STYLES[production.ageRating] ?? 'bg-zinc-700/50 text-zinc-400'}`}>
+                      {production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+`}
+                    </span>
+                  )}
+                  {!production.tmdbId && (
+                    <span className="text-[10px] text-zinc-600 font-bold">sem TMDB</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           actions={(production) => (
             <div className="flex items-center gap-1">
               {/* Cast button → opens modal */}
