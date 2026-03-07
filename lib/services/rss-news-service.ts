@@ -185,9 +185,17 @@ export class RSSNewsService {
         const markdownContent = rawContent ? this.htmlToMarkdown(rawContent) : '';
         const cleanDescription = this.cleanHtml(description);
 
-        // Se conteúdo RSS for curto (<300 chars), scrape o artigo completo
+        // Scrape artigo completo se:
+        // - conteúdo curto (<1500 chars), OU
+        // - termina com "..." / "…" (truncado pelo feed), OU
+        // - contém marcadores de "leia mais"
         let fullContent = markdownContent || cleanDescription;
-        if (fullContent.length < 300 && link) {
+        const isTruncated =
+          fullContent.length < 1500 ||
+          /(\.\.\.|…)\s*$/.test(fullContent) ||
+          /\[(\.\.\.|…|read more|continue reading|more)\]/i.test(fullContent);
+
+        if (isTruncated && link) {
           const articleData = await this.fetchArticleData(link);
           if (!imageUrl && articleData.imageUrl) imageUrl = articleData.imageUrl;
           if (articleData.content && articleData.content.length > fullContent.length) {
@@ -355,8 +363,8 @@ export class RSSNewsService {
 
   /**
    * Converte HTML para Markdown, preservando estrutura:
-   * headings, negrito, itálico, links, listas, parágrafos, blockquotes.
-   * Remove scripts, styles, imagens (tratadas separadamente).
+   * headings, negrito, itálico, links, listas, parágrafos, blockquotes,
+   * imagens inline, figures com caption e embeds do YouTube.
    * Usado para conteúdo completo de artigos.
    */
   private htmlToMarkdown(html: string): string {
@@ -366,9 +374,39 @@ export class RSSNewsService {
       // Remover noise
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<img[^>]*>/gi, '')
-      .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '')
       .replace(/<!--[\s\S]*?-->/g, '')
+      // Figure com figcaption → imagem com caption (processar ANTES de <img>)
+      .replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, (_, inner) => {
+        const srcMatch = inner.match(/src=["']([^"']+)["']/i)
+        const captionMatch = inner.match(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i)
+        if (!srcMatch) return ''
+        const src = srcMatch[1]
+        if (src.startsWith('data:') || src.length < 10) return ''
+        const alt = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, '').trim() : ''
+        return `\n\n![${alt}](${src})\n\n`
+      })
+      // Imagens inline → Markdown (filtrar ícones/avatares/data URIs)
+      .replace(/<img\s[^>]*>/gi, (imgTag) => {
+        const srcMatch = imgTag.match(/src=["']([^"']+)["']/i)
+        const altMatch = imgTag.match(/alt=["']([^"']*)["']/i)
+        if (!srcMatch) return ''
+        const src = srcMatch[1]
+        if (src.startsWith('data:') || /\b(icon|logo|avatar|emoji|pixel|1x1|spacer)\b/i.test(src)) return ''
+        const alt = altMatch ? altMatch[1] : ''
+        return `\n\n![${alt}](${src})\n\n`
+      })
+      // Iframes: YouTube → thumbnail clicável, resto → removido
+      // Passagem única para evitar iframes parcialmente removidos
+      .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, (match) => {
+        const srcMatch = match.match(/src=["']([^"']+)["']/i)
+        if (srcMatch) {
+          const videoId = srcMatch[1].match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
+          if (videoId) return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
+        }
+        return ''
+      })
+      // Catch-all: iframes sem closing tag (malformados)
+      .replace(/<iframe\b[^>]*>/gi, '')
       // Headings → ## / ###
       .replace(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi, '\n\n## $1\n\n')
       .replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n\n### $1\n\n')

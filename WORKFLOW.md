@@ -25,56 +25,65 @@
 ```
 ┌─────────────────────────────────────────────────────┐
 │                                                     │
-│  1. MODIFICAR LOCALMENTE                           │
+│  1. MODIFICAR LOCALMENTE (branch: staging)         │
+│     git checkout staging                           │
 │     - Editar arquivos no projeto local             │
 │     - Testar local: npm run dev                    │
-│     - Verificar se funciona                        │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  2. DOCUMENTAR (se necessário)                     │
-│     - Criar/atualizar docs/*.md                    │
-│     - Substituir secrets por placeholders          │
-│     - Explicar mudanças                            │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  3. COMMITAR                                       │
+│  2. COMMITAR E PUSH PARA STAGING                   │
 │     git add <arquivos>                             │
 │     git commit -m "mensagem"                       │
-│     → Pre-commit hook verifica secrets            │
-│     → Se falhar: substituir secrets!               │
-│     git push origin main                           │
+│     git push origin staging                        │
+│     → GitHub Actions: build + deploy staging auto  │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  4. DEPLOY STAGING                                 │
-│     ./scripts/deploy.sh staging                    │
-│     → Automaticamente: pull, build, migrate, restart│
+│  3. [OPCIONAL] SYNC DADOS DE PRODUÇÃO              │
+│     → GitHub Actions → sync-staging-db → Run       │
+│     → Staging recebe dados reais de produção       │
+│     → Útil para testar com dados reais             │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  5. TESTAR STAGING                                 │
-│     - Acessar staging.hallyuhub.com.br             │
+│  4. TESTAR STAGING                                 │
+│     - Acessar http://31.97.255.107:3001            │
 │     - Testar funcionalidade modificada             │
-│     - Verificar logs                               │
 │     - Confirmar que funciona 100%                  │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│  6. DEPLOY PRODUCTION                              │
-│     ./scripts/deploy.sh production                 │
-│     → Automaticamente: pull, build, migrate, restart│
+│  5. CRIAR PR: staging → main                       │
+│     gh pr create --base main                       │
+│     → Parity check CI valida paridade              │
+│     → Deploy de produção aguarda APROVAÇÃO         │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  6. APROVAR DEPLOY DE PRODUÇÃO                     │
+│     → GitHub Actions → deploy-production           │
+│     → Aparece botão "Review deployments"           │
+│     → Aprovadores: uchidate, fbchdt                │
+│     → Aprovação libera deploy em produção          │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  7. TESTAR PRODUCTION                              │
-│     - Acessar hallyuhub.com.br                     │
+│     - Acessar https://www.hallyuhub.com.br         │
 │     - Testar funcionalidade                        │
-│     - Verificar logs                               │
 │     - Monitorar por 10-15 minutos                  │
 │                                                     │
 └─────────────────────────────────────────────────────┘
+```
+
+### Sync de Dados Produção → Staging
+
+```bash
+# Via GitHub Actions (recomendado):
+# Actions → "Sync Production → Staging DB" → Run workflow
+# Marcar checkbox "Confirmo: staging será SOBRESCRITO..."
+# ⚠️  Sobrescreve tudo no staging — dados criados lá serão perdidos
 ```
 
 ---

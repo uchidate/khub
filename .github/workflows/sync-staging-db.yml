@@ -1,0 +1,235 @@
+name: Sync Production → Staging DB
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Copia o banco de produção para staging.
+#
+# USE QUANDO:
+#   - Quiser testar uma feature com dados reais
+#   - Staging está desatualizado após muito tempo
+#   - Precisa reproduzir um bug que só aparece com dados reais
+#
+# ⚠️  ATENÇÃO: Sobrescreve COMPLETAMENTE o banco de staging.
+#     Qualquer dado criado diretamente no staging será perdido.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirmo: staging será SOBRESCRITO com dados de produção"
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  sync-db:
+    name: Sync Production → Staging DB
+    runs-on: [self-hosted, staging]
+    timeout-minutes: 20
+    if: github.event.inputs.confirm == 'true'
+
+    steps:
+      - name: Verificar confirmação
+        run: |
+          echo "✅ Sync confirmado por: ${{ github.actor }}"
+          echo "⏰ Iniciado em: $(date '+%Y-%m-%d %H:%M:%S')"
+
+      - name: Notificar Slack — Sync Iniciado
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -s -X POST "$SLACK_WEBHOOK" \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "blocks": [
+                  {"type":"header","text":{"type":"plain_text","text":"⬇️  Sync DB: Produção → Staging","emoji":true}},
+                  {"type":"section","fields":[
+                    {"type":"mrkdwn","text":"*Disparado por:*\n`${{ github.actor }}`"},
+                    {"type":"mrkdwn","text":"*Status:*\n⏳ Iniciando..."}
+                  ]}
+                ],
+                "text": "Sync DB Produção → Staging iniciado"
+              }'
+          fi
+
+      - name: Verificar containers necessários
+        run: |
+          set -e
+          echo "Verificando containers..."
+
+          if ! docker ps --format '{{.Names}}' | grep -q '^hallyuhub-postgres-production$'; then
+            echo "❌ ERRO: Container hallyuhub-postgres-production não está rodando!"
+            exit 1
+          fi
+
+          if ! docker ps --format '{{.Names}}' | grep -q '^hallyuhub-postgres-staging$'; then
+            echo "❌ ERRO: Container hallyuhub-postgres-staging não está rodando!"
+            exit 1
+          fi
+
+          echo "✅ Ambos os containers postgres estão rodando"
+
+      - name: Coletar stats de produção
+        run: |
+          echo "📊 Estatísticas de produção antes do sync:"
+          docker exec hallyuhub-postgres-production psql -U hallyuhub -d hallyuhub_production \
+            -c "SELECT
+                  'User'       AS tabela, COUNT(*) AS rows FROM \"User\"
+              UNION ALL SELECT 'Artist',        COUNT(*) FROM \"Artist\"
+              UNION ALL SELECT 'MusicalGroup',  COUNT(*) FROM \"MusicalGroup\"
+              UNION ALL SELECT 'News',          COUNT(*) FROM \"News\"
+              UNION ALL SELECT 'Production',    COUNT(*) FROM \"Production\"
+              UNION ALL SELECT 'Comment',       COUNT(*) FROM \"Comment\"
+              ORDER BY tabela;" \
+            2>/dev/null || echo "⚠️  Não foi possível coletar stats (não crítico)"
+
+      - name: Dump do banco de produção
+        run: |
+          set -e
+          echo "📦 Iniciando dump de produção..."
+
+          docker exec hallyuhub-postgres-production pg_dump \
+            -U hallyuhub \
+            -d hallyuhub_production \
+            --format=plain \
+            --no-owner \
+            --no-acl \
+            | gzip > /tmp/sync-prod-to-staging.sql.gz
+
+          DUMP_SIZE=$(du -h /tmp/sync-prod-to-staging.sql.gz | cut -f1)
+          echo "✅ Dump concluído: ${DUMP_SIZE}"
+
+      - name: Parar app de staging (manter banco)
+        run: |
+          echo "⏸️  Parando app de staging..."
+          docker stop hallyuhub-staging 2>/dev/null && echo "App parado" || echo "App já estava parado"
+          # Aguarda 3s para conexões com o banco encerrarem
+          sleep 3
+
+      - name: Recriar banco de staging
+        run: |
+          set -e
+          echo "🗑️  Encerrando conexões ativas com hallyuhub_staging..."
+          docker exec hallyuhub-postgres-staging psql -U postgres \
+            -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'hallyuhub_staging' AND pid <> pg_backend_pid();" \
+            2>/dev/null || true
+
+          echo "🗑️  Removendo banco de staging..."
+          docker exec hallyuhub-postgres-staging psql -U postgres \
+            -c "DROP DATABASE IF EXISTS hallyuhub_staging;"
+
+          echo "➕ Criando banco de staging limpo..."
+          docker exec hallyuhub-postgres-staging psql -U postgres \
+            -c "CREATE DATABASE hallyuhub_staging OWNER hallyuhub;"
+
+          echo "✅ Banco de staging recriado"
+
+      - name: Restaurar dump no banco de staging
+        run: |
+          set -e
+          echo "📥 Restaurando dados de produção no staging..."
+
+          zcat /tmp/sync-prod-to-staging.sql.gz \
+            | docker exec -i hallyuhub-postgres-staging psql \
+                -U hallyuhub \
+                -d hallyuhub_staging \
+                --quiet \
+                2>&1 | grep -v "^$" | grep -v "^SET$" | tail -5 || true
+
+          echo "✅ Restauração concluída"
+
+      - name: Aplicar migrations pendentes de staging
+        run: |
+          echo "🔄 Verificando migrations pendentes..."
+          cd /var/www/hallyuhub
+          docker-compose -f docker-compose.staging.yml run --rm --no-deps migrate-staging \
+            2>&1 | tail -10 || {
+            echo "⚠️  Migrations não puderam ser aplicadas (pode ser normal se staging = produção)"
+          }
+
+      - name: Reiniciar app de staging
+        run: |
+          set -e
+          echo "▶️  Reiniciando app de staging..."
+          docker start hallyuhub-staging
+          echo "App reiniciado, aguardando health check..."
+
+      - name: Health check do staging
+        run: |
+          MAX_RETRIES=18
+          WAIT=5
+          for i in $(seq 1 $MAX_RETRIES); do
+            if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+              echo "✅ Staging saudável após ${i} tentativas"
+              break
+            fi
+            if [ "$i" -eq "$MAX_RETRIES" ]; then
+              echo "❌ Staging não respondeu após $((MAX_RETRIES * WAIT))s"
+              docker logs hallyuhub-staging --tail 30 || true
+              exit 1
+            fi
+            echo "  Tentativa ${i}/${MAX_RETRIES}... aguardando ${WAIT}s"
+            sleep $WAIT
+          done
+
+      - name: Coletar stats do staging pós-sync
+        run: |
+          echo "📊 Estatísticas do staging após sync:"
+          docker exec hallyuhub-postgres-staging psql -U hallyuhub -d hallyuhub_staging \
+            -c "SELECT
+                  'User'       AS tabela, COUNT(*) AS rows FROM \"User\"
+              UNION ALL SELECT 'Artist',        COUNT(*) FROM \"Artist\"
+              UNION ALL SELECT 'MusicalGroup',  COUNT(*) FROM \"MusicalGroup\"
+              UNION ALL SELECT 'News',          COUNT(*) FROM \"News\"
+              UNION ALL SELECT 'Production',    COUNT(*) FROM \"Production\"
+              UNION ALL SELECT 'Comment',       COUNT(*) FROM \"Comment\"
+              ORDER BY tabela;" \
+            2>/dev/null || echo "⚠️  Stats indisponíveis"
+
+      - name: Limpar arquivos temporários
+        if: always()
+        run: |
+          rm -f /tmp/sync-prod-to-staging.sql.gz
+          echo "🧹 Temp files removidos"
+
+      - name: Notificar Slack — Sync Concluído
+        if: success()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -s -X POST "$SLACK_WEBHOOK" \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "blocks": [
+                  {"type":"header","text":{"type":"plain_text","text":"✅  Sync DB Concluído","emoji":true}},
+                  {"type":"section","fields":[
+                    {"type":"mrkdwn","text":"*Staging agora tem:*\nDados de produção"},
+                    {"type":"mrkdwn","text":"*Disparado por:*\n`${{ github.actor }}`"}
+                  ]},
+                  {"type":"section","text":{"type":"mrkdwn","text":"Acesse: http://31.97.255.107:3001"}}
+                ],
+                "text": "Sync DB Produção → Staging concluído com sucesso"
+              }'
+          fi
+
+      - name: Notificar Slack — Sync Falhou
+        if: failure()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_ALERTS }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -s -X POST "$SLACK_WEBHOOK" \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "blocks": [
+                  {"type":"header","text":{"type":"plain_text","text":"❌  Sync DB Falhou","emoji":true}},
+                  {"type":"section","fields":[
+                    {"type":"mrkdwn","text":"*Disparado por:*\n`${{ github.actor }}`"},
+                    {"type":"mrkdwn","text":"*Ação:*\nVerificar logs no GitHub Actions"}
+                  ]}
+                ],
+                "text": "FALHA no sync DB Produção → Staging"
+              }'
+          fi

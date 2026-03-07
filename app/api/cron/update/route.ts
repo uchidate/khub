@@ -171,7 +171,7 @@ async function runCronProcessing(lockId: string) {
                     const savedNews = await prisma.news.upsert({
                         where: { sourceUrl: news.sourceUrl },
                         // Ao atualizar: NÃO sobrescreve title/contentMd/translationStatus
-                        // (a notícia pode já estar traduzida pelo NewsTranslationService)
+                        // (tags podem já estar enriquecidas pelo NewsTaggingService)
                         update: {
                             imageUrl: news.imageUrl || null,
                             tags: news.tags && news.tags.length > 0 ? news.tags : undefined,
