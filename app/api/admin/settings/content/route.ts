@@ -76,7 +76,7 @@ export async function PUT(req: NextRequest) {
       },
     })
 
-    revalidateTag('system-settings')
+    revalidateTag('system-settings', { expire: 0 })
     return NextResponse.json({ success: true, settings })
   } catch (err) {
     console.error('Error updating content settings:', err)

@@ -362,7 +362,7 @@ export default function SocialLinksAdminPage() {
     const filterRef  = useRef<FilterType>('all')
     const searchRef  = useRef('')
     const pageRef    = useRef(1)
-    const searchTimer = useRef<ReturnType<typeof setTimeout>>()
+    const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
     const doFetch = useCallback(async (f: FilterType, s: string, p: number) => {
         filterRef.current = f
