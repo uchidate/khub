@@ -102,7 +102,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         </h1>
 
                         <p className="text-sm text-zinc-400 mb-3 max-w-lg leading-relaxed">
-                            Artistas, K-Dramas, grupos e notícias da cultura coreana — tudo em um lugar.
+                            Artistas, Produções e Notícias da cultura coreana.
                         </p>
 
                         {/* Stats inline */}
