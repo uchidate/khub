@@ -4,13 +4,12 @@ import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
-import { withLogging } from '@/lib/server/withLogging'
 
 const log = createLogger('SEARCH-FULL')
 
 export const dynamic = 'force-dynamic'
 
-export const GET = withLogging(async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
     const limited = checkRateLimit(request, RateLimitPresets.SEARCH)
     if (limited) return limited
 
@@ -45,7 +44,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
                     gender: true,
                 },
                 orderBy: { trendingScore: 'desc' },
-                take: 100,
+                take: 30,
             }),
 
             prisma.musicalGroup.findMany({
@@ -63,14 +62,13 @@ export const GET = withLogging(async function GET(request: NextRequest) {
                     profileImageUrl: true,
                 },
                 orderBy: { trendingScore: 'desc' },
-                take: 100,
+                take: 20,
             }),
 
             prisma.news.findMany({
                 where: {
                     OR: [
                         { title: { contains: searchTerm, mode: 'insensitive' } },
-                        { contentMd: { contains: searchTerm, mode: 'insensitive' } },
                         { tags: { has: searchTerm } },
                     ],
                 },
@@ -83,7 +81,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
                     contentMd: true,
                 },
                 orderBy: { publishedAt: 'desc' },
-                take: 100,
+                take: 20,
             }),
 
             prisma.production.findMany({
@@ -92,7 +90,6 @@ export const GET = withLogging(async function GET(request: NextRequest) {
                     OR: [
                         { titlePt: { contains: searchTerm, mode: 'insensitive' } },
                         { titleKr: { contains: searchTerm, mode: 'insensitive' } },
-                        { synopsis: { contains: searchTerm, mode: 'insensitive' } },
                     ],
                     ...ageRatingFilter,
                 },
@@ -107,7 +104,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
                     synopsis: true,
                 },
                 orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
-                take: 100,
+                take: 30,
             }),
         ])
 
@@ -116,4 +113,4 @@ export const GET = withLogging(async function GET(request: NextRequest) {
         log.error('Full search error', { error: getErrorMessage(error) })
         return NextResponse.json({ error: 'Search failed' }, { status: 500 })
     }
-})
+}

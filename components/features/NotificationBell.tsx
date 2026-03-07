@@ -34,18 +34,11 @@ export function NotificationBell() {
         }
     }, [])
 
-    // Initial fetch + polling every 30s
+    // Initial fetch + polling every 3 minutes
     useEffect(() => {
         fetchNotifications()
-        const interval = setInterval(fetchNotifications, 30_000)
+        const interval = setInterval(fetchNotifications, 3 * 60_000)
         return () => clearInterval(interval)
-    }, [fetchNotifications])
-
-    // Refresh on window focus
-    useEffect(() => {
-        const onFocus = () => fetchNotifications()
-        window.addEventListener('focus', onFocus)
-        return () => window.removeEventListener('focus', onFocus)
     }, [fetchNotifications])
 
     // Close on outside click
