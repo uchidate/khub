@@ -185,9 +185,17 @@ export class RSSNewsService {
         const markdownContent = rawContent ? this.htmlToMarkdown(rawContent) : '';
         const cleanDescription = this.cleanHtml(description);
 
-        // Se conteúdo RSS for curto (<300 chars), scrape o artigo completo
+        // Scrape artigo completo se:
+        // - conteúdo curto (<1500 chars), OU
+        // - termina com "..." / "…" (truncado pelo feed), OU
+        // - contém marcadores de "leia mais"
         let fullContent = markdownContent || cleanDescription;
-        if (fullContent.length < 300 && link) {
+        const isTruncated =
+          fullContent.length < 1500 ||
+          /(\.\.\.|…)\s*$/.test(fullContent) ||
+          /\[(\.\.\.|…|read more|continue reading|more)\]/i.test(fullContent);
+
+        if (isTruncated && link) {
           const articleData = await this.fetchArticleData(link);
           if (!imageUrl && articleData.imageUrl) imageUrl = articleData.imageUrl;
           if (articleData.content && articleData.content.length > fullContent.length) {

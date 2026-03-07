@@ -63,16 +63,19 @@ export async function POST(request: NextRequest) {
 }
 
 async function runBatch(limit: number) {
-    // Priorizar notícias sem imagens inline no originalContent (não contém "![")
-    const news = await prisma.news.findMany({
-        where: {
-            sourceUrl: { not: '' },
-            originalContent: { not: { contains: '!['} },
-        },
-        take: limit,
+    // Notícias sem imagens inline OU com conteúdo curto (provavelmente truncado)
+    const allCandidates = await prisma.news.findMany({
+        where: { sourceUrl: { not: '' } },
         orderBy: { publishedAt: 'desc' },
-        select: { id: true, sourceUrl: true },
+        take: limit * 4, // buscar mais para filtrar
+        select: { id: true, sourceUrl: true, originalContent: true },
     })
+
+    // Filtrar: sem "![" (sem imagens) OU conteúdo curto OU termina com "..."
+    const news = allCandidates.filter(n => {
+        const c = n.originalContent ?? ''
+        return !c.includes('![') || c.length < 1500 || /(\.\.\.|…)\s*$/.test(c)
+    }).slice(0, limit)
 
     const service = getRSSNewsService()
     let updated = 0
