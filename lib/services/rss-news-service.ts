@@ -395,14 +395,18 @@ export class RSSNewsService {
         const alt = altMatch ? altMatch[1] : ''
         return `\n\n![${alt}](${src})\n\n`
       })
-      // YouTube iframes → thumbnail clicável
-      .replace(/<iframe[^>]+src=["']([^"']*youtube\.com\/embed[^"']*)["'][^>]*>[\s\S]*?<\/iframe>/gi, (_, src) => {
-        const videoId = src.match(/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
-        if (videoId) return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
+      // Iframes: YouTube → thumbnail clicável, resto → removido
+      // Passagem única para evitar iframes parcialmente removidos
+      .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, (match) => {
+        const srcMatch = match.match(/src=["']([^"']+)["']/i)
+        if (srcMatch) {
+          const videoId = srcMatch[1].match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
+          if (videoId) return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
+        }
         return ''
       })
-      // Remover outros iframes
-      .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+      // Catch-all: iframes sem closing tag (malformados)
+      .replace(/<iframe\b[^>]*>/gi, '')
       // Headings → ## / ###
       .replace(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi, '\n\n## $1\n\n')
       .replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n\n### $1\n\n')
