@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,13 +17,23 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
         p => (showsByPlatform[p]?.length ?? 0) > 0
     )
     const [activeTab, setActiveTab] = useState(availablePlatforms[0] ?? '')
-
-    if (availablePlatforms.length === 0) return null
+    const [featuredSmallIndex, setFeaturedSmallIndex] = useState(0)
 
     const shows = showsByPlatform[activeTab] ?? []
     const featured = shows[0]
     const rest = shows.slice(1, 10)
     const cfg = getStreamingConfig(activeTab)
+
+    useEffect(() => {
+        if (rest.length === 0) return
+        setFeaturedSmallIndex(0)
+        const timer = setInterval(() => {
+            setFeaturedSmallIndex(i => (i + 1) % rest.length)
+        }, 2500)
+        return () => clearInterval(timer)
+    }, [rest.length, activeTab])
+
+    if (availablePlatforms.length === 0) return null
 
     return (
         <section className="mb-10">
@@ -109,8 +119,8 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                                 </p>
                                 <div className="flex gap-3 overflow-x-auto pb-1"
                                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                                    {rest.map(show => (
-                                        <SmallCard key={`${show.source}-${show.tmdbId}`} show={show} cfg={cfg} />
+                                    {rest.map((show, index) => (
+                                        <SmallCard key={`${show.source}-${show.tmdbId}`} show={show} cfg={cfg} isActive={index === featuredSmallIndex} />
                                     ))}
                                 </div>
                             </div>
@@ -197,9 +207,9 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
 
 // ─── Small card: shows #2–10 ─────────────────────────────────────────────────
 
-function SmallCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig> }) {
+function SmallCard({ show, cfg, isActive = false }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig>; isActive?: boolean }) {
     const inner = (
-        <div className="group flex-shrink-0 w-[72px] md:w-[80px]">
+        <div className={`group flex-shrink-0 w-[72px] md:w-[80px] transition-all duration-500 ease-in-out ${isActive ? 'scale-[1.15] z-10 drop-shadow-2xl' : 'scale-100'}`}>
             <div className={`
                 relative aspect-[2/3] rounded-lg overflow-hidden
                 border border-zinc-700/60 ${cfg.hoverBorderColor}

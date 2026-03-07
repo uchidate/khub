@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Tv2, ChevronRight } from 'lucide-react'
@@ -39,22 +39,11 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
     )
 
     const [activeTab, setActiveTab] = useState<string>(availablePlatforms[0] ?? '')
-    const [featuredIndex, setFeaturedIndex] = useState(0)
+
+    if (availablePlatforms.length === 0) return null
 
     const activeShows = showsByPlatform[activeTab] ?? []
     const activeCfg = getStreamingConfig(activeTab)
-    const totalShows = Math.min(activeShows.length, 10)
-
-    useEffect(() => {
-        if (totalShows === 0) return
-        setFeaturedIndex(0)
-        const timer = setInterval(() => {
-            setFeaturedIndex(i => (i + 1) % totalShows)
-        }, 2500)
-        return () => clearInterval(timer)
-    }, [totalShows, activeTab])
-
-    if (availablePlatforms.length === 0) return null
 
     return (
         <section>
@@ -106,8 +95,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
 
             {/* Grid de shows */}
             <div className="grid grid-cols-5 md:grid-cols-10 gap-2 md:gap-2.5">
-                {activeShows.slice(0, 10).map((show, index) => {
-                    const isFeatured = index === featuredIndex
+                {activeShows.slice(0, 10).map(show => {
                     const cfg = getStreamingConfig(show.source)
                     const card = (
                         <div className={`
@@ -156,10 +144,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                     )
 
                     return (
-                        <div
-                            key={`${show.source}-${show.tmdbId}`}
-                            className={`relative transition-all duration-500 ease-in-out ${isFeatured ? 'scale-[1.15] z-10 drop-shadow-2xl' : 'scale-100 z-0'}`}
-                        >
+                        <div key={`${show.source}-${show.tmdbId}`} className="block">
                             {show.productionId ? (
                                 <Link href={`/productions/${show.productionId}`} className="block">
                                     {card}
