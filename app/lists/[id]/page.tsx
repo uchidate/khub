@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Lock, Globe, Pencil, Trash2, X, Check, Loader2, User, Film, Users } from 'lucide-react'
+import { ArrowLeft, Lock, Globe, Pencil, X, Check, Loader2, User, Film, Users } from 'lucide-react'
 
 interface ListItem {
     id: string
