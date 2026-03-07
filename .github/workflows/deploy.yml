@@ -369,6 +369,20 @@ jobs:
           fi
           exit 1
 
+      - name: 🔥 Cache Warm-up (ISR)
+        if: success()
+        run: |
+          BASE=http://31.97.255.107:3001
+          PAGES="/productions /groups /artists /news"
+          echo "Aquecendo cache ISR..."
+          for page in $PAGES; do
+            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page} (ignorado)"
+          done
+          sleep 5
+          for page in $PAGES; do
+            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page} regenerado" || echo "⚠️ ${page}"
+          done
+
       - name: 📊 Summary
         if: success()
         run: |
@@ -568,6 +582,20 @@ jobs:
               -d '{"text": "❌ *Deploy PRODUCTION FALHOU!* Health check falhou e sem imagem de rollback. Intervenção manual necessária!"}'
           fi
           exit 1
+
+      - name: 🔥 Cache Warm-up (ISR)
+        if: success()
+        run: |
+          BASE=https://www.hallyuhub.com.br
+          PAGES="/productions /groups /artists /news"
+          echo "Aquecendo cache ISR..."
+          for page in $PAGES; do
+            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page} (ignorado)"
+          done
+          sleep 5
+          for page in $PAGES; do
+            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page} regenerado" || echo "⚠️ ${page}"
+          done
 
       - name: 📊 Summary
         if: success()
