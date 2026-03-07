@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import { getProductionCastService } from '@/lib/services/production-cast-service';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
@@ -80,11 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fire-and-forget background processing
-    runCastSync(limit, mode, lockId, log).catch(err => {
-        log.error('Unhandled error in background cast sync', {
-            error: err instanceof Error ? err.message : String(err),
-        });
-    });
+    runCastSync(limit, mode, lockId, log).catch(onCronError(log, 'cron-sync-cast', 'Unhandled error in background job'));
 
     return NextResponse.json({
         status: 'accepted',

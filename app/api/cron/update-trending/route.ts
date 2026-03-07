@@ -23,7 +23,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
-import { getErrorMessage } from '@/lib/utils/error'
+import { onCronError } from '@/lib/utils/cron-logger'
 
 export const maxDuration = 120
 
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
 
     runUpdateTrending()
         .then(result => log.info('Trending update completed', { requestId, ...result }))
-        .catch(err => log.error('Trending update failed', { requestId, error: getErrorMessage(err) }))
+        .catch(onCronError(log, 'cron-update-trending', 'Trending update failed'))
 
     return NextResponse.json({ success: true, status: 'accepted', requestId }, { status: 202 })
 }

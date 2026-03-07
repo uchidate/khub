@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto'
 import { findArtistSocialLinks } from '@/lib/services/wikidata-social-links'
 import prisma from '@/lib/prisma'
@@ -67,11 +68,7 @@ export async function POST(request: NextRequest) {
     log.info('Starting Wikidata social links sync in background', { limit })
 
     // Fire-and-forget
-    runWikidataSync(limit, requestId, log).catch(err => {
-        log.error('Unhandled error in background Wikidata social links sync', {
-            error: err instanceof Error ? err.message : String(err),
-        })
-    })
+    runWikidataSync(limit, requestId, log).catch(onCronError(log, 'cron-sync-wikidata', 'Unhandled error in background Wikidata social links sync'))
 
     return NextResponse.json({
         status: 'accepted',

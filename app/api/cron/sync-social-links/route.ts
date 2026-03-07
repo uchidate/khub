@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import { getSocialLinksSyncService } from '@/lib/services/social-links-sync-service';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
@@ -77,11 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fire-and-forget background processing
-    runSocialLinksSync(limit, lockId, log).catch(err => {
-        log.error('Unhandled error in background social links sync', {
-            error: err instanceof Error ? err.message : String(err),
-        });
-    });
+    runSocialLinksSync(limit, lockId, log).catch(onCronError(log, 'cron-sync-social-links', 'Unhandled error in background job'));
 
     return NextResponse.json({
         status: 'accepted',

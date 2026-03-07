@@ -28,6 +28,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
+import { onCronError } from '@/lib/utils/cron-logger'
 import { getErrorMessage } from '@/lib/utils/error'
 
 export const maxDuration = 120
@@ -214,7 +215,7 @@ export async function POST(request: NextRequest) {
       const totalErrors = results.flatMap(r => r.errors).length
       log.info('News fetch completed', { requestId, totalSaved, totalErrors, results })
     })
-    .catch(err => log.error('News fetch fatal error', { requestId, error: getErrorMessage(err) }))
+    .catch(onCronError(log, 'cron-fetch-news', 'News fetch fatal error'))
 
   return NextResponse.json({
     success: true,

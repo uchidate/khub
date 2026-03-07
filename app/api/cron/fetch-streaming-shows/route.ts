@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { createLogger } from '@/lib/utils/logger'
-import { getErrorMessage } from '@/lib/utils/error'
+import { onCronError } from '@/lib/utils/cron-logger'
 import { syncStreamingShows } from '@/lib/services/streaming-show-service'
 
 export const maxDuration = 120
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
             requestId,
             sources: results.map(r => ({ source: r.source, upserted: r.upserted, error: r.error })),
         }))
-        .catch(err => log.error('Fetch streaming shows failed', { requestId, error: getErrorMessage(err) }))
+        .catch(onCronError(log, 'cron-fetch-streaming-shows', 'Fetch streaming shows failed'))
 
     return NextResponse.json({ success: true, status: 'accepted', requestId }, { status: 202 })
 }

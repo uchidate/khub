@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import { getTmdbProductionMatchService } from '@/lib/services/tmdb-production-match-service';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
@@ -79,17 +80,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (mode === 'backfill-tv') {
-        runBackfillTvSeries(limit, lockId, log).catch(err => {
-            log.error('Unhandled error in background TV backfill', {
-                error: err instanceof Error ? err.message : String(err),
-            });
-        });
+        runBackfillTvSeries(limit, lockId, log).catch(onCronError(log, 'cron-match-productions', 'Unhandled error in background TV backfill'));
     } else {
-        runMatchProductions(limit, lockId, log).catch(err => {
-            log.error('Unhandled error in background production match', {
-                error: err instanceof Error ? err.message : String(err),
-            });
-        });
+        runMatchProductions(limit, lockId, log).catch(onCronError(log, 'cron-match-productions', 'Unhandled error in background production match'));
     }
 
     return NextResponse.json({

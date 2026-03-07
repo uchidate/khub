@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import { getDiscographySyncService } from '@/lib/services/discography-sync-service';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
@@ -77,11 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fire-and-forget background processing
-    runDiscographySync(limit, lockId, log).catch(err => {
-        log.error('Unhandled error in background discography sync', {
-            error: err instanceof Error ? err.message : String(err),
-        });
-    });
+    runDiscographySync(limit, lockId, log).catch(onCronError(log, 'cron-sync-discography', 'Unhandled error in background job'));
 
     return NextResponse.json({
         status: 'accepted',
