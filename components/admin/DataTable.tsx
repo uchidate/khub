@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Search, ChevronLeft, ChevronRight, Trash2, ArrowUpDown } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Trash2, ArrowUpDown, X } from 'lucide-react'
 
 export interface Column<T> {
   key: string
@@ -128,15 +128,20 @@ export function DataTable<T extends { id: string }>({
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative w-full sm:w-80">
+        <div className="flex items-center gap-2 w-full sm:w-80 bg-zinc-900 border border-zinc-800 rounded-lg px-3 focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/20 transition-all">
+          <Search className="text-zinc-500 shrink-0" size={16} />
           <input
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
             placeholder={searchPlaceholder}
-            className="w-full px-4 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 text-sm"
+            className="flex-1 bg-transparent py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none"
           />
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={18} />
+          {search && (
+            <button onClick={() => { setSearch(''); setPagination(p => ({ ...p, page: 1 })) }} className="text-zinc-500 hover:text-white shrink-0">
+              <X size={16} />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {filters}

@@ -170,7 +170,8 @@ export function ProductionsList() {
             {/* Filters */}
             <div className="mb-8 space-y-3">
                 {/* Search */}
-                <div className="relative">
+                <div className="flex items-center gap-2 bg-zinc-900/50 border border-white/10 rounded-xl px-3 focus-within:border-purple-500/50 focus-within:ring-2 focus-within:ring-purple-500/20 transition-all">
+                    <Search className="w-4 h-4 text-zinc-500 shrink-0" />
                     <input
                         type="text"
                         value={searchInput}
@@ -178,14 +179,12 @@ export function ProductionsList() {
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(searchInput) }}
                         onBlur={() => handleSearch(searchInput)}
                         placeholder="Buscar filme, série ou drama..."
-                        className="w-full px-4 pr-10 py-3.5 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+                        className="flex-1 bg-transparent py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none"
                     />
-                    {searchInput ? (
-                        <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                    {searchInput && (
+                        <button onClick={() => handleSearch('')} className="text-zinc-500 hover:text-white shrink-0">
                             <X className="w-4 h-4" />
                         </button>
-                    ) : (
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
                     )}
                 </div>
 
