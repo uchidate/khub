@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, Tv2 } from 'lucide-react'
@@ -17,13 +17,11 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
         p => (showsByPlatform[p]?.length ?? 0) > 0
     )
     const [activeTab, setActiveTab] = useState(availablePlatforms[0] ?? '')
-    // featuredIndex cicla por TODOS os shows (0-9), não só os pequenos
     const [featuredIndex, setFeaturedIndex] = useState(0)
 
     const shows = showsByPlatform[activeTab] ?? []
     const top10 = shows.slice(0, 10)
     const featured = top10[featuredIndex] ?? top10[0]
-    // strip = todos exceto o featured atual
     const strip = top10.filter((_, i) => i !== featuredIndex)
     const cfg = getStreamingConfig(activeTab)
 
@@ -88,7 +86,7 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                     transition={{ duration: 0.22, ease: 'easeOut' }}
                     className="relative rounded-2xl overflow-hidden"
                 >
-                    {/* Blurred ambient background from #1 poster */}
+                    {/* Blurred ambient background from featured poster */}
                     {featured?.posterUrl && (
                         <div className="absolute inset-0 z-0 overflow-hidden">
                             <Image
@@ -107,64 +105,60 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                     )}
 
                     {/* Content grid */}
-                    <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row gap-5 md:gap-6">
+                    <LayoutGroup id={activeTab}>
+                        <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row gap-5 md:gap-6">
 
-                        {/* Featured — cicla por todos os shows */}
-                        {featured && (
-                            <AnimatePresence mode="wait">
-                                <motion.div
-                                    key={featured.tmdbId ?? featuredIndex}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ duration: 0.35, ease: 'easeOut' }}
-                                >
-                                    <FeaturedCard show={featured} cfg={cfg} />
-                                </motion.div>
-                            </AnimatePresence>
-                        )}
+                            {/* Featured — large card */}
+                            {featured && (
+                                <FeaturedCard show={featured} cfg={cfg} />
+                            )}
 
-                        {/* Strip — os demais (excluindo o featured) */}
-                        {strip.length > 0 && (
-                            <div className="flex flex-col flex-1 min-w-0 gap-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                                    Também em destaque
-                                </p>
-                                <div className="flex gap-3 overflow-x-auto pb-1"
-                                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                                    {strip.map((show) => (
-                                        <SmallCard
-                                            key={`${show.source}-${show.tmdbId}`}
-                                            show={show}
-                                            cfg={cfg}
-                                            onClick={() => {
-                                                const idx = top10.findIndex(s => s.tmdbId === show.tmdbId && s.source === show.source)
-                                                if (idx !== -1) setFeaturedIndex(idx)
-                                            }}
-                                        />
-                                    ))}
+                            {/* Strip — remaining shows */}
+                            {strip.length > 0 && (
+                                <div className="flex flex-col flex-1 min-w-0 gap-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                                        Também em destaque
+                                    </p>
+                                    <div className="flex gap-3 overflow-x-auto pb-1"
+                                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                        {strip.map((show) => (
+                                            <SmallCard
+                                                key={`${show.source}-${show.tmdbId}`}
+                                                show={show}
+                                                cfg={cfg}
+                                                onClick={() => {
+                                                    const idx = top10.findIndex(s => s.tmdbId === show.tmdbId && s.source === show.source)
+                                                    if (idx !== -1) setFeaturedIndex(idx)
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    </LayoutGroup>
                 </motion.div>
             </AnimatePresence>
         </section>
     )
 }
 
-// ─── Featured card: the #1 show ──────────────────────────────────────────────
+// ─── Featured card ────────────────────────────────────────────────────────────
 
 function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig> }) {
+    const layoutId = `poster-${show.source}-${show.tmdbId}`
+
     const inner = (
         <div className="group relative w-full md:w-48 lg:w-56 flex-shrink-0">
-            {/* Poster */}
-            <div className={`
-                relative aspect-[2/3] rounded-xl overflow-hidden
-                border-2 ${cfg.borderColor}
-                shadow-2xl ring-1 ring-white/5
-                group-hover:scale-[1.02] transition-transform duration-300
-            `}>
+            <motion.div
+                layoutId={layoutId}
+                className={`
+                    relative aspect-[2/3] rounded-xl overflow-hidden
+                    border-2 ${cfg.borderColor}
+                    shadow-2xl ring-1 ring-white/5
+                `}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
                 {show.posterUrl ? (
                     <Image
                         src={show.posterUrl}
@@ -184,28 +178,48 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
                 {/* Rank — large */}
-                <div className="absolute top-2 left-3 z-10">
+                <motion.div
+                    className="absolute top-2 left-3 z-10"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                >
                     <span className="text-6xl font-black text-white leading-none drop-shadow-[0_3px_8px_rgba(0,0,0,1)]">
                         {show.rank ?? 1}
                     </span>
-                </div>
+                </motion.div>
 
                 {/* Rating */}
                 {show.voteAverage != null && show.voteAverage > 0 && (
-                    <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5 px-1.5 py-0.5 bg-black/70 rounded-md">
+                    <motion.div
+                        className="absolute top-2 right-2 z-10 flex items-center gap-0.5 px-1.5 py-0.5 bg-black/70 rounded-md"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.15 }}
+                    >
                         <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                         <span className="text-xs font-bold text-white">{show.voteAverage.toFixed(1)}</span>
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Platform badge */}
-                <div className={`absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded text-[10px] font-black ${cfg.bgColor} ${cfg.textColor}`}>
+                <motion.div
+                    className={`absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded text-[10px] font-black ${cfg.bgColor} ${cfg.textColor}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                >
                     #{show.rank ?? 1} {cfg.label}
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
 
             {/* Title below */}
-            <div className="mt-2 px-0.5">
+            <motion.div
+                className="mt-2 px-0.5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+            >
                 <p className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">
                     {show.productionTitle ?? show.showTitle}
                 </p>
@@ -217,7 +231,7 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
                         Ver no HallyuHub →
                     </p>
                 )}
-            </div>
+            </motion.div>
         </div>
     )
 
@@ -226,21 +240,25 @@ function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<type
         : inner
 }
 
-// ─── Small card: shows no strip ──────────────────────────────────────────────
+// ─── Small card ───────────────────────────────────────────────────────────────
 
 function SmallCard({ show, cfg, onClick }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig>; onClick?: () => void }) {
-    // Clique seleciona como featured — não navega diretamente
+    const layoutId = `poster-${show.source}-${show.tmdbId}`
+
     return (
         <div
             className="group flex-shrink-0 w-[72px] md:w-[80px] cursor-pointer"
             onClick={onClick}
             title={show.productionTitle ?? show.showTitle}
         >
-            <div className={`
-                relative aspect-[2/3] rounded-lg overflow-hidden
-                border border-zinc-700/60 ${cfg.hoverBorderColor}
-                transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl
-            `}>
+            <motion.div
+                layoutId={layoutId}
+                className={`
+                    relative aspect-[2/3] rounded-lg overflow-hidden
+                    border border-zinc-700/60 ${cfg.hoverBorderColor}
+                `}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
                 {show.posterUrl ? (
                     <Image
                         src={show.posterUrl}
@@ -269,7 +287,7 @@ function SmallCard({ show, cfg, onClick }: { show: StreamingShow; cfg: ReturnTyp
                         ★ {show.voteAverage.toFixed(1)}
                     </div>
                 )}
-            </div>
+            </motion.div>
 
             {/* Title */}
             <p className="mt-1 text-[9px] md:text-[10px] font-medium line-clamp-2 leading-tight text-zinc-500 group-hover:text-zinc-300 transition-colors">
