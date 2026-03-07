@@ -111,7 +111,6 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 { icon: Users,      href: '/artists',     label: 'Artistas',  value: stats.artists },
                                 { icon: Film,       href: '/productions', label: 'Produções', value: stats.productions },
                                 { icon: Newspaper,  href: '/news',        label: 'Notícias',  value: stats.news },
-                                { icon: TrendingUp, href: '/artists',     label: 'Views',     value: stats.views },
                             ].map(({ icon: Icon, href, label, value }) => (
                                 <a key={label} href={href} className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors group">
                                     <Icon className="w-3 h-3 group-hover:text-neon-pink transition-colors" />
