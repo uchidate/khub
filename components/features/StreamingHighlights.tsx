@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, Tv2 } from 'lucide-react'
@@ -22,7 +22,6 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
     const shows = showsByPlatform[activeTab] ?? []
     const top10 = shows.slice(0, 10)
     const featured = top10[featuredIndex] ?? top10[0]
-    const strip = top10.filter((_, i) => i !== featuredIndex)
     const cfg = getStreamingConfig(activeTab)
 
     useEffect(() => {
@@ -76,7 +75,7 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                 })}
             </div>
 
-            {/* Animated content area */}
+            {/* Content area */}
             <AnimatePresence mode="wait">
                 <motion.div
                     key={activeTab}
@@ -86,7 +85,7 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                     transition={{ duration: 0.22, ease: 'easeOut' }}
                     className="relative rounded-2xl overflow-hidden"
                 >
-                    {/* Blurred ambient background from featured poster */}
+                    {/* Blurred ambient background */}
                     {featured?.posterUrl && (
                         <div className="absolute inset-0 z-0 overflow-hidden">
                             <Image
@@ -104,161 +103,58 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                         <div className="absolute inset-0 z-0 bg-zinc-900" />
                     )}
 
-                    {/* Content grid */}
-                    <LayoutGroup id={activeTab}>
-                        <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row gap-5 md:gap-6">
-
-                            {/* Featured — large card */}
-                            {featured && (
-                                <FeaturedCard show={featured} cfg={cfg} />
-                            )}
-
-                            {/* Strip — remaining shows */}
-                            {strip.length > 0 && (
-                                <div className="flex flex-col flex-1 min-w-0 gap-3">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                                        Também em destaque
-                                    </p>
-                                    <div className="flex gap-3 overflow-x-auto pb-1"
-                                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                                        {strip.map((show) => (
-                                            <SmallCard
-                                                key={`${show.source}-${show.tmdbId}`}
-                                                show={show}
-                                                cfg={cfg}
-                                                onClick={() => {
-                                                    const idx = top10.findIndex(s => s.tmdbId === show.tmdbId && s.source === show.source)
-                                                    if (idx !== -1) setFeaturedIndex(idx)
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                    {/* Cards row — padding vertical extra para acomodar o zoom */}
+                    <div className="relative z-10 px-4 md:px-6 pt-10 pb-12">
+                        <div
+                            className="flex gap-2 md:gap-3 overflow-x-auto items-center"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                            {top10.map((show, i) => (
+                                <ShowCard
+                                    key={`${show.source}-${show.tmdbId}`}
+                                    show={show}
+                                    cfg={cfg}
+                                    isFeatured={i === featuredIndex}
+                                    onClick={() => setFeaturedIndex(i)}
+                                />
+                            ))}
                         </div>
-                    </LayoutGroup>
+                    </div>
                 </motion.div>
             </AnimatePresence>
         </section>
     )
 }
 
-// ─── Featured card ────────────────────────────────────────────────────────────
-
-function FeaturedCard({ show, cfg }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig> }) {
-    const layoutId = `poster-${show.source}-${show.tmdbId}`
-
+function ShowCard({
+    show,
+    cfg,
+    isFeatured,
+    onClick,
+}: {
+    show: StreamingShow
+    cfg: ReturnType<typeof getStreamingConfig>
+    isFeatured: boolean
+    onClick: () => void
+}) {
     const inner = (
-        <div className="group relative w-full md:w-48 lg:w-56 flex-shrink-0">
-            <motion.div
-                layoutId={layoutId}
-                className={`
-                    relative aspect-[2/3] rounded-xl overflow-hidden
-                    border-2 ${cfg.borderColor}
-                    shadow-2xl ring-1 ring-white/5
-                `}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            >
-                {show.posterUrl ? (
-                    <Image
-                        src={show.posterUrl}
-                        alt={show.showTitle}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 50vw, 224px"
-                        priority
-                    />
-                ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white text-4xl font-black">
-                        {show.showTitle[0]}
-                    </div>
-                )}
-
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-
-                {/* Rank — large */}
-                <motion.div
-                    className="absolute top-2 left-3 z-10"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.15 }}
-                >
-                    <span className="text-6xl font-black text-white leading-none drop-shadow-[0_3px_8px_rgba(0,0,0,1)]">
-                        {show.rank ?? 1}
-                    </span>
-                </motion.div>
-
-                {/* Rating */}
-                {show.voteAverage != null && show.voteAverage > 0 && (
-                    <motion.div
-                        className="absolute top-2 right-2 z-10 flex items-center gap-0.5 px-1.5 py-0.5 bg-black/70 rounded-md"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.15 }}
-                    >
-                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                        <span className="text-xs font-bold text-white">{show.voteAverage.toFixed(1)}</span>
-                    </motion.div>
-                )}
-
-                {/* Platform badge */}
-                <motion.div
-                    className={`absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded text-[10px] font-black ${cfg.bgColor} ${cfg.textColor}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.15 }}
-                >
-                    #{show.rank ?? 1} {cfg.label}
-                </motion.div>
-            </motion.div>
-
-            {/* Title below */}
-            <motion.div
-                className="mt-2 px-0.5"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-            >
-                <p className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">
-                    {show.productionTitle ?? show.showTitle}
-                </p>
-                {show.year && (
-                    <p className="text-xs text-zinc-500 mt-0.5">{show.year}</p>
-                )}
-                {show.productionId && (
-                    <p className="text-[10px] text-purple-400 mt-1 font-bold">
-                        Ver no HallyuHub →
-                    </p>
-                )}
-            </motion.div>
-        </div>
-    )
-
-    return show.productionId
-        ? <Link href={`/productions/${show.productionId}`}>{inner}</Link>
-        : inner
-}
-
-// ─── Small card ───────────────────────────────────────────────────────────────
-
-function SmallCard({ show, cfg, onClick }: { show: StreamingShow; cfg: ReturnType<typeof getStreamingConfig>; onClick?: () => void }) {
-    const layoutId = `poster-${show.source}-${show.tmdbId}`
-
-    return (
-        <div
-            className="group flex-shrink-0 w-[72px] md:w-[80px] cursor-pointer"
+        <motion.div
+            className="flex-shrink-0 w-[72px] md:w-20 cursor-pointer"
+            animate={{
+                scale: isFeatured ? 1.6 : 1,
+                zIndex: isFeatured ? 10 : 0,
+            }}
+            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+            style={{ originX: 0.5, originY: 0.5 }}
             onClick={onClick}
-            title={show.productionTitle ?? show.showTitle}
         >
-            <motion.div
-                layoutId={layoutId}
-                className={`
-                    relative aspect-[2/3] rounded-lg overflow-hidden
-                    border border-zinc-700/60 ${cfg.hoverBorderColor}
-                `}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            >
+            <div className={`
+                relative aspect-[2/3] rounded-lg overflow-hidden
+                ${isFeatured
+                    ? `border-2 ${cfg.borderColor} shadow-2xl ring-1 ring-white/10`
+                    : 'border border-zinc-700/50'
+                }
+            `}>
                 {show.posterUrl ? (
                     <Image
                         src={show.posterUrl}
@@ -266,33 +162,47 @@ function SmallCard({ show, cfg, onClick }: { show: StreamingShow; cfg: ReturnTyp
                         fill
                         className="object-cover"
                         sizes="80px"
+                        priority={isFeatured}
                     />
                 ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white text-xs font-bold text-center p-1">
-                        {show.showTitle}
+                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white font-black text-center p-1 text-xs">
+                        {show.showTitle[0]}
                     </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
                 {/* Rank */}
                 <div className="absolute top-1 left-1.5">
-                    <span className="text-2xl font-black text-white/90 leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                    <span className="text-xl font-black text-white/90 leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                         {show.rank}
                     </span>
                 </div>
 
                 {/* Rating */}
                 {show.voteAverage != null && show.voteAverage > 0 && (
-                    <div className="absolute top-1 right-1 px-1 py-0.5 bg-black/70 rounded text-[7px] font-bold text-yellow-400 leading-none">
-                        ★ {show.voteAverage.toFixed(1)}
+                    <div className="absolute top-1 right-1 px-1 py-0.5 bg-black/70 rounded text-[7px] font-bold text-yellow-400 leading-none flex items-center gap-0.5">
+                        <Star className="w-2 h-2 fill-yellow-400" />
+                        {show.voteAverage.toFixed(1)}
                     </div>
                 )}
-            </motion.div>
 
-            {/* Title */}
-            <p className="mt-1 text-[9px] md:text-[10px] font-medium line-clamp-2 leading-tight text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                {show.productionTitle ?? show.showTitle}
-            </p>
-        </div>
+                {/* Platform badge (featured only) */}
+                {isFeatured && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className={`absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black ${cfg.bgColor} ${cfg.textColor}`}
+                    >
+                        #{show.rank} {cfg.label}
+                    </motion.div>
+                )}
+            </div>
+        </motion.div>
     )
+
+    return show.productionId && isFeatured
+        ? <Link href={`/productions/${show.productionId}`}>{inner}</Link>
+        : inner
 }
