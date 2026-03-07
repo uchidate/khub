@@ -9,9 +9,12 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
 import { MobileSearchOverlay } from "@/components/features/MobileSearchOverlay"
+import { NotificationBell } from "@/components/features/NotificationBell"
+import { useSession } from "next-auth/react"
 
 const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?: boolean; betaMode?: boolean }) => {
     const pathname = usePathname()
+    const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
 
@@ -74,6 +77,13 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
                             <div className="hidden md:flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-zinc-700/50">
                                 <ThemeToggle />
                             </div>
+
+                            {/* Notification bell - logged-in users only */}
+                            {session && (
+                                <div className="hidden md:block">
+                                    <NotificationBell />
+                                </div>
+                            )}
 
                             {/* User menu - Always visible */}
                             <div className="hidden md:block">

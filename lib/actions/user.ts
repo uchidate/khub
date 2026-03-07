@@ -246,7 +246,7 @@ export async function getProfileData() {
                 production: { select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true } },
             },
         }),
-        prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } }),
+        prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, bio: true } }),
         // Primeira artista favoritada (mais antiga) para o hero banner
         prisma.favorite.findFirst({
             where: { userId, artistId: { not: null } },
@@ -273,6 +273,7 @@ export async function getProfileData() {
             .filter(f => f.production)
             .map(f => ({ ...f.production!, favoritedAt: f.createdAt.toISOString() })),
         memberSince: user?.createdAt.toISOString() ?? null,
+        bio: user?.bio ?? null,
         heroImageUrl: heroFavorite?.artist?.primaryImageUrl ?? null,
         trendingArtists,
     }

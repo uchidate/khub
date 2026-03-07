@@ -339,6 +339,7 @@ model User {
   emailVerified          DateTime?
   password               String?
   image                  String?
+  bio                    String?                      @db.VarChar(300)
   role                   String                       @default("user") // 'admin' | 'editor' | 'user'
   accounts               Account[]
   sessions               Session[]
@@ -353,6 +354,7 @@ model User {
   comments               Comment[]
   contentPreferences     UserContentPreferences?
   auditLogs              AuditLog[]
+  lists                  UserList[]
 
   @@index([email])
 }
@@ -384,9 +386,10 @@ model NotificationHistory {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   newsId       String
   news         News      @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  type         String    // 'EMAIL_INSTANT', 'EMAIL_DIGEST', 'PUSH'
+  type         String    // 'EMAIL_INSTANT', 'EMAIL_DIGEST', 'PUSH', 'IN_APP'
   status       String    @default("PENDING") // 'PENDING', 'SENT', 'FAILED'
   sentAt       DateTime?
+  readAt       DateTime?                    // null = não lida (IN_APP only)
   errorMessage String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -397,6 +400,7 @@ model NotificationHistory {
   @@index([status])
   @@index([createdAt])
   @@index([userId, newsId, type])
+  @@index([userId, type, readAt])
 }
 
 model EmailLog {
@@ -837,6 +841,36 @@ model BotCrawlLog {
   @@index([path])
   @@index([bot, createdAt])
   @@map("bot_crawl_log")
+}
+
+model UserList {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?        @db.VarChar(500)
+  isPublic    Boolean        @default(false)
+  items       UserListItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId])
+  @@map("user_lists")
+}
+
+model UserListItem {
+  id         String   @id @default(cuid())
+  listId     String
+  list       UserList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  entityType String   // 'ARTIST' | 'PRODUCTION' | 'GROUP'
+  entityId   String
+  note       String?  @db.VarChar(300)
+  addedAt    DateTime @default(now())
+
+  @@unique([listId, entityType, entityId])
+  @@index([listId])
+  @@index([entityId])
+  @@map("user_list_items")
 }
 
 model ServerLog {

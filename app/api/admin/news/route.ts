@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { logAudit } from '@/lib/services/audit-service'
+import { getNewsNotificationService } from '@/lib/services/news-notification-service'
 
 const log = createLogger('ADMIN-NEWS')
 
@@ -97,6 +98,10 @@ export async function POST(request: NextRequest) {
     })
 
     await logAudit({ adminId: session!.user.id, action: 'CREATE', entity: 'News', entityId: news.id, details: `Criou notícia "${news.title}"` })
+    // Fire-and-forget IN_APP notifications
+    void getNewsNotificationService().notifyInAppForNews(news.id).catch(
+      (e: Error) => log.warn('IN_APP notify failed (non-blocking)', { error: e.message })
+    )
     return NextResponse.json(news, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
