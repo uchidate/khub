@@ -133,8 +133,8 @@ function ResetPasswordForm() {
               <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">
                 Nova Senha
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+              <div className="flex items-center bg-black border border-zinc-700 rounded-lg focus-within:border-purple-500 transition-colors">
+                <span className="pl-3 text-zinc-500 shrink-0"><Lock size={20} /></span>
                 <input
                   id="password"
                   type="password"
@@ -142,7 +142,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={!token}
-                  className="w-full pl-11 pr-4 py-3 bg-black border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-3 bg-transparent text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Mínimo 6 caracteres"
                 />
               </div>
@@ -153,8 +153,8 @@ function ResetPasswordForm() {
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-300 mb-2">
                 Confirmar Nova Senha
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+              <div className="flex items-center bg-black border border-zinc-700 rounded-lg focus-within:border-purple-500 transition-colors">
+                <span className="pl-3 text-zinc-500 shrink-0"><Lock size={20} /></span>
                 <input
                   id="confirmPassword"
                   type="password"
@@ -162,7 +162,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   disabled={!token}
-                  className="w-full pl-11 pr-4 py-3 bg-black border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-3 bg-transparent text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Digite a senha novamente"
                 />
               </div>
