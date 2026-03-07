@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, FlaskConical, CheckCircle, XCircle, Loader2, Eye, EyeOff, RefreshCw, Users } from 'lucide-react'
+import { Plus, FlaskConical, CheckCircle, XCircle, Loader2, Eye, EyeOff, RefreshCw, Users, ImageOff } from 'lucide-react'
 import Image from 'next/image'
 
 interface LinkedArtist {
@@ -65,6 +65,38 @@ function RelinkButton({ newsId, onDone }: { newsId: string; onDone: (artists: Li
       }`}
     >
       <RefreshCw size={14} className={state === 'loading' ? 'animate-spin' : ''} />
+    </button>
+  )
+}
+
+// ─── Per-news refetch content button ─────────────────────────────────────────
+
+function RefetchContentButton({ newsId }: { newsId: string }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
+
+  const handle = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setState('loading')
+    try {
+      const res = await fetch(`/api/admin/news/refetch-content?id=${newsId}`, { method: 'POST' })
+      const data = await res.json()
+      setState(data.ok ? 'ok' : 'err')
+    } catch { setState('err') }
+    finally { setTimeout(() => setState('idle'), 2500) }
+  }
+
+  return (
+    <button
+      onClick={handle}
+      disabled={state === 'loading'}
+      title="Re-buscar conteúdo completo da fonte (restaura imagens)"
+      className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
+        state === 'ok'  ? 'text-green-400 bg-green-400/10' :
+        state === 'err' ? 'text-red-400 bg-red-400/10' :
+        'text-zinc-400 hover:text-blue-300 hover:bg-blue-400/10'
+      }`}
+    >
+      <ImageOff size={14} className={state === 'loading' ? 'animate-pulse' : ''} />
     </button>
   )
 }
@@ -134,6 +166,14 @@ interface BatchRelinkResult {
   errors: number
 }
 
+interface BatchRefetchResult {
+  ok: boolean
+  processed: number
+  updated: number
+  skipped: number
+  errors: number
+}
+
 export default function NewsAdminPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -143,6 +183,8 @@ export default function NewsAdminPage() {
   const [generateResult, setGenerateResult] = useState<GenerateResult | null>(null)
   const [batchRelinking, setBatchRelinking] = useState(false)
   const [batchResult, setBatchResult] = useState<BatchRelinkResult | null>(null)
+  const [batchRefetching, setBatchRefetching] = useState(false)
+  const [batchRefetchResult, setBatchRefetchResult] = useState<BatchRefetchResult | null>(null)
 
   // Otimista: atualizar artistas localmente sem re-fetch completo
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
@@ -291,6 +333,20 @@ export default function NewsAdminPage() {
     }
   }
 
+  const handleBatchRefetch = async () => {
+    setBatchRefetching(true)
+    setBatchRefetchResult(null)
+    try {
+      const res = await fetch('/api/admin/news/refetch-content?mode=batch&limit=50', { method: 'POST' })
+      const data = await res.json()
+      setBatchRefetchResult(data)
+    } catch {
+      setBatchRefetchResult({ ok: false, processed: 0, updated: 0, skipped: 0, errors: 1 })
+    } finally {
+      setBatchRefetching(false)
+    }
+  }
+
   const handleToggleHidden = async (news: News) => {
     await fetch(`/api/admin/news?id=${news.id}`, {
       method: 'PATCH',
@@ -321,6 +377,15 @@ export default function NewsAdminPage() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <p className="text-zinc-400">Gerencie notícias e artigos</p>
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleBatchRefetch}
+              disabled={batchRefetching}
+              title="Re-buscar conteúdo completo (imagens) de notícias sem imagens inline (até 50)"
+              className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold rounded-lg hover:border-blue-500/50 hover:text-blue-300 transition-all disabled:opacity-50 text-sm"
+            >
+              {batchRefetching ? <Loader2 size={15} className="animate-spin" /> : <ImageOff size={15} />}
+              {batchRefetching ? 'Re-buscando...' : 'Re-buscar conteúdo'}
+            </button>
             <button
               onClick={handleBatchRelink}
               disabled={batchRelinking}
@@ -374,6 +439,25 @@ export default function NewsAdminPage() {
           </div>
         )}
 
+        {batchRefetchResult && (
+          <div className={`flex items-start gap-3 p-4 rounded-xl border ${batchRefetchResult.ok ? 'bg-blue-500/10 border-blue-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+            {batchRefetchResult.ok
+              ? <CheckCircle size={20} className="text-blue-400 mt-0.5 shrink-0" />
+              : <XCircle size={20} className="text-red-400 mt-0.5 shrink-0" />
+            }
+            <div className="text-sm">
+              {batchRefetchResult.ok ? (
+                <p className="text-zinc-300">
+                  Re-fetch concluído — processadas: <strong>{batchRefetchResult.processed}</strong> · atualizadas: <strong className="text-blue-400">{batchRefetchResult.updated}</strong> · sem conteúdo: {batchRefetchResult.skipped} · erros: {batchRefetchResult.errors}
+                </p>
+              ) : (
+                <p className="text-red-400">Erro no re-fetch em lote</p>
+              )}
+            </div>
+            <button onClick={() => setBatchRefetchResult(null)} className="ml-auto text-zinc-500 hover:text-white">✕</button>
+          </div>
+        )}
+
         {batchResult && (
           <div className={`flex items-start gap-3 p-4 rounded-xl border ${batchResult.ok ? 'bg-purple-500/10 border-purple-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
             {batchResult.ok
@@ -401,6 +485,7 @@ export default function NewsAdminPage() {
           searchPlaceholder="Buscar por título ou conteúdo..."
           actions={(news) => (
             <div className="flex items-center gap-1">
+              <RefetchContentButton newsId={news.id} />
               <RelinkButton
                 newsId={news.id}
                 onDone={(artists) => setLocalArtistsOverride(prev => ({ ...prev, [news.id]: artists }))}

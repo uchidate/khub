@@ -355,8 +355,8 @@ export class RSSNewsService {
 
   /**
    * Converte HTML para Markdown, preservando estrutura:
-   * headings, negrito, itálico, links, listas, parágrafos, blockquotes.
-   * Remove scripts, styles, imagens (tratadas separadamente).
+   * headings, negrito, itálico, links, listas, parágrafos, blockquotes,
+   * imagens inline, figures com caption e embeds do YouTube.
    * Usado para conteúdo completo de artigos.
    */
   private htmlToMarkdown(html: string): string {
@@ -366,9 +366,35 @@ export class RSSNewsService {
       // Remover noise
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<img[^>]*>/gi, '')
-      .replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '')
       .replace(/<!--[\s\S]*?-->/g, '')
+      // Figure com figcaption → imagem com caption (processar ANTES de <img>)
+      .replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, (_, inner) => {
+        const srcMatch = inner.match(/src=["']([^"']+)["']/i)
+        const captionMatch = inner.match(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i)
+        if (!srcMatch) return ''
+        const src = srcMatch[1]
+        if (src.startsWith('data:') || src.length < 10) return ''
+        const alt = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, '').trim() : ''
+        return `\n\n![${alt}](${src})\n\n`
+      })
+      // Imagens inline → Markdown (filtrar ícones/avatares/data URIs)
+      .replace(/<img\s[^>]*>/gi, (imgTag) => {
+        const srcMatch = imgTag.match(/src=["']([^"']+)["']/i)
+        const altMatch = imgTag.match(/alt=["']([^"']*)["']/i)
+        if (!srcMatch) return ''
+        const src = srcMatch[1]
+        if (src.startsWith('data:') || /\b(icon|logo|avatar|emoji|pixel|1x1|spacer)\b/i.test(src)) return ''
+        const alt = altMatch ? altMatch[1] : ''
+        return `\n\n![${alt}](${src})\n\n`
+      })
+      // YouTube iframes → thumbnail clicável
+      .replace(/<iframe[^>]+src=["']([^"']*youtube\.com\/embed[^"']*)["'][^>]*>[\s\S]*?<\/iframe>/gi, (_, src) => {
+        const videoId = src.match(/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
+        if (videoId) return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
+        return ''
+      })
+      // Remover outros iframes
+      .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
       // Headings → ## / ###
       .replace(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi, '\n\n## $1\n\n')
       .replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n\n### $1\n\n')
