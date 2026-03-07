@@ -36,7 +36,7 @@ interface HeroSectionProps {
 
 const ROTATING_CTAS = [
     { href: '/artists',     label: 'Explorar Artistas', icon: Users },
-    { href: '/productions', label: 'Ver K-Dramas',      icon: Film },
+    { href: '/productions', label: 'Ver Produções',      icon: Film },
     { href: '/groups',      label: 'Descobrir Grupos',   icon: Music2 },
     { href: '/news',        label: 'Últimas Notícias',   icon: Newspaper },
 ]
