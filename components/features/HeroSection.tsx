@@ -36,7 +36,7 @@ interface HeroSectionProps {
 
 const ROTATING_CTAS = [
     { href: '/artists',     label: 'Explorar Artistas', icon: Users },
-    { href: '/productions', label: 'Ver K-Dramas',      icon: Film },
+    { href: '/productions', label: 'Ver Produções',      icon: Film },
     { href: '/groups',      label: 'Descobrir Grupos',   icon: Music2 },
     { href: '/news',        label: 'Últimas Notícias',   icon: Newspaper },
 ]
@@ -89,7 +89,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         transition={{ duration: 0.6 }}
                     >
                         <p className="inline-flex items-center gap-1.5 text-neon-pink font-black tracking-widest uppercase text-[10px] mb-4 px-3 py-1 rounded-full border border-neon-pink/30 bg-neon-pink/10">
-                            ✦ A plataforma Hallyu do Brasil
+                            A plataforma Hallyu do Brasil
                         </p>
 
                         <h1 className="text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
@@ -102,7 +102,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         </h1>
 
                         <p className="text-sm text-zinc-400 mb-3 max-w-lg leading-relaxed">
-                            Artistas, K-Dramas, grupos e notícias da cultura coreana — tudo em um lugar.
+                            Artistas, Produções e Notícias da cultura coreana.
                         </p>
 
                         {/* Stats inline */}
@@ -111,7 +111,6 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 { icon: Users,      href: '/artists',     label: 'Artistas',  value: stats.artists },
                                 { icon: Film,       href: '/productions', label: 'Produções', value: stats.productions },
                                 { icon: Newspaper,  href: '/news',        label: 'Notícias',  value: stats.news },
-                                { icon: TrendingUp, href: '/artists',     label: 'Views',     value: stats.views },
                             ].map(({ icon: Icon, href, label, value }) => (
                                 <a key={label} href={href} className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors group">
                                     <Icon className="w-3 h-3 group-hover:text-neon-pink transition-colors" />

@@ -177,11 +177,11 @@ export function ProductionsList() {
                         onChange={(e) => setSearchInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(searchInput) }}
                         onBlur={() => handleSearch(searchInput)}
-                        placeholder="Buscar filme, série ou drama..."
+                        placeholder="Buscar filme, série ou drama"
                         className="w-full px-4 pr-10 py-3.5 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
                     />
                     {searchInput ? (
-                        <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                        <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white z-10">
                             <X className="w-4 h-4" />
                         </button>
                     ) : (

@@ -409,13 +409,13 @@ export default function ReportsPage() {
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none z-10" />
             <input
               type="text"
               value={searchInput}
               onChange={e => handleSearchChange(e.target.value)}
               placeholder="Buscar por nome da entidade..."
-              className="w-full pl-8 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full pl-8 pr-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
 
