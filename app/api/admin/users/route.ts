@@ -36,17 +36,32 @@ export async function GET(request: NextRequest) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
-    // Build where clause for search
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {}
+    // Aggregate stats endpoint
+    if (searchParams.get('stats') === '1') {
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      const [total, admins, verified, newThisWeek] = await Promise.all([
+        prisma.user.count(),
+        prisma.user.count({ where: { role: 'admin' } }),
+        prisma.user.count({ where: { emailVerified: { not: null } } }),
+        prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
+      ])
+      return NextResponse.json({ total, admins, verified, newThisWeek })
+    }
+
+    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+    const role = searchParams.get('role') ?? ''
+
+    // Build where clause for search + role filter
+    const where = {
+      ...(role ? { role } : {}),
+      ...(search ? {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
+    }
 
     // Fetch users and total count
     const [users, total] = await Promise.all([

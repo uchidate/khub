@@ -663,6 +663,60 @@ export default function ArtistsAdminPage() {
               <WikidataSyncButton artist={artist} onSynced={handleSynced} onFailed={handleWikiFailed} />
             </div>
           )}
+          renderMobileCard={(artist) => {
+            const imageUrl = photoOverrides[artist.id] ?? artist.primaryImageUrl
+            const override = nameOverrides[artist.id]
+            const name = override?.nameRomanized ?? artist.nameRomanized
+            const hangul = override?.nameHangul ?? artist.nameHangul
+            const hasKorean = KOREAN_REGEX.test(name)
+            return (
+              <div className="p-3 flex items-start gap-3">
+                {/* Photo */}
+                {imageUrl ? (
+                  <Image src={imageUrl} alt={name} width={48} height={48}
+                    className="rounded-lg object-cover flex-shrink-0 w-12 h-12" />
+                ) : (
+                  <div className="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center text-xs text-zinc-500 flex-shrink-0 font-bold">
+                    N/A
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className={`font-semibold truncate ${hasKorean ? 'text-orange-400' : 'text-white'}`}>
+                        {name}
+                      </div>
+                      {hangul && <div className="text-xs text-zinc-500 truncate">{hangul}</div>}
+                    </div>
+                    <Link href={`/admin/artists/${artist.id}`}
+                      className="flex-shrink-0 text-xs text-zinc-500 hover:text-purple-400 px-2 py-0.5 border border-zinc-700 rounded hover:border-purple-500/50 transition-colors"
+                      onClick={e => e.stopPropagation()}>
+                      Editar
+                    </Link>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {artist.musicalGroupName && (
+                      <span className="text-cyan-400 text-xs font-medium px-1.5 py-0.5 bg-cyan-400/10 rounded-full whitespace-nowrap">
+                        {artist.musicalGroupName}
+                      </span>
+                    )}
+                    <span className="text-purple-400 text-xs font-bold">{artist.productionsCount} prod.</span>
+                    <span className="text-pink-400 text-xs font-bold">{artist.albumsCount} álbuns</span>
+                  </div>
+
+                  {/* Social + action buttons */}
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    <SocialBadges links={socialOverrides[artist.id] ?? artist.socialLinks} />
+                    <PhotoSyncButton artist={artist} onSynced={handlePhotoSynced} onFailed={handlePhotoFailed} />
+                    <FixNamesButton artist={artist} onFixed={handleFixed} onFailed={handleFixFailed} />
+                    <WikidataSyncButton artist={artist} onSynced={handleSynced} onFailed={handleWikiFailed} />
+                  </div>
+                </div>
+              </div>
+            )
+          }}
         />
       </div>
 
