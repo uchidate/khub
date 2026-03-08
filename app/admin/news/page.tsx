@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useSearchParams, useRouter as useNextRouter } from 'next/navigation'
+import { useRouter as useNextRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
@@ -372,17 +372,16 @@ export default function NewsAdminPage() {
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
 
   // Deep-link: ?editId=ID opens edit modal for that news item
-  const editSearchParams = useSearchParams()
   const editRouter = useNextRouter()
   useEffect(() => {
-    const editId = editSearchParams.get('editId')
+    const params = new URLSearchParams(window.location.search)
+    const editId = params.get('editId')
     if (!editId) return
     fetch(`/api/admin/news/${editId}`)
       .then(r => r.ok ? r.json() : null)
       .then(news => {
         if (news) { setEditingNews(news); setFormOpen(true) }
         // Remove editId from URL without navigation
-        const params = new URLSearchParams(editSearchParams.toString())
         params.delete('editId')
         const newUrl = params.toString() ? `?${params}` : window.location.pathname
         editRouter.replace(newUrl, { scroll: false })
