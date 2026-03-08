@@ -27,6 +27,7 @@ import { getNewsNotificationService } from '@/lib/services/news-notification-ser
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300
 
 interface ReprocessResult {
     newsId: string
@@ -143,12 +144,17 @@ export async function POST(request: NextRequest) {
         const errorIds: string[] = []
 
         for (const item of items) {
-            const r = await reprocessOne(item)
-            if (r.error) {
-                skipped++
-            } else if (r.contentUpdated) {
-                updated++
-            } else {
+            try {
+                const r = await reprocessOne(item)
+                if (r.error) {
+                    skipped++
+                } else if (r.contentUpdated) {
+                    updated++
+                } else {
+                    errors++
+                    if (errorIds.length < 10) errorIds.push(item.id)
+                }
+            } catch {
                 errors++
                 if (errorIds.length < 10) errorIds.push(item.id)
             }

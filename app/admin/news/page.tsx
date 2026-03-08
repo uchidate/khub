@@ -5,8 +5,13 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, FlaskConical, CheckCircle, XCircle, Loader2, Eye, EyeOff, RefreshCw, Users, ImageOff } from 'lucide-react'
+import {
+  Plus, FlaskConical, CheckCircle, XCircle, Loader2,
+  Eye, EyeOff, RefreshCw, ChevronDown, ChevronUp,
+} from 'lucide-react'
 import Image from 'next/image'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface LinkedArtist {
   id: string
@@ -24,30 +29,69 @@ interface News {
   title: string
   contentMd: string
   sourceUrl: string
+  source: string | null
   imageUrl: string | null
   publishedAt: Date
   tags: string[]
   isHidden: boolean
+  contentType: string | null
+  readingTimeMin: number | null
   createdAt: Date
   updatedAt: Date
   artists: NewsArtistLink[]
 }
 
-// ─── Per-news relink button ───────────────────────────────────────────────────
+// ─── Display config ───────────────────────────────────────────────────────────
 
-function RelinkButton({ newsId, onDone }: { newsId: string; onDone: (artists: LinkedArtist[]) => void }) {
+const SOURCE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  Soompi:         { bg: 'bg-purple-500/15', text: 'text-purple-300',  border: 'border-purple-500/30' },
+  Koreaboo:       { bg: 'bg-pink-500/15',   text: 'text-pink-300',    border: 'border-pink-500/30'   },
+  Dramabeans:     { bg: 'bg-blue-500/15',   text: 'text-blue-300',    border: 'border-blue-500/30'   },
+  'Asian Junkie': { bg: 'bg-amber-500/15',  text: 'text-amber-300',   border: 'border-amber-500/30'  },
+  HelloKpop:      { bg: 'bg-emerald-500/15',text: 'text-emerald-300', border: 'border-emerald-500/30'},
+  Kpopmap:        { bg: 'bg-violet-500/15', text: 'text-violet-300',  border: 'border-violet-500/30' },
+}
+
+const CONTENT_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  debut:         { bg: 'bg-cyan-500/10',    text: 'text-cyan-300'    },
+  comeback:      { bg: 'bg-pink-500/10',    text: 'text-pink-300'    },
+  mv:            { bg: 'bg-red-500/10',     text: 'text-red-300'     },
+  concert:       { bg: 'bg-orange-500/10',  text: 'text-orange-300'  },
+  award:         { bg: 'bg-yellow-500/10',  text: 'text-yellow-300'  },
+  collaboration: { bg: 'bg-teal-500/10',    text: 'text-teal-300'    },
+  drama:         { bg: 'bg-blue-500/10',    text: 'text-blue-300'    },
+  interview:     { bg: 'bg-violet-500/10',  text: 'text-violet-300'  },
+  scandal:       { bg: 'bg-rose-500/10',    text: 'text-rose-300'    },
+  general:       { bg: 'bg-zinc-700/50',    text: 'text-zinc-400'    },
+}
+
+const SOURCES = ['Soompi', 'Koreaboo', 'Dramabeans', 'Asian Junkie', 'HelloKpop', 'Kpopmap'] as const
+type Source = typeof SOURCES[number]
+
+// ─── Components ───────────────────────────────────────────────────────────────
+
+/** Single unified reprocess button (content + artists + notifications) */
+function ReprocessButton({
+  newsId,
+  onDone,
+}: {
+  newsId: string
+  onDone: (artists: LinkedArtist[]) => void
+}) {
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
 
-  const handleRelink = async (e: React.MouseEvent) => {
+  const handle = async (e: React.MouseEvent) => {
     e.stopPropagation()
     setState('loading')
     try {
-      const res = await fetch(`/api/admin/news/relink-artists?id=${newsId}`, { method: 'POST' })
+      const res = await fetch(`/api/admin/news/reprocess?id=${newsId}`, { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) { setState('err'); return }
-      onDone(data.artists.map((a: { id: string; name: string }) => ({
-        id: a.id, nameRomanized: a.name, primaryImageUrl: null,
-      })))
+      if (!res.ok || !data.ok) { setState('err'); return }
+      onDone(
+        (data.artists ?? []).map((a: { id: string; name: string }) => ({
+          id: a.id, nameRomanized: a.name, primaryImageUrl: null,
+        }))
+      )
       setState('ok')
     } catch { setState('err') }
     finally { setTimeout(() => setState('idle'), 2500) }
@@ -55,9 +99,9 @@ function RelinkButton({ newsId, onDone }: { newsId: string; onDone: (artists: Li
 
   return (
     <button
-      onClick={handleRelink}
+      onClick={handle}
       disabled={state === 'loading'}
-      title="Re-extrair artistas desta notícia"
+      title="Reprocessar — re-busca conteúdo, atualiza campos e re-extrai artistas"
       className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
         state === 'ok'  ? 'text-green-400 bg-green-400/10' :
         state === 'err' ? 'text-red-400 bg-red-400/10' :
@@ -69,48 +113,32 @@ function RelinkButton({ newsId, onDone }: { newsId: string; onDone: (artists: Li
   )
 }
 
-// ─── Per-news refetch content button ─────────────────────────────────────────
-
-function RefetchContentButton({ newsId }: { newsId: string }) {
-  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
-
-  const handle = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setState('loading')
-    try {
-      const res = await fetch(`/api/admin/news/refetch-content?id=${newsId}`, { method: 'POST' })
-      const data = await res.json()
-      setState(data.ok ? 'ok' : 'err')
-    } catch { setState('err') }
-    finally { setTimeout(() => setState('idle'), 2500) }
-  }
-
+function SourceBadge({ source }: { source: string | null }) {
+  if (!source) return <span className="text-zinc-700 text-xs italic">—</span>
+  const c = SOURCE_COLORS[source] ?? { bg: 'bg-zinc-800', text: 'text-zinc-400', border: 'border-zinc-700' }
   return (
-    <button
-      onClick={handle}
-      disabled={state === 'loading'}
-      title="Re-buscar conteúdo completo da fonte (restaura imagens)"
-      className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
-        state === 'ok'  ? 'text-green-400 bg-green-400/10' :
-        state === 'err' ? 'text-red-400 bg-red-400/10' :
-        'text-zinc-400 hover:text-blue-300 hover:bg-blue-400/10'
-      }`}
-    >
-      <ImageOff size={14} className={state === 'loading' ? 'animate-pulse' : ''} />
-    </button>
+    <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold border ${c.bg} ${c.text} ${c.border}`}>
+      {source}
+    </span>
   )
 }
 
-// ─── Artists cell ─────────────────────────────────────────────────────────────
+function ContentTypeBadge({ type }: { type: string | null }) {
+  if (!type) return <span className="text-zinc-700 text-xs italic">—</span>
+  const c = CONTENT_TYPE_COLORS[type] ?? CONTENT_TYPE_COLORS.general
+  return (
+    <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${c.bg} ${c.text}`}>
+      {type}
+    </span>
+  )
+}
 
 function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
-  if (artists.length === 0) {
-    return <span className="text-xs text-zinc-700 italic">nenhum</span>
-  }
-  const shown = artists.slice(0, 4)
+  if (artists.length === 0) return <span className="text-xs text-zinc-700 italic">nenhum</span>
+  const shown = artists.slice(0, 3)
   const extra = artists.length - shown.length
   return (
-    <div className="flex items-center gap-1 flex-wrap max-w-[200px]">
+    <div className="flex items-center gap-1 flex-wrap max-w-[180px]">
       {shown.map(({ artist }) => (
         <span
           key={artist.id}
@@ -130,26 +158,67 @@ function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
               {artist.nameRomanized[0]}
             </span>
           )}
-          <span className="truncate max-w-[70px]">{artist.nameRomanized}</span>
+          <span className="truncate max-w-[65px]">{artist.nameRomanized}</span>
         </span>
       ))}
-      {extra > 0 && (
-        <span className="text-[10px] text-zinc-500 font-bold">+{extra}</span>
-      )}
+      {extra > 0 && <span className="text-[10px] text-zinc-500 font-bold">+{extra}</span>}
     </div>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+/** Inline toast-style result banner */
+function ResultBanner({
+  result,
+  color,
+  message,
+  onClose,
+}: {
+  result: Record<string, unknown>
+  color: 'blue' | 'purple' | 'green'
+  message: string
+  onClose: () => void
+}) {
+  const ok = result.ok as boolean
+  const colorMap = {
+    blue:   { icon: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/30'   },
+    purple: { icon: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+    green:  { icon: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/30'  },
+  }
+  const { icon, bg, border } = ok ? colorMap[color] : { icon: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' }
+  return (
+    <div className={`flex items-start gap-3 p-3 rounded-xl border ${bg} ${border} text-sm`}>
+      {ok
+        ? <CheckCircle size={16} className={`${icon} mt-0.5 shrink-0`} />
+        : <XCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
+      }
+      <p className="flex-1 text-zinc-300">{ok ? message : 'Erro na operação'}</p>
+      <button onClick={onClose} className="text-zinc-500 hover:text-white shrink-0 text-xs">✕</button>
+    </div>
+  )
+}
+
+// ─── Form fields ──────────────────────────────────────────────────────────────
 
 const formFields: FormField[] = [
-  { key: 'title', label: 'Título', type: 'text', placeholder: 'Título da notícia', required: true },
-  { key: 'contentMd', label: 'Conteúdo (Markdown)', type: 'textarea', placeholder: 'Conteúdo em Markdown', required: true },
-  { key: 'sourceUrl', label: 'URL da Fonte', type: 'text', placeholder: 'https://...', required: true },
-  { key: 'imageUrl', label: 'URL da Imagem', type: 'text', placeholder: 'https://...' },
-  { key: 'publishedAt', label: 'Data de Publicação', type: 'date' },
-  { key: 'tags', label: 'Tags', type: 'tags', placeholder: 'Separar por vírgula (ex: k-drama, k-pop)' },
+  { key: 'title',      label: 'Título',              type: 'text',     placeholder: 'Título da notícia',  required: true },
+  { key: 'contentMd',  label: 'Conteúdo (Markdown)', type: 'textarea', placeholder: 'Conteúdo em Markdown', required: true },
+  { key: 'sourceUrl',  label: 'URL da Fonte',        type: 'text',     placeholder: 'https://...',          required: true },
+  { key: 'imageUrl',   label: 'URL da Imagem',       type: 'text',     placeholder: 'https://...' },
+  { key: 'publishedAt',label: 'Data de Publicação',  type: 'date' },
+  { key: 'tags',       label: 'Tags',                type: 'tags',     placeholder: 'Separar por vírgula (ex: k-drama, k-pop)' },
 ]
+
+// ─── Batch result types ───────────────────────────────────────────────────────
+
+interface BatchResult extends Record<string, unknown> {
+  ok: boolean
+  processed: number
+  updated?: number
+  linked?: number
+  skipped: number
+  errors: number
+  errorIds?: string[]
+}
 
 interface GenerateResult {
   success: boolean
@@ -158,68 +227,49 @@ interface GenerateResult {
   duration?: number
 }
 
-interface BatchRelinkResult {
-  ok: boolean
-  processed: number
-  linked: number
-  skipped: number
-  errors: number
-}
-
-interface BatchRefetchResult {
-  ok: boolean
-  processed: number
-  updated: number
-  skipped: number
-  errors: number
-  errorIds?: string[]
-}
-
-interface BatchRelinkResultEx extends BatchRelinkResult {
-  errorIds?: string[]
-}
-
-const SOURCES = ['Soompi', 'Koreaboo', 'Dramabeans', 'Asian Junkie', 'HelloKpop', 'Kpopmap'] as const
-type Source = typeof SOURCES[number]
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NewsAdminPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editingNews, setEditingNews] = useState<News | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  // Generate one
   const [generating, setGenerating] = useState(false)
   const [generateResult, setGenerateResult] = useState<GenerateResult | null>(null)
-  const [batchRelinking, setBatchRelinking] = useState(false)
-  const [batchResult, setBatchResult] = useState<BatchRelinkResultEx | null>(null)
-  const [batchRefetching, setBatchRefetching] = useState(false)
-  const [batchRefetchResult, setBatchRefetchResult] = useState<BatchRefetchResult | null>(null)
 
-  // Por fonte
+  // Batch reprocess (candidates)
+  const [batchProcessing, setBatchProcessing] = useState(false)
+  const [batchResult, setBatchResult] = useState<BatchResult | null>(null)
+
+  // Per-source section
+  const [sourceOpen, setSourceOpen] = useState(false)
   const [selectedSource, setSelectedSource] = useState<Source | null>(null)
-  const [sourceRefetching, setSourceRefetching] = useState(false)
-  const [sourceRelinking, setSourceRelinking] = useState(false)
-  const [sourceRefetchResult, setSourceRefetchResult] = useState<BatchRefetchResult | null>(null)
-  const [sourceRelinkResult, setSourceRelinkResult] = useState<BatchRelinkResultEx | null>(null)
+  const [sourceProcessing, setSourceProcessing] = useState(false)
+  const [sourceResult, setSourceResult] = useState<BatchResult | null>(null)
 
-  // Otimista: atualizar artistas localmente sem re-fetch completo
+  // Optimistic artist override
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
+
+  // ── Columns ────────────────────────────────────────────────────────────────
 
   const columns: Column<News>[] = [
     {
       key: 'imageUrl',
-      label: 'Img',
+      label: '',
       render: (news) =>
         news.imageUrl ? (
           <Image
             src={news.imageUrl}
             alt={news.title}
-            width={60}
-            height={40}
-            className="rounded-lg object-cover"
+            width={56}
+            height={38}
+            className="rounded-lg object-cover flex-shrink-0"
           />
         ) : (
-          <div className="w-15 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-xs text-zinc-500">
-            N/A
+          <div className="w-14 h-9 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
+            <span className="text-[9px] text-zinc-600 font-bold">SEM IMG</span>
           </div>
         ),
     },
@@ -229,17 +279,28 @@ export default function NewsAdminPage() {
       sortable: true,
       render: (news) => (
         <div className="max-w-xs">
-          <p className="font-medium text-white truncate">{news.title}</p>
-          <p className="text-xs text-zinc-500 truncate">{news.sourceUrl}</p>
+          <p className="font-medium text-white leading-snug line-clamp-2">{news.title}</p>
+          <p className="text-[11px] text-zinc-600 truncate mt-0.5">{news.sourceUrl}</p>
         </div>
       ),
+    },
+    {
+      key: 'source',
+      label: 'Fonte',
+      render: (news) => <SourceBadge source={news.source} />,
+    },
+    {
+      key: 'contentType',
+      label: 'Tipo',
+      render: (news) => <ContentTypeBadge type={news.contentType} />,
     },
     {
       key: 'artists',
       label: 'Artistas',
       render: (news) => {
-        const artists = localArtistsOverride[news.id] != null
-          ? localArtistsOverride[news.id].map(a => ({ artistId: a.id, artist: a }))
+        const overridden = localArtistsOverride[news.id]
+        const artists = overridden != null
+          ? overridden.map(a => ({ artistId: a.id, artist: a }))
           : news.artists
         return <ArtistsCell artists={artists} />
       },
@@ -249,27 +310,9 @@ export default function NewsAdminPage() {
       label: 'Publicado',
       sortable: true,
       render: (news) => (
-        <span className="text-sm text-zinc-400">
+        <span className="text-xs text-zinc-400 whitespace-nowrap">
           {new Date(news.publishedAt).toLocaleDateString('pt-BR')}
         </span>
-      ),
-    },
-    {
-      key: 'tags',
-      label: 'Tags',
-      render: (news) => (
-        <div className="flex flex-wrap gap-1 max-w-xs">
-          {news.tags.slice(0, 3).map((tag, index) => (
-            <span key={index} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">
-              {tag}
-            </span>
-          ))}
-          {news.tags.length > 3 && (
-            <span className="px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded text-xs">
-              +{news.tags.length - 3}
-            </span>
-          )}
-        </div>
       ),
     },
     {
@@ -281,40 +324,44 @@ export default function NewsAdminPage() {
     },
   ]
 
-  const handleCreate = () => {
-    setEditingNews(null)
-    setFormOpen(true)
-  }
-
-  const handleEdit = (news: News) => {
-    setEditingNews(news)
-    setFormOpen(true)
-  }
-
-  const handleDelete = (ids: string[]) => {
-    setSelectedIds(ids)
-    setDeleteOpen(true)
-  }
+  // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     if (data.publishedAt && typeof data.publishedAt === 'string') {
       data.publishedAt = new Date(data.publishedAt).toISOString()
     }
-
     const url = editingNews ? `/api/admin/news?id=${editingNews.id}` : '/api/admin/news'
-    const method = editingNews ? 'PATCH' : 'POST'
-
     const res = await fetch(url, {
-      method,
+      method: editingNews ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-
     if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.error || 'Erro ao salvar notícia')
+      const e = await res.json()
+      throw new Error(e.error || 'Erro ao salvar notícia')
     }
+    refetchTable()
+  }
 
+  const handleDeleteConfirm = async () => {
+    const res = await fetch('/api/admin/news', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selectedIds }),
+    })
+    if (!res.ok) {
+      const e = await res.json()
+      throw new Error(e.error || 'Erro ao deletar notícias')
+    }
+    refetchTable()
+  }
+
+  const handleToggleHidden = async (news: News) => {
+    await fetch(`/api/admin/news?id=${news.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isHidden: !news.isHidden }),
+    })
     refetchTable()
   }
 
@@ -333,149 +380,91 @@ export default function NewsAdminPage() {
     }
   }
 
-  const handleBatchRelink = async () => {
-    setBatchRelinking(true)
+  /** Reprocess candidates (no content/short content) using the full pipeline */
+  const handleBatchReprocess = async () => {
+    setBatchProcessing(true)
     setBatchResult(null)
     try {
-      const res = await fetch('/api/admin/news/relink-artists?mode=batch&limit=200', { method: 'POST' })
+      const res = await fetch('/api/admin/news/reprocess?mode=batch&limit=50', { method: 'POST' })
       const data = await res.json()
       setBatchResult(data)
       if (data.ok) refetchTable()
     } catch {
-      setBatchResult({ ok: false, processed: 0, linked: 0, skipped: 0, errors: 1 })
+      setBatchResult({ ok: false, processed: 0, skipped: 0, errors: 1 })
     } finally {
-      setBatchRelinking(false)
+      setBatchProcessing(false)
     }
   }
 
-  const handleBatchRefetch = async () => {
-    setBatchRefetching(true)
-    setBatchRefetchResult(null)
-    try {
-      const res = await fetch('/api/admin/news/refetch-content?mode=batch&limit=50', { method: 'POST' })
-      const data = await res.json()
-      setBatchRefetchResult(data)
-    } catch {
-      setBatchRefetchResult({ ok: false, processed: 0, updated: 0, skipped: 0, errors: 1 })
-    } finally {
-      setBatchRefetching(false)
-    }
-  }
-
-  const handleToggleHidden = async (news: News) => {
-    await fetch(`/api/admin/news?id=${news.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isHidden: !news.isHidden }),
-    })
-    refetchTable()
-  }
-
-  const handleSourceRefetch = async () => {
+  /** Reprocess ALL news from selected source using the full pipeline */
+  const handleSourceReprocess = async () => {
     if (!selectedSource) return
-    setSourceRefetching(true)
-    setSourceRefetchResult(null)
+    setSourceProcessing(true)
+    setSourceResult(null)
     try {
       const res = await fetch(
-        `/api/admin/news/refetch-content?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=200`,
+        `/api/admin/news/reprocess?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=200`,
         { method: 'POST' },
       )
       const data = await res.json()
-      setSourceRefetchResult(data)
-    } catch {
-      setSourceRefetchResult({ ok: false, processed: 0, updated: 0, skipped: 0, errors: 1 })
-    } finally {
-      setSourceRefetching(false)
-    }
-  }
-
-  const handleSourceRelink = async () => {
-    if (!selectedSource) return
-    setSourceRelinking(true)
-    setSourceRelinkResult(null)
-    try {
-      const res = await fetch(
-        `/api/admin/news/relink-artists?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=500`,
-        { method: 'POST' },
-      )
-      const data = await res.json()
-      setSourceRelinkResult(data)
+      setSourceResult(data)
       if (data.ok) refetchTable()
     } catch {
-      setSourceRelinkResult({ ok: false, processed: 0, linked: 0, skipped: 0, errors: 1 })
+      setSourceResult({ ok: false, processed: 0, skipped: 0, errors: 1 })
     } finally {
-      setSourceRelinking(false)
+      setSourceProcessing(false)
     }
   }
 
-  const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/news', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
-
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.error || 'Erro ao deletar notícias')
-    }
-
-    refetchTable()
-  }
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <AdminLayout title="Notícias">
-      <div className="space-y-6">
+      <div className="space-y-5">
+
+        {/* ── Toolbar ─────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <p className="text-zinc-400">Gerencie notícias e artigos</p>
+          <p className="text-zinc-400 text-sm">Gerencie notícias e artigos do HallyuHub</p>
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={handleBatchRefetch}
-              disabled={batchRefetching}
-              title="Re-buscar conteúdo completo (imagens) de notícias sem imagens inline (até 50)"
-              className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold rounded-lg hover:border-blue-500/50 hover:text-blue-300 transition-all disabled:opacity-50 text-sm"
+              onClick={handleBatchReprocess}
+              disabled={batchProcessing}
+              title="Reprocessar pipeline completo em notícias candidatas (sem imagem / conteúdo curto)"
+              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
             >
-              {batchRefetching ? <Loader2 size={15} className="animate-spin" /> : <ImageOff size={15} />}
-              {batchRefetching ? 'Re-buscando...' : 'Re-buscar conteúdo'}
-            </button>
-            <button
-              onClick={handleBatchRelink}
-              disabled={batchRelinking}
-              title="Re-extrair artistas de notícias sem vínculos (até 200)"
-              className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
-            >
-              {batchRelinking ? <Loader2 size={15} className="animate-spin" /> : <Users size={15} />}
-              {batchRelinking ? 'Re-vinculando...' : 'Re-extrair artistas'}
+              {batchProcessing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              {batchProcessing ? 'Reprocessando...' : 'Reprocessar candidatos'}
             </button>
             <button
               onClick={handleGenerateOne}
               disabled={generating}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-800 border border-zinc-700 text-white font-bold rounded-lg hover:border-green-500 hover:text-green-400 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-white font-medium rounded-lg hover:border-green-500/50 hover:text-green-400 transition-all disabled:opacity-50 text-sm"
             >
-              {generating ? <Loader2 size={18} className="animate-spin" /> : <FlaskConical size={18} />}
-              {generating ? 'Gerando...' : 'Gerar 1 (Teste)'}
+              {generating ? <Loader2 size={14} className="animate-spin" /> : <FlaskConical size={14} />}
+              {generating ? 'Gerando...' : 'Gerar 1'}
             </button>
             <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
+              onClick={() => { setEditingNews(null); setFormOpen(true) }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all text-sm"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               Nova Notícia
             </button>
           </div>
         </div>
 
+        {/* ── Result banners ───────────────────────────────────────────────── */}
         {generateResult && (
           <div className={`flex items-start gap-3 p-4 rounded-xl border ${generateResult.success ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
             {generateResult.success
-              ? <CheckCircle size={20} className="text-green-400 mt-0.5 shrink-0" />
-              : <XCircle size={20} className="text-red-400 mt-0.5 shrink-0" />
+              ? <CheckCircle size={18} className="text-green-400 mt-0.5 shrink-0" />
+              : <XCircle size={18} className="text-red-400 mt-0.5 shrink-0" />
             }
-            <div className="text-sm">
+            <div className="text-sm flex-1">
               {generateResult.success && generateResult.news ? (
                 <>
                   <p className="font-bold text-white">{generateResult.news.title}</p>
-                  <p className="text-zinc-400 mt-1">
+                  <p className="text-zinc-400 mt-0.5">
                     {generateResult.news.artistsCount > 0
                       ? `Artistas: ${generateResult.news.artists.map(a => a.name).join(', ')}`
                       : 'Nenhum artista identificado'
@@ -487,158 +476,105 @@ export default function NewsAdminPage() {
                 <p className="text-red-400">{generateResult.error}</p>
               )}
             </div>
-            <button onClick={() => setGenerateResult(null)} className="ml-auto text-zinc-500 hover:text-white">✕</button>
-          </div>
-        )}
-
-        {batchRefetchResult && (
-          <div className={`flex items-start gap-3 p-4 rounded-xl border ${batchRefetchResult.ok ? 'bg-blue-500/10 border-blue-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-            {batchRefetchResult.ok
-              ? <CheckCircle size={20} className="text-blue-400 mt-0.5 shrink-0" />
-              : <XCircle size={20} className="text-red-400 mt-0.5 shrink-0" />
-            }
-            <div className="text-sm">
-              {batchRefetchResult.ok ? (
-                <p className="text-zinc-300">
-                  Re-fetch concluído — processadas: <strong>{batchRefetchResult.processed}</strong> · atualizadas: <strong className="text-blue-400">{batchRefetchResult.updated}</strong> · sem conteúdo: {batchRefetchResult.skipped} · erros: {batchRefetchResult.errors}
-                </p>
-              ) : (
-                <p className="text-red-400">Erro no re-fetch em lote</p>
-              )}
-            </div>
-            <button onClick={() => setBatchRefetchResult(null)} className="ml-auto text-zinc-500 hover:text-white">✕</button>
+            <button onClick={() => setGenerateResult(null)} className="text-zinc-500 hover:text-white">✕</button>
           </div>
         )}
 
         {batchResult && (
-          <div className={`flex items-start gap-3 p-4 rounded-xl border ${batchResult.ok ? 'bg-purple-500/10 border-purple-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-            {batchResult.ok
-              ? <CheckCircle size={20} className="text-purple-400 mt-0.5 shrink-0" />
-              : <XCircle size={20} className="text-red-400 mt-0.5 shrink-0" />
-            }
-            <div className="text-sm">
-              {batchResult.ok ? (
-                <p className="text-zinc-300">
-                  Re-extração concluída — processadas: <strong>{batchResult.processed}</strong> · vinculadas: <strong className="text-purple-400">{batchResult.linked}</strong> · sem artistas: {batchResult.skipped} · erros: {batchResult.errors}
-                </p>
-              ) : (
-                <p className="text-red-400">Erro na re-extração em lote</p>
-              )}
-            </div>
-            <button onClick={() => setBatchResult(null)} className="ml-auto text-zinc-500 hover:text-white">✕</button>
-          </div>
+          <ResultBanner
+            result={batchResult}
+            color="purple"
+            message={`Reprocessamento concluído — processadas: ${batchResult.processed} · atualizadas: ${batchResult.updated ?? 0} · sem conteúdo: ${batchResult.skipped} · erros: ${batchResult.errors}`}
+            onClose={() => setBatchResult(null)}
+          />
         )}
 
-        {/* ── Reprocessar por fonte ─────────────────────────────────────────── */}
-        <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/50 space-y-3">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-sm font-semibold text-zinc-300">Reprocessar por fonte</p>
-            <div className="flex items-center gap-1 flex-wrap">
-              {SOURCES.map(s => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    setSelectedSource(prev => prev === s ? null : s)
-                    setSourceRefetchResult(null)
-                    setSourceRelinkResult(null)
-                  }}
-                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors border ${
-                    selectedSource === s
-                      ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* ── Por fonte ────────────────────────────────────────────────────── */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+          <button
+            onClick={() => { setSourceOpen(o => !o); setSourceResult(null) }}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800/40 transition-colors"
+          >
+            <span>Reprocessar por fonte</span>
+            {sourceOpen ? <ChevronUp size={15} className="text-zinc-500" /> : <ChevronDown size={15} className="text-zinc-500" />}
+          </button>
 
-          {selectedSource && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={handleSourceRefetch}
-                  disabled={sourceRefetching || sourceRelinking}
-                  title={`Re-buscar conteúdo de TODAS as notícias de ${selectedSource}`}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-blue-500/50 hover:text-blue-300 transition-all disabled:opacity-50 text-sm"
-                >
-                  {sourceRefetching ? <Loader2 size={14} className="animate-spin" /> : <ImageOff size={14} />}
-                  {sourceRefetching ? 'Re-buscando...' : `Re-buscar conteúdo (${selectedSource})`}
-                </button>
-                <button
-                  onClick={handleSourceRelink}
-                  disabled={sourceRefetching || sourceRelinking}
-                  title={`Re-extrair artistas de TODAS as notícias de ${selectedSource}`}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
-                >
-                  {sourceRelinking ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
-                  {sourceRelinking ? 'Re-vinculando...' : `Re-extrair artistas (${selectedSource})`}
-                </button>
+          {sourceOpen && (
+            <div className="px-4 pb-4 space-y-3 border-t border-zinc-800">
+              {/* Source selector */}
+              <div className="flex items-center gap-1.5 flex-wrap pt-3">
+                {SOURCES.map(s => {
+                  const c = SOURCE_COLORS[s]
+                  const active = selectedSource === s
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => { setSelectedSource(prev => prev === s ? null : s); setSourceResult(null) }}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors border ${
+                        active && c
+                          ? `${c.bg} ${c.text} ${c.border}`
+                          : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  )
+                })}
               </div>
 
-              {sourceRefetchResult && (
-                <div className={`flex items-start gap-2 p-3 rounded-lg border text-xs ${sourceRefetchResult.ok ? 'bg-blue-500/10 border-blue-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-                  {sourceRefetchResult.ok
-                    ? <CheckCircle size={14} className="text-blue-400 mt-0.5 shrink-0" />
-                    : <XCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
-                  }
-                  <div className="flex-1">
-                    {sourceRefetchResult.ok ? (
-                      <p className="text-zinc-300">
-                        Re-fetch <strong>{selectedSource}</strong> — processadas: <strong>{sourceRefetchResult.processed}</strong> · atualizadas: <strong className="text-blue-400">{sourceRefetchResult.updated}</strong> · sem conteúdo: {sourceRefetchResult.skipped} · erros: {sourceRefetchResult.errors}
-                        {sourceRefetchResult.errorIds?.length ? (
-                          <span className="ml-1 text-red-400">(IDs: {sourceRefetchResult.errorIds.join(', ')})</span>
-                        ) : null}
-                      </p>
-                    ) : (
-                      <p className="text-red-400">Erro no re-fetch de {selectedSource}</p>
-                    )}
+              {selectedSource && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSourceReprocess}
+                      disabled={sourceProcessing}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
+                    >
+                      {sourceProcessing
+                        ? <Loader2 size={14} className="animate-spin" />
+                        : <RefreshCw size={14} />
+                      }
+                      {sourceProcessing
+                        ? `Reprocessando ${selectedSource}...`
+                        : `Reprocessar todas de ${selectedSource} (pipeline completo)`
+                      }
+                    </button>
                   </div>
-                  <button onClick={() => setSourceRefetchResult(null)} className="text-zinc-500 hover:text-white shrink-0">✕</button>
-                </div>
-              )}
+                  <p className="text-[11px] text-zinc-600">
+                    Re-busca conteúdo, recalcula campos e re-extrai artistas para todas as notícias de {selectedSource}.
+                  </p>
 
-              {sourceRelinkResult && (
-                <div className={`flex items-start gap-2 p-3 rounded-lg border text-xs ${sourceRelinkResult.ok ? 'bg-purple-500/10 border-purple-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-                  {sourceRelinkResult.ok
-                    ? <CheckCircle size={14} className="text-purple-400 mt-0.5 shrink-0" />
-                    : <XCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
-                  }
-                  <div className="flex-1">
-                    {sourceRelinkResult.ok ? (
-                      <p className="text-zinc-300">
-                        Re-extração <strong>{selectedSource}</strong> — processadas: <strong>{sourceRelinkResult.processed}</strong> · vínculos: <strong className="text-purple-400">{sourceRelinkResult.linked}</strong> · sem artistas: {sourceRelinkResult.skipped} · erros: {sourceRelinkResult.errors}
-                        {sourceRelinkResult.errorIds?.length ? (
-                          <span className="ml-1 text-red-400">(IDs: {sourceRelinkResult.errorIds.join(', ')})</span>
-                        ) : null}
-                      </p>
-                    ) : (
-                      <p className="text-red-400">Erro na re-extração de {selectedSource}</p>
-                    )}
-                  </div>
-                  <button onClick={() => setSourceRelinkResult(null)} className="text-zinc-500 hover:text-white shrink-0">✕</button>
+                  {sourceResult && (
+                    <ResultBanner
+                      result={sourceResult}
+                      color="purple"
+                      message={`${selectedSource} — processadas: ${sourceResult.processed} · atualizadas: ${sourceResult.updated ?? 0} · sem conteúdo: ${sourceResult.skipped} · erros: ${sourceResult.errors}${sourceResult.errorIds?.length ? ` (IDs: ${sourceResult.errorIds.join(', ')})` : ''}`}
+                      onClose={() => setSourceResult(null)}
+                    />
+                  )}
                 </div>
               )}
             </div>
           )}
         </div>
 
+        {/* ── Table ────────────────────────────────────────────────────────── */}
         <DataTable<News>
           columns={columns}
           apiUrl="/api/admin/news"
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={(news) => { setEditingNews(news); setFormOpen(true) }}
+          onDelete={(ids) => { setSelectedIds(ids); setDeleteOpen(true) }}
           searchPlaceholder="Buscar por título ou conteúdo..."
           actions={(news) => (
             <div className="flex items-center gap-1">
-              <RefetchContentButton newsId={news.id} />
-              <RelinkButton
+              <ReprocessButton
                 newsId={news.id}
-                onDone={(artists) => setLocalArtistsOverride(prev => ({ ...prev, [news.id]: artists }))}
+                onDone={(artists) =>
+                  setLocalArtistsOverride(prev => ({ ...prev, [news.id]: artists }))
+                }
               />
               <button
-                onClick={() => handleToggleHidden(news)}
+                onClick={(e) => { e.stopPropagation(); handleToggleHidden(news) }}
                 title={news.isHidden ? 'Tornar visível' : 'Ocultar do site'}
                 className={`p-1.5 rounded transition-colors ${
                   news.isHidden
