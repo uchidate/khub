@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 
