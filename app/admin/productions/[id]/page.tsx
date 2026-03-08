@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -73,12 +73,19 @@ const AGE_RATINGS = [
 export default function EditProductionPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
+    const returnToRef = useRef<string | null>(null)
     const [production, setProduction] = useState<Production | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Production>>({})
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const returnTo = params.get('returnTo')
+        if (returnTo) returnToRef.current = returnTo
+    }, [])
     const [tmdbData, setTmdbData] = useState<TmdbPreview | null>(null)
     const [fetchingTmdb, setFetchingTmdb] = useState(false)
     const [tmdbError, setTmdbError] = useState('')
@@ -196,7 +203,11 @@ export default function EditProductionPage() {
                 throw new Error(err.error || 'Erro ao salvar')
             }
             setSuccess('Salvo com sucesso!')
-            setTimeout(() => setSuccess(''), 3000)
+            if (returnToRef.current) {
+                setTimeout(() => router.push(returnToRef.current!), 800)
+            } else {
+                setTimeout(() => setSuccess(''), 3000)
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao salvar')
         } finally {
@@ -214,7 +225,7 @@ export default function EditProductionPage() {
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-8">
                     <button
-                        onClick={() => router.back()}
+                        onClick={() => returnToRef.current ? router.push(returnToRef.current) : router.back()}
                         className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" />

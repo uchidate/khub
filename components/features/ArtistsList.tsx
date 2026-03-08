@@ -176,7 +176,7 @@ export function ArtistsList() {
                                         ...getRoleLabels(artist.roles || [], artist.gender),
                                     ]}
                                     aspectRatio="poster"
-                                    adminHref={`/admin/artists/${artist.id}`}
+                                    adminHref={`/admin/artists/${artist.id}?returnTo=${encodeURIComponent(pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`}
                                     streamingSignal={artist.streamingSignals?.[0]}
                                 />
                             )
