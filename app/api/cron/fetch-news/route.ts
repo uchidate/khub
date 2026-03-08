@@ -1,235 +1,164 @@
 /**
- * POST /api/cron/fetch-news
+ * POST/GET /api/cron/fetch-news
  *
- * Cron dedicado para busca de notícias RSS por fonte.
- * Substitui (ou complementa) a lógica de news do /api/cron/update,
- * permitindo chamar cada fonte independentemente para isolamento de falhas.
+ * Cron de busca de notícias via WordPress REST API.
+ * Usa a mesma lógica do import manual (/api/admin/news/import):
+ *   - WP API (date_gmt) como fonte authoritative — sem derivação de datas via RSS
+ *   - importOne() com correção automática de publishedAt quando necessário
+ *   - Delay de 1500ms apenas para artigos realmente novos (não para os que já existem)
  *
  * Query params:
- *   ?source=Soompi    → busca apenas dessa fonte (case-insensitive)
- *   (sem source)      → busca de todas as fontes, uma por vez
- *   ?limit=N          → máximo de itens por fonte (padrão: 20)
- *   ?dry=true         → testa RSS sem salvar no banco
+ *   ?source=Soompi   → busca apenas essa fonte (case-sensitive, conforme WP_API_BASES)
+ *   (sem source)     → busca todas as fontes sequencialmente
+ *   ?daysBack=N      → busca artigos dos últimos N dias (padrão: 1)
+ *   ?dry=true        → descobre artigos sem importar (só conta)
  *
  * Auth: Bearer token via Authorization header ou ?token=
  *
- * Fontes disponíveis:
- *   Soompi, Koreaboo, KpopStarz, Dramabeans, Asian Junkie
+ * Fontes disponíveis: Soompi, Koreaboo, Dramabeans, Asian Junkie, HelloKpop, Kpopmap
  *
  * Exemplos de cron-job.org:
- *   POST .../fetch-news?source=Soompi&token=...     (a cada 30 min)
- *   POST .../fetch-news?source=Koreaboo&token=...   (a cada 30 min)
- *   POST .../fetch-news?source=Dramabeans&token=... (a cada 2 horas)
- *   POST .../fetch-news?source=Asian+Junkie&token=... (a cada 2 horas)
- *
- * Retorno: 202 Accepted — processamento em background.
+ *   POST .../fetch-news?source=Soompi&token=...      (a cada 30 min)
+ *   POST .../fetch-news?source=Koreaboo&token=...    (a cada 30 min)
+ *   POST .../fetch-news?source=Dramabeans&token=...  (a cada 2 horas)
+ *   POST .../fetch-news?source=Asian+Junkie&token=...  (a cada 2 horas)
  */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
-import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
-import { normalizeSourceUrl } from '@/lib/utils/url'
-import { getErrorMessage } from '@/lib/utils/error'
+import { WP_API_BASES, discoverViaWPAPI, importOne } from '@/lib/services/news-import-service'
 
-export const maxDuration = 120
+export const maxDuration = 300
 
 const log = createLogger('CRON-FETCH-NEWS')
+const IMPORT_DELAY_MS = 1500 // respeitado apenas para artigos realmente novos
 
 function verifyToken(request: NextRequest): boolean {
-  const authToken =
-    request.headers.get('authorization')?.replace('Bearer ', '') ||
-    request.nextUrl.searchParams.get('token')
-  const expectedToken = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET
-  if (!expectedToken || !authToken) return false
-  if (authToken.length !== expectedToken.length) return false
-  try {
-    return timingSafeEqual(Buffer.from(authToken), Buffer.from(expectedToken))
-  } catch {
-    return false
-  }
+    const authToken =
+        request.headers.get('authorization')?.replace('Bearer ', '') ||
+        request.nextUrl.searchParams.get('token')
+    const expectedToken = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET
+    if (!expectedToken || !authToken) return false
+    if (authToken.length !== expectedToken.length) return false
+    try {
+        return timingSafeEqual(Buffer.from(authToken), Buffer.from(expectedToken))
+    } catch {
+        return false
+    }
 }
 
 interface SourceResult {
-  source: string
-  fetched: number
-  saved: number
-  skipped: number
-  errors: string[]
-  duration_ms: number
+    source:    string
+    discovered: number
+    imported:  number
+    exists:    number
+    errors:    number
+    duration_ms: number
 }
 
-async function fetchAndSaveNewsFromSource(
-  sourceName: string,
-  maxItems: number,
-  existingUrls: Set<string>,
-  dryRun: boolean,
+async function fetchSourceNews(
+    sourceName: string,
+    dateFrom: Date,
+    dateTo: Date,
+    dryRun: boolean,
 ): Promise<SourceResult> {
-  const t = Date.now()
-  const result: SourceResult = {
-    source: sourceName,
-    fetched: 0,
-    saved: 0,
-    skipped: 0,
-    errors: [],
-    duration_ms: 0,
-  }
+    const t = Date.now()
+    const result: SourceResult = { source: sourceName, discovered: 0, imported: 0, exists: 0, errors: 0, duration_ms: 0 }
 
-  const { getRSSNewsService } = await import('@/lib/services/rss-news-service')
-  const { getNewsArtistExtractionService } = await import('@/lib/services/news-artist-extraction-service')
-  const rssService = getRSSNewsService()
-  const extractionService = getNewsArtistExtractionService(prisma)
+    const articles = await discoverViaWPAPI(sourceName, dateFrom, dateTo, 500)
+    result.discovered = articles.length
 
-  const items = await rssService.fetchFromSource(sourceName, maxItems)
-  result.fetched = items.length
+    if (dryRun) {
+        result.duration_ms = Date.now() - t
+        return result
+    }
 
-  if (dryRun) {
-    result.skipped = items.filter(i => existingUrls.has(normalizeSourceUrl(i.link))).length
-    result.saved = items.length - result.skipped
+    for (let i = 0; i < articles.length; i++) {
+        try {
+            const r = await importOne(articles[i], sourceName)
+            if (r === 'imported') {
+                result.imported++
+                // Delay apenas para artigos realmente importados (evita rate limiting)
+                if (i < articles.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, IMPORT_DELAY_MS))
+                }
+            } else if (r === 'exists') {
+                result.exists++
+            } else {
+                result.errors++
+            }
+        } catch {
+            result.errors++
+        }
+    }
+
     result.duration_ms = Date.now() - t
     return result
-  }
-
-  for (const item of items) {
-    const canonicalUrl = normalizeSourceUrl(item.link)
-    if (existingUrls.has(canonicalUrl)) {
-      result.skipped++
-      continue
-    }
-
-    try {
-      const content = item.content || item.description || ''
-
-      const savedNews = await prisma.news.upsert({
-        where: { sourceUrl: canonicalUrl },
-        // Não atualiza publishedAt no upsert — evita derivação de datas via RSS
-        // A data só é definida na criação (authoritative: WP API date_gmt via import)
-        update: {
-          imageUrl: item.imageUrl ?? null,
-        },
-        create: {
-          title: item.title,
-          contentMd: content,
-          sourceUrl: canonicalUrl,
-          originalTitle: item.title,
-          originalContent: content,
-          imageUrl: item.imageUrl ?? null,
-          tags: item.categories ?? [],
-          publishedAt: item.publishedAt,
-          source: sourceName,
-          translationStatus: 'pending',
-          author:         item.author         ?? null,
-          contentType:    item.contentType    ?? null,
-          readingTimeMin: item.readingTimeMin ?? null,
-        },
-      })
-
-      existingUrls.add(canonicalUrl)
-      result.saved++
-
-      // Vincular artistas mencionados (falha graciosamente)
-      try {
-        const mentions = await extractionService.extractArtists(item.title, content)
-        for (const mention of mentions) {
-          await prisma.newsArtist.upsert({
-            where: { newsId_artistId: { newsId: savedNews.id, artistId: mention.artistId } },
-            update: {},
-            create: { newsId: savedNews.id, artistId: mention.artistId },
-          })
-        }
-      } catch {
-        // artist extraction is best-effort
-      }
-    } catch (saveErr) {
-      result.errors.push(getErrorMessage(saveErr))
-    }
-  }
-
-  result.duration_ms = Date.now() - t
-  return result
 }
 
 async function runFetchNews(
-  source: string | null,
-  maxItems: number,
-  dryRun: boolean,
+    source: string | null,
+    daysBack: number,
+    dryRun: boolean,
 ): Promise<SourceResult[]> {
-  const { getRSSNewsService } = await import('@/lib/services/rss-news-service')
-  const rssService = getRSSNewsService()
-  const availableFeeds = rssService.getAvailableFeeds()
+    const sources = source ? [source] : Object.keys(WP_API_BASES)
+    const dateTo   = new Date()
+    const dateFrom = new Date(dateTo.getTime() - daysBack * 86_400_000)
 
-  const sourcesToFetch = source
-    ? availableFeeds.filter(f => f.name.toLowerCase() === source.toLowerCase())
-    : availableFeeds
+    const results: SourceResult[] = []
 
-  if (sourcesToFetch.length === 0) {
-    throw new Error(
-      `Fonte desconhecida: "${source}". Disponíveis: ${availableFeeds.map(f => f.name).join(', ')}`
-    )
-  }
-
-  // Buscar URLs já salvas para deduplicação
-  const existingUrls = dryRun
-    ? new Set<string>()
-    : new Set(
-        (await prisma.news.findMany({ select: { sourceUrl: true } })).map(n => n.sourceUrl)
-      )
-
-  const results: SourceResult[] = []
-
-  for (const feed of sourcesToFetch) {
-    log.info(`Processing source: ${feed.name}`)
-    try {
-      const result = await fetchAndSaveNewsFromSource(feed.name, maxItems, existingUrls, dryRun)
-      log.info(`${feed.name}: saved=${result.saved} skipped=${result.skipped} errors=${result.errors.length} (${result.duration_ms}ms)`)
-      results.push(result)
-    } catch (err) {
-      const msg = getErrorMessage(err)
-      log.error(`${feed.name} failed: ${msg}`)
-      results.push({
-        source: feed.name,
-        fetched: 0,
-        saved: 0,
-        skipped: 0,
-        errors: [msg],
-        duration_ms: 0,
-      })
+    for (const src of sources) {
+        if (!WP_API_BASES[src]) {
+            log.warn(`Fonte desconhecida: ${src}`)
+            continue
+        }
+        log.info(`Buscando ${src} (últimos ${daysBack} dia(s))`)
+        try {
+            const result = await fetchSourceNews(src, dateFrom, dateTo, dryRun)
+            log.info(`${src}: discovered=${result.discovered} imported=${result.imported} exists=${result.exists} errors=${result.errors} (${result.duration_ms}ms)`)
+            results.push(result)
+        } catch (err) {
+            log.error(`${src} falhou: ${String(err)}`)
+            results.push({ source: src, discovered: 0, imported: 0, exists: 0, errors: 1, duration_ms: 0 })
+        }
     }
-  }
 
-  return results
+    return results
 }
 
 export async function POST(request: NextRequest) {
-  if (!verifyToken(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+    if (!verifyToken(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-  const source = request.nextUrl.searchParams.get('source') || null
-  const maxItems = Math.min(50, Math.max(1, parseInt(request.nextUrl.searchParams.get('limit') ?? '20')))
-  const dryRun = request.nextUrl.searchParams.get('dry') === 'true'
-  const requestId = `fetch-news-${Date.now()}`
+    const sp = request.nextUrl.searchParams
+    const source   = sp.get('source') || null
+    const daysBack = Math.min(30, Math.max(1, parseInt(sp.get('daysBack') ?? '1')))
+    const dryRun   = sp.get('dry') === 'true'
+    const requestId = `fetch-news-${Date.now()}`
 
-  log.info('News fetch cron started', { source: source ?? 'all', maxItems, dryRun, requestId })
+    log.info('News fetch cron started', { source: source ?? 'all', daysBack, dryRun, requestId })
 
-  runFetchNews(source, maxItems, dryRun)
-    .then(results => {
-      const totalSaved = results.reduce((s, r) => s + r.saved, 0)
-      const totalErrors = results.flatMap(r => r.errors).length
-      log.info('News fetch completed', { requestId, totalSaved, totalErrors, results })
-    })
-    .catch(onCronError(log, 'cron-fetch-news', 'News fetch fatal error'))
+    runFetchNews(source, daysBack, dryRun)
+        .then(results => {
+            const totalImported = results.reduce((s, r) => s + r.imported, 0)
+            const totalErrors   = results.reduce((s, r) => s + r.errors,  0)
+            log.info('News fetch completed', { requestId, totalImported, totalErrors, results })
+        })
+        .catch(onCronError(log, 'cron-fetch-news', 'News fetch fatal error'))
 
-  return NextResponse.json({
-    success: true,
-    status: 'accepted',
-    message: `Buscando notícias de: ${source ?? 'todas as fontes'}`,
-    requestId,
-    dryRun,
-  }, { status: 202 })
+    return NextResponse.json({
+        success: true,
+        status: 'accepted',
+        message: `Buscando notícias de: ${source ?? 'todas as fontes'} (últimos ${daysBack} dia(s))`,
+        requestId,
+        dryRun,
+    }, { status: 202 })
 }
 
 // GET suportado (cron-job.org pode usar GET)
 export async function GET(request: NextRequest) {
-  return POST(request)
+    return POST(request)
 }
