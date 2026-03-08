@@ -353,7 +353,7 @@ export class RSSNewsService {
     };
 
     // Fontes que devem usar class-first (o <article> dessas fontes inclui header/metadata)
-    const CLASS_FIRST_SOURCES = new Set(['Soompi']);
+    const CLASS_FIRST_SOURCES = new Set(['Soompi', 'Koreaboo']);
 
     const priorityClasses = sourceName ? (SOURCE_CONTENT_SELECTORS[sourceName] ?? []) : [];
     // Genéricos de fallback (sem repetir os já tentados)
@@ -510,6 +510,8 @@ export class RSSNewsService {
       })
       // Catch-all: iframes sem closing tag (malformados)
       .replace(/<iframe\b[^>]*>/gi, '')
+      // Videos (mp4 GIFs, etc.) → remover (não renderizáveis em markdown)
+      .replace(/<video\b[^>]*>[\s\S]*?<\/video>/gi, '')
       // Headings → ## / ###
       .replace(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi, '\n\n## $1\n\n')
       .replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n\n### $1\n\n')
