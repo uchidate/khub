@@ -346,7 +346,8 @@ export class RSSNewsService {
       // article-wrapper = corpo limpo do Soompi sem header (título, data, autor, tags)
       Soompi:        ['article-wrapper', 'sp-detail__content', 'article-container', 'entry-content'],
       Koreaboo:      ['entry-content', 'post-content', 'article__body'],
-      Dramabeans:    ['entry-content', 'post-content', 'entry__content'],
+      // Dramabeans usa estrutura de tabs; post-item é o container do artigo (sem nav tabs)
+      Dramabeans:    ['post-item', 'entry-content', 'post-content', 'entry__content'],
       // Asian Junkie usa 'entry' (não entry-content); share-post div é removido antes da conversão
       'Asian Junkie':['entry', 'entry-content', 'post-content', 'article-content'],
       HelloKpop:     ['td-post-content', 'entry-content', 'tdb-block-inner'],
@@ -354,7 +355,7 @@ export class RSSNewsService {
     };
 
     // Fontes que devem usar class-first (o <article> dessas fontes inclui header/metadata)
-    const CLASS_FIRST_SOURCES = new Set(['Soompi', 'Koreaboo', 'Asian Junkie']);
+    const CLASS_FIRST_SOURCES = new Set(['Soompi', 'Koreaboo', 'Asian Junkie', 'Dramabeans']);
 
     const priorityClasses = sourceName ? (SOURCE_CONTENT_SELECTORS[sourceName] ?? []) : [];
     // Genéricos de fallback (sem repetir os já tentados)
@@ -371,6 +372,20 @@ export class RSSNewsService {
     const SOURCE_HTML_PREPROCESSORS: Record<string, (html: string) => string> = {
       // Asian Junkie: remover barra de share (Facebook, Twitter, etc.) do topo do 'entry' div
       'Asian Junkie': (html) => html.replace(/<div[^>]*class="[^"]*\bshare-post\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, ''),
+      // Dramabeans: remover metadata do topo do post-item (comment count, datas, título duplicado, autor)
+      Dramabeans: (html) => {
+        let cleaned = html
+        // Remove bloco de comentário/data (<div class="comment">...</div>)
+        cleaned = cleaned.replace(/<div[^>]*class="[^"]*\bcomment\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, '')
+        // Remove <meta> tags (og:url, og:title, etc. embutidas na estrutura)
+        cleaned = cleaned.replace(/<meta[^>]*>/gi, '')
+        // Remove select de episódios (line-text-wrapper)
+        cleaned = cleaned.replace(/<div[^>]*class="[^"]*\bline-text-wrapper\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, '')
+        // Truncar na seção de comentários do Disqus (após o artigo)
+        const endIdx = cleaned.search(/id="[^"]*(?:disqus|comments)[^"]*"/i)
+        if (endIdx > -1) cleaned = cleaned.substring(0, endIdx)
+        return cleaned
+      },
       // Koreaboo: remover WordPress embedded posts (artigos relacionados embutidos inline) e
       // truncar no início da seção de artigos relacionados / footer do site
       Koreaboo: (html) => {

@@ -128,6 +128,14 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'site nav tabs', pattern: /^-\s*\[(?:recaps?|reviews?|news|videos?|cast|episodes?)\][^\n]*\n/gim },
     // Linhas que são só links de âncora interna (#anchor) — navegação da página
     { description: 'anchor nav links', pattern: /^-\s*\[[^\]]{1,30}\]\(#[^)]+\)\s*\n/gim },
+    // Contagem de comentários "[1](#comments)" ou "[42](#comments)" — do .comment div
+    { description: 'comment count link', pattern: /^\s*\[\d+\]\(#comments\)\s*\n*/gm },
+    // Linha de data isolada (publicação / atualização)
+    { description: 'standalone date', pattern: /^(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4})?\s*$/gm },
+    // Byline "### by [Author](/members/...)" — duplica o autor já exibido na página
+    { description: 'author byline', pattern: /^#{1,4}\s+by\s+\[[^\]]+\]\([^)]+\)\s*\n*/gm },
+    // Seletor de episódios que vaza: "Episodes 1-2 (First Impressions)"
+    { description: 'episode selector option', pattern: /^\s*Episodes? \d+[^\n]{0,60}\n*/gm },
   ],
 
   'Asian Junkie': [

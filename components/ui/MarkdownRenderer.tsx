@@ -150,6 +150,7 @@ function buildComponents(source?: string | null): Components {
                 <img
                     src={src}
                     alt={alt || ''}
+                    referrerPolicy="no-referrer"
                     className="rounded-2xl w-full object-cover border border-white/10 shadow-xl"
                 />
                 {alt && (
