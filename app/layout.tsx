@@ -83,6 +83,10 @@ export default async function RootLayout({
 
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
+            <head>
+                {/* Anti-FOUC: aplica tema dark/light ANTES do primeiro paint para evitar flash branco */}
+                <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})()` }} />
+            </head>
             <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
                 {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
                 <Script id="ga-consent-defaults" strategy="beforeInteractive">{`
