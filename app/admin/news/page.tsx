@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import {
   Plus, FlaskConical, CheckCircle, XCircle, Loader2,
-  Eye, EyeOff, RefreshCw, ChevronDown, ChevronUp,
+  Eye, EyeOff, RefreshCw, ChevronDown, ChevronUp, AlertTriangle,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -68,9 +68,145 @@ const CONTENT_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 const SOURCES = ['Soompi', 'Koreaboo', 'Dramabeans', 'Asian Junkie', 'HelloKpop', 'Kpopmap'] as const
 type Source = typeof SOURCES[number]
 
+// ─── Streaming state ──────────────────────────────────────────────────────────
+
+type StreamResult = 'updated' | 'skipped' | 'error'
+
+interface StreamLogEntry {
+  title: string
+  result: StreamResult
+  artistCount: number
+}
+
+interface StreamProgress {
+  phase: 'running' | 'done' | 'error'
+  label: string
+  total: number
+  current: number
+  updated: number
+  skipped: number
+  errors: number
+  log: StreamLogEntry[]
+}
+
+// ─── BatchProgressPanel ───────────────────────────────────────────────────────
+
+function BatchProgressPanel({
+  progress,
+  onClose,
+}: {
+  progress: StreamProgress
+  onClose: () => void
+}) {
+  const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
+  const isDone = progress.phase === 'done'
+  const isError = progress.phase === 'error'
+
+  return (
+    <div className={`rounded-xl border overflow-hidden transition-all ${
+      isError
+        ? 'border-red-500/30 bg-red-500/5'
+        : isDone
+        ? 'border-green-500/30 bg-green-500/5'
+        : 'border-purple-500/30 bg-purple-500/5'
+    }`}>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        {isError ? (
+          <AlertTriangle size={16} className="text-red-400 shrink-0" />
+        ) : isDone ? (
+          <CheckCircle size={16} className="text-green-400 shrink-0" />
+        ) : (
+          <Loader2 size={16} className="text-purple-400 animate-spin shrink-0" />
+        )}
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-3 mb-1.5">
+            <span className="text-sm font-semibold text-white truncate">
+              {isError
+                ? 'Erro no reprocessamento'
+                : isDone
+                ? `Concluído — ${progress.label}`
+                : progress.label}
+            </span>
+            <span className="text-xs text-zinc-400 shrink-0 font-mono">
+              {progress.current}/{progress.total}
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                isError ? 'bg-red-500' : isDone ? 'bg-green-500' : 'bg-purple-500'
+              }`}
+              style={{ width: `${isDone ? 100 : pct}%` }}
+            />
+          </div>
+        </div>
+
+        {isDone || isError ? (
+          <button
+            onClick={onClose}
+            className="text-zinc-500 hover:text-white text-xs shrink-0 ml-1"
+          >
+            ✕
+          </button>
+        ) : null}
+      </div>
+
+      {/* Stats row */}
+      <div className="flex items-center gap-4 px-4 pb-2 text-xs">
+        <span className="flex items-center gap-1 text-green-400">
+          <CheckCircle size={11} />
+          <strong>{progress.updated}</strong> atualizadas
+        </span>
+        <span className="flex items-center gap-1 text-zinc-500">
+          <span className="w-2.5 h-2.5 rounded-full border border-zinc-600 inline-block" />
+          <strong>{progress.skipped}</strong> sem conteúdo
+        </span>
+        <span className="flex items-center gap-1 text-red-400">
+          <XCircle size={11} />
+          <strong>{progress.errors}</strong> erros
+        </span>
+        {!isDone && !isError && (
+          <span className="ml-auto text-zinc-500 font-mono">{pct}%</span>
+        )}
+      </div>
+
+      {/* Live log */}
+      {progress.log.length > 0 && (
+        <div className="border-t border-white/5 max-h-48 overflow-y-auto">
+          {[...progress.log].reverse().map((entry, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-2.5 px-4 py-1.5 border-b border-white/[0.03] last:border-0"
+            >
+              <span className={`mt-0.5 shrink-0 ${
+                entry.result === 'updated' ? 'text-green-400' :
+                entry.result === 'skipped' ? 'text-zinc-600' :
+                'text-red-400'
+              }`}>
+                {entry.result === 'updated' ? '✓' : entry.result === 'skipped' ? '—' : '✕'}
+              </span>
+              <span className="text-xs text-zinc-400 leading-snug truncate flex-1">
+                {entry.title}
+              </span>
+              {entry.result === 'updated' && entry.artistCount > 0 && (
+                <span className="text-[10px] text-purple-400 shrink-0">
+                  +{entry.artistCount} artista{entry.artistCount !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Components ───────────────────────────────────────────────────────────────
 
-/** Single unified reprocess button (content + artists + notifications) */
 function ReprocessButton({
   newsId,
   onDone,
@@ -166,37 +302,6 @@ function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
   )
 }
 
-/** Inline toast-style result banner */
-function ResultBanner({
-  result,
-  color,
-  message,
-  onClose,
-}: {
-  result: Record<string, unknown>
-  color: 'blue' | 'purple' | 'green'
-  message: string
-  onClose: () => void
-}) {
-  const ok = result.ok as boolean
-  const colorMap = {
-    blue:   { icon: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/30'   },
-    purple: { icon: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
-    green:  { icon: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/30'  },
-  }
-  const { icon, bg, border } = ok ? colorMap[color] : { icon: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' }
-  return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border ${bg} ${border} text-sm`}>
-      {ok
-        ? <CheckCircle size={16} className={`${icon} mt-0.5 shrink-0`} />
-        : <XCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
-      }
-      <p className="flex-1 text-zinc-300">{ok ? message : 'Erro na operação'}</p>
-      <button onClick={onClose} className="text-zinc-500 hover:text-white shrink-0 text-xs">✕</button>
-    </div>
-  )
-}
-
 // ─── Form fields ──────────────────────────────────────────────────────────────
 
 const formFields: FormField[] = [
@@ -207,18 +312,6 @@ const formFields: FormField[] = [
   { key: 'publishedAt',label: 'Data de Publicação',  type: 'date' },
   { key: 'tags',       label: 'Tags',                type: 'tags',     placeholder: 'Separar por vírgula (ex: k-drama, k-pop)' },
 ]
-
-// ─── Batch result types ───────────────────────────────────────────────────────
-
-interface BatchResult extends Record<string, unknown> {
-  ok: boolean
-  processed: number
-  updated?: number
-  linked?: number
-  skipped: number
-  errors: number
-  errorIds?: string[]
-}
 
 interface GenerateResult {
   success: boolean
@@ -235,22 +328,111 @@ export default function NewsAdminPage() {
   const [editingNews, setEditingNews] = useState<News | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  // Generate one
   const [generating, setGenerating] = useState(false)
   const [generateResult, setGenerateResult] = useState<GenerateResult | null>(null)
 
-  // Batch reprocess (candidates)
-  const [batchProcessing, setBatchProcessing] = useState(false)
-  const [batchResult, setBatchResult] = useState<BatchResult | null>(null)
+  // Streaming batch progress
+  const [streamProgress, setStreamProgress] = useState<StreamProgress | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   // Per-source section
   const [sourceOpen, setSourceOpen] = useState(false)
   const [selectedSource, setSelectedSource] = useState<Source | null>(null)
-  const [sourceProcessing, setSourceProcessing] = useState(false)
-  const [sourceResult, setSourceResult] = useState<BatchResult | null>(null)
 
   // Optimistic artist override
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
+
+  // ── SSE streaming helper ───────────────────────────────────────────────────
+
+  const runStreamingBatch = async (url: string, label: string) => {
+    // Abort any in-progress stream
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setStreamProgress({
+      phase: 'running',
+      label,
+      total: 0,
+      current: 0,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+      log: [],
+    })
+
+    try {
+      const res = await fetch(url, { method: 'POST', signal: controller.signal })
+
+      if (!res.ok || !res.body) {
+        setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const event = JSON.parse(line.slice(6))
+
+            if (event.type === 'start') {
+              setStreamProgress(prev => prev ? { ...prev, total: event.total } : null)
+
+            } else if (event.type === 'item') {
+              const entry: StreamLogEntry = {
+                title: event.title,
+                result: event.result,
+                artistCount: event.artistCount ?? 0,
+              }
+              setStreamProgress(prev => {
+                if (!prev) return null
+                return {
+                  ...prev,
+                  current: event.current,
+                  total: event.total,
+                  updated: prev.updated + (event.result === 'updated' ? 1 : 0),
+                  skipped: prev.skipped + (event.result === 'skipped' ? 1 : 0),
+                  errors:  prev.errors  + (event.result === 'error'   ? 1 : 0),
+                  log: [...prev.log, entry].slice(-100), // keep last 100
+                }
+              })
+
+            } else if (event.type === 'done') {
+              setStreamProgress(prev => prev ? {
+                ...prev,
+                phase: 'done',
+                current: prev.total,
+                updated: event.updated,
+                skipped: event.skipped,
+                errors: event.errors,
+              } : null)
+              refetchTable()
+
+            } else if (event.type === 'error') {
+              setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+            }
+          } catch {
+            // malformed event — skip
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+      }
+    }
+  }
 
   // ── Columns ────────────────────────────────────────────────────────────────
 
@@ -380,41 +562,21 @@ export default function NewsAdminPage() {
     }
   }
 
-  /** Reprocess candidates (no content/short content) using the full pipeline */
-  const handleBatchReprocess = async () => {
-    setBatchProcessing(true)
-    setBatchResult(null)
-    try {
-      const res = await fetch('/api/admin/news/reprocess?mode=batch&limit=50', { method: 'POST' })
-      const data = await res.json()
-      setBatchResult(data)
-      if (data.ok) refetchTable()
-    } catch {
-      setBatchResult({ ok: false, processed: 0, skipped: 0, errors: 1 })
-    } finally {
-      setBatchProcessing(false)
-    }
+  const handleBatchReprocess = () =>
+    runStreamingBatch(
+      '/api/admin/news/reprocess?mode=batch&limit=50&stream=1',
+      'Reprocessando candidatos...',
+    )
+
+  const handleSourceReprocess = () => {
+    if (!selectedSource) return
+    runStreamingBatch(
+      `/api/admin/news/reprocess?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=200&stream=1`,
+      `Reprocessando ${selectedSource}...`,
+    )
   }
 
-  /** Reprocess ALL news from selected source using the full pipeline */
-  const handleSourceReprocess = async () => {
-    if (!selectedSource) return
-    setSourceProcessing(true)
-    setSourceResult(null)
-    try {
-      const res = await fetch(
-        `/api/admin/news/reprocess?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=200`,
-        { method: 'POST' },
-      )
-      const data = await res.json()
-      setSourceResult(data)
-      if (data.ok) refetchTable()
-    } catch {
-      setSourceResult({ ok: false, processed: 0, skipped: 0, errors: 1 })
-    } finally {
-      setSourceProcessing(false)
-    }
-  }
+  const isStreaming = streamProgress?.phase === 'running'
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -428,12 +590,12 @@ export default function NewsAdminPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleBatchReprocess}
-              disabled={batchProcessing}
+              disabled={isStreaming}
               title="Reprocessar pipeline completo em notícias candidatas (sem imagem / conteúdo curto)"
               className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
             >
-              {batchProcessing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              {batchProcessing ? 'Reprocessando...' : 'Reprocessar candidatos'}
+              {isStreaming ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Reprocessar candidatos
             </button>
             <button
               onClick={handleGenerateOne}
@@ -453,7 +615,7 @@ export default function NewsAdminPage() {
           </div>
         </div>
 
-        {/* ── Result banners ───────────────────────────────────────────────── */}
+        {/* ── Generate result ──────────────────────────────────────────────── */}
         {generateResult && (
           <div className={`flex items-start gap-3 p-4 rounded-xl border ${generateResult.success ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
             {generateResult.success
@@ -480,19 +642,18 @@ export default function NewsAdminPage() {
           </div>
         )}
 
-        {batchResult && (
-          <ResultBanner
-            result={batchResult}
-            color="purple"
-            message={`Reprocessamento concluído — processadas: ${batchResult.processed} · atualizadas: ${batchResult.updated ?? 0} · sem conteúdo: ${batchResult.skipped} · erros: ${batchResult.errors}`}
-            onClose={() => setBatchResult(null)}
+        {/* ── Streaming progress panel ─────────────────────────────────────── */}
+        {streamProgress && (
+          <BatchProgressPanel
+            progress={streamProgress}
+            onClose={() => setStreamProgress(null)}
           />
         )}
 
         {/* ── Por fonte ────────────────────────────────────────────────────── */}
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
           <button
-            onClick={() => { setSourceOpen(o => !o); setSourceResult(null) }}
+            onClick={() => setSourceOpen(o => !o)}
             className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800/40 transition-colors"
           >
             <span>Reprocessar por fonte</span>
@@ -501,7 +662,6 @@ export default function NewsAdminPage() {
 
           {sourceOpen && (
             <div className="px-4 pb-4 space-y-3 border-t border-zinc-800">
-              {/* Source selector */}
               <div className="flex items-center gap-1.5 flex-wrap pt-3">
                 {SOURCES.map(s => {
                   const c = SOURCE_COLORS[s]
@@ -509,7 +669,7 @@ export default function NewsAdminPage() {
                   return (
                     <button
                       key={s}
-                      onClick={() => { setSelectedSource(prev => prev === s ? null : s); setSourceResult(null) }}
+                      onClick={() => setSelectedSource(prev => prev === s ? null : s)}
                       className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors border ${
                         active && c
                           ? `${c.bg} ${c.text} ${c.border}`
@@ -523,35 +683,21 @@ export default function NewsAdminPage() {
               </div>
 
               {selectedSource && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleSourceReprocess}
-                      disabled={sourceProcessing}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
-                    >
-                      {sourceProcessing
-                        ? <Loader2 size={14} className="animate-spin" />
-                        : <RefreshCw size={14} />
-                      }
-                      {sourceProcessing
-                        ? `Reprocessando ${selectedSource}...`
-                        : `Reprocessar todas de ${selectedSource} (pipeline completo)`
-                      }
-                    </button>
-                  </div>
+                <div className="space-y-1.5">
+                  <button
+                    onClick={handleSourceReprocess}
+                    disabled={isStreaming}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
+                  >
+                    {isStreaming
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : <RefreshCw size={14} />
+                    }
+                    Reprocessar todas de {selectedSource} (pipeline completo)
+                  </button>
                   <p className="text-[11px] text-zinc-600">
                     Re-busca conteúdo, recalcula campos e re-extrai artistas para todas as notícias de {selectedSource}.
                   </p>
-
-                  {sourceResult && (
-                    <ResultBanner
-                      result={sourceResult}
-                      color="purple"
-                      message={`${selectedSource} — processadas: ${sourceResult.processed} · atualizadas: ${sourceResult.updated ?? 0} · sem conteúdo: ${sourceResult.skipped} · erros: ${sourceResult.errors}${sourceResult.errorIds?.length ? ` (IDs: ${sourceResult.errorIds.join(', ')})` : ''}`}
-                      onClose={() => setSourceResult(null)}
-                    />
-                  )}
                 </div>
               )}
             </div>
