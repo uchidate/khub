@@ -718,7 +718,7 @@ export default function NewsAdminPage() {
     refetchTable()
   }
 
-  /** Importa artigos históricos da fonte usando a WP REST API */
+  /** Importa artigos históricos em lotes de 200, com delay entre fetches para evitar rate limiting */
   const handleSourceImport = async () => {
     if (!selectedSource || !dateFrom) return
 
@@ -726,7 +726,10 @@ export default function NewsAdminPage() {
     const controller = new AbortController()
     abortRef.current = controller
 
-    const total = availableCount ?? 200
+    const total = availableCount && availableCount > 0 ? availableCount : 200
+    const BATCH = 200
+    const DELAY_MS = 500  // 500ms entre fetches para evitar rate limiting
+
     setStreamProgress({
       phase: 'running',
       label: `Importando ${selectedSource}...`,
@@ -738,80 +741,102 @@ export default function NewsAdminPage() {
       log: [],
     })
 
-    const params = new URLSearchParams({
-      source: selectedSource,
-      limit: String(Math.min(total, 500)),
-      stream: '1',
-    })
-    if (dateFrom) params.set('dateFrom', dateFrom)
-    if (dateTo) params.set('dateTo', dateTo)
+    let offset = 0
+    let accumImported = 0, accumSkipped = 0, accumErrors = 0
 
-    try {
-      const res = await fetch(`/api/admin/news/import?${params}`, {
-        method: 'POST',
-        signal: controller.signal,
+    while (offset < total && !controller.signal.aborted) {
+      const limit = Math.min(BATCH, total - offset)
+      const batchParams = new URLSearchParams({
+        source: selectedSource,
+        limit: String(limit),
+        offset: String(offset),
+        delay: String(DELAY_MS),
+        stream: '1',
       })
-      if (!res.ok || !res.body) {
-        setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+      if (dateFrom) batchParams.set('dateFrom', dateFrom)
+      if (dateTo) batchParams.set('dateTo', dateTo)
+      const url = `/api/admin/news/import?${batchParams}`
+
+      let batchImported = 0, batchSkipped = 0, batchErrors = 0
+      let batchDone = false
+
+      try {
+        const res = await fetch(url, { method: 'POST', signal: controller.signal })
+        if (!res.ok || !res.body) {
+          setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+          return
+        }
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (!batchDone) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            try {
+              const event = JSON.parse(line.slice(6))
+
+              if (event.type === 'item') {
+                if (event.result === 'imported') batchImported++
+                else if (event.result === 'exists') batchSkipped++
+                else batchErrors++
+
+                const entry: StreamLogEntry = {
+                  title: event.title,
+                  result: event.result === 'imported' ? 'updated' : event.result === 'exists' ? 'skipped' : 'error',
+                  artistCount: 0,
+                }
+                const au = accumImported + batchImported
+                const as_ = accumSkipped + batchSkipped
+                const ae = accumErrors + batchErrors
+                setStreamProgress(prev => prev ? {
+                  ...prev,
+                  current: offset + event.current,
+                  updated: au,
+                  skipped: as_,
+                  errors: ae,
+                  log: [...prev.log, entry].slice(-100),
+                } : null)
+
+              } else if (event.type === 'done') {
+                batchDone = true
+              } else if (event.type === 'error') {
+                setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+                return
+              }
+            } catch { /* skip malformed */ }
+          }
+        }
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+        }
         return
       }
 
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          try {
-            const event = JSON.parse(line.slice(6))
-            if (event.type === 'start') {
-              setStreamProgress(prev => prev ? { ...prev, total: event.total } : null)
-            } else if (event.type === 'item') {
-              const entry: StreamLogEntry = {
-                title: event.title,
-                result: event.result === 'imported' ? 'updated' : event.result === 'exists' ? 'skipped' : 'error',
-                artistCount: 0,
-              }
-              setStreamProgress(prev => {
-                if (!prev) return null
-                return {
-                  ...prev,
-                  current: event.current,
-                  updated: prev.updated + (event.result === 'imported' ? 1 : 0),
-                  skipped: prev.skipped + (event.result === 'exists' ? 1 : 0),
-                  errors: prev.errors + (event.result === 'error' ? 1 : 0),
-                  log: [...prev.log, entry].slice(-100),
-                }
-              })
-            } else if (event.type === 'done') {
-              setStreamProgress(prev => prev ? {
-                ...prev,
-                phase: 'done',
-                current: prev.total,
-                updated: event.imported,
-                skipped: event.skipped,
-                errors: event.errors,
-              } : null)
-              refetchTable()
-            } else if (event.type === 'error') {
-              setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
-            }
-          } catch { /* skip malformed */ }
-        }
-      }
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
-      }
+      accumImported += batchImported
+      accumSkipped += batchSkipped
+      accumErrors += batchErrors
+      offset += limit
     }
+
+    setStreamProgress(prev => prev ? {
+      ...prev,
+      phase: 'done',
+      current: total,
+      updated: accumImported,
+      skipped: accumSkipped,
+      errors: accumErrors,
+    } : null)
+    refetchTable()
   }
 
   const isStreaming = streamProgress?.phase === 'running'

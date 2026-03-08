@@ -10,7 +10,9 @@
  *   source:   nome da fonte (obrigatório)
  *   dateFrom: YYYY-MM-DD — filtra publishedAt >= dateFrom (obrigatório)
  *   dateTo:   YYYY-MM-DD — filtra publishedAt <= dateTo (default: hoje)
- *   limit:    máximo de artigos a importar (default: 200, max: 500)
+ *   limit:    máximo de artigos a importar por lote (default: 200, max: 200)
+ *   offset:   pular N artigos descobertos (default: 0) — paginação em múltiplos lotes
+ *   delay:    ms de espera entre fetches de artigo (default: 0) — evitar rate limiting
  *   stream:   '1' — SSE com progresso em tempo real
  *
  * GET /api/admin/news/import?source=<source>&dateFrom=...&dateTo=...
@@ -73,6 +75,7 @@ async function discoverViaWPAPI(
     dateFrom: Date,
     dateTo: Date,
     limit: number,
+    offset = 0,
 ): Promise<DiscoveredArticle[]> {
     const base = WP_API_BASES[source]
     if (!base) throw new Error('WP API not configured for source')
@@ -80,13 +83,18 @@ async function discoverViaWPAPI(
     const after  = new Date(dateFrom.getTime() - 1000).toISOString()
     const before = new Date(dateTo.getTime()   + 1000).toISOString()
 
+    const PER_PAGE = 100
+    // Jump directly to the WP page that contains the offset
+    const startPage = Math.floor(offset / PER_PAGE) + 1
+    const skipInFirstPage = offset % PER_PAGE
+
     const collected: DiscoveredArticle[] = []
-    let page = 1
+    let page = startPage
 
     while (collected.length < limit) {
         const params = new URLSearchParams({
             after, before,
-            per_page: '100',
+            per_page: String(PER_PAGE),
             page: String(page),
             orderby: 'date',
             order: 'desc',
@@ -101,12 +109,18 @@ async function discoverViaWPAPI(
 
         if (!res.ok) throw new Error(`WP API HTTP ${res.status}`)
 
-        const total = parseInt(res.headers.get('X-WP-Total') || '0')
+        const apiTotal = parseInt(res.headers.get('X-WP-Total') || '0')
         const posts: Array<{ date: string; date_gmt: string; title: { rendered: string }; link: string }> = await res.json()
 
         if (posts.length === 0) break
 
-        for (const p of posts) {
+        // In the first page fetched, skip articles already covered by offset
+        const slice = page === startPage && skipInFirstPage > 0
+            ? posts.slice(skipInFirstPage)
+            : posts
+
+        for (const p of slice) {
+            if (collected.length >= limit) break
             collected.push({
                 url:   p.link,
                 date:  new Date(p.date_gmt || p.date),
@@ -114,11 +128,11 @@ async function discoverViaWPAPI(
             })
         }
 
-        if (collected.length >= total || collected.length >= limit) break
+        if (collected.length >= limit || offset + collected.length >= apiTotal) break
         page++
     }
 
-    return collected.slice(0, limit)
+    return collected
 }
 
 // ─── Strategy 2: Paginated listing scraper ────────────────────────────────────
@@ -165,15 +179,18 @@ async function discoverViaListing(
     dateFrom: Date,
     dateTo: Date,
     limit: number,
+    offset = 0,
 ): Promise<DiscoveredArticle[]> {
     const pageUrl = LISTING_URLS[source]
     if (!pageUrl) throw new Error('Listing URL not configured for source')
 
+    // Collect offset + limit articles to support pagination
+    const needed = offset + limit
     const collected: DiscoveredArticle[] = []
     let page = 1
-    const MAX_PAGES = 300  // safety cap (~6000 articles)
+    const MAX_PAGES = 500  // safety cap (~10000 articles)
 
-    while (collected.length < limit && page <= MAX_PAGES) {
+    while (collected.length < needed && page <= MAX_PAGES) {
         const url = pageUrl(page)
         const res = await fetch(url, {
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)' },
@@ -187,24 +204,19 @@ async function discoverViaListing(
 
         if (articles.length === 0) break  // sem mais artigos
 
-        let anyInRange = false
-
         for (const article of articles) {
             if (article.date > dateTo) continue      // ainda mais novo que dateTo — pular
             if (article.date < dateFrom) continue    // mais antigo que dateFrom — pular
-            anyInRange = true
             collected.push(article)
         }
 
         // Se todos os artigos desta página são mais antigos que dateFrom, parar
         if (articles.every(a => a.date < dateFrom)) break
 
-        if (!anyInRange && articles[articles.length - 1].date < dateFrom) break
-
         page++
     }
 
-    return collected.slice(0, limit)
+    return collected.slice(offset, offset + limit)
 }
 
 // ─── Discovery orchestrator ───────────────────────────────────────────────────
@@ -214,15 +226,16 @@ async function discoverArticles(
     dateFrom: Date,
     dateTo: Date,
     limit: number,
+    offset = 0,
 ): Promise<{ articles: DiscoveredArticle[]; strategy: DiscoveryStrategy }> {
     try {
-        const articles = await discoverViaWPAPI(source, dateFrom, dateTo, limit)
+        const articles = await discoverViaWPAPI(source, dateFrom, dateTo, limit, offset)
         return { articles, strategy: 'api' }
     } catch (err) {
         console.warn(`[import] WP API falhou para ${source}, usando listing scraper:`, err)
     }
 
-    const articles = await discoverViaListing(source, dateFrom, dateTo, limit)
+    const articles = await discoverViaListing(source, dateFrom, dateTo, limit, offset)
     return { articles, strategy: 'listing' }
 }
 
@@ -353,6 +366,7 @@ function streamImport(
     articles: DiscoveredArticle[],
     source: string,
     strategy: DiscoveryStrategy,
+    delayMs = 0,
 ): Response {
     const encoder = new TextEncoder()
     const send = (ctrl: ReadableStreamDefaultController, data: object) =>
@@ -383,6 +397,11 @@ function streamImport(
                         url: article.url,
                         result,
                     })
+
+                    // Rate-limiting delay between article fetches
+                    if (delayMs > 0 && i < articles.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delayMs))
+                    }
                 }
 
                 send(controller, { type: 'done', imported, skipped, errors })
@@ -421,16 +440,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'dateFrom obrigatório' }, { status: 400 })
     }
 
-    const dateFrom = new Date(dateFromStr)
-    const dateTo   = searchParams.get('dateTo')
+    const dateFrom  = new Date(dateFromStr)
+    const dateTo    = searchParams.get('dateTo')
         ? new Date(searchParams.get('dateTo')! + 'T23:59:59Z')
         : new Date()
-    const limit    = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '200')))
+    const limit     = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') || '200')))
+    const offset    = Math.max(0, parseInt(searchParams.get('offset') || '0'))
+    const delayMs   = Math.min(5000, Math.max(0, parseInt(searchParams.get('delay') || '0')))
     const streaming = searchParams.get('stream') === '1'
 
-    const { articles, strategy } = await discoverArticles(source, dateFrom, dateTo, limit)
+    const { articles, strategy } = await discoverArticles(source, dateFrom, dateTo, limit, offset)
 
-    if (streaming) return streamImport(articles, source, strategy)
+    if (streaming) return streamImport(articles, source, strategy, delayMs)
 
     // Non-streaming fallback
     let imported = 0, skipped = 0, errors = 0
