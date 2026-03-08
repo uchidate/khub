@@ -532,7 +532,8 @@ export class RSSNewsService {
         if (!srcMatch) return ''
         const src = srcMatch[1]
         if (src.startsWith('data:') || src.length < 10) return ''
-        const rawCaption = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, '').trim() : ''
+        // Strip all HTML — incluindo tags sem > de fechamento (evita js/incomplete-multi-character-sanitization)
+        const rawCaption = captionMatch ? captionMatch[1].replace(/<[^>]*>?/g, '').replace(/</g, '').trim() : ''
         // Remover prefixo "| " usado pelo Koreaboo como separador de crédito
         const alt = rawCaption.replace(/^\|\s*/, '').trim()
         return `\n\n![${alt}](${src})\n\n`
