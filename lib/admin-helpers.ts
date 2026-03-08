@@ -51,6 +51,42 @@ export function paginatedResponse<T>(data: T[], total: number, page: number, lim
 }
 
 /**
+ * Require any authenticated user. Returns session or 401.
+ */
+export async function requireAuth() {
+  const session = await auth()
+  if (!session) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), session: null }
+  }
+  return { error: null, session }
+}
+
+/**
+ * Require admin or editor role. Returns session or 401.
+ */
+export async function requireEditorOrAdmin() {
+  const session = await auth()
+  const role = session?.user.role?.toLowerCase()
+  if (!session || (role !== 'admin' && role !== 'editor')) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), session: null }
+  }
+  return { error: null, session }
+}
+
+/**
+ * Require contributor role or above (contributor, editor, admin).
+ */
+export async function requireContributorOrAbove() {
+  const session = await auth()
+  const role = session?.user.role?.toLowerCase()
+  const allowed = ['admin', 'editor', 'contributor']
+  if (!session || !allowed.includes(role ?? '')) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), session: null }
+  }
+  return { error: null, session }
+}
+
+/**
  * Get dashboard statistics.
  */
 export async function getDashboardStats() {
