@@ -55,13 +55,12 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
         }, 500) // Debounce de 500ms
 
         return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters, onFilterChange])
 
     const updateFilter = (key: keyof FilterValues, value: string | undefined) => {
         setFilters(prev => {
             if (!value) {
-                const { [key]: _, ...rest } = prev
+                const { [key]: _removed, ...rest } = prev
                 return rest
             }
             return { ...prev, [key]: value }

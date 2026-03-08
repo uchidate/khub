@@ -388,7 +388,6 @@ export default function NewsAdminPage() {
         editRouter.replace(newUrl, { scroll: false })
       })
       .catch(() => {})
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Buscar contagem (DB) e disponíveis (WP API) ao selecionar fonte ou mudar período
