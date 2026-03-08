@@ -371,6 +371,28 @@ export class RSSNewsService {
     const SOURCE_HTML_PREPROCESSORS: Record<string, (html: string) => string> = {
       // Asian Junkie: remover barra de share (Facebook, Twitter, etc.) do topo do 'entry' div
       'Asian Junkie': (html) => html.replace(/<div[^>]*class="[^"]*\bshare-post\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, ''),
+      // Koreaboo: remover WordPress embedded posts (artigos relacionados embutidos inline) e
+      // truncar no início da seção de artigos relacionados / footer do site
+      Koreaboo: (html) => {
+        // Remove blocos de post embutido WordPress: <blockquote class="wp-embedded-content"> + <p><iframe class="wp-embedded-content">
+        let cleaned = html.replace(
+          /<blockquote[^>]*class="[^"]*\bwp-embedded-content\b[^"]*"[\s\S]*?<\/blockquote>\s*(?:<p>\s*<iframe[^>]*class="[^"]*\bwp-embedded-content\b[^"]*"[\s\S]*?<\/iframe>\s*<\/p>)?/gi,
+          ''
+        )
+        // Truncar no primeiro sinal de "fim do artigo": seção de relacionados, footer, ou "See more"
+        const endMarkers = [
+          /<h2[^>]*class="[^"]*\bseries-header-title\b[^"]*"/i,
+          /<div[^>]*class="[^"]*\bseries-posts-list\b[^"]*"/i,
+          /id="sitemap_footer"/i,
+          /data-isource="footer"/i,
+          /class="[^"]*\bfooter-container\b[^"]*"/i,
+        ]
+        for (const marker of endMarkers) {
+          const idx = cleaned.search(marker)
+          if (idx > -1) { cleaned = cleaned.substring(0, idx); break }
+        }
+        return cleaned
+      },
     }
 
     // 1. Para fontes class-first, tentar seletores específicos ANTES de <article>
@@ -489,12 +511,15 @@ export class RSSNewsService {
       .replace(/<!--[\s\S]*?-->/g, '')
       // Figure com figcaption → imagem com caption (processar ANTES de <img>)
       .replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, (_, inner) => {
-        const srcMatch = inner.match(/src=["']([^"']+)["']/i)
+        // Preferir data-orig (URL original full-quality, usado pelo Koreaboo) sobre src
+        const srcMatch = inner.match(/data-orig=["']([^"']+)["']/i) || inner.match(/src=["']([^"']+)["']/i)
         const captionMatch = inner.match(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i)
         if (!srcMatch) return ''
         const src = srcMatch[1]
         if (src.startsWith('data:') || src.length < 10) return ''
-        const alt = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, '').trim() : ''
+        const rawCaption = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, '').trim() : ''
+        // Remover prefixo "| " usado pelo Koreaboo como separador de crédito
+        const alt = rawCaption.replace(/^\|\s*/, '').trim()
         return `\n\n![${alt}](${src})\n\n`
       })
       // Imagens inline → Markdown (filtrar ícones/avatares/data URIs)
