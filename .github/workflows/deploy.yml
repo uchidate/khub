@@ -1,11 +1,14 @@
 # ═══════════════════════════════════════════════════════════════════
-# WORKFLOW OTIMIZADO - Reduz tempo total de deploy em ~40-60%
+# BUILD & DEPLOY — HallyuHub
 # ═══════════════════════════════════════════════════════════════════
-# Mudanças principais:
-# - validate-code NÃO faz build (apenas lint + typecheck)
-# - Cache de node_modules entre runs
-# - Health checks mais rápidos (2s interval)
-# - BuildKit cache mode=max
+# Fluxo: validate → build → deploy-staging | deploy-production
+#
+# Melhorias de performance:
+# - validate-code não faz build (Docker build é a fonte única)
+# - Cache node_modules entre runs
+# - Docker build usa GHA cache + registry cache (fallback se GHA expirar)
+# - Deploy recria apenas app+migrate (postgres/network ficam intactos → ~10-15s downtime)
+# - Rollback consistente: stop/rm app apenas (não derruba postgres)
 # ═══════════════════════════════════════════════════════════════════
 
 name: 🚀 Build and Deploy (Optimized)
@@ -25,13 +28,13 @@ env:
 
 jobs:
   # ════════════════════════════════════════════════════════════════
-  # 📋 FASE 1: Validação Rápida (OTIMIZADA - sem build)
+  # FASE 1: Validação (lint + typecheck + tests)
   # ════════════════════════════════════════════════════════════════
 
   validate-code:
     name: ✅ Validate Code
     runs-on: ubuntu-latest
-    timeout-minutes: 5  # Reduzido de 10 para 5 (sem build)
+    timeout-minutes: 8
 
     steps:
       - name: Checkout
@@ -43,7 +46,6 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # OTIMIZAÇÃO: Cache de node_modules (economiza 30-60s)
       - name: Cache node_modules
         id: cache-node-modules
         uses: actions/cache@v5
@@ -62,7 +64,7 @@ jobs:
           npx prisma generate
           npx prisma generate --schema=prisma-kpopping/schema.prisma --config=prisma-kpopping/prisma.config.ts
 
-      - name: 🔍 Run Linters & Type Check
+      - name: 🔍 Lint & Type Check
         run: |
           echo "::group::ESLint"
           npx eslint app/ lib/ --max-warnings 10
@@ -72,56 +74,30 @@ jobs:
           npx tsc --noEmit
           echo "::endgroup::"
 
-      - name: 🧪 Run Tests
+      - name: 🧪 Tests
         run: npx vitest run
 
       - name: 🔒 Security Audit
         run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar antes do próximo deploy"
 
-      # OTIMIZAÇÃO: Build removido! Docker faz o build uma única vez
-      # ❌ ANTES: npm run build (2-3min desperdiçados)
-      # ✅ DEPOIS: Docker build faz isso de forma otimizada
-
       - name: 📊 Summary
         run: |
-          echo "### ✅ Validação Concluída" >> $GITHUB_STEP_SUMMARY
-          echo "- ✓ ESLint passou" >> $GITHUB_STEP_SUMMARY
-          echo "- ✓ TypeScript type-check passou" >> $GITHUB_STEP_SUMMARY
-          echo "- ✓ Vitest testes passaram" >> $GITHUB_STEP_SUMMARY
-          echo "- ℹ️  Build será feito no Docker (otimizado)" >> $GITHUB_STEP_SUMMARY
-
-  check-deploy-process:
-    name: 📋 Check Deploy Process
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-
-    steps:
-      - name: Validate Process
-        run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "push" ]]; then
-            echo "::warning::⚠️ Push direto para main detectado!"
-            echo "::warning::Processo recomendado: staging → STAGING → PR → main"
+            echo "::warning::⚠️ Push direto para main detectado! Processo recomendado: staging → PR → main"
           fi
-
-          if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            echo "### 🟡 Deploy para Staging" >> $GITHUB_STEP_SUMMARY
-            echo "Após deploy, valide em: http://31.97.255.107:3001" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "### 🔍 Pull Request" >> $GITHUB_STEP_SUMMARY
-            echo "Apenas validação será executada (sem deploy)" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "### ✅ Validação Concluída" >> $GITHUB_STEP_SUMMARY
+          echo "- ✓ ESLint, TypeScript, Vitest passaram" >> $GITHUB_STEP_SUMMARY
+          echo "- ℹ️  Build via Docker (único artefato)" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════════
-  # 🐳 FASE 2: Build da Imagem Docker (OTIMIZADA)
+  # FASE 2: Build da Imagem Docker
   # ════════════════════════════════════════════════════════════════
 
   build-image:
     name: 🐳 Build Docker Image
-    needs: [validate-code, check-deploy-process]
+    needs: validate-code
     runs-on: ubuntu-latest
-    timeout-minutes: 12  # Reduzido de 15 para 12 (build mais rápido)
+    timeout-minutes: 15
     if: github.event_name != 'pull_request'
 
     permissions:
@@ -159,7 +135,6 @@ jobs:
             org.opencontainers.image.title=HallyuHub
             org.opencontainers.image.description=K-pop content platform
 
-      # OTIMIZAÇÃO: Usa Dockerfile otimizado (prisma generate UMA vez, deps produção)
       - name: Build and Push
         id: build
         uses: docker/build-push-action@v5
@@ -169,30 +144,28 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # OTIMIZAÇÃO: mode=max para cache mais agressivo
-          cache-from: type=gha
+          # GHA cache (primário) + registry cache (fallback quando GHA expira)
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/uchidate/khub:staging,enable=${{ github.ref == 'refs/heads/staging' }}
+            type=registry,ref=ghcr.io/uchidate/khub:latest,enable=${{ github.ref == 'refs/heads/main' }}
           cache-to: type=gha,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
 
       - name: 📊 Summary
         run: |
           echo "### 🐳 Imagem Docker Buildada" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════════
-  # 🟡 FASE 3a: Deploy STAGING (OTIMIZADO)
+  # FASE 3a: Deploy STAGING
   # ════════════════════════════════════════════════════════════════
 
   deploy-staging:
     name: 🟡 Deploy to Staging
     needs: build-image
     runs-on: [self-hosted, staging]
-    timeout-minutes: 8  # Reduzido de 10 para 8
+    timeout-minutes: 8
     if: github.ref == 'refs/heads/staging'
 
     environment:
@@ -208,51 +181,46 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
           COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
-          curl -X POST "$SLACK_WEBHOOK" \
-            -H 'Content-Type: application/json' \
-            -d "{\"text\": \"🚀 Deploy STAGING iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy STAGING Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"}}]}"
+          curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+            -d "{\"text\": \"🚀 Deploy STAGING iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy STAGING Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\n> $COMMIT_MSG\"}}]}"
 
-      - name: 🏷️ Prepare Environment & Directory
+      - name: 🏷️ Prepare Environment
         run: |
           set -e
-          echo "📁 Ensuring base directory exists..."
           sudo mkdir -p /var/www/hallyuhub
           sudo chown -R github-runner:github-runner /var/www/hallyuhub
-
           cd /var/www/hallyuhub
 
-          if [ ! -f .env.staging ]; then
-            echo "⚠️ .env.staging not found! Creating..."
-            [ -f .env.staging.bak ] && cp .env.staging.bak .env.staging || touch .env.staging
-          fi
-
+          [ ! -f .env.staging ] && { [ -f .env.staging.bak ] && cp .env.staging.bak .env.staging || touch .env.staging; }
           cp .env.staging .env.staging.bak
           sed -i '/^=/d' .env.staging
 
           update_env() {
             key=$1; val=$2
             [ -z "$val" ] && return
-            grep -q "^${key}=" .env.staging && sed -i "s|^${key}=.*|${key}=${val}|" .env.staging || echo "${key}=${val}" >> .env.staging
+            grep -q "^${key}=" .env.staging \
+              && sed -i "s|^${key}=.*|${key}=${val}|" .env.staging \
+              || echo "${key}=${val}" >> .env.staging
           }
 
-          update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
-          update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
-          update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
-          update_env "DATABASE_URL" "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-staging:5432/hallyuhub_staging"
-          update_env "KPOPPING_DATABASE_URL" "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/kpopping_db"
-          update_env "OLLAMA_BASE_URL" "http://ollama-staging:11434"
-          update_env "OLLAMA_MODEL" "gemma:2b"
-          update_env "NEXT_PUBLIC_SITE_URL" "http://31.97.255.107:3001"
+          update_env "TMDB_API_KEY"             "${{ secrets.TMDB_API_KEY }}"
+          update_env "UNSPLASH_ACCESS_KEY"       "${{ secrets.UNSPLASH_ACCESS_KEY }}"
+          update_env "GEMINI_API_KEY"            "${{ secrets.GEMINI_API_KEY }}"
+          update_env "DATABASE_URL"              "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-staging:5432/hallyuhub_staging"
+          update_env "KPOPPING_DATABASE_URL"     "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/kpopping_db"
+          update_env "OLLAMA_BASE_URL"           "http://ollama-staging:11434"
+          update_env "OLLAMA_MODEL"              "gemma:2b"
+          update_env "NEXT_PUBLIC_SITE_URL"      "http://31.97.255.107:3001"
           update_env "NEXT_PUBLIC_ADSENSE_CLIENT" "ca-pub-6015098995926392"
-          update_env "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
-          update_env "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
-          update_env "RESEND_API_KEY" "${{ secrets.RESEND_API_KEY }}"
-
+          update_env "GOOGLE_CLIENT_ID"          "${{ secrets.GOOGLE_CLIENT_ID }}"
+          update_env "GOOGLE_CLIENT_SECRET"      "${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          update_env "RESEND_API_KEY"            "${{ secrets.RESEND_API_KEY }}"
           chmod 600 .env.staging
 
-          # Shared .env for docker-compose variable interpolation (GF_SECURITY_ADMIN_PASSWORD, POSTGRES_PASSWORD)
           touch .env
-          grep -q "^GF_SECURITY_ADMIN_PASSWORD=" .env && sed -i "s|^GF_SECURITY_ADMIN_PASSWORD=.*|GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}|" .env || echo "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> .env
+          grep -q "^GF_SECURITY_ADMIN_PASSWORD=" .env \
+            && sed -i "s|^GF_SECURITY_ADMIN_PASSWORD=.*|GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}|" .env \
+            || echo "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> .env
 
       - name: Copy Files to Deploy Directory
         run: |
@@ -267,51 +235,41 @@ jobs:
           echo "image-id=$ROLLBACK_ID" >> $GITHUB_OUTPUT
           echo "Rollback image: ${ROLLBACK_ID:0:20}..."
 
-      - name: Deploy to Staging
+      - name: 🚀 Deploy to Staging
         run: |
           set -e
           cd /var/www/hallyuhub
-
-          COMPOSE_CMD=$(docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+          COMPOSE="docker compose -f docker-compose.staging.yml"
 
           echo "🧹 Limpando imagens antigas..."
           docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || true
 
-          echo "📥 Pulling images..."
-          $COMPOSE_CMD -f docker-compose.staging.yml pull hallyuhub-staging
+          echo "📥 Pulling app image..."
+          $COMPOSE pull hallyuhub-staging
 
-          # Garante infraestrutura (postgres, ollama) sem derrubá-los desnecessariamente
           echo "✅ Garantindo infraestrutura (postgres, ollama)..."
-          $COMPOSE_CMD -f docker-compose.staging.yml up -d postgres-staging ollama-staging 2>/dev/null || true
+          $COMPOSE up -d postgres-staging ollama-staging 2>/dev/null || true
 
-          echo "🔐 Syncing DB user password..."
-          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
-          if [ -n "$POSTGRES_CONTAINER" ]; then
-            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_staging -c \
-              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
-              && echo "✅ Password synced" \
-              || echo "⚠️ Password sync failed (non-blocking)"
-          fi
+          echo "🔐 Syncing DB password..."
+          PGCTR=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
+          [ -n "$PGCTR" ] && docker exec "$PGCTR" psql -U hallyuhub -d hallyuhub_staging \
+            -c "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
+            && echo "✅ Password synced" || echo "⚠️ Password sync failed (non-blocking)"
 
-          # Recria apenas o app + migrate (postgres e network ficam intactos → menos downtime)
           echo "🛑 Parando apenas o app..."
-          $COMPOSE_CMD -f docker-compose.staging.yml stop hallyuhub-staging 2>/dev/null || true
-          $COMPOSE_CMD -f docker-compose.staging.yml rm -f hallyuhub-staging migrate-staging 2>/dev/null || true
+          $COMPOSE stop hallyuhub-staging 2>/dev/null || true
+          $COMPOSE rm -f hallyuhub-staging migrate-staging 2>/dev/null || true
 
           echo "🚀 Iniciando app + migration..."
-          $COMPOSE_CMD -f docker-compose.staging.yml up -d hallyuhub-staging
+          $COMPOSE up -d hallyuhub-staging
 
           echo "⏳ Aguardando container ficar healthy..."
-          max_retries=18
-          count=0
-          until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null)" == "healthy" ] || [ $count -eq $max_retries ]; do
-            health_status=$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null || echo "unknown")
-            echo "Aguardando... (Status: $health_status, $((count+1))/$max_retries)"
-            sleep 2
-            count=$((count+1))
+          max=18; n=0
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null)" = "healthy" ] || [ $n -eq $max ]; do
+            echo "  $(docker inspect -f '{{.State.Health.Status}}' hallyuhub-staging 2>/dev/null || echo unknown) ($((n+1))/$max)"
+            sleep 2; n=$((n+1))
           done
-
-          [ $count -eq $max_retries ] && echo "❌ Timeout" && $COMPOSE_CMD -f docker-compose.staging.yml logs hallyuhub-staging | tail -n 50 && exit 1
+          [ $n -eq $max ] && echo "❌ Timeout" && $COMPOSE logs hallyuhub-staging | tail -50 && exit 1
 
           chmod +x scripts/export-cron-info.sh scripts/setup-auto-generation.sh
           ./scripts/export-cron-info.sh staging
@@ -323,28 +281,28 @@ jobs:
           ROLLBACK_IMAGE: ${{ steps.save-rollback.outputs.image-id }}
         run: |
           cd /var/www/hallyuhub
-          COMPOSE_CMD=$(docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+          COMPOSE="docker compose -f docker-compose.staging.yml"
 
-          max_attempts=12; attempt=0
-          while [ $attempt -lt $max_attempts ]; do
+          for i in $(seq 1 12); do
             curl -sf http://31.97.255.107:3001/api/health > /dev/null && echo "✅ OK" && exit 0
-            attempt=$((attempt + 1)); sleep 3
+            sleep 3
           done
 
-          echo "❌ Health check falhou após ${max_attempts} tentativas"
+          echo "❌ Health check falhou"
 
           if [ -n "$ROLLBACK_IMAGE" ]; then
-            echo "🔄 Iniciando rollback automático..."
+            echo "🔄 Rollback automático..."
             docker tag "$ROLLBACK_IMAGE" ghcr.io/uchidate/khub:staging
-            $COMPOSE_CMD -f docker-compose.staging.yml down
-            $COMPOSE_CMD -f docker-compose.staging.yml up -d
+            $COMPOSE stop hallyuhub-staging 2>/dev/null || true
+            $COMPOSE rm -f hallyuhub-staging migrate-staging 2>/dev/null || true
+            $COMPOSE up -d hallyuhub-staging
             sleep 5
             echo "✅ Rollback concluído"
             curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
-              -d "{\"text\": \"🔄 *ROLLBACK AUTOMÁTICO* em STAGING!\\nDeploy \`${GITHUB_SHA:0:7}\` falhou no health check — revertido para versão anterior.\"}"
+              -d "{\"text\": \"🔄 *ROLLBACK AUTOMÁTICO* em STAGING!\nDeploy \`${GITHUB_SHA:0:7}\` falhou — revertido para versão anterior.\"}"
           else
             curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
-              -d '{"text": "❌ *Deploy STAGING FALHOU!* Health check falhou e sem imagem de rollback. Intervenção manual necessária!"}'
+              -d '{"text": "❌ *Deploy STAGING FALHOU!* Sem imagem de rollback. Intervenção manual necessária!"}'
           fi
           exit 1
 
@@ -352,40 +310,36 @@ jobs:
         if: success()
         run: |
           BASE=http://31.97.255.107:3001
-          PAGES="/groups /artists /news"
-          echo "Aquecendo cache ISR..."
-          for page in $PAGES; do
-            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page} (ignorado)"
+          for page in /groups /artists /news; do
+            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page}"
           done
           sleep 5
-          for page in $PAGES; do
+          for page in /groups /artists /news; do
             curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page} regenerado" || echo "⚠️ ${page}"
           done
 
       - name: 📊 Summary
         if: success()
-        run: |
-          echo "### ✅ Deploy STAGING Concluído" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** http://31.97.255.107:3001" >> $GITHUB_STEP_SUMMARY
+        run: echo "### ✅ Deploy STAGING Concluído — http://31.97.255.107:3001" >> $GITHUB_STEP_SUMMARY
 
       - name: 📢 Notify Result
         if: always()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
-          STATUS_EMOJI=$([ "${{ job.status }}" == "success" ] && echo "✅" || echo "❌")
-          STATUS_TEXT=$([ "${{ job.status }}" == "success" ] && echo "Sucesso" || echo "Falhou")
-          curl -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' -d "{\"text\": \"$STATUS_EMOJI Deploy STAGING $STATUS_TEXT\"}"
+          STATUS_EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
+          curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+            -d "{\"text\": \"$STATUS_EMOJI Deploy STAGING ${{ job.status }}\"}"
 
   # ════════════════════════════════════════════════════════════════
-  # 🟢 FASE 3b: Deploy PRODUCTION (OTIMIZADO)
+  # FASE 3b: Deploy PRODUCTION
   # ════════════════════════════════════════════════════════════════
 
   deploy-production:
     name: 🟢 Deploy to Production
     needs: build-image
     runs-on: [self-hosted, production]
-    timeout-minutes: 8  # Reduzido de 10 para 8
+    timeout-minutes: 8
     if: github.ref == 'refs/heads/main'
 
     environment:
@@ -401,51 +355,46 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
           COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
-          curl -X POST "$SLACK_WEBHOOK" \
-            -H 'Content-Type: application/json' \
-            -d "{\"text\": \"🚀 Deploy PRODUCTION iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy PRODUCTION Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\\n> $COMMIT_MSG\"}}]}"
+          curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+            -d "{\"text\": \"🚀 Deploy PRODUCTION iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy PRODUCTION Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\n> $COMMIT_MSG\"}}]}"
 
-      - name: 🏷️ Prepare Environment & Directory
+      - name: 🏷️ Prepare Environment
         run: |
           set -e
-          echo "📁 Ensuring base directory exists..."
           sudo mkdir -p /var/www/hallyuhub
           sudo chown -R github-runner:github-runner /var/www/hallyuhub
-
           cd /var/www/hallyuhub
 
-          if [ ! -f .env.production ]; then
-            echo "⚠️ .env.production not found! Creating..."
-            [ -f .env.production.bak ] && cp .env.production.bak .env.production || touch .env.production
-          fi
-
+          [ ! -f .env.production ] && { [ -f .env.production.bak ] && cp .env.production.bak .env.production || touch .env.production; }
           cp .env.production .env.production.bak
           sed -i '/^=/d' .env.production
 
           update_env() {
             key=$1; val=$2
             [ -z "$val" ] && return
-            grep -q "^${key}=" .env.production && sed -i "s|^${key}=.*|${key}=${val}|" .env.production || echo "${key}=${val}" >> .env.production
+            grep -q "^${key}=" .env.production \
+              && sed -i "s|^${key}=.*|${key}=${val}|" .env.production \
+              || echo "${key}=${val}" >> .env.production
           }
 
-          update_env "TMDB_API_KEY" "${{ secrets.TMDB_API_KEY }}"
-          update_env "UNSPLASH_ACCESS_KEY" "${{ secrets.UNSPLASH_ACCESS_KEY }}"
-          update_env "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
-          update_env "DATABASE_URL" "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/hallyuhub_production"
-          update_env "KPOPPING_DATABASE_URL" "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/kpopping_db"
-          update_env "OLLAMA_BASE_URL" "http://ollama-production:11434"
-          update_env "OLLAMA_MODEL" "phi3:mini"
-          update_env "NEXT_PUBLIC_SITE_URL" "https://www.hallyuhub.com.br"
+          update_env "TMDB_API_KEY"             "${{ secrets.TMDB_API_KEY }}"
+          update_env "UNSPLASH_ACCESS_KEY"       "${{ secrets.UNSPLASH_ACCESS_KEY }}"
+          update_env "GEMINI_API_KEY"            "${{ secrets.GEMINI_API_KEY }}"
+          update_env "DATABASE_URL"              "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/hallyuhub_production"
+          update_env "KPOPPING_DATABASE_URL"     "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/kpopping_db"
+          update_env "OLLAMA_BASE_URL"           "http://ollama-production:11434"
+          update_env "OLLAMA_MODEL"              "phi3:mini"
+          update_env "NEXT_PUBLIC_SITE_URL"      "https://www.hallyuhub.com.br"
           update_env "NEXT_PUBLIC_ADSENSE_CLIENT" "ca-pub-6015098995926392"
-          update_env "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
-          update_env "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
-          update_env "RESEND_API_KEY" "${{ secrets.RESEND_API_KEY }}"
-
+          update_env "GOOGLE_CLIENT_ID"          "${{ secrets.GOOGLE_CLIENT_ID }}"
+          update_env "GOOGLE_CLIENT_SECRET"      "${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          update_env "RESEND_API_KEY"            "${{ secrets.RESEND_API_KEY }}"
           chmod 600 .env.production
 
-          # Shared .env for docker-compose variable interpolation (GF_SECURITY_ADMIN_PASSWORD, POSTGRES_PASSWORD)
           touch .env
-          grep -q "^GF_SECURITY_ADMIN_PASSWORD=" .env && sed -i "s|^GF_SECURITY_ADMIN_PASSWORD=.*|GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}|" .env || echo "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> .env
+          grep -q "^GF_SECURITY_ADMIN_PASSWORD=" .env \
+            && sed -i "s|^GF_SECURITY_ADMIN_PASSWORD=.*|GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}|" .env \
+            || echo "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> .env
 
       - name: Copy Files to Deploy Directory
         run: |
@@ -460,51 +409,41 @@ jobs:
           echo "image-id=$ROLLBACK_ID" >> $GITHUB_OUTPUT
           echo "Rollback image: ${ROLLBACK_ID:0:20}..."
 
-      - name: Deploy to Production
+      - name: 🚀 Deploy to Production
         run: |
           set -e
           cd /var/www/hallyuhub
-
-          COMPOSE_CMD=$(docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+          COMPOSE="docker compose -f docker-compose.prod.yml"
 
           echo "🧹 Limpando imagens antigas..."
           docker images ghcr.io/uchidate/khub --format "{{.ID}} {{.CreatedAt}}" | tail -n +4 | awk '{print $1}' | xargs -r docker rmi -f 2>/dev/null || true
 
-          echo "📥 Pulling images..."
-          $COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub
+          echo "📥 Pulling app image..."
+          $COMPOSE pull hallyuhub
 
-          # Garante infraestrutura (postgres, ollama) sem derrubá-los desnecessariamente
           echo "✅ Garantindo infraestrutura (postgres, ollama)..."
-          $COMPOSE_CMD -f docker-compose.prod.yml up -d postgres-production ollama-production 2>/dev/null || true
+          $COMPOSE up -d postgres-production ollama-production 2>/dev/null || true
 
-          echo "🔐 Syncing DB user password..."
-          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
-          if [ -n "$POSTGRES_CONTAINER" ]; then
-            docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_production -c \
-              "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
-              && echo "✅ Password synced" \
-              || echo "⚠️ Password sync failed (non-blocking)"
-          fi
+          echo "🔐 Syncing DB password..."
+          PGCTR=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
+          [ -n "$PGCTR" ] && docker exec "$PGCTR" psql -U hallyuhub -d hallyuhub_production \
+            -c "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
+            && echo "✅ Password synced" || echo "⚠️ Password sync failed (non-blocking)"
 
-          # Recria apenas o app + migrate (postgres e network ficam intactos → menos downtime)
           echo "🛑 Parando apenas o app..."
-          $COMPOSE_CMD -f docker-compose.prod.yml stop hallyuhub 2>/dev/null || true
-          $COMPOSE_CMD -f docker-compose.prod.yml rm -f hallyuhub migrate-production 2>/dev/null || true
+          $COMPOSE stop hallyuhub 2>/dev/null || true
+          $COMPOSE rm -f hallyuhub migrate-production 2>/dev/null || true
 
           echo "🚀 Iniciando app + migration..."
-          $COMPOSE_CMD -f docker-compose.prod.yml up -d hallyuhub
+          $COMPOSE up -d hallyuhub
 
           echo "⏳ Aguardando container ficar healthy..."
-          max_retries=18
-          count=0
-          until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null)" == "healthy" ] || [ $count -eq $max_retries ]; do
-            health_status=$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null || echo "unknown")
-            echo "Aguardando... (Status: $health_status, $((count+1))/$max_retries)"
-            sleep 2
-            count=$((count+1))
+          max=18; n=0
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null)" = "healthy" ] || [ $n -eq $max ]; do
+            echo "  $(docker inspect -f '{{.State.Health.Status}}' hallyuhub 2>/dev/null || echo unknown) ($((n+1))/$max)"
+            sleep 2; n=$((n+1))
           done
-
-          [ $count -eq $max_retries ] && echo "❌ Timeout" && $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50 && exit 1
+          [ $n -eq $max ] && echo "❌ Timeout" && $COMPOSE logs hallyuhub | tail -50 && exit 1
 
           chmod +x scripts/export-cron-info.sh scripts/verify-production.sh
           ./scripts/export-cron-info.sh production
@@ -516,28 +455,28 @@ jobs:
           ROLLBACK_IMAGE: ${{ steps.save-rollback.outputs.image-id }}
         run: |
           cd /var/www/hallyuhub
-          COMPOSE_CMD=$(docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+          COMPOSE="docker compose -f docker-compose.prod.yml"
 
-          max_attempts=12; attempt=0
-          while [ $attempt -lt $max_attempts ]; do
+          for i in $(seq 1 12); do
             curl -sf https://www.hallyuhub.com.br/api/health > /dev/null && echo "✅ OK" && exit 0
-            attempt=$((attempt + 1)); sleep 3
+            sleep 3
           done
 
-          echo "❌ Health check falhou após ${max_attempts} tentativas"
+          echo "❌ Health check falhou"
 
           if [ -n "$ROLLBACK_IMAGE" ]; then
-            echo "🔄 Iniciando rollback automático..."
+            echo "🔄 Rollback automático..."
             docker tag "$ROLLBACK_IMAGE" ghcr.io/uchidate/khub:latest
-            $COMPOSE_CMD -f docker-compose.prod.yml down
-            $COMPOSE_CMD -f docker-compose.prod.yml up -d
+            $COMPOSE stop hallyuhub 2>/dev/null || true
+            $COMPOSE rm -f hallyuhub migrate-production 2>/dev/null || true
+            $COMPOSE up -d hallyuhub
             sleep 5
             echo "✅ Rollback concluído"
             curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
-              -d "{\"text\": \"🔄 *ROLLBACK AUTOMÁTICO* em PRODUCTION!\\nDeploy \`${GITHUB_SHA:0:7}\` falhou no health check — revertido para versão anterior.\"}"
+              -d "{\"text\": \"🔄 *ROLLBACK AUTOMÁTICO* em PRODUCTION!\nDeploy \`${GITHUB_SHA:0:7}\` falhou — revertido para versão anterior.\"}"
           else
             curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
-              -d '{"text": "❌ *Deploy PRODUCTION FALHOU!* Health check falhou e sem imagem de rollback. Intervenção manual necessária!"}'
+              -d '{"text": "❌ *Deploy PRODUCTION FALHOU!* Sem imagem de rollback. Intervenção manual necessária!"}'
           fi
           exit 1
 
@@ -545,27 +484,23 @@ jobs:
         if: success()
         run: |
           BASE=https://www.hallyuhub.com.br
-          PAGES="/groups /artists /news"
-          echo "Aquecendo cache ISR..."
-          for page in $PAGES; do
-            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page} (ignorado)"
+          for page in /groups /artists /news; do
+            curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page}" || echo "⚠️ ${page}"
           done
           sleep 5
-          for page in $PAGES; do
+          for page in /groups /artists /news; do
             curl -sf --max-time 15 "${BASE}${page}" -o /dev/null && echo "✅ ${page} regenerado" || echo "⚠️ ${page}"
           done
 
       - name: 📊 Summary
         if: success()
-        run: |
-          echo "### ✅ Deploy PRODUCTION Concluído" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** https://www.hallyuhub.com.br" >> $GITHUB_STEP_SUMMARY
+        run: echo "### ✅ Deploy PRODUCTION Concluído — https://www.hallyuhub.com.br" >> $GITHUB_STEP_SUMMARY
 
       - name: 📢 Notify Result
         if: always()
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
-          STATUS_EMOJI=$([ "${{ job.status }}" == "success" ] && echo "✅" || echo "❌")
-          STATUS_TEXT=$([ "${{ job.status }}" == "success" ] && echo "Sucesso" || echo "Falhou")
-          curl -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' -d "{\"text\": \"$STATUS_EMOJI Deploy PRODUCTION $STATUS_TEXT\"}"
+          STATUS_EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
+          curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+            -d "{\"text\": \"$STATUS_EMOJI Deploy PRODUCTION ${{ job.status }}\"}"
