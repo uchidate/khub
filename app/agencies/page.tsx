@@ -10,8 +10,16 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-    title: 'Agências',
-    description: 'Os arquitetos do sucesso. Conheça as empresas que moldam o futuro do entretenimento coreano global.',
+    title: 'Agências K-pop',
+    description: 'Os arquitetos do sucesso. Conheça as principais empresas de entretenimento coreano: HYBE, SM, JYP, YG e mais.',
+    keywords: 'agências k-pop, HYBE, SM Entertainment, JYP Entertainment, YG Entertainment, empresas k-pop, entretenimento coreano',
+    alternates: { canonical: 'https://www.hallyuhub.com.br/agencies' },
+    openGraph: {
+        title: 'Agências K-pop | HallyuHub',
+        description: 'Os arquitetos do sucesso. Conheça as principais empresas de entretenimento coreano: HYBE, SM, JYP, YG e mais.',
+        url: 'https://www.hallyuhub.com.br/agencies',
+        type: 'website',
+    },
 }
 
 function AgencySkeleton() {

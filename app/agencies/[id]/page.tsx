@@ -4,32 +4,59 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import { getRoleLabel } from "@/lib/utils/role-labels"
 import { ExternalLink, Users, Music2 } from "lucide-react"
+import { cache } from "react"
+import type { Metadata } from "next"
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
 
-export default async function AgencyDetailPage(props: { params: Promise<{ id: string }> }) {
-    const params = await props.params;
-    const agency = await prisma.agency.findUnique({
-        where: { id: params.id },
+const BASE_URL = 'https://www.hallyuhub.com.br'
+
+const getAgency = cache(async (id: string) =>
+    prisma.agency.findUnique({
+        where: { id },
         include: {
             artists: {
-                select: {
-                    id: true, nameRomanized: true, nameHangul: true,
-                    primaryImageUrl: true, roles: true, gender: true,
-                },
+                select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
                 orderBy: { trendingScore: 'desc' },
             },
             musicalGroups: {
-                select: {
-                    id: true, name: true, nameHangul: true,
-                    profileImageUrl: true, debutDate: true, disbandDate: true,
-                    _count: { select: { members: true } },
-                },
+                select: { id: true, name: true, nameHangul: true, profileImageUrl: true, debutDate: true, disbandDate: true, _count: { select: { members: true } } },
                 orderBy: { trendingScore: 'desc' },
             },
         },
     })
+)
+
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const params = await props.params
+    const agency = await getAgency(params.id)
+    if (!agency) return {}
+
+    const artistNames = agency.artists.slice(0, 5).map(a => a.nameRomanized).join(', ')
+    const groupNames = agency.musicalGroups.slice(0, 3).map(g => g.name).join(', ')
+    const description = [
+        `${agency.name} é uma agência de entretenimento K-pop.`,
+        agency.artists.length > 0 && `Artistas: ${artistNames}${agency.artists.length > 5 ? ' e mais' : ''}.`,
+        agency.musicalGroups.length > 0 && `Grupos: ${groupNames}.`,
+    ].filter(Boolean).join(' ')
+
+    return {
+        title: agency.name,
+        description,
+        alternates: { canonical: `${BASE_URL}/agencies/${params.id}` },
+        openGraph: {
+            title: `${agency.name} | HallyuHub`,
+            description,
+            url: `${BASE_URL}/agencies/${params.id}`,
+            type: 'website',
+        },
+    }
+}
+
+export default async function AgencyDetailPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
+    const agency = await getAgency(params.id)
 
     if (!agency) notFound()
 
