@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
@@ -338,9 +338,24 @@ export default function NewsAdminPage() {
   // Per-source section
   const [sourceOpen, setSourceOpen] = useState(false)
   const [selectedSource, setSelectedSource] = useState<Source | null>(null)
+  const [sourceCount, setSourceCount] = useState<number | null>(null)
+  const [sourceTotal, setSourceTotal] = useState<number>(200)
 
   // Optimistic artist override
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
+
+  // Buscar contagem ao selecionar fonte
+  useEffect(() => {
+    if (!selectedSource) { setSourceCount(null); return }
+    setSourceCount(null)
+    fetch(`/api/admin/news/reprocess?source=${encodeURIComponent(selectedSource)}`)
+      .then(r => r.json())
+      .then(d => {
+        setSourceCount(d.count ?? null)
+        setSourceTotal(d.count ?? 200)
+      })
+      .catch(() => setSourceCount(null))
+  }, [selectedSource])
 
   // ── SSE streaming helper ───────────────────────────────────────────────────
 
@@ -568,12 +583,110 @@ export default function NewsAdminPage() {
       'Reprocessando candidatos...',
     )
 
-  const handleSourceReprocess = () => {
+  /** Processa em lotes de 200 até atingir o total escolhido */
+  const handleSourceReprocess = async () => {
     if (!selectedSource) return
-    runStreamingBatch(
-      `/api/admin/news/reprocess?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=200&stream=1`,
-      `Reprocessando ${selectedSource}...`,
-    )
+    const total = sourceTotal
+    const BATCH = 200
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setStreamProgress({
+      phase: 'running',
+      label: `Reprocessando ${selectedSource}...`,
+      total,
+      current: 0,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+      log: [],
+    })
+
+    let offset = 0
+    let accumUpdated = 0, accumSkipped = 0, accumErrors = 0
+
+    while (offset < total && !controller.signal.aborted) {
+      const limit = Math.min(BATCH, total - offset)
+      const url = `/api/admin/news/reprocess?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=${limit}&offset=${offset}&stream=1`
+
+      let batchUpdated = 0, batchSkipped = 0, batchErrors = 0
+      let batchDone = false
+
+      try {
+        const res = await fetch(url, { method: 'POST', signal: controller.signal })
+        if (!res.ok || !res.body) {
+          setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+          return
+        }
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (!batchDone) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            try {
+              const event = JSON.parse(line.slice(6))
+
+              if (event.type === 'item') {
+                if (event.result === 'updated') batchUpdated++
+                else if (event.result === 'skipped') batchSkipped++
+                else if (event.result === 'error') batchErrors++
+
+                const entry: StreamLogEntry = { title: event.title, result: event.result, artistCount: event.artistCount ?? 0 }
+                const au = accumUpdated + batchUpdated
+                const as_ = accumSkipped + batchSkipped
+                const ae = accumErrors + batchErrors
+                setStreamProgress(prev => prev ? {
+                  ...prev,
+                  current: offset + event.current,
+                  updated: au,
+                  skipped: as_,
+                  errors: ae,
+                  log: [...prev.log, entry].slice(-100),
+                } : null)
+
+              } else if (event.type === 'done') {
+                batchDone = true
+              } else if (event.type === 'error') {
+                setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+                return
+              }
+            } catch { /* skip malformed */ }
+          }
+        }
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+        }
+        return
+      }
+
+      accumUpdated += batchUpdated
+      accumSkipped += batchSkipped
+      accumErrors += batchErrors
+      offset += limit
+    }
+
+    setStreamProgress(prev => prev ? {
+      ...prev,
+      phase: 'done',
+      current: total,
+      updated: accumUpdated,
+      skipped: accumSkipped,
+      errors: accumErrors,
+    } : null)
+    refetchTable()
   }
 
   const isStreaming = streamProgress?.phase === 'running'
@@ -683,21 +796,45 @@ export default function NewsAdminPage() {
               </div>
 
               {selectedSource && (
-                <div className="space-y-1.5">
+                <div className="space-y-2.5">
+                  {/* Contagem + input de total */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {sourceCount === null ? (
+                      <span className="text-xs text-zinc-600 flex items-center gap-1.5">
+                        <Loader2 size={11} className="animate-spin" /> carregando...
+                      </span>
+                    ) : (
+                      <span className="text-xs text-zinc-500">
+                        <strong className="text-zinc-300">{sourceCount.toLocaleString('pt-BR')}</strong> notícias em {selectedSource}
+                      </span>
+                    )}
+
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                      <span>Processar</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={sourceCount ?? 9999}
+                        value={sourceTotal}
+                        onChange={e => setSourceTotal(Math.max(1, parseInt(e.target.value) || 1))}
+                        disabled={isStreaming}
+                        className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-0.5 text-xs text-zinc-200 text-center focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                      />
+                      <span>de {sourceCount ?? '?'} · lotes de 200</span>
+                    </div>
+                  </div>
+
                   <button
                     onClick={handleSourceReprocess}
-                    disabled={isStreaming}
+                    disabled={isStreaming || sourceCount === null}
                     className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
                   >
                     {isStreaming
                       ? <Loader2 size={14} className="animate-spin" />
                       : <RefreshCw size={14} />
                     }
-                    Reprocessar todas de {selectedSource} (pipeline completo)
+                    Reprocessar {selectedSource}
                   </button>
-                  <p className="text-[11px] text-zinc-600">
-                    Re-busca conteúdo, recalcula campos e re-extrai artistas para todas as notícias de {selectedSource}.
-                  </p>
                 </div>
               )}
             </div>

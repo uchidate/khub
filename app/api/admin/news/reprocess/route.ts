@@ -17,7 +17,11 @@
  *   source: filtra por fonte (ex: 'Koreaboo') — apenas no modo batch
  *   all:    '1' — reprocessa todos da fonte (não só candidatos)
  *   limit:  máximo para batch (default: 50, max: 200)
+ *   offset: pular N itens (default: 0) — permite paginação em múltiplos lotes
  *   stream: '1' — retorna SSE com progresso em tempo real (batch only)
+ *
+ * GET /api/admin/news/reprocess?source=<source>
+ *   Retorna a contagem de notícias disponíveis da fonte.
  *
  * SSE events (quando stream=1):
  *   { type: 'start',    total: number }
@@ -109,6 +113,7 @@ async function selectBatchItems(
     limit: number,
     source: string | undefined,
     forceAll: boolean,
+    offset: number = 0,
 ): Promise<BatchItem[]> {
     const baseWhere = {
         sourceUrl: { not: '' },
@@ -119,6 +124,7 @@ async function selectBatchItems(
         return prisma.news.findMany({
             where: baseWhere,
             orderBy: { publishedAt: 'desc' },
+            skip: offset,
             take: limit,
             select: { id: true, title: true, sourceUrl: true, source: true },
         })
@@ -219,11 +225,12 @@ export async function POST(request: NextRequest) {
     // ── Batch mode ───────────────────────────────────────────────────────────
     if (mode === 'batch') {
         const limit = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') || '50')))
+        const offset = Math.max(0, parseInt(searchParams.get('offset') || '0'))
         const source = searchParams.get('source') || undefined
         const forceAll = searchParams.get('all') === '1'
         const streaming = searchParams.get('stream') === '1'
 
-        const items = await selectBatchItems(limit, source, forceAll)
+        const items = await selectBatchItems(limit, source, forceAll, offset)
 
         if (streaming) {
             return streamBatch(items)
@@ -287,4 +294,22 @@ export async function POST(request: NextRequest) {
         notified: result.notified,
         artists: artists.map(a => ({ id: a.artistId, name: a.artist.nameRomanized })),
     })
+}
+
+// ─── GET: count articles for a source ────────────────────────────────────────
+
+export async function GET(request: NextRequest) {
+    const { error } = await requireAdmin()
+    if (error) return error
+
+    const source = new URL(request.url).searchParams.get('source')
+    if (!source) {
+        return NextResponse.json({ error: 'source obrigatório' }, { status: 400 })
+    }
+
+    const count = await prisma.news.count({
+        where: { source, sourceUrl: { not: '' } },
+    })
+
+    return NextResponse.json({ source, count })
 }
