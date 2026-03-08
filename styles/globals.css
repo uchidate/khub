@@ -263,21 +263,23 @@ html:not(.dark)::-webkit-scrollbar-thumb:hover {
   background-size: 1000px 100%;
 }
 
-/* Mobile menu slide-in animation */
+/* Mobile menu slide-in animations */
 @keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
 
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
 .animate-slide-in-right {
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Skeleton Loader */

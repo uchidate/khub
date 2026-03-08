@@ -48,7 +48,7 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
 
       {/* Mobile Menu — portal para escapar do stacking context do NavBar */}
       {isOpen && createPortal(
-        <div className="fixed inset-0 z-[500] flex justify-end">
+        <div className="fixed inset-0 z-[500] flex justify-start">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -56,7 +56,7 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
           />
 
           {/* Drawer — mesmo estilo glass do NavBar */}
-          <div className="relative w-[85vw] max-w-sm h-full bg-black/90 backdrop-blur-xl border-l border-white/10 flex flex-col animate-slide-in-right">
+          <div className="relative w-[85vw] max-w-sm h-full bg-black/90 backdrop-blur-xl border-r border-white/10 flex flex-col animate-slide-in-left">
             {/* Header — espelho exato do NavBar (mesma altura h-12) */}
             <div className="flex items-center justify-between px-4 border-b border-white/10 h-12">
               <Link href="/" onClick={() => setIsOpen(false)} className="text-2xl font-black tracking-tighter uppercase hover:opacity-80 transition-opacity">

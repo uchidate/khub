@@ -7,9 +7,11 @@
  * Apenas admins podem acionar. Resposta síncrona (não streaming).
  *
  * Query params:
- *   id:   ID da notícia (obrigatório)
- *   mode: 'batch' — processa lote de notícias sem artistas (optional)
- *   limit: número máximo para modo batch (default: 100, max: 500)
+ *   id:     ID da notícia (obrigatório no modo individual)
+ *   mode:   'batch' — processa lote (opcional)
+ *   source: filtra por fonte (ex: 'Soompi') — apenas no modo batch
+ *   all:    '1' — reprocessa todos da fonte, inclusive já vinculados (apenas com source)
+ *   limit:  número máximo para modo batch (default: 100, max: 500)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -28,10 +30,12 @@ export async function POST(request: NextRequest) {
     const newsId = searchParams.get('id')
     const mode = searchParams.get('mode')
 
-    // ── Modo batch: processa notícias sem artistas ─────────────────────────────
+    // ── Modo batch: processa notícias sem artistas (ou todos de uma fonte) ──────
     if (mode === 'batch') {
         const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '100')))
-        return runBatch(limit)
+        const source = searchParams.get('source') || undefined
+        const forceAll = searchParams.get('all') === '1'
+        return runBatch(limit, source, forceAll)
     }
 
     // ── Modo individual: re-extrai artistas de uma notícia ─────────────────────
@@ -86,9 +90,16 @@ export async function POST(request: NextRequest) {
     })
 }
 
-async function runBatch(limit: number) {
+async function runBatch(limit: number, source?: string, forceAll?: boolean) {
+    // Com source + forceAll: reprocessar todos (inclusive já vinculados) — apaga e recria
+    // Com source sem forceAll: apenas sem artistas da fonte
+    // Sem source: apenas sem artistas (comportamento original)
+    const where = source && forceAll
+        ? { source }
+        : { artists: { none: {} }, ...(source ? { source } : {}) }
+
     const news = await prisma.news.findMany({
-        where: { artists: { none: {} } },
+        where,
         take: limit,
         orderBy: { publishedAt: 'desc' },
         select: { id: true, title: true, contentMd: true, originalContent: true },
@@ -98,11 +109,18 @@ async function runBatch(limit: number) {
     let linked = 0
     let skipped = 0
     let errors = 0
+    const errorIds: string[] = []
 
     for (const item of news) {
         try {
             const content = item.originalContent || item.contentMd
             const mentions = await service.extractArtists(item.title, content)
+
+            // Apaga vínculos antigos (relevante quando forceAll=true)
+            if (source && forceAll) {
+                await prisma.newsArtist.deleteMany({ where: { newsId: item.id } })
+            }
+
             if (mentions.length > 0) {
                 await prisma.newsArtist.createMany({
                     data: mentions.map(m => ({ newsId: item.id, artistId: m.artistId })),
@@ -114,6 +132,7 @@ async function runBatch(limit: number) {
             }
         } catch {
             errors++
+            if (errorIds.length < 10) errorIds.push(item.id)
         }
     }
 
@@ -123,5 +142,6 @@ async function runBatch(limit: number) {
         linked,
         skipped,
         errors,
+        errorIds,
     })
 }

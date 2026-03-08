@@ -6,9 +6,11 @@
  * da correção de preservação de imagens no htmlToMarkdown.
  *
  * Query params:
- *   id:    ID da notícia (obrigatório)
- *   mode:  'batch' — reprocessa notícias com conteúdo curto (opcional)
- *   limit: máximo para batch (default: 50, max: 200)
+ *   id:     ID da notícia (obrigatório no modo individual)
+ *   mode:   'batch' — reprocessa lote (opcional)
+ *   source: filtra por fonte (ex: 'Soompi') — apenas no modo batch
+ *   all:    '1' — reprocessa todos da fonte, não só candidatos (apenas com source)
+ *   limit:  máximo para batch (default: 50, max: 200)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -28,7 +30,9 @@ export async function POST(request: NextRequest) {
 
     if (mode === 'batch') {
         const limit = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') || '50')))
-        return runBatch(limit)
+        const source = searchParams.get('source') || undefined
+        const forceAll = searchParams.get('all') === '1'
+        return runBatch(limit, source, forceAll)
     }
 
     if (!newsId) {
@@ -62,29 +66,55 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, newsId, contentLength: content.length, imageUpdated: !!imageUrl })
 }
 
-async function runBatch(limit: number) {
-    // Notícias sem imagens inline OU com conteúdo curto (provavelmente truncado)
+async function runBatch(limit: number, source?: string, forceAll?: boolean) {
+    const baseWhere = {
+        sourceUrl: { not: '' },
+        ...(source ? { source } : {}),
+    }
+
+    if (source && forceAll) {
+        // Reprocessar TODOS da fonte, sem filtrar candidatos
+        const news = await prisma.news.findMany({
+            where: baseWhere,
+            orderBy: { publishedAt: 'desc' },
+            take: limit,
+            select: { id: true, sourceUrl: true, source: true },
+        })
+        return processItems(news, source)
+    }
+
+    // Modo padrão: apenas candidatos (sem imagens, conteúdo curto ou truncado)
     const allCandidates = await prisma.news.findMany({
-        where: { sourceUrl: { not: '' } },
+        where: baseWhere,
         orderBy: { publishedAt: 'desc' },
-        take: limit * 4, // buscar mais para filtrar
-        select: { id: true, sourceUrl: true, originalContent: true },
+        take: limit * 4,
+        select: { id: true, sourceUrl: true, source: true, originalContent: true },
     })
 
-    // Filtrar: sem "![" (sem imagens) OU conteúdo curto OU termina com "..."
     const news = allCandidates.filter(n => {
         const c = n.originalContent ?? ''
         return !c.includes('![') || c.length < 1500 || /(\.\.\.|…)\s*$/.test(c)
     }).slice(0, limit)
 
+    return processItems(news, source)
+}
+
+async function processItems(
+    items: { id: string; sourceUrl: string; source?: string | null }[],
+    sourceName?: string,
+) {
     const service = getRSSNewsService()
     let updated = 0
     let skipped = 0
     let errors = 0
+    const errorIds: string[] = []
 
-    for (const item of news) {
+    for (const item of items) {
         try {
-            const { content, imageUrl } = await service.fetchArticleData(item.sourceUrl)
+            const { content, imageUrl } = await service.fetchArticleData(
+                item.sourceUrl,
+                item.source ?? sourceName,
+            )
             if (!content || content.length < 100) { skipped++; continue }
 
             await prisma.news.update({
@@ -97,8 +127,9 @@ async function runBatch(limit: number) {
             updated++
         } catch {
             errors++
+            if (errorIds.length < 10) errorIds.push(item.id)
         }
     }
 
-    return NextResponse.json({ ok: true, processed: news.length, updated, skipped, errors })
+    return NextResponse.json({ ok: true, processed: items.length, updated, skipped, errors, errorIds })
 }

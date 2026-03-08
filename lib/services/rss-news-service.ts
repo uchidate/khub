@@ -347,13 +347,14 @@ export class RSSNewsService {
       Soompi:        ['article-wrapper', 'sp-detail__content', 'article-container', 'entry-content'],
       Koreaboo:      ['entry-content', 'post-content', 'article__body'],
       Dramabeans:    ['entry-content', 'post-content', 'entry__content'],
-      'Asian Junkie':['entry-content', 'post-content', 'article-content'],
+      // Asian Junkie usa 'entry' (não entry-content); share-post div é removido antes da conversão
+      'Asian Junkie':['entry', 'entry-content', 'post-content', 'article-content'],
       HelloKpop:     ['td-post-content', 'entry-content', 'tdb-block-inner'],
       Kpopmap:       ['entry-content', 'post-content', 'article-content', 'td-post-content'],
     };
 
     // Fontes que devem usar class-first (o <article> dessas fontes inclui header/metadata)
-    const CLASS_FIRST_SOURCES = new Set(['Soompi', 'Koreaboo']);
+    const CLASS_FIRST_SOURCES = new Set(['Soompi', 'Koreaboo', 'Asian Junkie']);
 
     const priorityClasses = sourceName ? (SOURCE_CONTENT_SELECTORS[sourceName] ?? []) : [];
     // Genéricos de fallback (sem repetir os já tentados)
@@ -366,14 +367,22 @@ export class RSSNewsService {
 
     const allClasses = [...priorityClasses, ...genericClasses];
 
+    // Pré-processadores HTML específicos por fonte (rodam sobre o chunk extraído)
+    const SOURCE_HTML_PREPROCESSORS: Record<string, (html: string) => string> = {
+      // Asian Junkie: remover barra de share (Facebook, Twitter, etc.) do topo do 'entry' div
+      'Asian Junkie': (html) => html.replace(/<div[^>]*class="[^"]*\bshare-post\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, ''),
+    }
+
     // 1. Para fontes class-first, tentar seletores específicos ANTES de <article>
     if (sourceName && CLASS_FIRST_SOURCES.has(sourceName)) {
+      const preprocess = sourceName ? (SOURCE_HTML_PREPROCESSORS[sourceName] ?? null) : null;
       for (const cls of priorityClasses) {
         const regex = new RegExp(`<div[^>]*class="[^"]*\\b${cls}\\b[^"]*"[^>]*>`, 'i');
         const match = regex.exec(stripped);
         if (match) {
           const startIdx = match.index + match[0].length;
-          const chunk = stripped.substring(startIdx, startIdx + 10000);
+          const rawChunk = stripped.substring(startIdx, startIdx + 10000);
+          const chunk = preprocess ? preprocess(rawChunk) : rawChunk;
           const text = this.htmlToMarkdown(chunk).trim();
           if (text.length > 200) return text;
         }
@@ -548,6 +557,8 @@ export class RSSNewsService {
       .replace(/&#8220;|&ldquo;/g, '"')
       .replace(/&#8221;|&rdquo;/g, '"')
       .replace(/&#8230;|&hellip;/g, '...')
+      .replace(/&#8212;|&mdash;/g, '—')
+      .replace(/&#8211;|&ndash;/g, '–')
       // Limpar markdown vazio: ****, **, []() sem link útil
       .replace(/\*{2,4}\s*\*{2,4}/g, '')
       .replace(/\[([^\]]*)\]\(\s*\)/g, '$1')
