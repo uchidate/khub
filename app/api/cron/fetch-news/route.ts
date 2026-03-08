@@ -100,6 +100,7 @@ async function fetchSourceNews(
 
 /** Sanitiza nome de fonte para logs — remove caracteres de controle (newline injection) */
 function sanitizeForLog(value: string): string {
+    // eslint-disable-next-line no-control-regex
     return value.replace(/[\r\n\t\x00-\x1f\x7f]/g, '')
 }
 
