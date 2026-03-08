@@ -30,6 +30,7 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import { getRSSNewsService, classifyContentType, estimateReadingTime } from '@/lib/services/rss-news-service'
 import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service'
 import { getNewsNotificationService } from '@/lib/services/news-notification-service'
+import { normalizeSourceUrl } from '@/lib/utils/url'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -329,8 +330,9 @@ async function importOne(
     article: DiscoveredArticle,
     source: string,
 ): Promise<'imported' | 'exists' | 'error'> {
+    const canonicalUrl = normalizeSourceUrl(article.url)
     const existing = await prisma.news.findFirst({
-        where: { sourceUrl: article.url },
+        where: { sourceUrl: canonicalUrl },
         select: { id: true },
     })
     if (existing) return 'exists'
@@ -348,7 +350,7 @@ async function importOne(
             title: article.title,
             contentMd: content,
             originalContent: content,
-            sourceUrl: article.url,
+            sourceUrl: canonicalUrl,
             source,
             imageUrl: imageUrl ?? null,
             publishedAt: article.date,

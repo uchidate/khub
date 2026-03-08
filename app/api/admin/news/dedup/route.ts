@@ -105,15 +105,17 @@ export async function POST(request: NextRequest) {
         const keep = sorted[0]
         const toDelete = sorted.slice(1).map((r: NewsRecord) => r.id)
 
-        // Normaliza URL do registro mantido
+        // Remove duplicatas primeiro (NewsArtist tem onDelete: Cascade no schema)
+        // DEVE ser antes de normalizar o sourceUrl do keep para evitar unique constraint
+        // (o duplicado pode já ter a URL canônica, causando violação se atualizar antes de deletar)
+        await prisma.news.deleteMany({ where: { id: { in: toDelete } } })
+        totalDeleted += toDelete.length
+
+        // Normaliza URL do registro mantido (agora seguro pois duplicados foram removidos)
         if (keep.sourceUrl !== canonical) {
             await prisma.news.update({ where: { id: keep.id }, data: { sourceUrl: canonical } })
             totalNormalized++
         }
-
-        // Remove duplicatas (NewsArtist tem onDelete: Cascade no schema)
-        await prisma.news.deleteMany({ where: { id: { in: toDelete } } })
-        totalDeleted += toDelete.length
     }
 
     return NextResponse.json({
