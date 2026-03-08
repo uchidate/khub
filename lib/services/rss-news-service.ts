@@ -54,7 +54,7 @@ const CONTENT_TYPE_RULES: { type: string; pattern: RegExp }[] = [
   { type: 'scandal',       pattern: /\b(scandal|controversy|dating|relationship confirmed|breakup|military|enlist(ment)?|hiatus|leave|lawsuit|apology|apologizes)\b/i },
 ];
 
-function classifyContentType(title: string, content: string, sourceName?: string): string {
+export function classifyContentType(title: string, content: string, sourceName?: string): string {
   // Dramabeans é 100% drama/kdrama — skip classification
   if (sourceName === 'Dramabeans') return 'drama';
 
@@ -65,7 +65,7 @@ function classifyContentType(title: string, content: string, sourceName?: string
   return 'general';
 }
 
-function estimateReadingTime(text: string): number {
+export function estimateReadingTime(text: string): number {
   const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
   return Math.max(1, Math.ceil(words / 200));
 }
