@@ -21,10 +21,10 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
   const breadcrumbs = items || generateBreadcrumbs(pathname)
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex items-center gap-2 text-sm flex-wrap">
+    <nav aria-label="Breadcrumb" className="mb-6 min-w-0">
+      <ol className="flex items-center gap-2 text-sm overflow-hidden">
         {/* Home */}
-        <li>
+        <li className="flex-shrink-0">
           <Link
             href=""
             className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
@@ -39,11 +39,11 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
           const isLast = index === breadcrumbs.length - 1
 
           return (
-            <li key={index} className="flex items-center gap-2">
-              <ChevronRight size={16} className="text-zinc-600" aria-hidden="true" />
+            <li key={index} className={`flex items-center gap-2 ${isLast ? 'min-w-0' : 'flex-shrink-0'}`}>
+              <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" aria-hidden="true" />
 
               {isLast || !crumb.href ? (
-                <span className="text-white font-medium" aria-current="page">
+                <span className="text-white font-medium truncate" aria-current="page">
                   {crumb.label}
                 </span>
               ) : (

@@ -204,12 +204,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 </div>
 
                 {/* Breadcrumbs */}
-                <div className="relative z-10 pt-24 md:pt-28 px-4 sm:px-12 md:px-20 flex justify-between items-start flex-shrink-0">
+                <div className="relative z-10 pt-24 md:pt-28 px-4 sm:px-12 md:px-20 flex justify-between items-start gap-2">
                     <Breadcrumbs items={[
                         { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }
                     ]} />
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                         <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/productions/${production.id}`)}`} label="Editar" />
                         <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt}
                             className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
