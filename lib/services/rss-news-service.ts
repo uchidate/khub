@@ -636,8 +636,9 @@ export class RSSNewsService {
       .replace(/<\/p>/gi, '\n\n')
       .replace(/<p[^>]*>/gi, '')
       .replace(/<br\s*\/?>/gi, '\n')
-      // Remover tags restantes
+      // Remover tags restantes (completas e truncadas ao final do chunk)
       .replace(/<[^>]+>/g, '')
+      .replace(/<[^>]*$/, '') // tag truncada sem '>' no final do chunk
       // Decodificar entidades HTML
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
