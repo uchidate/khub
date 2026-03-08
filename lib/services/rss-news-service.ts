@@ -532,8 +532,15 @@ export class RSSNewsService {
         if (!srcMatch) return ''
         const src = srcMatch[1]
         if (src.startsWith('data:') || src.length < 10) return ''
-        // Strip all HTML — incluindo tags sem > de fechamento (evita js/incomplete-multi-character-sanitization)
-        const rawCaption = captionMatch ? captionMatch[1].replace(/<[^>]*>?/g, '').replace(/</g, '').trim() : ''
+        // Extrair plain text: split em '<', descartar tudo até o '>' em cada segmento
+        // (inclui fragmentos sem '>' de fechamento — evita js/incomplete-multi-character-sanitization)
+        const rawCaption = captionMatch
+          ? captionMatch[1]
+              .split('<')
+              .map((s: string, i: number) => { if (i === 0) return s; const gt = s.indexOf('>'); return gt >= 0 ? s.slice(gt + 1) : '' })
+              .join('')
+              .trim()
+          : ''
         // Remover prefixo "| " usado pelo Koreaboo como separador de crédito
         const alt = rawCaption.replace(/^\|\s*/, '').trim()
         return `\n\n![${alt}](${src})\n\n`
