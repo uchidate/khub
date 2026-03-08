@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { getRoleLabel } from "@/lib/utils/role-labels"
+import { auth } from "@/lib/auth"
 import { Calendar, ExternalLink, Clock, User } from "lucide-react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -106,6 +107,9 @@ export async function generateMetadata(props: NewsDetailPageProps): Promise<Meta
 
 export default async function NewsDetailPage(props: NewsDetailPageProps) {
     const params = await props.params;
+    const session = await auth()
+    const isAdmin = session?.user?.role?.toLowerCase() === 'admin'
+
     // Deduplica com generateMetadata via React.cache
     const news = await getNews(params.id)
 
@@ -416,12 +420,12 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                     />
                 </div>
 
-                {/* Rodapé da Notícia */}
-                <footer className="mt-12">
-                    {(() => {
-                        let hostname = news.sourceUrl
-                        try { hostname = new URL(news.sourceUrl).hostname.replace(/^www\./, '') } catch { /* keep raw */ }
-                        return (
+                {/* Rodapé da Notícia — visível apenas para admins */}
+                {isAdmin && (() => {
+                    let hostname = news.sourceUrl
+                    try { hostname = new URL(news.sourceUrl).hostname.replace(/^www\./, '') } catch { /* keep raw */ }
+                    return (
+                        <footer className="mt-12">
                             <a
                                 href={news.sourceUrl}
                                 target="_blank"
@@ -434,13 +438,13 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                     <p className="text-xs text-zinc-600 mt-0.5">{hostname}</p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0 px-4 py-2 rounded-full border border-white/10 group-hover:border-purple-500/40 transition-all text-xs font-semibold text-zinc-400 group-hover:text-purple-300">
-                                    Ler lá
+                                    Ler original
                                     <ExternalLink className="w-3.5 h-3.5" />
                                 </div>
                             </a>
-                        )
-                    })()}
-                </footer>
+                        </footer>
+                    )
+                })()}
 
                 {/* Seção de Comentários */}
                 <CommentsSection newsId={news.id} />
