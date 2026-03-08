@@ -158,17 +158,17 @@ export async function importOne(
 
     const existing = await prisma.news.findFirst({
         where:  { sourceUrl: canonicalUrl },
-        select: { id: true, publishedAt: true },
+        select: { id: true, publishedAt: true, source: true },
     })
 
     if (existing) {
-        // Corrige publishedAt se diferir > 1 dia da data authoritative do WP API
+        // Corrige campos incorretos deixados por bugs anteriores (source NULL, publishedAt errado)
+        const fixes: Record<string, unknown> = {}
         const msDiff = Math.abs(existing.publishedAt.getTime() - article.date.getTime())
-        if (msDiff > 86_400_000) {
-            await prisma.news.update({
-                where: { id: existing.id },
-                data:  { publishedAt: article.date },
-            })
+        if (msDiff > 86_400_000) fixes.publishedAt = article.date
+        if (existing.source !== source) fixes.source = source
+        if (Object.keys(fixes).length > 0) {
+            await prisma.news.update({ where: { id: existing.id }, data: fixes })
         }
         return 'exists'
     }
