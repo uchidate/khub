@@ -214,12 +214,12 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
                 <div className="max-w-4xl mx-auto">
                 {/* Breadcrumbs */}
-                <div className="mb-8 flex justify-between items-start">
+                <div className="mb-8 flex justify-between items-start gap-2">
                     <Breadcrumbs items={[
                         { label: 'Notícias', href: '/news' },
                         { label: news.title }
                     ]} />
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                         <AdminQuickEdit href={`/admin/news/${news.id}?returnTo=${encodeURIComponent(`/news/${news.id}`)}`} label="Editar" />
                         <FavoriteButton
                             id={news.id}

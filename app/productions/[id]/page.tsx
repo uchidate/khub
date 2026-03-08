@@ -188,11 +188,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 ],
             }} />
             {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
-            <div className="relative min-h-[55vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
+            <div className="relative min-h-[72vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
                 {/* Background image (contained, never clips content) */}
                 <div className="absolute inset-0">
                     {heroImageUrl ? (
-                        <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover brightness-[0.45]" />
+                        <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover" />
                     ) : (
                         <>
                             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
@@ -204,12 +204,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 </div>
 
                 {/* Breadcrumbs */}
-                <div className="relative z-10 pt-24 md:pt-28 px-4 sm:px-12 md:px-20 flex justify-between items-start flex-shrink-0">
+                <div className="relative z-10 pt-24 md:pt-28 px-4 sm:px-12 md:px-20 flex justify-between items-start gap-2">
                     <Breadcrumbs items={[
                         { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }
                     ]} />
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                         <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/productions/${production.id}`)}`} label="Editar" />
                         <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt}
                             className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
