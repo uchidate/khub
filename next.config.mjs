@@ -109,12 +109,21 @@ const nextConfig = {
                 hostname: 'allkpop.com',
             },
             // Dramabeans — imagens no próprio domínio (wp-content/uploads)
+            // HTTP incluído: artigos importados antes da normalização para HTTPS
             {
                 protocol: 'https',
                 hostname: 'dramabeans.com',
             },
             {
                 protocol: 'https',
+                hostname: 'www.dramabeans.com',
+            },
+            {
+                protocol: 'http',
+                hostname: 'dramabeans.com',
+            },
+            {
+                protocol: 'http',
                 hostname: 'www.dramabeans.com',
             },
             // Asian Junkie — imagens no próprio domínio (wp-content/uploads)
