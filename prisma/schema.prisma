@@ -57,6 +57,7 @@ model MusicalGroup {
   @@index([agencyId])
   @@index([trendingScore])
   @@index([isHidden])
+  @@index([disbandDate, isHidden, trendingScore]) // home page: active groups ordered by trending
 }
 
 model ArtistGroupMembership {
@@ -143,6 +144,7 @@ model Artist {
   @@index([nameRomanized, createdAt])
   @@index([flaggedAsNonKorean])
   @@index([isHidden])
+  @@index([flaggedAsNonKorean, isHidden, trendingScore]) // artist listing: filter + sort
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
   @@index([tmdbSyncStatus, tmdbLastSync])
@@ -252,6 +254,7 @@ model Production {
   @@index([ageRatingSyncAt])
   @@index([flaggedAsNonKorean])
   @@index([isHidden])
+  @@index([flaggedAsNonKorean, isHidden]) // production listing filter
 }
 
 model ArtistProduction {
@@ -300,6 +303,7 @@ model News {
   @@index([trendingScore])
   @@index([isHidden])
   @@index([contentType])
+  @@index([isHidden, publishedAt]) // news listing: filter + sort
 }
 
 model NewsArtist {

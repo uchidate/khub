@@ -27,28 +27,19 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
-import { getRSSNewsService, classifyContentType, estimateReadingTime } from '@/lib/services/rss-news-service'
-import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service'
-import { getNewsNotificationService } from '@/lib/services/news-notification-service'
-import { normalizeSourceUrl } from '@/lib/utils/url'
-import prisma from '@/lib/prisma'
+import {
+    WP_API_BASES,
+    DiscoveredArticle,
+    discoverViaWPAPI,
+    importOne,
+} from '@/lib/services/news-import-service'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
-// ─── Source configurations ────────────────────────────────────────────────────
+// ─── Listing fallback config ──────────────────────────────────────────────────
 
-/** Base da WP REST API por fonte */
-const WP_API_BASES: Record<string, string> = {
-    Soompi:         'https://www.soompi.com/wp-json/wp/v2',
-    Koreaboo:       'https://www.koreaboo.com/wp-json/wp/v2',
-    Dramabeans:     'https://dramabeans.com/wp-json/wp/v2',
-    'Asian Junkie': 'https://www.asianjunkie.com/wp-json/wp/v2',
-    HelloKpop:      'https://www.hellokpop.com/wp-json/wp/v2',
-    Kpopmap:        'https://kpopmap.com/wp-json/wp/v2',
-}
-
-/** URL das páginas de listagem por fonte (paginação WordPress padrão /page/N/) */
+/** URL das páginas de listagem por fonte — fallback quando WP API está indisponível */
 const LISTING_URLS: Record<string, (page: number) => string> = {
     Soompi:         (p) => p <= 1 ? 'https://www.soompi.com/'               : `https://www.soompi.com/page/${p}/`,
     Koreaboo:       (p) => p <= 1 ? 'https://www.koreaboo.com/news/'        : `https://www.koreaboo.com/news/page/${p}/`,
@@ -58,84 +49,9 @@ const LISTING_URLS: Record<string, (page: number) => string> = {
     Kpopmap:        (p) => p <= 1 ? 'https://kpopmap.com/'                  : `https://kpopmap.com/page/${p}/`,
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface DiscoveredArticle {
-    url: string
-    date: Date
-    title: string
-}
-
 type DiscoveryStrategy = 'api' | 'listing'
 
-// ─── Strategy 1: WordPress REST API ──────────────────────────────────────────
-
-async function discoverViaWPAPI(
-    source: string,
-    dateFrom: Date,
-    dateTo: Date,
-    limit: number,
-    offset = 0,
-): Promise<DiscoveredArticle[]> {
-    const base = WP_API_BASES[source]
-    if (!base) throw new Error('WP API not configured for source')
-
-    const after  = new Date(dateFrom.getTime() - 1000).toISOString()
-    const before = new Date(dateTo.getTime()   + 1000).toISOString()
-
-    const PER_PAGE = 100
-    // Jump directly to the WP page that contains the offset
-    const startPage = Math.floor(offset / PER_PAGE) + 1
-    const skipInFirstPage = offset % PER_PAGE
-
-    const collected: DiscoveredArticle[] = []
-    let page = startPage
-
-    while (collected.length < limit) {
-        const params = new URLSearchParams({
-            after, before,
-            per_page: String(PER_PAGE),
-            page: String(page),
-            orderby: 'date',
-            order: 'desc',
-            _fields: 'id,date,date_gmt,title,link',
-            status: 'publish',
-        })
-
-        const res = await fetch(`${base}/posts?${params}`, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)' },
-            signal: AbortSignal.timeout(12000),
-        })
-
-        if (!res.ok) throw new Error(`WP API HTTP ${res.status}`)
-
-        const apiTotal = parseInt(res.headers.get('X-WP-Total') || '0')
-        const posts: Array<{ date: string; date_gmt: string; title: { rendered: string }; link: string }> = await res.json()
-
-        if (posts.length === 0) break
-
-        // In the first page fetched, skip articles already covered by offset
-        const slice = page === startPage && skipInFirstPage > 0
-            ? posts.slice(skipInFirstPage)
-            : posts
-
-        for (const p of slice) {
-            if (collected.length >= limit) break
-            collected.push({
-                url:   p.link,
-                date:  new Date(p.date_gmt || p.date),
-                title: decodeHtmlEntities(p.title.rendered),
-            })
-        }
-
-        if (collected.length >= limit || offset + collected.length >= apiTotal) break
-        page++
-    }
-
-    return collected
-}
-
-// ─── Strategy 2: Paginated listing scraper ────────────────────────────────────
+// ─── Strategy 2: Paginated listing scraper (fallback) ────────────────────────
 
 /**
  * Extrai artigos de uma página de listagem WordPress.
@@ -296,83 +212,6 @@ async function countAvailable(
     return count > 0 ? count : -1
 }
 
-// ─── Utility ──────────────────────────────────────────────────────────────────
-
-function decodeHtmlEntities(str: string): string {
-    return str
-        .replace(/&amp;/g, '&')
-        .replace(/&#039;/g, "'")
-        .replace(/&quot;/g, '"')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&#8217;/g, '\u2019')
-        .replace(/&#8216;/g, '\u2018')
-        .replace(/&#8220;/g, '\u201C')
-        .replace(/&#8221;/g, '\u201D')
-}
-
-// ─── Import single article ────────────────────────────────────────────────────
-
-/** Faz fetch com 1 retry automático em caso de conteúdo insuficiente (rate limiting) */
-async function fetchWithRetry(
-    service: ReturnType<typeof getRSSNewsService>,
-    url: string,
-    source: string,
-) {
-    const first = await service.fetchArticleData(url, source)
-    if (first.content && first.content.length >= 100) return first
-    // Aguarda antes de tentar novamente — provável rate limiting
-    await new Promise(r => setTimeout(r, 3000))
-    return service.fetchArticleData(url, source)
-}
-
-async function importOne(
-    article: DiscoveredArticle,
-    source: string,
-): Promise<'imported' | 'exists' | 'error'> {
-    const canonicalUrl = normalizeSourceUrl(article.url)
-    const existing = await prisma.news.findFirst({
-        where: { sourceUrl: canonicalUrl },
-        select: { id: true },
-    })
-    if (existing) return 'exists'
-
-    const service = getRSSNewsService()
-    const { content, imageUrl } = await fetchWithRetry(service, article.url, source)
-
-    if (!content || content.length < 100) return 'error'
-
-    const readingTimeMin = estimateReadingTime(content)
-    const contentType    = classifyContentType(article.title, content, source)
-
-    const news = await prisma.news.create({
-        data: {
-            title: article.title,
-            contentMd: content,
-            originalContent: content,
-            sourceUrl: canonicalUrl,
-            source,
-            imageUrl: imageUrl ?? null,
-            publishedAt: article.date,
-            readingTimeMin,
-            contentType,
-            tags: [],
-        },
-    })
-
-    const extractionService = getNewsArtistExtractionService(prisma)
-    const mentions = await extractionService.extractArtists(article.title, content)
-
-    if (mentions.length > 0) {
-        await prisma.newsArtist.createMany({
-            data: mentions.map(m => ({ newsId: news.id, artistId: m.artistId })),
-            skipDuplicates: true,
-        })
-        void getNewsNotificationService().notifyInAppForNews(news.id).catch(() => {})
-    }
-
-    return 'imported'
-}
 
 // ─── SSE streaming ────────────────────────────────────────────────────────────
 
