@@ -7,7 +7,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import {
   Plus, FlaskConical, CheckCircle, XCircle, Loader2,
-  Eye, EyeOff, RefreshCw, ChevronDown, ChevronUp, AlertTriangle, Download,
+  Eye, EyeOff, RefreshCw, RotateCcw, ChevronDown, ChevronUp, AlertTriangle, Download,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -362,6 +362,11 @@ export default function NewsAdminPage() {
   // null = loading, number = ok, -1 = error
   const [availableCount, setAvailableCount] = useState<number | null>(null)
 
+  // Resume state: saved when reprocess is interrupted mid-way
+  const [reprocessResume, setReprocessResume] = useState<{
+    source: string; dateFrom: string; dateTo: string; offset: number; total: number
+  } | null>(null)
+
   // Optimistic artist override
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
 
@@ -640,21 +645,22 @@ export default function NewsAdminPage() {
     }
   }
 
-  /** Processa em lotes de 200 até atingir o total escolhido */
-  const handleSourceReprocess = async () => {
+  /** Processa em lotes de 50 até atingir o total escolhido. Suporta retomar do offset salvo. */
+  const handleSourceReprocess = async (startOffset = 0) => {
     if (!selectedSource) return
     const total = sourceTotal
-    const BATCH = 200
+    const BATCH = 50
 
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
 
+    setReprocessResume(null)
     setStreamProgress({
       phase: 'running',
       label: `Reprocessando ${selectedSource}...`,
       total,
-      current: 0,
+      current: startOffset,
       updated: 0,
       skipped: 0,
       exists: 0,
@@ -662,7 +668,7 @@ export default function NewsAdminPage() {
       log: [],
     })
 
-    let offset = 0
+    let offset = startOffset
     let accumUpdated = 0, accumSkipped = 0, accumErrors = 0
 
     while (offset < total && !controller.signal.aborted) {
@@ -686,6 +692,7 @@ export default function NewsAdminPage() {
         const res = await fetch(url, { method: 'POST', signal: controller.signal })
         if (!res.ok || !res.body) {
           setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+          setReprocessResume({ source: selectedSource, dateFrom, dateTo, offset, total })
           return
         }
 
@@ -728,6 +735,7 @@ export default function NewsAdminPage() {
                 batchDone = true
               } else if (event.type === 'error') {
                 setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+                setReprocessResume({ source: selectedSource, dateFrom, dateTo, offset, total })
                 return
               }
             } catch { /* skip malformed */ }
@@ -736,6 +744,7 @@ export default function NewsAdminPage() {
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+          setReprocessResume({ source: selectedSource, dateFrom, dateTo, offset, total })
         }
         return
       }
@@ -746,6 +755,7 @@ export default function NewsAdminPage() {
       offset += limit
     }
 
+    setReprocessResume(null)
     setStreamProgress(prev => prev ? {
       ...prev,
       phase: 'done',
@@ -985,6 +995,7 @@ export default function NewsAdminPage() {
                         setSelectedSource(prev => prev === s ? null : s)
                         setDateFrom('')
                         setDateTo('')
+                        setReprocessResume(null)
                       }}
                       className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors border ${
                         active && c
@@ -1020,7 +1031,7 @@ export default function NewsAdminPage() {
                     />
                     {(dateFrom || dateTo) && (
                       <button
-                        onClick={() => { setDateFrom(''); setDateTo('') }}
+                        onClick={() => { setDateFrom(''); setDateTo(''); setReprocessResume(null) }}
                         disabled={isStreaming}
                         className="text-zinc-600 hover:text-zinc-400 disabled:opacity-50"
                         title="Limpar período"
@@ -1097,7 +1108,7 @@ export default function NewsAdminPage() {
 
                     {/* Reprocessar existentes */}
                     <button
-                      onClick={handleSourceReprocess}
+                      onClick={() => handleSourceReprocess(0)}
                       disabled={isStreaming || sourceCount === null}
                       className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
                     >
@@ -1107,6 +1118,22 @@ export default function NewsAdminPage() {
                       }
                       Reprocessar {(dateFrom || dateTo) ? 'existentes' : selectedSource}
                     </button>
+
+                    {/* Retomar reprocessamento interrompido */}
+                    {reprocessResume &&
+                      reprocessResume.source === selectedSource &&
+                      reprocessResume.dateFrom === dateFrom &&
+                      reprocessResume.dateTo === dateTo && (
+                      <button
+                        onClick={() => handleSourceReprocess(reprocessResume.offset)}
+                        disabled={isStreaming}
+                        title={`Retomar do artigo ${reprocessResume.offset + 1} de ${reprocessResume.total}`}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-amber-700/60 text-amber-400 font-medium rounded-lg hover:border-amber-500/80 hover:text-amber-300 transition-all disabled:opacity-50 text-sm"
+                      >
+                        <RotateCcw size={14} />
+                        Retomar do {reprocessResume.offset + 1}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
