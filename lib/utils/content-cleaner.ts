@@ -29,6 +29,12 @@ const COMMON_RULES: SourceRule[] = [
   { description: 'youtube embed as image', pattern: /!\[[^\]]*\]\(https?:\/\/(?:www\.)?youtube\.com\/embed\/[^)]+\)/g },
   // Entidade HTML &#038; (= &) que ficou literal em URLs de markdown
   { description: 'html numeric amp entity', pattern: /&#0*38;/g, replacement: '&' },
+  // Texto fallback de <video> tag não suportada
+  { description: 'video fallback text', pattern: /^\s*Your browser does not support video\.\s*$/gim },
+  // Links de navegação interna (Next Page / Previous Page)
+  { description: 'nav page links', pattern: /\n*\[(?:Next|Previous|Prev) Page\][^\n]*\n*/gi },
+  // Texto solto de navegação (quando href era vazio e virou texto)
+  { description: 'nav page text', pattern: /^\s*(?:Next|Previous|Prev) Page\s*$/gim },
 ]
 
 // Regras por fonte
@@ -72,6 +78,17 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'byline', pattern: /^By\s+[A-Z][^\n]{1,60}\n+/m },
     // "What do you think?" engagement line
     { description: 'engagement', pattern: /\n+What do you think\?[^\n]*/gi },
+    // Título H2 repetido no topo (H1 do artigo aparece como ## no conteúdo raspado)
+    // Detectado quando antecede imagem de capa ou link de categoria Koreaboo
+    { description: 'article title h2', pattern: /^##\s+[^\n]{20,300}\n+(?=[^\n]*\n+!\[|\[[^\]]+\]\(https?:\/\/www\.koreaboo\.com\/)/m },
+    // Links de categoria Koreaboo (ex: [Stories](https://www.koreaboo.com/stories/))
+    { description: 'category link', pattern: /\[[^\]]+\]\(https?:\/\/www\.koreaboo\.com\/(?:stories|news|trending|lists|videos|polls|rankings)\/\)/g },
+    // Logo/ícone do site Koreaboo
+    { description: 'site logo', pattern: /!\[[^\]]*\]\(https?:\/\/www\.koreaboo\.com\/wp-content\/themes\/[^)]+\)/g },
+    // "Koreaboo" como texto isolado (nome do site como autor)
+    { description: 'site name standalone', pattern: /^\s*Koreaboo\s*$/gm },
+    // Timestamp relativo (ex: "2 hours ago", "3 days ago")
+    { description: 'relative timestamp', pattern: /^\s*\d+\s+(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?)\s+ago\s*$/gim },
   ],
 
   Dramabeans: [
