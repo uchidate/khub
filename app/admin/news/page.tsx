@@ -70,7 +70,7 @@ type Source = typeof SOURCES[number]
 
 // ─── Streaming state ──────────────────────────────────────────────────────────
 
-type StreamResult = 'updated' | 'skipped' | 'error'
+type StreamResult = 'updated' | 'skipped' | 'exists' | 'error'
 
 interface StreamLogEntry {
   title: string
@@ -85,6 +85,7 @@ interface StreamProgress {
   current: number
   updated: number
   skipped: number
+  exists: number
   errors: number
   log: StreamLogEntry[]
 }
@@ -156,15 +157,23 @@ function BatchProgressPanel({
       </div>
 
       {/* Stats row */}
-      <div className="flex items-center gap-4 px-4 pb-2 text-xs">
+      <div className="flex items-center gap-4 px-4 pb-2 text-xs flex-wrap">
         <span className="flex items-center gap-1 text-green-400">
           <CheckCircle size={11} />
           <strong>{progress.updated}</strong> atualizadas
         </span>
-        <span className="flex items-center gap-1 text-zinc-500">
-          <span className="w-2.5 h-2.5 rounded-full border border-zinc-600 inline-block" />
-          <strong>{progress.skipped}</strong> sem conteúdo
-        </span>
+        {progress.exists > 0 && (
+          <span className="flex items-center gap-1 text-blue-400">
+            <span className="w-2.5 h-2.5 rounded-full border border-blue-500/50 inline-block" />
+            <strong>{progress.exists}</strong> já existem
+          </span>
+        )}
+        {progress.skipped > 0 && (
+          <span className="flex items-center gap-1 text-zinc-500">
+            <span className="w-2.5 h-2.5 rounded-full border border-zinc-600 inline-block" />
+            <strong>{progress.skipped}</strong> sem conteúdo
+          </span>
+        )}
         <span className="flex items-center gap-1 text-red-400">
           <XCircle size={11} />
           <strong>{progress.errors}</strong> erros
@@ -184,10 +193,11 @@ function BatchProgressPanel({
             >
               <span className={`mt-0.5 shrink-0 ${
                 entry.result === 'updated' ? 'text-green-400' :
+                entry.result === 'exists'  ? 'text-blue-500' :
                 entry.result === 'skipped' ? 'text-zinc-600' :
                 'text-red-400'
               }`}>
-                {entry.result === 'updated' ? '✓' : entry.result === 'skipped' ? '—' : '✕'}
+                {entry.result === 'updated' ? '✓' : entry.result === 'exists' ? '=' : entry.result === 'skipped' ? '—' : '✕'}
               </span>
               <span className="text-xs text-zinc-400 leading-snug truncate flex-1">
                 {entry.title}
@@ -391,6 +401,7 @@ export default function NewsAdminPage() {
       current: 0,
       updated: 0,
       skipped: 0,
+      exists: 0,
       errors: 0,
       log: [],
     })
@@ -619,6 +630,7 @@ export default function NewsAdminPage() {
       current: 0,
       updated: 0,
       skipped: 0,
+      exists: 0,
       errors: 0,
       log: [],
     })
@@ -737,12 +749,13 @@ export default function NewsAdminPage() {
       current: 0,
       updated: 0,
       skipped: 0,
+      exists: 0,
       errors: 0,
       log: [],
     })
 
     let offset = 0
-    let accumImported = 0, accumSkipped = 0, accumErrors = 0
+    let accumImported = 0, accumExists = 0, accumErrors = 0
 
     while (offset < total && !controller.signal.aborted) {
       const limit = Math.min(BATCH, total - offset)
@@ -757,7 +770,7 @@ export default function NewsAdminPage() {
       if (dateTo) batchParams.set('dateTo', dateTo)
       const url = `/api/admin/news/import?${batchParams}`
 
-      let batchImported = 0, batchSkipped = 0, batchErrors = 0
+      let batchImported = 0, batchExists = 0, batchErrors = 0
       let batchDone = false
 
       try {
@@ -786,22 +799,22 @@ export default function NewsAdminPage() {
 
               if (event.type === 'item') {
                 if (event.result === 'imported') batchImported++
-                else if (event.result === 'exists') batchSkipped++
+                else if (event.result === 'exists') batchExists++
                 else batchErrors++
 
                 const entry: StreamLogEntry = {
                   title: event.title,
-                  result: event.result === 'imported' ? 'updated' : event.result === 'exists' ? 'skipped' : 'error',
+                  result: event.result === 'imported' ? 'updated' : event.result === 'exists' ? 'exists' : 'error',
                   artistCount: 0,
                 }
                 const au = accumImported + batchImported
-                const as_ = accumSkipped + batchSkipped
+                const ax = accumExists + batchExists
                 const ae = accumErrors + batchErrors
                 setStreamProgress(prev => prev ? {
                   ...prev,
                   current: offset + event.current,
                   updated: au,
-                  skipped: as_,
+                  exists: ax,
                   errors: ae,
                   log: [...prev.log, entry].slice(-100),
                 } : null)
@@ -823,7 +836,7 @@ export default function NewsAdminPage() {
       }
 
       accumImported += batchImported
-      accumSkipped += batchSkipped
+      accumExists += batchExists
       accumErrors += batchErrors
       offset += limit
     }
@@ -833,7 +846,7 @@ export default function NewsAdminPage() {
       phase: 'done',
       current: total,
       updated: accumImported,
-      skipped: accumSkipped,
+      exists: accumExists,
       errors: accumErrors,
     } : null)
     refetchTable()
