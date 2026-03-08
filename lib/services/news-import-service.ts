@@ -173,8 +173,10 @@ export async function importOne(
         return 'exists'
     }
 
-    const { content, imageUrl } = await fetchArticleWithRetry(article.url, source)
+    const { content, imageUrl: rawImageUrl } = await fetchArticleWithRetry(article.url, source)
     if (!content || content.length < 100) return 'error'
+    // Normalizar URLs de imagem para HTTPS (Dramabeans e outros servem HTTP)
+    const imageUrl = rawImageUrl?.replace(/^http:\/\//i, 'https://') ?? null
 
     const readingTimeMin = estimateReadingTime(content)
     const contentType    = classifyContentType(article.title, content, source)
