@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -21,7 +21,7 @@ function MarkdownPreview({ content }: { content: string }) {
   )
 }
 
-export default function WritePage() {
+function WritePageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -343,5 +343,13 @@ export default function WritePage() {
         </aside>
       </div>
     </div>
+  )
+}
+
+export default function WritePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <WritePageContent />
+    </Suspense>
   )
 }
