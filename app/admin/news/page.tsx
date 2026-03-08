@@ -342,6 +342,7 @@ export default function NewsAdminPage() {
   const [sourceTotal, setSourceTotal] = useState<number>(200)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  // null = loading, number = ok, -1 = error
   const [availableCount, setAvailableCount] = useState<number | null>(null)
 
   // Optimistic artist override
@@ -369,9 +370,9 @@ export default function NewsAdminPage() {
     // Contagem de artigos disponíveis na fonte (só quando há filtro de data)
     if (dateFrom || dateTo) {
       fetch(`/api/admin/news/import?${params}`)
-        .then(r => r.json())
-        .then(d => setAvailableCount(d.available ?? null))
-        .catch(() => setAvailableCount(null))
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(d => setAvailableCount(typeof d.available === 'number' ? d.available : -1))
+        .catch(() => setAvailableCount(-1))  // -1 = API indisponível
     }
   }, [selectedSource, dateFrom, dateTo])
 
@@ -974,6 +975,8 @@ export default function NewsAdminPage() {
                           <span className="text-zinc-600 flex items-center gap-1">
                             <Loader2 size={10} className="animate-spin" /> verificando fonte...
                           </span>
+                        ) : availableCount === -1 ? (
+                          <span className="text-zinc-600">API da fonte indisponível</span>
                         ) : (
                           <>
                             <strong className={availableCount > (sourceCount ?? 0) ? 'text-emerald-400' : 'text-zinc-300'}>
@@ -1007,7 +1010,7 @@ export default function NewsAdminPage() {
                     {(dateFrom || dateTo) && (
                       <button
                         onClick={handleSourceImport}
-                        disabled={isStreaming || !dateFrom}
+                        disabled={isStreaming || !dateFrom || availableCount === -1}
                         className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-emerald-500/50 hover:text-emerald-300 transition-all disabled:opacity-50 text-sm"
                       >
                         {isStreaming
