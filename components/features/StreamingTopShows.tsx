@@ -82,7 +82,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
             </div>
 
             {/* Pills de plataforma */}
-            <div className="flex gap-2 mb-5 flex-wrap">
+            <div className="flex gap-2 mb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {availablePlatforms.map(platform => {
                     const cfg = getStreamingConfig(platform)
                     const isActive = platform === activeTab
@@ -91,7 +91,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                             key={platform}
                             onClick={() => setActiveTab(platform)}
                             className={`
-                                px-4 py-1.5 rounded-full text-xs font-bold transition-all
+                                flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all
                                 ${isActive
                                     ? 'bg-white text-black shadow-md'
                                     : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
