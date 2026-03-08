@@ -130,7 +130,6 @@ export function ArtistsList() {
     const handlePageChange = (newPage: number) => {
         const filters = getFiltersFromUrl()
         updateUrl(filters, newPage)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     return (

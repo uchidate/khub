@@ -156,7 +156,6 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
 
     const handlePageChange = (newPage: number) => {
         updateUrl(getFiltersFromUrl(), newPage)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     const handleFeedMode = (mode: FeedMode) => {
