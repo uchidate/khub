@@ -370,8 +370,31 @@ export class RSSNewsService {
 
     // Pré-processadores HTML específicos por fonte (rodam sobre o chunk extraído)
     const SOURCE_HTML_PREPROCESSORS: Record<string, (html: string) => string> = {
-      // Asian Junkie: remover barra de share (Facebook, Twitter, etc.) do topo do 'entry' div
-      'Asian Junkie': (html) => html.replace(/<div[^>]*class="[^"]*\bshare-post\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, ''),
+      // Asian Junkie: remover share bar do topo e truncar antes de tags/autor/navegação
+      'Asian Junkie': (html) => {
+        // Remove share bar do topo — usa o comment <!-- .share-post --> como âncora quando disponível
+        let cleaned = html.replace(/<div[^>]*class="[^"]*\bshare-post\b[^"]*"[^>]*>[\s\S]*?<!--\s*\.share-post\s*-->\s*/gi, '')
+        // Fallback: remoção simples (sem comment âncora)
+        if (cleaned === html) {
+          cleaned = cleaned.replace(/<div[^>]*class="[^"]*\bshare-post\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*/gi, '')
+        }
+        // Truncar antes das seções de tags, autor ou navegação que ficam após o artigo
+        const endMarkers = [
+          /class="[^"]*\bpost-tag\b[^"]*"/i,
+          /class="[^"]*\bauthor-bio\b[^"]*"/i,
+          /class="[^"]*\bpost-navigation\b[^"]*"/i,
+          /class="[^"]*\bauthor-description\b[^"]*"/i,
+          /id="[^"]*\bdisqus\b[^"]*"/i,
+        ]
+        for (const marker of endMarkers) {
+          const idx = cleaned.search(marker)
+          if (idx > -1) {
+            const blockStart = cleaned.lastIndexOf('<', idx)
+            return cleaned.substring(0, blockStart > -1 ? blockStart : idx)
+          }
+        }
+        return cleaned
+      },
       // Soompi: o article-wrapper inclui bloco de sharing e artigos relacionados ao final
       // Truncar antes do primeiro sinal de sharing social ou related
       Soompi: (html) => {
