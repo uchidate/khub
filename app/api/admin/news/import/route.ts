@@ -128,8 +128,9 @@ async function countAvailable(source: string, dateFrom: Date, dateTo: Date): Pro
     try {
         const { total } = await fetchWPPostsPage(base, after, before, 1, 1)
         return total
-    } catch {
-        return 0
+    } catch (err) {
+        console.warn(`[import] WP API indisponível para ${source}:`, err)
+        return -1   // sinaliza erro (diferente de 0 artigos)
     }
 }
 
