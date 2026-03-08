@@ -10,13 +10,22 @@ const AUTOSAVE_KEY = 'blog_draft_autosave'
 
 type Tab = 'write' | 'preview'
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 function MarkdownPreview({ content }: { content: string }) {
-  // Simple inline preview — render line breaks and basic markdown
+  // Simple inline preview — escape HTML then render line breaks
   if (!content) return <p className="text-zinc-600 italic">Nada para visualizar ainda...</p>
   return (
     <div
       className="prose prose-invert prose-zinc max-w-none prose-headings:font-bold prose-a:text-purple-400"
-      dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br/>') }}
+      dangerouslySetInnerHTML={{ __html: escapeHtml(content).replace(/\n/g, '<br/>') }}
     />
   )
 }
