@@ -84,14 +84,15 @@ async function fetchAndSaveNewsFromSource(
   result.fetched = items.length
 
   if (dryRun) {
-    result.skipped = items.filter(i => existingUrls.has(i.link)).length
+    result.skipped = items.filter(i => existingUrls.has(normalizeSourceUrl(i.link))).length
     result.saved = items.length - result.skipped
     result.duration_ms = Date.now() - t
     return result
   }
 
   for (const item of items) {
-    if (existingUrls.has(item.link)) {
+    const canonicalUrl = normalizeSourceUrl(item.link)
+    if (existingUrls.has(canonicalUrl)) {
       result.skipped++
       continue
     }
@@ -99,12 +100,12 @@ async function fetchAndSaveNewsFromSource(
     try {
       const content = item.content || item.description || ''
 
-      const canonicalUrl = normalizeSourceUrl(item.link)
       const savedNews = await prisma.news.upsert({
         where: { sourceUrl: canonicalUrl },
+        // Não atualiza publishedAt no upsert — evita derivação de datas via RSS
+        // A data só é definida na criação (authoritative: WP API date_gmt via import)
         update: {
           imageUrl: item.imageUrl ?? null,
-          publishedAt: item.publishedAt,
         },
         create: {
           title: item.title,
@@ -123,7 +124,7 @@ async function fetchAndSaveNewsFromSource(
         },
       })
 
-      existingUrls.add(item.link)
+      existingUrls.add(canonicalUrl)
       result.saved++
 
       // Vincular artistas mencionados (falha graciosamente)

@@ -333,9 +333,20 @@ async function importOne(
     const canonicalUrl = normalizeSourceUrl(article.url)
     const existing = await prisma.news.findFirst({
         where: { sourceUrl: canonicalUrl },
-        select: { id: true },
+        select: { id: true, publishedAt: true },
     })
-    if (existing) return 'exists'
+    if (existing) {
+        // Corrige publishedAt se diferir > 1 dia da data authoritative do WP API (date_gmt)
+        // Isso corrije artigos que tiveram datas derivadas pelo cron RSS ao longo do tempo
+        const msDiff = Math.abs(existing.publishedAt.getTime() - article.date.getTime())
+        if (msDiff > 86_400_000) {
+            await prisma.news.update({
+                where: { id: existing.id },
+                data: { publishedAt: article.date },
+            })
+        }
+        return 'exists'
+    }
 
     const service = getRSSNewsService()
     const { content, imageUrl } = await fetchWithRetry(service, article.url, source)
