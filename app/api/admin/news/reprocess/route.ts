@@ -12,16 +12,18 @@
  *   Batch:      POST ?mode=batch&source=<source>&limit=N&all=1[&stream=1]
  *
  * Query params:
- *   id:     ID da notícia (obrigatório no modo individual)
- *   mode:   'batch' — reprocessa lote
- *   source: filtra por fonte (ex: 'Koreaboo') — apenas no modo batch
- *   all:    '1' — reprocessa todos da fonte (não só candidatos)
- *   limit:  máximo para batch (default: 50, max: 200)
- *   offset: pular N itens (default: 0) — permite paginação em múltiplos lotes
- *   stream: '1' — retorna SSE com progresso em tempo real (batch only)
+ *   id:       ID da notícia (obrigatório no modo individual)
+ *   mode:     'batch' — reprocessa lote
+ *   source:   filtra por fonte (ex: 'Koreaboo') — apenas no modo batch
+ *   all:      '1' — reprocessa todos da fonte (não só candidatos)
+ *   limit:    máximo para batch (default: 50, max: 200)
+ *   offset:   pular N itens (default: 0) — permite paginação em múltiplos lotes
+ *   stream:   '1' — retorna SSE com progresso em tempo real (batch only)
+ *   dateFrom: ISO date string — filtra por publishedAt >= dateFrom (ex: 2024-01-01)
+ *   dateTo:   ISO date string — filtra por publishedAt <= dateTo (ex: 2024-12-31)
  *
- * GET /api/admin/news/reprocess?source=<source>
- *   Retorna a contagem de notícias disponíveis da fonte.
+ * GET /api/admin/news/reprocess?source=<source>[&dateFrom=...&dateTo=...]
+ *   Retorna a contagem de notícias disponíveis da fonte (respeitando filtro de data).
  *
  * SSE events (quando stream=1):
  *   { type: 'start',    total: number }
@@ -114,10 +116,17 @@ async function selectBatchItems(
     source: string | undefined,
     forceAll: boolean,
     offset: number = 0,
+    dateFrom?: Date,
+    dateTo?: Date,
 ): Promise<BatchItem[]> {
+    const dateFilter = (dateFrom || dateTo)
+        ? { publishedAt: { ...(dateFrom ? { gte: dateFrom } : {}), ...(dateTo ? { lte: dateTo } : {}) } }
+        : {}
+
     const baseWhere = {
         sourceUrl: { not: '' },
         ...(source ? { source } : {}),
+        ...dateFilter,
     }
 
     if (source && forceAll) {
@@ -229,8 +238,10 @@ export async function POST(request: NextRequest) {
         const source = searchParams.get('source') || undefined
         const forceAll = searchParams.get('all') === '1'
         const streaming = searchParams.get('stream') === '1'
+        const dateFrom = searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')!) : undefined
+        const dateTo = searchParams.get('dateTo') ? new Date(searchParams.get('dateTo') + 'T23:59:59Z') : undefined
 
-        const items = await selectBatchItems(limit, source, forceAll, offset)
+        const items = await selectBatchItems(limit, source, forceAll, offset, dateFrom, dateTo)
 
         if (streaming) {
             return streamBatch(items)
@@ -307,8 +318,18 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'source obrigatório' }, { status: 400 })
     }
 
+    const { searchParams: sp } = new URL(request.url)
+    const dateFrom = sp.get('dateFrom') ? new Date(sp.get('dateFrom')!) : undefined
+    const dateTo = sp.get('dateTo') ? new Date(sp.get('dateTo') + 'T23:59:59Z') : undefined
+
     const count = await prisma.news.count({
-        where: { source, sourceUrl: { not: '' } },
+        where: {
+            source,
+            sourceUrl: { not: '' },
+            ...(dateFrom || dateTo ? {
+                publishedAt: { ...(dateFrom ? { gte: dateFrom } : {}), ...(dateTo ? { lte: dateTo } : {}) },
+            } : {}),
+        },
     })
 
     return NextResponse.json({ source, count })

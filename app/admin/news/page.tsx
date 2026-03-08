@@ -340,22 +340,27 @@ export default function NewsAdminPage() {
   const [selectedSource, setSelectedSource] = useState<Source | null>(null)
   const [sourceCount, setSourceCount] = useState<number | null>(null)
   const [sourceTotal, setSourceTotal] = useState<number>(200)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   // Optimistic artist override
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
 
-  // Buscar contagem ao selecionar fonte
+  // Buscar contagem ao selecionar fonte ou mudar período
   useEffect(() => {
     if (!selectedSource) { setSourceCount(null); return }
     setSourceCount(null)
-    fetch(`/api/admin/news/reprocess?source=${encodeURIComponent(selectedSource)}`)
+    const params = new URLSearchParams({ source: selectedSource })
+    if (dateFrom) params.set('dateFrom', dateFrom)
+    if (dateTo) params.set('dateTo', dateTo)
+    fetch(`/api/admin/news/reprocess?${params}`)
       .then(r => r.json())
       .then(d => {
         setSourceCount(d.count ?? null)
         setSourceTotal(d.count ?? 200)
       })
       .catch(() => setSourceCount(null))
-  }, [selectedSource])
+  }, [selectedSource, dateFrom, dateTo])
 
   // ── SSE streaming helper ───────────────────────────────────────────────────
 
@@ -609,7 +614,17 @@ export default function NewsAdminPage() {
 
     while (offset < total && !controller.signal.aborted) {
       const limit = Math.min(BATCH, total - offset)
-      const url = `/api/admin/news/reprocess?mode=batch&source=${encodeURIComponent(selectedSource)}&all=1&limit=${limit}&offset=${offset}&stream=1`
+      const batchParams = new URLSearchParams({
+          mode: 'batch',
+          source: selectedSource,
+          all: '1',
+          limit: String(limit),
+          offset: String(offset),
+          stream: '1',
+        })
+        if (dateFrom) batchParams.set('dateFrom', dateFrom)
+        if (dateTo) batchParams.set('dateTo', dateTo)
+        const url = `/api/admin/news/reprocess?${batchParams}`
 
       let batchUpdated = 0, batchSkipped = 0, batchErrors = 0
       let batchDone = false
@@ -782,7 +797,11 @@ export default function NewsAdminPage() {
                   return (
                     <button
                       key={s}
-                      onClick={() => setSelectedSource(prev => prev === s ? null : s)}
+                      onClick={() => {
+                        setSelectedSource(prev => prev === s ? null : s)
+                        setDateFrom('')
+                        setDateTo('')
+                      }}
                       className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors border ${
                         active && c
                           ? `${c.bg} ${c.text} ${c.border}`
@@ -797,6 +816,36 @@ export default function NewsAdminPage() {
 
               {selectedSource && (
                 <div className="space-y-2.5">
+                  {/* Filtro de período */}
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 flex-wrap">
+                    <span>Período</span>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={e => setDateFrom(e.target.value)}
+                      disabled={isStreaming}
+                      className="bg-zinc-800 border border-zinc-700 rounded px-2 py-0.5 text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                    />
+                    <span>até</span>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={e => setDateTo(e.target.value)}
+                      disabled={isStreaming}
+                      className="bg-zinc-800 border border-zinc-700 rounded px-2 py-0.5 text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                    />
+                    {(dateFrom || dateTo) && (
+                      <button
+                        onClick={() => { setDateFrom(''); setDateTo('') }}
+                        disabled={isStreaming}
+                        className="text-zinc-600 hover:text-zinc-400 disabled:opacity-50"
+                        title="Limpar período"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
                   {/* Contagem + input de total */}
                   <div className="flex items-center gap-3 flex-wrap">
                     {sourceCount === null ? (
@@ -806,6 +855,7 @@ export default function NewsAdminPage() {
                     ) : (
                       <span className="text-xs text-zinc-500">
                         <strong className="text-zinc-300">{sourceCount.toLocaleString('pt-BR')}</strong> notícias em {selectedSource}
+                        {(dateFrom || dateTo) && <span className="text-zinc-600"> no período</span>}
                       </span>
                     )}
 
