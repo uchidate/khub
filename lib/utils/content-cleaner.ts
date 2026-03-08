@@ -92,6 +92,21 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'site name standalone', pattern: /^\s*Koreaboo\s*$/gm },
     // Timestamp relativo (ex: "2 hours ago", "3 days ago")
     { description: 'relative timestamp', pattern: /^\s*\d+\s+(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?)\s+ago\s*$/gim },
+    // "Source: [TheQoo](...)" / "**Source: **[...](...)" — link de fonte inline
+    { description: 'source link', pattern: /\n*\*{0,2}Source:\s*\*{0,2}\s*\[[^\]]*\]\([^)]+\)\s*/gi },
+    // Links de artigos relacionados internos Koreaboo que vazam após truncamento
+    { description: 'internal article links', pattern: /\n*-\s*\[[^\]]+\]\(https?:\/\/www\.koreaboo\.com\/(?:news|stories|trending|lists)\/[^)]+\)\s*/g },
+    // Imagens CDN do Koreaboo de tamanho small (ex: w96 ou w128) — thumbnails de artigos relacionados
+    { description: 'small cdn thumbnails', pattern: /!\[[^\]]*\]\(https?:\/\/image\.koreaboo\.com\/[^)]*(?:w96|w128|w64|w32|thumbnail|thumb)[^)]*\)/gi },
+    // "See more [Artist](https://www.koreaboo.com/artist/...)" — link de seção de artista
+    { description: 'see more artist', pattern: /\n*\[See more [^\]]+\]\(https?:\/\/www\.koreaboo\.com\/artist\/[^)]+\)\s*/gi },
+    // Lista de artistas do footer que vaza: "- [2NE1](https://www.koreaboo.com/artist/...)"
+    { description: 'footer artist links', pattern: /\n*-\s*\[[^\]]+\]\(https?:\/\/www\.koreaboo\.com\/artist\/[^)]+\)\s*/g },
+    // Seções do footer: "Artists", "Sections", "Follow Us" como linhas isoladas
+    { description: 'footer section headers', pattern: /^\s*(?:Artists|Sections|Follow Us)\s*$/gm },
+    // Fragmentos de SVG que vazaram (path fill=...)
+    { description: 'svg fragments', pattern: /<path[^>]*>[\s\S]*?<\/path>/gi },
+    { description: 'svg attributes', pattern: /\bfill="[^"]*"[^>\n]*/g },
   ],
 
   Dramabeans: [
@@ -113,6 +128,14 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'site nav tabs', pattern: /^-\s*\[(?:recaps?|reviews?|news|videos?|cast|episodes?)\][^\n]*\n/gim },
     // Linhas que são só links de âncora interna (#anchor) — navegação da página
     { description: 'anchor nav links', pattern: /^-\s*\[[^\]]{1,30}\]\(#[^)]+\)\s*\n/gim },
+    // Contagem de comentários "[1](#comments)" ou "[42](#comments)" — do .comment div
+    { description: 'comment count link', pattern: /^\s*\[\d+\]\(#comments\)\s*\n*/gm },
+    // Linha de data isolada (publicação / atualização)
+    { description: 'standalone date', pattern: /^(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}(?:\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4})?\s*$/gm },
+    // Byline "### by [Author](/members/...)" — duplica o autor já exibido na página
+    { description: 'author byline', pattern: /^#{1,4}\s+by\s+\[[^\]]+\]\([^)]+\)\s*\n*/gm },
+    // Seletor de episódios que vaza: "Episodes 1-2 (First Impressions)"
+    { description: 'episode selector option', pattern: /^\s*Episodes? \d+[^\n]{0,60}\n*/gm },
   ],
 
   'Asian Junkie': [
