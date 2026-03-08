@@ -876,7 +876,7 @@ export default function NewsAdminPage() {
     } : null)
     refetchTable()
     // Re-fetch counts: importOne pode ter corrigido publishedAt de artigos com data errada
-    if (selectedSource) refreshSourceCounts(selectedSource, dateFrom, dateTo)
+    refreshSourceCounts(selectedSource, dateFrom, dateTo)
   }
 
   const isStreaming = streamProgress?.phase === 'running'
