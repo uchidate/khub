@@ -394,13 +394,19 @@ export class RSSNewsService {
       // Dramabeans: remover metadata do topo do post-item (comment count, datas, título duplicado, autor)
       Dramabeans: (html) => {
         let cleaned = html
-        // Remove bloco de comentário/data (<div class="comment">...</div>)
-        cleaned = cleaned.replace(/<div[^>]*class="[^"]*\bcomment\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, '')
+        // Remove bloco de comentário/data (<div class="comment">...</div>) — apenas a div com class exata "comment"
+        cleaned = cleaned.replace(/<div[^>]*class="(?:[^"]*\s)?comment(?:\s[^"]*)?"[^>]*>[\s\S]*?<\/div>\s*/gi, '')
         // Remove <meta> tags (og:url, og:title, etc. embutidas na estrutura)
         cleaned = cleaned.replace(/<meta[^>]*>/gi, '')
         // Remove select de episódios (line-text-wrapper)
         cleaned = cleaned.replace(/<div[^>]*class="[^"]*\bline-text-wrapper\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, '')
-        // Truncar na seção de comentários do Disqus (após o artigo)
+        // Truncar na seção RELATED POSTS (lista de artigos relacionados dentro do post-item)
+        const relatedIdx = cleaned.search(/<p[^>]*>\s*(?:&nbsp;\s*<br\s*\/?>\s*)?<strong>RELATED POSTS<\/strong>/i)
+        if (relatedIdx > -1) return cleaned.substring(0, relatedIdx)
+        // Truncar na linha de Tags (fallback, caso RELATED POSTS não exista)
+        const tagsIdx = cleaned.search(/<p[^>]*>Tags:\s*<a/i)
+        if (tagsIdx > -1) return cleaned.substring(0, tagsIdx)
+        // Truncar na seção de comentários (fallback final)
         const endIdx = cleaned.search(/id="[^"]*(?:disqus|comments)[^"]*"/i)
         if (endIdx > -1) cleaned = cleaned.substring(0, endIdx)
         return cleaned
