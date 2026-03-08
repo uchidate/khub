@@ -2,10 +2,20 @@ name: CodeQL Analysis
 
 # ============================================================
 # Análise estática de segurança (SAST) via GitHub CodeQL.
-# Detecta vulnerabilidades comuns em JavaScript/TypeScript:
-# - Injeção de código, XSS, path traversal, etc.
+# Detecta vulnerabilidades em JavaScript/TypeScript:
+#   - Injeção de código, XSS, path traversal, log injection, etc.
 #
-# Resultados aparecem em: GitHub → Security → Code scanning
+# Como funciona em PRs (duas checks aparecem no PR):
+#   ① "CodeQL Analysis / Analyze" → sempre passa (só faz upload)
+#   ② "Code scanning results / CodeQL" → BLOQUEIA o PR se o código
+#      do PR introduzir alertas novos de severidade HIGH ou CRITICAL
+#
+# ⚠️  Se o PR estiver bloqueado mas o job "Analyze" estiver verde:
+#   → Vá em Security → Code scanning → filtre pela branch do PR
+#   → Corrija os alertas listados como "New" ou "Introduced"
+#   → Falsos-positivos: marque como "Dismissed" na aba Security
+#
+# Para ver todos os alertas: GitHub → Security → Code scanning
 # ============================================================
 
 on:
@@ -33,8 +43,9 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
-          # Queries extras de segurança além das padrões
-          queries: security-extended
+          # security-and-quality: queries padrão de segurança + qualidade
+          # (mais focado que security-extended, menos falsos-positivos)
+          queries: security-and-quality
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
