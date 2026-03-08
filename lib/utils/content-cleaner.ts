@@ -29,6 +29,9 @@ const COMMON_RULES: SourceRule[] = [
   { description: 'youtube embed as image', pattern: /!\[[^\]]*\]\(https?:\/\/(?:www\.)?youtube\.com\/embed\/[^)]+\)/g },
   // Entidade HTML &#038; (= &) que ficou literal em URLs de markdown
   { description: 'html numeric amp entity', pattern: /&#0*38;/g, replacement: '&' },
+  // Em dash / en dash como entidades numéricas literais
+  { description: 'em dash entity', pattern: /&#8212;|&mdash;/g, replacement: '—' },
+  { description: 'en dash entity', pattern: /&#8211;|&ndash;/g, replacement: '–' },
   // Texto fallback de <video> tag não suportada
   { description: 'video fallback text', pattern: /^\s*Your browser does not support video\.\s*$/gim },
   // Links de navegação interna (Next Page / Previous Page)
@@ -121,6 +124,16 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'thot of day', pattern: /\n+Thot(?:s)? of the Day:?[^\n]*/gi },
     // Disqus / comments prompt
     { description: 'comments prompt', pattern: /\n+(?:Leave a comment|Join the discussion)[^\n]*/gi },
+    // Barra de share ("Share" isolado + links de redes sociais de sharing)
+    { description: 'share text', pattern: /^\s*Share\s*$/gm },
+    { description: 'social share links', pattern: /\n*-\s*\[[^\]]+\]\(https?:\/\/(?:www\.facebook\.com\/sharer|twitter\.com\/intent|t\.co|plus\.google\.com|pinterest\.com\/pin)[^)]+\)\n*/g },
+    // Tag links no rodapé (ex: [Ayumu Imazu](https://www.asianjunkie.com/tag/...))
+    { description: 'tag links', pattern: /\n*\[[^\]]+\]\(https?:\/\/www\.asianjunkie\.com\/tag\/[^)]+\)\n*/g },
+    // "Tags [tag1] [tag2]..." no rodapé
+    { description: 'tags line', pattern: /\nTags\s+(?:\[[^\]]+\]\([^)]+\)\s*)+/g },
+    // &#8212; / &#8211; como entidades literais (em dash / en dash não decodificados)
+    { description: 'em dash entity', pattern: /&#8212;/g, replacement: '—' },
+    { description: 'en dash entity', pattern: /&#8211;/g, replacement: '–' },
   ],
 
   HelloKpop: [
