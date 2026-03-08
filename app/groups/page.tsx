@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { SectionHeader } from "@/components/ui/SectionHeader"
@@ -47,7 +48,9 @@ export default async function GroupsPage() {
                 subtitle="As formações, as gerações e os fandoms. Explore os grupos que moldaram a identidade do K-Pop."
             />
 
-            <GroupsList />
+            <Suspense>
+                <GroupsList />
+            </Suspense>
             <ScrollToTop />
         </PageTransition>
         </>
