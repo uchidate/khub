@@ -280,37 +280,27 @@ jobs:
           echo "📥 Pulling images..."
           $COMPOSE_CMD -f docker-compose.staging.yml pull hallyuhub-staging
 
-          echo "🛑 Parando containers antigos..."
-          $COMPOSE_CMD -f docker-compose.staging.yml down || true
-          docker network rm backend-staging 2>/dev/null || true
-
-          echo "🚀 Iniciando containers..."
-          $COMPOSE_CMD -f docker-compose.staging.yml up -d
-
-          echo "⏳ Aguardando postgres aceitar conexões..."
-          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
-          if [ -n "$POSTGRES_CONTAINER" ]; then
-            for i in {1..30}; do
-              if docker exec "$POSTGRES_CONTAINER" pg_isready -U hallyuhub -d hallyuhub_staging >/dev/null 2>&1; then
-                echo "✅ Postgres ready after ${i}s"
-                break
-              fi
-              [ $i -eq 30 ] && echo "⚠️ Postgres timeout, proceeding anyway"
-              sleep 1
-            done
-          fi
+          # Garante infraestrutura (postgres, ollama) sem derrubá-los desnecessariamente
+          echo "✅ Garantindo infraestrutura (postgres, ollama)..."
+          $COMPOSE_CMD -f docker-compose.staging.yml up -d postgres-staging ollama-staging 2>/dev/null || true
 
           echo "🔐 Syncing DB user password..."
-          if [ -z "$POSTGRES_CONTAINER" ]; then
-            echo "⚠️ Postgres staging container not found, skipping password sync"
-          else
+          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.staging|staging.postgres' | head -1)
+          if [ -n "$POSTGRES_CONTAINER" ]; then
             docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_staging -c \
               "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
               && echo "✅ Password synced" \
               || echo "⚠️ Password sync failed (non-blocking)"
           fi
 
-          # OTIMIZAÇÃO: Health check mais rápido (2s interval, 18 retries)
+          # Recria apenas o app + migrate (postgres e network ficam intactos → menos downtime)
+          echo "🛑 Parando apenas o app..."
+          $COMPOSE_CMD -f docker-compose.staging.yml stop hallyuhub-staging 2>/dev/null || true
+          $COMPOSE_CMD -f docker-compose.staging.yml rm -f hallyuhub-staging migrate-staging 2>/dev/null || true
+
+          echo "🚀 Iniciando app + migration..."
+          $COMPOSE_CMD -f docker-compose.staging.yml up -d hallyuhub-staging
+
           echo "⏳ Aguardando container ficar healthy..."
           max_retries=18
           count=0
@@ -322,17 +312,6 @@ jobs:
           done
 
           [ $count -eq $max_retries ] && echo "❌ Timeout" && $COMPOSE_CMD -f docker-compose.staging.yml logs hallyuhub-staging | tail -n 50 && exit 1
-
-          # OTIMIZAÇÃO: Skip migrations se DB já está atualizado
-          echo "🔍 Checking migrations..."
-          MIGRATE_STATUS=$($COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate status 2>&1 || echo "status_failed")
-
-          if echo "$MIGRATE_STATUS" | grep -qi "up to date"; then
-            echo "✅ No pending migrations - skipping"
-          else
-            echo "🔄 Applying migrations..."
-            $COMPOSE_CMD -f docker-compose.staging.yml exec -T hallyuhub-staging npx prisma migrate deploy || echo "⚠️ Migration failed (continuing)"
-          fi
 
           chmod +x scripts/export-cron-info.sh scripts/setup-auto-generation.sh
           ./scripts/export-cron-info.sh staging
@@ -494,37 +473,27 @@ jobs:
           echo "📥 Pulling images..."
           $COMPOSE_CMD -f docker-compose.prod.yml pull hallyuhub
 
-          echo "🛑 Parando containers antigos..."
-          $COMPOSE_CMD -f docker-compose.prod.yml down || true
-          docker network rm backend-production 2>/dev/null || true
-
-          echo "🚀 Iniciando containers..."
-          $COMPOSE_CMD -f docker-compose.prod.yml up -d
-
-          echo "⏳ Aguardando postgres aceitar conexões..."
-          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
-          if [ -n "$POSTGRES_CONTAINER" ]; then
-            for i in {1..30}; do
-              if docker exec "$POSTGRES_CONTAINER" pg_isready -U hallyuhub -d hallyuhub_production >/dev/null 2>&1; then
-                echo "✅ Postgres ready after ${i}s"
-                break
-              fi
-              [ $i -eq 30 ] && echo "⚠️ Postgres timeout, proceeding anyway"
-              sleep 1
-            done
-          fi
+          # Garante infraestrutura (postgres, ollama) sem derrubá-los desnecessariamente
+          echo "✅ Garantindo infraestrutura (postgres, ollama)..."
+          $COMPOSE_CMD -f docker-compose.prod.yml up -d postgres-production ollama-production 2>/dev/null || true
 
           echo "🔐 Syncing DB user password..."
-          if [ -z "$POSTGRES_CONTAINER" ]; then
-            echo "⚠️ Postgres production container not found, skipping password sync"
-          else
+          POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'postgres.production|production.postgres' | head -1)
+          if [ -n "$POSTGRES_CONTAINER" ]; then
             docker exec "$POSTGRES_CONTAINER" psql -U hallyuhub -d hallyuhub_production -c \
               "ALTER USER hallyuhub PASSWORD '${{ secrets.POSTGRES_PASSWORD }}';" 2>&1 \
               && echo "✅ Password synced" \
               || echo "⚠️ Password sync failed (non-blocking)"
           fi
 
-          # OTIMIZAÇÃO: Health check mais rápido (2s interval, 18 retries)
+          # Recria apenas o app + migrate (postgres e network ficam intactos → menos downtime)
+          echo "🛑 Parando apenas o app..."
+          $COMPOSE_CMD -f docker-compose.prod.yml stop hallyuhub 2>/dev/null || true
+          $COMPOSE_CMD -f docker-compose.prod.yml rm -f hallyuhub migrate-production 2>/dev/null || true
+
+          echo "🚀 Iniciando app + migration..."
+          $COMPOSE_CMD -f docker-compose.prod.yml up -d hallyuhub
+
           echo "⏳ Aguardando container ficar healthy..."
           max_retries=18
           count=0
@@ -536,17 +505,6 @@ jobs:
           done
 
           [ $count -eq $max_retries ] && echo "❌ Timeout" && $COMPOSE_CMD -f docker-compose.prod.yml logs hallyuhub | tail -n 50 && exit 1
-
-          # OTIMIZAÇÃO: Skip migrations se DB já está atualizado
-          echo "🔍 Checking migrations..."
-          MIGRATE_STATUS=$($COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate status 2>&1 || echo "status_failed")
-
-          if echo "$MIGRATE_STATUS" | grep -qi "up to date"; then
-            echo "✅ No pending migrations - skipping"
-          else
-            echo "🔄 Applying migrations..."
-            $COMPOSE_CMD -f docker-compose.prod.yml exec -T hallyuhub npx prisma migrate deploy || echo "⚠️ Migration failed (continuing)"
-          fi
 
           chmod +x scripts/export-cron-info.sh scripts/verify-production.sh
           ./scripts/export-cron-info.sh production
