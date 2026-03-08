@@ -372,6 +372,25 @@ export class RSSNewsService {
     const SOURCE_HTML_PREPROCESSORS: Record<string, (html: string) => string> = {
       // Asian Junkie: remover barra de share (Facebook, Twitter, etc.) do topo do 'entry' div
       'Asian Junkie': (html) => html.replace(/<div[^>]*class="[^"]*\bshare-post\b[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi, ''),
+      // Soompi: o article-wrapper inclui bloco de sharing e artigos relacionados ao final
+      // Truncar antes do primeiro sinal de sharing social ou related
+      Soompi: (html) => {
+        const endMarkers = [
+          /facebook\.com\/sharer\/sharer\.php/i,
+          /twitter\.com\/intent\/tweet/i,
+          /<div[^>]*class="[^"]*\brelated[-_]articles?\b[^"]*"/i,
+          /class="[^"]*\bsharedaddy\b[^"]*"/i,
+          /class="[^"]*\bshare-buttons?\b[^"]*"/i,
+        ]
+        for (const marker of endMarkers) {
+          const idx = html.search(marker)
+          if (idx > -1) {
+            const blockStart = html.lastIndexOf('<', idx)
+            return html.substring(0, blockStart > -1 ? blockStart : idx)
+          }
+        }
+        return html
+      },
       // Dramabeans: remover metadata do topo do post-item (comment count, datas, título duplicado, autor)
       Dramabeans: (html) => {
         let cleaned = html
