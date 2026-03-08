@@ -646,6 +646,7 @@ export default function NewsAdminPage() {
           all: '1',
           limit: String(limit),
           offset: String(offset),
+          delay: '500',
           stream: '1',
         })
         if (dateFrom) batchParams.set('dateFrom', dateFrom)
