@@ -12,7 +12,6 @@
  *   dateTo:   YYYY-MM-DD — filtra publishedAt <= dateTo (default: hoje)
  *   limit:    máximo de artigos a importar por lote (default: 200, max: 200)
  *   offset:   pular N artigos descobertos (default: 0) — paginação em múltiplos lotes
- *   delay:    ms de espera entre fetches de artigo (default: 0) — evitar rate limiting
  *   stream:   '1' — SSE com progresso em tempo real
  *
  * GET /api/admin/news/import?source=<source>&dateFrom=...&dateTo=...
@@ -362,12 +361,14 @@ async function importOne(
 
 // ─── SSE streaming ────────────────────────────────────────────────────────────
 
+const STREAM_IMPORT_DELAY_MS = 500 // delay fixo entre fetches para evitar rate limiting
+
 function streamImport(
     articles: DiscoveredArticle[],
     source: string,
     strategy: DiscoveryStrategy,
-    delayMs = 0,
 ): Response {
+    const delayMs = STREAM_IMPORT_DELAY_MS
     const encoder = new TextEncoder()
     const send = (ctrl: ReadableStreamDefaultController, data: object) =>
         ctrl.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
@@ -446,12 +447,11 @@ export async function POST(request: NextRequest) {
         : new Date()
     const limit     = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') || '200')))
     const offset    = Math.max(0, parseInt(searchParams.get('offset') || '0'))
-    const delayMs   = Math.min(5000, Math.max(0, parseInt(searchParams.get('delay') || '0')))
     const streaming = searchParams.get('stream') === '1'
 
     const { articles, strategy } = await discoverArticles(source, dateFrom, dateTo, limit, offset)
 
-    if (streaming) return streamImport(articles, source, strategy, delayMs)
+    if (streaming) return streamImport(articles, source, strategy)
 
     // Non-streaming fallback
     let imported = 0, skipped = 0, errors = 0

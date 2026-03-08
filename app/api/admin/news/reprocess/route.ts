@@ -156,7 +156,10 @@ async function selectBatchItems(
 
 // ─── SSE streaming batch ──────────────────────────────────────────────────────
 
+const STREAM_BATCH_DELAY_MS = 500 // delay fixo entre fetches para evitar rate limiting
+
 function streamBatch(items: BatchItem[]): Response {
+    const delayMs = STREAM_BATCH_DELAY_MS
     const encoder = new TextEncoder()
 
     const send = (controller: ReadableStreamDefaultController, data: object) => {
@@ -200,6 +203,11 @@ function streamBatch(items: BatchItem[]): Response {
                         result,
                         artistCount,
                     })
+
+                    // Rate-limiting delay between article fetches
+                    if (delayMs > 0 && i < items.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delayMs))
+                    }
                 }
 
                 send(controller, { type: 'done', updated, skipped, errors })
