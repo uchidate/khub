@@ -188,15 +188,12 @@ async function discoverViaListing(
         if (articles.length === 0) break  // sem mais artigos
 
         let anyInRange = false
-        let allOlderThanFrom = true
 
         for (const article of articles) {
             if (article.date > dateTo) continue      // ainda mais novo que dateTo — pular
             if (article.date < dateFrom) continue    // mais antigo que dateFrom — pular
             anyInRange = true
-            allOlderThanFrom = false
             collected.push(article)
-            if (article.date >= dateFrom) allOlderThanFrom = false
         }
 
         // Se todos os artigos desta página são mais antigos que dateFrom, parar
