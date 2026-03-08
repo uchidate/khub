@@ -1,6 +1,9 @@
 import { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 
+// Cache sitemap 1h — evita 6 queries massivas a cada crawl do Google/Bing
+export const revalidate = 3600
+
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
 // Data de referência para páginas estáticas (evita "modificado hoje" em todo crawl)
