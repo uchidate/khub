@@ -646,7 +646,6 @@ export default function NewsAdminPage() {
           all: '1',
           limit: String(limit),
           offset: String(offset),
-          delay: '500',
           stream: '1',
         })
         if (dateFrom) batchParams.set('dateFrom', dateFrom)
@@ -741,7 +740,6 @@ export default function NewsAdminPage() {
 
     const total = availableCount && availableCount > 0 ? availableCount : 200
     const BATCH = 200
-    const DELAY_MS = 500  // 500ms entre fetches para evitar rate limiting
 
     setStreamProgress({
       phase: 'running',
@@ -764,7 +762,6 @@ export default function NewsAdminPage() {
         source: selectedSource,
         limit: String(limit),
         offset: String(offset),
-        delay: String(DELAY_MS),
         stream: '1',
       })
       if (dateFrom) batchParams.set('dateFrom', dateFrom)

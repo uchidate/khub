@@ -19,7 +19,6 @@
  *   limit:    máximo para batch (default: 50, max: 200)
  *   offset:   pular N itens (default: 0) — permite paginação em múltiplos lotes
  *   stream:   '1' — retorna SSE com progresso em tempo real (batch only)
- *   delay:    ms de espera entre fetches de artigo (default: 0) — evitar rate limiting
  *   dateFrom: ISO date string — filtra por publishedAt >= dateFrom (ex: 2024-01-01)
  *   dateTo:   ISO date string — filtra por publishedAt <= dateTo (ex: 2024-12-31)
  *
@@ -157,7 +156,10 @@ async function selectBatchItems(
 
 // ─── SSE streaming batch ──────────────────────────────────────────────────────
 
-function streamBatch(items: BatchItem[], delayMs = 0): Response {
+const STREAM_BATCH_DELAY_MS = 500 // delay fixo entre fetches para evitar rate limiting
+
+function streamBatch(items: BatchItem[]): Response {
+    const delayMs = STREAM_BATCH_DELAY_MS
     const encoder = new TextEncoder()
 
     const send = (controller: ReadableStreamDefaultController, data: object) => {
@@ -244,14 +246,13 @@ export async function POST(request: NextRequest) {
         const source = searchParams.get('source') || undefined
         const forceAll = searchParams.get('all') === '1'
         const streaming = searchParams.get('stream') === '1'
-        const delayMs = Math.min(5000, Math.max(0, parseInt(searchParams.get('delay') || '0')))
         const dateFrom = searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')!) : undefined
         const dateTo = searchParams.get('dateTo') ? new Date(searchParams.get('dateTo') + 'T23:59:59Z') : undefined
 
         const items = await selectBatchItems(limit, source, forceAll, offset, dateFrom, dateTo)
 
         if (streaming) {
-            return streamBatch(items, delayMs)
+            return streamBatch(items)
         }
 
         // Non-streaming fallback (keeps backwards compat for API/cron use)
