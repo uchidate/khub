@@ -1,4 +1,5 @@
 import { getRSSNewsService, RSSNewsItem } from '../../services/rss-news-service';
+import { normalizeSourceUrl } from '../../utils/url';
 
 export interface NewsData {
     title: string;           // título original EN/KR do RSS
@@ -77,7 +78,7 @@ export class NewsGeneratorV2 {
             contentMd: content,
             originalTitle: item.title,
             originalContent: content,
-            sourceUrl: item.link,
+            sourceUrl: normalizeSourceUrl(item.link),
             publishedAt: item.publishedAt,
             imageUrl: item.imageUrl,
             tags,
