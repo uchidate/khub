@@ -27,14 +27,11 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
-import { normalizeSourceUrl } from '@/lib/utils/url'
 import {
     WP_API_BASES,
     DiscoveredArticle,
     discoverViaWPAPI,
     importOne,
-    decodeHtmlEntities,
-    type ImportResult,
 } from '@/lib/services/news-import-service'
 
 export const dynamic = 'force-dynamic'
