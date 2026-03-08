@@ -620,6 +620,21 @@ export default function NewsAdminPage() {
       'Reprocessando candidatos...',
     )
 
+  /** Remove duplicatas por URL canônica (strip UTM) */
+  const handleDedup = async () => {
+    if (!confirm('Remover artigos duplicados (mesmo URL canônico)? Mantém o registro com conteúdo mais completo.')) return
+    try {
+      const res = await fetch('/api/admin/news/dedup', { method: 'POST' })
+      const data = await res.json()
+      if (data.ok) {
+        alert(`Dedup concluído: ${data.deleted} artigos removidos, ${data.normalized} URLs normalizadas.`)
+        refetchTable()
+      }
+    } catch {
+      alert('Erro ao executar dedup.')
+    }
+  }
+
   /** Processa em lotes de 200 até atingir o total escolhido */
   const handleSourceReprocess = async () => {
     if (!selectedSource) return
@@ -869,6 +884,15 @@ export default function NewsAdminPage() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <p className="text-zinc-400 text-sm">Gerencie notícias e artigos do HallyuHub</p>
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleDedup}
+              disabled={isStreaming}
+              title="Remove artigos duplicados com o mesmo URL canônico (strip UTM params)"
+              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-yellow-500/50 hover:text-yellow-300 transition-all disabled:opacity-50 text-sm"
+            >
+              <AlertTriangle size={14} />
+              Dedup
+            </button>
             <button
               onClick={handleBatchReprocess}
               disabled={isStreaming}

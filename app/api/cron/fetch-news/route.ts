@@ -29,6 +29,7 @@ import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
+import { normalizeSourceUrl } from '@/lib/utils/url'
 import { getErrorMessage } from '@/lib/utils/error'
 
 export const maxDuration = 120
@@ -98,8 +99,9 @@ async function fetchAndSaveNewsFromSource(
     try {
       const content = item.content || item.description || ''
 
+      const canonicalUrl = normalizeSourceUrl(item.link)
       const savedNews = await prisma.news.upsert({
-        where: { sourceUrl: item.link },
+        where: { sourceUrl: canonicalUrl },
         update: {
           imageUrl: item.imageUrl ?? null,
           publishedAt: item.publishedAt,
@@ -107,7 +109,7 @@ async function fetchAndSaveNewsFromSource(
         create: {
           title: item.title,
           contentMd: content,
-          sourceUrl: item.link,
+          sourceUrl: canonicalUrl,
           originalTitle: item.title,
           originalContent: content,
           imageUrl: item.imageUrl ?? null,
