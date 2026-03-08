@@ -28,8 +28,8 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
 
     const closeSearch = useCallback(() => setSearchOpen(false), [])
 
-    // Hide NavBar on auth and admin pages - AFTER all hooks
-    if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin')) return null
+    // Hide NavBar on auth, admin, and write pages - AFTER all hooks
+    if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
 
     const navLinks = [
         { label: "Início", href: "/" },
@@ -37,6 +37,7 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
         { label: "Grupos", href: "/groups" },
         { label: "Produções", href: "/productions" },
         { label: "Notícias", href: "/news" },
+        { label: "Blog", href: "/blog", secondary: true },  // oculto em lg, visível em xl+
         ...(premiumEnabled ? [{ label: "Premium", href: "/premium" }] : []),
     ]
 
@@ -61,7 +62,7 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`text-sm font-medium transition-colors whitespace-nowrap ${pathname === link.href
+                                    className={`text-sm font-medium transition-colors whitespace-nowrap ${link.secondary ? 'hidden xl:block' : ''} ${pathname === link.href
                                         ? "text-purple-600 dark:text-white font-semibold"
                                         : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300"
                                         }`}

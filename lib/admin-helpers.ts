@@ -16,11 +16,18 @@ export async function requireAdmin() {
 /**
  * Build Prisma query options from URL search params.
  */
+// Whitelist of allowed sort fields — prevents remote property injection
+const ALLOWED_SORT_FIELDS = new Set([
+  'createdAt', 'updatedAt', 'publishedAt', 'title', 'name', 'nameRomanized',
+  'viewCount', 'rank', 'readingTimeMin', 'status', 'featured',
+])
+
 export function buildQueryOptions(searchParams: URLSearchParams) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
   const search = searchParams.get('search') || ''
-  const sortBy = searchParams.get('sortBy') || 'createdAt'
+  const requestedSort = searchParams.get('sortBy') ?? ''
+  const sortBy = ALLOWED_SORT_FIELDS.has(requestedSort) ? requestedSort : 'createdAt'
   const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
 
   return {
@@ -48,6 +55,42 @@ export function paginatedResponse<T>(data: T[], total: number, page: number, lim
       totalPages: Math.ceil(total / limit),
     },
   })
+}
+
+/**
+ * Require any authenticated user. Returns session or 401.
+ */
+export async function requireAuth() {
+  const session = await auth()
+  if (!session) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), session: null }
+  }
+  return { error: null, session }
+}
+
+/**
+ * Require admin or editor role. Returns session or 401.
+ */
+export async function requireEditorOrAdmin() {
+  const session = await auth()
+  const role = session?.user.role?.toLowerCase()
+  if (!session || (role !== 'admin' && role !== 'editor')) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), session: null }
+  }
+  return { error: null, session }
+}
+
+/**
+ * Require contributor role or above (contributor, editor, admin).
+ */
+export async function requireContributorOrAbove() {
+  const session = await auth()
+  const role = session?.user.role?.toLowerCase()
+  const allowed = ['admin', 'editor', 'contributor']
+  if (!session || !allowed.includes(role ?? '')) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), session: null }
+  }
+  return { error: null, session }
 }
 
 /**
