@@ -16,11 +16,18 @@ export async function requireAdmin() {
 /**
  * Build Prisma query options from URL search params.
  */
+// Whitelist of allowed sort fields — prevents remote property injection
+const ALLOWED_SORT_FIELDS = new Set([
+  'createdAt', 'updatedAt', 'publishedAt', 'title', 'name', 'nameRomanized',
+  'viewCount', 'rank', 'readingTimeMin', 'status', 'featured',
+])
+
 export function buildQueryOptions(searchParams: URLSearchParams) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
   const search = searchParams.get('search') || ''
-  const sortBy = searchParams.get('sortBy') || 'createdAt'
+  const requestedSort = searchParams.get('sortBy') ?? ''
+  const sortBy = ALLOWED_SORT_FIELDS.has(requestedSort) ? requestedSort : 'createdAt'
   const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
 
   return {
