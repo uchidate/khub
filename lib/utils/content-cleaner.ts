@@ -43,19 +43,20 @@ const COMMON_RULES: SourceRule[] = [
 // Regras por fonte
 const SOURCE_RULES: Record<string, SourceRule[]> = {
   Soompi: [
-    // "Share it on" + bloco de links de sharing (Facebook, Twitter, Instagram, TikTok)
-    { description: 'share it on block', pattern: /\n+Share it on\n+(?:(?:\[.*?\]\(.*?\)|[^\n]*)\n)*/gi },
-    // Links de redes sociais de sharing (Facebook sharer, Twitter intent)
-    { description: 'fb share link', pattern: /\n*\[.*?\]\(https?:\/\/www\.facebook\.com\/sharer\/[^)]+\)\n*/g },
-    { description: 'twitter share link', pattern: /\n*\[.*?\]\(https?:\/\/twitter\.com\/intent\/[^)]+\)\n*/g },
+    // "Share it on" + tudo que vem depois (bloco de share, html cru, "Related", etc.)
+    // Usando truncação até o fim pois o conteúdo após esse ponto é sempre lixo
+    { description: 'share it on to end', pattern: /\n[ \t]*Share it on[\s\S]*$/i, replacement: '' },
+    // Links de redes sociais de sharing (Facebook sharer, Twitter intent) — fallback individual
+    { description: 'fb share link', pattern: /[ \t]*\[[ *]*[^\]]*\]\(https?:\/\/www\.facebook\.com\/sharer\/[^)]+\)\n?/g, replacement: '' },
+    { description: 'twitter share link', pattern: /[ \t]*\[[ *]*[^\]]*\]\(https?:\/\/twitter\.com\/intent\/[^)]+\)\n?/g, replacement: '' },
     // Links do perfil oficial Soompi nas redes (Instagram, TikTok, etc.)
-    { description: 'soompi social links', pattern: /\n*\[.*?\]\(https?:\/\/(?:www\.instagram\.com|www\.tiktok\.com|www\.youtube\.com|www\.facebook\.com)\/soompi[^)]*\)\n*/gi },
+    { description: 'soompi social links', pattern: /[ \t]*\[[ *]*[^\]]*\]\(https?:\/\/(?:www\.instagram\.com|www\.tiktok\.com|www\.youtube\.com|www\.facebook\.com)\/soompi[^)]*\)\n?/gi, replacement: '' },
     // Seções de rodapé que vazam após o artigo
     { description: 'related header', pattern: /^\s*Related\s*$/gm },
     { description: 'similar articles header', pattern: /^\s*Similar Articles\s*$/gm },
     { description: 'must read header', pattern: /^\s*Must Read\s*$/gm },
-    // Fragmentos de HTML cru que escaparam da conversão (ex: <div class="col col-12...)
-    { description: 'raw html fragments', pattern: /<\/?(?:div|section|article|aside|nav|ul|li|span|p)[^>]{0,200}>/gi },
+    // Fragmentos de HTML cru: tags com ou sem fechamento (ex: <div class="ad...)
+    { description: 'raw html fragments', pattern: /[ \t]*<\/?(?:div|section|article|aside|nav|ul|li|span|p)[^>\n]{0,300}>?[ \t]*\n?/gi, replacement: '' },
     // "SHARE THIS ARTICLE" / "SHARE" call-to-action
     { description: 'share CTA', pattern: /\n+SHARE\s+THIS\s+ARTICLE[^\n]*/gi },
     // Crédito "(Photo: Soompi)" e variações

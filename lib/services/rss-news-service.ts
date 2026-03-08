@@ -437,7 +437,7 @@ export class RSSNewsService {
         const match = regex.exec(stripped);
         if (match) {
           const startIdx = match.index + match[0].length;
-          const rawChunk = stripped.substring(startIdx, startIdx + 10000);
+          const rawChunk = stripped.substring(startIdx, startIdx + 50000);
           const chunk = preprocess ? preprocess(rawChunk) : rawChunk;
           const text = this.htmlToMarkdown(chunk).trim();
           if (text.length > 200) return text;
@@ -461,7 +461,7 @@ export class RSSNewsService {
       const match = regex.exec(stripped);
       if (match) {
         const startIdx = match.index + match[0].length;
-        const chunk = stripped.substring(startIdx, startIdx + 10000);
+        const chunk = stripped.substring(startIdx, startIdx + 50000);
         const text = this.htmlToMarkdown(chunk).trim();
         if (text.length > 200) return text;
       }
