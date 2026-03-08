@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
@@ -366,14 +366,10 @@ export default function NewsAdminPage() {
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
 
   // Buscar contagem (DB) e disponíveis (WP API) ao selecionar fonte ou mudar período
-  useEffect(() => {
-    if (!selectedSource) { setSourceCount(null); setAvailableCount(null); return }
-    setSourceCount(null)
-    setAvailableCount(null)
-
-    const params = new URLSearchParams({ source: selectedSource })
-    if (dateFrom) params.set('dateFrom', dateFrom)
-    if (dateTo) params.set('dateTo', dateTo)
+  const refreshSourceCounts = useCallback((source: string, from: string, to: string) => {
+    const params = new URLSearchParams({ source })
+    if (from) params.set('dateFrom', from)
+    if (to) params.set('dateTo', to)
 
     // Contagem de artigos no banco
     fetch(`/api/admin/news/reprocess?${params}`)
@@ -384,14 +380,23 @@ export default function NewsAdminPage() {
       })
       .catch(() => setSourceCount(null))
 
-    // Contagem de artigos disponíveis na fonte (só quando há filtro de data)
-    if (dateFrom || dateTo) {
+    // Disponíveis na fonte — só quando dateFrom está definido (evitar busca ilimitada histórica)
+    if (from) {
       fetch(`/api/admin/news/import?${params}`)
         .then(r => r.ok ? r.json() : Promise.reject(r.status))
         .then(d => setAvailableCount(typeof d.available === 'number' ? d.available : -1))
-        .catch(() => setAvailableCount(-1))  // -1 = API indisponível
+        .catch(() => setAvailableCount(-1))
+    } else {
+      setAvailableCount(null)
     }
-  }, [selectedSource, dateFrom, dateTo])
+  }, [])
+
+  useEffect(() => {
+    if (!selectedSource) { setSourceCount(null); setAvailableCount(null); return }
+    setSourceCount(null)
+    setAvailableCount(null)
+    refreshSourceCounts(selectedSource, dateFrom, dateTo)
+  }, [selectedSource, dateFrom, dateTo, refreshSourceCounts])
 
   // ── SSE streaming helper ───────────────────────────────────────────────────
 
@@ -870,6 +875,8 @@ export default function NewsAdminPage() {
       errors: accumErrors,
     } : null)
     refetchTable()
+    // Re-fetch counts: importOne pode ter corrigido publishedAt de artigos com data errada
+    if (selectedSource) refreshSourceCounts(selectedSource, dateFrom, dateTo)
   }
 
   const isStreaming = streamProgress?.phase === 'running'
