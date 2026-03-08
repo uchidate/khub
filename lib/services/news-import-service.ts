@@ -38,17 +38,23 @@ export type ImportResult = 'imported' | 'exists' | 'error'
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
+const HTML_ENTITY_MAP: Record<string, string> = {
+    '&amp;':   '&',
+    '&#038;':  '&',
+    '&#039;':  "'",
+    '&quot;':  '"',
+    '&#034;':  '"',
+    '&lt;':    '<',
+    '&gt;':    '>',
+    '&#8217;': '\u2019',
+    '&#8216;': '\u2018',
+    '&#8220;': '\u201C',
+    '&#8221;': '\u201D',
+}
+
+/** Decodifica entidades HTML em passagem única — sem risco de double-unescaping. */
 export function decodeHtmlEntities(str: string): string {
-    return str
-        .replace(/&amp;/g, '&')
-        .replace(/&#039;/g, "'")
-        .replace(/&quot;/g, '"')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&#8217;/g, '\u2019')
-        .replace(/&#8216;/g, '\u2018')
-        .replace(/&#8220;/g, '\u201C')
-        .replace(/&#8221;/g, '\u201D')
+    return str.replace(/&(?:#?\w+);/g, match => HTML_ENTITY_MAP[match] ?? match)
 }
 
 /** Faz fetch com 1 retry automático em caso de conteúdo insuficiente (rate limiting) */

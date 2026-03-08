@@ -98,6 +98,11 @@ async function fetchSourceNews(
     return result
 }
 
+/** Sanitiza nome de fonte para logs — remove caracteres de controle (newline injection) */
+function sanitizeForLog(value: string): string {
+    return value.replace(/[\r\n\t\x00-\x1f\x7f]/g, '')
+}
+
 async function runFetchNews(
     source: string | null,
     daysBack: number,
@@ -110,17 +115,18 @@ async function runFetchNews(
     const results: SourceResult[] = []
 
     for (const src of sources) {
+        const safeSrc = sanitizeForLog(src)
         if (!WP_API_BASES[src]) {
-            log.warn(`Fonte desconhecida: ${src}`)
+            log.warn(`Fonte desconhecida: ${safeSrc}`)
             continue
         }
-        log.info(`Buscando ${src} (últimos ${daysBack} dia(s))`)
+        log.info(`Buscando ${safeSrc} (últimos ${daysBack} dia(s))`)
         try {
             const result = await fetchSourceNews(src, dateFrom, dateTo, dryRun)
-            log.info(`${src}: discovered=${result.discovered} imported=${result.imported} exists=${result.exists} errors=${result.errors} (${result.duration_ms}ms)`)
+            log.info(`${safeSrc}: discovered=${result.discovered} imported=${result.imported} exists=${result.exists} errors=${result.errors} (${result.duration_ms}ms)`)
             results.push(result)
         } catch (err) {
-            log.error(`${src} falhou: ${String(err)}`)
+            log.error(`${safeSrc} falhou: ${String(err)}`)
             results.push({ source: src, discovered: 0, imported: 0, exists: 0, errors: 1, duration_ms: 0 })
         }
     }
