@@ -45,10 +45,15 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
             <nav className={`w-full z-[100] fixed top-0 py-3 transition-[background-color,backdrop-filter,border-color] duration-300 ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/5' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between gap-4 md:gap-6 h-12 md:h-14">
-                        {/* Logo */}
-                        <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase flex-shrink-0 hover:opacity-80 transition-opacity">
-                            <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
-                        </Link>
+                        {/* Mobile hamburger (left) + Logo */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex md:hidden">
+                                <MobileMenu links={navLinks} />
+                            </div>
+                            <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase hover:opacity-80 transition-opacity">
+                                <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
+                            </Link>
+                        </div>
 
                         {/* Desktop Navigation Links */}
                         <div className="hidden lg:flex items-center space-x-6">
@@ -102,9 +107,6 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
                                 </button>
                                 <ThemeToggle />
                                 <UserMenu premiumEnabled={premiumEnabled} />
-                                <div className="pl-2 border-l border-zinc-200 dark:border-zinc-700/50">
-                                    <MobileMenu links={navLinks} />
-                                </div>
                             </div>
                         </div>
                     </div>
