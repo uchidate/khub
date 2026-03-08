@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -46,12 +46,19 @@ interface TMDBPreview {
 export default function EditArtistPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
+    const returnToRef = useRef<string | null>(null)
     const [artist, setArtist] = useState<Artist | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Artist>>({})
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const returnTo = params.get('returnTo')
+        if (returnTo) returnToRef.current = returnTo
+    }, [])
 
     // Preview TMDB
     const [tmdbPreview, setTmdbPreview] = useState<TMDBPreview | null>(null)
@@ -159,7 +166,11 @@ export default function EditArtistPage() {
                 throw new Error((err.error || 'Erro ao salvar') + detail)
             }
             setSuccess('Salvo com sucesso!')
-            setTimeout(() => setSuccess(''), 3000)
+            if (returnToRef.current) {
+                setTimeout(() => router.push(returnToRef.current!), 800)
+            } else {
+                setTimeout(() => setSuccess(''), 3000)
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao salvar')
         } finally {
@@ -213,7 +224,7 @@ export default function EditArtistPage() {
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-8">
                     <button
-                        onClick={() => router.back()}
+                        onClick={() => returnToRef.current ? router.push(returnToRef.current) : router.back()}
                         className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" />

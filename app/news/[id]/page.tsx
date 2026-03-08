@@ -220,7 +220,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                         { label: news.title }
                     ]} />
                     <div className="flex items-center gap-2">
-                        <AdminQuickEdit href="/admin/news" label="Editar" />
+                        <AdminQuickEdit href={`/admin/news/${news.id}?returnTo=${encodeURIComponent(`/news/${news.id}`)}`} label="Editar" />
                         <FavoriteButton
                             id={news.id}
                             itemName={news.title}

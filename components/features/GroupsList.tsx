@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Users, Search, X } from 'lucide-react'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 
@@ -35,6 +36,8 @@ function getGeneration(debutDate: string | null): string | null {
 }
 
 export function GroupsList() {
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const [groups, setGroups] = useState<Group[]>([])
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disbanded'>('all')
@@ -246,7 +249,7 @@ export function GroupsList() {
                                     </div>
                                 </Link>
                                 <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
-                                    <AdminQuickEdit href={`/admin/groups/${group.id}`} label="Editar" />
+                                    <AdminQuickEdit href={`/admin/groups/${group.id}?returnTo=${encodeURIComponent(pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`} label="Editar" />
                                 </div>
                             </div>
                         )

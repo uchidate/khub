@@ -37,6 +37,9 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
     const { trackSearch } = useAnalytics()
     // Ref para disparar trackSearch apenas quando a busca está estabilizada (após debounce)
     const searchTrackedRef = useRef<string>('')
+    // Ref estável para trackSearch — evita que nova referência a cada render dispare o efeito
+    const trackSearchRef = useRef(trackSearch)
+    trackSearchRef.current = trackSearch
 
     // Detectar se há filtros ativos (exceto search)
     const hasActiveFilters = !!(filters.artistId || filters.groupId || filters.source || filters.from || filters.to)
@@ -47,17 +50,17 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
             // Rastrear busca textual após o debounce (evita spam por tecla)
             if (filters.search && filters.search.length >= 3 && filters.search !== searchTrackedRef.current) {
                 searchTrackedRef.current = filters.search
-                trackSearch(filters.search, 'news')
+                trackSearchRef.current(filters.search, 'news')
             }
         }, 500) // Debounce de 500ms
 
         return () => clearTimeout(timer)
-    }, [filters, onFilterChange, trackSearch])
+    }, [filters, onFilterChange])
 
     const updateFilter = (key: keyof FilterValues, value: string | undefined) => {
         setFilters(prev => {
             if (!value) {
-                const { [key]: _, ...rest } = prev
+                const { [key]: _removed, ...rest } = prev
                 return rest
             }
             return { ...prev, [key]: value }

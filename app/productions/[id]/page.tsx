@@ -210,7 +210,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                         { label: production.titlePt }
                     ]} />
                     <div className="flex items-center gap-2">
-                        <AdminQuickEdit href={`/admin/productions/${production.id}`} label="Editar" />
+                        <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/productions/${production.id}`)}`} label="Editar" />
                         <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt}
                             className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
                         <FavoriteButton

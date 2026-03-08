@@ -156,7 +156,6 @@ export function ProductionsList() {
     const handleSort = (value: string) => updateUrl({ ...filters, sortBy: value }, 1)
     const handlePage = (p: number) => {
         updateUrl(filters, p)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
     const clearAll = () => {
         setSearchInput('')
