@@ -340,15 +340,20 @@ export class RSSNewsService {
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
       .replace(/<!--[\s\S]*?-->/g, '');
 
-    // Seletores específicos por fonte (tentados primeiro)
+    // Seletores específicos por fonte
+    // Fontes marcadas com [] como primeiro item usam class-first (antes de <article>)
     const SOURCE_CONTENT_SELECTORS: Record<string, string[]> = {
-      Soompi:        ['sp-detail__content', 'article-container', 'entry-content'],
+      // article-wrapper = corpo limpo do Soompi sem header (título, data, autor, tags)
+      Soompi:        ['article-wrapper', 'sp-detail__content', 'article-container', 'entry-content'],
       Koreaboo:      ['entry-content', 'post-content', 'article__body'],
       Dramabeans:    ['entry-content', 'post-content', 'entry__content'],
       'Asian Junkie':['entry-content', 'post-content', 'article-content'],
       HelloKpop:     ['td-post-content', 'entry-content', 'tdb-block-inner'],
       Kpopmap:       ['entry-content', 'post-content', 'article-content', 'td-post-content'],
     };
+
+    // Fontes que devem usar class-first (o <article> dessas fontes inclui header/metadata)
+    const CLASS_FIRST_SOURCES = new Set(['Soompi']);
 
     const priorityClasses = sourceName ? (SOURCE_CONTENT_SELECTORS[sourceName] ?? []) : [];
     // Genéricos de fallback (sem repetir os já tentados)
@@ -361,15 +366,32 @@ export class RSSNewsService {
 
     const allClasses = [...priorityClasses, ...genericClasses];
 
-    // 1. Tag <article>
+    // 1. Para fontes class-first, tentar seletores específicos ANTES de <article>
+    if (sourceName && CLASS_FIRST_SOURCES.has(sourceName)) {
+      for (const cls of priorityClasses) {
+        const regex = new RegExp(`<div[^>]*class="[^"]*\\b${cls}\\b[^"]*"[^>]*>`, 'i');
+        const match = regex.exec(stripped);
+        if (match) {
+          const startIdx = match.index + match[0].length;
+          const chunk = stripped.substring(startIdx, startIdx + 10000);
+          const text = this.htmlToMarkdown(chunk).trim();
+          if (text.length > 200) return text;
+        }
+      }
+    }
+
+    // 2. Tag <article>
     const articleMatch = stripped.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
     if (articleMatch) {
       const text = this.htmlToMarkdown(articleMatch[1]).trim();
       if (text.length > 200) return text;
     }
 
-    // 2. Divs com classes de conteúdo (específicos primeiro, depois genéricos)
-    for (const cls of allClasses) {
+    // 3. Divs com classes de conteúdo (genéricos como fallback)
+    const fallbackClasses = sourceName && CLASS_FIRST_SOURCES.has(sourceName)
+      ? genericClasses  // priority já tentados acima
+      : allClasses;
+    for (const cls of fallbackClasses) {
       const regex = new RegExp(`<div[^>]*class="[^"]*\\b${cls}\\b[^"]*"[^>]*>`, 'i');
       const match = regex.exec(stripped);
       if (match) {
@@ -512,6 +534,7 @@ export class RSSNewsService {
       // Decodificar entidades HTML
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
+      .replace(/&#0*38;/g, '&')   // &#038; = & (numeric entity)
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')

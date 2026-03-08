@@ -8,6 +8,7 @@
 type SourceRule = {
   description: string
   pattern: RegExp
+  replacement?: string  // padrão: '\n' (remoção); definir para substituição diferente
 }
 
 // Regras comuns a todas as fontes
@@ -24,6 +25,10 @@ const COMMON_RULES: SourceRule[] = [
   { description: 'image via', pattern: /\n+\*?Image(?:\s+(?:via|credit|courtesy)):?\s*[^\n]{1,100}\*?\n*/gi },
   // "Related Articles" / "Related Posts" link lists
   { description: 'related articles header', pattern: /\n+\*{0,2}Related (?:Articles?|Posts?|News|Stories|Content):?\*{0,2}\n(?:[-*]\s*\[[^\]]+\]\([^)]+\)\n)*/gi },
+  // YouTube embed convertido erroneamente como imagem (ex: ![](https://www.youtube.com/embed/...))
+  { description: 'youtube embed as image', pattern: /!\[[^\]]*\]\(https?:\/\/(?:www\.)?youtube\.com\/embed\/[^)]+\)/g },
+  // Entidade HTML &#038; (= &) que ficou literal em URLs de markdown
+  { description: 'html numeric amp entity', pattern: /&#0*38;/g, replacement: '&' },
 ]
 
 // Regras por fonte
@@ -39,6 +44,21 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'newsletter CTA', pattern: /\n+(?:Subscribe|Follow us)[^\n]{0,80}newsletter[^\n]*/gi },
     // "Tagged:" ou "Tags:" no rodapé
     { description: 'tags footer', pattern: /\n+(?:Tagged|Tags):?\s*[^\n]+/gi },
+    // Título H2 repetido no topo (o <h1> do artigo aparece como ## no conteúdo)
+    // Detectado quando antecede link de categoria Soompi ou data de publicação
+    { description: 'article title h2', pattern: /^##\s+[^\n]+\n+(?=\s*(?:\[[^\]]+\]\(https?:\/\/www\.soompi\.com\/category|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b))/m },
+    // Link de categoria (ex: [Music](https://www.soompi.com/category/music))
+    { description: 'category link', pattern: /\[[^\]]+\]\(https?:\/\/www\.soompi\.com\/category\/[^)]+\)/g },
+    // Data de publicação isolada em linha (ex: "Mar 07, 2026")
+    { description: 'publication date', pattern: /^(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\s*$/gm },
+    // Byline do autor (ex: "by [E Cha](https://www.soompi.com/author/...)")
+    { description: 'author byline', pattern: /^by\s+\[[^\]]+\]\(https?:\/\/www\.soompi\.com\/author[^)]+\)\s*$/gim },
+    // Tag links no rodapé (ex: [Stray Kids](https://www.soompi.com/tag/stray-kids))
+    { description: 'tag links', pattern: /\n*\[[^\]]+\]\(https?:\/\/www\.soompi\.com\/tag\/[^)]+\)\n*/g },
+    // Banners promocionais Soompi (imagens CDN com "Banner" ou "banner" no nome)
+    { description: 'promo banners', pattern: /!\[[^\]]*\]\(https?:\/\/\d+\.soompi\.io\/[^)]*[Bb]anner[^)]*\)/g },
+    // Bloco de afiliado Viki quebrado: [ ... imagem ... Texto](viki.com/...)
+    { description: 'viki affiliate block', pattern: /^\[\s*\n[\s\S]{0,800}?\]\(https?:\/\/www\.viki\.com[^)]+\)/gm },
   ],
 
   Koreaboo: [
@@ -125,14 +145,14 @@ export function cleanContentBySource(content: string, source?: string | null): s
 
   // Regras comuns primeiro
   for (const rule of COMMON_RULES) {
-    text = text.replace(rule.pattern, '\n')
+    text = text.replace(rule.pattern, rule.replacement ?? '\n')
   }
 
   // Regras específicas da fonte
   if (source) {
     const sourceRules = SOURCE_RULES[source] ?? []
     for (const rule of sourceRules) {
-      text = text.replace(rule.pattern, '\n')
+      text = text.replace(rule.pattern, rule.replacement ?? '\n')
     }
   }
 
