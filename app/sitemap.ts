@@ -3,113 +3,101 @@ import prisma from '@/lib/prisma'
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
 
+// Data de referência para páginas estáticas (evita "modificado hoje" em todo crawl)
+const STATIC_DATE = new Date('2025-01-01')
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
-        // 1. Static Routes
-        const primaryRoutes = [
-            '',
-            '/artists',
-            '/groups',
-            '/productions',
-            '/news',
-        ].map((route) => ({
-            url: `${BASE_URL}${route}`,
-            lastModified: new Date(),
-            changeFrequency: 'daily' as const,
-            priority: 1,
-        }))
+        const primaryRoutes: MetadataRoute.Sitemap = [
+            { url: BASE_URL,                    lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 1   },
+            { url: `${BASE_URL}/artists`,       lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
+            { url: `${BASE_URL}/groups`,        lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
+            { url: `${BASE_URL}/productions`,   lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
+            { url: `${BASE_URL}/news`,          lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
+            { url: `${BASE_URL}/agencies`,      lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
+            { url: `${BASE_URL}/blog`,          lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
+            { url: `${BASE_URL}/about`,         lastModified: STATIC_DATE, changeFrequency: 'monthly', priority: 0.5 },
+            { url: `${BASE_URL}/faq`,           lastModified: STATIC_DATE, changeFrequency: 'monthly', priority: 0.5 },
+            { url: `${BASE_URL}/privacidade`,   lastModified: STATIC_DATE, changeFrequency: 'yearly',  priority: 0.3 },
+            { url: `${BASE_URL}/termos`,        lastModified: STATIC_DATE, changeFrequency: 'yearly',  priority: 0.3 },
+        ]
 
-        const secondaryRoutes = [
-            '/about',
-            '/faq',
-        ].map((route) => ({
-            url: `${BASE_URL}${route}`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly' as const,
-            priority: 0.6,
-        }))
-
-        const legalRoutes = [
-            '/privacidade',
-            '/termos',
-        ].map((route) => ({
-            url: `${BASE_URL}${route}`,
-            lastModified: new Date(),
-            changeFrequency: 'yearly' as const,
-            priority: 0.3,
-        }))
-
-        const routes = [...primaryRoutes, ...secondaryRoutes, ...legalRoutes]
-
-        // Skip DB queries during build
+        // Skip DB queries during Docker build
         if (process.env.SKIP_BUILD_STATIC_GENERATION) {
-            return routes
+            return primaryRoutes
         }
 
-        // 2. Dynamic Artists
-        const artists = await prisma.artist.findMany({
-            where: { flaggedAsNonKorean: false },
-            select: { id: true, updatedAt: true },
-            take: 1000,
-        })
+        const [artists, productions, news, groups, agencies, blogPosts] = await Promise.all([
+            prisma.artist.findMany({
+                where: { flaggedAsNonKorean: false },
+                select: { id: true, updatedAt: true },
+                orderBy: { updatedAt: 'desc' },
+            }),
+            prisma.production.findMany({
+                where: { flaggedAsNonKorean: false },
+                select: { id: true, updatedAt: true },
+                orderBy: { updatedAt: 'desc' },
+            }),
+            prisma.news.findMany({
+                select: { id: true, publishedAt: true },
+                orderBy: { publishedAt: 'desc' },
+            }),
+            prisma.musicalGroup.findMany({
+                select: { id: true, updatedAt: true },
+                orderBy: { updatedAt: 'desc' },
+            }),
+            prisma.agency.findMany({
+                select: { id: true, updatedAt: true },
+                orderBy: { name: 'asc' },
+            }),
+            prisma.blogPost.findMany({
+                where: { publishedAt: { not: null } },
+                select: { slug: true, publishedAt: true, updatedAt: true },
+                orderBy: { publishedAt: 'desc' },
+            }),
+        ])
 
-        const artistRoutes = artists.map((artist) => ({
-            url: `${BASE_URL}/artists/${artist.id}`,
-            lastModified: artist.updatedAt,
-            changeFrequency: 'weekly' as const,
-            priority: 0.8,
-        }))
-
-        // 3. Dynamic Productions
-        const productions = await prisma.production.findMany({
-            where: { flaggedAsNonKorean: false },
-            select: { id: true, updatedAt: true },
-            take: 1000,
-        })
-
-        const productionRoutes = productions.map((prod) => ({
-            url: `${BASE_URL}/productions/${prod.id}`,
-            lastModified: prod.updatedAt,
-            changeFrequency: 'weekly' as const,
-            priority: 0.8,
-        }))
-
-        // 4. Dynamic News
-        const news = await prisma.news.findMany({
-            select: { id: true, publishedAt: true },
-            take: 1000,
-        })
-
-        const newsRoutes = news.map((item) => ({
-            url: `${BASE_URL}/news/${item.id}`,
-            lastModified: item.publishedAt,
-            changeFrequency: 'daily' as const,
-            priority: 0.7,
-        }))
-
-        // 5. Dynamic Groups
-        const groups = await prisma.musicalGroup.findMany({
-            select: { id: true, updatedAt: true },
-            take: 1000,
-        })
-
-        const groupRoutes = groups.map((group) => ({
-            url: `${BASE_URL}/groups/${group.id}`,
-            lastModified: group.updatedAt,
-            changeFrequency: 'weekly' as const,
-            priority: 0.75,
-        }))
-
-        return [...primaryRoutes, ...secondaryRoutes, ...legalRoutes, ...artistRoutes, ...productionRoutes, ...newsRoutes, ...groupRoutes]
+        return [
+            ...primaryRoutes,
+            ...artists.map(a => ({
+                url: `${BASE_URL}/artists/${a.id}`,
+                lastModified: a.updatedAt,
+                changeFrequency: 'weekly' as const,
+                priority: 0.8,
+            })),
+            ...groups.map(g => ({
+                url: `${BASE_URL}/groups/${g.id}`,
+                lastModified: g.updatedAt,
+                changeFrequency: 'weekly' as const,
+                priority: 0.75,
+            })),
+            ...productions.map(p => ({
+                url: `${BASE_URL}/productions/${p.id}`,
+                lastModified: p.updatedAt,
+                changeFrequency: 'weekly' as const,
+                priority: 0.8,
+            })),
+            ...news.map(n => ({
+                url: `${BASE_URL}/news/${n.id}`,
+                lastModified: n.publishedAt,
+                changeFrequency: 'never' as const,
+                priority: 0.7,
+            })),
+            ...agencies.map(a => ({
+                url: `${BASE_URL}/agencies/${a.id}`,
+                lastModified: a.updatedAt,
+                changeFrequency: 'monthly' as const,
+                priority: 0.6,
+            })),
+            ...blogPosts.map(p => ({
+                url: `${BASE_URL}/blog/${p.slug}`,
+                lastModified: p.updatedAt ?? p.publishedAt ?? STATIC_DATE,
+                changeFrequency: 'monthly' as const,
+                priority: 0.7,
+            })),
+        ]
     } catch (error) {
         console.error('Error generating sitemap:', error)
-        return [
-            {
-                url: BASE_URL,
-                lastModified: new Date(),
-                changeFrequency: 'daily',
-                priority: 1,
-            },
-        ]
+        return [{ url: BASE_URL, lastModified: STATIC_DATE, changeFrequency: 'daily', priority: 1 }]
     }
 }
