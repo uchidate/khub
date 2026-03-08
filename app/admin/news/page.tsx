@@ -7,7 +7,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import {
   Plus, FlaskConical, CheckCircle, XCircle, Loader2,
-  Eye, EyeOff, RefreshCw, ChevronDown, ChevronUp, AlertTriangle,
+  Eye, EyeOff, RefreshCw, ChevronDown, ChevronUp, AlertTriangle, Download,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -342,17 +342,22 @@ export default function NewsAdminPage() {
   const [sourceTotal, setSourceTotal] = useState<number>(200)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [availableCount, setAvailableCount] = useState<number | null>(null)
 
   // Optimistic artist override
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
 
-  // Buscar contagem ao selecionar fonte ou mudar período
+  // Buscar contagem (DB) e disponíveis (WP API) ao selecionar fonte ou mudar período
   useEffect(() => {
-    if (!selectedSource) { setSourceCount(null); return }
+    if (!selectedSource) { setSourceCount(null); setAvailableCount(null); return }
     setSourceCount(null)
+    setAvailableCount(null)
+
     const params = new URLSearchParams({ source: selectedSource })
     if (dateFrom) params.set('dateFrom', dateFrom)
     if (dateTo) params.set('dateTo', dateTo)
+
+    // Contagem de artigos no banco
     fetch(`/api/admin/news/reprocess?${params}`)
       .then(r => r.json())
       .then(d => {
@@ -360,6 +365,14 @@ export default function NewsAdminPage() {
         setSourceTotal(d.count ?? 200)
       })
       .catch(() => setSourceCount(null))
+
+    // Contagem de artigos disponíveis na fonte (só quando há filtro de data)
+    if (dateFrom || dateTo) {
+      fetch(`/api/admin/news/import?${params}`)
+        .then(r => r.json())
+        .then(d => setAvailableCount(d.available ?? null))
+        .catch(() => setAvailableCount(null))
+    }
   }, [selectedSource, dateFrom, dateTo])
 
   // ── SSE streaming helper ───────────────────────────────────────────────────
@@ -704,6 +717,102 @@ export default function NewsAdminPage() {
     refetchTable()
   }
 
+  /** Importa artigos históricos da fonte usando a WP REST API */
+  const handleSourceImport = async () => {
+    if (!selectedSource || !dateFrom) return
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    const total = availableCount ?? 200
+    setStreamProgress({
+      phase: 'running',
+      label: `Importando ${selectedSource}...`,
+      total,
+      current: 0,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+      log: [],
+    })
+
+    const params = new URLSearchParams({
+      source: selectedSource,
+      limit: String(Math.min(total, 500)),
+      stream: '1',
+    })
+    if (dateFrom) params.set('dateFrom', dateFrom)
+    if (dateTo) params.set('dateTo', dateTo)
+
+    try {
+      const res = await fetch(`/api/admin/news/import?${params}`, {
+        method: 'POST',
+        signal: controller.signal,
+      })
+      if (!res.ok || !res.body) {
+        setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const event = JSON.parse(line.slice(6))
+            if (event.type === 'start') {
+              setStreamProgress(prev => prev ? { ...prev, total: event.total } : null)
+            } else if (event.type === 'item') {
+              const entry: StreamLogEntry = {
+                title: event.title,
+                result: event.result === 'imported' ? 'updated' : event.result === 'exists' ? 'skipped' : 'error',
+                artistCount: 0,
+              }
+              setStreamProgress(prev => {
+                if (!prev) return null
+                return {
+                  ...prev,
+                  current: event.current,
+                  updated: prev.updated + (event.result === 'imported' ? 1 : 0),
+                  skipped: prev.skipped + (event.result === 'exists' ? 1 : 0),
+                  errors: prev.errors + (event.result === 'error' ? 1 : 0),
+                  log: [...prev.log, entry].slice(-100),
+                }
+              })
+            } else if (event.type === 'done') {
+              setStreamProgress(prev => prev ? {
+                ...prev,
+                phase: 'done',
+                current: prev.total,
+                updated: event.imported,
+                skipped: event.skipped,
+                errors: event.errors,
+              } : null)
+              refetchTable()
+            } else if (event.type === 'error') {
+              setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setStreamProgress(prev => prev ? { ...prev, phase: 'error' } : null)
+      }
+    }
+  }
+
   const isStreaming = streamProgress?.phase === 'running'
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -846,7 +955,7 @@ export default function NewsAdminPage() {
                     )}
                   </div>
 
-                  {/* Contagem + input de total */}
+                  {/* Contagem no banco + disponíveis na fonte */}
                   <div className="flex items-center gap-3 flex-wrap">
                     {sourceCount === null ? (
                       <span className="text-xs text-zinc-600 flex items-center gap-1.5">
@@ -854,37 +963,74 @@ export default function NewsAdminPage() {
                       </span>
                     ) : (
                       <span className="text-xs text-zinc-500">
-                        <strong className="text-zinc-300">{sourceCount.toLocaleString('pt-BR')}</strong> notícias em {selectedSource}
+                        <strong className="text-zinc-300">{sourceCount.toLocaleString('pt-BR')}</strong> no banco
                         {(dateFrom || dateTo) && <span className="text-zinc-600"> no período</span>}
                       </span>
                     )}
 
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-                      <span>Processar</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={sourceCount ?? 9999}
-                        value={sourceTotal}
-                        onChange={e => setSourceTotal(Math.max(1, parseInt(e.target.value) || 1))}
-                        disabled={isStreaming}
-                        className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-0.5 text-xs text-zinc-200 text-center focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
-                      />
-                      <span>de {sourceCount ?? '?'} · lotes de 200</span>
-                    </div>
+                    {(dateFrom || dateTo) && (
+                      <span className="text-xs text-zinc-500">
+                        {availableCount === null ? (
+                          <span className="text-zinc-600 flex items-center gap-1">
+                            <Loader2 size={10} className="animate-spin" /> verificando fonte...
+                          </span>
+                        ) : (
+                          <>
+                            <strong className={availableCount > (sourceCount ?? 0) ? 'text-emerald-400' : 'text-zinc-300'}>
+                              {availableCount.toLocaleString('pt-BR')}
+                            </strong>
+                            <span className="text-zinc-600"> disponíveis na fonte</span>
+                          </>
+                        )}
+                      </span>
+                    )}
+
+                    {!(dateFrom || dateTo) && (
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                        <span>Processar</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={sourceCount ?? 9999}
+                          value={sourceTotal}
+                          onChange={e => setSourceTotal(Math.max(1, parseInt(e.target.value) || 1))}
+                          disabled={isStreaming}
+                          className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-0.5 text-xs text-zinc-200 text-center focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                        />
+                        <span>de {sourceCount ?? '?'} · lotes de 200</span>
+                      </div>
+                    )}
                   </div>
 
-                  <button
-                    onClick={handleSourceReprocess}
-                    disabled={isStreaming || sourceCount === null}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
-                  >
-                    {isStreaming
-                      ? <Loader2 size={14} className="animate-spin" />
-                      : <RefreshCw size={14} />
-                    }
-                    Reprocessar {selectedSource}
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Importar novos (apenas quando há filtro de data) */}
+                    {(dateFrom || dateTo) && (
+                      <button
+                        onClick={handleSourceImport}
+                        disabled={isStreaming || !dateFrom}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-emerald-500/50 hover:text-emerald-300 transition-all disabled:opacity-50 text-sm"
+                      >
+                        {isStreaming
+                          ? <Loader2 size={14} className="animate-spin" />
+                          : <Download size={14} />
+                        }
+                        Importar novos
+                      </button>
+                    )}
+
+                    {/* Reprocessar existentes */}
+                    <button
+                      onClick={handleSourceReprocess}
+                      disabled={isStreaming || sourceCount === null}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
+                    >
+                      {isStreaming
+                        ? <Loader2 size={14} className="animate-spin" />
+                        : <RefreshCw size={14} />
+                      }
+                      Reprocessar {(dateFrom || dateTo) ? 'existentes' : selectedSource}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
