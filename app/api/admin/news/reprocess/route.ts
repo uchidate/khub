@@ -57,6 +57,19 @@ type BatchItem = { id: string; title: string; sourceUrl: string; source: string 
 
 // ─── Core reprocess logic ─────────────────────────────────────────────────────
 
+/** Faz fetch com 1 retry automático em caso de conteúdo insuficiente (rate limiting) */
+async function fetchWithRetry(
+    service: ReturnType<typeof getRSSNewsService>,
+    url: string,
+    source: string | undefined,
+) {
+    const first = await service.fetchArticleData(url, source)
+    if (first.content && first.content.length >= 100) return first
+    // Aguarda antes de tentar novamente — provável rate limiting
+    await new Promise(r => setTimeout(r, 3000))
+    return service.fetchArticleData(url, source)
+}
+
 async function reprocessOne(news: BatchItem): Promise<ReprocessResult> {
     const result: ReprocessResult = {
         newsId: news.id,
@@ -67,7 +80,7 @@ async function reprocessOne(news: BatchItem): Promise<ReprocessResult> {
     }
 
     const service = getRSSNewsService()
-    const { content, imageUrl } = await service.fetchArticleData(news.sourceUrl, news.source ?? undefined)
+    const { content, imageUrl } = await fetchWithRetry(service, news.sourceUrl, news.source ?? undefined)
 
     if (!content || content.length < 100) {
         result.error = 'Conteúdo insuficiente'

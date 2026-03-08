@@ -183,6 +183,13 @@ function BatchProgressPanel({
         )}
       </div>
 
+      {/* Dica: todos já existem → sugerir reprocessar */}
+      {isDone && progress.updated === 0 && progress.exists > 0 && progress.errors === 0 && (
+        <div className="px-4 pb-2 pt-1 text-xs text-blue-400/80 border-t border-white/5">
+          Todos esses artigos já estão no banco. Use <strong>Reprocessar existentes</strong> para atualizar o conteúdo.
+        </div>
+      )}
+
       {/* Live log */}
       {progress.log.length > 0 && (
         <div className="border-t border-white/5 max-h-48 overflow-y-auto">

@@ -312,6 +312,19 @@ function decodeHtmlEntities(str: string): string {
 
 // ─── Import single article ────────────────────────────────────────────────────
 
+/** Faz fetch com 1 retry automático em caso de conteúdo insuficiente (rate limiting) */
+async function fetchWithRetry(
+    service: ReturnType<typeof getRSSNewsService>,
+    url: string,
+    source: string,
+) {
+    const first = await service.fetchArticleData(url, source)
+    if (first.content && first.content.length >= 100) return first
+    // Aguarda antes de tentar novamente — provável rate limiting
+    await new Promise(r => setTimeout(r, 3000))
+    return service.fetchArticleData(url, source)
+}
+
 async function importOne(
     article: DiscoveredArticle,
     source: string,
@@ -323,7 +336,7 @@ async function importOne(
     if (existing) return 'exists'
 
     const service = getRSSNewsService()
-    const { content, imageUrl } = await service.fetchArticleData(article.url, source)
+    const { content, imageUrl } = await fetchWithRetry(service, article.url, source)
 
     if (!content || content.length < 100) return 'error'
 
