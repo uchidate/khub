@@ -255,7 +255,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                                     contentMd={item.originalContent || item.contentMd}
                                     artists={artistNames}
                                     sourceUrl={item.sourceUrl}
-                                    adminHref={`/admin/news/${item.id}`}
+                                    adminHref={`/admin/news/${item.id}?returnTo=${encodeURIComponent(pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`}
                                 />
                             )
                         })}

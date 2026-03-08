@@ -371,18 +371,22 @@ export default function NewsAdminPage() {
   // Optimistic artist override
   const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
 
-  // Deep-link: ?editId=ID opens edit modal for that news item
+  // Deep-link: ?editId=ID opens edit modal; ?returnTo=URL navigates back after save
   const editRouter = useNextRouter()
+  const returnToRef = useRef<string | null>(null)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const editId = params.get('editId')
+    const returnTo = params.get('returnTo')
+    if (returnTo) returnToRef.current = returnTo
     if (!editId) return
     fetch(`/api/admin/news/${editId}`)
       .then(r => r.ok ? r.json() : null)
       .then(news => {
         if (news) { setEditingNews(news); setFormOpen(true) }
-        // Remove editId from URL without navigation
+        // Remove editId/returnTo from URL without navigation
         params.delete('editId')
+        params.delete('returnTo')
         const newUrl = params.toString() ? `?${params}` : window.location.pathname
         editRouter.replace(newUrl, { scroll: false })
       })
@@ -604,6 +608,10 @@ export default function NewsAdminPage() {
       throw new Error(e.error || 'Erro ao salvar notícia')
     }
     refetchTable()
+    if (returnToRef.current) {
+      editRouter.push(returnToRef.current)
+      returnToRef.current = null
+    }
   }
 
   const handleDeleteConfirm = async () => {
