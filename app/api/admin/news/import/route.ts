@@ -374,7 +374,7 @@ async function importOne(
 
 // ─── SSE streaming ────────────────────────────────────────────────────────────
 
-const STREAM_IMPORT_DELAY_MS = 500 // delay fixo entre fetches para evitar rate limiting
+const STREAM_IMPORT_DELAY_MS = 1500 // delay fixo entre fetches para evitar rate limiting
 
 function streamImport(
     articles: DiscoveredArticle[],
@@ -412,8 +412,8 @@ function streamImport(
                         result,
                     })
 
-                    // Rate-limiting delay between article fetches
-                    if (delayMs > 0 && i < articles.length - 1) {
+                    // Rate-limiting delay — só aplica quando houve fetch real ao Soompi
+                    if (delayMs > 0 && result !== 'exists' && i < articles.length - 1) {
                         await new Promise(resolve => setTimeout(resolve, delayMs))
                     }
                 }
