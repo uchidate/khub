@@ -40,11 +40,17 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
     // Ref estável para trackSearch — evita que nova referência a cada render dispare o efeito
     const trackSearchRef = useRef(trackSearch)
     trackSearchRef.current = trackSearch
+    // Não disparar onFilterChange no mount — NewsList já busca ao carregar via URL
+    const didMountRef = useRef(false)
 
     // Detectar se há filtros ativos (exceto search)
     const hasActiveFilters = !!(filters.artistId || filters.groupId || filters.source || filters.from || filters.to)
 
     useEffect(() => {
+        if (!didMountRef.current) {
+            didMountRef.current = true
+            return
+        }
         const timer = setTimeout(() => {
             onFilterChange(filters)
             // Rastrear busca textual após o debounce (evita spam por tecla)
