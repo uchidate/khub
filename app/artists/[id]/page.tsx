@@ -229,9 +229,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
 
                 {/* Breadcrumbs + Favorite */}
-                <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20 flex justify-between items-start gap-2">
+                <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: artist.nameRomanized }]} />
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                         <AdminQuickEdit href={`/admin/artists/${artist.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
                         <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized}
                             className="bg-black/40 border border-white/10 backdrop-blur-sm" />
