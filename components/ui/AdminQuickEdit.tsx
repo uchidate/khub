@@ -21,7 +21,7 @@ export function AdminQuickEdit({ href, label = 'Editar no Admin' }: AdminQuickEd
             title={label}
         >
             <Pencil className="w-3 h-3" />
-            {label}
+            <span className="hidden sm:inline">{label}</span>
         </Link>
     )
 }
