@@ -219,7 +219,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 {/* Main image — blurred backdrop (not crisp, portrait card handles crisp) */}
                 <div className="absolute inset-0">
                     {artist.primaryImageUrl ? (
-                        <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover object-[50%_15%] blur-sm brightness-[0.25]" />
+                        <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover object-[50%_15%]" />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-900/30 via-zinc-900 to-black" />
                     )}
