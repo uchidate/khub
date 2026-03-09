@@ -188,7 +188,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 ],
             }} />
             {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
-            <div className="relative min-h-[72vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
+            <div className="relative min-h-[88vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
                 {/* Background image (contained, never clips content) */}
                 <div className="absolute inset-0">
                     {heroImageUrl ? (
