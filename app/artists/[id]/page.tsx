@@ -209,7 +209,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
             }} />
 
             {/* ── HERO ── */}
-            <div className="relative h-[65vh] md:h-[75vh] overflow-hidden">
+            <div className="relative h-[88vh] md:h-[75vh] overflow-hidden">
                 {/* Blurred background */}
                 {artist.primaryImageUrl && (
                     <div className="absolute inset-0 scale-110">
