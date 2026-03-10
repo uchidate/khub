@@ -73,13 +73,13 @@ export default async function ProfilePage() {
       <div className="min-h-screen pb-20">
 
         {/* ── Hero Banner ─────────────────────────────────────────────────────── */}
-        <div className="relative h-52 md:h-72 overflow-hidden">
+        <div className="relative w-full h-52 md:h-72 overflow-hidden">
           {heroImageUrl ? (
             <Image
               src={heroImageUrl}
               alt="Profile hero"
               fill
-              className="object-cover object-top scale-110 blur-sm brightness-30"
+              className="object-cover object-center blur-sm brightness-30"
               sizes="100vw"
               priority
             />
