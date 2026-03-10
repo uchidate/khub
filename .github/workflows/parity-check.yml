@@ -131,8 +131,11 @@ jobs:
           # - nginx.NORMALIZED: staging usa nginx.staging.conf, production usa nginx.prod.conf + SSL
           # - sites-available/hallyuhub-NORMALIZED: staging cria link, production sobrescreve diretamente
           # - watchdog.sh URL: staging usa IP:3001, production usa domínio HTTPS
+          # - Linhas de supressão de notificação (comentários + check inline): contêm "staging"
+          #   em texto livre (comment/echo) — normalizadas diferente por serem texto, não tokens.
+          #   "frequentes" cobre o comentário, "suprimida" cobre o echo/check.
           if diff -u \
-            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL\|ALTER USER\|docker exec.*psql\|pg_isready\|nginx\.\|sites-available\|sites-enabled\|watchdog\|maintenance\.html\|Sync Nginx\|letsencrypt\|ssl_cert' \
+            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL\|ALTER USER\|docker exec.*psql\|pg_isready\|nginx\.\|sites-available\|sites-enabled\|watchdog\|maintenance\.html\|Sync Nginx\|letsencrypt\|ssl_cert\|frequentes\|suprimida\|ruído desnecessário' \
             /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
             echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
             echo ""
