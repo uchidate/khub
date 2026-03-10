@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, Users } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Save, RefreshCw, Users, Trash2 } from 'lucide-react'
 
 interface MusicalGroup {
     id: string
@@ -108,6 +108,8 @@ export default function EditGroupPage() {
     const [group, setGroup] = useState<MusicalGroup | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [deleting, setDeleting] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [form, setForm] = useState<FormState | null>(null)
@@ -135,6 +137,28 @@ export default function EditGroupPage() {
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
         setForm(prev => prev ? { ...prev, [key]: value } : prev)
+    }
+
+    const handleDelete = async () => {
+        setDeleting(true)
+        setError('')
+        try {
+            const res = await fetch('/api/admin/groups', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [id] }),
+            })
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.error || 'Erro ao excluir')
+            }
+            router.push('/admin/groups')
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erro ao excluir')
+            setConfirmDelete(false)
+        } finally {
+            setDeleting(false)
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -467,6 +491,38 @@ export default function EditGroupPage() {
                             >
                                 Cancelar
                             </Link>
+                            <div className="ml-auto">
+                                {!confirmDelete ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setConfirmDelete(true)}
+                                        className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 hover:bg-red-950 border border-zinc-700 hover:border-red-800 text-zinc-400 hover:text-red-400 rounded-lg text-sm font-bold transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Excluir
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-red-400 font-medium">Confirmar exclusão?</span>
+                                        <button
+                                            type="button"
+                                            onClick={handleDelete}
+                                            disabled={deleting}
+                                            className="flex items-center gap-1.5 px-3 py-2 bg-red-700 hover:bg-red-600 disabled:bg-red-900 text-white rounded-lg text-xs font-bold transition-colors"
+                                        >
+                                            {deleting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                                            {deleting ? 'Excluindo...' : 'Sim, excluir'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfirmDelete(false)}
+                                            className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-colors"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </form>
                 )}
