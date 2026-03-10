@@ -232,24 +232,19 @@ jobs:
         run: |
           set -e
 
-          # Sincroniza o nginx config da repo para o servidor (staging usa porta 3001, HTTP)
+          # Staging usa HTTP na porta 3001 (sem SSL)
           sudo cp docker/nginx/nginx.staging.conf /etc/nginx/sites-available/hallyuhub-staging 2>/dev/null || true
           sudo cp docker/nginx/maintenance.html /etc/nginx/html/maintenance.html
-          # Ativa o site staging se ainda não estiver ativo
-          [ ! -f /etc/nginx/sites-enabled/hallyuhub-staging ] && sudo ln -s /etc/nginx/sites-available/hallyuhub-staging /etc/nginx/sites-enabled/hallyuhub-staging 2>/dev/null || true
-          sudo nginx -t && sudo systemctl reload nginx && echo "✅ Nginx recarregado com nova config" || echo "⚠️ Nginx reload falhou (non-blocking)"
+          [ ! -L /etc/nginx/sites-enabled/hallyuhub-staging ] && sudo ln -sf /etc/nginx/sites-available/hallyuhub-staging /etc/nginx/sites-enabled/hallyuhub-staging 2>/dev/null || true
+          sudo nginx -t && sudo systemctl reload nginx && echo "✅ Nginx recarregado" || echo "⚠️ Nginx reload (non-blocking)"
 
-          # Instala (ou atualiza) o watchdog no crontab do root
-          # Roda a cada minuto — detecta e recupera o app em ~30s
           chmod +x /var/www/hallyuhub/scripts/watchdog.sh
           WATCHDOG_ENTRY="* * * * * /var/www/hallyuhub/scripts/watchdog.sh >> /var/log/hallyuhub-watchdog.log 2>&1"
           CURRENT_CRONTAB=$(crontab -l 2>/dev/null || true)
           if echo "$CURRENT_CRONTAB" | grep -q "watchdog.sh"; then
-            # Atualiza entrada existente
             echo "$CURRENT_CRONTAB" | grep -v "watchdog.sh" | { cat; echo "$WATCHDOG_ENTRY"; } | crontab -
             echo "✅ Watchdog cron atualizado"
           else
-            # Adiciona nova entrada
             { echo "$CURRENT_CRONTAB"; echo "$WATCHDOG_ENTRY"; } | crontab -
             echo "✅ Watchdog cron instalado"
           fi

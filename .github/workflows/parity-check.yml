@@ -128,8 +128,11 @@ jobs:
           # - NODE_ENV e argumentos específicos de scripts
           # - scripts/NORMALIZED: invocação do script (staging usa NODE_ENV=X + flags, production não)
           #   Ambas as linhas (+ e -) contêm "scripts/NORMALIZED", então a mudança é ignorada
+          # - nginx.NORMALIZED: staging usa nginx.staging.conf, production usa nginx.prod.conf + SSL
+          # - sites-available/hallyuhub-NORMALIZED: staging cria link, production sobrescreve diretamente
+          # - watchdog.sh URL: staging usa IP:3001, production usa domínio HTTPS
           if diff -u \
-            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL\|ALTER USER\|docker exec.*psql\|pg_isready' \
+            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL\|ALTER USER\|docker exec.*psql\|pg_isready\|nginx\.\|sites-available\|sites-enabled\|watchdog\|maintenance\.html\|Sync Nginx\|letsencrypt\|ssl_cert' \
             /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
             echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
             echo ""
