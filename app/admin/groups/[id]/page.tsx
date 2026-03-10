@@ -227,6 +227,12 @@ export default function EditGroupPage() {
         <AdminLayout title={group ? `Editar: ${group.name}` : 'Editar Grupo'}>
             <div className="max-w-3xl mx-auto px-4 py-8">
                 {/* Header */}
+                {error && (
+                    <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-2">
+                        <span className="flex-shrink-0">⚠</span>
+                        <span>{error}</span>
+                    </div>
+                )}
                 <div className="flex items-center gap-3 mb-8 flex-wrap">
                     <button
                         onClick={() => returnToRef.current ? router.push(returnToRef.current) : router.back()}
@@ -505,7 +511,6 @@ export default function EditGroupPage() {
                         </div>
 
                         {/* Feedback */}
-                        {error && <p className="text-sm text-red-400 font-medium">{error}</p>}
                         {success && <p className="text-sm text-green-400 font-medium">{success}</p>}
 
                         {/* Actions */}
