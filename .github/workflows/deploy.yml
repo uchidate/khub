@@ -234,7 +234,7 @@ jobs:
 
           # Staging usa HTTP na porta 3001 (sem SSL)
           sudo cp docker/nginx/nginx.staging.conf /etc/nginx/sites-available/hallyuhub-staging 2>/dev/null || true
-          sudo cp docker/nginx/maintenance.html /etc/nginx/html/maintenance.html
+          sudo mkdir -p /etc/nginx/html && sudo cp docker/nginx/maintenance.html /etc/nginx/html/maintenance.html
           [ ! -L /etc/nginx/sites-enabled/hallyuhub-staging ] && sudo ln -sf /etc/nginx/sites-available/hallyuhub-staging /etc/nginx/sites-enabled/hallyuhub-staging 2>/dev/null || true
           sudo nginx -t && sudo systemctl reload nginx && echo "✅ Nginx recarregado" || echo "⚠️ Nginx reload (non-blocking)"
 
@@ -430,7 +430,7 @@ jobs:
           # Sincroniza o nginx config da repo para o servidor
           # O maintenance.html vai para o diretório padrão do nginx
           sudo cp docker/nginx/nginx.prod.conf /etc/nginx/sites-enabled/hallyuhub
-          sudo cp docker/nginx/maintenance.html /etc/nginx/html/maintenance.html
+          sudo mkdir -p /etc/nginx/html && sudo cp docker/nginx/maintenance.html /etc/nginx/html/maintenance.html
           sudo nginx -t && sudo systemctl reload nginx && echo "✅ Nginx recarregado com nova config"
 
           # Instala (ou atualiza) o watchdog no crontab do root
