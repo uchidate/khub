@@ -8,7 +8,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { getEmailService } from './email-service';
+import { sendNewsInstantEmail, sendNewsDigestEmail } from './email-service';
 import prismaSingleton from '@/lib/prisma';
 
 interface NewsItem {
@@ -214,7 +214,8 @@ export class NewsNotificationService {
                 user.email,
                 user.name || 'K-pop Fan',
                 news,
-                favoriteArtists
+                favoriteArtists,
+                user.id
             );
 
             // Registrar no histórico
@@ -255,121 +256,19 @@ export class NewsNotificationService {
     }
 
     /**
-     * Template de email para notificação instantânea
+     * Envia email de notificação instantânea via template do banco de dados
      */
     private async sendInstantNotificationEmail(
         to: string,
         userName: string,
         news: NewsItem,
-        favoriteArtists: string[]
+        favoriteArtists: string[],
+        userId?: string
     ): Promise<boolean> {
-        const emailService = getEmailService();
-
         const artistsList = favoriteArtists.slice(0, 3).join(', ');
         const moreArtists = favoriteArtists.length > 3 ? ` +${favoriteArtists.length - 3}` : '';
-
-        const newsUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/news/${news.id}`;
-        const settingsUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/settings/notifications`;
-
-        const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">📰 Nova Notícia!</h1>
-    </div>
-
-    <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-        <p style="font-size: 16px;">Olá, <strong>${userName}</strong>!</p>
-
-        <p>Uma nova notícia sobre <strong>${artistsList}${moreArtists}</strong> foi publicada:</p>
-
-        ${news.imageUrl ? `
-        <div style="margin: 20px 0; text-align: center;">
-            <img src="${news.imageUrl}"
-                 alt="${news.title}"
-                 style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        </div>
-        ` : ''}
-
-        <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
-            <h2 style="margin: 0 0 10px 0; font-size: 18px; color: #333;">
-                ${news.title}
-            </h2>
-            <p style="color: #666; font-size: 14px; margin: 0;">
-                📅 ${new Date(news.publishedAt).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                })}
-            </p>
-        </div>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="${newsUrl}"
-               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      color: white;
-                      padding: 15px 40px;
-                      text-decoration: none;
-                      border-radius: 5px;
-                      font-weight: bold;
-                      display: inline-block;">
-                Ler Notícia Completa
-            </a>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-
-        <p style="color: #666; font-size: 13px; text-align: center;">
-            Você está recebendo este email porque segue ${artistsList}${moreArtists}.<br>
-            <a href="${settingsUrl}" style="color: #667eea; text-decoration: none;">Gerenciar notificações</a>
-        </p>
-
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
-            <p style="color: #999; font-size: 12px; margin: 5px 0;">
-                <strong>HallyuHub</strong> - Sua fonte de entretenimento coreano
-            </p>
-            <p style="color: #999; font-size: 12px; margin: 5px 0;">
-                <a href="https://www.hallyuhub.com.br" style="color: #667eea; text-decoration: none;">www.hallyuhub.com.br</a>
-            </p>
-        </div>
-    </div>
-</body>
-</html>
-        `;
-
-        const text = `
-📰 Nova Notícia no HallyuHub!
-
-Olá, ${userName}!
-
-Uma nova notícia sobre ${artistsList}${moreArtists} foi publicada:
-
-${news.title}
-
-📅 ${new Date(news.publishedAt).toLocaleDateString('pt-BR')}
-
-Leia a notícia completa em:
-${newsUrl}
-
----
-Você está recebendo este email porque segue ${artistsList}${moreArtists}.
-Gerenciar notificações: ${settingsUrl}
-
-HallyuHub - Sua fonte de entretenimento coreano
-https://www.hallyuhub.com.br
-        `;
-
-        return emailService.sendEmail({
-            to,
-            subject: `📰 ${artistsList}${moreArtists}: ${news.title}`,
-            text,
-            html,
-        });
+        const artists = `${artistsList}${moreArtists}`;
+        return sendNewsInstantEmail(to, userName, news.title, news.id, artists, userId);
     }
 
     /**
@@ -445,7 +344,8 @@ https://www.hallyuhub.com.br
                 user.email,
                 user.name || 'K-pop Fan',
                 news,
-                frequency
+                frequency,
+                userId
             );
         } catch (error: any) {
             console.error(`❌ Error sending digest to ${userId}:`, error.message);
@@ -454,115 +354,34 @@ https://www.hallyuhub.com.br
     }
 
     /**
-     * Template de email digest
+     * Envia email digest via template do banco de dados
      */
     private async sendDigestEmailTemplate(
         to: string,
         userName: string,
         news: Array<NewsItem>,
-        frequency: 'DAILY' | 'WEEKLY'
+        frequency: 'DAILY' | 'WEEKLY',
+        userId?: string
     ): Promise<boolean> {
-        const emailService = getEmailService();
+        const period = frequency === 'DAILY' ? 'hoje' : 'esta semana';
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br';
 
-        const periodText = frequency === 'DAILY' ? 'hoje' : 'esta semana';
-        const settingsUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/settings/notifications`;
-
-        const newsListHtml = news
-            .map(
-                (item) => `
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea;">
-            <h3 style="margin: 0 0 10px 0; font-size: 16px;">
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/news/${item.id}"
-                   style="color: #333; text-decoration: none;">
+        const newsListHtml = news.map((item) => `
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #a855f7;">
+            <h3 style="margin: 0 0 8px 0; font-size: 15px;">
+                <a href="${siteUrl}/news/${item.id}" style="color: #18181b; text-decoration: none;">
                     ${item.title}
                 </a>
             </h3>
-            <p style="color: #666; font-size: 13px; margin: 5px 0;">
+            <p style="color: #71717a; font-size: 13px; margin: 4px 0;">
                 🎤 ${item.artists.map((a) => a.artist.nameRomanized).join(', ')}
             </p>
-            <p style="color: #999; font-size: 12px; margin: 5px 0;">
+            <p style="color: #a1a1aa; font-size: 12px; margin: 4px 0;">
                 📅 ${new Date(item.publishedAt).toLocaleDateString('pt-BR')}
             </p>
-        </div>
-        `
-            )
-            .join('');
+        </div>`).join('');
 
-        const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">📬 Resumo de Notícias</h1>
-    </div>
-
-    <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-        <p style="font-size: 16px;">Olá, <strong>${userName}</strong>!</p>
-
-        <p>Aqui estão as <strong>${news.length} notícias</strong> sobre seus artistas favoritos ${periodText}:</p>
-
-        ${newsListHtml}
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/news"
-               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      color: white;
-                      padding: 15px 40px;
-                      text-decoration: none;
-                      border-radius: 5px;
-                      font-weight: bold;
-                      display: inline-block;">
-                Ver Todas as Notícias
-            </a>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-
-        <p style="color: #666; font-size: 13px; text-align: center;">
-            <a href="${settingsUrl}" style="color: #667eea; text-decoration: none;">Gerenciar frequência do digest</a>
-        </p>
-
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
-            <p style="color: #999; font-size: 12px; margin: 5px 0;">
-                <strong>HallyuHub</strong> - Sua fonte de entretenimento coreano
-            </p>
-            <p style="color: #999; font-size: 12px; margin: 5px 0;">
-                <a href="https://www.hallyuhub.com.br" style="color: #667eea; text-decoration: none;">www.hallyuhub.com.br</a>
-            </p>
-        </div>
-    </div>
-</body>
-</html>
-        `;
-
-        const frequencyLabel = frequency === 'DAILY' ? 'Diário' : 'Semanal';
-
-        return emailService.sendEmail({
-            to,
-            subject: `📬 Resumo ${frequencyLabel} - ${news.length} nova${news.length > 1 ? 's' : ''} notícia${news.length > 1 ? 's' : ''}`,
-            text: `
-Resumo ${frequencyLabel} de Notícias - HallyuHub
-
-Olá, ${userName}!
-
-Aqui estão as ${news.length} notícias sobre seus artistas favoritos ${periodText}:
-
-${news.map((item, i) => `${i + 1}. ${item.title}\n   🎤 ${item.artists.map((a) => a.artist.nameRomanized).join(', ')}\n   📅 ${new Date(item.publishedAt).toLocaleDateString('pt-BR')}`).join('\n\n')}
-
-Ver todas as notícias: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.hallyuhub.com.br'}/news
-
----
-Gerenciar frequência do digest: ${settingsUrl}
-
-HallyuHub - Sua fonte de entretenimento coreano
-https://www.hallyuhub.com.br
-            `,
-            html,
-        });
+        return sendNewsDigestEmail(to, userName, period, newsListHtml, userId);
     }
 }
 
