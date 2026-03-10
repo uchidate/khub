@@ -273,26 +273,28 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                         {/* Nome */}
                         <div>
-                            <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter drop-shadow-2xl">
+                            <h1 className="text-4xl md:text-8xl font-black text-white leading-none tracking-tighter drop-shadow-2xl">
                                 {artist.nameRomanized}
                             </h1>
                             {artist.nameHangul && (
-                                <p className="text-xl md:text-3xl font-bold mt-1 text-purple-400 drop-shadow-lg">{artist.nameHangul}</p>
+                                <p className="text-lg md:text-3xl font-bold mt-1 text-purple-400 drop-shadow-lg">{artist.nameHangul}</p>
                             )}
                             {stageNames.length > 0 && (
-                                <p className="text-zinc-500 text-sm font-medium mt-1.5">
+                                <p className="hidden md:block text-zinc-500 text-sm font-medium mt-1.5">
                                     Também conhecido como: {stageNames.join(', ')}
                                 </p>
                             )}
                         </div>
 
-                        {/* Bio */}
+                        {/* Bio — só desktop; no mobile fica no conteúdo abaixo */}
                         {(bioPt ?? artist.bio) && (
-                            <ExpandableBio bio={bioPt ?? artist.bio!} />
+                            <div className="hidden md:block">
+                                <ExpandableBio bio={bioPt ?? artist.bio!} />
+                            </div>
                         )}
 
-                        {/* Stats */}
-                        <div className="flex items-center gap-4 flex-wrap">
+                        {/* Stats — só desktop */}
+                        <div className="hidden md:flex items-center gap-4 flex-wrap">
                             {age !== null && (
                                 <div className="flex items-center gap-1.5 text-purple-400">
                                     <Sparkles className="w-3.5 h-3.5" />
@@ -435,6 +437,13 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                     {/* ── MAIN ── */}
                     <div className="lg:col-span-2 space-y-16">
+
+                        {/* Bio mobile — visível só no mobile (desktop fica no hero) */}
+                        {(bioPt ?? artist.bio) && (
+                            <div className="md:hidden">
+                                <ExpandableBio bio={bioPt ?? artist.bio!} />
+                            </div>
+                        )}
 
                         {/* Ad: topo do conteúdo principal */}
                         <AdBanner
