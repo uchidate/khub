@@ -491,6 +491,29 @@ function IdolCard({
     setShowTMDB(false)
   }
 
+  const createArtist = async () => {
+    setPending(true)
+    try {
+      const res = await fetch('/api/admin/artists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nameRomanized: idol.idolName,
+          nameHangul: idol.idolNameHangul ?? undefined,
+          birthDate: idol.idolBirthday ?? undefined,
+          primaryImageUrl: idol.idolImageUrl ?? undefined,
+          roles: ['IDOL'],
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao criar cantor')
+      await doAction('confirm', data.id)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao criar cantor')
+      setPending(false)
+    }
+  }
+
   const idolImg = idol.idolImageUrl ?? avatarPlaceholder(idol.idolName)
   const artistImg = localArtist?.primaryImageUrl ?? avatarPlaceholder(localArtist?.nameRomanized ?? '?')
 
@@ -629,6 +652,17 @@ function IdolCard({
         >
           <Star size={12} /> TMDB
         </button>
+
+        {!isConfirmed && (
+          <button
+            onClick={createArtist}
+            disabled={pending}
+            title={`Criar "${idol.idolName}" como novo cantor no HallyuHub`}
+            className="text-xs bg-blue-900 hover:bg-blue-800 disabled:opacity-50 text-blue-300 px-3 py-1.5 rounded flex items-center gap-1"
+          >
+            <Plus size={12} /> Criar no HallyuHub
+          </button>
+        )}
 
         {isRejected && (
           <button
