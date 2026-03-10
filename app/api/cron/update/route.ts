@@ -635,8 +635,8 @@ Requisitos:
 
         log.info(`Job completed`, { duration: Math.round(duration / 1000), totalUpdates, totalErrors });
 
-        // 4. Enviar notificação Slack se configurado
-        if (totalUpdates > 0 || totalErrors > 0) {
+        // 4. Enviar notificação Slack apenas em caso de erros
+        if (totalErrors > 0) {
             try {
                 const slackService = getSlackService();
 
