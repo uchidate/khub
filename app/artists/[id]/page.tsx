@@ -33,7 +33,12 @@ const getArtist = cache(async (id: string) => {
             agency: true,
             albums: { orderBy: { releaseDate: 'desc' } },
             productions: {
-                where: { production: { flaggedAsNonKorean: false } },
+                where: {
+                    production: {
+                        flaggedAsNonKorean: false,
+                        ageRating: { in: ['L', '10', '12', '14', '16'] },
+                    }
+                },
                 include: { production: true },
                 orderBy: { production: { year: { sort: 'desc', nulls: 'last' } } },
             },

@@ -37,7 +37,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.production.findMany({
-                where: { flaggedAsNonKorean: false },
+                where: {
+                    flaggedAsNonKorean: false,
+                    // Excluir do SEO conteúdo oculto por faixa etária (18+ e não classificados)
+                    ageRating: { in: ['L', '10', '12', '14', '16'] },
+                },
                 select: { id: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
             }),
