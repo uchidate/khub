@@ -91,7 +91,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.7'  # Reduzido de 0.8 — libera CPU para o banco
+          cpus: '2.0'  # Aumentado de 0.7 — suporta 10k conexões simultâneas
           memory: 3G   # Aumentado de 2G — cron + web traffic podem atingir 2.5GB
         reservations:
           memory: 1G
