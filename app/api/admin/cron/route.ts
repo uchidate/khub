@@ -141,7 +141,7 @@ function loadCronJobs(env: string): Array<{name: string; schedule: string; descr
         nextRun: getNextCronRun(job.schedule)
       }));
     }
-  } catch (error) {
+  } catch {
     log.warn(`Could not read ${configFile}, using fallback`);
   }
 

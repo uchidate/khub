@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
                         })
                         send(`FIXED:${artist.nameRomanized}→${tmdb.name}`)
                         fixed++
-                    } catch (updateErr) {
+                    } catch {
                         // Unique constraint — dois artistas com mesmo nome exato
                         send(`NAME_CONFLICT_UNRESOLVABLE:${artist.nameRomanized}→${tmdb.name}:${artist.id}`)
                         nameConflicts++
