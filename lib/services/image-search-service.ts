@@ -440,7 +440,7 @@ export class ImageSearchService {
                 source: 'placeholder',
                 attribution: 'K-pop themed placeholder from Unsplash',
             };
-        } catch (error) {
+        } catch {
             // Ultimate fallback: solid color data URI (never fails, always works offline)
             console.warn('⚠️ All placeholders failed, using solid color fallback');
             return {

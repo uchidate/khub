@@ -210,7 +210,6 @@ export class NewsNotificationService {
             }
 
             // Enviar email
-            const emailService = getEmailService();
             const success = await this.sendInstantNotificationEmail(
                 user.email,
                 user.name || 'K-pop Fan',
@@ -442,7 +441,6 @@ https://www.hallyuhub.com.br
             }
 
             // Enviar digest
-            const emailService = getEmailService();
             return this.sendDigestEmailTemplate(
                 user.email,
                 user.name || 'K-pop Fan',
