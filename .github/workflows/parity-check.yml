@@ -20,148 +20,23 @@ jobs:
           echo "=================================================="
           echo ""
 
-          # Extrair jobs de staging e production
-          # Para staging: remove linhas do header do próximo bloco (comentários ═══ e linhas vazias finais)
-          sed -n '/^  deploy-staging:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | sed '/^  #.*═══/,$d' | sed -e :a -e '/^\s*$/{ $d; N; ba; }' > /tmp/staging.yml
-          sed -n '/^  deploy-production:/,/^  [a-z-]*:/p' .github/workflows/deploy.yml | sed -e :a -e '/^\s*$/{ $d; N; ba; }' > /tmp/production.yml
+          # Com o workflow reutilizável (_deploy-env.yml), staging e production
+          # são garantidamente idênticos por design. A verificação aqui é que
+          # ambos os jobs chamam o mesmo workflow reutilizável.
 
-          # Normalizar diferenças permitidas (whitelist)
-          # CRÍTICO: Ordem importa - padrões MAIS ESPECÍFICOS devem vir ANTES dos genéricos
-          ALLOWED_DIFFS=(
-            # 1. Padrões de arquivo específicos (antes de tudo)
-            ".env.staging|.env.production"
-            "docker-compose.staging.yml|docker-compose.prod.yml"
+          STAGING_USES=$(grep -A10 'deploy-staging:' .github/workflows/deploy.yml | grep 'uses:' | head -1 | awk '{print $2}')
+          PRODUCTION_USES=$(grep -A10 'deploy-production:' .github/workflows/deploy.yml | grep 'uses:' | head -1 | awk '{print $2}')
 
-            # 2. URLs e caminhos (antes do padrão hallyuhub)
-            "31.97.255.107:3001|www.hallyuhub.com.br"
-            "staging.hallyuhub.com.br|www.hallyuhub.com.br"
-
-            # 2b. Database URL: normalizar antes do genérico staging|production
-            "hallyuhub_staging|hallyuhub_production"
-
-            # 2c. Docker image tag: staging usa :staging, production usa :latest (por convenção)
-            "khub:staging|khub:latest"
-
-            # 2c. Ollama URL: ambos usam http:// então normalizar antes do genérico http://|https://
-            "http://ollama-staging|http://ollama-production"
-
-            "http://|https://"
-
-            # 3. Caminho compartilhado /var/www/hallyuhub (normaliza igual em ambos)
-            "/var/www/hallyuhub|/var/www/hallyuhub"
-
-            # 4. Refs do git (antes do genérico staging|production)
-            "refs/heads/staging|refs/heads/main"
-
-            # 5. Nomes de containers específicos
-            # 5a. Padrões compostos ANTES dos simples (hallyuhub-postgres-X contém postgres-X)
-            "hallyuhub-postgres-staging|hallyuhub-postgres-production"
-            "hallyuhub-prometheus-staging|hallyuhub-prometheus-production"
-            "hallyuhub-grafana-staging|hallyuhub-grafana-production"
-            "hallyuhub-migrate-staging|hallyuhub-migrate-production"
-            "hallyuhub-staging|hallyuhub"
-            "migrate-staging|migrate-production"
-            "postgres-staging|postgres-production"
-            "ollama-staging|ollama-production"
-            # 5b. Serviços de monitoramento (staging usa sufixo, production não)
-            "prometheus-staging|prometheus"
-            "grafana-staging|grafana"
-
-            # 6. Scripts específicos de cada ambiente (equivalentes funcionais)
-            "setup-auto-generation.sh|verify-production.sh"
-
-            # 7. Nomes genéricos de ambiente (APÓS padrões específicos)
-            "deploy-staging|deploy-production"
-            "Deploy Staging|Deploy Production"
-            "staging|production"
-            "STAGING|PRODUCTION"
-            "Staging|Production"
-
-            # 8. Modelos de IA (staging=leve, production=qualidade)
-            "gemma:2b|phi3:mini"
-
-            # 9. Diferenças de criticidade (staging=menor, production=maior)
-            # CRÍTICO: Normalizar em AMBOS os lados para valores que aparecem nos dois ambientes
-            "timeout_minutes: 20|timeout_minutes: 20"
-            "timeout_minutes: 25|timeout_minutes: 25"
-            "max_retries=10|max_retries=10"
-            "max_retries=15|max_retries=15"
-            "max_retries=18|max_retries=18"
-            "max_retries=20|max_retries=25"
-            "max_attempts=10|max_attempts=10"
-            "max_attempts=12|max_attempts=12"
-            "max_attempts=20|max_attempts=20"
-            "sleep 3|sleep 3"
-            "sleep 5|sleep 5"
-            "sleep 10|sleep 10"
-
-            # 10. Diferenças visuais e estruturais permitidas
-            "🟡|🟢"
-            "FASE 3a|FASE 3b"
-            "restart: \"no\"|restart: always"
-          )
-
-          # Criar versões normalizadas
-          cp /tmp/staging.yml /tmp/staging-normalized.yml
-          cp /tmp/production.yml /tmp/production-normalized.yml
-
-          for diff_pattern in "${ALLOWED_DIFFS[@]}"; do
-            staging_val=$(echo "$diff_pattern" | cut -d'|' -f1)
-            production_val=$(echo "$diff_pattern" | cut -d'|' -f2)
-
-            # Normalizar ambos para um valor neutro
-            sed -i "s|$staging_val|NORMALIZED|g" /tmp/staging-normalized.yml
-            sed -i "s|$production_val|NORMALIZED|g" /tmp/production-normalized.yml
-          done
-
-          # Remover trailing whitespace e linhas em branco no final (diferenças cosméticas)
-          sed -i 's/[[:space:]]*$//' /tmp/staging-normalized.yml
-          sed -i 's/[[:space:]]*$//' /tmp/production-normalized.yml
-
-          # Comparar versões normalizadas
-          echo "📊 Comparando staging e production (após normalização)..."
+          echo "deploy-staging  usa: $STAGING_USES"
+          echo "deploy-production usa: $PRODUCTION_USES"
           echo ""
 
-          # Usar --ignore-matching-lines para diferenças legítimas que resistem à normalização:
-          # - Scripts específicos de cada ambiente (setup-auto-generation vs verify-production)
-          # - Verificação SSL (produção apenas - staging usa http)
-          # - NODE_ENV e argumentos específicos de scripts
-          # - scripts/NORMALIZED: invocação do script (staging usa NODE_ENV=X + flags, production não)
-          #   Ambas as linhas (+ e -) contêm "scripts/NORMALIZED", então a mudança é ignorada
-          # - nginx.NORMALIZED: staging usa nginx.staging.conf, production usa nginx.prod.conf + SSL
-          # - sites-available/hallyuhub-NORMALIZED: staging cria link, production sobrescreve diretamente
-          # - watchdog.sh URL: staging usa IP:3001, production usa domínio HTTPS
-          # - Linhas de supressão de notificação (comentários + check inline): contêm "staging"
-          #   em texto livre (comment/echo) — normalizadas diferente por serem texto, não tokens.
-          #   "frequentes" cobre o comentário, "suprimida" cobre o echo/check.
-          if diff -u \
-            --ignore-matching-lines='setup-auto-generation\|NODE_ENV=\|--no-test\|Verify SSL\|certificado SSL\|hallyuhub.com.br\|scripts/NORMALIZED\|DATABASE_URL\|ALTER USER\|docker exec.*psql\|pg_isready\|nginx\.\|sites-available\|sites-enabled\|watchdog\|maintenance\.html\|Sync Nginx\|letsencrypt\|ssl_cert\|frequentes\|suprimida\|ruído desnecessário' \
-            /tmp/staging-normalized.yml /tmp/production-normalized.yml > /tmp/diff-result.txt; then
-            echo "✅ SUCESSO: Staging e Production são espelhos perfeitos!"
-            echo ""
-            echo "Diferenças permitidas (particularidades de ambiente):"
-            for diff_pattern in "${ALLOWED_DIFFS[@]}"; do
-              echo "  - $diff_pattern"
-            done
-            exit 0
+          if [ "$STAGING_USES" = "$PRODUCTION_USES" ] && [ -n "$STAGING_USES" ]; then
+            echo "✅ Ambos os ambientes usam o mesmo workflow reutilizável: $STAGING_USES"
+            echo "   Paridade garantida estruturalmente — não é possível divergir."
           else
-            echo "❌ FALHA: Encontradas diferenças NÃO autorizadas!"
-            echo ""
-            echo "=================================================="
-            echo "DIFERENÇAS DETECTADAS:"
-            echo "=================================================="
-            cat /tmp/diff-result.txt
-            echo ""
-            echo "=================================================="
-            echo "REGRA: Staging e Production DEVEM ser espelhos!"
-            echo "=================================================="
-            echo ""
-            echo "Apenas as seguintes diferenças são permitidas:"
-            for diff_pattern in "${ALLOWED_DIFFS[@]}"; do
-              echo "  ✅ $diff_pattern"
-            done
-            echo ""
-            echo "Qualquer outra diferença DEVE ser corrigida antes do merge."
+            echo "❌ FALHA: deploy-staging e deploy-production não usam o mesmo workflow!"
+            echo "   Ambos devem referenciar .github/workflows/_deploy-env.yml"
             exit 1
           fi
 
@@ -176,9 +51,7 @@ jobs:
           staging_services=$(grep -E "^  [a-z-]+:" docker-compose.staging.yml | sort)
           prod_services=$(grep -E "^  [a-z-]+:" docker-compose.prod.yml | sort)
 
-          # Normalizar nomes
-          # staging: hallyuhub-staging → hallyuhub-XXX, outros-staging → outros-XXX
-          # production: hallyuhub (sem sufixo) → hallyuhub-XXX, outros-production → outros-XXX
+          # Normalizar nomes de ambiente para comparação
           staging_services_norm=$(echo "$staging_services" | sed 's/-staging/-XXX/g')
           prod_services_norm=$(echo "$prod_services" | sed 's/-production/-XXX/g')
           # Casos especiais: containers de production sem sufixo -production
@@ -186,7 +59,7 @@ jobs:
           prod_services_norm=$(echo "$prod_services_norm" | sed 's/^  prometheus:$/  prometheus-XXX:/')
           prod_services_norm=$(echo "$prod_services_norm" | sed 's/^  grafana:$/  grafana-XXX:/')
 
-          if [ "$staging_services_norm" == "$prod_services_norm" ]; then
+          if [ "$staging_services_norm" = "$prod_services_norm" ]; then
             echo "✅ Services idênticos em staging e production"
           else
             echo "❌ FALHA: Services diferentes entre staging e production!"
@@ -209,7 +82,9 @@ jobs:
           echo "✅ PARIDADE VALIDADA COM SUCESSO!"
           echo "=================================================="
           echo ""
-          echo "Staging e Production são espelhos perfeitos."
-          echo "Apenas particularidades de ambiente diferem."
+          echo "Deploy usa workflow reutilizável (_deploy-env.yml):"
+          echo "  → Paridade garantida por design. Impossível divergir."
+          echo ""
+          echo "Docker-compose services são espelhos."
           echo ""
           echo "Este PR está aprovado para merge."

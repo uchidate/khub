@@ -61,14 +61,17 @@ echo "⚙️  Reconfigurando crontab..."
 
 if [ "$ENV" = "production" ]; then
     # Production setup
+    # Nota: watchdog está em /etc/cron.d/hallyuhub-watchdog (não aqui)
+    # Nota: AI generation foi desativado (hallyuhub-ai cron.d removido)
     (echo "# HallyuHub - Production Crontab Configuration"; \
      echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; \
      echo ""; \
-     echo "# Auto generate content every 15 minutes"; \
-     echo "*/15 * * * * ${PROJECT_DIR}/scripts/auto-generate-content.sh >> ${PROJECT_DIR}/logs/cron-direct.log 2>&1"; \
-     echo ""; \
      echo "# Health Monitor every 30 minutes"; \
      echo "*/30 * * * * ${PROJECT_DIR}/scripts/monitor-health.sh >> ${PROJECT_DIR}/logs/health-monitor.log 2>&1"; \
+     echo ""; \
+     echo "# Email Digest Jobs"; \
+     echo "0 9 * * * ${PROJECT_DIR}/scripts/cron/daily-digest.sh >> ${PROJECT_DIR}/logs/cron/daily-digest.log 2>&1"; \
+     echo "0 9 * * 1 ${PROJECT_DIR}/scripts/cron/weekly-digest.sh >> ${PROJECT_DIR}/logs/cron/weekly-digest.log 2>&1"; \
      echo ""; \
      echo "# Server Cleanup daily at 3AM"; \
      echo "0 3 * * * SLACK_WEBHOOK_ALERTS=\${SLACK_WEBHOOK_ALERTS} ${PROJECT_DIR}/scripts/cleanup-cron.sh >> ${PROJECT_DIR}/logs/cleanup-cron.log 2>&1") | crontab -
