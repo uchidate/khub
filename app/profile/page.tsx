@@ -79,7 +79,7 @@ export default async function ProfilePage() {
               src={heroImageUrl}
               alt="Profile hero"
               fill
-              className="object-cover object-top scale-110 blur-sm brightness-30"
+              className="object-cover object-center scale-110 blur-sm brightness-30"
               sizes="100vw"
               priority
             />
