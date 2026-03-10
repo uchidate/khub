@@ -6,7 +6,7 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
-import { Plus, Users, Music2, EyeOff, Instagram, Twitter, Youtube, ExternalLink, Globe } from 'lucide-react'
+import { Plus, Users, Music2, EyeOff, Instagram, Twitter, Youtube, ExternalLink, Globe, Pencil, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -138,7 +138,6 @@ export default function GroupsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [membersOpen, setMembersOpen] = useState(false)
-  const [editingGroup, setEditingGroup] = useState<MusicalGroup | null>(null)
   const [managingGroup, setManagingGroup] = useState<MusicalGroup | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
@@ -227,35 +226,11 @@ export default function GroupsPage() {
     },
   ], [])
 
-  const handleCreate = () => { setEditingGroup(null); setFormOpen(true) }
-
-  const handleEdit = (group: MusicalGroup) => {
-    const socialFlat: Record<string, string> = {}
-    if (group.socialLinks) {
-      for (const platform of SOCIAL_PLATFORMS) {
-        socialFlat[`sl_${platform}`] = group.socialLinks[platform] ?? ''
-      }
-    }
-    const mvFlat: Record<string, string> = {}
-    if (group.videos) {
-      group.videos.forEach((mv, i) => {
-        if (i < MAX_MVS) {
-          mvFlat[`mv${i + 1}_title`] = mv.title ?? ''
-          mvFlat[`mv${i + 1}_url`] = mv.url ?? ''
-        }
-      })
-    }
-    setEditingGroup({ ...group, ...socialFlat, ...mvFlat } as unknown as MusicalGroup)
-    setFormOpen(true)
-  }
-
+  const handleCreate = () => { setFormOpen(true) }
   const handleManageMembers = (group: MusicalGroup) => { setManagingGroup(group); setMembersOpen(true) }
   const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
-    const url = editingGroup ? `/api/admin/groups?id=${editingGroup.id}` : '/api/admin/groups'
-    const method = editingGroup ? 'PATCH' : 'POST'
-
     const socialLinks: Record<string, string> = {}
     for (const platform of SOCIAL_PLATFORMS) {
       const val = data[`sl_${platform}`] as string | undefined
@@ -276,8 +251,8 @@ export default function GroupsPage() {
       videos: videos.length > 0 ? videos : null,
     }
 
-    const res = await fetch(url, {
-      method,
+    const res = await fetch('/api/admin/groups', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
@@ -295,15 +270,6 @@ export default function GroupsPage() {
     if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao deletar') }
     refetchTable()
     fetchStats()
-  }
-
-  const getInitialData = () => {
-    if (!editingGroup) return undefined
-    return {
-      ...editingGroup,
-      debutDate: editingGroup.debutDate ? new Date(editingGroup.debutDate).toISOString().split('T')[0] : '',
-      disbandDate: editingGroup.disbandDate ? new Date(editingGroup.disbandDate).toISOString().split('T')[0] : '',
-    } as unknown as Record<string, unknown>
   }
 
   const statusFilterEl = (
@@ -370,15 +336,22 @@ export default function GroupsPage() {
           apiUrl="/api/admin/groups"
           extraParams={extraParams}
           filters={statusFilterEl}
-          onEdit={handleEdit}
+          editHref={(group) => `/admin/groups/${group.id}`}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por nome ou hangul..."
           actions={(group) => (
-            <button onClick={() => handleManageMembers(group)}
-              title="Gerenciar Membros"
-              className="p-2 text-zinc-400 hover:text-purple-400 hover:bg-purple-900/20 rounded-lg transition-colors">
-              <Users size={16} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => handleManageMembers(group)}
+                title="Gerenciar Membros"
+                className="p-1.5 text-zinc-400 hover:text-purple-400 hover:bg-purple-900/20 rounded-lg transition-colors">
+                <Users size={15} />
+              </button>
+              <button onClick={() => handleDelete([group.id])}
+                title="Excluir"
+                className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors">
+                <Trash2 size={15} />
+              </button>
+            </div>
           )}
           renderMobileCard={(group) => (
             <div className="p-3 flex items-start gap-3">
@@ -425,12 +398,27 @@ export default function GroupsPage() {
                   </div>
                 )}
 
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleManageMembers(group) }}
-                  className="mt-2 text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
-                >
-                  <Users size={10} /> Gerenciar membros
-                </button>
+                <div className="flex items-center gap-3 mt-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleManageMembers(group) }}
+                    className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
+                  >
+                    <Users size={10} /> Membros
+                  </button>
+                  <a
+                    href={`/admin/groups/${group.id}`}
+                    className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Pencil size={10} /> Editar
+                  </a>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete([group.id]) }}
+                    className="text-xs text-zinc-600 hover:text-red-400 flex items-center gap-1 transition-colors"
+                  >
+                    <Trash2 size={10} /> Excluir
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -438,9 +426,8 @@ export default function GroupsPage() {
       </div>
 
       <FormModal
-        title={editingGroup ? 'Editar Grupo Musical' : 'Novo Grupo Musical'}
+        title="Novo Grupo Musical"
         fields={formFields}
-        initialData={getInitialData()}
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSubmit={handleFormSubmit}
