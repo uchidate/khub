@@ -44,6 +44,15 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         }
     }
 
+    // Conteúdo oculto por faixa etária (18+ ou não classificado) não deve ser indexado
+    const SAFE_RATINGS = ['L', '10', '12', '14', '16']
+    if (!production.ageRating || !SAFE_RATINGS.includes(production.ageRating)) {
+        return {
+            title: production.titlePt,
+            robots: { index: false, follow: false },
+        }
+    }
+
     const description = production.synopsis || `${production.titlePt} (${production.titleKr}) - ${production.type} ${production.year ? `de ${production.year}` : ''}`
     const castNames = production.artists.slice(0, 3).map(a => a.artist.nameRomanized).join(', ')
     const fullDescription = production.synopsis
