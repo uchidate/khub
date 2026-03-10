@@ -629,6 +629,41 @@ export class SlackNotificationService {
     }
 
     /**
+     * Notify when a new user registers
+     */
+    async notifyNewUserRegistered(email: string, name?: string, totalUsers?: number): Promise<boolean> {
+        const webhook = this.webhookContent || this.webhookAlerts;
+        if (!webhook) return false;
+
+        const blocks: SlackBlock[] = [
+            {
+                type: 'header',
+                text: { type: 'plain_text', text: '👤 Novo Usuário Cadastrado', emoji: true },
+            },
+            {
+                type: 'section',
+                fields: [
+                    { type: 'mrkdwn', text: `*Nome:*\n${name || 'Não informado'}` },
+                    { type: 'mrkdwn', text: `*Email:*\n${email}` },
+                ],
+            },
+        ];
+
+        if (totalUsers !== undefined) {
+            blocks.push({
+                type: 'section',
+                text: { type: 'mrkdwn', text: `*Total de usuários:* ${totalUsers}` },
+            });
+        }
+
+        blocks.push({ type: 'divider' });
+        const contextBlock = this.buildContextBlock({ source: 'api', timestamp: new Date() });
+        if (contextBlock) blocks.push(contextBlock);
+
+        return this.sendMessage(webhook, { blocks });
+    }
+
+    /**
      * Send raw message to a webhook
      */
     private async sendMessage(webhookUrl: string, payload: { blocks: SlackBlock[]; text?: string }): Promise<boolean> {

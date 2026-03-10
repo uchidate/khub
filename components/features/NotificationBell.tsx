@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { Bell, Check, X } from 'lucide-react'
+import Image from 'next/image'
+import { Bell, Check, X, Settings } from 'lucide-react'
 
 interface Notification {
     id: string
@@ -13,6 +14,18 @@ interface Notification {
         title: string
         imageUrl: string | null
     }
+}
+
+function relativeTime(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diff / 60_000)
+    const hours = Math.floor(diff / 3_600_000)
+    const days = Math.floor(diff / 86_400_000)
+    if (mins < 1) return 'agora'
+    if (mins < 60) return `${mins}m atrás`
+    if (hours < 24) return `${hours}h atrás`
+    if (days < 7) return `${days}d atrás`
+    return new Date(dateStr).toLocaleDateString('pt-BR')
 }
 
 export function NotificationBell() {
@@ -88,7 +101,8 @@ export function NotificationBell() {
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-96 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+                    {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
                         <span className="text-sm font-bold text-white">Notificações</span>
                         <div className="flex items-center gap-2">
@@ -101,6 +115,14 @@ export function NotificationBell() {
                                     Marcar todas
                                 </button>
                             )}
+                            <Link
+                                href="/settings/notifications"
+                                onClick={() => setOpen(false)}
+                                className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                                title="Configurar notificações"
+                            >
+                                <Settings className="w-4 h-4" />
+                            </Link>
                             <button
                                 onClick={() => setOpen(false)}
                                 className="text-zinc-500 hover:text-white"
@@ -110,10 +132,19 @@ export function NotificationBell() {
                         </div>
                     </div>
 
-                    <div className="max-h-80 overflow-y-auto">
+                    {/* List */}
+                    <div className="max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
-                            <div className="py-8 text-center text-sm text-zinc-600">
-                                Nenhuma notificação
+                            <div className="py-10 text-center">
+                                <Bell className="w-8 h-8 mx-auto mb-3 text-zinc-700" />
+                                <p className="text-sm text-zinc-500 mb-3">Nenhuma notificação ainda</p>
+                                <Link
+                                    href="/settings/notifications"
+                                    onClick={() => setOpen(false)}
+                                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                                >
+                                    Configurar notificações →
+                                </Link>
                             </div>
                         ) : (
                             notifications.map(n => (
@@ -121,21 +152,41 @@ export function NotificationBell() {
                                     key={n.id}
                                     className={`flex items-start gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors border-b border-zinc-800/50 last:border-0 ${!n.readAt ? 'bg-purple-600/5' : ''}`}
                                 >
-                                    {!n.readAt && (
-                                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0" />
+                                    {/* Thumbnail */}
+                                    {n.news.imageUrl ? (
+                                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                                            <Image
+                                                src={n.news.imageUrl}
+                                                alt=""
+                                                width={48}
+                                                height={48}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-lg flex-shrink-0 bg-zinc-800 flex items-center justify-center">
+                                            <Bell className="w-5 h-5 text-zinc-600" />
+                                        </div>
                                     )}
+
+                                    {/* Content */}
                                     <div className="flex-1 min-w-0" onClick={() => !n.readAt && markRead(n.id)}>
                                         <Link
                                             href={`/news/${n.news.id}`}
                                             onClick={() => { setOpen(false); if (!n.readAt) markRead(n.id) }}
-                                            className="text-xs text-zinc-300 hover:text-white line-clamp-2"
+                                            className="text-xs text-zinc-300 hover:text-white line-clamp-2 leading-relaxed"
                                         >
                                             {n.news.title}
                                         </Link>
-                                        <p className="text-[10px] text-zinc-600 mt-0.5">
-                                            {new Date(n.createdAt).toLocaleDateString('pt-BR')}
+                                        <p className="text-[10px] text-zinc-600 mt-1">
+                                            {relativeTime(n.createdAt)}
                                         </p>
                                     </div>
+
+                                    {/* Unread dot */}
+                                    {!n.readAt && (
+                                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-1.5 flex-shrink-0" />
+                                    )}
                                 </div>
                             ))
                         )}

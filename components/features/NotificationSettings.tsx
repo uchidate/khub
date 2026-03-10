@@ -222,6 +222,38 @@ export function NotificationSettings({
                 </div>
             </div>
 
+            {/* Filtros */}
+            <div className="p-6 rounded-xl bg-zinc-900/50 border border-white/10">
+                <div className="flex items-start gap-4 mb-4">
+                    <Users className="w-6 h-6 text-purple-400 flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                        <h3 className="font-bold text-white mb-2">Filtros de Notificação</h3>
+                        <p className="text-sm text-zinc-400 mb-4">
+                            Controle quais notícias disparam notificações para você
+                        </p>
+
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={formData.onlyFavoriteArtists}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, onlyFavoriteArtists: e.target.checked })
+                                }
+                                className="w-5 h-5 rounded border-zinc-700 bg-zinc-800 text-purple-500 focus:ring-2 focus:ring-purple-500/50"
+                            />
+                            <span className="text-sm text-zinc-300">
+                                Notificar apenas sobre artistas que sigo
+                            </span>
+                        </label>
+                        <p className="text-xs text-zinc-500 mt-2 ml-8">
+                            {formData.onlyFavoriteArtists
+                                ? 'Você só receberá notificações sobre artistas que favoritou'
+                                : 'Você receberá notificações sobre todos os artistas do HallyuHub'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Botão Salvar */}
             <div className="flex items-center justify-between pt-6">
                 <div className="text-sm text-zinc-500">

@@ -180,6 +180,8 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          # Staging deploys são frequentes — notificar apenas produção para evitar ruído
+          [ "${{ github.ref_name }}" = "staging" ] && echo "Staging — notificação de início suprimida" && exit 0
           COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
             -d "{\"text\": \"🚀 Deploy STAGING iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy STAGING Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\n> $COMMIT_MSG\"}}]}"
@@ -347,6 +349,8 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          # Staging com sucesso = ruído desnecessário — notificar apenas falhas
+          [ "${{ job.status }}" = "success" ] && [ "${{ github.ref_name }}" = "staging" ] && echo "Staging sucesso — notificação suprimida" && exit 0
           STATUS_EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
           curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
             -d "{\"text\": \"$STATUS_EMOJI Deploy STAGING ${{ job.status }}\"}"
@@ -374,6 +378,8 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          # Staging deploys são frequentes — notificar apenas produção para evitar ruído
+          [ "${{ github.ref_name }}" = "staging" ] && echo "Staging — notificação de início suprimida" && exit 0
           COMMIT_MSG=$(git log -1 --pretty=format:'%s' | head -c 100)
           curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
             -d "{\"text\": \"🚀 Deploy PRODUCTION iniciado\", \"blocks\": [{\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Deploy PRODUCTION Iniciado\"}}, {\"type\": \"section\", \"fields\": [{\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n\`${{ github.ref_name }}\`\"}, {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${GITHUB_SHA:0:7}\`\"}]}, {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Mensagem:*\n> $COMMIT_MSG\"}}]}"
@@ -541,6 +547,8 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
         run: |
+          # Staging com sucesso = ruído desnecessário — notificar apenas falhas
+          [ "${{ job.status }}" = "success" ] && [ "${{ github.ref_name }}" = "staging" ] && echo "Staging sucesso — notificação suprimida" && exit 0
           STATUS_EMOJI=$([ "${{ job.status }}" = "success" ] && echo "✅" || echo "❌")
           curl -s -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
             -d "{\"text\": \"$STATUS_EMOJI Deploy PRODUCTION ${{ job.status }}\"}"

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { getEmailService } from '@/lib/services/email-service'
+import { getSlackService } from '@/lib/services/slack-notification-service'
 import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
@@ -70,6 +71,14 @@ export const POST = withLogging(async function POST(request: NextRequest) {
     } catch (emailError) {
       // Log error but don't fail registration
       log.warn('Failed to send welcome email', { error: getErrorMessage(emailError) })
+    }
+
+    // Slack admin notification (non-blocking)
+    try {
+      const totalUsers = await prisma.user.count()
+      await getSlackService().notifyNewUserRegistered(user.email, user.name || undefined, totalUsers)
+    } catch {
+      // Non-blocking — never fail registration due to Slack
     }
 
     return NextResponse.json(
