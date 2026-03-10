@@ -105,14 +105,20 @@ function NavLink({ item, pathname, onNav }: { item: NavItem; pathname: string | 
     <Link
       href={item.href}
       onClick={onNav}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
         isActive
-          ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-          : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+          ? 'bg-purple-500/15 text-purple-300 font-semibold'
+          : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 font-medium'
       }`}
     >
-      <item.icon size={16} />
-      {item.label}
+      <item.icon
+        size={15}
+        className={isActive ? 'text-purple-400' : 'text-zinc-600'}
+      />
+      <span className="truncate">{item.label}</span>
+      {isActive && (
+        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-400 flex-shrink-0" />
+      )}
     </Link>
   )
 }
@@ -148,11 +154,13 @@ function NavSectionBlock({
     <div>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-zinc-300 transition-colors rounded"
+        className={`w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-colors rounded-lg ${
+          active ? 'text-purple-400/80' : 'text-zinc-600 hover:text-zinc-400'
+        }`}
       >
         <span>{section.label}</span>
         <ChevronDown
-          size={12}
+          size={11}
           className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
@@ -172,20 +180,25 @@ function NavSectionBlock({
 function SidebarContent({ pathname, onNav }: { pathname: string | null; onNav?: () => void }) {
   return (
     <>
-      <div className="p-4 border-b border-zinc-800 space-y-3">
-        <Link href="/admin" className="flex items-center gap-2" onClick={onNav}>
-          <Shield className="text-red-500" size={22} />
-          <span className="text-base font-black text-white">HallyuHub Admin</span>
+      {/* Header */}
+      <div className="p-4 border-b border-zinc-800/80">
+        <Link href="/admin" className="flex items-center gap-2.5 mb-3 group" onClick={onNav}>
+          <div className="w-7 h-7 rounded-lg bg-red-500/15 border border-red-500/20 flex items-center justify-center flex-shrink-0">
+            <Shield className="text-red-400" size={15} />
+          </div>
+          <span className="text-sm font-black text-white tracking-tight">HallyuHub Admin</span>
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/50 hover:border-zinc-600 px-3 py-1.5 rounded-md transition-colors w-full"
+          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 px-3 py-1.5 rounded-lg transition-all w-full"
           onClick={onNav}
         >
-          <ChevronLeft size={13} />
+          <ChevronLeft size={12} />
           Voltar ao site
         </Link>
       </div>
+
+      {/* Nav */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navSections.map((section, i) => (
           <NavSectionBlock key={i} section={section} pathname={pathname} onNav={onNav} />
@@ -205,11 +218,11 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
   }, [pathname])
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-zinc-950">
       <div className="flex">
 
         {/* Sidebar desktop */}
-        <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-zinc-950 border-r border-zinc-800 fixed">
+        <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-[#0a0a0a] border-r border-zinc-800/80 fixed">
           <SidebarContent pathname={pathname} />
         </aside>
 
@@ -218,17 +231,17 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
           <div className="lg:hidden fixed inset-0 z-50 flex">
             {/* Backdrop */}
             <div
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
             {/* Drawer */}
-            <aside className="relative flex flex-col w-72 max-w-[85vw] bg-zinc-950 border-r border-zinc-800 h-full overflow-y-auto">
+            <aside className="relative flex flex-col w-72 max-w-[85vw] bg-[#0a0a0a] border-r border-zinc-800/80 h-full overflow-y-auto">
               <button
                 onClick={() => setMobileOpen(false)}
                 className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
                 aria-label="Fechar menu"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
               <SidebarContent pathname={pathname} onNav={() => setMobileOpen(false)} />
             </aside>
@@ -238,27 +251,29 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
         {/* Main Content */}
         <main className="flex-1 lg:ml-60 min-w-0 overflow-x-hidden">
           {/* Mobile header */}
-          <div className="lg:hidden sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+          <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/80 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileOpen(true)}
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                 aria-label="Abrir menu"
               >
-                <Menu size={20} />
+                <Menu size={19} />
               </button>
               <div className="flex items-center gap-2">
-                <Shield className="text-red-500" size={18} />
+                <Shield className="text-red-400" size={16} />
                 <span className="font-bold text-white text-sm">{title}</span>
               </div>
             </div>
-            <Link href="/" className="text-xs text-zinc-500 hover:text-white transition-colors">
-              ← Site
+            <Link href="/" className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+              <ChevronLeft size={13} />
+              Site
             </Link>
           </div>
 
-          <div className="p-3 sm:p-4 lg:p-8">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white mb-4 lg:mb-8">{title}</h1>
+          {/* Page content */}
+          <div className="p-4 sm:p-5 lg:p-8">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white mb-5 lg:mb-7">{title}</h1>
             {children}
           </div>
         </main>
