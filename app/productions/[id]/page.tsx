@@ -199,16 +199,14 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
             {/* Cinematic Hero — mobile: imagem visível em cima / desktop: full-bleed */}
             <div className="bg-black flex flex-col md:relative md:min-h-[65vh] md:overflow-hidden">
 
-                {/* Mobile: imagem proporcional visível (não cortada) */}
-                <div className="relative w-full md:hidden overflow-hidden">
-                    <div className={`relative ${production.backdropUrl ? 'aspect-video' : 'aspect-[2/3] max-h-[80vw]'}`}>
-                        {heroImageUrl ? (
-                            <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover object-center" />
-                        ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-pink-900/30" />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
-                    </div>
+                {/* Mobile: banner com altura fixa — object-cover centraliza e preenche */}
+                <div className="relative w-full h-64 sm:h-72 md:hidden overflow-hidden">
+                    {heroImageUrl ? (
+                        <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover object-center" />
+                    ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-pink-900/30" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
                 </div>
 
                 {/* Desktop: background full-bleed */}
