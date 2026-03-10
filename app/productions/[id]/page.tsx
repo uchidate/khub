@@ -196,10 +196,23 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                     { "@type": "ListItem", "position": 2, "name": production.titlePt, "item": `${BASE_URL}/productions/${production.id}` },
                 ],
             }} />
-            {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
-            <div className="relative min-h-[88vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
-                {/* Background image (contained, never clips content) */}
-                <div className="absolute inset-0">
+            {/* Cinematic Hero — mobile: imagem visível em cima / desktop: full-bleed */}
+            <div className="bg-black flex flex-col md:relative md:min-h-[65vh] md:overflow-hidden">
+
+                {/* Mobile: imagem proporcional visível (não cortada) */}
+                <div className="relative w-full md:hidden overflow-hidden">
+                    <div className={`relative ${production.backdropUrl ? 'aspect-video' : 'aspect-[2/3] max-h-[80vw]'}`}>
+                        {heroImageUrl ? (
+                            <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover object-center" />
+                        ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-pink-900/30" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
+                    </div>
+                </div>
+
+                {/* Desktop: background full-bleed */}
+                <div className="absolute inset-0 hidden md:block">
                     {heroImageUrl ? (
                         <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover" />
                     ) : (
@@ -212,8 +225,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
                 </div>
 
-                {/* Breadcrumbs */}
-                <div className="relative z-10 pt-24 md:pt-28 px-4 sm:px-12 md:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                {/* Breadcrumbs — mobile: abaixo da imagem / desktop: sobre o background */}
+                <div className="relative z-10 pt-4 md:pt-28 px-4 sm:px-12 md:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs items={[
                         { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }
@@ -231,11 +244,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                     </div>
                 </div>
 
-                {/* Spacer — pushes hero content to the bottom */}
-                <div className="flex-1 min-h-[24px]" />
+                {/* Spacer — empurra conteúdo para o fundo (desktop only) */}
+                <div className="hidden md:flex flex-1 min-h-[24px]" />
 
                 {/* Hero content */}
-                <div className="relative z-10 px-4 sm:px-12 md:px-20 pb-10 md:pb-16">
+                <div className="relative z-10 px-4 sm:px-12 md:px-20 pt-4 pb-8 md:pt-0 md:pb-16">
                     <div className="flex items-end gap-6 md:gap-10">
                         {/* Main info — fills remaining space */}
                         <div className="flex-1 min-w-0">
