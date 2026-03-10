@@ -206,7 +206,7 @@ jobs:
           update_env "TMDB_API_KEY"             "${{ secrets.TMDB_API_KEY }}"
           update_env "UNSPLASH_ACCESS_KEY"       "${{ secrets.UNSPLASH_ACCESS_KEY }}"
           update_env "GEMINI_API_KEY"            "${{ secrets.GEMINI_API_KEY }}"
-          update_env "DATABASE_URL"              "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-staging:5432/hallyuhub_staging"
+          update_env "DATABASE_URL"              "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-staging:5432/hallyuhub_staging?connection_limit=8&pool_timeout=30"
           update_env "KPOPPING_DATABASE_URL"     "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/kpopping_db"
           update_env "OLLAMA_BASE_URL"           "http://ollama-staging:11434"
           update_env "OLLAMA_MODEL"              "gemma:2b"
@@ -380,7 +380,7 @@ jobs:
           update_env "TMDB_API_KEY"             "${{ secrets.TMDB_API_KEY }}"
           update_env "UNSPLASH_ACCESS_KEY"       "${{ secrets.UNSPLASH_ACCESS_KEY }}"
           update_env "GEMINI_API_KEY"            "${{ secrets.GEMINI_API_KEY }}"
-          update_env "DATABASE_URL"              "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/hallyuhub_production"
+          update_env "DATABASE_URL"              "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/hallyuhub_production?connection_limit=10&pool_timeout=30"
           update_env "KPOPPING_DATABASE_URL"     "postgresql://hallyuhub:${{ secrets.POSTGRES_PASSWORD }}@postgres-production:5432/kpopping_db"
           update_env "OLLAMA_BASE_URL"           "http://ollama-production:11434"
           update_env "OLLAMA_MODEL"              "phi3:mini"
@@ -401,6 +401,31 @@ jobs:
           cp -f docker-compose.prod.yml /var/www/hallyuhub/
           cp -rf scripts /var/www/hallyuhub/
           cp -rf monitoring /var/www/hallyuhub/
+
+      - name: 🔧 Sync Nginx Config + Install Watchdog
+        run: |
+          set -e
+
+          # Sincroniza o nginx config da repo para o servidor
+          # O maintenance.html vai para o diretório padrão do nginx
+          sudo cp docker/nginx/nginx.prod.conf /etc/nginx/sites-enabled/hallyuhub
+          sudo cp docker/nginx/maintenance.html /etc/nginx/html/maintenance.html
+          sudo nginx -t && sudo systemctl reload nginx && echo "✅ Nginx recarregado com nova config"
+
+          # Instala (ou atualiza) o watchdog no crontab do root
+          # Roda a cada minuto — detecta e recupera o app em ~30s
+          chmod +x /var/www/hallyuhub/scripts/watchdog.sh
+          WATCHDOG_ENTRY="* * * * * /var/www/hallyuhub/scripts/watchdog.sh >> /var/log/hallyuhub-watchdog.log 2>&1"
+          CURRENT_CRONTAB=$(crontab -l 2>/dev/null || true)
+          if echo "$CURRENT_CRONTAB" | grep -q "watchdog.sh"; then
+            # Atualiza entrada existente
+            echo "$CURRENT_CRONTAB" | grep -v "watchdog.sh" | { cat; echo "$WATCHDOG_ENTRY"; } | crontab -
+            echo "✅ Watchdog cron atualizado"
+          else
+            # Adiciona nova entrada
+            { echo "$CURRENT_CRONTAB"; echo "$WATCHDOG_ENTRY"; } | crontab -
+            echo "✅ Watchdog cron instalado"
+          fi
 
       - name: 💾 Save rollback image
         id: save-rollback
