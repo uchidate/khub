@@ -24,8 +24,8 @@ jobs:
           # são garantidamente idênticos por design. A verificação aqui é que
           # ambos os jobs chamam o mesmo workflow reutilizável.
 
-          STAGING_USES=$(grep -A2 'deploy-staging:' .github/workflows/deploy.yml | grep 'uses:' | awk '{print $2}')
-          PRODUCTION_USES=$(grep -A2 'deploy-production:' .github/workflows/deploy.yml | grep 'uses:' | awk '{print $2}')
+          STAGING_USES=$(grep -A10 'deploy-staging:' .github/workflows/deploy.yml | grep 'uses:' | head -1 | awk '{print $2}')
+          PRODUCTION_USES=$(grep -A10 'deploy-production:' .github/workflows/deploy.yml | grep 'uses:' | head -1 | awk '{print $2}')
 
           echo "deploy-staging  usa: $STAGING_USES"
           echo "deploy-production usa: $PRODUCTION_USES"
