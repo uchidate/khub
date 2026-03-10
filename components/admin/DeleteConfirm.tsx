@@ -13,14 +13,18 @@ interface DeleteConfirmProps {
 
 export function DeleteConfirm({ open, count, entityName, onClose, onConfirm }: DeleteConfirmProps) {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   if (!open) return null
 
   const handleConfirm = async () => {
     setLoading(true)
+    setError('')
     try {
       await onConfirm()
       onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao excluir')
     } finally {
       setLoading(false)
     }
@@ -34,6 +38,11 @@ export function DeleteConfirm({ open, count, entityName, onClose, onConfirm }: D
           <Trash2 className="text-red-400" size={24} />
         </div>
         <h3 className="text-base font-bold text-white mb-1.5">Confirmar exclusão</h3>
+        {error && (
+          <div className="mb-4 px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-left">
+            {error}
+          </div>
+        )}
         <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
           Você está prestes a excluir{' '}
           <span className="text-white font-semibold">
