@@ -100,7 +100,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
 
     return (
         <div className="mb-8 space-y-3">
-            {/* Row 1: Search + Solo/Grupo + Filtros */}
+            {/* Row 1: Search + Filtros toggle */}
             <div className="flex gap-2 min-w-0">
                 <div className="flex-1 relative min-w-0">
                     <input
@@ -108,7 +108,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                         placeholder="Buscar por nome"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full px-4 pr-10 py-3 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+                        className="w-full px-4 pr-10 py-3 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-base md:text-sm"
                     />
                     {search ? (
                         <button
@@ -120,23 +120,6 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                     ) : (
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
                     )}
-                </div>
-
-                {/* Solo / Grupo toggle */}
-                <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl flex-shrink-0">
-                    {MEMBER_TYPE_OPTIONS.map(opt => (
-                        <button
-                            key={opt.value}
-                            onClick={() => setMemberType(opt.value)}
-                            className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
-                                memberType === opt.value
-                                    ? 'bg-purple-600 text-white'
-                                    : 'text-zinc-400 hover:text-white'
-                            }`}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
                 </div>
 
                 {/* Filtros avançados toggle */}
@@ -155,9 +138,26 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                 </button>
             </div>
 
-            {/* Row 2: Sort — always visible */}
-            <div className="flex gap-2 min-w-0">
-                <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto">
+            {/* Row 2: Solo/Grupo + Sort + Limpar */}
+            <div className="flex gap-2 min-w-0 overflow-x-auto">
+                {/* Solo / Grupo toggle */}
+                <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl flex-shrink-0">
+                    {MEMBER_TYPE_OPTIONS.map(opt => (
+                        <button
+                            key={opt.value}
+                            onClick={() => setMemberType(opt.value)}
+                            className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
+                                memberType === opt.value
+                                    ? 'bg-purple-600 text-white'
+                                    : 'text-zinc-400 hover:text-white'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl flex-shrink-0">
                     {SORT_OPTIONS.map(opt => (
                         <button
                             key={opt.value}
@@ -172,6 +172,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                         </button>
                     ))}
                 </div>
+
                 {hasActiveFilters && (
                     <button
                         onClick={clearFilters}
