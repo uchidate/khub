@@ -16,6 +16,7 @@ import { ViewTracker } from "@/components/features/ViewTracker"
 import { CommentsSection } from "@/components/features/CommentsSection"
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"
 import { AdBanner } from "@/components/ui/AdBanner"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import type { Metadata } from "next"
 
@@ -453,6 +454,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                 <RelatedNews news={relatedNews} />
             </div>
         </div>
+        <ScrollToTop />
         </>
     )
 }

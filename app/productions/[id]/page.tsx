@@ -12,6 +12,7 @@ import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { Film } from "lucide-react"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -651,6 +652,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                     </div>
                 </div>
             </div>
+            <ScrollToTop />
         </div>
     )
 }

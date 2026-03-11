@@ -12,6 +12,7 @@ import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
+import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
 
@@ -652,6 +653,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                     </div>
                 </div>
             </div>
+            <ScrollToTop />
         </div>
     );
 }
