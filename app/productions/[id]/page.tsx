@@ -316,7 +316,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
             </div>
 
             {/* Content */}
-            <div className="px-4 sm:px-12 md:px-20 py-16">
+            <div className="px-4 sm:px-12 md:px-20 pt-6 pb-16 md:py-16">
                 <div className="grid md:grid-cols-3 gap-16">
                     {/* Main column */}
                     <div className="md:col-span-2 space-y-10">
