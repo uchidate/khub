@@ -45,6 +45,7 @@ export default async function ArtistsPage() {
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <SectionHeader
                 title="Artistas"
+                backHref="/"
             />
 
             <Suspense>
