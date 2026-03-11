@@ -153,7 +153,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
 
     const galleryUrls = (production.galleryUrls as string[] | null) || []
 
-    const heroImageUrl = production.imageUrl || production.backdropUrl
+    const heroImageMobile = production.imageUrl || production.backdropUrl
+    const heroImageDesktop = production.backdropUrl || production.imageUrl
 
     function formatRuntime(minutes: number | null): string | null {
         if (!minutes) return null
@@ -200,9 +201,14 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
             <div className="relative min-h-[88vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
                 {/* Background image (contained, never clips content) */}
                 <div className="absolute inset-0">
-                    {heroImageUrl ? (
-                        <Image src={heroImageUrl} alt={production.titlePt} fill priority sizes="100vw" className="object-cover" />
-                    ) : (
+                    {/* Mobile: poster (imageUrl) */}
+                    {heroImageMobile && (
+                        <Image src={heroImageMobile} alt={production.titlePt} fill priority sizes="100vw" className="object-cover md:hidden" />
+                    )}
+                    {/* Desktop: backdrop (backdropUrl) */}
+                    {heroImageDesktop ? (
+                        <Image src={heroImageDesktop} alt={production.titlePt} fill priority sizes="100vw" className="object-cover hidden md:block" />
+                    ) : !heroImageMobile && (
                         <>
                             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
                             <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-pink-600/10 rounded-full blur-3xl" />
