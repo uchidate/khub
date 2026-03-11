@@ -9,8 +9,8 @@ import { getRoleLabels } from '@/lib/utils/role-labels'
 
 function ArtistsSkeleton() {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10">
-            {Array.from({ length: 10 }).map((_, i) => (
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
+            {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="animate-pulse">
                     <div className="aspect-[2/3] rounded-xl bg-zinc-800/60" />
                 </div>
@@ -158,7 +158,7 @@ export function ArtistsList() {
             {/* Grid de Artistas */}
             {!isLoading && artists.length > 0 && (
                 <>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-10 perspective-1000">
+                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6 perspective-1000">
                         {artists.map((artist) => {
                             const group = artist.memberships?.[0]?.group
                             return (
