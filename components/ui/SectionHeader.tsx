@@ -11,7 +11,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, subtitle, align = 'left', className = '' }: SectionHeaderProps) {
     return (
-        <div className={`mb-12 ${align === 'center' ? 'text-center' : 'text-left'} ${className}`}>
+        <div className={`mb-6 ${align === 'center' ? 'text-center' : 'text-left'} ${className}`}>
             <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
