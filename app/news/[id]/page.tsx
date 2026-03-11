@@ -15,7 +15,9 @@ import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { CommentsSection } from "@/components/features/CommentsSection"
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer"
+import { BlockRenderer } from "@/components/ui/BlockRenderer"
 import { AdBanner } from "@/components/ui/AdBanner"
+import type { NewsBlock } from "@/lib/types/blocks"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import type { Metadata } from "next"
@@ -221,6 +223,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                         { label: news.title }
                     ]} />
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
+                        <AdminQuickEdit href={`/admin/news/${news.id}/edit?returnTo=${encodeURIComponent(`/news/${news.id}`)}`} label="Editar blocos" />
                         <AdminQuickEdit href={`/admin/news/${news.id}?returnTo=${encodeURIComponent(`/news/${news.id}`)}`} label="Editar" />
                         <FavoriteButton
                             id={news.id}
@@ -312,6 +315,8 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                 <ExternalLink className="w-4 h-4" />
                             </a>
                         </div>
+                    ) : Array.isArray((news as unknown as { blocks: unknown }).blocks) && ((news as unknown as { blocks: NewsBlock[] }).blocks).length > 0 ? (
+                        <BlockRenderer blocks={(news as unknown as { blocks: NewsBlock[] }).blocks} />
                     ) : (
                         <MarkdownRenderer content={mainContent} coverImageUrl={news.imageUrl ?? undefined} source={news.source} />
                     )}
