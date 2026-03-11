@@ -51,7 +51,7 @@ export default async function ProfilePage() {
   const data = await getProfileData()
   if (!data) return null
 
-  const { stats, recentComments, recentFavoriteArtists, recentFavoriteProductions, memberSince, heroImageUrl, trendingArtists, bio } = data
+  const { stats, recentComments, recentFavoriteArtists, recentFavoriteProductions, memberSince, trendingArtists, bio } = data
 
   const roleBadge = getRoleBadge(session.user.role ?? '')
   const achievements = getAchievements(stats)
@@ -74,16 +74,6 @@ export default async function ProfilePage() {
 
         {/* ── Hero Banner ─────────────────────────────────────────────────────── */}
         <div className="relative w-full h-52 md:h-72 overflow-hidden">
-          {heroImageUrl ? (
-            <Image
-              src={heroImageUrl}
-              alt="Profile hero"
-              fill
-              className="object-cover object-center blur-sm brightness-30"
-              sizes="100vw"
-              priority
-            />
-          ) : null}
           <div className="absolute inset-0 bg-gradient-to-br from-cyber-purple/40 via-black/60 to-neon-pink/30" />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
         </div>
