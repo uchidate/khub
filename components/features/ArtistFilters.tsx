@@ -19,11 +19,11 @@ interface ArtistFiltersProps {
 
 const ROLES = [
     { value: '', label: 'Todos os Tipos' },
-    { value: 'CANTOR', label: '🎤 Cantores' },
-    { value: 'ATOR', label: '🎬 Atores' },
-    { value: 'DANÇARINO', label: '💃 Dançarinos' },
-    { value: 'RAPPER', label: '🎵 Rappers' },
-    { value: 'MODELO', label: '📸 Modelos' },
+    { value: 'CANTOR', label: 'Cantores' },
+    { value: 'ATOR', label: 'Atores' },
+    { value: 'DANÇARINO', label: 'Dançarinos' },
+    { value: 'RAPPER', label: 'Rappers' },
+    { value: 'MODELO', label: 'Modelos' },
 ]
 
 const SORT_OPTIONS = [
@@ -264,13 +264,13 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                     )}
                     {groupId && (
                         <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold rounded-full flex items-center gap-2">
-                            🎶 {groups.find(g => g.id === groupId)?.name ?? '...'}
+                            {groups.find(g => g.id === groupId)?.name ?? '...'}
                             <button onClick={() => setGroupId('')}><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {agencyId && (
                         <span className="px-3 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 text-xs font-bold rounded-full flex items-center gap-2">
-                            🏢 {agencies.find(a => a.id === agencyId)?.name ?? '...'}
+                            {agencies.find(a => a.id === agencyId)?.name ?? '...'}
                             <button onClick={() => setAgencyId('')}><X className="w-3 h-3" /></button>
                         </span>
                     )}
