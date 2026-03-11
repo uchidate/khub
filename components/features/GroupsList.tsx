@@ -108,7 +108,7 @@ export function GroupsList() {
                             placeholder="Buscar grupo ou agência"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full px-4 pr-10 py-3.5 dark:bg-zinc-900/50 bg-zinc-100 dark:border-white/10 border border-zinc-200 rounded-xl dark:text-white text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-sm"
+                            className="w-full px-4 pr-10 py-3.5 dark:bg-zinc-900/50 bg-zinc-100 dark:border-white/10 border border-zinc-200 rounded-xl dark:text-white text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-base md:text-sm"
                         />
                         {search
                             ? <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"><X className="w-4 h-4" /></button>
