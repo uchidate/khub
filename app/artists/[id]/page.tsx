@@ -17,7 +17,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ExpandableBio } from "@/components/ui/ExpandableBio"
 import { getTranslation } from "@/lib/translations"
-import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Droplet, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -277,7 +277,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 {artist.nameRomanized}
                             </h1>
                             {artist.nameHangul && (
-                                <p className="text-lg md:text-3xl font-bold mt-1 text-purple-400 drop-shadow-lg">{artist.nameHangul}</p>
+                                <p className="text-lg md:text-3xl font-bold mt-1 text-purple-400 drop-shadow-lg flex items-baseline gap-2 flex-wrap">
+                                    <span>{artist.nameHangul}</span>
+                                    {age !== null && (
+                                        <span className="text-sm md:text-xl font-semibold text-zinc-400">{age} anos</span>
+                                    )}
+                                </p>
                             )}
                             {stageNames.length > 0 && (
                                 <p className="hidden md:block text-zinc-500 text-sm font-medium mt-1.5">
@@ -335,11 +340,18 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 <div className="grid lg:grid-cols-3 gap-12 max-w-[1600px] mx-auto">
 
                     {/* ── SIDEBAR ── */}
-                    <div className="space-y-8 lg:col-span-1">
+                    <div className="space-y-6 lg:col-span-1">
+
+                        {/* Bio mobile — antes das informações, só no mobile */}
+                        {(bioPt ?? artist.bio) && (
+                            <div className="md:hidden">
+                                <ExpandableBio bio={bioPt ?? artist.bio!} />
+                            </div>
+                        )}
 
                         {/* Informações */}
-                        <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
-                            <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4">Informações</h3>
+                        <div className="p-4 md:p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
+                            <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Informações</h3>
                             <div className="space-y-0">
                                 {artist.birthName && (
                                     <InfoRow icon={<User className="w-3.5 h-3.5" />} label="Nome Real" value={artist.birthName} />
@@ -352,9 +364,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 )}
                                 {artist.height && (
                                     <InfoRow icon={<Ruler className="w-3.5 h-3.5" />} label="Altura" value={artist.height} />
-                                )}
-                                {artist.bloodType && (
-                                    <InfoRow icon={<Droplet className="w-3.5 h-3.5" />} label="Tipo Sanguíneo" value={artist.bloodType} />
                                 )}
                                 {artist.zodiacSign && (
                                     <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Signo" value={artist.zodiacSign} />
@@ -389,22 +398,21 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                         {/* Redes Sociais */}
                         {Object.keys(socialLinks).length > 0 && (
-                            <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4">Redes Sociais</h3>
-                                <div className="flex flex-col gap-2">
+                            <div className="p-4 md:p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
+                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Redes Sociais</h3>
+                                {/* Mobile: grid compacto 2 colunas / Desktop: lista vertical */}
+                                <div className="grid grid-cols-2 md:grid-cols-1 gap-1.5 md:gap-2">
                                     {Object.entries(socialLinks).map(([key, url]) => {
                                         const platform = getSocialPlatform(key)
                                         const Icon = typeof platform.icon === 'string' ? null : platform.icon
                                         return (
                                             <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
-                                                className={`group flex items-center justify-between px-4 py-3 rounded-xl bg-zinc-800/50 border border-white/5 hover:border-white/10 transition-all ${platform.bg}`}>
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`text-base ${platform.color}`}>
-                                                        {Icon ? <Icon className="w-4 h-4" /> : <span>{platform.icon as string}</span>}
-                                                    </span>
-                                                    <span className="text-sm font-bold text-white">{platform.label}</span>
-                                                </div>
-                                                <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                                                className={`group flex items-center gap-2 px-3 py-2 md:px-4 md:py-3 rounded-xl bg-zinc-800/50 border border-white/5 hover:border-white/10 transition-all ${platform.bg}`}>
+                                                <span className={`flex-shrink-0 ${platform.color}`}>
+                                                    {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="text-sm leading-none">{platform.icon as string}</span>}
+                                                </span>
+                                                <span className="text-xs md:text-sm font-bold text-white truncate">{platform.label}</span>
+                                                <ExternalLink className="w-2.5 h-2.5 md:w-3 md:h-3 text-zinc-600 group-hover:text-zinc-400 transition-colors ml-auto flex-shrink-0 hidden md:block" />
                                             </a>
                                         )
                                     })}
@@ -437,13 +445,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                     {/* ── MAIN ── */}
                     <div className="lg:col-span-2 space-y-16">
-
-                        {/* Bio mobile — visível só no mobile (desktop fica no hero) */}
-                        {(bioPt ?? artist.bio) && (
-                            <div className="md:hidden">
-                                <ExpandableBio bio={bioPt ?? artist.bio!} />
-                            </div>
-                        )}
 
                         {/* Ad: topo do conteúdo principal */}
                         <AdBanner
@@ -615,12 +616,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
-            <div className="flex items-center gap-2 text-zinc-500">
+        <div className="flex justify-between items-center py-2 md:py-3 border-b border-white/5 last:border-0">
+            <div className="flex items-center gap-1.5 text-zinc-500">
                 {icon}
-                <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+                <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">{label}</span>
             </div>
-            <span className="text-sm font-bold text-zinc-300 text-right">{value}</span>
+            <span className="text-xs md:text-sm font-bold text-zinc-300 text-right">{value}</span>
         </div>
     )
 }
