@@ -1,9 +1,11 @@
 'use client'
 
+import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 import { cleanContentBySource } from '@/lib/utils/content-cleaner'
+import { InstagramEmbed } from '@/components/ui/InstagramEmbed'
 
 interface MarkdownRendererProps {
     content: string
@@ -28,6 +30,10 @@ const SOURCE_STYLES: Record<string, { container: string; accentColor: string }> 
 
 function isExternalUrl(href: string): boolean {
     return href.startsWith('http://') || href.startsWith('https://')
+}
+
+function isInstagramPostUrl(url: string): boolean {
+    return /^https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[^/\s]+\/?/i.test(url.trim())
 }
 
 function preprocessMarkdown(content: string, coverImageUrl?: string, source?: string | null): string {
@@ -75,11 +81,19 @@ function buildComponents(source?: string | null): Components {
     const isAsianJunkie = source === 'Asian Junkie'
 
     return {
-        p: ({ children }) => (
-            <p className="mb-5 leading-relaxed text-zinc-300 text-lg">
-                {children}
-            </p>
-        ),
+        p: ({ children }) => {
+            // Bare Instagram URL on its own line → embed
+            const childArray = React.Children.toArray(children)
+            if (childArray.length === 1 && typeof childArray[0] === 'string') {
+                const text = (childArray[0] as string).trim()
+                if (isInstagramPostUrl(text)) return <InstagramEmbed url={text} />
+            }
+            return (
+                <p className="mb-5 leading-relaxed text-zinc-300 text-lg">
+                    {children}
+                </p>
+            )
+        },
 
         h1: ({ children }) => (
             <h1 className="text-3xl font-black text-white mt-10 mb-5 leading-tight tracking-tight">
@@ -131,6 +145,10 @@ function buildComponents(source?: string | null): Components {
         ),
 
         a: ({ href, children }) => {
+            // Instagram post/reel link → embed
+            if (href && isInstagramPostUrl(href)) {
+                return <InstagramEmbed url={href} />
+            }
             const external = href ? isExternalUrl(href) : false
             return (
                 <a
