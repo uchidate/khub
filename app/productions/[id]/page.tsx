@@ -288,7 +288,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             {production.tagline && <p className="text-base text-zinc-400 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
                             {!production.tagline && <div className="mb-6" />}
 
-                            <div className="mt-6 flex flex-wrap items-center gap-3">
+                            <div className="mt-6 flex items-center gap-2">
                                 {production.trailerUrl && (
                                     <TrailerModal trailerUrl={production.trailerUrl} title={production.titlePt} />
                                 )}
