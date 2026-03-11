@@ -618,6 +618,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 instagramUrl={(artist.socialLinks as Record<string, string> | null)?.instagram ?? null}
                             />
                         )}
+
+                        {/* Discography */}
+                        {artist.albums.length > 0 && (
+                            <DiscographySection albums={artist.albums} />
+                        )}
                     </div>
                 </div>
             </div>
