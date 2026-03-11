@@ -121,7 +121,7 @@ export default async function DashboardPage() {
   const miniStats = [
     { label: 'Favoritos', value: stats.favoritesCount, icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-400/10', href: '/favorites' },
     { label: 'Minha Lista', value: stats.watchlistCount, icon: BookmarkCheck, color: 'text-teal-400', bg: 'bg-teal-400/10', href: '/watchlist' },
-    { label: 'Comentários', value: stats.commentsCount, icon: MessageCircle, color: 'text-neon-pink', bg: 'bg-pink-400/10', href: '/profile' },
+    { label: 'Comentários', value: stats.commentsCount, icon: MessageCircle, color: 'text-neon-pink', bg: 'bg-pink-400/10', href: '/profile/comments' },
     ...(daysSinceJoin !== null ? [{ label: 'Dias', value: daysSinceJoin, icon: CalendarDays, color: 'text-purple-400', bg: 'bg-purple-400/10', href: '/profile' }] : []),
   ]
 
@@ -330,7 +330,7 @@ export default async function DashboardPage() {
                   Atividade Recente
                 </h3>
                 {stats.commentsCount > 0 && (
-                  <Link href="/profile" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors">
+                  <Link href="/profile/comments" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors">
                     <MessageCircle size={11} className="text-neon-cyan" />
                     {stats.commentsCount} comentário{stats.commentsCount !== 1 ? 's' : ''}
                   </Link>
