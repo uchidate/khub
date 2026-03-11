@@ -520,11 +520,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             )}
                         </section>
 
-                        {/* Discography */}
-                        {artist.albums.length > 0 && (
-                            <DiscographySection albums={artist.albums} />
-                        )}
-
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
                             <section>
@@ -617,6 +612,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 posts={instagramPosts}
                                 instagramUrl={(artist.socialLinks as Record<string, string> | null)?.instagram ?? null}
                             />
+                        )}
+
+                        {/* Discography */}
+                        {artist.albums.length > 0 && (
+                            <DiscographySection albums={artist.albums} />
                         )}
                     </div>
                 </div>
