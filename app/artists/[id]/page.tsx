@@ -333,8 +333,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
             <div className="px-4 sm:px-12 md:px-20 py-8 lg:py-12">
                 <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 max-w-[1600px] mx-auto">
 
-                    {/* ── SIDEBAR ── order-2 no mobile → aparece depois da filmografia */}
-                    <div className="order-2 lg:order-1 space-y-4 lg:space-y-6 lg:col-span-1">
+                    {/* ── SIDEBAR ── */}
+                    <div className="space-y-4 lg:space-y-6 lg:col-span-1">
 
                         {/* Bio mobile — antes das informações, só no mobile */}
                         {(bioPt ?? artist.bio) && (
@@ -442,8 +442,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                     </div>
 
-                    {/* ── MAIN ── order-1 no mobile → aparece antes da sidebar */}
-                    <div className="order-1 lg:order-2 lg:col-span-2 space-y-10 lg:space-y-16">
+                    {/* ── MAIN ── */}
+                    <div className="lg:col-span-2 space-y-10 lg:space-y-16">
 
                         {/* Ad: topo do conteúdo principal */}
                         <AdBanner
