@@ -45,7 +45,6 @@ export default async function GroupsPage() {
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
             <SectionHeader
                 title="Grupos Musicais"
-                subtitle="As formações, as gerações e os fandoms. Explore os grupos que moldaram a identidade do K-Pop."
             />
 
             <Suspense>
