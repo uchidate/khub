@@ -16,6 +16,7 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ExpandableBio } from "@/components/ui/ExpandableBio"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
@@ -621,6 +622,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     </div>
                 </div>
             </div>
+            <ScrollToTop />
         </div>
     )
 }
