@@ -451,6 +451,54 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             format="horizontal"
                         />
 
+                        {/* Notícias */}
+                        {artistNews.length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="flex items-center gap-2">
+                                        <Newspaper className="w-4 h-4 text-amber-400" />
+                                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Notícias</h3>
+                                    </div>
+                                    <div className="flex-1 h-px bg-white/5" />
+                                    <Link href={`/news?artistId=${artist.id}`} className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex-shrink-0">
+                                        Ver todas →
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {artistNews.map((item) => (
+                                        <Link key={item.id} href={`/news/${item.id}`}
+                                            className="group flex gap-4 p-4 rounded-2xl bg-zinc-900/50 border border-white/5 hover:border-purple-500/30 hover:bg-zinc-900 transition-all">
+                                            <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-zinc-800">
+                                                {item.imageUrl ? (
+                                                    <Image src={item.imageUrl} alt={item.title} fill sizes="80px"
+                                                        className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Newspaper className="w-5 h-5 text-zinc-700" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col justify-between min-w-0 flex-1">
+                                                <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug">
+                                                    {item.title}
+                                                </h4>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-[10px] font-bold text-zinc-600">
+                                                        {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
+                                                    </span>
+                                                    {item.tags?.[0] && (
+                                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-zinc-800 text-zinc-500 rounded-sm">
+                                                            {item.tags[0]}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
                         {/* Filmography */}
                         <section>
                             <div className="flex items-center gap-3 mb-5">
@@ -520,6 +568,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             )}
                         </section>
 
+                        {/* Discography */}
+                        {artist.albums.length > 0 && (
+                            <DiscographySection albums={artist.albums} />
+                        )}
+
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
                             <section>
@@ -558,65 +611,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             </section>
                         )}
 
-                        {/* Notícias */}
-                        {artistNews.length > 0 && (
-                            <section>
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="flex items-center gap-2">
-                                        <Newspaper className="w-4 h-4 text-amber-400" />
-                                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Notícias</h3>
-                                    </div>
-                                    <div className="flex-1 h-px bg-white/5" />
-                                    <Link href={`/news?artistId=${artist.id}`} className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex-shrink-0">
-                                        Ver todas →
-                                    </Link>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {artistNews.map((item) => (
-                                        <Link key={item.id} href={`/news/${item.id}`}
-                                            className="group flex gap-4 p-4 rounded-2xl bg-zinc-900/50 border border-white/5 hover:border-purple-500/30 hover:bg-zinc-900 transition-all">
-                                            <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-zinc-800">
-                                                {item.imageUrl ? (
-                                                    <Image src={item.imageUrl} alt={item.title} fill sizes="80px"
-                                                        className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <Newspaper className="w-5 h-5 text-zinc-700" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col justify-between min-w-0 flex-1">
-                                                <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug">
-                                                    {item.title}
-                                                </h4>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <span className="text-[10px] font-bold text-zinc-600">
-                                                        {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
-                                                    </span>
-                                                    {item.tags?.[0] && (
-                                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-zinc-800 text-zinc-500 rounded-sm">
-                                                            {item.tags[0]}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
-
                         {/* Instagram Feed */}
                         {instagramPosts.length > 0 && (
                             <InstagramFeed
                                 posts={instagramPosts}
                                 instagramUrl={(artist.socialLinks as Record<string, string> | null)?.instagram ?? null}
                             />
-                        )}
-
-                        {/* Discography */}
-                        {artist.albums.length > 0 && (
-                            <DiscographySection albums={artist.albums} />
                         )}
                     </div>
                 </div>
