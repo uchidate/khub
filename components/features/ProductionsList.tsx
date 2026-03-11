@@ -107,14 +107,16 @@ export function ProductionsList() {
     }), [searchParams])
 
     const getCurrentPage = () => Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const getPerPage = () => parseInt(searchParams.get('limit') || '50')
 
-    const updateUrl = useCallback((filters: { search: string; type: string; ageRating: string; sortBy: string }, page = 1) => {
+    const updateUrl = useCallback((filters: { search: string; type: string; ageRating: string; sortBy: string }, page = 1, limit?: number) => {
         const params = new URLSearchParams()
         if (filters.search) params.set('search', filters.search)
         if (filters.type) params.set('type', filters.type)
         if (filters.ageRating) params.set('ageRating', filters.ageRating)
         if (filters.sortBy && filters.sortBy !== 'popular') params.set('sortBy', filters.sortBy)
         if (page > 1) params.set('page', page.toString())
+        if (limit && limit !== 50) params.set('limit', limit.toString())
         router.push(params.toString() ? `${pathname}?${params}` : pathname, { scroll: false })
     }, [pathname, router])
 
@@ -125,7 +127,7 @@ export function ProductionsList() {
             const page = getCurrentPage()
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: '18',
+                limit: getPerPage().toString(),
                 ...(filters.search && { search: filters.search }),
                 ...(filters.type && { type: filters.type }),
                 ...(filters.ageRating && { ageRating: filters.ageRating }),
@@ -155,7 +157,10 @@ export function ProductionsList() {
     const handleAgeRating = (value: string) => updateUrl({ ...filters, ageRating: value }, 1)
     const handleSort = (value: string) => updateUrl({ ...filters, sortBy: value }, 1)
     const handlePage = (p: number) => {
-        updateUrl(filters, p)
+        updateUrl(filters, p, getPerPage())
+    }
+    const handlePerPage = (n: number) => {
+        updateUrl(filters, 1, n)
     }
     const clearAll = () => {
         setSearchInput('')
@@ -312,67 +317,75 @@ export function ProductionsList() {
                     </div>
 
                     {/* Pagination */}
-                    {pagination.pages > 1 && (
-                        <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
-                            <button
-                                onClick={() => handlePage(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                                Anterior
-                            </button>
-
-                            {/* Page indicator / jump */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-zinc-500">Página</span>
-                                {isEditingPage ? (
-                                    <input
-                                        autoFocus
-                                        type="number"
-                                        min={1}
-                                        max={pagination.pages}
-                                        value={pageJumpInput}
-                                        onChange={e => setPageJumpInput(e.target.value)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') {
-                                                const p = Math.min(pagination.pages, Math.max(1, parseInt(pageJumpInput) || currentPage))
-                                                handlePage(p)
-                                                setIsEditingPage(false)
-                                                setPageJumpInput('')
-                                            }
-                                            if (e.key === 'Escape') {
-                                                setIsEditingPage(false)
-                                                setPageJumpInput('')
-                                            }
-                                        }}
-                                        onBlur={() => {
-                                            setIsEditingPage(false)
-                                            setPageJumpInput('')
-                                        }}
-                                        className="w-14 text-center px-2 py-1 bg-zinc-800 border border-purple-500/50 rounded text-sm text-white focus:outline-none"
-                                    />
-                                ) : (
+                    {pagination.pages > 0 && (
+                        <div className="mt-10 flex flex-col items-center gap-3">
+                            {/* Per-page selector */}
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-zinc-600">Por página:</span>
+                                {[50, 100, 150].map(n => (
                                     <button
-                                        onClick={() => { setIsEditingPage(true); setPageJumpInput(String(currentPage)) }}
-                                        className="px-2 py-1 rounded text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 hover:text-purple-400 transition-colors min-w-[2rem] text-center"
-                                        title="Clique para ir a uma página específica"
+                                        key={n}
+                                        onClick={() => handlePerPage(n)}
+                                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${getPerPage() === n ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
                                     >
-                                        {currentPage}
+                                        {n}
                                     </button>
-                                )}
-                                <span className="text-sm text-zinc-500">de {pagination.pages}</span>
-                                <span className="text-xs text-zinc-600 hidden sm:inline">({pagination.total.toLocaleString('pt-BR')} produções)</span>
+                                ))}
+                                <span className="text-xs text-zinc-600 ml-1">({pagination.total.toLocaleString('pt-BR')} total)</span>
                             </div>
-
-                            <button
-                                onClick={() => handlePage(currentPage + 1)}
-                                disabled={currentPage === pagination.pages}
-                                className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                Próxima
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
+                            {/* Nav */}
+                            {pagination.pages > 1 && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handlePage(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                        <span className="hidden md:inline">Anterior</span>
+                                    </button>
+                                    <div className="flex items-center gap-1.5">
+                                        {isEditingPage ? (
+                                            <input
+                                                autoFocus
+                                                type="number"
+                                                min={1}
+                                                max={pagination.pages}
+                                                value={pageJumpInput}
+                                                onChange={e => setPageJumpInput(e.target.value)}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') {
+                                                        const p = Math.min(pagination.pages, Math.max(1, parseInt(pageJumpInput) || currentPage))
+                                                        handlePage(p)
+                                                        setIsEditingPage(false)
+                                                        setPageJumpInput('')
+                                                    }
+                                                    if (e.key === 'Escape') { setIsEditingPage(false); setPageJumpInput('') }
+                                                }}
+                                                onBlur={() => { setIsEditingPage(false); setPageJumpInput('') }}
+                                                className="w-12 text-center px-2 py-1 bg-zinc-800 border border-purple-500/50 rounded text-sm text-white focus:outline-none"
+                                            />
+                                        ) : (
+                                            <button
+                                                onClick={() => { setIsEditingPage(true); setPageJumpInput(String(currentPage)) }}
+                                                className="px-2 py-1 rounded text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 hover:text-purple-400 transition-colors min-w-[2rem] text-center"
+                                                title="Clique para ir a uma página específica"
+                                            >
+                                                {currentPage}
+                                            </button>
+                                        )}
+                                        <span className="text-sm text-zinc-500">/ {pagination.pages}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => handlePage(currentPage + 1)}
+                                        disabled={currentPage === pagination.pages}
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <span className="hidden md:inline">Próxima</span>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </>
