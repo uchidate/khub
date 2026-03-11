@@ -38,7 +38,9 @@ function isInstagramPostUrl(url: string): boolean {
 }
 
 function isTwitterPostUrl(url: string): boolean {
-    return /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[^/\s]+\/status\/\d+/i.test(url.trim())
+    const u = url.trim()
+    return /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[^/\s]+\/status\/\d+/i.test(u)
+        || /^https?:\/\/t\.co\/[A-Za-z0-9]+/i.test(u)
 }
 
 function preprocessMarkdown(content: string, coverImageUrl?: string, source?: string | null): string {
