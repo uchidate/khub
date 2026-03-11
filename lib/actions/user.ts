@@ -279,6 +279,24 @@ export async function getProfileData() {
     }
 }
 
+export async function getAllComments() {
+    const session = await auth()
+    if (!session?.user?.id) return null
+
+    const comments = await prisma.comment.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: 'desc' },
+        select: {
+            id: true, content: true, createdAt: true,
+            news: { select: { id: true, title: true, imageUrl: true } },
+        },
+    })
+
+    return comments
+        .filter(c => c.news)
+        .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), news: c.news! }))
+}
+
 export async function registerInterest(tierName: string) {
     try {
         const session = await auth()
