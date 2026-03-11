@@ -191,7 +191,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                 ref={buttonRef}
                 onClick={handleOpen}
                 disabled={!isLoaded}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors ${buttonBg} ${!isLoaded ? 'opacity-50 cursor-wait' : ''}`}
+                className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-xs md:text-sm font-semibold text-white transition-colors ${buttonBg} ${!isLoaded ? 'opacity-50 cursor-wait' : ''}`}
                 aria-label={buttonLabel}
             >
                 {buttonIcon ? (
