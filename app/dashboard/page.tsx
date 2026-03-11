@@ -65,6 +65,33 @@ const ENTITY_HREF: Record<string, (id: string) => string> = {
   GROUP:      id => `/groups/${id}`,
 }
 
+// ─── Section Header ───────────────────────────────────────────────────────────
+
+function SectionTitle({ icon, title, subtitle, href, linkLabel }: {
+  icon: React.ReactNode
+  title: string
+  subtitle?: string
+  href?: string
+  linkLabel?: string
+}) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2.5">
+        <div className="p-1.5 bg-white/5 rounded-lg">{icon}</div>
+        <div>
+          <h2 className="text-base font-black text-white uppercase tracking-wider leading-none">{title}</h2>
+          {subtitle && <p className="text-[11px] text-zinc-500 mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
+      {href && (
+        <Link href={href} className="text-[11px] font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1">
+          {linkLabel ?? 'Ver tudo'} <ChevronRight size={12} />
+        </Link>
+      )}
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
@@ -85,9 +112,7 @@ export default async function DashboardPage() {
 
   const newsToShow = hasFollowing && personalizedNews.length > 0 ? personalizedNews : latestNews
   const newsTitle = hasFollowing && personalizedNews.length > 0 ? 'Para você' : 'Últimas Notícias'
-  const newsSubtitle = hasFollowing && personalizedNews.length > 0
-    ? 'Notícias dos seus artistas favoritos'
-    : 'Fique por dentro do universo hallyu'
+  const newsSubtitle = hasFollowing && personalizedNews.length > 0 ? 'Dos seus artistas favoritos' : undefined
 
   const daysSinceJoin = stats.joinDate
     ? Math.floor((Date.now() - new Date(stats.joinDate).getTime()) / (1000 * 60 * 60 * 24))
@@ -97,27 +122,27 @@ export default async function DashboardPage() {
     { label: 'Favoritos', value: stats.favoritesCount, icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-400/10', href: '/favorites' },
     { label: 'Minha Lista', value: stats.watchlistCount, icon: BookmarkCheck, color: 'text-teal-400', bg: 'bg-teal-400/10', href: '/watchlist' },
     { label: 'Comentários', value: stats.commentsCount, icon: MessageCircle, color: 'text-neon-pink', bg: 'bg-pink-400/10', href: '/profile' },
-    ...(daysSinceJoin !== null ? [{ label: 'Dias de membro', value: daysSinceJoin, icon: CalendarDays, color: 'text-purple-400', bg: 'bg-purple-400/10', href: '/profile' }] : []),
+    ...(daysSinceJoin !== null ? [{ label: 'Dias', value: daysSinceJoin, icon: CalendarDays, color: 'text-purple-400', bg: 'bg-purple-400/10', href: '/profile' }] : []),
   ]
 
   return (
     <PageTransition>
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 space-y-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 space-y-6 md:space-y-8">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             {session.user.image && (
-              <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 flex-shrink-0">
+              <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white/10 flex-shrink-0">
                 <Image src={session.user.image} alt={session.user.name ?? ''} fill className="object-cover" sizes="56px" />
               </div>
             )}
-            <div>
-              <p className="flex items-center gap-2 text-neon-pink mb-1 font-black tracking-widest uppercase text-[10px]">
-                <LayoutDashboard size={12} />
-                Command Center
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-zinc-500 mb-0.5 font-black tracking-widest uppercase text-[9px]">
+                <LayoutDashboard size={10} />
+                Dashboard
               </p>
-              <h1 className="text-3xl md:text-4xl font-display font-black text-white tracking-tight leading-none">
+              <h1 className="text-2xl md:text-3xl font-display font-black text-white tracking-tight leading-none truncate">
                 Olá,{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-neon-cyan">
                   {session.user.name?.split(' ')[0]}
@@ -125,56 +150,49 @@ export default async function DashboardPage() {
               </h1>
             </div>
           </div>
-          <div className="flex gap-3 sm:flex-shrink-0">
-            <Link href="/" className="btn-secondary text-xs uppercase tracking-widest">
+          <div className="flex gap-2 flex-shrink-0">
+            <Link href="/" className="btn-secondary text-xs uppercase tracking-widest hidden sm:flex">
               Explorar
             </Link>
-            <Link href="/premium" className="bg-white text-black px-5 py-2.5 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-              <span className="flex items-center gap-2"><Crown size={13} className="text-cyber-purple" /> Upgrade</span>
+            <Link href="/premium" className="bg-white text-black px-4 py-2 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+              <span className="flex items-center gap-1.5"><Crown size={12} className="text-cyber-purple" /> Upgrade</span>
             </Link>
           </div>
         </header>
 
         {/* ── Mini stats strip ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-2 md:gap-3">
           {miniStats.map(({ label, value, icon: Icon, color, bg, href }) => (
-            <Link key={label} href={href} className="glass-card p-4 flex items-center gap-3 rounded-xl border border-white/5 hover:border-white/15 transition-all group">
-              <div className={`p-2 rounded-lg ${bg} ${color} group-hover:scale-110 transition-transform`}>
-                <Icon size={16} />
+            <Link key={label} href={href} className="glass-card p-3 md:p-4 flex flex-col sm:flex-row items-center sm:gap-3 gap-1.5 rounded-xl border border-white/5 hover:border-white/15 transition-all group text-center sm:text-left">
+              <div className={`p-1.5 md:p-2 rounded-lg ${bg} ${color} group-hover:scale-110 transition-transform flex-shrink-0`}>
+                <Icon size={14} />
               </div>
               <div>
-                <p className="text-xl font-black text-white leading-none">{value}</p>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">{label}</p>
+                <p className="text-lg md:text-xl font-black text-white leading-none">{value}</p>
+                <p className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5 hidden sm:block">{label}</p>
               </div>
             </Link>
           ))}
         </div>
 
-        {/* ── 1. CONTINUANDO — mais relevante: onde parei? ────────────────── */}
+        {/* ── 1. CONTINUANDO ──────────────────────────────────────────────── */}
         {watchingEntries.length > 0 && (
           <section>
-            <div className="flex justify-between items-end mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-teal-500/20 rounded-lg">
-                  <Play size={16} className="text-teal-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-display font-black text-white uppercase italic tracking-tight">Continuando</h2>
-                  <p className="text-xs text-zinc-500">Continue de onde parou</p>
-                </div>
-              </div>
-              <Link href="/watchlist?status=WATCHING" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
-                Ver Lista <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+            <SectionTitle
+              icon={<Play size={15} className="text-teal-400" />}
+              title="Continuando"
+              subtitle="Continue de onde parou"
+              href="/watchlist?status=WATCHING"
+              linkLabel="Ver Lista"
+            />
+            <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
               {watchingEntries.map((entry: any) => (
                 <Link
                   key={entry.productionId}
                   href={`/productions/${entry.production.id}`}
-                  className="group flex-shrink-0 flex flex-col gap-2 w-28"
+                  className="group flex-shrink-0 flex flex-col gap-2 w-24 md:w-28"
                 >
-                  <div className="relative w-28 h-40 rounded-xl overflow-hidden border border-white/10 group-hover:border-teal-500/60 transition-all duration-300 shadow-lg bg-zinc-800">
+                  <div className="relative w-24 h-36 md:w-28 md:h-40 rounded-xl overflow-hidden border border-white/10 group-hover:border-teal-500/60 transition-all duration-300 shadow-lg bg-zinc-800">
                     {entry.production.imageUrl ? (
                       <Image
                         src={entry.production.imageUrl}
@@ -204,47 +222,36 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* ── 2. NOTÍCIAS — personalizado ou genérico ─────────────────────── */}
+        {/* ── 2. NOTÍCIAS ─────────────────────────────────────────────────── */}
         {newsToShow.length > 0 && (
           <section>
-            <div className="flex justify-between items-end mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-2xl font-display font-black text-white uppercase italic tracking-tight">{newsTitle}</h2>
-                  {hasFollowing && personalizedNews.length > 0 && (
-                    <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-neon-pink/20 text-neon-pink border border-neon-pink/30">
-                      <Sparkles size={9} />
-                      Personalizado
-                    </span>
-                  )}
-                </div>
-                <p className="text-zinc-500 text-sm">{newsSubtitle}</p>
-              </div>
-              <Link href="/news" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
-                Ver Tudo <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SectionTitle
+              icon={<Newspaper size={15} className="text-amber-400" />}
+              title={newsTitle}
+              subtitle={newsSubtitle}
+              href="/news"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {(newsToShow as NewsItem[]).map((item) => {
                 const mentionedArtists = item.artists?.map((a) => a.artist.nameRomanized) ?? []
                 return (
                   <Link
                     key={item.id}
                     href={`/news/${item.id}`}
-                    className="glass-card overflow-hidden group hover:scale-[1.02] transition-transform"
+                    className="glass-card overflow-hidden group hover:border-white/15 transition-all flex sm:flex-col gap-3 sm:gap-0"
                   >
                     {item.imageUrl && (
-                      <div className="relative h-40 overflow-hidden">
+                      <div className="relative w-20 sm:w-full h-full sm:h-36 overflow-hidden flex-shrink-0">
                         <Image
                           src={item.imageUrl}
                           alt={item.title}
                           fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-500"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 640px) 80px, (max-width: 1024px) 50vw, 25vw"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                         {item.tags?.[0] && (
-                          <div className="absolute bottom-2 left-3">
+                          <div className="absolute bottom-2 left-2 hidden sm:block">
                             <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-neon-pink/80 text-white">
                               {item.tags[0]}
                             </span>
@@ -252,20 +259,15 @@ export default async function DashboardPage() {
                         )}
                       </div>
                     )}
-                    <div className="p-4">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Newspaper size={10} className="text-zinc-600" />
-                        <span className="text-xs text-zinc-500">
-                          {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
-                        </span>
-                      </div>
+                    <div className="p-3 flex-1 min-w-0">
+                      <span className="text-[10px] text-zinc-500 block mb-1">
+                        {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                      </span>
                       <h4 className="text-sm font-bold text-white line-clamp-2 group-hover:text-neon-cyan transition-colors leading-snug">
                         {item.title}
                       </h4>
                       {mentionedArtists.length > 0 && (
-                        <p className="text-[10px] text-neon-pink/70 mt-1.5 truncate">
-                          {mentionedArtists.join(' · ')}
-                        </p>
+                        <p className="text-[10px] text-neon-pink/70 mt-1.5 truncate">{mentionedArtists.join(' · ')}</p>
                       )}
                     </div>
                   </Link>
@@ -275,31 +277,24 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* ── 3. EM ALTA — descoberta ──────────────────────────────────────── */}
+        {/* ── 3. EM ALTA ──────────────────────────────────────────────────── */}
         {trendingArtists.length > 0 && (
           <section>
-            <div className="flex justify-between items-end mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-neon-pink/10 rounded-lg">
-                  <TrendingUp size={16} className="text-neon-pink" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-display font-black text-white uppercase italic tracking-tight">Em Alta Agora</h2>
-                  <p className="text-xs text-zinc-500">Artistas em destaque</p>
-                </div>
-              </div>
-              <Link href="/artists" className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
-                Ver Artistas <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+            <SectionTitle
+              icon={<TrendingUp size={15} className="text-neon-pink" />}
+              title="Em Alta Agora"
+              subtitle="Artistas em destaque"
+              href="/artists"
+              linkLabel="Ver Artistas"
+            />
+            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
               {trendingArtists.map((artist: any) => (
                 <Link
                   key={artist.id}
                   href={`/artists/${artist.id}`}
-                  className="group flex-shrink-0 flex flex-col items-center gap-2 w-20"
+                  className="group flex-shrink-0 flex flex-col items-center gap-2 w-[72px] md:w-20"
                 >
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-neon-pink/60 transition-all duration-300 shadow-lg">
+                  <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-neon-pink/60 transition-all duration-300 shadow-lg">
                     {artist.primaryImageUrl ? (
                       <Image
                         src={artist.primaryImageUrl}
@@ -328,24 +323,24 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             {/* Timeline de Atividade */}
-            <div className="glass-card p-6 md:col-span-2 flex flex-col relative overflow-hidden">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-display font-bold text-xl text-white flex items-center gap-2">
-                  <History size={20} className="text-neon-cyan" />
+            <div className="glass-card p-5 md:col-span-2 flex flex-col relative overflow-hidden">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-black text-sm text-white flex items-center gap-2 uppercase tracking-wider">
+                  <History size={16} className="text-neon-cyan" />
                   Atividade Recente
                 </h3>
                 {stats.commentsCount > 0 && (
-                  <Link href="/profile" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white transition-colors">
-                    <MessageCircle size={12} className="text-neon-cyan" />
+                  <Link href="/profile" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors">
+                    <MessageCircle size={11} className="text-neon-cyan" />
                     {stats.commentsCount} comentário{stats.commentsCount !== 1 ? 's' : ''}
                   </Link>
                 )}
               </div>
 
-              <div className="flex-grow space-y-2 overflow-y-auto max-h-[340px] pr-1 custom-scrollbar">
+              <div className="flex-grow space-y-1.5 overflow-y-auto max-h-[320px] pr-1 custom-scrollbar">
                 {activities.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-60">
-                    <Clock size={32} className="mb-2" />
+                  <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-60 py-8">
+                    <Clock size={28} className="mb-2" />
                     <p className="text-xs font-mono">Sem atividade recente</p>
                   </div>
                 ) : (
@@ -356,7 +351,7 @@ export default async function DashboardPage() {
                       : null
 
                     const content = (
-                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
+                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
                         <span className={`text-[10px] font-black whitespace-nowrap ${config.color}`}>
                           {config.label}
                         </span>
@@ -385,77 +380,76 @@ export default async function DashboardPage() {
               </div>
 
               {stats.joinDate && (
-                <p className="text-[10px] text-zinc-700 mt-4 pt-3 border-t border-white/5">
+                <p className="text-[10px] text-zinc-700 mt-3 pt-3 border-t border-white/5">
                   Membro desde {new Date(stats.joinDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                 </p>
               )}
             </div>
 
             {/* Quick Actions */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               {quickLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent ${link.accent}`}>
+                <Link key={link.href} href={link.href} className={`glass-card p-3.5 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent ${link.accent}`}>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-white transition-colors">
-                      <link.icon size={18} />
+                    <div className="p-1.5 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-white transition-colors">
+                      <link.icon size={16} />
                     </div>
                     <div>
                       <p className="font-bold text-sm text-white">{link.title}</p>
                       <p className="text-[10px] text-zinc-500">{link.description}</p>
                     </div>
                   </div>
-                  <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                  <ChevronRight size={14} className="text-zinc-600 group-hover:text-white transition-colors" />
                 </Link>
               ))}
 
-              <Link href="/favorites" className="glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-pink-500">
+              <Link href="/favorites" className="glass-card p-3.5 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-pink-500">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-pink-400 transition-colors">
-                    <Heart size={18} />
+                  <div className="p-1.5 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-pink-400 transition-colors">
+                    <Heart size={16} />
                   </div>
                   <div>
                     <p className="font-bold text-sm text-white">Favoritos</p>
-                    <p className="text-[10px] text-zinc-500">Sua coleção completa</p>
+                    <p className="text-[10px] text-zinc-500">{stats.favoritesCount} item{stats.favoritesCount !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                <ChevronRight size={14} className="text-zinc-600 group-hover:text-white transition-colors" />
               </Link>
 
-              <Link href="/watchlist" className="glass-card p-4 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-teal-500">
+              <Link href="/watchlist" className="glass-card p-3.5 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-teal-500">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-teal-400 transition-colors">
-                    <BookmarkCheck size={18} />
+                  <div className="p-1.5 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-teal-400 transition-colors">
+                    <BookmarkCheck size={16} />
                   </div>
                   <div>
                     <p className="font-bold text-sm text-white">Minha Lista</p>
                     <p className="text-[10px] text-zinc-500">{stats.watchlistCount} produção{stats.watchlistCount !== 1 ? 'ões' : ''}</p>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-zinc-600 group-hover:text-white transition-colors" />
+                <ChevronRight size={14} className="text-zinc-600 group-hover:text-white transition-colors" />
               </Link>
 
               {/* Explorar por categoria */}
               <div className="glass-card p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Explorar</p>
-                <div className="space-y-1">
+                <div className="grid grid-cols-2 gap-1">
                   {[
                     { href: '/artists', label: 'Artistas', icon: User, color: 'text-purple-400' },
                     { href: '/groups', label: 'Grupos', icon: Music, color: 'text-pink-400' },
                     { href: '/productions', label: 'Produções', icon: Film, color: 'text-cyan-400' },
                     { href: '/news', label: 'Notícias', icon: Newspaper, color: 'text-yellow-400' },
                   ].map(({ href, label, icon: Icon, color }) => (
-                    <Link key={href} href={href} className="flex items-center gap-2 py-1.5 text-zinc-400 hover:text-white transition-colors group">
+                    <Link key={href} href={href} className="flex items-center gap-2 px-2 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors group">
                       <Icon size={13} className={color} />
                       <span className="text-xs font-bold">{label}</span>
-                      <ChevronRight size={12} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Link>
                   ))}
                 </div>
               </div>
 
-              <div className="glass-card p-5 bg-gradient-to-br from-cyber-purple/20 to-transparent border-cyber-purple/30 relative overflow-hidden group">
-                <div className="flex items-center gap-3 mb-2 relative z-10">
-                  <Zap size={18} className="text-cyber-purple" />
+              <div className="glass-card p-4 bg-gradient-to-br from-cyber-purple/20 to-transparent border-cyber-purple/30 relative overflow-hidden group">
+                <div className="flex items-center gap-2 mb-1.5 relative z-10">
+                  <Zap size={16} className="text-cyber-purple" />
                   <span className="text-xs font-black uppercase text-cyber-purple tracking-widest">Power User</span>
                 </div>
                 <p className="text-[10px] text-zinc-400 leading-tight relative z-10">Desbloqueie recursos avançados.</p>
@@ -467,29 +461,29 @@ export default async function DashboardPage() {
 
         {/* ── Onboarding — usuário novo ────────────────────────────────────── */}
         {isNewUser && (
-          <div className="glass-card p-10 md:p-16 text-center relative overflow-hidden">
+          <div className="glass-card p-8 md:p-14 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-cyber-purple/10 via-transparent to-neon-pink/10 pointer-events-none" />
             <div className="relative z-10">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyber-purple to-neon-pink flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-900/50">
-                <Compass size={32} className="text-white" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyber-purple to-neon-pink flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-900/50">
+                <Compass size={28} className="text-white" />
               </div>
-              <h2 className="text-3xl font-display font-black text-white italic tracking-tight mb-3">
+              <h2 className="text-2xl md:text-3xl font-display font-black text-white italic tracking-tight mb-2">
                 Comece sua jornada Hallyu
               </h2>
-              <p className="text-zinc-400 text-sm leading-relaxed mb-8 max-w-md mx-auto">
-                Favorite artistas, salve produções na sua lista e explore o universo do K-Pop e K-Drama. Seu painel vai ganhar vida!
+              <p className="text-zinc-400 text-sm leading-relaxed mb-6 max-w-md mx-auto">
+                Favorite artistas, salve produções na sua lista e explore o universo do K-Pop e K-Drama.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link href="/artists" className="btn-primary flex items-center gap-2">
-                  <User size={16} />
+                  <User size={15} />
                   Explorar Artistas
                 </Link>
                 <Link href="/productions" className="btn-secondary flex items-center gap-2">
-                  <Film size={16} />
+                  <Film size={15} />
                   Ver Produções
                 </Link>
                 <Link href="/news" className="btn-secondary flex items-center gap-2">
-                  <Newspaper size={16} />
+                  <Newspaper size={15} />
                   Ler Notícias
                 </Link>
               </div>
