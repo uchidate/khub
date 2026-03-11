@@ -4,10 +4,14 @@ import { useSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { BookmarkPlus, LogIn, Film } from 'lucide-react'
-import { WatchStatus, WATCH_STATUS_LABELS, WATCH_STATUS_ICONS } from '@/hooks/useWatchlist'
+import {
+    BookmarkPlus, LogIn, Film, Bookmark, Play, CheckCircle, XCircle,
+    LayoutList, Star,
+} from 'lucide-react'
+import { WatchStatus, WATCH_STATUS_LABELS } from '@/hooks/useWatchlist'
 import { StarRating } from '@/components/ui/StarRating'
 import { WatchButton } from '@/components/ui/WatchButton'
+import { ScrollToTop } from '@/components/ui/ScrollToTop'
 
 interface WatchEntry {
     id: string
@@ -29,20 +33,39 @@ interface WatchEntry {
     }
 }
 
-const STATUS_TABS: Array<{ key: WatchStatus | 'ALL'; label: string; icon: string }> = [
-    { key: 'ALL', label: 'Todos', icon: '📋' },
-    { key: 'WANT_TO_WATCH', label: WATCH_STATUS_LABELS.WANT_TO_WATCH, icon: WATCH_STATUS_ICONS.WANT_TO_WATCH },
-    { key: 'WATCHING', label: WATCH_STATUS_LABELS.WATCHING, icon: WATCH_STATUS_ICONS.WATCHING },
-    { key: 'WATCHED', label: WATCH_STATUS_LABELS.WATCHED, icon: WATCH_STATUS_ICONS.WATCHED },
-    { key: 'DROPPED', label: WATCH_STATUS_LABELS.DROPPED, icon: WATCH_STATUS_ICONS.DROPPED },
-]
+const STATUS_ICON: Record<WatchStatus, React.ReactNode> = {
+    WANT_TO_WATCH: <Bookmark size={15} />,
+    WATCHING:      <Play size={15} />,
+    WATCHED:       <CheckCircle size={15} />,
+    DROPPED:       <XCircle size={15} />,
+}
+
+const STATUS_COLOR: Record<WatchStatus, string> = {
+    WANT_TO_WATCH: 'text-teal-400 bg-teal-400/10 border-teal-400/20',
+    WATCHING:      'text-green-400 bg-green-400/10 border-green-400/20',
+    WATCHED:       'text-purple-400 bg-purple-400/10 border-purple-400/20',
+    DROPPED:       'text-red-400 bg-red-400/10 border-red-400/20',
+}
+
+const STATUS_ACTIVE: Record<WatchStatus, string> = {
+    WANT_TO_WATCH: 'bg-teal-500 text-white border-teal-500',
+    WATCHING:      'bg-green-500 text-white border-green-500',
+    WATCHED:       'bg-purple-600 text-white border-purple-600',
+    DROPPED:       'bg-red-600 text-white border-red-600',
+}
 
 const TYPE_LABEL: Record<string, string> = {
-    DRAMA: 'Drama',
-    MOVIE: 'Filme',
-    VARIETY: 'Variety',
-    WEBTOON: 'Webtoon',
+    DRAMA: 'Drama', MOVIE: 'Filme', VARIETY: 'Variety', WEBTOON: 'Webtoon',
+    SERIES: 'Série', MOVIE_DRAMA: 'Filme',
 }
+
+const STATUS_TABS: Array<{ key: WatchStatus | 'ALL'; label: string }> = [
+    { key: 'ALL',           label: 'Todos' },
+    { key: 'WANT_TO_WATCH', label: WATCH_STATUS_LABELS.WANT_TO_WATCH },
+    { key: 'WATCHING',      label: WATCH_STATUS_LABELS.WATCHING },
+    { key: 'WATCHED',       label: WATCH_STATUS_LABELS.WATCHED },
+    { key: 'DROPPED',       label: WATCH_STATUS_LABELS.DROPPED },
+]
 
 export default function WatchlistPage() {
     const { status } = useSession()
@@ -52,10 +75,7 @@ export default function WatchlistPage() {
 
     useEffect(() => {
         if (status === 'loading') return
-        if (status === 'unauthenticated') {
-            setLoading(false)
-            return
-        }
+        if (status === 'unauthenticated') { setLoading(false); return }
 
         fetch('/api/users/watchlist')
             .then(r => r.json())
@@ -83,36 +103,44 @@ export default function WatchlistPage() {
     }
 
     const filtered = activeTab === 'ALL' ? entries : entries.filter(e => e.status === activeTab)
-
     const counts: Record<string, number> = {}
-    for (const e of entries) {
-        counts[e.status] = (counts[e.status] ?? 0) + 1
-    }
+    for (const e of entries) counts[e.status] = (counts[e.status] ?? 0) + 1
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-16">
+
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                    <BookmarkPlus size={32} className="text-neon-pink" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 flex items-center gap-1.5">
+                    <LayoutList size={10} />
                     Minha Lista
-                </h1>
-                <p className="text-zinc-400 mt-1">
-                    {entries.length === 0 && !loading
-                        ? 'Nenhuma produção na sua lista ainda'
-                        : `${entries.length} produç${entries.length === 1 ? 'ão' : 'ões'} na sua lista`}
                 </p>
+                <h1 className="text-3xl md:text-4xl font-display font-black text-white tracking-tight leading-none">
+                    {loading ? 'Carregando...' : entries.length === 0
+                        ? 'Nenhuma produção ainda'
+                        : `${entries.length} produção${entries.length !== 1 ? 'ões' : ''}`}
+                </h1>
             </div>
 
             {/* Stats bar */}
             {entries.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
                     {(Object.keys(WATCH_STATUS_LABELS) as WatchStatus[]).map(s => (
-                        <div key={s} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                            <div className="text-2xl mb-1">{WATCH_STATUS_ICONS[s]}</div>
-                            <div className="text-2xl font-bold text-white">{counts[s] ?? 0}</div>
-                            <div className="text-xs text-zinc-400 mt-0.5">{WATCH_STATUS_LABELS[s]}</div>
-                        </div>
+                        <button
+                            key={s}
+                            onClick={() => setActiveTab(s)}
+                            className={`glass-card p-4 text-left transition-all border ${activeTab === s ? STATUS_ACTIVE[s] : 'border-white/5 hover:border-white/15'}`}
+                        >
+                            <div className={`mb-2 ${activeTab === s ? 'text-white' : STATUS_COLOR[s].split(' ')[0]}`}>
+                                {STATUS_ICON[s]}
+                            </div>
+                            <div className={`text-2xl font-black leading-none ${activeTab === s ? 'text-white' : 'text-white'}`}>
+                                {counts[s] ?? 0}
+                            </div>
+                            <div className={`text-xs mt-1 font-bold uppercase tracking-wider ${activeTab === s ? 'text-white/70' : 'text-zinc-500'}`}>
+                                {WATCH_STATUS_LABELS[s]}
+                            </div>
+                        </button>
                     ))}
                 </div>
             )}
@@ -121,21 +149,25 @@ export default function WatchlistPage() {
             <div className="flex gap-2 flex-wrap mb-6">
                 {STATUS_TABS.map(tab => {
                     const count = tab.key === 'ALL' ? entries.length : (counts[tab.key] ?? 0)
+                    const isActive = activeTab === tab.key
+                    const activeStyle = tab.key !== 'ALL' ? STATUS_ACTIVE[tab.key as WatchStatus] : 'bg-white text-black border-white'
                     return (
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                activeTab === tab.key
-                                    ? 'bg-neon-pink text-black'
-                                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors border ${
+                                isActive
+                                    ? activeStyle
+                                    : 'bg-zinc-800/50 text-zinc-300 border-white/5 hover:border-white/20 hover:text-white'
                             }`}
                         >
-                            <span>{tab.icon}</span>
+                            {tab.key !== 'ALL' && (
+                                <span className={isActive ? 'text-white' : STATUS_COLOR[tab.key as WatchStatus].split(' ')[0]}>
+                                    {STATUS_ICON[tab.key as WatchStatus]}
+                                </span>
+                            )}
                             <span>{tab.label}</span>
-                            <span className={`text-xs ${activeTab === tab.key ? 'text-black/70' : 'text-zinc-500'}`}>
-                                {count}
-                            </span>
+                            <span className={`text-xs ${isActive ? 'opacity-70' : 'text-zinc-500'}`}>{count}</span>
                         </button>
                     )
                 })}
@@ -160,6 +192,8 @@ export default function WatchlistPage() {
                     ))}
                 </div>
             )}
+
+            <ScrollToTop />
         </div>
     )
 }
@@ -185,7 +219,9 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
                     )}
                     {/* Status badge */}
                     <div className="absolute top-2 left-2">
-                        <span className="text-lg">{WATCH_STATUS_ICONS[entry.status]}</span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${STATUS_COLOR[entry.status]}`}>
+                            {STATUS_ICON[entry.status]}
+                        </span>
                     </div>
                     {/* Type badge */}
                     <div className="absolute bottom-2 right-2">
@@ -203,10 +239,12 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
                 </Link>
                 {p.year && <p className="text-xs text-zinc-500">{p.year}</p>}
                 {entry.rating && (
-                    <StarRating value={entry.rating} onChange={() => {}} readonly size={14} />
+                    <div className="flex items-center gap-1">
+                        <Star size={11} className="text-yellow-400 fill-yellow-400" />
+                        <span className="text-xs text-yellow-400 font-bold">{entry.rating}/10</span>
+                    </div>
                 )}
             </div>
-            {/* Inline WatchButton for quick update */}
             <div className="mt-2">
                 <WatchButton productionId={p.id} productionName={p.titlePt} className="w-full" />
             </div>
