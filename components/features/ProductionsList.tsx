@@ -189,14 +189,14 @@ export function ProductionsList() {
                 </div>
 
                 {/* Type + Sort row */}
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 min-w-0">
                     {/* Type filter */}
-                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto">
+                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto flex-1 min-w-0">
                         {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => handleType(opt.value)}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
+                                className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
                                     filters.type === opt.value
                                         ? 'bg-purple-600 text-white'
                                         : 'text-zinc-400 hover:text-white'
@@ -213,12 +213,12 @@ export function ProductionsList() {
                     </div>
 
                     {/* Sort */}
-                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl ml-auto">
+                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto sm:ml-auto flex-shrink-0">
                         {SORT_OPTIONS.map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => handleSort(opt.value)}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
+                                className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
                                     filters.sortBy === opt.value
                                         ? 'bg-purple-600 text-white'
                                         : 'text-zinc-400 hover:text-white'
