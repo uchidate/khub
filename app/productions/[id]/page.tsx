@@ -153,7 +153,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
 
     const galleryUrls = (production.galleryUrls as string[] | null) || []
 
-    const heroImageUrl = production.backdropUrl || production.imageUrl
+    const heroImageUrl = production.imageUrl || production.backdropUrl
 
     function formatRuntime(minutes: number | null): string | null {
         if (!minutes) return null
