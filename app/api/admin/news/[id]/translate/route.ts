@@ -4,12 +4,7 @@ import prisma from '@/lib/prisma'
 import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks'
 import type { NewsBlock } from '@/lib/types/blocks'
 
-const deepseek = new OpenAI({
-    apiKey:  process.env.DEEPSEEK_API_KEY!,
-    baseURL: 'https://api.deepseek.com',
-})
-
-async function translateBlocks(title: string, blocks: NewsBlock[]): Promise<{ title: string; blocks: NewsBlock[] }> {
+async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[]): Promise<{ title: string; blocks: NewsBlock[] }> {
     const textIndices: number[] = []
     const lines: string[] = [`T: ${title}`]
 
@@ -31,7 +26,7 @@ Rules:
 
 ${lines.join('\n')}`
 
-    const res = await deepseek.chat.completions.create({
+    const res = await client.chat.completions.create({
         model:       'deepseek-chat',
         messages:    [{ role: 'user', content: prompt }],
         temperature: 0.2,
@@ -69,6 +64,11 @@ export async function POST(
         return NextResponse.json({ error: 'DEEPSEEK_API_KEY não configurada' }, { status: 503 })
     }
 
+    const deepseek = new OpenAI({
+        apiKey:  process.env.DEEPSEEK_API_KEY,
+        baseURL: 'https://api.deepseek.com',
+    })
+
     const news = await prisma.news.findUnique({
         where:  { id },
         select: { id: true, title: true, originalContent: true, contentMd: true },
@@ -79,7 +79,7 @@ export async function POST(
     const source = news.originalContent || news.contentMd
     const blocks = markdownToBlocks(source)
 
-    const { title, blocks: translated } = await translateBlocks(news.title, blocks)
+    const { title, blocks: translated } = await translateBlocks(deepseek, news.title, blocks)
 
     const contentMd = translated.map(b => {
         if (b.type === 'heading')        return `## ${b.translated}`
