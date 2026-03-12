@@ -5,9 +5,19 @@ import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks'
 import { logAiUsage } from '@/lib/ai/ai-usage-logger'
 import type { NewsBlock } from '@/lib/types/blocks'
 
-/** Remove markdown links [text](url) → text, preserving the label */
+const MEDIA_DOMAINS = /\b(youtube\.com|youtu\.be|twitter\.com|x\.com|instagram\.com|tiktok\.com|facebook\.com|spotify\.com|soundcloud\.com|weverse\.io|vlive\.tv|naver\.com|youku\.com|bilibili\.com)\b/i
+
+/**
+ * Strip markdown links that point to external article/profile pages.
+ * Keeps links to social/media platforms (Twitter, Instagram, YouTube, etc.)
+ * and image URLs (jpg, png, gif, webp).
+ */
 function stripExternalLinks(text: string): string {
-    return text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
+        if (MEDIA_DOMAINS.test(url)) return match   // keep social/media links
+        if (/\.(jpe?g|png|gif|webp|svg)(\?|$)/i.test(url)) return match  // keep image links
+        return label  // strip article/profile links → plain text
+    })
 }
 
 async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[]): Promise<{ title: string; blocks: NewsBlock[]; tokensIn: number; tokensOut: number; cost: number }> {
