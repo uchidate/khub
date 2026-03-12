@@ -99,6 +99,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: 'Este artista não foi encontrado em nossa base de dados.'
         }
     }
+    if (artist.isHidden) return { title: 'Artista não encontrado - HallyuHub', robots: { index: false, follow: false } }
 
     const roles = artist.roles || []
     const description = artist.bio || `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''} - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
@@ -130,7 +131,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     // Step 1: fetch artist (deduplica com generateMetadata via React.cache)
     const artist = await getArtist(params.id)
 
-    if (!artist) {
+    if (!artist || artist.isHidden) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
                 <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: 'Não Encontrado' }]} />

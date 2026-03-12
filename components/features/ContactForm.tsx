@@ -132,7 +132,7 @@ export function ContactForm() {
             <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-sm transition-colors"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-sm transition-colors"
             >
                 {status === 'sending'
                     ? <><Loader2 size={16} className="animate-spin" /> Enviando...</>

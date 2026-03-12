@@ -49,6 +49,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     const params = await props.params;
     const group = await getGroup(params.id)
     if (!group) return { title: 'Grupo não encontrado - HallyuHub' }
+    if (group.isHidden) return { title: 'Grupo não encontrado - HallyuHub', robots: { index: false, follow: false } }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
     const isThinContent = !group.profileImageUrl && !group.bio
     return {
@@ -77,7 +78,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
     // Step 1: fetch group (deduplica com generateMetadata via React.cache)
     const group = await getGroup(params.id)
 
-    if (!group) {
+    if (!group || group.isHidden) {
         return (
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
                 <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: 'Não Encontrado' }]} />

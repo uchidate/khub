@@ -87,7 +87,7 @@ export default function ContatoPage() {
                 },
             }} />
 
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-8 md:px-12 min-h-screen">
+            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-6 md:px-8 min-h-screen">
                 <div className="max-w-3xl mx-auto">
 
                     {/* Header */}
@@ -107,7 +107,7 @@ export default function ContatoPage() {
                     </div>
 
                     {/* Canais diretos */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
                         {CONTACT_CHANNELS.map(ch => (
                             <a
                                 key={ch.label}
@@ -116,12 +116,12 @@ export default function ContatoPage() {
                                 rel={ch.external ? 'noopener noreferrer' : undefined}
                                 className={`group flex items-start gap-4 p-5 rounded-2xl border transition-all hover:scale-[1.02] active:scale-100 ${ch.color}`}
                             >
-                                <div className={`p-2 rounded-xl border ${ch.color} shrink-0`}>
+                                <div className="p-2 rounded-xl bg-white/5 shrink-0">
                                     <ch.icon size={18} />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-0.5">{ch.label}</p>
-                                    <p className="font-bold text-white group-hover:underline underline-offset-4">{ch.value}</p>
+                                    <p className="font-bold text-white group-hover:underline underline-offset-4 break-all">{ch.value}</p>
                                     <p className="text-xs text-zinc-500 mt-1">{ch.description}</p>
                                 </div>
                             </a>
