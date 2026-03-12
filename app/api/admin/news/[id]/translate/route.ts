@@ -93,15 +93,18 @@ export async function POST(
 
     const news = await prisma.news.findUnique({
         where:  { id },
-        select: { id: true, title: true, originalContent: true, contentMd: true },
+        select: { id: true, title: true, contentMd: true, originalContent: true, blocks: true },
     })
 
     if (!news) return NextResponse.json({ error: 'Notícia não encontrada' }, { status: 404 })
 
-    const source = news.originalContent || news.contentMd
-    const rawBlocks = markdownToBlocks(source)
-    // Strip external links from original text (links to other sites, e.g. soompi.com/artist/...)
-    const blocks = rawBlocks.map(b => {
+    // Prefer contentMd (cleaned) over originalContent (raw); regenerate blocks if not saved
+    const source = news.contentMd ?? news.originalContent ?? ''
+    const savedBlocks = Array.isArray(news.blocks) && news.blocks.length > 0
+        ? (news.blocks as NewsBlock[])
+        : markdownToBlocks(source)
+    // Strip any remaining external links from text blocks (handles pre-cleanup articles)
+    const blocks = savedBlocks.map(b => {
         if (b.type === 'heading' || b.type === 'paragraph' || b.type === 'quote') {
             const clean = stripExternalLinks(b.original)
             return { ...b, original: clean, translated: clean }
