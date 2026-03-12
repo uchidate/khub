@@ -39,6 +39,34 @@ export function markdownToBlocks(markdown: string): NewsBlock[] {
             continue
         }
 
+        // YouTube bare URL or [text](youtube-url)
+        const youtubeUrl = chunk.match(/^(?:\[([^\]]*)\]\()?(https?:\/\/(?:www\.)?(?:youtube\.com\/watch[^\s)]+|youtu\.be\/[^\s)]+))\)?$/)
+        if (youtubeUrl) {
+            blocks.push({ type: 'video', url: youtubeUrl[2] })
+            continue
+        }
+
+        // Twitter/X embed — bare URL or [text](url)
+        const twitterUrl = chunk.match(/^(?:\[([^\]]*)\]\()?(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^\s)]+)\)?$/)
+        if (twitterUrl) {
+            blocks.push({ type: 'twitter_embed', url: twitterUrl[2] })
+            continue
+        }
+
+        // Instagram embed — bare URL or [text](url)
+        const instagramUrl = chunk.match(/^(?:\[([^\]]*)\]\()?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[^\s/)]+\/?)\)?$/)
+        if (instagramUrl) {
+            blocks.push({ type: 'instagram_embed', url: instagramUrl[2] })
+            continue
+        }
+
+        // TikTok embed — bare URL or [text](url)
+        const tiktokUrl = chunk.match(/^(?:\[([^\]]*)\]\()?(https?:\/\/(?:www\.)?(?:tiktok\.com|vm\.tiktok\.com)\/[^\s)]+)\)?$/)
+        if (tiktokUrl) {
+            blocks.push({ type: 'video', url: tiktokUrl[2] })
+            continue
+        }
+
         // Blockquote: > text
         const quoteMatch = chunk.match(/^>\s+([\s\S]+)$/)
         if (quoteMatch) {
