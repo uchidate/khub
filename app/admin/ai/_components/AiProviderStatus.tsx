@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react'
 import { Loader2, Zap, ZapOff, AlertTriangle } from 'lucide-react'
 
 interface ProviderStatus {
-    name:        string
-    configured:  boolean
-    circuitOpen: boolean
-    cooldown:    number
-    requests:    number
-    failures:    number
-    cost:        number
-    latencyMs?:  number
-    error?:      string
+    name:                     string
+    configured:               boolean
+    circuitOpen:              boolean
+    circuitCooldownRemaining: number
+    consecutiveFailures:      number
+    stats: {
+        requests: number
+        failures: number
+        cost:     number
+    }
 }
 
 interface StatusResponse {
@@ -62,7 +63,7 @@ export default function AiProviderStatus() {
                     {data.providers.map(p => (
                         <div key={p.name} className="bg-zinc-800/50 rounded-lg p-3 border border-white/6 space-y-2">
                             <div className="flex items-center gap-2">
-                                <StatusDot ok={p.configured && !p.circuitOpen} warn={p.circuitOpen} />
+                                <StatusDot ok={p.configured && !p.circuitOpen} warn={p.configured && p.circuitOpen} />
                                 <span className="text-xs font-semibold text-zinc-200 capitalize">{p.name}</span>
                             </div>
 
@@ -71,7 +72,7 @@ export default function AiProviderStatus() {
                             ) : p.circuitOpen ? (
                                 <div className="flex items-center gap-1 text-yellow-500">
                                     <AlertTriangle className="w-3 h-3" />
-                                    <span className="text-[10px]">Circuit open ({p.cooldown}s)</span>
+                                    <span className="text-[10px]">Circuit open ({p.circuitCooldownRemaining}s)</span>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-1 text-emerald-500">
@@ -81,8 +82,8 @@ export default function AiProviderStatus() {
                             )}
 
                             <div className="text-[10px] text-zinc-600 space-y-0.5">
-                                <p>{p.requests} req · {p.failures} erros</p>
-                                <p>{fmtCost(p.cost)} sessão</p>
+                                <p>{p.stats.requests} req · {p.stats.failures} erros</p>
+                                <p>{fmtCost(p.stats.cost)} sessão</p>
                                 {p.name === data.testedProvider && data.testLatencyMs && (
                                     <p className="text-zinc-500">{data.testLatencyMs}ms ping</p>
                                 )}
