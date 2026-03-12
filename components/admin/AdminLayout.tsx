@@ -74,6 +74,13 @@ const navSections: NavSection[] = [
     ],
   },
   {
+    label: 'Inteligência Artificial',
+    items: [
+      { href: '/admin/ai', label: 'Dashboard IA', icon: Bot, exact: true },
+      { href: '/admin/ai/config', label: 'Config de Providers', icon: Settings },
+    ],
+  },
+  {
     label: 'Plataforma',
     items: [
       { href: '/admin/users', label: 'Usuários', icon: Users },

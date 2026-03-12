@@ -61,11 +61,14 @@ export class OllamaProvider extends BaseAIProvider {
 
             const data = await response.json();
             const content = data.response;
-            const tokensUsed = Math.ceil((prompt.length + content.length) / 4);
+            // Ollama não reporta tokens de forma confiável — estimativa por caracteres
+            const tokensIn  = Math.ceil(prompt.length / 4);
+            const tokensOut = Math.ceil(content.length / 4);
+            const tokensUsed = tokensIn + tokensOut;
 
             this.recordSuccess(tokensUsed, 0);
 
-            return { content, provider: 'ollama', model: modelName, tokensUsed, cost: 0 };
+            return { content, provider: 'ollama', model: modelName, tokensUsed, tokensIn, tokensOut, cost: 0 };
         } catch (error: any) {
             this.recordFailure();
             if (error.name === 'AbortError') {

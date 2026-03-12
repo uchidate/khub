@@ -40,7 +40,9 @@ export class ClaudeProvider extends BaseAIProvider {
                 ? message.content[0].text
                 : '';
 
-            const tokensUsed = message.usage.input_tokens + message.usage.output_tokens;
+            const tokensIn  = message.usage.input_tokens;
+            const tokensOut = message.usage.output_tokens;
+            const tokensUsed = tokensIn + tokensOut;
             const cost = this.config.costPer1kTokens * (tokensUsed / 1000);
 
             this.recordSuccess(tokensUsed, cost);
@@ -50,6 +52,8 @@ export class ClaudeProvider extends BaseAIProvider {
                 provider: 'claude',
                 model: modelName,
                 tokensUsed,
+                tokensIn,
+                tokensOut,
                 cost,
             };
         } catch (error: any) {
