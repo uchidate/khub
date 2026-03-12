@@ -44,6 +44,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: 'Esta produção não foi encontrada em nossa base de dados.'
         }
     }
+    if (production.isHidden) return { title: 'Produção não encontrada - HallyuHub', robots: { index: false, follow: false } }
 
     // Conteúdo oculto por faixa etária (18+ ou não classificado) não deve ser indexado
     const SAFE_RATINGS = ['L', '10', '12', '14', '16']
@@ -92,7 +93,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
 
     const production = await getProduction(params.id)
 
-    if (!production) {
+    if (!production || production.isHidden) {
         notFound()
     }
 
