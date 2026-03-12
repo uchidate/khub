@@ -2,6 +2,7 @@ import { BaseAIProvider } from './providers/base-provider';
 import { GeminiProvider } from './providers/gemini-provider';
 import { OpenAIProvider } from './providers/openai-provider';
 import { ClaudeProvider } from './providers/claude-provider';
+import { DeepSeekProvider } from './providers/deepseek-provider';
 import { OllamaProvider } from './providers/ollama-provider';
 import { PROVIDER_CONFIGS } from './ai-config';
 import type { AIProviderType, GenerateOptions, GenerationResult, OrchestratorStats } from './ai-config';
@@ -23,6 +24,7 @@ export class AIOrchestrator {
         geminiApiKey?: string;
         openaiApiKey?: string;
         claudeApiKey?: string;
+        deepseekApiKey?: string;
         ollamaBaseUrl?: string;
         maxRetries?: number;
     }) {
@@ -35,6 +37,9 @@ export class AIOrchestrator {
         }
         if (config.claudeApiKey) {
             this.providers.set('claude', new ClaudeProvider(config.claudeApiKey));
+        }
+        if (config.deepseekApiKey) {
+            this.providers.set('deepseek', new DeepSeekProvider(config.deepseekApiKey));
         }
         // Ollama só ativado se a URL for explicitamente configurada
         const ollamaUrl = config.ollamaBaseUrl || process.env.OLLAMA_BASE_URL;
