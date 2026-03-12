@@ -5,6 +5,11 @@ import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks'
 import { logAiUsage } from '@/lib/ai/ai-usage-logger'
 import type { NewsBlock } from '@/lib/types/blocks'
 
+/** Remove markdown links [text](url) → text, preserving the label */
+function stripExternalLinks(text: string): string {
+    return text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+}
+
 async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[]): Promise<{ title: string; blocks: NewsBlock[]; tokensIn: number; tokensOut: number; cost: number }> {
     const textIndices: number[] = []
     const lines: string[] = [`T: ${title}`]
@@ -12,7 +17,8 @@ async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[
     blocks.forEach((b, i) => {
         if (b.type === 'heading' || b.type === 'paragraph' || b.type === 'quote') {
             textIndices.push(i)
-            lines.push(`${textIndices.length}: ${'original' in b ? b.original : ''}`)
+            const text = 'original' in b ? b.original : ''
+            lines.push(`${textIndices.length}: ${stripExternalLinks(text)}`)
         }
     })
 
@@ -21,7 +27,7 @@ async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[
     const prompt = `Translate each numbered line from English to Brazilian Portuguese (pt-BR).
 Rules:
 - Keep proper names, K-pop terms, drama titles, and artist names in their original form
-- Keep markdown links [text](url) intact
+- Do NOT include any markdown links or URLs in your output — plain text only
 - Return ONLY the translated lines in the same numbered format
 - Line starting with "T:" is the article title
 
@@ -83,7 +89,15 @@ export async function POST(
     if (!news) return NextResponse.json({ error: 'Notícia não encontrada' }, { status: 404 })
 
     const source = news.originalContent || news.contentMd
-    const blocks = markdownToBlocks(source)
+    const rawBlocks = markdownToBlocks(source)
+    // Strip external links from original text (links to other sites, e.g. soompi.com/artist/...)
+    const blocks = rawBlocks.map(b => {
+        if (b.type === 'heading' || b.type === 'paragraph' || b.type === 'quote') {
+            const clean = stripExternalLinks(b.original)
+            return { ...b, original: clean, translated: clean }
+        }
+        return b
+    }) as NewsBlock[]
 
     const t0 = Date.now()
     let translateResult: Awaited<ReturnType<typeof translateBlocks>>
