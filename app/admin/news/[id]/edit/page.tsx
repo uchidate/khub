@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Loader2, CheckCircle, ExternalLink, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, CheckCircle, ExternalLink, Eye, EyeOff, Languages } from 'lucide-react'
 import { BlockEditor } from '@/components/admin/BlockEditor'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import type { NewsBlock } from '@/lib/types/blocks'
@@ -34,6 +34,7 @@ export default function NewsBlockEditPage({
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
+    const [translating, setTranslating] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [showOriginal, setShowOriginal] = useState(true)
 
@@ -79,6 +80,23 @@ export default function NewsBlockEditPage({
             setSaving(false)
         }
     }, [newsId, blocks])
+
+    const handleTranslate = useCallback(async () => {
+        if (!newsId) return
+        setTranslating(true)
+        setError(null)
+        try {
+            const res = await fetch(`/api/admin/news/${newsId}/translate`, { method: 'POST' })
+            if (!res.ok) throw new Error((await res.json()).error || 'Erro ao traduzir')
+            const data = await res.json() as { title: string; blocks: NewsBlock[] }
+            setBlocks(data.blocks)
+            if (news) setNews({ ...news, title: data.title })
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'Erro ao traduzir')
+        } finally {
+            setTranslating(false)
+        }
+    }, [newsId, news])
 
     // Keyboard shortcut: Cmd/Ctrl + S
     useEffect(() => {
@@ -137,6 +155,17 @@ export default function NewsBlockEditPage({
                         <ExternalLink className="w-3.5 h-3.5" />
                         Ver
                     </Link>
+
+                    {/* Translate */}
+                    <button
+                        onClick={handleTranslate}
+                        disabled={translating || saving}
+                        title="Traduzir com DeepSeek-V3"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/50 disabled:opacity-50 transition-colors"
+                    >
+                        {translating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
+                        {translating ? 'Traduzindo...' : 'Traduzir'}
+                    </button>
 
                     {/* Toggle original panel */}
                     <button
