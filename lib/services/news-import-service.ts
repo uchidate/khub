@@ -13,6 +13,7 @@ import { getRSSNewsService, classifyContentType, estimateReadingTime } from '@/l
 import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service'
 import { getNewsNotificationService } from '@/lib/services/news-notification-service'
 import { normalizeSourceUrl } from '@/lib/utils/url'
+import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks'
 import prisma from '@/lib/prisma'
 
 // ─── Source config ────────────────────────────────────────────────────────────
@@ -180,6 +181,7 @@ export async function importOne(
 
     const readingTimeMin = estimateReadingTime(content)
     const contentType    = classifyContentType(article.title, content, source)
+    const blocks         = markdownToBlocks(content)
 
     const news = await prisma.news.create({
         data: {
@@ -193,6 +195,7 @@ export async function importOne(
             readingTimeMin,
             contentType,
             tags:            [],
+            blocks:          blocks as object[],
         },
     })
 
