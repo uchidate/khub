@@ -44,7 +44,7 @@ export async function GET() {
     const orchStats = getOrchestratorStats()
 
     // Status de cada provider pelo config
-    const providerNames = ['ollama', 'openai', 'claude', 'gemini'] as const
+    const providerNames = ['deepseek', 'ollama', 'openai', 'claude', 'gemini'] as const
 
     for (const name of providerNames) {
         const stats = orchStats?.providerStats[name]
@@ -64,6 +64,9 @@ export async function GET() {
 
         // Verificar se está configurado baseado nas env vars
         switch (name) {
+            case 'deepseek':
+                providerStatuses[name].configured = !!process.env.DEEPSEEK_API_KEY
+                break
             case 'ollama':
                 providerStatuses[name].configured = !!process.env.OLLAMA_BASE_URL
                 break
@@ -128,7 +131,9 @@ export async function GET() {
         status: testResult?.success ? 'healthy' : 'degraded',
         timestamp: new Date().toISOString(),
         totalDurationMs,
-        providers: providerStatuses,
+        providers: Object.values(providerStatuses),   // array, não objeto
+        testedProvider: testResult?.provider,
+        testLatencyMs: testResult?.latencyMs,
         quickTest: testResult,
         env: envInfo,
         orchestratorStats: orchStats,
