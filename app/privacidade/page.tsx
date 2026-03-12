@@ -179,7 +179,7 @@ export default function PrivacidadePage() {
                 <li><strong className="text-zinc-300">Reclamação:</strong> perante a ANPD (Autoridade Nacional de Proteção de Dados)</li>
               </ul>
               <p>
-                Para exercer esses direitos, entre em contato pelo e-mail <a href="mailto:contato@hallyuhub.com.br" className="text-pink-400 hover:underline">contato@hallyuhub.com.br</a>. Responderemos em até 15 dias úteis.
+                Para exercer esses direitos, entre em contato pelo e-mail <a href="mailto:privacidade@hallyuhub.com.br" className="text-pink-400 hover:underline">privacidade@hallyuhub.com.br</a>. Responderemos em até 15 dias úteis.
               </p>
             </Section>
 
@@ -188,7 +188,7 @@ export default function PrivacidadePage() {
                 O HallyuHub não é direcionado a crianças menores de 13 anos e não coletamos intencionalmente dados pessoais de menores de 13 anos. Usuários entre 13 e 18 anos necessitam de consentimento de um responsável legal.
               </p>
               <p>
-                Se você tiver conhecimento de que um menor nos forneceu dados sem autorização, entre em contato com <a href="mailto:contato@hallyuhub.com.br" className="text-pink-400 hover:underline">contato@hallyuhub.com.br</a> e excluiremos os dados imediatamente.
+                Se você tiver conhecimento de que um menor nos forneceu dados sem autorização, entre em contato com <a href="mailto:privacidade@hallyuhub.com.br" className="text-pink-400 hover:underline">privacidade@hallyuhub.com.br</a> e excluiremos os dados imediatamente.
               </p>
             </Section>
 
@@ -219,7 +219,8 @@ export default function PrivacidadePage() {
                 Para exercer seus direitos, tirar dúvidas ou fazer solicitações relacionadas a dados pessoais:
               </p>
               <ul className="list-none space-y-1">
-                <li><strong className="text-zinc-300">Contato:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-pink-400 hover:underline">contato@hallyuhub.com.br</a></li>
+                <li><strong className="text-zinc-300">Privacidade / LGPD:</strong> <a href="mailto:privacidade@hallyuhub.com.br" className="text-pink-400 hover:underline">privacidade@hallyuhub.com.br</a></li>
+                <li><strong className="text-zinc-300">Contato geral:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-pink-400 hover:underline">contato@hallyuhub.com.br</a></li>
               </ul>
               <p>
                 Você também pode registrar reclamações diretamente na <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">ANPD (Autoridade Nacional de Proteção de Dados)</a>.

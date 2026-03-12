@@ -197,7 +197,9 @@ export default function TermosPage() {
                 Para dúvidas, solicitações relacionadas a estes Termos ou questões de propriedade intelectual, entre em contato:
               </p>
               <ul className="list-none space-y-1">
-                <li><strong className="text-zinc-300">E-mail:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-purple-400 hover:underline">contato@hallyuhub.com.br</a></li>
+                <li><strong className="text-zinc-300">Contato geral:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-purple-400 hover:underline">contato@hallyuhub.com.br</a></li>
+                <li><strong className="text-zinc-300">Parcerias:</strong> <a href="mailto:parceiros@hallyuhub.com.br" className="text-purple-400 hover:underline">parceiros@hallyuhub.com.br</a></li>
+                <li><strong className="text-zinc-300">Privacidade / LGPD:</strong> <a href="mailto:privacidade@hallyuhub.com.br" className="text-purple-400 hover:underline">privacidade@hallyuhub.com.br</a></li>
               </ul>
               <p>
                 Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da Comarca de São Paulo/SP para dirimir eventuais conflitos, com renúncia a qualquer outro, por mais privilegiado que seja.

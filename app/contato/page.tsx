@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { ContactForm } from '@/components/features/ContactForm'
 import { AdBanner } from '@/components/ui/AdBanner'
-import { Mail, Instagram, HelpCircle, FileText } from 'lucide-react'
+import { Mail, Instagram, HelpCircle, FileText, Handshake } from 'lucide-react'
 import Link from 'next/link'
 
 const BASE_URL = 'https://www.hallyuhub.com.br'
@@ -43,6 +43,14 @@ const CONTACT_CHANNELS = [
         color: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
         description: 'Siga e envie uma DM para contato rápido.',
         external: true,
+    },
+    {
+        icon: Handshake,
+        label: 'Parcerias',
+        value: 'parceiros@hallyuhub.com.br',
+        href: 'mailto:parceiros@hallyuhub.com.br',
+        color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        description: 'Propostas comerciais e colaborações.',
     },
 ]
 
@@ -99,7 +107,7 @@ export default function ContatoPage() {
                     </div>
 
                     {/* Canais diretos */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
                         {CONTACT_CHANNELS.map(ch => (
                             <a
                                 key={ch.label}
