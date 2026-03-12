@@ -121,18 +121,6 @@ fi
 
 echo ""
 echo "=========================================="
-echo "  6/6 - CONFIGURANDO AUTO-GERAÇÃO"
-echo "=========================================="
-
-if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
-    echo "✅ Cron job já configurado"
-else
-    echo "Configurando cron job..."
-    ./scripts/setup-auto-generation.sh || echo "⚠️  Falha ao configurar cron"
-fi
-
-echo ""
-echo "=========================================="
 echo "  VERIFICAÇÕES FINAIS"
 echo "=========================================="
 echo ""
@@ -177,13 +165,6 @@ fi
 echo ""
 
 # Verificar cron
-echo "⏱️  Auto-geração:"
-if crontab -l 2>/dev/null | grep -q "auto-generate-content.sh"; then
-    echo "  ✅ Cron job configurado"
-else
-    echo "  ❌ Cron job NÃO configurado"
-fi
-
 echo ""
 echo "=========================================="
 echo "  SETUP CONCLUÍDO!"

@@ -3,7 +3,7 @@
  * Configurações centralizadas para todos os providers de IA
  */
 
-export type AIProviderType = 'gemini' | 'openai' | 'claude' | 'ollama';
+export type AIProviderType = 'gemini' | 'openai' | 'claude' | 'ollama' | 'deepseek';
 
 export interface AIProviderConfig {
   name: AIProviderType;
@@ -95,6 +95,21 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
     models: {
       default: 'claude-3-5-haiku-20241022',
       alternatives: ['claude-3-haiku-20240307'],
+    },
+  },
+  deepseek: {
+    name: 'deepseek',
+    displayName: 'DeepSeek',
+    enabled: true,
+    priority: 1, // Alta prioridade — barato e rápido
+    costPer1kTokens: 0.00027, // DeepSeek-V3: $0.27/MTok input
+    rateLimit: {
+      requestsPerMinute: 60,
+      tokensPerMinute: 60000,
+    },
+    models: {
+      default: 'deepseek-chat', // DeepSeek-V3
+      alternatives: ['deepseek-reasoner'],
     },
   },
   ollama: {
