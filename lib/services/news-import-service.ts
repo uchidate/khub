@@ -14,6 +14,7 @@ import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extra
 import { getNewsNotificationService } from '@/lib/services/news-notification-service'
 import { normalizeSourceUrl } from '@/lib/utils/url'
 import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks'
+import { cleanContentBySource } from '@/lib/utils/content-cleaner'
 import prisma from '@/lib/prisma'
 
 // ─── Source config ────────────────────────────────────────────────────────────
@@ -174,10 +175,11 @@ export async function importOne(
         return 'exists'
     }
 
-    const { content, imageUrl: rawImageUrl } = await fetchArticleWithRetry(article.url, source)
-    if (!content || content.length < 100) return 'error'
+    const { content: rawContent, imageUrl: rawImageUrl } = await fetchArticleWithRetry(article.url, source)
+    if (!rawContent || rawContent.length < 100) return 'error'
     // Normalizar URLs de imagem para HTTPS (Dramabeans e outros servem HTTP)
     const imageUrl = rawImageUrl?.replace(/^http:\/\//i, 'https://') ?? null
+    const content  = cleanContentBySource(rawContent, source)
 
     const readingTimeMin = estimateReadingTime(content)
     const contentType    = classifyContentType(article.title, content, source)
@@ -187,7 +189,7 @@ export async function importOne(
         data: {
             title:           article.title,
             contentMd:       content,
-            originalContent: content,
+            originalContent: rawContent,
             sourceUrl:       canonicalUrl,
             source,
             imageUrl:        imageUrl ?? null,
