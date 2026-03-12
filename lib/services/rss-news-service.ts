@@ -574,10 +574,16 @@ export class RSSNewsService {
       .replace(/<!--[\s\S]*?-->/g, '')
       // Figure com figcaption → imagem com caption (processar ANTES de <img>)
       .replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, (_, inner) => {
-        // WordPress oEmbed: <figure class="wp-block-embed is-type-video ..."> com URL bare no inner
-        const ytUrlInner = inner.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})[^\s<]*/i)
-        if (ytUrlInner) {
-          const videoId = ytUrlInner[1]
+        // WordPress oEmbed — YouTube bare watch URL no inner (sem iframe)
+        const ytBareUrl = inner.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/i)
+        if (ytBareUrl) {
+          const videoId = ytBareUrl[1]
+          return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
+        }
+        // WordPress oEmbed — iframe com src="youtube.com/embed/VIDEO_ID" dentro da figure
+        const ytEmbedSrc = inner.match(/src=["']https?:\/\/(?:www\.)?youtube\.com\/embed\/([A-Za-z0-9_-]{11})[^"']*/i)
+        if (ytEmbedSrc) {
+          const videoId = ytEmbedSrc[1]
           return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
         }
         // Preferir data-orig (URL original full-quality, usado pelo Koreaboo) sobre src
