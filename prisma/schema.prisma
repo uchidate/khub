@@ -941,3 +941,40 @@ model BlogPost {
   @@index([slug])
   @@index([featured, status])
 }
+
+// ─── IA ──────────────────────────────────────────────────────────────────────
+
+/// Log imutável de cada chamada de IA (melhor esforço — nunca bloqueia a operação)
+model AiUsageLog {
+  id         String   @id @default(cuid())
+  provider   String   // 'deepseek' | 'openai' | 'claude' | 'ollama' | 'gemini'
+  model      String   // 'deepseek-chat' | 'gpt-4o-mini' | etc.
+  feature    String   // 'news_translation' | 'news_generation' | 'artist_generation' | ...
+  tokensIn   Int      @default(0)
+  tokensOut  Int      @default(0)
+  cost       Float    @default(0)   // USD
+  durationMs Int      @default(0)
+  status     String   // 'success' | 'error' | 'circuit_open'
+  errorMsg   String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([provider, createdAt])
+  @@index([feature, createdAt])
+  @@index([status])
+  @@map("ai_usage_log")
+}
+
+/// Configuração de IA por feature — sobrescreve padrões do ai-config.ts em runtime
+model AiConfig {
+  id                String   @id @default(cuid())
+  feature           String   @unique // ex: 'news_translation', 'default'
+  preferredProvider String?  // null = round-robin automático
+  enabled           Boolean  @default(true)
+  monthlyBudgetUsd  Float?   // null = sem limite
+  notes             String?  @db.VarChar(300)
+  updatedAt         DateTime @updatedAt
+  updatedBy         String?  // email do admin
+
+  @@map("ai_config")
+}

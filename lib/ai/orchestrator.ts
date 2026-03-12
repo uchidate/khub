@@ -6,6 +6,7 @@ import { DeepSeekProvider } from './providers/deepseek-provider';
 import { OllamaProvider } from './providers/ollama-provider';
 import { PROVIDER_CONFIGS } from './ai-config';
 import type { AIProviderType, GenerateOptions, GenerationResult, OrchestratorStats } from './ai-config';
+import { logAiUsage } from './ai-usage-logger';
 
 /**
  * Orquestrador de múltiplos providers de IA
@@ -101,13 +102,32 @@ export class AIOrchestrator {
                 continue;
             }
 
+            const t0 = Date.now()
             try {
                 console.log(`🔄 Attempting generation with ${providerName}...`);
                 const result = await provider.generate(prompt, options);
                 this.successfulRequests++;
                 console.log(`✅ Successfully generated with ${providerName}`);
+                logAiUsage({
+                    provider:   result.provider,
+                    model:      result.model,
+                    feature:    options?.feature ?? 'unknown',
+                    tokensIn:   result.tokensIn,
+                    tokensOut:  result.tokensOut,
+                    cost:       result.cost ?? 0,
+                    durationMs: Date.now() - t0,
+                    status:     'success',
+                })
                 return result;
             } catch (error: any) {
+                logAiUsage({
+                    provider:   providerName,
+                    model:      PROVIDER_CONFIGS[providerName]?.models?.default ?? 'unknown',
+                    feature:    options?.feature ?? 'unknown',
+                    durationMs: Date.now() - t0,
+                    status:     'error',
+                    errorMsg:   error.message,
+                })
                 lastError = error;
                 attempts++;
                 console.warn(`⚠️  ${providerName} failed (attempt ${attempts}): ${error.message}`);

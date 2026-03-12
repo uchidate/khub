@@ -1,0 +1,96 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Loader2, Zap, ZapOff, AlertTriangle } from 'lucide-react'
+
+interface ProviderStatus {
+    name:        string
+    configured:  boolean
+    circuitOpen: boolean
+    cooldown:    number
+    requests:    number
+    failures:    number
+    cost:        number
+    latencyMs?:  number
+    error?:      string
+}
+
+interface StatusResponse {
+    providers: ProviderStatus[]
+    testedProvider?: string
+    testLatencyMs?:  number
+}
+
+function StatusDot({ ok, warn }: { ok: boolean; warn?: boolean }) {
+    if (!ok) return <span className="w-2 h-2 rounded-full bg-zinc-700 shrink-0" />
+    if (warn) return <span className="w-2 h-2 rounded-full bg-yellow-500 shrink-0 animate-pulse" />
+    return <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+}
+
+function fmtCost(v: number) {
+    if (v === 0) return '$0.00'
+    if (v < 0.001) return `<$0.001`
+    return `$${v.toFixed(4)}`
+}
+
+export default function AiProviderStatus() {
+    const [data,    setData]    = useState<StatusResponse | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error,   setError]   = useState<string | null>(null)
+
+    useEffect(() => {
+        fetch('/api/admin/ai/status')
+            .then(r => r.json())
+            .then(setData)
+            .catch(() => setError('Erro ao carregar status'))
+            .finally(() => setLoading(false))
+    }, [])
+
+    return (
+        <div className="bg-zinc-900 border border-white/8 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Status dos providers</p>
+                {loading && <Loader2 className="w-3 h-3 text-zinc-600 animate-spin" />}
+            </div>
+
+            {error && (
+                <p className="text-xs text-red-400">{error}</p>
+            )}
+
+            {!loading && !error && data && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {data.providers.map(p => (
+                        <div key={p.name} className="bg-zinc-800/50 rounded-lg p-3 border border-white/6 space-y-2">
+                            <div className="flex items-center gap-2">
+                                <StatusDot ok={p.configured && !p.circuitOpen} warn={p.circuitOpen} />
+                                <span className="text-xs font-semibold text-zinc-200 capitalize">{p.name}</span>
+                            </div>
+
+                            {!p.configured ? (
+                                <span className="text-[10px] text-zinc-600">Não configurado</span>
+                            ) : p.circuitOpen ? (
+                                <div className="flex items-center gap-1 text-yellow-500">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    <span className="text-[10px]">Circuit open ({p.cooldown}s)</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1 text-emerald-500">
+                                    <Zap className="w-3 h-3" />
+                                    <span className="text-[10px]">Disponível</span>
+                                </div>
+                            )}
+
+                            <div className="text-[10px] text-zinc-600 space-y-0.5">
+                                <p>{p.requests} req · {p.failures} erros</p>
+                                <p>{fmtCost(p.cost)} sessão</p>
+                                {p.name === data.testedProvider && data.testLatencyMs && (
+                                    <p className="text-zinc-500">{data.testLatencyMs}ms ping</p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}

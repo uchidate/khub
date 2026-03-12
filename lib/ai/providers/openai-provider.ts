@@ -42,7 +42,9 @@ export class OpenAIProvider extends BaseAIProvider {
             });
 
             const text = completion.choices[0]?.message?.content || '';
-            const tokensUsed = completion.usage?.total_tokens || 0;
+            const tokensIn  = completion.usage?.prompt_tokens     || 0;
+            const tokensOut = completion.usage?.completion_tokens || 0;
+            const tokensUsed = tokensIn + tokensOut;
             const cost = this.config.costPer1kTokens * (tokensUsed / 1000);
 
             this.recordSuccess(tokensUsed, cost);
@@ -52,6 +54,8 @@ export class OpenAIProvider extends BaseAIProvider {
                 provider: 'openai',
                 model: modelName,
                 tokensUsed,
+                tokensIn,
+                tokensOut,
                 cost,
             };
         } catch (error: any) {

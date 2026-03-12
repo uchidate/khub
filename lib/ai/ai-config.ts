@@ -27,6 +27,8 @@ export interface GenerateOptions {
   preferredProvider?: AIProviderType;
   systemPrompt?: string;
   excludeList?: string[];
+  /** Feature que originou a chamada — usada para logging de uso */
+  feature?: import('./ai-usage-logger').AiFeature;
 }
 
 export interface GenerationResult {
@@ -34,6 +36,8 @@ export interface GenerationResult {
   provider: AIProviderType;
   model: string;
   tokensUsed?: number;
+  tokensIn?: number;
+  tokensOut?: number;
   cost?: number;
 }
 
