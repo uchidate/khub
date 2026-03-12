@@ -603,13 +603,35 @@ export class RSSNewsService {
         const alt = altMatch ? altMatch[1] : ''
         return `\n\n![${alt}](${src})\n\n`
       })
-      // Iframes: YouTube → thumbnail clicável, resto → removido
-      // Passagem única para evitar iframes parcialmente removidos
+      // Social embed blockquotes — detectar ANTES da regra genérica de blockquote
+      // Twitter/X: <blockquote class="twitter-tweet">...<a href="tweet-url">...</blockquote>
+      .replace(/<blockquote[^>]*class="[^"]*twitter-tweet[^"]*"[^>]*>[\s\S]*?<\/blockquote>/gi, (match) => {
+        // Pegar a última <a href> dentro do blockquote (é a URL canônica do tweet)
+        const urls = Array.from(match.matchAll(/<a[^>]*href="(https?:\/\/(?:twitter|x)\.com\/[^"]+)"/gi))
+        const url = urls[urls.length - 1]?.[1]
+        return url ? `\n\n${url}\n\n` : ''
+      })
+      // Instagram: <blockquote class="instagram-media">...<a href="instagram-url">...</blockquote>
+      .replace(/<blockquote[^>]*class="[^"]*instagram-media[^"]*"[^>]*>[\s\S]*?<\/blockquote>/gi, (match) => {
+        const urlMatch = match.match(/href="(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[^/"]+\/?)"/)
+        return urlMatch ? `\n\n${urlMatch[1]}\n\n` : ''
+      })
+      // TikTok: <blockquote class="tiktok-embed" cite="url">...</blockquote>
+      .replace(/<blockquote[^>]*class="[^"]*tiktok-embed[^"]*"[^>]*cite="([^"]+)"[^>]*>[\s\S]*?<\/blockquote>/gi,
+        (_, url) => `\n\n${url}\n\n`)
+      // Iframes: YouTube → thumbnail clicável, TikTok/Instagram/Twitter → URL bare, resto → removido
       .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, (match) => {
         const srcMatch = match.match(/src=["']([^"']+)["']/i)
         if (srcMatch) {
-          const videoId = srcMatch[1].match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
+          const src = srcMatch[1]
+          const videoId = src.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
           if (videoId) return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
+          if (/instagram\.com\/embed/i.test(src)) {
+            // Extrair URL canônica do post: /p/xxx, /reel/xxx
+            const postUrl = src.match(/(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[^/?]+)/)?.[1]
+            return postUrl ? `\n\n${postUrl}/\n\n` : ''
+          }
+          if (/tiktok\.com\/embed/i.test(src)) return `\n\n${src}\n\n`
         }
         return ''
       })
@@ -627,7 +649,7 @@ export class RSSNewsService {
       .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '*$1*')
       // Links → [text](url)
       .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
-      // Blockquote → > quote
+      // Blockquote genérico → > quote
       .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, '\n\n> $1\n\n')
       // Listas
       .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '\n- $1')
