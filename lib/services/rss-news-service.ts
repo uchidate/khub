@@ -626,12 +626,12 @@ export class RSSNewsService {
           const src = srcMatch[1]
           const videoId = src.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/)?.[1]
           if (videoId) return `\n\n[![](https://img.youtube.com/vi/${videoId}/hqdefault.jpg)](https://www.youtube.com/watch?v=${videoId})\n\n`
-          if (/instagram\.com\/embed/i.test(src)) {
+          if (/^https?:\/\/(?:www\.)?instagram\.com\//i.test(src)) {
             // Extrair URL canônica do post: /p/xxx, /reel/xxx
             const postUrl = src.match(/(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[^/?]+)/)?.[1]
             return postUrl ? `\n\n${postUrl}/\n\n` : ''
           }
-          if (/tiktok\.com\/embed/i.test(src)) return `\n\n${src}\n\n`
+          if (/^https?:\/\/(?:www\.)?tiktok\.com\//i.test(src)) return `\n\n${src}\n\n`
         }
         return ''
       })
