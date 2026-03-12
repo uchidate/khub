@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
     title: 'Sobre nós | HallyuHub',
@@ -44,10 +45,28 @@ export default function AboutPage() {
                     </div>
                 </div>
 
-                <div className="p-12 bg-white text-black rounded-[40px] text-center">
+                <div className="p-12 bg-white text-black rounded-[40px] text-center mb-10">
                     <h2 className="text-4xl font-black mb-4 tracking-tighter uppercase italic">O Futuro é Hallyu.</h2>
                     <p className="font-bold text-zinc-600 mb-8 max-w-lg mx-auto leading-tight">Junte-se à revolução da cultura coreana com o portal mais moderno do país.</p>
                     <div className="w-16 h-1 w-full bg-purple-600 mx-auto rounded-full" />
+                </div>
+
+                {/* Social + Contato */}
+                <div className="flex flex-wrap gap-4 justify-center">
+                    <a
+                        href="https://www.instagram.com/hallyuhub_br/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold hover:opacity-90 transition-opacity"
+                    >
+                        Instagram · @hallyuhub_br
+                    </a>
+                    <Link
+                        href="/contato"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/15 text-zinc-400 text-sm font-bold hover:text-white hover:border-white/30 transition-colors"
+                    >
+                        Fale conosco
+                    </Link>
                 </div>
             </div>
         </div>
