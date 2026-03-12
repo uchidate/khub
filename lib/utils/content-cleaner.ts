@@ -5,6 +5,25 @@
  * Esta utilidade remove boilerplate específico de cada site.
  */
 
+// Domínios de mídia/embed que NÃO devem ter seus links removidos
+const EXTERNAL_LINK_MEDIA_DOMAINS = /\b(youtube\.com|youtu\.be|twitter\.com|x\.com|instagram\.com|tiktok\.com|facebook\.com|spotify\.com|soundcloud\.com|weverse\.io|vlive\.tv|naver\.com|youku\.com|bilibili\.com)\b/i
+
+/**
+ * Remove links externos de artigos (ex: [BLACKPINK](https://viki.com/...))
+ * preservando:
+ *  - Links de mídia/embed (YouTube, Twitter, Instagram, TikTok, etc.)
+ *  - Imagens markdown: ![alt](url) — via lookbehind negativo
+ *  - URLs de imagens (jpg/png/gif/webp/svg)
+ */
+function stripExternalLinksFromContent(text: string): string {
+    // (?<!!) previne match de imagens markdown: ![alt](url)
+    return text.replace(/(?<!!)(\[([^\]]+)\]\(([^)]+)\))/g, (_match, full, label, url) => {
+        if (EXTERNAL_LINK_MEDIA_DOMAINS.test(url)) return full
+        if (/\.(jpe?g|png|gif|webp|svg)(\?|$)/i.test(url)) return full
+        return label
+    })
+}
+
 type SourceRule = {
   description: string
   pattern: RegExp
@@ -222,6 +241,9 @@ export function cleanContentBySource(content: string, source?: string | null): s
       text = text.replace(rule.pattern, rule.replacement ?? '\n')
     }
   }
+
+  // Remover links externos (artigos de outros sites); preserva embeds e imagens
+  text = stripExternalLinksFromContent(text)
 
   // Normalizar múltiplas linhas em branco resultantes da limpeza
   text = text.replace(/\n{3,}/g, '\n\n').trim()

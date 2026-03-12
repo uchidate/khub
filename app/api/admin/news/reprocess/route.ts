@@ -38,6 +38,8 @@ import { classifyContentType, estimateReadingTime } from '@/lib/services/rss-new
 import { getNewsArtistExtractionService } from '@/lib/services/news-artist-extraction-service'
 import { getNewsNotificationService } from '@/lib/services/news-notification-service'
 import { fetchArticleWithRetry } from '@/lib/services/news-import-service'
+import { cleanContentBySource } from '@/lib/utils/content-cleaner'
+import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -74,14 +76,17 @@ async function reprocessOne(news: BatchItem): Promise<ReprocessResult> {
         return result
     }
 
-    const readingTimeMin = estimateReadingTime(content)
-    const contentType = classifyContentType(news.title, content, news.source ?? undefined)
+    const cleanedContent = cleanContentBySource(content, news.source)
+    const readingTimeMin = estimateReadingTime(cleanedContent)
+    const contentType = classifyContentType(news.title, cleanedContent, news.source ?? undefined)
+    const blocks = markdownToBlocks(cleanedContent)
 
     await prisma.news.update({
         where: { id: news.id },
         data: {
             originalContent: content,
-            contentMd: content,
+            contentMd: cleanedContent,
+            blocks,
             readingTimeMin,
             contentType,
             ...(imageUrl ? { imageUrl } : {}),
