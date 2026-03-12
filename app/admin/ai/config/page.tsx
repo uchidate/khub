@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { Loader2, Save, ArrowLeft, CheckCircle } from 'lucide-react'
-import { AI_FEATURES, FEATURE_LABELS } from '@/lib/services/ai-config-service'
-import type { AiFeature } from '@/lib/ai/ai-usage-logger'
+import { AI_FEATURES, FEATURE_LABELS } from '@/lib/ai/ai-features'
+import type { AiFeature } from '@/lib/ai/ai-features'
 
 interface AiConfigRow {
     id:                string

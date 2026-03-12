@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { FEATURE_LABELS } from '@/lib/services/ai-config-service'
-import type { AiFeature } from '@/lib/ai/ai-usage-logger'
+import type { AiFeature } from '@/lib/ai/ai-features'
 
 interface AiLog {
     id:         string

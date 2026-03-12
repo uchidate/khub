@@ -1,14 +1,6 @@
 import prisma from '@/lib/prisma'
-
-export type AiFeature =
-    | 'news_translation'
-    | 'news_generation'
-    | 'artist_generation'
-    | 'artist_translation'
-    | 'group_translation'
-    | 'production_generation'
-    | 'news_tagging'
-    | 'unknown'
+export type { AiFeature } from './ai-features'
+import type { AiFeature } from './ai-features'
 
 export interface AiUsageEntry {
     provider: string
@@ -31,15 +23,15 @@ export function logAiUsage(entry: AiUsageEntry): void {
     const tokensOut = entry.tokensOut ?? 0
     prisma.aiUsageLog.create({
         data: {
-            provider:  entry.provider,
-            model:     entry.model,
-            feature:   entry.feature,
+            provider:   entry.provider,
+            model:      entry.model,
+            feature:    entry.feature,
             tokensIn,
             tokensOut,
-            cost:      entry.cost ?? 0,
+            cost:       entry.cost ?? 0,
             durationMs: entry.durationMs,
-            status:    entry.status,
-            errorMsg:  entry.errorMsg?.slice(0, 500),
+            status:     entry.status,
+            errorMsg:   entry.errorMsg?.slice(0, 500),
         },
     }).catch(() => { /* melhor esforço */ })
 }

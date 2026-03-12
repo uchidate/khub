@@ -1,26 +1,6 @@
 import prisma from '@/lib/prisma'
-import type { AiFeature } from '@/lib/ai/ai-usage-logger'
-
-export const AI_FEATURES: AiFeature[] = [
-    'news_translation',
-    'news_generation',
-    'artist_generation',
-    'artist_translation',
-    'group_translation',
-    'production_generation',
-    'news_tagging',
-]
-
-export const FEATURE_LABELS: Record<AiFeature | 'unknown', string> = {
-    news_translation:     'Tradução de Notícias',
-    news_generation:      'Geração de Notícias',
-    artist_generation:    'Geração de Artistas',
-    artist_translation:   'Tradução de Artistas',
-    group_translation:    'Tradução de Grupos',
-    production_generation:'Geração de Produções',
-    news_tagging:         'Tagueamento de Notícias',
-    unknown:              'Desconhecido',
-}
+// Re-export constants from ai-features for convenience in server-side code
+export { AI_FEATURES, FEATURE_LABELS } from '@/lib/ai/ai-features'
 
 export interface AiConfigRow {
     id:               string
