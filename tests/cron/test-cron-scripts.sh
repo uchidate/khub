@@ -52,11 +52,9 @@ echo "📋 Test Suite 1: Bash Syntax Validation"
 echo "-------------------------------------------"
 
 CRON_SCRIPTS=(
-    "auto-generate-content.sh"
     "monitor-health.sh"
     "cleanup-cron.sh"
     "fix-crontab.sh"
-    "setup-auto-generation.sh"
     "export-cron-info.sh"
 )
 
@@ -260,7 +258,7 @@ if [ -f "$SCRIPTS_DIR/export-cron-info.sh" ]; then
 
     # Simular crontab vazio
     echo "# Test crontab" > "$TEMP_DIR/test-crontab.txt"
-    echo "*/15 * * * * /var/www/hallyuhub/scripts/auto-generate-content.sh >> /var/www/hallyuhub/logs/cron-direct.log 2>&1" >> "$TEMP_DIR/test-crontab.txt"
+    echo "*/30 * * * * /var/www/hallyuhub/scripts/monitor-health.sh >> /var/www/hallyuhub/logs/cron-direct.log 2>&1" >> "$TEMP_DIR/test-crontab.txt"
 
     # Executar script de export (com mock do crontab)
     (

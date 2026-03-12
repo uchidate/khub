@@ -121,11 +121,6 @@ check "AI Config: Gemini" "curl -s https://www.hallyuhub.com.br/api/health | gre
 check "AI Config: Ollama" "curl -s https://www.hallyuhub.com.br/api/health | grep -q '\"ollama\":{.*\"configured\":true}'"
 echo ""
 
-echo "⏰ CRON JOBS"
-echo "----------------------------------------"
-warn "Auto-geração configurada" "crontab -l | grep -q auto-generate-content.sh"
-echo ""
-
 echo "🔒 SEGURANÇA"
 echo "----------------------------------------"
 warn "Traefik parado" "docker ps | grep -q traefik && echo 'Traefik ainda rodando!' && exit 1 || exit 0"

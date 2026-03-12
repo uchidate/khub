@@ -30,7 +30,7 @@ ${text}`
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            model: 'llama3:8b',
+            model: 'phi3:mini',
             prompt,
             stream: false,
             options: { temperature: 0.3 },
@@ -55,7 +55,7 @@ Título: ${title}`
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            model: 'llama3:8b',
+            model: 'phi3:mini',
             prompt,
             stream: false,
             options: { temperature: 0.2 },

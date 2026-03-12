@@ -192,7 +192,7 @@ jobs:
       ollama_host:       ollama-staging
       ollama_model:      gemma:2b
 
-      post_deploy_command: "NODE_ENV=staging ./scripts/setup-auto-generation.sh -f --no-test"
+      post_deploy_command: "echo '✅ Staging deployed'"
       suppress_slack_on_success: true
 
   # ════════════════════════════════════════════════════════════════
