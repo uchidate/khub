@@ -484,7 +484,7 @@ async function runCronProcessing(lockId: string) {
                     const result: any = await orchestrator.generateStructured(
                         `Traduza a seguinte biografia para português brasileiro de forma natural e profissional. Mantenha 2-3 frases, tom acessível:\n\n${artistWithEnglishBio.bio}`,
                         '{ "bio": "string (biografia em português brasileiro)" }',
-                        { preferredProvider: 'ollama', maxTokens: 200 }
+                        { maxTokens: 200 }
                     );
                     if (result?.bio && result.bio.length > 20 && !isLikelyEnglish(result.bio)) {
                         await prisma.artist.update({
@@ -509,7 +509,7 @@ async function runCronProcessing(lockId: string) {
                     const result: any = await orchestrator.generateStructured(
                         `Traduza a seguinte sinopse para português brasileiro de forma natural. Mantenha 2-3 frases, sem spoilers:\n\n${productionWithEnglishSynopsis.synopsis}`,
                         '{ "synopsis": "string (sinopse em português brasileiro)" }',
-                        { preferredProvider: 'ollama', maxTokens: 200 }
+                        { maxTokens: 200 }
                     );
                     if (result?.synopsis && result.synopsis.length > 20 && !isLikelyEnglish(result.synopsis)) {
                         await prisma.production.update({
@@ -560,7 +560,7 @@ Requisitos:
                     const result: any = await orchestrator.generateStructured(
                         prompt,
                         '{ "content": "string (notícia em português com markdown)" }',
-                        { preferredProvider: 'ollama', maxTokens: 500 }
+                        { maxTokens: 500 }
                     );
 
                     if (result?.content && result.content.length > 50) {
@@ -570,7 +570,7 @@ Requisitos:
                             const tagResult: any = await orchestrator.generateStructured(
                                 `Extraia 3-5 tags relevantes desta notícia:\n\nTítulo: ${oldNewsWithoutMarkdown.title}\n\nConteúdo: ${result.content}\n\nRetorne tags como array de strings.`,
                                 '{ "tags": ["string"] }',
-                                { preferredProvider: 'ollama', maxTokens: 100 }
+                                { maxTokens: 100 }
                             );
                             tags = tagResult?.tags || [];
                         }

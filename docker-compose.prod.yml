@@ -34,14 +34,12 @@ services:
     networks:
       - web
       - backend-production
-    restart: always
+    restart: "no"  # Não inicia automaticamente — use DeepSeek/OpenAI como provider principal
     deploy:
       resources:
         limits:
-          cpus: '0.5'  # 50% de 1 core - suficiente para inferência
-          memory: 5G  # Aumentado de 4G para 5G (phi3:mini requer 3.5GB + headroom)
-        reservations:
-          memory: 4G  # Reserva 4GB para garantir memória disponível
+          cpus: '0.5'
+          memory: 2G  # Reduzido — sem modelo ativo carregado
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
@@ -72,12 +70,10 @@ services:
     environment:
       - DEPLOY_ENV=production
       - TZ=America/Sao_Paulo
-      # Ollama: phi3:mini (3.8B) tem melhor instruction following que gemma:2b (2B)
-      # Melhora significativamente qualidade de traduções PT-BR e structured JSON
+      # Ollama: configurado mas inativo — provider principal é DeepSeek/OpenAI
       - OLLAMA_MODEL=phi3:mini
-      # Limitar heap do Node.js a 2.5GB — permite GC agressivo antes de atingir o
-      # limite Docker de 3GB, evitando OOM kill e consequente 502 Bad Gateway
-      - NODE_OPTIONS=--max-old-space-size=2560
+      # Limitar heap do Node.js — GC agressivo antes do limite Docker, evita OOM kill
+      - NODE_OPTIONS=--max-old-space-size=5120
     env_file:
       - .env.production
     volumes:
@@ -91,10 +87,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'  # Aumentado de 0.7 — suporta 10k conexões simultâneas
-          memory: 3G   # Aumentado de 2G — cron + web traffic podem atingir 2.5GB
+          cpus: '2.0'
+          memory: 6G   # Aumentado de 3G — memória liberada do Ollama redistribuída ao app
         reservations:
-          memory: 1G
+          memory: 2G
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
@@ -105,8 +101,6 @@ services:
         condition: service_completed_successfully
       postgres-production:
         condition: service_healthy
-      ollama-production:
-        condition: service_started
 
   prometheus:
     image: prom/prometheus:latest

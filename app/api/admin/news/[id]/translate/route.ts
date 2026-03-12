@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import prisma from '@/lib/prisma'
 import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks'
+import { logAiUsage } from '@/lib/ai/ai-usage-logger'
 import type { NewsBlock } from '@/lib/types/blocks'
 
-async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[]): Promise<{ title: string; blocks: NewsBlock[] }> {
+async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[]): Promise<{ title: string; blocks: NewsBlock[]; tokensIn: number; tokensOut: number; cost: number }> {
     const textIndices: number[] = []
     const lines: string[] = [`T: ${title}`]
 
@@ -15,7 +16,7 @@ async function translateBlocks(client: OpenAI, title: string, blocks: NewsBlock[
         }
     })
 
-    if (textIndices.length === 0) return { title, blocks }
+    if (textIndices.length === 0) return { title, blocks, tokensIn: 0, tokensOut: 0, cost: 0 }
 
     const prompt = `Translate each numbered line from English to Brazilian Portuguese (pt-BR).
 Rules:
@@ -32,6 +33,11 @@ ${lines.join('\n')}`
         temperature: 0.2,
         max_tokens:  4096,
     })
+
+    const tokensIn  = res.usage?.prompt_tokens     ?? 0
+    const tokensOut = res.usage?.completion_tokens ?? 0
+    // DeepSeek-V3: $0.27/MTok input, $1.10/MTok output
+    const cost = (tokensIn * 0.00000027) + (tokensOut * 0.0000011)
 
     const raw = res.choices[0]?.message?.content ?? ''
     let translatedTitle = title
@@ -51,7 +57,7 @@ ${lines.join('\n')}`
         return t ? { ...b, translated: t } as NewsBlock : b
     })
 
-    return { title: translatedTitle, blocks: translatedBlocks }
+    return { title: translatedTitle, blocks: translatedBlocks, tokensIn, tokensOut, cost }
 }
 
 export async function POST(
@@ -79,7 +85,32 @@ export async function POST(
     const source = news.originalContent || news.contentMd
     const blocks = markdownToBlocks(source)
 
-    const { title, blocks: translated } = await translateBlocks(deepseek, news.title, blocks)
+    const t0 = Date.now()
+    let translateResult: Awaited<ReturnType<typeof translateBlocks>>
+    try {
+        translateResult = await translateBlocks(deepseek, news.title, blocks)
+        logAiUsage({
+            provider:   'deepseek',
+            model:      'deepseek-chat',
+            feature:    'news_translation',
+            tokensIn:   translateResult.tokensIn,
+            tokensOut:  translateResult.tokensOut,
+            cost:       translateResult.cost,
+            durationMs: Date.now() - t0,
+            status:     'success',
+        })
+    } catch (err: unknown) {
+        logAiUsage({
+            provider:   'deepseek',
+            model:      'deepseek-chat',
+            feature:    'news_translation',
+            durationMs: Date.now() - t0,
+            status:     'error',
+            errorMsg:   err instanceof Error ? err.message : String(err),
+        })
+        throw err
+    }
+    const { title, blocks: translated } = translateResult
 
     const contentMd = translated.map(b => {
         if (b.type === 'heading')        return `## ${b.translated}`
