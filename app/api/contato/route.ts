@@ -15,8 +15,16 @@ export async function POST(req: NextRequest) {
         if (message.length < 20) {
             return NextResponse.json({ error: 'Mensagem muito curta' }, { status: 400 })
         }
-        // Basic email validation
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        // Basic email structural validation — avoids ReDoS-prone nested quantifiers
+        const atIdx = email.indexOf('@')
+        const isValidEmail =
+            atIdx > 0 &&
+            atIdx < email.length - 1 &&
+            email.indexOf('@', atIdx + 1) === -1 &&
+            email.slice(atIdx + 1).includes('.') &&
+            email.length <= 254 &&
+            !email.includes(' ')
+        if (!isValidEmail) {
             return NextResponse.json({ error: 'E-mail inválido' }, { status: 400 })
         }
 
