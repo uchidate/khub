@@ -118,7 +118,9 @@ export default async function RootLayout({
                         "contactType": "customer support",
                         "availableLanguage": "Portuguese",
                     },
-                    "sameAs": [],
+                    "sameAs": [
+                        "https://www.instagram.com/hallyuhub_br/",
+                    ],
                 }} />
                 <JsonLd data={{
                     "@context": "https://schema.org",
@@ -158,8 +160,10 @@ export default async function RootLayout({
                                     <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-500">
                                         <a href="/about" className="hover:text-white underline-offset-4 hover:underline">Sobre nós</a>
                                         <a href="/faq" className="hover:text-white underline-offset-4 hover:underline">FAQ</a>
+                                        <a href="/contato" className="hover:text-white underline-offset-4 hover:underline">Contato</a>
                                         <a href="/privacidade" className="hover:text-white underline-offset-4 hover:underline">Privacidade</a>
                                         <a href="/termos" className="hover:text-white underline-offset-4 hover:underline">Termos de Uso</a>
+                                        <a href="https://www.instagram.com/hallyuhub_br/" target="_blank" rel="noopener noreferrer" className="hover:text-pink-400 underline-offset-4 hover:underline transition-colors">@hallyuhub_br</a>
                                     </div>
                                     <p className="text-zinc-600 text-xs text-center md:text-right pr-20">
                                         &copy; {new Date().getFullYear()} HallyuHub. O portal brasileiro da cultura coreana.
