@@ -135,7 +135,10 @@ export async function POST(
             status:     'error',
             errorMsg:   err instanceof Error ? err.message : String(err),
         })
-        throw err
+        return NextResponse.json(
+            { error: err instanceof Error ? err.message : 'Erro interno ao traduzir' },
+            { status: 500 },
+        )
     }
     const { title, blocks: translated } = translateResult
 
