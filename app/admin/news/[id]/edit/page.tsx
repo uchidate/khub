@@ -35,6 +35,7 @@ export default function NewsBlockEditPage({
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [translating, setTranslating] = useState(false)
+    const [togglingHidden, setTogglingHidden] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [showOriginal, setShowOriginal] = useState(true)
 
@@ -87,7 +88,11 @@ export default function NewsBlockEditPage({
         setError(null)
         try {
             const res = await fetch(`/api/admin/news/${newsId}/translate`, { method: 'POST' })
-            if (!res.ok) throw new Error((await res.json()).error || 'Erro ao traduzir')
+            if (!res.ok) {
+                let msg = 'Erro ao traduzir'
+                try { msg = (await res.json()).error || msg } catch { /* body não é JSON (ex: 500 HTML) */ }
+                throw new Error(msg)
+            }
             const data = await res.json() as { title: string; blocks: NewsBlock[] }
             setBlocks(data.blocks)
             if (news) setNews({ ...news, title: data.title })
@@ -95,6 +100,25 @@ export default function NewsBlockEditPage({
             setError(e instanceof Error ? e.message : 'Erro ao traduzir')
         } finally {
             setTranslating(false)
+        }
+    }, [newsId, news])
+
+    const handleToggleHidden = useCallback(async () => {
+        if (!newsId || !news) return
+        setTogglingHidden(true)
+        setError(null)
+        try {
+            const res = await fetch(`/api/admin/news?id=${newsId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isHidden: !news.isHidden }),
+            })
+            if (!res.ok) throw new Error('Erro ao alterar visibilidade')
+            setNews({ ...news, isHidden: !news.isHidden })
+        } catch {
+            setError('Erro ao alterar visibilidade')
+        } finally {
+            setTogglingHidden(false)
         }
     }, [newsId, news])
 
@@ -174,6 +198,26 @@ export default function NewsBlockEditPage({
                     >
                         {showOriginal ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         Original
+                    </button>
+
+                    {/* Toggle visibility */}
+                    <button
+                        onClick={handleToggleHidden}
+                        disabled={togglingHidden}
+                        title={news.isHidden ? 'Notícia oculta — clique para publicar' : 'Notícia visível — clique para ocultar'}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border disabled:opacity-50 transition-colors ${
+                            news.isHidden
+                                ? 'text-amber-400 border-amber-500/30 hover:border-amber-500/50 hover:text-amber-300'
+                                : 'text-zinc-500 border-white/8 hover:text-zinc-300 hover:border-white/15'
+                        }`}
+                    >
+                        {togglingHidden
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : news.isHidden
+                                ? <EyeOff className="w-3.5 h-3.5" />
+                                : <Eye className="w-3.5 h-3.5" />
+                        }
+                        {news.isHidden ? 'Oculta' : 'Visível'}
                     </button>
 
                     {/* Save */}
