@@ -67,7 +67,7 @@ export async function generateMetadata(props: NewsDetailPageProps): Promise<Meta
         }
     }
 
-    const mainContent = news.originalContent || news.contentMd
+    const mainContent = news.contentMd ?? news.originalContent ?? ''
     const rawDescription = mainContent
         ? mainContent
             .replace(/#{1,6}\s+/g, '')
@@ -168,8 +168,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
         }
     })
 
-    // Usar conteúdo original quando disponível (traduções via Ollama tinham baixa qualidade)
-    const mainContent = news.originalContent || news.contentMd
+    const mainContent = news.contentMd ?? news.originalContent ?? ''
 
     // Dramabeans: Drama Hangout e Open Thread são posts de discussão sem corpo de artigo
     const isDiscussionPost =
