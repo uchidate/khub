@@ -160,7 +160,7 @@ export function ArtistsList() {
             {!isLoading && artists.length > 0 && (
                 <>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 perspective-1000">
-                        {artists.map((artist) => {
+                        {artists.map((artist, index) => {
                             const group = artist.memberships?.[0]?.group
                             return (
                                 <MediaCard
@@ -178,6 +178,7 @@ export function ArtistsList() {
                                     aspectRatio="poster"
                                     adminHref={`/admin/artists/${artist.id}?returnTo=${encodeURIComponent(pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`}
                                     streamingSignal={artist.streamingSignals?.[0]}
+                                    priority={index < 4}
                                 />
                             )
                         })}

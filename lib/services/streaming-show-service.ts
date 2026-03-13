@@ -22,7 +22,7 @@ import { STREAMING_CONFIG, STREAMING_TAB_ORDER } from '@/lib/config/streaming-pl
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
-const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w342'
 
 // Top N shows por plataforma (10 para platforms, até 20 para trending_global)
 const TOP_N_PLATFORM = 10

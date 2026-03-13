@@ -321,6 +321,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                     src={artist.primaryImageUrl}
                                     alt={artist.nameRomanized}
                                     fill
+                                    priority
                                     sizes="(max-width: 1024px) 176px, 208px"
                                     className="object-cover object-top"
                                 />

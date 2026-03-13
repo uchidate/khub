@@ -292,7 +292,7 @@ export function ProductionsList() {
             {!isLoading && productions.length > 0 && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 perspective-1000">
-                        {productions.map((prod) => {
+                        {productions.map((prod, index) => {
                             const subtitleParts = [prod.year, prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null].filter(Boolean)
                             return (
                                 <div key={prod.id} className="relative">
@@ -305,6 +305,7 @@ export function ProductionsList() {
                                         href={`/productions/${prod.id}`}
                                         badges={prod.streamingPlatforms as string[] || []}
                                         aspectRatio="video"
+                                        priority={index < 3}
                                     />
                                     {prod.ageRating && (
                                         <div className="absolute top-2 left-2 z-10">
