@@ -6,7 +6,7 @@ import Image from 'next/image'
 import {
   Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2,
   Search, ChevronLeft, ChevronRight, Flag, FlagOff, CheckSquare,
-  Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp, EyeOff,
+  Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp, EyeOff, Eye,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
@@ -26,6 +26,7 @@ type Production = {
   flaggedAt: string | null
   isAdultContent: boolean | null
   adultCheckedAt: string | null
+  isHidden: boolean
   _count: { artists: number; userFavorites: number }
   suspicionScore: number
   suspicionReasons: string[]
@@ -100,10 +101,10 @@ function ScoreBar({ score }: { score: number }) {
 
 // ——— Production card ———
 function ProductionCard({
-  prod, selected, onSelect, onFlag, onDelete, actioning, highlightAdult,
+  prod, selected, onSelect, onFlag, onDelete, onHide, actioning, highlightAdult,
 }: {
   prod: Production; selected: boolean; onSelect: () => void
-  onFlag: () => void; onDelete: () => void; actioning: boolean; highlightAdult?: boolean
+  onFlag: () => void; onDelete: () => void; onHide: () => void; actioning: boolean; highlightAdult?: boolean
 }) {
   const adultKeywordsFound = highlightAdult
     ? detectAdultKeywords((prod.titlePt ?? '') + ' ' + (prod.synopsis ?? ''))
@@ -174,6 +175,11 @@ function ProductionCard({
             {prod.tmdbId && <span className="text-blue-400/80">TMDB ✓</span>}
             <span>{prod._count.artists} artistas</span>
             <span>{prod._count.userFavorites} favs</span>
+            {prod.isHidden && (
+              <span className="px-1.5 py-0.5 bg-zinc-700/60 text-zinc-400 border border-zinc-600/40 rounded flex items-center gap-1">
+                <EyeOff size={10} /> Oculto
+              </span>
+            )}
             {prod.isAdultContent === true && (
               <span className="px-1.5 py-0.5 bg-pink-600/20 text-pink-400 border border-pink-500/30 rounded font-medium">IA: Adulto</span>
             )}
@@ -210,7 +216,7 @@ function ProductionCard({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={onFlag}
               disabled={actioning}
@@ -222,6 +228,18 @@ function ProductionCard({
             >
               {prod.flaggedAsNonKorean ? <FlagOff size={12} /> : <Flag size={12} />}
               {prod.flaggedAsNonKorean ? 'Desmarcar' : 'Não é coreano'}
+            </button>
+            <button
+              onClick={onHide}
+              disabled={actioning}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+                prod.isHidden
+                  ? 'bg-zinc-700/40 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
+                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-yellow-400 border border-zinc-700'
+              }`}
+            >
+              {prod.isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+              {prod.isHidden ? 'Reexibir' : 'Ocultar'}
             </button>
             <button
               onClick={onDelete}
@@ -404,6 +422,18 @@ export default function ProductionModerationPage() {
     } finally { removeActioning(ids) }
   }
 
+  async function doHide(ids: string[], isHidden: boolean) {
+    addActioning(ids)
+    try {
+      const res = await fetch('/api/admin/productions/moderation', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, isHidden }),
+      })
+      if (res.ok) { await fetchProductions(pagination?.page || 1); await fetchStats() }
+    } finally { removeActioning(ids) }
+  }
+
   async function doDelete(ids: string[], withArtists = false) {
     addActioning(ids)
     try {
@@ -426,6 +456,20 @@ export default function ProductionModerationPage() {
     })
   }
 
+  function handleHide(prod: Production) {
+    if (prod.isHidden) {
+      doHide([prod.id], false)
+      return
+    }
+    openConfirm({
+      open: true,
+      title: 'Ocultar produção',
+      message: `"${prod.titlePt}" ficará invisível no site público e fora do sitemap. Você pode reexibir a qualquer momento.`,
+      confirmLabel: 'Ocultar',
+      onConfirm: () => doHide([prod.id], true),
+    })
+  }
+
   function handleDelete(prod: Production) {
     openConfirm({
       open: true,
@@ -445,6 +489,19 @@ export default function ProductionModerationPage() {
       message: `${ids.length} produções selecionadas serão ${flaggedAsNonKorean ? 'marcadas como não-relevantes' : 'desmarcadas'}.`,
       confirmLabel: flaggedAsNonKorean ? 'Marcar todas' : 'Desmarcar todas',
       onConfirm: () => doFlag(ids, flaggedAsNonKorean),
+    })
+  }
+
+  function handleBulkHide(isHidden: boolean) {
+    const ids = Array.from(selected)
+    openConfirm({
+      open: true,
+      title: isHidden ? `Ocultar ${ids.length} produções` : `Reexibir ${ids.length} produções`,
+      message: isHidden
+        ? `${ids.length} produções ficarão invisíveis no site público e fora do sitemap.`
+        : `${ids.length} produções voltarão a aparecer no site público.`,
+      confirmLabel: isHidden ? 'Ocultar todas' : 'Reexibir todas',
+      onConfirm: () => doHide(ids, isHidden),
     })
   }
 
@@ -733,6 +790,18 @@ export default function ProductionModerationPage() {
                 </button>
               </>
             )}
+            <button
+              onClick={() => handleBulkHide(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-yellow-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+            >
+              <EyeOff size={12} /> Ocultar
+            </button>
+            <button
+              onClick={() => handleBulkHide(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+            >
+              <Eye size={12} /> Reexibir
+            </button>
             {filter === 'adult' && (
               <button
                 onClick={() => handleBulkDelete(true)}
@@ -794,6 +863,7 @@ export default function ProductionModerationPage() {
                 selected={selected.has(prod.id)}
                 onSelect={() => toggleSelect(prod.id)}
                 onFlag={() => handleFlag(prod)}
+                onHide={() => handleHide(prod)}
                 onDelete={() => handleDelete(prod)}
                 actioning={actioningIds.has(prod.id)}
                 highlightAdult={filter === 'adult'}

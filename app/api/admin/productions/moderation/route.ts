@@ -179,6 +179,7 @@ export async function GET(request: NextRequest) {
           flaggedAt: true,
           isAdultContent: true,
           adultCheckedAt: true,
+          isHidden: true,
           _count: { select: { artists: true, userFavorites: true } },
         },
         skip,
@@ -211,12 +212,13 @@ export async function GET(request: NextRequest) {
 const flagSchema = z.object({
   productionId: z.string().optional(),
   ids: z.array(z.string()).optional(),
-  flaggedAsNonKorean: z.boolean(),
+  flaggedAsNonKorean: z.boolean().optional(),
+  isHidden: z.boolean().optional(),
 })
 
 /**
  * PUT /api/admin/productions/moderation
- * Marcar/desmarcar — single (productionId) ou bulk (ids[])
+ * Marcar/desmarcar / ocultar — single (productionId) ou bulk (ids[])
  */
 export async function PUT(request: NextRequest) {
   const { error } = await requireAdmin()
@@ -231,22 +233,29 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'productionId or ids[] required' }, { status: 400 })
     }
 
-    await prisma.production.updateMany({
-      where: { id: { in: ids } },
-      data: {
-        flaggedAsNonKorean: parsed.flaggedAsNonKorean,
-        flaggedAt: parsed.flaggedAsNonKorean ? new Date() : null,
-      },
-    })
+    const data: Record<string, unknown> = {}
+    if (parsed.flaggedAsNonKorean !== undefined) {
+      data.flaggedAsNonKorean = parsed.flaggedAsNonKorean
+      data.flaggedAt = parsed.flaggedAsNonKorean ? new Date() : null
+    }
+    if (parsed.isHidden !== undefined) {
+      data.isHidden = parsed.isHidden
+    }
 
-    log.info(`${ids.length} production(s) ${parsed.flaggedAsNonKorean ? 'flagged' : 'unflagged'}`, { ids })
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'Nenhum campo para atualizar' }, { status: 400 })
+    }
+
+    await prisma.production.updateMany({ where: { id: { in: ids } }, data })
+
+    log.info(`${ids.length} production(s) updated`, { ids, data })
 
     return NextResponse.json({ success: true, updated: ids.length })
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
     }
-    log.error('Failed to update production flag', { error: getErrorMessage(err) })
+    log.error('Failed to update production', { error: getErrorMessage(err) })
     return NextResponse.json({ error: 'Failed to update production' }, { status: 500 })
   }
 }
