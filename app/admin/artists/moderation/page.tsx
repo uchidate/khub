@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
-  Shield, AlertTriangle, CheckCircle, XCircle, Trash2, RefreshCw,
+  Shield, CheckCircle, Trash2, RefreshCw,
   ShieldAlert, Flag, FlagOff, CheckSquare, Square, Minus,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -114,8 +114,8 @@ export default function ArtistModerationPage() {
   }, [filter, page])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-  useEffect(() => { setPage(1); fetchArtists(1) }, [filter]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchArtists(page) }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(1); fetchArtists(1) }, [filter]) // fetchArtists estável via useCallback
+  useEffect(() => { fetchArtists(page) }, [page]) // fetchArtists estável via useCallback
 
   function openConfirm(opts: typeof modal) { setModal({ ...opts, open: true }) }
   const addActioning = (ids: string[]) => setActioningIds(prev => new Set(Array.from(prev).concat(ids)))
