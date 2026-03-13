@@ -33,13 +33,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         const [artists, productions, news, groups, agencies, blogPosts] = await Promise.all([
             prisma.artist.findMany({
-                where: { flaggedAsNonKorean: false },
+                where: { flaggedAsNonKorean: false, isHidden: false },
                 select: { id: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.production.findMany({
                 where: {
                     flaggedAsNonKorean: false,
+                    isHidden: false,
                     // Excluir do SEO conteúdo oculto por faixa etária (18+ e não classificados)
                     ageRating: { in: ['L', '10', '12', '14', '16'] },
                 },
@@ -51,6 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 orderBy: { publishedAt: 'desc' },
             }),
             prisma.musicalGroup.findMany({
+                where: { isHidden: false },
                 select: { id: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
             }),
