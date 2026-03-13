@@ -196,7 +196,7 @@ export function GroupsList() {
                 </div>
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                    {filtered.map(group => {
+                    {filtered.map((group, index) => {
                         const faded = !!group.disbandDate
                         const gen = getGeneration(group.debutDate)
                         return (
@@ -210,6 +210,7 @@ export function GroupsList() {
                                                 fill
                                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
                                                 className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-90 group-hover:brightness-100"
+                                                priority={index < 4}
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center dark:bg-gradient-to-br dark:from-zinc-800 dark:to-zinc-900 bg-zinc-200">

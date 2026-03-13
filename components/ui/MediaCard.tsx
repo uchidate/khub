@@ -20,6 +20,7 @@ interface MediaCardProps {
     aspectRatio?: 'poster' | 'video' | 'square' // poster = 2:3, video = 16:9, square = 1:1
     adminHref?: string
     streamingSignal?: { showTitle: string; rank: number; source?: string }
+    priority?: boolean
 }
 
 export function MediaCard({
@@ -34,6 +35,7 @@ export function MediaCard({
     aspectRatio = 'poster',
     adminHref,
     streamingSignal,
+    priority = false,
 }: MediaCardProps) {
     const aspectClass = aspectRatio === 'poster' ? 'aspect-[2/3]' : aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
     const [imgError, setImgError] = useState(false)
@@ -118,7 +120,8 @@ export function MediaCard({
                                 placeholder="blur"
                                 blurDataURL={blurDataURL}
                                 onError={() => setImgError(true)}
-                                loading="lazy"
+                                loading={priority ? undefined : 'lazy'}
+                                priority={priority}
                                 quality={85}
                             />
                         ) : (
