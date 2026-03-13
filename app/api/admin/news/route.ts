@@ -37,14 +37,30 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
 
-    const where = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' as const } },
-            { contentMd: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {}
+    const source      = searchParams.get('source')      || undefined
+    const contentType = searchParams.get('contentType') || undefined
+    const isHiddenRaw = searchParams.get('isHidden')
+    const isHidden    = isHiddenRaw === 'true' ? true : isHiddenRaw === 'false' ? false : undefined
+    const dateFrom    = searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')!) : undefined
+    const dateTo      = searchParams.get('dateTo')   ? new Date(searchParams.get('dateTo')! + 'T23:59:59Z') : undefined
+
+    const where = {
+      ...(search ? {
+        OR: [
+          { title:     { contains: search, mode: 'insensitive' as const } },
+          { contentMd: { contains: search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
+      ...(source      ? { source }      : {}),
+      ...(contentType ? { contentType } : {}),
+      ...(isHidden !== undefined ? { isHidden } : {}),
+      ...((dateFrom || dateTo) ? {
+        publishedAt: {
+          ...(dateFrom ? { gte: dateFrom } : {}),
+          ...(dateTo   ? { lte: dateTo }   : {}),
+        },
+      } : {}),
+    }
 
     const [news, total] = await Promise.all([
       prisma.news.findMany({

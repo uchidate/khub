@@ -7,7 +7,7 @@ import {
   Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
   Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
-  Mail, FileText, Bot, Menu, X,
+  Mail, FileText, Bot, Menu, X, Download, RotateCcw,
 } from 'lucide-react'
 
 type NavItem = {
@@ -56,14 +56,21 @@ const navSections: NavSection[] = [
     ],
   },
   {
+    label: 'Notícias',
+    items: [
+      { href: '/admin/news',            label: 'Gerenciar',    icon: Newspaper,  exact: true },
+      { href: '/admin/news/import',     label: 'Importar',     icon: Download },
+      { href: '/admin/news/reprocess',  label: 'Reprocessar',  icon: RotateCcw },
+    ],
+  },
+  {
     label: 'Conteúdo',
     items: [
-      { href: '/admin/news', label: 'Notícias', icon: Newspaper },
-      { href: '/admin/albums', label: 'Álbuns', icon: Disc3 },
-      { href: '/admin/tags', label: 'Tags', icon: Tag },
-      { href: '/admin/comments', label: 'Comentários', icon: MessageSquare },
-      { href: '/admin/reports', label: 'Reportes', icon: Flag },
-      { href: '/admin/translations', label: 'Traduções', icon: Languages },
+      { href: '/admin/albums',       label: 'Álbuns',       icon: Disc3 },
+      { href: '/admin/tags',         label: 'Tags',         icon: Tag },
+      { href: '/admin/comments',     label: 'Comentários',  icon: MessageSquare },
+      { href: '/admin/reports',      label: 'Reportes',     icon: Flag },
+      { href: '/admin/translations', label: 'Traduções',    icon: Languages },
     ],
   },
   {
