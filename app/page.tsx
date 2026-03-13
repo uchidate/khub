@@ -109,7 +109,7 @@ const getHomePublicData = unstable_cache(
                 title: n.title,
                 imageUrl: n.imageUrl,
                 publishedAt: n.publishedAt.toISOString(),
-                excerpt: stripMarkdown(n.originalContent || n.contentMd),
+                excerpt: stripMarkdown(n.contentMd || n.originalContent),
             })),
             streamingShowsRaw,
             trendingGroups: trendingGroupsRaw,

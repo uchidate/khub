@@ -256,7 +256,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                                     imageUrl={item.imageUrl}
                                     publishedAt={item.publishedAt}
                                     tags={item.tags || []}
-                                    contentMd={item.originalContent || item.contentMd}
+                                    contentMd={item.contentMd || item.originalContent}
                                     artists={artistNames}
                                     sourceUrl={item.sourceUrl}
                                     adminHref={`/admin/news/${item.id}?returnTo=${encodeURIComponent(pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`}
