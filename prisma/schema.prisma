@@ -234,9 +234,11 @@ model Production {
   // Cast sync tracking
   castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
   // Moderation fields
-  flaggedAsNonKorean Boolean            @default(false)
-  flaggedAt          DateTime?
-  isHidden           Boolean            @default(false) // Oculto do site público pelo admin
+  flaggedAsNonKorean  Boolean            @default(false)
+  flaggedAt           DateTime?
+  isHidden            Boolean            @default(false) // Oculto do site público pelo admin
+  isAdultContent      Boolean?           // null = não verificado, true = adulto, false = ok
+  adultCheckedAt      DateTime?          // quando foi verificado pelo DeepSeek
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -255,6 +257,8 @@ model Production {
   @@index([flaggedAsNonKorean])
   @@index([isHidden])
   @@index([flaggedAsNonKorean, isHidden]) // production listing filter
+  @@index([isAdultContent])
+  @@index([adultCheckedAt])
 }
 
 model ArtistProduction {

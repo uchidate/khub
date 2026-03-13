@@ -9,7 +9,6 @@ import {
     LayoutList, Star,
 } from 'lucide-react'
 import { WatchStatus, WATCH_STATUS_LABELS } from '@/hooks/useWatchlist'
-import { StarRating } from '@/components/ui/StarRating'
 import { WatchButton } from '@/components/ui/WatchButton'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 

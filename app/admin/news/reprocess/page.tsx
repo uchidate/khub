@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { BatchProgressPanel, type StreamProgress, type StreamLogEntry } from '@/components/admin/news/BatchProgressPanel'
 import {
-    RefreshCw, RotateCcw, AlertTriangle, Loader2,
+    RefreshCw, RotateCcw, Loader2,
     GitMerge, FlaskConical, CheckCircle, XCircle, CalendarDays, X,
 } from 'lucide-react'
 

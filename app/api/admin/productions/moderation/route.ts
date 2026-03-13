@@ -9,6 +9,31 @@ const log = createLogger('PRODUCTION_MODERATION')
 
 export const dynamic = 'force-dynamic'
 
+// Palavras-chave para detectar conteúdo adulto nos títulos
+export const ADULT_KEYWORDS = [
+  'porn', 'porno', 'pornô', 'xxx', 'jav',
+  'gravure', 'av idol', 'av girl', 'av model',
+  'hentai', 'erotic film', 'erotic movie', 'erotic drama',
+  'adult film', 'adult video', 'adult movie', 'adult content',
+  'nude model', 'nude film', 'softcore', 'hardcore',
+  'fetish', 'bdsm', 'onlyfans', 'camgirl', 'cam girl',
+  'sex tape', 'sex film', 'sex movie',
+  'uncensored', 'leaked sex', 'explicit content',
+]
+
+function buildAdultCondition() {
+  return {
+    OR: [
+      ...ADULT_KEYWORDS.map(kw => ({
+        titlePt: { contains: kw, mode: 'insensitive' as const },
+      })),
+      ...ADULT_KEYWORDS.map(kw => ({
+        synopsis: { contains: kw, mode: 'insensitive' as const },
+      })),
+    ],
+  }
+}
+
 function buildWhere(filter: string, search?: string) {
   const titleFilter = search
     ? {
@@ -38,6 +63,17 @@ function buildWhere(filter: string, search?: string) {
     }
     case 'flagged':
       return { flaggedAsNonKorean: true, ...titleFilter }
+    case 'adult': {
+      // Combina: verificado como adulto pelo DeepSeek OU detectado por palavras-chave
+      const adultCondition = {
+        OR: [
+          { isAdultContent: true },
+          ...buildAdultCondition().OR,
+        ],
+      }
+      if (search) return { AND: [adultCondition, titleFilter] }
+      return adultCondition
+    }
     case 'all':
     default:
       return { flaggedAsNonKorean: false, ...titleFilter }
@@ -98,7 +134,7 @@ export async function GET(request: NextRequest) {
   // Stats endpoint
   if (searchParams.get('stats') === '1') {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const [suspicious, recent, flagged, all] = await Promise.all([
+    const [suspicious, recent, flagged, adult, all] = await Promise.all([
       prisma.production.count({
         where: {
           flaggedAsNonKorean: false,
@@ -109,9 +145,10 @@ export async function GET(request: NextRequest) {
         where: { createdAt: { gte: sevenDaysAgo }, flaggedAsNonKorean: false },
       }),
       prisma.production.count({ where: { flaggedAsNonKorean: true } }),
+      prisma.production.count({ where: { OR: [{ isAdultContent: true }, ...buildAdultCondition().OR] } }),
       prisma.production.count({ where: { flaggedAsNonKorean: false } }),
     ])
-    return NextResponse.json({ suspicious, recent, flagged, all })
+    return NextResponse.json({ suspicious, recent, flagged, adult, all })
   }
 
   const filter = searchParams.get('filter') || 'suspicious'
@@ -140,6 +177,8 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           flaggedAsNonKorean: true,
           flaggedAt: true,
+          isAdultContent: true,
+          adultCheckedAt: true,
           _count: { select: { artists: true, userFavorites: true } },
         },
         skip,
@@ -214,11 +253,13 @@ export async function PUT(request: NextRequest) {
 
 const deleteSchema = z.object({
   ids: z.array(z.string().min(1)).min(1),
+  withArtists: z.boolean().optional().default(false),
 })
 
 /**
  * DELETE /api/admin/productions/moderation
  * Remover permanentemente — single (?productionId=) ou bulk (body.ids[])
+ * body.withArtists=true → também exclui artistas vinculados APENAS a essas produções
  */
 export async function DELETE(request: NextRequest) {
   const { error } = await requireAdmin()
@@ -228,21 +269,53 @@ export async function DELETE(request: NextRequest) {
     // Support both query param (single) and body (bulk)
     const productionIdParam = request.nextUrl.searchParams.get('productionId')
     let ids: string[]
+    let withArtists = false
 
     if (productionIdParam) {
       ids = [productionIdParam]
     } else {
       const body = await request.json()
-      ids = deleteSchema.parse(body).ids
+      const parsed = deleteSchema.parse(body)
+      ids = parsed.ids
+      withArtists = parsed.withArtists ?? false
+    }
+
+    let deletedArtists = 0
+
+    if (withArtists) {
+      // Artistas vinculados a essas produções
+      const linked = await prisma.artistProduction.findMany({
+        where: { productionId: { in: ids } },
+        select: { artistId: true },
+        distinct: ['artistId'],
+      })
+      const linkedArtistIds = linked.map(r => r.artistId)
+
+      if (linkedArtistIds.length > 0) {
+        // Desses, quais têm produções fora da lista (não podem ser excluídos)
+        const withOther = await prisma.artistProduction.findMany({
+          where: { artistId: { in: linkedArtistIds }, productionId: { notIn: ids } },
+          select: { artistId: true },
+          distinct: ['artistId'],
+        })
+        const withOtherSet = new Set(withOther.map(r => r.artistId))
+        const artistIdsToDelete = linkedArtistIds.filter(id => !withOtherSet.has(id))
+
+        if (artistIdsToDelete.length > 0) {
+          const r = await prisma.artist.deleteMany({ where: { id: { in: artistIdsToDelete } } })
+          deletedArtists = r.count
+          log.info(`${deletedArtists} artist(s) deleted alongside productions`, { artistIds: artistIdsToDelete })
+        }
+      }
     }
 
     const result = await prisma.production.deleteMany({
       where: { id: { in: ids } },
     })
 
-    log.info(`${result.count} production(s) permanently deleted`, { ids })
+    log.info(`${result.count} production(s) permanently deleted`, { ids, withArtists, deletedArtists })
 
-    return NextResponse.json({ success: true, deleted: result.count })
+    return NextResponse.json({ success: true, deleted: result.count, deletedArtists })
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
