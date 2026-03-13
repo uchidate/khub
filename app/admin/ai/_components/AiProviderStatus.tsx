@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, Zap, ZapOff, AlertTriangle } from 'lucide-react'
+import { Loader2, Zap, AlertTriangle } from 'lucide-react'
 
 interface ProviderStatus {
     name:                     string

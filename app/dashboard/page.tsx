@@ -15,7 +15,6 @@ import {
   Newspaper,
   Heart,
   MessageCircle,
-  Sparkles,
   TrendingUp,
   Star,
   Film,

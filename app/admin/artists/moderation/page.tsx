@@ -114,8 +114,8 @@ export default function ArtistModerationPage() {
   }, [filter, page])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-  useEffect(() => { setPage(1); fetchArtists(1) }, [filter]) // fetchArtists estável via useCallback
-  useEffect(() => { fetchArtists(page) }, [page]) // fetchArtists estável via useCallback
+  useEffect(() => { setPage(1); fetchArtists(1) }, [filter, fetchArtists])
+  useEffect(() => { fetchArtists(page) }, [page, fetchArtists])
 
   function openConfirm(opts: typeof modal) { setModal({ ...opts, open: true }) }
   const addActioning = (ids: string[]) => setActioningIds(prev => new Set(Array.from(prev).concat(ids)))
@@ -131,7 +131,6 @@ export default function ArtistModerationPage() {
           body: JSON.stringify({ artistId: id, flaggedAsNonKorean }),
         })
       ))
-      // eslint-disable-next-line no-empty
       await fetchArtists(page)
       await fetchStats()
     } finally { removeActioning(ids) }
