@@ -12,11 +12,12 @@ interface EventProps {
 
 export function useAnalytics() {
   const pathname = usePathname()
+  const isAdmin = pathname.startsWith('/admin')
 
-  // Track pageviews (pathname only to avoid Suspense requirement)
+  // Páginas /admin são internas — não trackear no GA
   useEffect(() => {
-    trackPageView(pathname)
-  }, [pathname])
+    if (!isAdmin) trackPageView(pathname)
+  }, [pathname, isAdmin])
 
   const trackPageView = (url: string) => {
     // Google Analytics 4

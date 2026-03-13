@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Outfit, Inter } from "next/font/google"
 import Script from "next/script"
 import "../styles/globals.css"
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { PublicAnalytics } from "@/components/features/PublicAnalytics"
 import { SessionProvider } from "@/components/features/SessionProvider"
 import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
@@ -98,7 +98,7 @@ export default async function RootLayout({
                     gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
                 `}</Script>
                 {process.env.NEXT_PUBLIC_GA_ID && (
-                    <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+                    <PublicAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
                 )}
                 {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
                     <Script
