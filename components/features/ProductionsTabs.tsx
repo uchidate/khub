@@ -98,7 +98,7 @@ export function ProductionsTabs({ latest, topRated }: ProductionsTabsProps) {
                                     alt={prod.titlePt}
                                     fill
                                     className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                    sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 16vw"
+                                    sizes="(max-width: 640px) 25vw, (max-width: 768px) 20vw, (max-width: 1024px) 17vw, 13vw"
                                 />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center p-3">
