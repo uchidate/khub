@@ -39,7 +39,7 @@ COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/package-lock.json ./package-lock.json
 
 # Remover dev dependencies (economiza ~200-300MB)
-RUN npm prune --production
+RUN npm prune --production --legacy-peer-deps
 
 # Stage 3: Builder
 FROM node:20-bullseye-slim AS builder
