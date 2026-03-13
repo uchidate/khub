@@ -68,10 +68,11 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black z-10" />
                 <Image
-                    src="https://images.unsplash.com/photo-1574169208507-84376144848b?q=80&w=2000"
-                    alt="Hallyu Wave Background"
+                    src="https://images.unsplash.com/photo-1574169208507-84376144848b?q=60&w=1200"
+                    alt=""
                     fill
                     priority
+                    aria-hidden="true"
                     className="object-cover opacity-25"
                 />
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyber-purple/20 blur-[120px] rounded-full z-20" />

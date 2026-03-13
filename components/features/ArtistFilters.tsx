@@ -113,7 +113,8 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                     {search ? (
                         <button
                             onClick={() => setSearch('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors z-10"
+                            aria-label="Limpar busca"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white transition-colors z-10"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -253,31 +254,31 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                     {search && (
                         <span className="px-3 py-1 bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-bold rounded-full flex items-center gap-2">
                             &quot;{search}&quot;
-                            <button onClick={() => setSearch('')}><X className="w-3 h-3" /></button>
+                            <button onClick={() => setSearch('')} aria-label="Remover filtro de busca" className="p-0.5"><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {role && (
                         <span className="px-3 py-1 bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-bold rounded-full flex items-center gap-2">
                             {ROLES.find(r => r.value === role)?.label}
-                            <button onClick={() => setRole('')}><X className="w-3 h-3" /></button>
+                            <button onClick={() => setRole('')} aria-label="Remover filtro de função" className="p-0.5"><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {groupId && (
                         <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold rounded-full flex items-center gap-2">
                             {groups.find(g => g.id === groupId)?.name ?? '...'}
-                            <button onClick={() => setGroupId('')}><X className="w-3 h-3" /></button>
+                            <button onClick={() => setGroupId('')} aria-label="Remover filtro de grupo" className="p-0.5"><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {agencyId && (
                         <span className="px-3 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 text-xs font-bold rounded-full flex items-center gap-2">
                             {agencies.find(a => a.id === agencyId)?.name ?? '...'}
-                            <button onClick={() => setAgencyId('')}><X className="w-3 h-3" /></button>
+                            <button onClick={() => setAgencyId('')} aria-label="Remover filtro de agência" className="p-0.5"><X className="w-3 h-3" /></button>
                         </span>
                     )}
                     {memberType && (
                         <span className="px-3 py-1 bg-zinc-700/50 text-zinc-300 text-xs font-bold rounded-full flex items-center gap-2">
                             {MEMBER_TYPE_OPTIONS.find(m => m.value === memberType)?.label}
-                            <button onClick={() => setMemberType('')}><X className="w-3 h-3" /></button>
+                            <button onClick={() => setMemberType('')} aria-label="Remover filtro de tipo de membro" className="p-0.5"><X className="w-3 h-3" /></button>
                         </span>
                     )}
                 </div>

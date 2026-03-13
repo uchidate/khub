@@ -90,7 +90,7 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
                     className="w-full px-4 pr-12 py-4 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
                 />
                 {filters.search ? (
-                    <button onClick={() => updateFilter('search', undefined)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors z-10">
+                    <button onClick={() => updateFilter('search', undefined)} aria-label="Limpar busca" className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white transition-colors z-10">
                         <X className="w-5 h-5" />
                     </button>
                 ) : (
@@ -243,7 +243,8 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
                             {groups.find(g => g.id === filters.groupId)?.name || 'Grupo selecionado'}
                             <button
                                 onClick={() => updateFilter('groupId', undefined)}
-                                className="hover:text-purple-300"
+                                aria-label="Remover filtro de grupo"
+                                className="p-0.5 hover:text-purple-300"
                             >
                                 <X className="w-3 h-3" />
                             </button>
@@ -255,7 +256,8 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
                             {artists.find(a => a.id === filters.artistId)?.nameRomanized || 'Artista selecionado'}
                             <button
                                 onClick={() => updateFilter('artistId', undefined)}
-                                className="hover:text-purple-300"
+                                aria-label="Remover filtro de artista"
+                                className="p-0.5 hover:text-purple-300"
                             >
                                 <X className="w-3 h-3" />
                             </button>
@@ -267,7 +269,8 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
                             {NEWS_SOURCES.find(s => s.value === filters.source)?.label || filters.source}
                             <button
                                 onClick={() => updateFilter('source', undefined)}
-                                className="hover:text-purple-300"
+                                aria-label="Remover filtro de fonte"
+                                className="p-0.5 hover:text-purple-300"
                             >
                                 <X className="w-3 h-3" />
                             </button>
@@ -284,7 +287,8 @@ export function NewsFilters({ onFilterChange, artists = [], groups = [], initial
                                     updateFilter('from', undefined)
                                     updateFilter('to', undefined)
                                 }}
-                                className="hover:text-purple-300"
+                                aria-label="Remover filtro de data"
+                                className="p-0.5 hover:text-purple-300"
                             >
                                 <X className="w-3 h-3" />
                             </button>

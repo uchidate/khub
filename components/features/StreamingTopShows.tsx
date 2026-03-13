@@ -143,13 +143,13 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
 
                             {/* Nota TMDB (canto superior direito — não colide com badge da plataforma) */}
                             {show.voteAverage != null && show.voteAverage > 0 && (
-                                <div className="absolute top-1 right-1 z-10 px-1 py-0.5 rounded bg-black/70 text-[8px] font-bold text-yellow-400 leading-none">
+                                <div className="absolute top-1 right-1 z-10 px-1 py-0.5 rounded bg-black/70 text-[10px] font-bold text-yellow-400 leading-none">
                                     ★ {show.voteAverage.toFixed(1)}
                                 </div>
                             )}
 
                             {/* Badge plataforma */}
-                            <div className={`absolute bottom-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded text-[8px] font-black ${cfg.bgColor} ${cfg.textColor}`}>
+                            <div className={`absolute bottom-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded text-[10px] font-black ${cfg.bgColor} ${cfg.textColor}`}>
                                 {cfg.label}
                             </div>
                         </div>
@@ -167,7 +167,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                         {show.productionTitle ?? show.showTitle}
                                     </p>
                                     {show.year && (
-                                        <p className="text-[9px] text-zinc-500 leading-none mt-0.5">{show.year}</p>
+                                        <p className="text-[10px] text-zinc-400 leading-none mt-0.5">{show.year}</p>
                                     )}
                                 </Link>
                             ) : (
@@ -177,7 +177,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                         {show.showTitle}
                                     </p>
                                     {show.year && (
-                                        <p className="text-[9px] text-zinc-500 leading-none mt-0.5">{show.year}</p>
+                                        <p className="text-[10px] text-zinc-400 leading-none mt-0.5">{show.year}</p>
                                     )}
                                 </>
                             )}
