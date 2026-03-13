@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Command, User, Film, Newspaper, Loader2, TrendingUp, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -56,26 +55,18 @@ export function QuickSearch() {
     const hasResults = results.total > 0
 
     return (
-        <AnimatePresence>
+        <>
             {modalOpen && (
                 <div className="fixed inset-0 z-[200] flex items-start justify-center pt-16 md:pt-24 px-4">
                     {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
+                    <div
                         onClick={closeModal}
-                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
                     />
 
                     {/* Palette */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.97, y: -12 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.97, y: -12 }}
-                        transition={{ duration: 0.18, ease: 'easeOut' }}
-                        className="relative w-full max-w-2xl bg-zinc-900/95 border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/60"
+                    <div
+                        className="relative w-full max-w-2xl bg-zinc-900/95 border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/60 animate-scale-in"
                     >
                         {/* Input */}
                         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
@@ -300,9 +291,9 @@ export function QuickSearch() {
                             <span><kbd className="font-mono bg-zinc-800 px-1 py-0.5 rounded text-zinc-500">Esc</kbd> fechar</span>
                             <span className="ml-auto"><kbd className="font-mono bg-zinc-800 px-1 py-0.5 rounded text-zinc-500">⌘K</kbd> alternar</span>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             )}
-        </AnimatePresence>
+        </>
     )
 }

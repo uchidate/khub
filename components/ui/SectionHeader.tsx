@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useRef, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
@@ -14,34 +14,47 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, subtitle, align = 'left', className = '', backHref, backLabel = 'Início' }: SectionHeaderProps) {
+    const ref = useRef<HTMLDivElement>(null)
+    const [visible, setVisible] = useState(false)
+
+    useEffect(() => {
+        const el = ref.current
+        if (!el) return
+        const obs = new IntersectionObserver(
+            ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+            { rootMargin: '-50px' }
+        )
+        obs.observe(el)
+        return () => obs.disconnect()
+    }, [])
+
+    const base: React.CSSProperties = {
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+    }
+
     return (
-        <div className={`mb-6 ${align === 'center' ? 'text-center' : 'text-left'} ${className}`}>
+        <div ref={ref} className={`mb-6 ${align === 'center' ? 'text-center' : 'text-left'} ${className}`}>
             {backHref && (
                 <Link href={backHref} className="inline-flex items-center gap-1 text-xs font-bold text-zinc-500 hover:text-white transition-colors mb-3 uppercase tracking-wider">
                     <ChevronLeft className="w-3 h-3" />
                     {backLabel}
                 </Link>
             )}
-            <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
+            <h1
+                style={base}
                 className="text-4xl md:text-6xl font-black mb-4 hallyu-gradient-text uppercase tracking-tighter italic"
             >
                 {title}
-            </motion.h1>
-
+            </h1>
             {subtitle && (
-                <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                <p
+                    style={{ ...base, transitionDelay: visible ? '0.2s' : '0s' }}
                     className={`text-zinc-500 text-lg font-medium max-w-xl ${align === 'center' ? 'mx-auto' : ''}`}
                 >
                     {subtitle}
-                </motion.p>
+                </p>
             )}
         </div>
     )
