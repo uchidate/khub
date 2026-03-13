@@ -118,14 +118,15 @@ export function NotificationBell() {
                             <Link
                                 href="/settings/notifications"
                                 onClick={() => setOpen(false)}
-                                className="text-zinc-500 hover:text-zinc-300 transition-colors"
-                                title="Configurar notificações"
+                                className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                aria-label="Configurar notificações"
                             >
                                 <Settings className="w-4 h-4" />
                             </Link>
                             <button
                                 onClick={() => setOpen(false)}
-                                className="text-zinc-500 hover:text-white"
+                                aria-label="Fechar notificações"
+                                className="p-1 text-zinc-500 hover:text-white"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -178,7 +179,7 @@ export function NotificationBell() {
                                         >
                                             {n.news.title}
                                         </Link>
-                                        <p className="text-[10px] text-zinc-600 mt-1">
+                                        <p className="text-[10px] text-zinc-400 mt-1">
                                             {relativeTime(n.createdAt)}
                                         </p>
                                     </div>
