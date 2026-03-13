@@ -74,6 +74,8 @@ function buildWhere(filter: string, search?: string) {
       if (search) return { AND: [adultCondition, titleFilter] }
       return adultCondition
     }
+    case 'hidden':
+      return { isHidden: true, ...titleFilter }
     case 'all':
     default:
       return { flaggedAsNonKorean: false, ...titleFilter }
@@ -121,9 +123,10 @@ function calcSuspicion(production: {
 /**
  * GET /api/admin/productions/moderation
  * - ?stats=1 → contagens por categoria
- * - ?filter=suspicious|recent|flagged|all
+ * - ?filter=suspicious|recent|flagged|adult|hidden|all
  * - ?search=texto
  * - ?page=1&limit=20
+ * - ?sort=createdAt_desc|titlePt_asc
  */
 export async function GET(request: NextRequest) {
   const { error } = await requireAdmin()
@@ -134,7 +137,7 @@ export async function GET(request: NextRequest) {
   // Stats endpoint
   if (searchParams.get('stats') === '1') {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const [suspicious, recent, flagged, adult, all] = await Promise.all([
+    const [suspicious, recent, flagged, adult, hidden, all] = await Promise.all([
       prisma.production.count({
         where: {
           flaggedAsNonKorean: false,
@@ -146,9 +149,10 @@ export async function GET(request: NextRequest) {
       }),
       prisma.production.count({ where: { flaggedAsNonKorean: true } }),
       prisma.production.count({ where: { OR: [{ isAdultContent: true }, ...buildAdultCondition().OR] } }),
+      prisma.production.count({ where: { isHidden: true } }),
       prisma.production.count({ where: { flaggedAsNonKorean: false } }),
     ])
-    return NextResponse.json({ suspicious, recent, flagged, adult, all })
+    return NextResponse.json({ suspicious, recent, flagged, adult, hidden, all })
   }
 
   const filter = searchParams.get('filter') || 'suspicious'
@@ -156,6 +160,14 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
   const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')))
   const skip = (page - 1) * limit
+  const sort = searchParams.get('sort') || 'createdAt_desc'
+
+  // Build orderBy
+  let orderBy: Record<string, string> = { createdAt: 'desc' }
+  if (sort === 'titlePt_asc') {
+    orderBy = { titlePt: 'asc' }
+  }
+  // score_desc is handled client-side after fetch (like suspicious sort)
 
   try {
     const where = buildWhere(filter, search)
@@ -179,11 +191,12 @@ export async function GET(request: NextRequest) {
           flaggedAt: true,
           isAdultContent: true,
           adultCheckedAt: true,
+          isHidden: true,
           _count: { select: { artists: true, userFavorites: true } },
         },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
       prisma.production.count({ where }),
     ])
@@ -193,7 +206,7 @@ export async function GET(request: NextRequest) {
       ...calcSuspicion(p),
     }))
 
-    if (filter === 'suspicious') {
+    if (filter === 'suspicious' || sort === 'score_desc') {
       productionsWithScore.sort((a, b) => b.suspicionScore - a.suspicionScore)
     }
 
@@ -211,12 +224,13 @@ export async function GET(request: NextRequest) {
 const flagSchema = z.object({
   productionId: z.string().optional(),
   ids: z.array(z.string()).optional(),
-  flaggedAsNonKorean: z.boolean(),
+  flaggedAsNonKorean: z.boolean().optional(),
+  isHidden: z.boolean().optional(),
 })
 
 /**
  * PUT /api/admin/productions/moderation
- * Marcar/desmarcar — single (productionId) ou bulk (ids[])
+ * Marcar/desmarcar / ocultar — single (productionId) ou bulk (ids[])
  */
 export async function PUT(request: NextRequest) {
   const { error } = await requireAdmin()
@@ -231,23 +245,58 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'productionId or ids[] required' }, { status: 400 })
     }
 
-    await prisma.production.updateMany({
-      where: { id: { in: ids } },
-      data: {
-        flaggedAsNonKorean: parsed.flaggedAsNonKorean,
-        flaggedAt: parsed.flaggedAsNonKorean ? new Date() : null,
-      },
-    })
+    const data: Record<string, unknown> = {}
+    if (parsed.flaggedAsNonKorean !== undefined) {
+      data.flaggedAsNonKorean = parsed.flaggedAsNonKorean
+      data.flaggedAt = parsed.flaggedAsNonKorean ? new Date() : null
+    }
+    if (parsed.isHidden !== undefined) {
+      data.isHidden = parsed.isHidden
+    }
 
-    log.info(`${ids.length} production(s) ${parsed.flaggedAsNonKorean ? 'flagged' : 'unflagged'}`, { ids })
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'Nenhum campo para atualizar' }, { status: 400 })
+    }
+
+    await prisma.production.updateMany({ where: { id: { in: ids } }, data })
+
+    log.info(`${ids.length} production(s) updated`, { ids, data })
 
     return NextResponse.json({ success: true, updated: ids.length })
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
     }
-    log.error('Failed to update production flag', { error: getErrorMessage(err) })
+    log.error('Failed to update production', { error: getErrorMessage(err) })
     return NextResponse.json({ error: 'Failed to update production' }, { status: 500 })
+  }
+}
+
+const patchSchema = z.object({
+  action: z.enum(['hideByKeywords']),
+})
+
+/**
+ * PATCH /api/admin/productions/moderation
+ * Bulk actions — ex: hideByKeywords
+ */
+export async function PATCH(request: NextRequest) {
+  const { error } = await requireAdmin()
+  if (error) return error
+  try {
+    const { action } = patchSchema.parse(await request.json())
+    if (action === 'hideByKeywords') {
+      const result = await prisma.production.updateMany({
+        where: { isHidden: false, OR: buildAdultCondition().OR },
+        data: { isHidden: true },
+      })
+      log.info(`hideByKeywords: ${result.count} productions hidden`)
+      return NextResponse.json({ success: true, hidden: result.count })
+    }
+  } catch (err) {
+    if (err instanceof z.ZodError) return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+    log.error('PATCH failed', { error: getErrorMessage(err) })
+    return NextResponse.json({ error: 'Erro' }, { status: 500 })
   }
 }
 

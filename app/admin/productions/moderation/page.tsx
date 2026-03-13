@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
   Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2,
   Search, ChevronLeft, ChevronRight, Flag, FlagOff, CheckSquare,
-  Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp, EyeOff,
+  Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp, EyeOff, Eye,
+  Pencil, ArrowUpDown,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
@@ -26,14 +28,18 @@ type Production = {
   flaggedAt: string | null
   isAdultContent: boolean | null
   adultCheckedAt: string | null
+  isHidden: boolean
   _count: { artists: number; userFavorites: number }
   suspicionScore: number
   suspicionReasons: string[]
 }
 
 type Pagination = { page: number; limit: number; total: number; pages: number }
-type Filter = 'suspicious' | 'recent' | 'flagged' | 'adult' | 'all'
-type Stats = { suspicious: number; recent: number; flagged: number; adult: number; all: number }
+type Filter = 'suspicious' | 'recent' | 'flagged' | 'adult' | 'hidden' | 'all'
+type Stats = { suspicious: number; recent: number; flagged: number; adult: number; hidden: number; all: number }
+type Sort = 'createdAt_desc' | 'titlePt_asc' | 'score_desc'
+
+const VALID_FILTERS: Filter[] = ['suspicious', 'recent', 'flagged', 'adult', 'hidden', 'all']
 
 // Mesmas palavras-chave do backend para highlight no card
 const ADULT_KEYWORDS = [
@@ -64,7 +70,7 @@ function ConfirmModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onCancel}>
       <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
         <h3 className="text-white font-bold text-lg mb-2">{title}</h3>
-        <p className="text-zinc-400 text-sm mb-6">{message}</p>
+        <p className="text-zinc-400 text-sm mb-6 whitespace-pre-line">{message}</p>
         <div className="flex gap-3 justify-end">
           <button onClick={onCancel} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors">
             Cancelar
@@ -100,15 +106,19 @@ function ScoreBar({ score }: { score: number }) {
 
 // ——— Production card ———
 function ProductionCard({
-  prod, selected, onSelect, onFlag, onDelete, actioning, highlightAdult,
+  prod, selected, onSelect, onFlag, onDelete, onHide, actioning, highlightAdult,
 }: {
   prod: Production; selected: boolean; onSelect: () => void
-  onFlag: () => void; onDelete: () => void; actioning: boolean; highlightAdult?: boolean
+  onFlag: () => void; onDelete: () => void; onHide: () => void; actioning: boolean; highlightAdult?: boolean
 }) {
-  const adultKeywordsFound = highlightAdult
+  const showAdultKeywords = highlightAdult || prod.isAdultContent === true
+  const adultKeywordsFound = showAdultKeywords
     ? detectAdultKeywords((prod.titlePt ?? '') + ' ' + (prod.synopsis ?? ''))
     : []
-  const borderColor = highlightAdult
+
+  const borderColor = prod.isHidden
+    ? 'border-zinc-700/50'
+    : highlightAdult
     ? 'border-pink-500/50'
     : prod.flaggedAsNonKorean
     ? 'border-zinc-700'
@@ -116,7 +126,9 @@ function ProductionCard({
     : prod.suspicionScore >= 4 ? 'border-yellow-500/30'
     : 'border-green-500/20'
 
-  const bgColor = highlightAdult
+  const bgColor = prod.isHidden
+    ? 'bg-zinc-900/40 opacity-60'
+    : highlightAdult
     ? 'bg-pink-500/5'
     : prod.flaggedAsNonKorean
     ? ''
@@ -157,14 +169,31 @@ function ProductionCard({
                 <Link href={`/productions/${prod.id}`} target="_blank" className="text-zinc-500 hover:text-purple-400 transition-colors">
                   <ExternalLink size={12} />
                 </Link>
+                <Link href={`/admin/productions/${prod.id}`} className="text-zinc-500 hover:text-blue-400 transition-colors" title="Editar">
+                  <Pencil size={12} />
+                </Link>
               </div>
               {prod.titleKr && <p className="text-xs text-zinc-500 mt-0.5">{prod.titleKr}</p>}
             </div>
-            {prod.flaggedAsNonKorean && (
-              <span className="shrink-0 text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded">
-                Marcada
-              </span>
-            )}
+            {/* Status badges — top-right vertical stack */}
+            <div className="shrink-0 flex flex-col items-end gap-1">
+              {prod.isHidden && (
+                <span className="text-xs px-1.5 py-0.5 bg-zinc-700/60 text-zinc-400 border border-zinc-600/40 rounded flex items-center gap-1">
+                  <EyeOff size={10} /> Oculto
+                </span>
+              )}
+              {prod.flaggedAsNonKorean && (
+                <span className="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded">
+                  Marcada
+                </span>
+              )}
+              {prod.isAdultContent === true && (
+                <span className="text-xs px-1.5 py-0.5 bg-pink-600/20 text-pink-400 border border-pink-500/30 rounded font-medium">IA: Adulto</span>
+              )}
+              {prod.isAdultContent === false && prod.adultCheckedAt && (
+                <span className="text-xs px-1.5 py-0.5 bg-green-600/10 text-green-500/70 border border-green-600/20 rounded">IA: OK</span>
+              )}
+            </div>
           </div>
 
           {/* Meta */}
@@ -174,13 +203,12 @@ function ProductionCard({
             {prod.tmdbId && <span className="text-blue-400/80">TMDB ✓</span>}
             <span>{prod._count.artists} artistas</span>
             <span>{prod._count.userFavorites} favs</span>
-            {prod.isAdultContent === true && (
-              <span className="px-1.5 py-0.5 bg-pink-600/20 text-pink-400 border border-pink-500/30 rounded font-medium">IA: Adulto</span>
-            )}
-            {prod.isAdultContent === false && prod.adultCheckedAt && (
-              <span className="px-1.5 py-0.5 bg-green-600/10 text-green-500/70 border border-green-600/20 rounded">IA: OK</span>
-            )}
           </div>
+
+          {/* Synopsis preview */}
+          {prod.synopsis && (
+            <p className="text-xs text-zinc-500 mb-2 line-clamp-1">{prod.synopsis}</p>
+          )}
 
           {/* Adult keywords found */}
           {adultKeywordsFound.length > 0 && (
@@ -194,14 +222,14 @@ function ProductionCard({
           )}
 
           {/* Score bar */}
-          {!prod.flaggedAsNonKorean && (
+          {!prod.flaggedAsNonKorean && !prod.isHidden && (
             <div className="mb-2">
               <ScoreBar score={prod.suspicionScore} />
             </div>
           )}
 
           {/* Reasons */}
-          {prod.suspicionReasons.length > 0 && !prod.flaggedAsNonKorean && (
+          {prod.suspicionReasons.length > 0 && !prod.flaggedAsNonKorean && !prod.isHidden && (
             <div className="flex flex-wrap gap-1 mb-2">
               {prod.suspicionReasons.map((r, i) => (
                 <span key={i} className="text-xs px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-400">{r}</span>
@@ -210,7 +238,7 @@ function ProductionCard({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={onFlag}
               disabled={actioning}
@@ -222,6 +250,18 @@ function ProductionCard({
             >
               {prod.flaggedAsNonKorean ? <FlagOff size={12} /> : <Flag size={12} />}
               {prod.flaggedAsNonKorean ? 'Desmarcar' : 'Não é coreano'}
+            </button>
+            <button
+              onClick={onHide}
+              disabled={actioning}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+                prod.isHidden
+                  ? 'bg-zinc-700/40 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
+                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-yellow-400 border border-zinc-700'
+              }`}
+            >
+              {prod.isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+              {prod.isHidden ? 'Reexibir' : 'Ocultar'}
             </button>
             <button
               onClick={onDelete}
@@ -239,11 +279,21 @@ function ProductionCard({
 }
 
 // ——— Main page ———
-export default function ProductionModerationPage() {
+function ProductionModerationContent() {
+  const router = useRouter()
+  const searchParamsHook = useSearchParams()
+
   const [productions, setProductions] = useState<Production[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
-  const [filter, setFilter] = useState<Filter>('suspicious')
+  const [filter, setFilter] = useState<Filter>(() => {
+    const f = searchParamsHook.get('filter') as Filter
+    return VALID_FILTERS.includes(f) ? f : 'suspicious'
+  })
+  const [sort, setSort] = useState<Sort>(() => {
+    const s = searchParamsHook.get('sort') as Sort
+    return ['createdAt_desc', 'titlePt_asc', 'score_desc'].includes(s) ? s as Sort : 'createdAt_desc'
+  })
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -258,6 +308,10 @@ export default function ProductionModerationPage() {
   const [autoHidePreview, setAutoHidePreview] = useState<{ adultVisible: number; artistsFromAdult: number } | null>(null)
   const [autoHideRunning, setAutoHideRunning] = useState(false)
   const [autoHideDone, setAutoHideDone] = useState<{ hiddenProductions: number } | null>(null)
+
+  // Keyword-based bulk hide
+  const [hideByKeywordsRunning, setHideByKeywordsRunning] = useState(false)
+  const [hideByKeywordsDone, setHideByKeywordsDone] = useState<number | null>(null)
 
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [aiStats, setAiStats] = useState<{
@@ -292,6 +346,7 @@ export default function ProductionModerationPage() {
     try {
       const params = new URLSearchParams({ filter, page: String(page), limit: '20' })
       if (debouncedSearch) params.set('search', debouncedSearch)
+      params.set('sort', sort)
       const res = await fetch(`/api/admin/productions/moderation?${params}`)
       const data = await res.json()
       if (res.ok) {
@@ -301,7 +356,7 @@ export default function ProductionModerationPage() {
     } catch { /* ignore */ } finally {
       setLoading(false)
     }
-  }, [filter, debouncedSearch])
+  }, [filter, debouncedSearch, sort])
 
   useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => { fetchProductions(1) }, [fetchProductions])
@@ -330,6 +385,25 @@ export default function ProductionModerationPage() {
       }
     } finally {
       setAutoHideRunning(false)
+    }
+  }
+
+  async function handleHideByKeywords() {
+    setHideByKeywordsRunning(true)
+    try {
+      const res = await fetch('/api/admin/productions/moderation', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'hideByKeywords' }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setHideByKeywordsDone(data.hidden)
+        await fetchProductions(1)
+        await fetchStats()
+      }
+    } finally {
+      setHideByKeywordsRunning(false)
     }
   }
 
@@ -404,6 +478,18 @@ export default function ProductionModerationPage() {
     } finally { removeActioning(ids) }
   }
 
+  async function doHide(ids: string[], isHidden: boolean) {
+    addActioning(ids)
+    try {
+      const res = await fetch('/api/admin/productions/moderation', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, isHidden }),
+      })
+      if (res.ok) { await fetchProductions(pagination?.page || 1); await fetchStats() }
+    } finally { removeActioning(ids) }
+  }
+
   async function doDelete(ids: string[], withArtists = false) {
     addActioning(ids)
     try {
@@ -423,6 +509,20 @@ export default function ProductionModerationPage() {
       message: `"${prod.titlePt}" será ${prod.flaggedAsNonKorean ? 'desmarcada' : 'marcada como não-relevante'}.`,
       confirmLabel: prod.flaggedAsNonKorean ? 'Desmarcar' : 'Marcar',
       onConfirm: () => doFlag([prod.id], !prod.flaggedAsNonKorean),
+    })
+  }
+
+  function handleHide(prod: Production) {
+    if (prod.isHidden) {
+      doHide([prod.id], false)
+      return
+    }
+    openConfirm({
+      open: true,
+      title: 'Ocultar produção',
+      message: `"${prod.titlePt}" ficará invisível no site público e fora do sitemap. Você pode reexibir a qualquer momento.`,
+      confirmLabel: 'Ocultar',
+      onConfirm: () => doHide([prod.id], true),
     })
   }
 
@@ -448,6 +548,26 @@ export default function ProductionModerationPage() {
     })
   }
 
+  function handleBulkHide(isHidden: boolean) {
+    const ids = Array.from(selected)
+    const alreadyHidden = productions.filter(p => ids.includes(p.id) && p.isHidden).length
+    const alreadyVisible = productions.filter(p => ids.includes(p.id) && !p.isHidden).length
+    const message = isHidden
+      ? [
+          `${ids.length} produção(ões) selecionada(s).`,
+          alreadyHidden > 0 ? `${alreadyHidden} já oculta(s) — serão ignoradas.` : '',
+          `${alreadyVisible} será(ão) ocultada(s).`,
+        ].filter(Boolean).join('\n')
+      : `${ids.length} produção(ões) voltarão a aparecer no site público.`
+    openConfirm({
+      open: true,
+      title: isHidden ? `Ocultar ${ids.length} produções` : `Reexibir ${ids.length} produções`,
+      message,
+      confirmLabel: isHidden ? 'Ocultar' : 'Reexibir',
+      onConfirm: () => doHide(ids, isHidden),
+    })
+  }
+
   function handleBulkDelete(withArtists = false) {
     const ids = Array.from(selected)
     openConfirm({
@@ -460,6 +580,22 @@ export default function ProductionModerationPage() {
       destructive: true,
       onConfirm: () => doDelete(ids, withArtists),
     })
+  }
+
+  function handleFilterChange(f: Filter) {
+    setFilter(f)
+    const params = new URLSearchParams()
+    params.set('filter', f)
+    if (sort !== 'createdAt_desc') params.set('sort', sort)
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
+
+  function handleSortChange(s: Sort) {
+    setSort(s)
+    const params = new URLSearchParams()
+    params.set('filter', filter)
+    if (s !== 'createdAt_desc') params.set('sort', s)
+    router.push(`?${params.toString()}`, { scroll: false })
   }
 
   function toggleSelect(id: string) {
@@ -478,8 +614,21 @@ export default function ProductionModerationPage() {
     { key: 'recent', label: 'Recentes (7d)', count: stats?.recent },
     { key: 'flagged', label: 'Marcadas', count: stats?.flagged },
     { key: 'adult', label: 'Conteúdo adulto', count: stats?.adult, danger: true },
+    { key: 'hidden', label: 'Ocultas', count: stats?.hidden },
     { key: 'all', label: 'Todas', count: stats?.all },
   ]
+
+  // Stats cards config with filter keys for click navigation
+  const statsCards: { label: string; value: number; color: string; filterKey: Filter }[] = stats
+    ? [
+        { label: 'Suspeitas', value: stats.suspicious, color: 'text-red-400', filterKey: 'suspicious' },
+        { label: 'Recentes (7d)', value: stats.recent, color: 'text-yellow-400', filterKey: 'recent' },
+        { label: 'Marcadas', value: stats.flagged, color: 'text-zinc-400', filterKey: 'flagged' },
+        { label: 'Adulto', value: stats.adult, color: 'text-pink-400', filterKey: 'adult' },
+        { label: 'Ocultas', value: stats.hidden, color: 'text-zinc-400', filterKey: 'hidden' },
+        { label: 'Total ativas', value: stats.all, color: 'text-purple-400', filterKey: 'all' },
+      ]
+    : []
 
   return (
     <AdminLayout title="Moderação de Produções">
@@ -494,18 +643,16 @@ export default function ProductionModerationPage() {
 
         {/* Stats bar */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {[
-              { label: 'Suspeitas', value: stats.suspicious, color: 'text-red-400' },
-              { label: 'Recentes (7d)', value: stats.recent, color: 'text-yellow-400' },
-              { label: 'Marcadas', value: stats.flagged, color: 'text-zinc-400' },
-              { label: 'Adulto', value: stats.adult, color: 'text-pink-400' },
-              { label: 'Total ativas', value: stats.all, color: 'text-purple-400' },
-            ].map(s => (
-              <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {statsCards.map(s => (
+              <button
+                key={s.label}
+                onClick={() => handleFilterChange(s.filterKey)}
+                className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center hover:border-zinc-700 transition-colors"
+              >
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString()}</div>
                 <div className="text-xs text-zinc-500 mt-0.5">{s.label}</div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -538,6 +685,30 @@ export default function ProductionModerationPage() {
                 Ocultar agora
               </button>
             )}
+          </div>
+        )}
+
+        {/* Keyword-based bulk hide banner */}
+        {stats && stats.adult > 0 && !hideByKeywordsDone && (
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
+            <ShieldAlert size={15} className="text-pink-400 shrink-0" />
+            <span className="text-sm text-zinc-300 flex-1 min-w-fit">
+              <span className="text-pink-400 font-medium">{stats.adult}</span> produções suspeitas por keyword ou IA
+            </span>
+            <button
+              onClick={handleHideByKeywords}
+              disabled={hideByKeywordsRunning}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-yellow-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {hideByKeywordsRunning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
+              Ocultar todas por keyword
+            </button>
+          </div>
+        )}
+        {hideByKeywordsDone !== null && (
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 flex items-center gap-2">
+            <CheckCircle size={14} className="text-green-400" />
+            <span className="text-sm text-green-400">{hideByKeywordsDone} produções ocultadas por keyword</span>
           </div>
         )}
 
@@ -664,7 +835,7 @@ export default function ProductionModerationPage() {
           )}
         </div>
 
-        {/* Filters + Search */}
+        {/* Filters + Sort + Search */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
           <div className="flex flex-wrap gap-2">
             {filterTabs.map(f => {
@@ -681,7 +852,7 @@ export default function ProductionModerationPage() {
               return (
                 <button
                   key={f.key}
-                  onClick={() => setFilter(f.key)}
+                  onClick={() => handleFilterChange(f.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? activeClass : inactiveClass}`}
                 >
                   {f.danger && <ShieldAlert size={13} />}
@@ -695,15 +866,30 @@ export default function ProductionModerationPage() {
               )
             })}
           </div>
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Buscar por título..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-8 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
-            />
+          {/* Sort + Search row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown size={13} className="text-zinc-500" />
+              <select
+                value={sort}
+                onChange={e => handleSortChange(e.target.value as Sort)}
+                className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+              >
+                <option value="createdAt_desc">Mais recentes</option>
+                <option value="titlePt_asc">Título A–Z</option>
+                <option value="score_desc">Score ↓</option>
+              </select>
+            </div>
+            <div className="relative flex-1 min-w-48">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Buscar por título..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full pl-8 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+              />
+            </div>
           </div>
         </div>
 
@@ -733,6 +919,18 @@ export default function ProductionModerationPage() {
                 </button>
               </>
             )}
+            <button
+              onClick={() => handleBulkHide(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-yellow-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+            >
+              <EyeOff size={12} /> Ocultar
+            </button>
+            <button
+              onClick={() => handleBulkHide(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+            >
+              <Eye size={12} /> Reexibir
+            </button>
             {filter === 'adult' && (
               <button
                 onClick={() => handleBulkDelete(true)}
@@ -794,6 +992,7 @@ export default function ProductionModerationPage() {
                 selected={selected.has(prod.id)}
                 onSelect={() => toggleSelect(prod.id)}
                 onFlag={() => handleFlag(prod)}
+                onHide={() => handleHide(prod)}
                 onDelete={() => handleDelete(prod)}
                 actioning={actioningIds.has(prod.id)}
                 highlightAdult={filter === 'adult'}
@@ -824,5 +1023,19 @@ export default function ProductionModerationPage() {
         )}
       </div>
     </AdminLayout>
+  )
+}
+
+export default function ProductionModerationPage() {
+  return (
+    <Suspense fallback={
+      <AdminLayout title="Moderação de Produções">
+        <div className="flex items-center justify-center py-16">
+          <RefreshCw className="w-7 h-7 text-purple-500 animate-spin" />
+        </div>
+      </AdminLayout>
+    }>
+      <ProductionModerationContent />
+    </Suspense>
   )
 }
