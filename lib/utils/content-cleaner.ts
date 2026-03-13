@@ -101,6 +101,12 @@ const SOURCE_RULES: Record<string, SourceRule[]> = {
     { description: 'promo banners', pattern: /!\[[^\]]*\]\(https?:\/\/\d+\.soompi\.io\/[^)]*[Bb]anner[^)]*\)/g },
     // Bloco de afiliado Viki quebrado: [ ... imagem ... Texto](viki.com/...)
     { description: 'viki affiliate block', pattern: /^\[\s*\n[\s\S]{0,800}?\]\(https?:\/\/www\.viki\.com[^)]+\)/gm },
+    // "Watch [show] on Viki:\n\nWatch Now" — CTA promocional
+    { description: 'viki watch CTA', pattern: /\n+Watch\s+[^\n]+\s+on\s+Viki[:\s\n]+Watch Now[^\n]*/gi, replacement: '' },
+    // Links de "Watch Now" / "Watch on Viki" inline
+    { description: 'watch on viki link', pattern: /\n*\[Watch(?:\s+Now)?\]\(https?:\/\/(?:www\.)?viki\.com[^)]*\)\n*/gi, replacement: '' },
+    // Texto "Watch Now" solto (após remoção do link)
+    { description: 'watch now text', pattern: /^\s*Watch Now\s*$/gim, replacement: '' },
   ],
 
   Koreaboo: [
