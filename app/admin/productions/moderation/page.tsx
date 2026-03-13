@@ -6,7 +6,7 @@ import Image from 'next/image'
 import {
   Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2,
   Search, ChevronLeft, ChevronRight, Flag, FlagOff, CheckSquare,
-  Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp,
+  Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp, EyeOff,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
@@ -255,6 +255,10 @@ export default function ProductionModerationPage() {
   }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} })
 
   // DeepSeek analysis panel
+  const [autoHidePreview, setAutoHidePreview] = useState<{ adultVisible: number; artistsFromAdult: number } | null>(null)
+  const [autoHideRunning, setAutoHideRunning] = useState(false)
+  const [autoHideDone, setAutoHideDone] = useState<{ hiddenProductions: number } | null>(null)
+
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [aiStats, setAiStats] = useState<{
     total: number; noRating: number; checked: number
@@ -301,6 +305,33 @@ export default function ProductionModerationPage() {
 
   useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => { fetchProductions(1) }, [fetchProductions])
+
+  useEffect(() => {
+    fetch('/api/admin/productions/auto-hide')
+      .then(r => r.json())
+      .then(d => setAutoHidePreview(d))
+      .catch(() => {})
+  }, [])
+
+  async function runAutoHide() {
+    setAutoHideRunning(true)
+    setAutoHideDone(null)
+    try {
+      const res = await fetch('/api/admin/productions/auto-hide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hideAdult: true, hideLinkedArtists: false }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setAutoHideDone({ hiddenProductions: data.hiddenProductions })
+        setAutoHidePreview(prev => prev ? { ...prev, adultVisible: 0 } : null)
+        await fetchStats()
+      }
+    } finally {
+      setAutoHideRunning(false)
+    }
+  }
 
   const fetchAiStats = useCallback(async () => {
     try {
@@ -476,6 +507,37 @@ export default function ProductionModerationPage() {
                 <div className="text-xs text-zinc-500 mt-0.5">{s.label}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Auto-hide panel */}
+        {autoHidePreview && autoHidePreview.adultVisible > 0 && (
+          <div className="bg-pink-600/10 border border-pink-600/30 rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
+            <EyeOff size={16} className="text-pink-400 shrink-0" />
+            <span className="text-sm text-pink-300 flex-1 min-w-fit">
+              {autoHidePreview.adultVisible} produção(ões) confirmadas como adultas ainda visíveis no site
+            </span>
+            {autoHideDone ? (
+              <span className="text-xs text-green-400 flex items-center gap-1.5">
+                <CheckCircle size={13} /> {autoHideDone.hiddenProductions} ocultada(s)
+              </span>
+            ) : (
+              <button
+                onClick={() => openConfirm({
+                  open: true,
+                  title: `Ocultar ${autoHidePreview.adultVisible} produções adultas`,
+                  message: `${autoHidePreview.adultVisible} produções confirmadas como conteúdo adulto pela IA serão ocultadas do site público. Os artistas não serão afetados.`,
+                  confirmLabel: 'Ocultar produções',
+                  destructive: true,
+                  onConfirm: runAutoHide,
+                })}
+                disabled={autoHideRunning}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-pink-700/40 text-pink-200 hover:bg-pink-700/60 border border-pink-600/40 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {autoHideRunning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
+                Ocultar agora
+              </button>
+            )}
           </div>
         )}
 
