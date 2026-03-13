@@ -64,7 +64,13 @@ function buildWhere(filter: string, search?: string) {
     case 'flagged':
       return { flaggedAsNonKorean: true, ...titleFilter }
     case 'adult': {
-      const adultCondition = buildAdultCondition()
+      // Combina: verificado como adulto pelo DeepSeek OU detectado por palavras-chave
+      const adultCondition = {
+        OR: [
+          { isAdultContent: true },
+          ...buildAdultCondition().OR,
+        ],
+      }
       if (search) return { AND: [adultCondition, titleFilter] }
       return adultCondition
     }
@@ -139,7 +145,7 @@ export async function GET(request: NextRequest) {
         where: { createdAt: { gte: sevenDaysAgo }, flaggedAsNonKorean: false },
       }),
       prisma.production.count({ where: { flaggedAsNonKorean: true } }),
-      prisma.production.count({ where: buildAdultCondition() }),
+      prisma.production.count({ where: { OR: [{ isAdultContent: true }, ...buildAdultCondition().OR] } }),
       prisma.production.count({ where: { flaggedAsNonKorean: false } }),
     ])
     return NextResponse.json({ suspicious, recent, flagged, adult, all })
@@ -171,6 +177,8 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           flaggedAsNonKorean: true,
           flaggedAt: true,
+          isAdultContent: true,
+          adultCheckedAt: true,
           _count: { select: { artists: true, userFavorites: true } },
         },
         skip,
