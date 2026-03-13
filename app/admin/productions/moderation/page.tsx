@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -279,7 +279,7 @@ function ProductionCard({
 }
 
 // ——— Main page ———
-export default function ProductionModerationPage() {
+function ProductionModerationContent() {
   const router = useRouter()
   const searchParamsHook = useSearchParams()
 
@@ -1023,5 +1023,19 @@ export default function ProductionModerationPage() {
         )}
       </div>
     </AdminLayout>
+  )
+}
+
+export default function ProductionModerationPage() {
+  return (
+    <Suspense fallback={
+      <AdminLayout title="Moderação de Produções">
+        <div className="flex items-center justify-center py-16">
+          <RefreshCw className="w-7 h-7 text-purple-500 animate-spin" />
+        </div>
+      </AdminLayout>
+    }>
+      <ProductionModerationContent />
+    </Suspense>
   )
 }
