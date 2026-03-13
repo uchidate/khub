@@ -6,7 +6,7 @@ import Image from 'next/image'
 import {
   Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2,
   Search, ChevronLeft, ChevronRight, Flag, FlagOff, CheckSquare,
-  Square, Minus, ExternalLink,
+  Square, Minus, ExternalLink, ShieldAlert, Users,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
@@ -30,8 +30,25 @@ type Production = {
 }
 
 type Pagination = { page: number; limit: number; total: number; pages: number }
-type Filter = 'suspicious' | 'recent' | 'flagged' | 'all'
-type Stats = { suspicious: number; recent: number; flagged: number; all: number }
+type Filter = 'suspicious' | 'recent' | 'flagged' | 'adult' | 'all'
+type Stats = { suspicious: number; recent: number; flagged: number; adult: number; all: number }
+
+// Mesmas palavras-chave do backend para highlight no card
+const ADULT_KEYWORDS = [
+  'porn', 'porno', 'pornô', 'xxx', 'jav',
+  'gravure', 'av idol', 'av girl', 'av model',
+  'hentai', 'erotic film', 'erotic movie', 'erotic drama',
+  'adult film', 'adult video', 'adult movie', 'adult content',
+  'nude model', 'nude film', 'softcore', 'hardcore',
+  'fetish', 'bdsm', 'onlyfans', 'camgirl', 'cam girl',
+  'sex tape', 'sex film', 'sex movie',
+  'uncensored', 'leaked sex', 'explicit content',
+]
+
+function detectAdultKeywords(title: string): string[] {
+  const lower = title.toLowerCase()
+  return ADULT_KEYWORDS.filter(kw => lower.includes(kw))
+}
 
 // ——— Confirmation modal ———
 function ConfirmModal({
@@ -81,18 +98,25 @@ function ScoreBar({ score }: { score: number }) {
 
 // ——— Production card ———
 function ProductionCard({
-  prod, selected, onSelect, onFlag, onDelete, actioning,
+  prod, selected, onSelect, onFlag, onDelete, actioning, highlightAdult,
 }: {
   prod: Production; selected: boolean; onSelect: () => void
-  onFlag: () => void; onDelete: () => void; actioning: boolean
+  onFlag: () => void; onDelete: () => void; actioning: boolean; highlightAdult?: boolean
 }) {
-  const borderColor = prod.flaggedAsNonKorean
+  const adultKeywordsFound = highlightAdult
+    ? detectAdultKeywords((prod.titlePt ?? '') + ' ' + (prod.synopsis ?? ''))
+    : []
+  const borderColor = highlightAdult
+    ? 'border-pink-500/50'
+    : prod.flaggedAsNonKorean
     ? 'border-zinc-700'
     : prod.suspicionScore >= 7 ? 'border-red-500/40'
     : prod.suspicionScore >= 4 ? 'border-yellow-500/30'
     : 'border-green-500/20'
 
-  const bgColor = prod.flaggedAsNonKorean
+  const bgColor = highlightAdult
+    ? 'bg-pink-500/5'
+    : prod.flaggedAsNonKorean
     ? ''
     : prod.suspicionScore >= 7 ? 'bg-red-500/5'
     : prod.suspicionScore >= 4 ? 'bg-yellow-500/5'
@@ -149,6 +173,17 @@ function ProductionCard({
             <span>{prod._count.artists} artistas</span>
             <span>{prod._count.userFavorites} favs</span>
           </div>
+
+          {/* Adult keywords found */}
+          {adultKeywordsFound.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {adultKeywordsFound.map((kw, i) => (
+                <span key={i} className="text-xs px-2 py-0.5 bg-pink-600/20 border border-pink-500/30 text-pink-300 rounded-full font-mono">
+                  {kw}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Score bar */}
           {!prod.flaggedAsNonKorean && (
@@ -265,13 +300,13 @@ export default function ProductionModerationPage() {
     } finally { removeActioning(ids) }
   }
 
-  async function doDelete(ids: string[]) {
+  async function doDelete(ids: string[], withArtists = false) {
     addActioning(ids)
     try {
       const res = await fetch('/api/admin/productions/moderation', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids }),
+        body: JSON.stringify({ ids, withArtists }),
       })
       if (res.ok) { await fetchProductions(pagination?.page || 1); await fetchStats() }
     } finally { removeActioning(ids) }
@@ -309,15 +344,17 @@ export default function ProductionModerationPage() {
     })
   }
 
-  function handleBulkDelete() {
+  function handleBulkDelete(withArtists = false) {
     const ids = Array.from(selected)
     openConfirm({
       open: true,
-      title: `Deletar ${ids.length} produções`,
-      message: `${ids.length} produções serão removidas permanentemente.`,
-      confirmLabel: 'Deletar todas',
+      title: withArtists ? `Deletar ${ids.length} produções + artistas` : `Deletar ${ids.length} produções`,
+      message: withArtists
+        ? `${ids.length} produções e os artistas exclusivos delas (sem outras produções) serão removidos permanentemente.`
+        : `${ids.length} produções serão removidas permanentemente.`,
+      confirmLabel: withArtists ? 'Deletar tudo' : 'Deletar todas',
       destructive: true,
-      onConfirm: () => doDelete(ids),
+      onConfirm: () => doDelete(ids, withArtists),
     })
   }
 
@@ -332,10 +369,11 @@ export default function ProductionModerationPage() {
     setSelected(allSelected ? new Set() : new Set(productions.map(p => p.id)))
   }
 
-  const filterTabs: { key: Filter; label: string; count?: number }[] = [
+  const filterTabs: { key: Filter; label: string; count?: number; danger?: boolean }[] = [
     { key: 'suspicious', label: 'Suspeitas', count: stats?.suspicious },
     { key: 'recent', label: 'Recentes (7d)', count: stats?.recent },
     { key: 'flagged', label: 'Marcadas', count: stats?.flagged },
+    { key: 'adult', label: 'Conteúdo adulto', count: stats?.adult, danger: true },
     { key: 'all', label: 'Todas', count: stats?.all },
   ]
 
@@ -352,11 +390,12 @@ export default function ProductionModerationPage() {
 
         {/* Stats bar */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
               { label: 'Suspeitas', value: stats.suspicious, color: 'text-red-400' },
               { label: 'Recentes (7d)', value: stats.recent, color: 'text-yellow-400' },
               { label: 'Marcadas', value: stats.flagged, color: 'text-zinc-400' },
+              { label: 'Adulto', value: stats.adult, color: 'text-pink-400' },
               { label: 'Total ativas', value: stats.all, color: 'text-purple-400' },
             ].map(s => (
               <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
@@ -370,22 +409,33 @@ export default function ProductionModerationPage() {
         {/* Filters + Search */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
           <div className="flex flex-wrap gap-2">
-            {filterTabs.map(f => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  filter === f.key ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                }`}
-              >
-                {f.label}
-                {f.count !== undefined && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${filter === f.key ? 'bg-purple-500/50' : 'bg-zinc-700'}`}>
-                    {f.count}
-                  </span>
-                )}
-              </button>
-            ))}
+            {filterTabs.map(f => {
+              const isActive = filter === f.key
+              const activeClass = f.danger
+                ? 'bg-pink-700 text-white'
+                : 'bg-purple-600 text-white'
+              const inactiveClass = f.danger
+                ? 'bg-pink-600/10 text-pink-400 border border-pink-600/30 hover:bg-pink-600/20'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              const badgeClass = isActive
+                ? f.danger ? 'bg-pink-600/50' : 'bg-purple-500/50'
+                : 'bg-zinc-700'
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? activeClass : inactiveClass}`}
+                >
+                  {f.danger && <ShieldAlert size={13} />}
+                  {f.label}
+                  {f.count !== undefined && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${badgeClass}`}>
+                      {f.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
@@ -401,24 +451,40 @@ export default function ProductionModerationPage() {
 
         {/* Bulk action bar */}
         {selected.size > 0 && (
-          <div className="flex items-center gap-3 bg-purple-600/10 border border-purple-600/30 rounded-xl px-4 py-3 flex-wrap">
-            <span className="text-sm text-purple-400 font-medium flex-1 min-w-fit">
+          <div className={`flex items-center gap-3 rounded-xl px-4 py-3 flex-wrap ${
+            filter === 'adult'
+              ? 'bg-pink-600/10 border border-pink-600/30'
+              : 'bg-purple-600/10 border border-purple-600/30'
+          }`}>
+            <span className={`text-sm font-medium flex-1 min-w-fit ${filter === 'adult' ? 'text-pink-400' : 'text-purple-400'}`}>
               {selected.size} selecionada{selected.size !== 1 ? 's' : ''}
             </span>
+            {filter !== 'adult' && (
+              <>
+                <button
+                  onClick={() => handleBulkFlag(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 rounded-lg transition-colors"
+                >
+                  <Flag size={12} /> Marcar
+                </button>
+                <button
+                  onClick={() => handleBulkFlag(false)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30 rounded-lg transition-colors"
+                >
+                  <FlagOff size={12} /> Desmarcar
+                </button>
+              </>
+            )}
+            {filter === 'adult' && (
+              <button
+                onClick={() => handleBulkDelete(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-pink-700/30 text-pink-300 hover:bg-pink-700/50 border border-pink-600/40 rounded-lg transition-colors"
+              >
+                <Users size={12} /> Deletar + artistas
+              </button>
+            )}
             <button
-              onClick={() => handleBulkFlag(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 rounded-lg transition-colors"
-            >
-              <Flag size={12} /> Marcar
-            </button>
-            <button
-              onClick={() => handleBulkFlag(false)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30 rounded-lg transition-colors"
-            >
-              <FlagOff size={12} /> Desmarcar
-            </button>
-            <button
-              onClick={handleBulkDelete}
+              onClick={() => handleBulkDelete(false)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-red-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
             >
               <Trash2 size={12} /> Deletar
@@ -472,6 +538,7 @@ export default function ProductionModerationPage() {
                 onFlag={() => handleFlag(prod)}
                 onDelete={() => handleDelete(prod)}
                 actioning={actioningIds.has(prod.id)}
+                highlightAdult={filter === 'adult'}
               />
             ))
           )}

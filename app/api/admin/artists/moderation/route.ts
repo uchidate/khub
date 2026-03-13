@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { logAudit } from '@/lib/services/audit-service'
@@ -8,6 +9,31 @@ import { logAudit } from '@/lib/services/audit-service'
 const log = createLogger('ARTIST_MODERATION')
 
 export const dynamic = 'force-dynamic'
+
+// Palavras-chave para detectar conteúdo adulto em artistas
+export const ADULT_KEYWORDS = [
+  'porn', 'porno', 'pornô', 'xxx', 'jav',
+  'gravure', 'av idol', 'av girl', 'av model',
+  'hentai', 'erotic film', 'erotic movie', 'erotic drama',
+  'adult film', 'adult video', 'adult movie', 'adult content',
+  'nude model', 'nude film', 'softcore', 'hardcore',
+  'fetish', 'bdsm', 'onlyfans', 'camgirl', 'cam girl',
+  'sex tape', 'sex film', 'sex movie',
+  'uncensored', 'leaked sex', 'explicit content',
+]
+
+function buildAdultArtistCondition() {
+  return {
+    OR: [
+      ...ADULT_KEYWORDS.map(kw => ({
+        nameRomanized: { contains: kw, mode: 'insensitive' as const },
+      })),
+      ...ADULT_KEYWORDS.map(kw => ({
+        bio: { contains: kw, mode: 'insensitive' as const },
+      })),
+    ],
+  }
+}
 
 /**
  * GET /api/admin/artists/moderation
@@ -62,11 +88,28 @@ export async function GET(request: NextRequest) {
         where = { flaggedAsNonKorean: true }
         break
 
+      case 'adult':
+        where = buildAdultArtistCondition()
+        break
+
       case 'all':
       default:
         // Todos os artistas (sem flagged)
         where = { flaggedAsNonKorean: false }
         break
+    }
+
+    // Stats
+    if (searchParams.get('stats') === '1') {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      const [suspicious, recent, flagged, adult, all] = await Promise.all([
+        prisma.artist.count({ where: { flaggedAsNonKorean: false, OR: [{ nameHangul: null }, { placeOfBirth: null }] } }),
+        prisma.artist.count({ where: { createdAt: { gte: sevenDaysAgo }, flaggedAsNonKorean: false } }),
+        prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
+        prisma.artist.count({ where: buildAdultArtistCondition() }),
+        prisma.artist.count({ where: { flaggedAsNonKorean: false } }),
+      ])
+      return NextResponse.json({ suspicious, recent, flagged, adult, all })
     }
 
     // Buscar artistas com contagem total
@@ -225,54 +268,48 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+const bulkDeleteSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+})
+
 /**
- * DELETE /api/admin/artists/moderation/:artistId
- * Remover artista permanentemente
+ * DELETE /api/admin/artists/moderation
+ * Remover artista(s) permanentemente
+ * - single: ?artistId=xxx (query param)
+ * - bulk: body { ids: string[] }
  */
 export async function DELETE(request: NextRequest) {
   const { error, session } = await requireAdmin()
   if (error) return error
 
   try {
-    const searchParams = request.nextUrl.searchParams
-    const artistId = searchParams.get('artistId')
+    const artistIdParam = request.nextUrl.searchParams.get('artistId')
+    let ids: string[]
 
-    if (!artistId) {
-      return NextResponse.json(
-        { error: 'Missing artistId query parameter' },
-        { status: 400 }
-      )
+    if (artistIdParam) {
+      ids = [artistIdParam]
+    } else {
+      const body = await request.json()
+      ids = bulkDeleteSchema.parse(body).ids
     }
 
-    // Buscar artista antes de deletar (para log)
-    const artist = await prisma.artist.findUnique({
-      where: { id: artistId },
-      select: { nameRomanized: true },
+    const result = await prisma.artist.deleteMany({ where: { id: { in: ids } } })
+
+    log.info(`${result.count} artist(s) permanently deleted`, { ids })
+    await logAudit({
+      adminId: session!.user.id,
+      action: 'DELETE',
+      entity: 'Artist',
+      entityId: ids[0],
+      details: `Deletou ${result.count} artista(s) (moderação bulk)`,
     })
 
-    if (!artist) {
-      return NextResponse.json(
-        { error: 'Artist not found' },
-        { status: 404 }
-      )
-    }
-
-    // Deletar artista (cascade deleta relações)
-    await prisma.artist.delete({
-      where: { id: artistId },
-    })
-
-    log.info(`Artist permanently deleted`, { artistId, name: artist.nameRomanized })
-    await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'Artist', entityId: artistId, details: `Deletou artista "${artist.nameRomanized}" (moderação)` })
-    return NextResponse.json({
-      success: true,
-      message: `Artist ${artist.nameRomanized} deleted successfully`,
-    })
+    return NextResponse.json({ success: true, deleted: result.count })
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
+    }
     log.error('Failed to delete artist', { error: getErrorMessage(err) })
-    return NextResponse.json(
-      { error: 'Failed to delete artist' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to delete artist' }, { status: 500 })
   }
 }
