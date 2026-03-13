@@ -17,7 +17,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Instalar todas as deps (prisma.config.ts precisa de dotenv)
-RUN npm ci --ignore-scripts
+RUN npm ci --ignore-scripts --legacy-peer-deps
 
 # Copiar prisma para geração do client
 COPY prisma ./prisma/
