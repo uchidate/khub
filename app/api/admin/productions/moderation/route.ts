@@ -158,9 +158,10 @@ export async function GET(request: NextRequest) {
   const filter = searchParams.get('filter') || 'suspicious'
   const search = searchParams.get('search')?.trim() || undefined
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+  const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '20')))
   const skip = (page - 1) * limit
   const sort = searchParams.get('sort') || 'createdAt_desc'
+  const excludeHidden = searchParams.get('excludeHidden') === '1'
 
   // Build orderBy
   let orderBy: Record<string, string> = { createdAt: 'desc' }
@@ -170,7 +171,10 @@ export async function GET(request: NextRequest) {
   // score_desc is handled client-side after fetch (like suspicious sort)
 
   try {
-    const where = buildWhere(filter, search)
+    const baseWhere = buildWhere(filter, search)
+    const where = excludeHidden
+      ? { AND: [baseWhere, { isHidden: false }] }
+      : baseWhere
 
     const [productions, total] = await Promise.all([
       prisma.production.findMany({

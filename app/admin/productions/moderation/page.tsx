@@ -58,6 +58,185 @@ function detectAdultKeywords(title: string): string[] {
   return ADULT_KEYWORDS.filter(kw => lower.includes(kw))
 }
 
+// ——— Review & hide modal ———
+type ReviewItem = {
+  id: string; titlePt: string; titleKr: string | null
+  type: string; year: number | null; synopsis: string | null
+  isAdultContent: boolean | null; keywords: string[]
+}
+
+function ReviewHideModal({ open, onClose, onDone }: {
+  open: boolean; onClose: () => void; onDone: (count: number) => void
+}) {
+  const [items, setItems] = useState<ReviewItem[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [hiding, setHiding] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const PER_PAGE = 25
+
+  useEffect(() => {
+    if (!open) { setDone(false); setSearch(''); setPage(1); return }
+    setLoading(true)
+    fetch('/api/admin/productions/moderation?filter=adult&excludeHidden=1&limit=500')
+      .then(r => r.json())
+      .then(data => {
+        const prods: ReviewItem[] = (data.productions ?? []).map((p: Production) => ({
+          id: p.id, titlePt: p.titlePt, titleKr: p.titleKr,
+          type: p.type, year: p.year, synopsis: p.synopsis,
+          isAdultContent: p.isAdultContent,
+          keywords: detectAdultKeywords((p.titlePt ?? '') + ' ' + (p.synopsis ?? '')),
+        }))
+        setItems(prods)
+        setSelected(new Set(prods.map(p => p.id)))
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [open])
+
+  const filtered = items.filter(p =>
+    !search || p.titlePt.toLowerCase().includes(search.toLowerCase())
+  )
+  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
+  function toggle(id: string) {
+    setSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+  }
+
+  async function doHide() {
+    const ids = Array.from(selected)
+    setHiding(true)
+    try {
+      const res = await fetch('/api/admin/productions/moderation', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, isHidden: true }),
+      })
+      if (res.ok) { setDone(true); onDone(ids.length) }
+    } finally { setHiding(false) }
+  }
+
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-800">
+          <ShieldAlert size={18} className="text-pink-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-white font-semibold">Revisar antes de ocultar</h3>
+            <p className="text-xs text-zinc-500">
+              {loading ? 'Carregando...' : `${items.length} produção(ões) por keyword · ${selected.size} selecionadas`}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors shrink-0">
+            <XCircle size={18} />
+          </button>
+        </div>
+
+        {/* Controls */}
+        <div className="px-5 py-3 border-b border-zinc-800 flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-40">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <input
+              placeholder="Filtrar por título..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              className="w-full pl-8 pr-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+            />
+          </div>
+          <button onClick={() => setSelected(new Set(filtered.map(p => p.id)))} className="text-xs text-zinc-400 hover:text-white transition-colors shrink-0">
+            Selecionar todos ({filtered.length})
+          </button>
+          <button onClick={() => setSelected(new Set())} className="text-xs text-zinc-400 hover:text-white transition-colors shrink-0">
+            Limpar
+          </button>
+        </div>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2 min-h-0">
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
+            </div>
+          ) : paged.length === 0 ? (
+            <p className="text-zinc-500 text-sm text-center py-10">Nenhuma produção encontrada</p>
+          ) : (
+            paged.map(item => {
+              const sel = selected.has(item.id)
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => toggle(item.id)}
+                  className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-all ${
+                    sel ? 'bg-pink-600/10 border-pink-500/30' : 'bg-zinc-800/40 border-zinc-700/40 opacity-50 hover:opacity-70'
+                  }`}
+                >
+                  <div className="shrink-0 mt-0.5">
+                    {sel
+                      ? <CheckSquare size={15} className="text-pink-400" />
+                      : <Square size={15} className="text-zinc-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-white">{item.titlePt}</span>
+                      {item.isAdultContent === true && (
+                        <span className="text-xs px-1.5 py-0.5 bg-pink-600/20 text-pink-400 border border-pink-500/30 rounded">IA ✓</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500">{item.type}{item.year ? ` · ${item.year}` : ''}</p>
+                    {item.keywords.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {item.keywords.map((kw, i) => (
+                          <span key={i} className="text-xs px-1.5 py-0.5 bg-pink-600/15 border border-pink-500/20 text-pink-300/80 rounded font-mono">{kw}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 px-5 py-2 border-t border-zinc-800">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="text-zinc-400 hover:text-white disabled:opacity-30 transition-colors">
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs text-zinc-500">{page} / {totalPages} · {filtered.length} produção(ões)</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="text-zinc-400 hover:text-white disabled:opacity-30 transition-colors">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center gap-3 px-5 py-4 border-t border-zinc-800">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 text-sm transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={doHide}
+            disabled={selected.size === 0 || hiding || done}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {hiding ? <><RefreshCw size={14} className="animate-spin" /> Ocultando...</>
+              : done ? <><CheckCircle size={14} /> Concluído</>
+              : <><EyeOff size={14} /> Ocultar {selected.size} produção(ões)</>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ——— Confirmation modal ———
 function ConfirmModal({
   open, title, message, confirmLabel, destructive, onConfirm, onCancel,
@@ -312,6 +491,7 @@ function ProductionModerationContent() {
   // Keyword-based bulk hide
   const [hideByKeywordsRunning, setHideByKeywordsRunning] = useState(false)
   const [hideByKeywordsDone, setHideByKeywordsDone] = useState<number | null>(null)
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
 
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [aiStats, setAiStats] = useState<{
@@ -389,22 +569,14 @@ function ProductionModerationContent() {
   }
 
   async function handleHideByKeywords() {
-    setHideByKeywordsRunning(true)
-    try {
-      const res = await fetch('/api/admin/productions/moderation', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'hideByKeywords' }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setHideByKeywordsDone(data.hidden)
-        await fetchProductions(1)
-        await fetchStats()
-      }
-    } finally {
-      setHideByKeywordsRunning(false)
-    }
+    setReviewModalOpen(true)
+  }
+
+  async function onReviewDone(count: number) {
+    setHideByKeywordsDone(count)
+    setReviewModalOpen(false)
+    await fetchProductions(1)
+    await fetchStats()
   }
 
   const fetchAiStats = useCallback(async () => {
@@ -636,6 +808,11 @@ function ProductionModerationContent() {
         {...modal}
         onConfirm={() => { setModal(m => ({ ...m, open: false })); modal.onConfirm() }}
         onCancel={() => setModal(m => ({ ...m, open: false }))}
+      />
+      <ReviewHideModal
+        open={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        onDone={onReviewDone}
       />
 
       <div className="space-y-4">
