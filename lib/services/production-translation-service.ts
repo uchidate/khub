@@ -137,6 +137,38 @@ export class ProductionTranslationService {
         return result.synopsis
     }
 
+    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed' }> {
+        const prod = await this.prisma.production.findUnique({
+            where: { id },
+            select: { id: true, titlePt: true, synopsis: true, synopsisSource: true },
+        })
+        if (!prod || !prod.synopsis) {
+            return { name: prod?.titlePt ?? id, status: 'skipped' }
+        }
+        try {
+            const langHint: DetectedLang | null =
+                prod.synopsisSource === 'tmdb_pt' ? 'pt'
+                : prod.synopsisSource === 'tmdb_en' ? 'en'
+                : null
+            const lang: DetectedLang = langHint ?? detectLanguage(prod.synopsis)
+            if (lang === 'pt') {
+                await this.markCompleted(prod.id)
+                return { name: prod.titlePt, status: 'skipped' }
+            }
+            const translatedSynopsis = await this.translateSynopsis(prod.titlePt, prod.synopsis, lang)
+            await this.prisma.contentTranslation.upsert({
+                where: { entityType_entityId_field_locale: { entityType: 'production', entityId: prod.id, field: 'synopsis', locale: 'pt-BR' } },
+                create: { entityType: 'production', entityId: prod.id, field: 'synopsis', locale: 'pt-BR', value: translatedSynopsis, status: 'draft', sourceLang: lang },
+                update: { value: translatedSynopsis, status: 'draft', sourceLang: lang },
+            })
+            await this.markCompleted(prod.id)
+            return { name: prod.titlePt, status: 'translated' }
+        } catch {
+            await this.prisma.production.update({ where: { id }, data: { translationStatus: 'failed' } }).catch(() => {})
+            return { name: prod.titlePt, status: 'failed' }
+        }
+    }
+
     async retryFailedTranslations(limit = 5): Promise<{ translated: number; failed: number; skipped: number }> {
         console.log(`🔄 Retrying failed production translations (limit: ${limit})...`)
         await this.prisma.production.updateMany({
