@@ -40,6 +40,11 @@ export type InstagramEmbedBlock = {
     url: string
 }
 
+export type TikTokEmbedBlock = {
+    type: 'tiktok_embed'
+    url: string
+}
+
 export type VideoBlock = {
     type: 'video'
     url: string
@@ -53,6 +58,7 @@ export type NewsBlock =
     | ImageBlock
     | TwitterEmbedBlock
     | InstagramEmbedBlock
+    | TikTokEmbedBlock
     | VideoBlock
 
 export type NewsBlockType = NewsBlock['type']
@@ -64,11 +70,12 @@ export const BLOCK_TYPE_LABELS: Record<NewsBlockType, string> = {
     image: 'Imagem',
     twitter_embed: 'Tweet',
     instagram_embed: 'Instagram',
+    tiktok_embed: 'TikTok',
     video: 'Vídeo',
 }
 
 export const TEXT_BLOCK_TYPES: NewsBlockType[] = ['heading', 'paragraph', 'quote']
-export const MEDIA_BLOCK_TYPES: NewsBlockType[] = ['image', 'twitter_embed', 'instagram_embed', 'video']
+export const MEDIA_BLOCK_TYPES: NewsBlockType[] = ['image', 'twitter_embed', 'instagram_embed', 'tiktok_embed', 'video']
 
 export function isTextBlock(block: NewsBlock): block is HeadingBlock | ParagraphBlock | QuoteBlock {
     return TEXT_BLOCK_TYPES.includes(block.type)

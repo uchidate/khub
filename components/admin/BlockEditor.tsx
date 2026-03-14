@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import {
     Plus, Trash2, GripVertical, ChevronUp, ChevronDown,
-    Type, AlignLeft, Quote, Image, Twitter, Instagram, Video, X
+    Type, AlignLeft, Quote, Image, Twitter, Instagram, Video, Music2, X
 } from 'lucide-react'
 import type {
     NewsBlock, NewsBlockType,
     HeadingBlock, ParagraphBlock, QuoteBlock,
-    ImageBlock, TwitterEmbedBlock, InstagramEmbedBlock, VideoBlock
+    ImageBlock, TwitterEmbedBlock, InstagramEmbedBlock, TikTokEmbedBlock, VideoBlock
 } from '@/lib/types/blocks'
 import { BLOCK_TYPE_LABELS, TEXT_BLOCK_TYPES } from '@/lib/types/blocks'
 
@@ -21,6 +21,7 @@ const BLOCK_ICONS: Record<NewsBlockType, React.ReactNode> = {
     image:           <Image className="w-3.5 h-3.5" />,
     twitter_embed:   <Twitter className="w-3.5 h-3.5" />,
     instagram_embed: <Instagram className="w-3.5 h-3.5" />,
+    tiktok_embed:    <Music2 className="w-3.5 h-3.5" />,
     video:           <Video className="w-3.5 h-3.5" />,
 }
 
@@ -31,6 +32,7 @@ const BLOCK_COLORS: Record<NewsBlockType, string> = {
     image:           'bg-blue-500/20 text-blue-300 border-blue-500/30',
     twitter_embed:   'bg-sky-500/20 text-sky-300 border-sky-500/30',
     instagram_embed: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+    tiktok_embed:    'bg-zinc-800/60 text-zinc-300 border-zinc-600/30',
     video:           'bg-red-500/20 text-red-300 border-red-500/30',
 }
 
@@ -44,6 +46,7 @@ function defaultBlock(type: NewsBlockType): NewsBlock {
         case 'image':           return { type, url: '', caption: '' }
         case 'twitter_embed':   return { type, url: '' }
         case 'instagram_embed': return { type, url: '' }
+        case 'tiktok_embed':    return { type, url: '' }
         case 'video':           return { type, url: '', caption: '' }
     }
 }
@@ -54,7 +57,7 @@ function BlockTypeSelector({ onSelect, onClose }: {
     onSelect: (type: NewsBlockType) => void
     onClose: () => void
 }) {
-    const types: NewsBlockType[] = ['heading', 'paragraph', 'quote', 'image', 'twitter_embed', 'instagram_embed', 'video']
+    const types: NewsBlockType[] = ['heading', 'paragraph', 'quote', 'image', 'twitter_embed', 'instagram_embed', 'tiktok_embed', 'video']
     return (
         <div className="absolute z-10 mt-1 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-2 min-w-[180px]">
             <div className="flex justify-between items-center px-2 py-1 mb-1">
@@ -147,7 +150,7 @@ function UrlBlockEditor({
     onChange,
     placeholder,
 }: {
-    block: TwitterEmbedBlock | InstagramEmbedBlock | VideoBlock
+    block: TwitterEmbedBlock | InstagramEmbedBlock | TikTokEmbedBlock | VideoBlock
     onChange: (updated: NewsBlock) => void
     placeholder: string
 }) {
@@ -179,6 +182,7 @@ function BlockFieldEditor({ block, onChange }: { block: NewsBlock; onChange: (up
         case 'image':     return <ImageBlockEditor block={block} onChange={onChange} />
         case 'twitter_embed':   return <UrlBlockEditor block={block} onChange={onChange} placeholder="URL do tweet (twitter.com ou x.com)..." />
         case 'instagram_embed': return <UrlBlockEditor block={block} onChange={onChange} placeholder="URL do post do Instagram..." />
+        case 'tiktok_embed':    return <UrlBlockEditor block={block} onChange={onChange} placeholder="URL do TikTok (tiktok.com/@user/video/...)..." />
         case 'video':     return <UrlBlockEditor block={block} onChange={onChange} placeholder="URL do YouTube..." />
     }
 }

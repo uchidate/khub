@@ -2,6 +2,7 @@
 
 import { TwitterEmbed } from '@/components/ui/TwitterEmbed'
 import { InstagramEmbed } from '@/components/ui/InstagramEmbed'
+import { TikTokEmbed } from '@/components/ui/TikTokEmbed'
 import type { NewsBlock } from '@/lib/types/blocks'
 
 interface BlockRendererProps {
@@ -72,6 +73,9 @@ function BlockItem({ block }: { block: NewsBlock }) {
 
         case 'instagram_embed':
             return <InstagramEmbed url={block.url} />
+
+        case 'tiktok_embed':
+            return <TikTokEmbed url={block.url} />
 
         case 'video': {
             const ytMatch = block.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/)
