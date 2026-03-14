@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
     //   no_rating_pending   — no rating, has tmdbId, never attempted
     //   no_rating_attempted — no rating, has tmdbId, already tried (ageRatingSyncAt set)
     //   no_rating_no_tmdb   — no rating, no tmdbId
+    //   hidden_from_public  — isHidden=false mas excluídas da filmografia pública
+    //                         (ageRating null/18 ou flaggedAsNonKorean=true)
 
     const filterWhere =
       filter === 'no_cast'           ? { artists: { none: {} } }
@@ -72,6 +74,14 @@ export async function GET(request: NextRequest) {
       : filter === 'no_rating_no_tmdb'   ? { ageRating: null, tmdbId: null }
       : filter === 'no_tmdb'   ? { tmdbId: null }
       : filter === 'has_tmdb'  ? { tmdbId: { not: null as null } }
+      : filter === 'hidden_from_public' ? {
+          isHidden: false,
+          OR: [
+            { ageRating: null },
+            { ageRating: '18' },
+            { flaggedAsNonKorean: true },
+          ],
+        }
       : {}
 
     const where = search

@@ -95,6 +95,7 @@ interface Stats {
   noRatingNoTmdb: number
   noTmdb: number
   hasTmdb: number
+  hiddenFromPublic: number
 }
 
 type FilterType =
@@ -102,6 +103,7 @@ type FilterType =
   | 'no_cast' | 'no_cast_pending' | 'no_cast_attempted' | 'no_cast_no_tmdb'
   | 'no_rating' | 'no_rating_pending' | 'no_rating_attempted' | 'no_rating_no_tmdb'
   | 'no_tmdb' | 'has_tmdb'
+  | 'hidden_from_public'
 
 // ─── Cast Modal ───────────────────────────────────────────────────────────────
 
@@ -374,11 +376,13 @@ function StatsBar({
   const isNoCast = filter === 'no_cast' || filter === 'no_cast_pending' || filter === 'no_cast_attempted' || filter === 'no_cast_no_tmdb'
   const isNoRating = filter === 'no_rating' || filter === 'no_rating_pending' || filter === 'no_rating_attempted' || filter === 'no_rating_no_tmdb'
   const isAll = filter === '' || filter === 'no_tmdb' || filter === 'has_tmdb'
+  const isHiddenFromPublic = filter === 'hidden_from_public'
 
   const mainTabs = [
     { label: 'Todas', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-zinc-400' },
     { label: 'Sem classificação', value: 'no_rating' as FilterType, count: stats?.noRating ?? null, dot: 'bg-yellow-400' },
     { label: 'Sem elenco', value: 'no_cast' as FilterType, count: stats?.noCast ?? null, dot: 'bg-red-400' },
+    { label: 'Ocultas do público', value: 'hidden_from_public' as FilterType, count: stats?.hiddenFromPublic ?? null, dot: 'bg-orange-500' },
   ]
 
   const castSubTabs = [
@@ -456,6 +460,7 @@ function StatsBar({
 
   const subTabs = isNoCast ? castSubTabs : isNoRating ? ratingSubTabs : isAll ? allSubTabs : []
 
+
   return (
     <div className="space-y-2">
       {/* Main tabs */}
@@ -465,6 +470,7 @@ function StatsBar({
             ? isAll
             : tab.value === 'no_cast' ? isNoCast
             : tab.value === 'no_rating' ? isNoRating
+            : tab.value === 'hidden_from_public' ? isHiddenFromPublic
             : filter === tab.value
           return (
             <button
