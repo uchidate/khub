@@ -43,6 +43,12 @@ export async function GET() {
       ...artistTmdbPtBioRows.map(r => r.id),
     ]))
 
+    // Pré-busca IDs de groups sem CT (para pendentes ocultos)
+    const groupCtIds = await prisma.contentTranslation.findMany({
+      where: { entityType: 'group', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
+      select: { entityId: true },
+    }).then(rows => rows.map(r => r.entityId))
+
     const [
       artistTotal,
       groupTotal,
@@ -56,6 +62,11 @@ export async function GET() {
       newsTotal,
       groupTranslated,
       newsTranslated,
+      // pendentes entre ocultos
+      artistHiddenPending,
+      groupHiddenPending,
+      productionHiddenPending,
+      newsHiddenPending,
     ] = await Promise.all([
       prisma.artist.count({ where: { bio: { not: null }, isHidden: false } }),
       prisma.musicalGroup.count({ where: { bio: { not: null }, isHidden: false } }),
@@ -93,13 +104,37 @@ export async function GET() {
           ],
         },
       }),
+      // pendentes ocultos (isHidden: true sem tradução)
+      prisma.artist.count({
+        where: {
+          isHidden: true, bio: { not: null },
+          id: { notIn: artistTranslatedIds },
+        },
+      }),
+      prisma.musicalGroup.count({
+        where: { isHidden: true, bio: { not: null }, id: { notIn: groupCtIds } },
+      }),
+      prisma.production.count({
+        where: {
+          isHidden: true, synopsis: { not: null },
+          synopsisSource: { not: 'tmdb_pt' },
+          id: { notIn: prodCtIds },
+        },
+      }),
+      prisma.news.count({
+        where: {
+          isHidden: true,
+          id: { notIn: newsCtIds },
+          translationStatus: { not: 'completed' },
+        },
+      }),
     ])
 
     return NextResponse.json({
-      artist:     { total: artistTotal,     translated: artistTranslatedIds.length, pending: Math.max(0, artistTotal - artistTranslatedIds.length) },
-      group:      { total: groupTotal,      translated: groupTranslated,      pending: Math.max(0, groupTotal - groupTranslated) },
-      production: { total: productionTotal, translated: productionTranslated, pending: productionPending, failed: productionFailed, noSynopsis: productionNoSynopsis },
-      news:       { total: newsTotal,       translated: newsTranslated,       pending: Math.max(0, newsTotal - newsTranslated) },
+      artist:     { total: artistTotal,     translated: artistTranslatedIds.length, pending: Math.max(0, artistTotal - artistTranslatedIds.length),     hiddenPending: artistHiddenPending },
+      group:      { total: groupTotal,      translated: groupTranslated,      pending: Math.max(0, groupTotal - groupTranslated),      hiddenPending: groupHiddenPending },
+      production: { total: productionTotal, translated: productionTranslated, pending: productionPending, failed: productionFailed, noSynopsis: productionNoSynopsis, hiddenPending: productionHiddenPending },
+      news:       { total: newsTotal,       translated: newsTranslated,       pending: Math.max(0, newsTotal - newsTranslated),       hiddenPending: newsHiddenPending },
     })
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 })

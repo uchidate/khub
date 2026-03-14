@@ -52,6 +52,11 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '30')))
   const skip = (page - 1) * limit
+  // hidden=true → entidades ocultas; hidden=false/ausente → apenas visíveis
+  const hiddenParam = searchParams.get('hidden')
+  const isHiddenFilter: boolean | undefined = hiddenParam === 'true' ? true : hiddenParam === 'false' ? false : undefined
+  // undefined = comportamento padrão (isHidden: false) para visíveis
+  const isHiddenWhere = isHiddenFilter === true ? true : false
 
   try {
     let items: Record<string, unknown>[] = []
@@ -62,7 +67,7 @@ export async function GET(req: NextRequest) {
       if (statusFilter === 'pending') {
         // Excluir também artistas com bio já em PT-BR (fieldSources.bio.source='tmdb_pt')
         const tmdbPtBioArtists = await prisma.artist.findMany({
-          where: { isHidden: false, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+          where: { isHidden: isHiddenWhere, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
           select: { id: true },
         })
         const tmdbPtIds = tmdbPtBioArtists.map(a => a.id)
@@ -73,7 +78,7 @@ export async function GET(req: NextRequest) {
       } else if (statusFilter === 'approved') {
         // Incluir também artistas com bio PT-BR do TMDB mesmo sem CT
         const tmdbPtBioArtists = await prisma.artist.findMany({
-          where: { isHidden: false, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+          where: { isHidden: isHiddenWhere, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
           select: { id: true },
         })
         const tmdbPtIds = tmdbPtBioArtists.map(a => a.id)
@@ -84,7 +89,7 @@ export async function GET(req: NextRequest) {
       }
       const where = {
         bio: { not: null as null },
-        isHidden: false,
+        isHidden: isHiddenWhere,
         ...(q ? { nameRomanized: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
       }
@@ -102,7 +107,7 @@ export async function GET(req: NextRequest) {
       const idFilter = await resolveStatusIds('group', 'bio', statusFilter)
       const where = {
         bio: { not: null as null },
-        isHidden: false,
+        isHidden: isHiddenWhere,
         ...(q ? { name: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
       }
@@ -118,7 +123,7 @@ export async function GET(req: NextRequest) {
       if (statusFilter === 'pending') {
         // Excluir também produções com sinopse já em PT-BR (synopsisSource='tmdb_pt')
         const alreadyPt = await prisma.production.findMany({
-          where: { synopsisSource: 'tmdb_pt', isHidden: false },
+          where: { synopsisSource: 'tmdb_pt', isHidden: isHiddenWhere },
           select: { id: true },
         })
         const excludeIds = alreadyPt.map(p => p.id)
@@ -129,7 +134,7 @@ export async function GET(req: NextRequest) {
       } else if (statusFilter === 'approved') {
         // Incluir também produções com synopsisSource='tmdb_pt' mesmo sem CT
         const alreadyPt = await prisma.production.findMany({
-          where: { synopsisSource: 'tmdb_pt', isHidden: false },
+          where: { synopsisSource: 'tmdb_pt', isHidden: isHiddenWhere },
           select: { id: true },
         })
         const extraIds = alreadyPt.map(p => p.id)
@@ -139,7 +144,7 @@ export async function GET(req: NextRequest) {
         }
       }
       const where = {
-        isHidden: false,
+        isHidden: isHiddenWhere,
         synopsis: { not: null as null },
         ...(q ? {
           OR: [
@@ -200,6 +205,7 @@ export async function GET(req: NextRequest) {
       }
 
       const where = {
+        isHidden: isHiddenWhere,
         ...(q ? { title: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
         ...extraWhere,

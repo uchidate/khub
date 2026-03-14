@@ -10,10 +10,10 @@ type EntityType = 'artist' | 'group' | 'production' | 'news'
 type StatusFilter = '' | 'pending' | 'draft' | 'approved'
 
 interface Stats {
-  artist:     { total: number; translated: number; pending: number }
-  group:      { total: number; translated: number; pending: number }
-  production: { total: number; translated: number; pending: number; failed: number; noSynopsis: number }
-  news:       { total: number; translated: number; pending: number }
+  artist:     { total: number; translated: number; pending: number; hiddenPending: number }
+  group:      { total: number; translated: number; pending: number; hiddenPending: number }
+  production: { total: number; translated: number; pending: number; failed: number; noSynopsis: number; hiddenPending: number }
+  news:       { total: number; translated: number; pending: number; hiddenPending: number }
 }
 
 interface TranslationItem {
@@ -125,6 +125,7 @@ function TranslationsPageContent() {
     ['artist', 'group', 'production', 'news'].includes(initialTab) ? initialTab : 'artist'
   )
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
+  const [hiddenFilter, setHiddenFilter] = useState<'visible' | 'hidden'>('visible')
   const [q, setQ] = useState('')
   const [items, setItems] = useState<TranslationItem[]>([])
   const [total, setTotal] = useState(0)
@@ -156,6 +157,7 @@ function TranslationsPageContent() {
     setLoading(true)
     const params = new URLSearchParams({ entityType: activeTab, page: String(page), limit: '30' })
     if (statusFilter) params.set('status', statusFilter)
+    if (statusFilter === 'pending' && hiddenFilter === 'hidden') params.set('hidden', 'true')
     if (q) params.set('q', q)
     const res = await fetch(`/api/admin/translations/list?${params}`)
     if (res.ok) {
@@ -164,11 +166,11 @@ function TranslationsPageContent() {
       setTotal(data.total)
     }
     setLoading(false)
-  }, [activeTab, statusFilter, q, page])
+  }, [activeTab, statusFilter, hiddenFilter, q, page])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-  useEffect(() => { setPage(1); setStatusFilter('') }, [activeTab])
-  useEffect(() => { setPage(1) }, [statusFilter, q])
+  useEffect(() => { setPage(1); setStatusFilter(''); setHiddenFilter('visible') }, [activeTab])
+  useEffect(() => { setPage(1) }, [statusFilter, hiddenFilter, q])
   useEffect(() => { fetchItems() }, [fetchItems])
   useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [progressLog, currentItem])
 
@@ -283,6 +285,9 @@ function TranslationsPageContent() {
                     {pendingCount > 0 && (
                       <span className="text-[10px] text-amber-500 font-medium">{pendingCount} pendentes</span>
                     )}
+                    {(s as { hiddenPending?: number } | undefined)?.hiddenPending ? (
+                      <span className="text-[10px] text-zinc-500 font-medium">+{(s as { hiddenPending: number }).hiddenPending} ocultos</span>
+                    ) : null}
                     {prodS?.failed && prodS.failed > 0 ? (
                       <span className="text-[10px] text-red-400 font-medium">{prodS.failed} falhas</span>
                     ) : null}
@@ -459,11 +464,11 @@ function TranslationsPageContent() {
                 />
               </div>
             </form>
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex gap-1 flex-wrap items-center">
               {FILTERS_BY_TAB[activeTab].map(([val, label]) => (
                 <button
                   key={val}
-                  onClick={() => setStatusFilter(val)}
+                  onClick={() => { setStatusFilter(val); if (val !== 'pending') setHiddenFilter('visible') }}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
                     statusFilter === val
                       ? 'bg-purple-600 text-white'
@@ -473,6 +478,32 @@ function TranslationsPageContent() {
                   {label}
                 </button>
               ))}
+              {statusFilter === 'pending' && (
+                <div className="flex gap-1 ml-2 pl-2 border-l border-white/10">
+                  {(['visible', 'hidden'] as const).map(v => {
+                    const s = stats?.[activeTab]
+                    const count = v === 'hidden' ? (s as { hiddenPending?: number } | undefined)?.hiddenPending ?? 0 : s?.pending ?? 0
+                    return (
+                      <button
+                        key={v}
+                        onClick={() => setHiddenFilter(v)}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 ${
+                          hiddenFilter === v
+                            ? 'bg-zinc-600 text-white'
+                            : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+                        }`}
+                      >
+                        {v === 'visible' ? 'Visíveis' : 'Ocultos'}
+                        {count > 0 && (
+                          <span className={`text-[10px] font-bold px-1 rounded ${v === 'hidden' ? 'text-zinc-400' : 'text-amber-400'}`}>
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
             <button onClick={fetchItems} className="ml-auto p-1.5 text-zinc-600 hover:text-zinc-400" title="Recarregar">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
