@@ -25,7 +25,8 @@ export class GroupTranslationService {
      */
     async translatePendingGroups(
         limit: number = 5,
-        onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void
+        onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void,
+        isHidden?: boolean
     ): Promise<{
         translated: number;
         failed: number;
@@ -43,7 +44,7 @@ export class GroupTranslationService {
         const groups = await this.prisma.musicalGroup.findMany({
             where: {
                 bio: { not: null },
-                isHidden: false,
+                isHidden: isHidden ?? false,
             },
             orderBy: { createdAt: 'asc' },
             select: { id: true, name: true, nameHangul: true, bio: true },

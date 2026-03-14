@@ -157,7 +157,7 @@ function TranslationsPageContent() {
     setLoading(true)
     const params = new URLSearchParams({ entityType: activeTab, page: String(page), limit: '30' })
     if (statusFilter) params.set('status', statusFilter)
-    if (statusFilter === 'pending' && hiddenFilter === 'hidden') params.set('hidden', 'true')
+    if (hiddenFilter === 'hidden') params.set('hidden', 'true')
     if (q) params.set('q', q)
     const res = await fetch(`/api/admin/translations/list?${params}`)
     if (res.ok) {
@@ -212,6 +212,8 @@ function TranslationsPageContent() {
     setRunning(true); setRunResult(null); setProgressLog([]); setCurrentItem(null); startTimer()
     setBatchPanelOpen(true)
     const params = new URLSearchParams({ entityType: activeTab, limit: String(batchLimit) })
+    if (hiddenFilter === 'hidden') params.set('hidden', 'true')
+    else params.set('hidden', 'false')
     const es = new EventSource(`/api/admin/translations/run?${params}`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as ProgressEvent & { type: string; translated?: number; skipped?: number; failed?: number; message?: string }
@@ -390,10 +392,10 @@ function TranslationsPageContent() {
                 }`}
               >
                 {ENTITY_LABELS[type]}
-                {/* Badge de pendências */}
-                {type === 'production' && stats?.production.pending && stats.production.pending > 0 && (
+                {/* Badge de pendências para todos os tipos */}
+                {(stats?.[type]?.pending ?? 0) > 0 && (
                   <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400">
-                    {stats.production.pending}
+                    {stats![type].pending}
                   </span>
                 )}
               </button>
@@ -468,7 +470,7 @@ function TranslationsPageContent() {
               {FILTERS_BY_TAB[activeTab].map(([val, label]) => (
                 <button
                   key={val}
-                  onClick={() => { setStatusFilter(val); if (val !== 'pending') setHiddenFilter('visible') }}
+                  onClick={() => setStatusFilter(val)}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
                     statusFilter === val
                       ? 'bg-purple-600 text-white'
@@ -478,32 +480,29 @@ function TranslationsPageContent() {
                   {label}
                 </button>
               ))}
-              {statusFilter === 'pending' && (
-                <div className="flex gap-1 ml-2 pl-2 border-l border-white/10">
-                  {(['visible', 'hidden'] as const).map(v => {
-                    const s = stats?.[activeTab]
-                    const count = v === 'hidden' ? (s as { hiddenPending?: number } | undefined)?.hiddenPending ?? 0 : s?.pending ?? 0
-                    return (
-                      <button
-                        key={v}
-                        onClick={() => setHiddenFilter(v)}
-                        className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 ${
-                          hiddenFilter === v
-                            ? 'bg-zinc-600 text-white'
-                            : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
-                        }`}
-                      >
-                        {v === 'visible' ? 'Visíveis' : 'Ocultos'}
-                        {count > 0 && (
-                          <span className={`text-[10px] font-bold px-1 rounded ${v === 'hidden' ? 'text-zinc-400' : 'text-amber-400'}`}>
-                            {count}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
+              {/* Subfiltro visibilidade — sempre visível */}
+              <div className="flex gap-1 ml-2 pl-2 border-l border-white/10">
+                {(['visible', 'hidden'] as const).map(v => {
+                  const s = stats?.[activeTab]
+                  const hiddenCount = (s as { hiddenPending?: number } | undefined)?.hiddenPending ?? 0
+                  return (
+                    <button
+                      key={v}
+                      onClick={() => setHiddenFilter(v)}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 ${
+                        hiddenFilter === v
+                          ? 'bg-zinc-600 text-white'
+                          : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+                      }`}
+                    >
+                      {v === 'visible' ? 'Visíveis' : 'Ocultos'}
+                      {v === 'hidden' && hiddenCount > 0 && (
+                        <span className="text-[10px] font-bold px-1 rounded text-zinc-400">{hiddenCount}</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
             <button onClick={fetchItems} className="ml-auto p-1.5 text-zinc-600 hover:text-zinc-400" title="Recarregar">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

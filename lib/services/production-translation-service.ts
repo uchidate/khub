@@ -25,7 +25,8 @@ export class ProductionTranslationService {
 
     async translatePendingProductions(
         limit = 5,
-        onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void
+        onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void,
+        isHidden?: boolean
     ): Promise<{ translated: number; failed: number; skipped: number }> {
         console.log(`🌐 Starting production translation batch (limit: ${limit})...`)
 
@@ -33,7 +34,7 @@ export class ProductionTranslationService {
             where: {
                 translationStatus: 'pending',
                 synopsis: { not: null },
-                isHidden: false,
+                isHidden: isHidden ?? false,
             },
             orderBy: { createdAt: 'asc' },
             take: limit,

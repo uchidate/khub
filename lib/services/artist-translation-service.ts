@@ -25,7 +25,8 @@ export class ArtistTranslationService {
      */
     async translatePendingArtists(
         limit: number = 5,
-        onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void
+        onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void,
+        isHidden?: boolean
     ): Promise<{
         translated: number;
         failed: number;
@@ -34,7 +35,7 @@ export class ArtistTranslationService {
         console.log(`🌐 Starting batch translation (limit: ${limit})...`);
 
         const pendingArtists = await this.prisma.artist.findMany({
-            where: { translationStatus: 'pending' },
+            where: { translationStatus: 'pending', ...(isHidden !== undefined ? { isHidden } : {}) },
             orderBy: { createdAt: 'asc' },
             take: limit,
             select: {
