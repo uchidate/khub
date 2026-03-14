@@ -22,6 +22,8 @@ interface TranslationItem {
   subtitle?: string
   fields: string[]
   snippet?: string
+  ptSnippet?: string
+  bioSource?: string | null
   status?: 'pending' | 'draft' | 'approved'
   fieldStatuses?: Record<string, string>
   // production-specific
@@ -83,6 +85,20 @@ const TRANSLATABLE_TYPES: EntityType[] = ['artist', 'group', 'production']
 
 const BATCH_LIMIT_OPTIONS = [5, 10, 25, 50]
 
+const SOURCE_FILTER_OPTIONS: [string, string][] = [
+  ['', 'Todos'],
+  ['tmdb_pt', 'TMDB pt-BR'],
+  ['tmdb_en', 'TMDB en'],
+  ['ai', 'IA'],
+  ['manual', 'Manual'],
+]
+
+function getPrimaryField(type: EntityType): string {
+  if (type === 'production') return 'synopsis'
+  if (type === 'news') return 'title'
+  return 'bio'
+}
+
 function formatElapsed(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0')
   const s = (seconds % 60).toString().padStart(2, '0')
@@ -90,7 +106,6 @@ function formatElapsed(seconds: number) {
 }
 
 function ProductionBadge({ item }: { item: TranslationItem }) {
-  // Prioridade: status da tradução CT > synopsisSource
   if (!item.hasSynopsis) {
     return (
       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-600 border border-zinc-700">
@@ -98,14 +113,12 @@ function ProductionBadge({ item }: { item: TranslationItem }) {
       </span>
     )
   }
-  // Tradução CT existe
   if (item.status === 'approved') {
     return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-900/40 text-green-400 border border-green-700/30">Revisado</span>
   }
   if (item.status === 'draft') {
     return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-900/40 text-yellow-400 border border-yellow-700/30">Traduzido (IA)</span>
   }
-  // Ainda não tem tradução CT — mostra a origem
   if (item.synopsisSource && SYNOPSIS_SOURCE_LABELS[item.synopsisSource]) {
     const src = SYNOPSIS_SOURCE_LABELS[item.synopsisSource]
     return (
@@ -126,12 +139,19 @@ function TranslationsPageContent() {
   )
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
   const [hiddenFilter, setHiddenFilter] = useState<'visible' | 'hidden'>('visible')
+  const [sourceFilter, setSourceFilter] = useState('')
   const [q, setQ] = useState('')
   const [items, setItems] = useState<TranslationItem[]>([])
   const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [statsLoading, setStatsLoading] = useState(true)
+
+  // Seleção para bulk approve
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [approving, setApproving] = useState<Set<string>>(new Set())
+  const [bulkApproving, setBulkApproving] = useState(false)
 
   const [singleTranslating, setSingleTranslating] = useState<Set<string>>(new Set())
   const [singleDone, setSingleDone] = useState<Set<string>>(new Set())
@@ -159,18 +179,20 @@ function TranslationsPageContent() {
     if (statusFilter) params.set('status', statusFilter)
     if (hiddenFilter === 'hidden') params.set('hidden', 'true')
     if (q) params.set('q', q)
+    if (sourceFilter && activeTab === 'artist') params.set('source', sourceFilter)
     const res = await fetch(`/api/admin/translations/list?${params}`)
     if (res.ok) {
       const data = await res.json()
       setItems(data.items)
       setTotal(data.total)
+      setTotalPages(data.totalPages ?? 1)
     }
     setLoading(false)
-  }, [activeTab, statusFilter, hiddenFilter, q, page])
+  }, [activeTab, statusFilter, hiddenFilter, q, page, sourceFilter])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-  useEffect(() => { setPage(1); setStatusFilter(''); setHiddenFilter('visible') }, [activeTab])
-  useEffect(() => { setPage(1) }, [statusFilter, hiddenFilter, q])
+  useEffect(() => { setPage(1); setStatusFilter(''); setHiddenFilter('visible'); setSourceFilter(''); setSelected(new Set()) }, [activeTab])
+  useEffect(() => { setPage(1); setSelected(new Set()) }, [statusFilter, hiddenFilter, q, sourceFilter])
   useEffect(() => { fetchItems() }, [fetchItems])
   useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [progressLog, currentItem])
 
@@ -203,6 +225,54 @@ function TranslationsPageContent() {
       setSingleTranslating(prev => { const n = new Set(prev); n.delete(id); return n })
     }
   }, [activeTab, fetchItems])
+
+  const handleApprove = useCallback(async (ids: string[], e?: React.MouseEvent) => {
+    e?.preventDefault()
+    e?.stopPropagation()
+    const field = getPrimaryField(activeTab)
+    ids.forEach(id => setApproving(prev => { const n = new Set(prev); n.add(id); return n }))
+    try {
+      await fetch('/api/admin/translations/approve', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityType: activeTab, ids, field }),
+      })
+      await fetchItems()
+      await fetchStats()
+    } finally {
+      ids.forEach(id => setApproving(prev => { const n = new Set(prev); n.delete(id); return n }))
+    }
+  }, [activeTab, fetchItems, fetchStats])
+
+  const handleBulkApprove = useCallback(async () => {
+    setBulkApproving(true)
+    const ids = Array.from(selected)
+    try {
+      await fetch('/api/admin/translations/approve', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityType: activeTab, ids, field: getPrimaryField(activeTab) }),
+      })
+      setSelected(new Set())
+      await fetchItems()
+      await fetchStats()
+    } finally {
+      setBulkApproving(false)
+    }
+  }, [selected, activeTab, fetchItems, fetchStats])
+
+  const toggleSelected = (id: string) => {
+    setSelected(prev => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+
+  const selectAllDraft = () => {
+    setSelected(new Set(items.filter(i => i.status === 'draft').map(i => i.id)))
+  }
 
   const handleRunBatch = () => {
     if (!TRANSLATABLE_TYPES.includes(activeTab)) {
@@ -245,6 +315,7 @@ function TranslationsPageContent() {
   const canTranslate = TRANSLATABLE_TYPES.includes(activeTab)
 
   const showBatchPanel = batchPanelOpen && (running || progressLog.length > 0)
+  const draftCount = items.filter(i => i.status === 'draft').length
 
   return (
     <AdminLayout title="Traduções">
@@ -281,7 +352,6 @@ function TranslationsPageContent() {
                     <span className="text-sm font-normal text-zinc-500">/{s?.total ?? 0}</span>
                   </div>
                 )}
-                {/* Sub-stats: pendentes para todos, extras para produção */}
                 {s && !statsLoading && (
                   <div className="mt-1 flex gap-2 flex-wrap">
                     {pendingCount > 0 && (
@@ -371,7 +441,7 @@ function TranslationsPageContent() {
               <div className={`px-4 py-2 text-sm border-t ${
                 runResult.startsWith('erro') ? 'bg-red-900/20 text-red-400 border-red-900/30' : 'bg-green-900/20 text-green-400 border-green-900/30'
               }`}>
-                {runResult.startsWith('erro') ? `Erro: ${runResult}` : `Concluido: ${runResult}`}
+                {runResult.startsWith('erro') ? `Erro: ${runResult}` : `Concluído: ${runResult}`}
               </div>
             )}
           </div>
@@ -401,7 +471,16 @@ function TranslationsPageContent() {
               </button>
             ))}
             <div className="ml-auto flex items-center gap-2 pb-3">
-              {/* Link para log — ícone */}
+              {/* Ver resultado anterior quando painel fechado */}
+              {!batchPanelOpen && runResult && (
+                <button
+                  onClick={() => setBatchPanelOpen(true)}
+                  className="text-xs text-zinc-600 hover:text-zinc-400 underline"
+                >
+                  Ver resultado anterior
+                </button>
+              )}
+              {/* Link para log */}
               <Link
                 href="/admin/translations/log"
                 title="Ver log de traduções"
@@ -411,7 +490,6 @@ function TranslationsPageContent() {
               </Link>
               {canTranslate && (
                 <>
-                  {/* Seletor de limite do lote */}
                   <div className="relative">
                     <select
                       value={batchLimit}
@@ -480,7 +558,7 @@ function TranslationsPageContent() {
                   {label}
                 </button>
               ))}
-              {/* Subfiltro visibilidade — sempre visível */}
+              {/* Subfiltro visibilidade */}
               <div className="flex gap-1 ml-2 pl-2 border-l border-white/10">
                 {(['visible', 'hidden'] as const).map(v => {
                   const s = stats?.[activeTab]
@@ -503,11 +581,70 @@ function TranslationsPageContent() {
                   )
                 })}
               </div>
+              {/* Subfiltro de fonte — apenas para artistas */}
+              {activeTab === 'artist' && (
+                <div className="flex gap-1 ml-2 pl-2 border-l border-white/10">
+                  {SOURCE_FILTER_OPTIONS.map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => setSourceFilter(val)}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+                        sourceFilter === val
+                          ? 'bg-zinc-600 text-white'
+                          : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button onClick={fetchItems} className="ml-auto p-1.5 text-zinc-600 hover:text-zinc-400" title="Recarregar">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
+
+          {/* Barra de ações em massa */}
+          {selected.size > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20">
+              <span className="text-xs text-zinc-400">{selected.size} selecionados</span>
+              <button
+                onClick={handleBulkApprove}
+                disabled={bulkApproving}
+                className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
+              >
+                <CheckCircle className="w-3 h-3" />
+                {bulkApproving ? 'Aprovando...' : `Aprovar ${selected.size}`}
+              </button>
+              <button
+                onClick={() => setSelected(new Set())}
+                className="text-xs text-zinc-600 hover:text-zinc-400"
+              >
+                Limpar seleção
+              </button>
+              {draftCount > 0 && (
+                <button
+                  onClick={selectAllDraft}
+                  className="text-xs text-zinc-600 hover:text-zinc-400 ml-auto"
+                >
+                  Selecionar todos rascunhos ({draftCount})
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Header de seleção quando há rascunhos visíveis */}
+          {selected.size === 0 && draftCount > 0 && (
+            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-white/5">
+              <button
+                onClick={selectAllDraft}
+                className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
+              >
+                Selecionar {draftCount} rascunho{draftCount !== 1 ? 's' : ''} desta página
+              </button>
+            </div>
+          )}
 
           {/* Lista */}
           {loading ? (
@@ -522,68 +659,109 @@ function TranslationsPageContent() {
                   : `/admin/translations/${activeTab}/${item.id}`
                 const isTranslating = singleTranslating.has(item.id)
                 const isDone = singleDone.has(item.id)
+                const isApprovingItem = approving.has(item.id)
+                const isSelectedItem = selected.has(item.id)
                 const canSingleTranslate = canTranslate && item.status !== 'approved'
+                const canApprove = item.status === 'draft'
                 return (
-                  <li key={item.id}>
-                    <Link
-                      href={editHref}
-                      className="flex items-start gap-4 px-4 py-3 hover:bg-zinc-800/50 transition-colors group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-zinc-100 truncate">{item.label}</span>
-                          {item.subtitle && (
-                            <span className="text-xs text-zinc-600 truncate hidden sm:inline">{item.subtitle}</span>
+                  <li key={item.id} className={isSelectedItem ? 'bg-purple-900/10' : ''}>
+                    <div className="flex items-start gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors group">
+                      {/* Checkbox */}
+                      <div className="flex-shrink-0 mt-1">
+                        <input
+                          type="checkbox"
+                          checked={isSelectedItem}
+                          onChange={() => toggleSelected(item.id)}
+                          className="accent-purple-500 cursor-pointer w-3.5 h-3.5"
+                        />
+                      </div>
+
+                      {/* Conteúdo clicável */}
+                      <Link href={editHref} className="flex-1 min-w-0 flex items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-zinc-100 truncate">{item.label}</span>
+                            {item.subtitle && (
+                              <span className="text-xs text-zinc-600 truncate hidden sm:inline">{item.subtitle}</span>
+                            )}
+                            {/* Badge fonte para artistas */}
+                            {activeTab === 'artist' && item.bioSource && SYNOPSIS_SOURCE_LABELS[item.bioSource] && (
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${SYNOPSIS_SOURCE_LABELS[item.bioSource].cls}`}>
+                                {SYNOPSIS_SOURCE_LABELS[item.bioSource].label}
+                              </span>
+                            )}
+                          </div>
+                          {/* Snippet original */}
+                          {item.snippet && (
+                            <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">
+                              {item.snippet}
+                            </p>
+                          )}
+                          {/* Preview PT-BR */}
+                          {item.ptSnippet && (item.status === 'draft' || item.status === 'approved') && (
+                            <p className="text-xs text-purple-400/70 mt-1 line-clamp-2 leading-relaxed">
+                              <span className="text-zinc-600 mr-1">pt-BR:</span>{item.ptSnippet}
+                            </p>
+                          )}
+                          {isProduction && item.synopsisSource && item.status !== 'draft' && item.status !== 'approved' && (
+                            <div className="text-[10px] text-zinc-600 mt-0.5">
+                              Origem: {SYNOPSIS_SOURCE_LABELS[item.synopsisSource]?.label ?? item.synopsisSource}
+                            </div>
                           )}
                         </div>
-                        {item.snippet && (
-                          <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">
-                            {item.snippet}
-                          </p>
-                        )}
-                        {isProduction && item.synopsisSource && item.status !== 'draft' && item.status !== 'approved' && (
-                          <div className="text-[10px] text-zinc-600 mt-0.5">
-                            Origem: {SYNOPSIS_SOURCE_LABELS[item.synopsisSource]?.label ?? item.synopsisSource}
-                          </div>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-                        {/* Botão traduzir individual */}
-                        {canSingleTranslate && (
-                          <button
-                            onClick={(e) => handleTranslateSingle(item.id, e)}
-                            disabled={isTranslating}
-                            title="Traduzir este item com IA"
-                            className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold transition-colors disabled:opacity-50 ${
-                              isDone
-                                ? 'bg-green-900/40 text-green-400 border border-green-700/30'
-                                : 'bg-zinc-800 text-zinc-500 hover:bg-purple-900/40 hover:text-purple-400 border border-white/5 hover:border-purple-700/30'
-                            }`}
-                          >
-                            {isTranslating
-                              ? <Loader2 className="w-3 h-3 animate-spin" />
-                              : isDone
-                                ? <CheckCircle className="w-3 h-3" />
-                                : <Sparkles className="w-3 h-3" />}
-                            {isDone ? 'Traduzido' : 'IA'}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                          {/* Botão aprovar inline */}
+                          {canApprove && (
+                            <button
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleApprove([item.id]) }}
+                              disabled={isApprovingItem}
+                              title="Aprovar tradução"
+                              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold bg-green-900/40 text-green-400 border border-green-700/30 hover:bg-green-800/60 disabled:opacity-50 transition-colors"
+                            >
+                              {isApprovingItem
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <CheckCircle className="w-3 h-3" />}
+                              Aprovar
+                            </button>
+                          )}
 
-                        {/* Badge de status */}
-                        {isProduction
-                          ? <ProductionBadge item={item} />
-                          : item.status ? (
-                            <span className={`px-2.5 py-0.5 rounded text-xs font-bold ${STATUS_COLORS[item.status]}`}>
-                              {STATUS_LABELS[item.status]}
-                            </span>
-                          ) : null}
+                          {/* Botão traduzir individual */}
+                          {canSingleTranslate && (
+                            <button
+                              onClick={(e) => handleTranslateSingle(item.id, e)}
+                              disabled={isTranslating}
+                              title="Traduzir este item com IA"
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold transition-colors disabled:opacity-50 ${
+                                isDone
+                                  ? 'bg-green-900/40 text-green-400 border border-green-700/30'
+                                  : 'bg-zinc-800 text-zinc-500 hover:bg-purple-900/40 hover:text-purple-400 border border-white/5 hover:border-purple-700/30'
+                              }`}
+                            >
+                              {isTranslating
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : isDone
+                                  ? <CheckCircle className="w-3 h-3" />
+                                  : <Sparkles className="w-3 h-3" />}
+                              {isDone ? 'Traduzido' : 'IA'}
+                            </button>
+                          )}
 
-                        {isProduction
-                          ? <Pencil className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-400" />
-                          : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400" />}
-                      </div>
-                    </Link>
+                          {/* Badge de status */}
+                          {isProduction
+                            ? <ProductionBadge item={item} />
+                            : item.status ? (
+                              <span className={`px-2.5 py-0.5 rounded text-xs font-bold ${STATUS_COLORS[item.status]}`}>
+                                {STATUS_LABELS[item.status]}
+                              </span>
+                            ) : null}
+
+                          {isProduction
+                            ? <Pencil className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-400" />
+                            : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400" />}
+                        </div>
+                      </Link>
+                    </div>
                   </li>
                 )
               })}
@@ -594,7 +772,7 @@ function TranslationsPageContent() {
           {total > 30 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
               <span className="text-xs text-zinc-600">{total} itens</span>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
@@ -602,10 +780,10 @@ function TranslationsPageContent() {
                 >
                   Anterior
                 </button>
-                <span className="px-3 py-1 text-xs text-zinc-500">Página {page}</span>
+                <span className="px-3 py-1 text-xs text-zinc-500">Página {page} de {totalPages}</span>
                 <button
                   onClick={() => setPage(p => p + 1)}
-                  disabled={items.length < 30}
+                  disabled={page >= totalPages}
                   className="px-3 py-1 text-xs border border-white/10 rounded-lg disabled:opacity-40 hover:bg-zinc-800 text-zinc-400"
                 >
                   Próxima

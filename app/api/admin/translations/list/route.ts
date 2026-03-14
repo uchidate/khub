@@ -57,6 +57,8 @@ export async function GET(req: NextRequest) {
   const isHiddenFilter: boolean | undefined = hiddenParam === 'true' ? true : hiddenParam === 'false' ? false : undefined
   // undefined = comportamento padrão (isHidden: false) para visíveis
   const isHiddenWhere = isHiddenFilter === true ? true : false
+  // source filter: apenas para entityType=artist (fieldSources.bio.source)
+  const sourceFilter = searchParams.get('source') ?? ''
 
   try {
     let items: Record<string, unknown>[] = []
@@ -92,6 +94,7 @@ export async function GET(req: NextRequest) {
         isHidden: isHiddenWhere,
         ...(q ? { nameRomanized: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
+        ...(sourceFilter ? { fieldSources: { path: ['bio', 'source'], equals: sourceFilter } } : {}),
       }
       const [artists, count] = await Promise.all([
         prisma.artist.findMany({ where, select: { id: true, nameRomanized: true, bio: true, fieldSources: true }, orderBy: { nameRomanized: 'asc' }, skip, take: limit }),
@@ -99,7 +102,7 @@ export async function GET(req: NextRequest) {
       ])
       items = artists.map(a => ({
         id: a.id, label: a.nameRomanized, fields: ['bio'], snippet: a.bio?.slice(0, 220) ?? undefined,
-        artistBioSource: (a.fieldSources as Record<string, { source: string }> | null)?.bio?.source ?? null,
+        bioSource: (a.fieldSources as Record<string, { source: string }> | null)?.bio?.source ?? null,
       }))
       total = count
 
@@ -237,23 +240,26 @@ export async function GET(req: NextRequest) {
     const existingTranslations = ids.length > 0
       ? await prisma.contentTranslation.findMany({
           where: { entityType, entityId: { in: ids }, locale: 'pt-BR' },
-          select: { entityId: true, field: true, status: true },
+          select: { entityId: true, field: true, status: true, value: true },
         })
       : []
 
-    // Monta mapa entityId → { field → status }
-    const translationMap = new Map<string, Map<string, string>>()
+    // Monta mapa entityId → { field → { status, value } }
+    const translationMap = new Map<string, Map<string, { status: string; value: string }>>()
     for (const t of existingTranslations) {
       if (!translationMap.has(t.entityId)) translationMap.set(t.entityId, new Map())
-      translationMap.get(t.entityId)!.set(t.field, t.status)
+      translationMap.get(t.entityId)!.set(t.field, { status: t.status, value: t.value })
     }
+
+    // Campo primário por entityType (para ptSnippet)
+    const primaryField = entityType === 'production' ? 'synopsis' : entityType === 'news' ? 'title' : 'bio'
 
     // Enriquece items com status de tradução
     const enriched = items.map(item => {
       const id = item.id as string
       const fields = item.fields as string[]
       const tMap = translationMap.get(id)
-      const fieldStatuses = fields.map(f => tMap?.get(f) ?? 'pending')
+      const fieldStatuses = fields.map(f => tMap?.get(f)?.status ?? 'pending')
       // Status geral: todos approved → approved; algum draft/approved → draft; senão pending
       let overallStatus: TranslationStatus = fieldStatuses.every(s => s === 'approved')
         ? 'approved'
@@ -265,7 +271,7 @@ export async function GET(req: NextRequest) {
         overallStatus = 'approved'
       }
       // Para artists: fieldSources.bio.source='tmdb_pt' = bio já em PT-BR → tratar como approved
-      if (overallStatus === 'pending' && (item.artistBioSource as string) === 'tmdb_pt') {
+      if (overallStatus === 'pending' && (item.bioSource as string) === 'tmdb_pt') {
         overallStatus = 'approved'
       }
       // Para news: se newsTranslationStatus='completed' e sem ContentTranslation → tratar como draft
@@ -273,11 +279,16 @@ export async function GET(req: NextRequest) {
       if (overallStatus === 'pending' && newsStatus === 'completed') {
         overallStatus = 'draft'
       }
-      const { newsTranslationStatus: _nts, artistBioSource: _abs, ...restItem } = item
+      // Preview da tradução PT-BR (campo primário)
+      const ptValue = tMap?.get(primaryField)?.value
+      const ptSnippet = ptValue ? ptValue.slice(0, 220) : undefined
+
+      const { newsTranslationStatus: _nts, ...restItem } = item
       return {
         ...restItem,
         status: overallStatus,
         fieldStatuses: Object.fromEntries(fields.map((f, i) => [f, fieldStatuses[i]])),
+        ptSnippet,
       }
     })
 
