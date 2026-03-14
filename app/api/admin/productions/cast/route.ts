@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -90,6 +91,9 @@ export async function DELETE(request: NextRequest) {
   await prisma.artistProduction.delete({
     where: { artistId_productionId: { artistId, productionId } },
   })
+
+  // Reavaliar visibilidade do artista após remoção do elenco
+  void getArtistVisibilityService().evaluate(artistId).catch(() => {})
 
   return NextResponse.json({ ok: true })
 }

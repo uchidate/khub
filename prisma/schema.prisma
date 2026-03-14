@@ -126,6 +126,7 @@ model Artist {
   flaggedAsNonKorean Boolean            @default(false) // Admin marcou como não-relevante
   flaggedAt          DateTime?          // Quando foi flagged
   isHidden           Boolean            @default(false) // Oculto do site público pelo admin
+  autoHidden         Boolean            @default(false) // Oculto automaticamente pelo sistema (sem produções visíveis)
   placeOfBirth       String?            // Local de nascimento (do TMDB)
   // Rastreio de origem dos campos (JSON: { campo: { source: 'manual'|'tmdb'|'wikidata'|'system', at: ISO, by?: adminId } })
   // Usado para proteger campos editados manualmente do sync automático TMDB/Wikidata
@@ -144,6 +145,8 @@ model Artist {
   @@index([nameRomanized, createdAt])
   @@index([flaggedAsNonKorean])
   @@index([isHidden])
+  @@index([autoHidden])
+  @@index([isHidden, autoHidden]) // auto-show reconciliation
   @@index([flaggedAsNonKorean, isHidden, trendingScore]) // artist listing: filter + sort
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
@@ -238,6 +241,7 @@ model Production {
   flaggedAt           DateTime?
   isHidden            Boolean            @default(false) // Oculto do site público pelo admin
   isAdultContent      Boolean?           // null = não verificado, true = adulto, false = ok
+  adultContentType    String?            // 'sexual' | 'violent' | 'other' — subtipo quando isAdultContent=true
   adultCheckedAt      DateTime?          // quando foi verificado pelo DeepSeek
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -258,6 +262,7 @@ model Production {
   @@index([isHidden])
   @@index([flaggedAsNonKorean, isHidden]) // production listing filter
   @@index([isAdultContent])
+  @@index([adultContentType])
   @@index([adultCheckedAt])
 }
 

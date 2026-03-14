@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { revalidatePath } from 'next/cache'
+import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
 
 const log = createLogger('ADMIN-PRODUCTIONS')
 
@@ -211,6 +212,19 @@ export async function PATCH(request: NextRequest) {
       where: { id: productionId },
       data: { ...validated, titlePt: resolvedTitlePt, synopsisSource: resolvedSynopsisSource },
     })
+
+    // Se visibilidade da produção mudou, reavaliar artistas vinculados
+    if (validated.isHidden !== undefined && validated.isHidden !== existing.isHidden) {
+      const linkedArtists = await prisma.artistProduction.findMany({
+        where: { productionId },
+        select: { artistId: true },
+      })
+      if (linkedArtists.length > 0) {
+        void getArtistVisibilityService()
+          .evaluateMany(linkedArtists.map(a => a.artistId))
+          .catch(() => {})
+      }
+    }
 
     // Invalidar ISR da página pública para refletir edições imediatamente
     revalidatePath(`/productions/${productionId}`)

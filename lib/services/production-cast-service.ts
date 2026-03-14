@@ -12,6 +12,7 @@ import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
 import { isRelevantToKoreanCulture } from '../utils/korean-validation'
 import { findArtistSocialLinks } from './wikidata-social-links'
 import prisma from '../prisma'
+import { getArtistVisibilityService } from './artist-visibility-service'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
@@ -179,6 +180,7 @@ export class ProductionCastService {
     const castMembers = await this.getProductionCast(tmdbId, tmdbType, 20)
 
     let synced = 0
+    const syncedArtistIds: string[] = []
 
     for (const member of castMembers) {
       try {
@@ -283,6 +285,7 @@ export class ProductionCastService {
           },
         })
 
+        syncedArtistIds.push(artistId)
         synced++
       } catch (err) {
         console.error(`Failed to sync cast member ${member.name} (${member.id}):`, err)
@@ -294,6 +297,13 @@ export class ProductionCastService {
       where: { id: productionId },
       data: { castSyncAt: new Date() },
     })
+
+    // Reavaliar visibilidade dos artistas sincronizados
+    if (syncedArtistIds.length > 0) {
+      void getArtistVisibilityService()
+        .evaluateMany(syncedArtistIds)
+        .catch(() => {})
+    }
 
     return { synced, skipped: castMembers.length - synced }
   }
