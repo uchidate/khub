@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
@@ -79,6 +79,8 @@ const FIELD_LABELS: Record<string, string> = {
 // Tipos que suportam tradução automática via IA
 const TRANSLATABLE_TYPES: EntityType[] = ['artist', 'group', 'production']
 
+const BATCH_LIMIT_OPTIONS = [5, 10, 25, 50]
+
 function formatElapsed(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0')
   const s = (seconds % 60).toString().padStart(2, '0')
@@ -129,6 +131,8 @@ export default function TranslationsPage() {
   const [progressLog, setProgressLog] = useState<ProgressEvent[]>([])
   const [currentItem, setCurrentItem] = useState<ProgressEvent | null>(null)
   const [elapsed, setElapsed] = useState(0)
+  const [batchLimit, setBatchLimit] = useState(10)
+  const [batchPanelOpen, setBatchPanelOpen] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
 
@@ -175,7 +179,8 @@ export default function TranslationsPage() {
       return
     }
     setRunning(true); setRunResult(null); setProgressLog([]); setCurrentItem(null); startTimer()
-    const params = new URLSearchParams({ entityType: activeTab, limit: '10' })
+    setBatchPanelOpen(true)
+    const params = new URLSearchParams({ entityType: activeTab, limit: String(batchLimit) })
     const es = new EventSource(`/api/admin/translations/run?${params}`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as ProgressEvent & { type: string; translated?: number; skipped?: number; failed?: number; message?: string }
@@ -205,6 +210,8 @@ export default function TranslationsPage() {
   const isProduction = activeTab === 'production'
   const prodStats = stats?.production
   const canTranslate = TRANSLATABLE_TYPES.includes(activeTab)
+
+  const showBatchPanel = batchPanelOpen && (running || progressLog.length > 0)
 
   return (
     <AdminLayout title="Traduções">
@@ -267,8 +274,8 @@ export default function TranslationsPage() {
           })}
         </div>
 
-        {/* Painel de tradução em tempo real */}
-        {(running || progressLog.length > 0) && (
+        {/* Painel de tradução em tempo real — colapsável */}
+        {showBatchPanel && (
           <div className="bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -285,8 +292,11 @@ export default function TranslationsPage() {
                 {skippedCount > 0 && <span>{skippedCount} ignorados</span>}
                 {failedCount > 0 && <span className="text-red-400 font-medium">{failedCount} ✗</span>}
                 {!running && (
-                  <button onClick={() => { setProgressLog([]); setRunResult(null); setElapsed(0) }} className="text-zinc-600 hover:text-zinc-400 text-xs underline">
-                    Limpar
+                  <button
+                    onClick={() => { setProgressLog([]); setRunResult(null); setElapsed(0); setBatchPanelOpen(false) }}
+                    className="text-zinc-600 hover:text-zinc-400 text-xs underline"
+                  >
+                    Fechar
                   </button>
                 )}
               </div>
@@ -324,15 +334,9 @@ export default function TranslationsPage() {
               <div className={`px-4 py-2 text-sm border-t ${
                 runResult.startsWith('erro') ? 'bg-red-900/20 text-red-400 border-red-900/30' : 'bg-green-900/20 text-green-400 border-green-900/30'
               }`}>
-                {runResult.startsWith('erro') ? `❌ ${runResult}` : `✅ ${runResult}`}
+                {runResult.startsWith('erro') ? `Erro: ${runResult}` : `Concluido: ${runResult}`}
               </div>
             )}
-          </div>
-        )}
-
-        {runResult && progressLog.length === 0 && (
-          <div className={`px-4 py-2 rounded-xl text-sm ${runResult.startsWith('erro') ? 'bg-red-900/20 text-red-400' : 'bg-green-900/20 text-green-400'}`}>
-            {runResult.startsWith('erro') ? `❌ ${runResult}` : `✅ ${runResult}`}
           </div>
         )}
 
@@ -360,19 +364,41 @@ export default function TranslationsPage() {
               </button>
             ))}
             <div className="ml-auto flex items-center gap-2 pb-3">
-              <Link href="/admin/translations/log" className="text-xs text-zinc-600 hover:text-zinc-400 px-2">
-                Log →
+              {/* Link para log — ícone */}
+              <Link
+                href="/admin/translations/log"
+                title="Ver log de traduções"
+                className="p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors rounded-lg hover:bg-zinc-800"
+              >
+                <History className="w-4 h-4" />
               </Link>
               {canTranslate && (
-                <button
-                  onClick={handleRunBatch}
-                  disabled={running}
-                  title={`Traduzir próximos 10 ${ENTITY_LABELS[activeTab].toLowerCase()} pendentes`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
-                >
-                  <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
-                  {running ? 'Traduzindo...' : 'Traduzir (IA)'}
-                </button>
+                <>
+                  {/* Seletor de limite do lote */}
+                  <div className="relative">
+                    <select
+                      value={batchLimit}
+                      onChange={e => setBatchLimit(Number(e.target.value))}
+                      disabled={running}
+                      className="appearance-none pl-2 pr-6 py-1.5 bg-zinc-800 border border-white/10 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50 cursor-pointer"
+                      title="Quantidade por lote"
+                    >
+                      {BATCH_LIMIT_OPTIONS.map(n => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500 pointer-events-none" />
+                  </div>
+                  <button
+                    onClick={handleRunBatch}
+                    disabled={running}
+                    title={`Traduzir próximos ${batchLimit} ${ENTITY_LABELS[activeTab].toLowerCase()} pendentes`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
+                  >
+                    <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
+                    {running ? 'Traduzindo...' : 'Traduzir (IA)'}
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -383,7 +409,7 @@ export default function TranslationsPage() {
               <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-400">
                 <strong>{prodStats.pending}</strong> sinopses pendentes de tradução.
-                Clique em <strong>Traduzir (IA)</strong> para processar em lotes de 10.
+                Clique em <strong>Traduzir (IA)</strong> para processar em lotes.
                 A sinopse original é preservada — a tradução fica em ContentTranslation.
               </p>
             </div>
@@ -432,7 +458,7 @@ export default function TranslationsPage() {
             <ul className="divide-y divide-white/5">
               {items.map(item => {
                 const editHref = isProduction
-                  ? `/admin/productions/${item.id}`
+                  ? `/admin/translations/production/${item.id}`
                   : `/admin/translations/${activeTab}/${item.id}`
                 return (
                   <li key={item.id}>
