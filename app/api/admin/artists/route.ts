@@ -7,6 +7,7 @@ import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { logAudit } from '@/lib/services/audit-service'
 import { revalidatePath } from 'next/cache'
+import { detectLanguage } from '@/lib/services/language-detection-service'
 
 function handlePrismaError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -425,6 +426,22 @@ export async function PATCH(request: NextRequest) {
           where: { artistId, groupId: { not: musicalGroupId } },
           data: { isActive: false },
         })
+      }
+    }
+
+    // Auto-tradução: se bio foi salva em português, criar/atualizar ContentTranslation automaticamente
+    if (validated.bio) {
+      const lang = detectLanguage(validated.bio)
+      if (lang === 'pt') {
+        await prisma.contentTranslation.upsert({
+          where: { entityType_entityId_field_locale: { entityType: 'artist', entityId: artistId, field: 'bio', locale: 'pt-BR' } },
+          create: { entityType: 'artist', entityId: artistId, field: 'bio', locale: 'pt-BR', value: validated.bio, status: 'approved', sourceLang: 'pt' },
+          update: { value: validated.bio, status: 'approved', sourceLang: 'pt' },
+        }).catch(() => {})
+        await prisma.artist.update({
+          where: { id: artistId },
+          data: { translationStatus: 'completed', translatedAt: new Date() },
+        }).catch(() => {})
       }
     }
 
