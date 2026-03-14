@@ -83,7 +83,7 @@ const FIELD_LABELS: Record<string, string> = {
 // Tipos que suportam tradução automática via IA
 const TRANSLATABLE_TYPES: EntityType[] = ['artist', 'group', 'production']
 
-const BATCH_LIMIT_OPTIONS = [5, 10, 25, 50]
+const BATCH_LIMIT_OPTIONS = [5, 10, 25, 50, 100, 150, 200, 250, 300]
 
 const SOURCE_FILTER_OPTIONS: [string, string][] = [
   ['', 'Todos'],
