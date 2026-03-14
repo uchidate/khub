@@ -39,10 +39,10 @@ const getHomePublicData = unstable_cache(
         ] = await Promise.all([
             prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
             prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
-            prisma.news.count({ where: { isHidden: false } }),
+            prisma.news.count({ where: { isHidden: false, status: 'published' } }),
             prisma.artist.aggregate({ _sum: { viewCount: true }, where: { isHidden: false } }),
             prisma.news.findMany({
-                where: { imageUrl: { not: null }, isHidden: false },
+                where: { imageUrl: { not: null }, isHidden: false, status: 'published' },
                 take: 5,
                 orderBy: { publishedAt: 'desc' },
                 select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
@@ -63,7 +63,7 @@ const getHomePublicData = unstable_cache(
                 },
             }),
             prisma.news.findMany({
-                where: { isHidden: false },
+                where: { isHidden: false, status: 'published' },
                 take: 3,
                 orderBy: { publishedAt: 'desc' },
                 // Busca apenas os campos necessários — excerpt processado server-side
@@ -190,6 +190,7 @@ export default async function Home() {
         ? await prisma.news.findMany({
             where: {
                 isHidden: false,
+                status: 'published',
                 artists: { some: { artistId: { in: favoriteArtistIds } } },
             },
             take: 3,

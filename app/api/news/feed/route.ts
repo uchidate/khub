@@ -27,7 +27,7 @@ function buildWhereClause(filters: {
     to?: string;
     favoriteArtistIds?: string[];
 }) {
-    const where: any = { isHidden: false };
+    const where: any = { isHidden: false, status: 'published' };
 
     // Feed personalizado: filtrar por artistas favoritos
     if (filters.favoriteArtistIds && filters.favoriteArtistIds.length > 0) {

@@ -23,6 +23,7 @@ const newsSchema = z.object({
   publishedAt: z.string().optional(), // ISO date string
   tags: z.array(z.string()).optional(),
   isHidden: z.boolean().optional(),
+  status: z.enum(['draft', 'ready', 'published']).optional(),
 })
 
 /**
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
     const contentType = searchParams.get('contentType') || undefined
     const isHiddenRaw = searchParams.get('isHidden')
     const isHidden    = isHiddenRaw === 'true' ? true : isHiddenRaw === 'false' ? false : undefined
+    const statusFilter = searchParams.get('status') || undefined
     const dateFrom    = searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')!) : undefined
     const dateTo      = searchParams.get('dateTo')   ? new Date(searchParams.get('dateTo')! + 'T23:59:59Z') : undefined
 
@@ -54,6 +56,7 @@ export async function GET(request: NextRequest) {
       ...(source      ? { source }      : {}),
       ...(contentType ? { contentType } : {}),
       ...(isHidden !== undefined ? { isHidden } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
       ...((dateFrom || dateTo) ? {
         publishedAt: {
           ...(dateFrom ? { gte: dateFrom } : {}),
@@ -147,8 +150,8 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * PATCH /api/admin/news?id=<newsId>
- * Update a news article
+ * PATCH /api/admin/news?bulk=publish  — bulk publish (status → 'published')
+ * PATCH /api/admin/news?id=<newsId>   — update a single article
  */
 export async function PATCH(request: NextRequest) {
   try {
@@ -156,6 +159,18 @@ export async function PATCH(request: NextRequest) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
+    const bulk = searchParams.get('bulk')
+
+    // ── Bulk publish ─────────────────────────────────────────────────────────
+    if (bulk === 'publish') {
+      const body = await request.json()
+      const { ids } = z.object({ ids: z.array(z.string()).min(1) }).parse(body)
+      await prisma.news.updateMany({ where: { id: { in: ids } }, data: { status: 'published' } })
+      await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'News', details: `Publicou ${ids.length} notícia(s) em massa` })
+      revalidatePath('/news')
+      return NextResponse.json({ updated: ids.length })
+    }
+
     const newsId = searchParams.get('id')
 
     if (!newsId) {

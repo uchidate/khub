@@ -33,7 +33,7 @@ export class NewsTaggingService {
         console.log(`🏷️  Starting news tag enrichment batch (limit: ${limit})...`);
 
         const pendingNews = await this.prisma.news.findMany({
-            where: { translationStatus: 'pending' },
+            where: { status: 'draft' },
             orderBy: { createdAt: 'asc' },
             take: limit,
             select: {
@@ -68,6 +68,7 @@ export class NewsTaggingService {
                         tags,
                         translationStatus: 'completed',
                         translatedAt: new Date(),
+                        status: 'ready',
                     }
                 });
 

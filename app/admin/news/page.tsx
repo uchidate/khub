@@ -6,7 +6,7 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import {
-    Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink, Download, RotateCcw,
+    Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink, Download, RotateCcw, Send,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -41,9 +41,11 @@ interface News {
     updatedAt: Date
     artists: NewsArtistLink[]
     blocks?: unknown[]
+    status: string
 }
 
 interface NewsStats {
+    queue: number
     total: number
     hidden: number
     today: number
@@ -195,7 +197,7 @@ export default function NewsAdminPage() {
 
     // Filters
     const [filterSource, setFilterSource] = useState<string>('')
-    const [filterStatus, setFilterStatus] = useState<'' | 'visible' | 'hidden'>('')
+    const [filterStatus, setFilterStatus] = useState<'' | 'visible' | 'hidden' | 'queue'>('')
 
     // Stats
     const [stats, setStats] = useState<NewsStats | null>(null)
@@ -205,11 +207,15 @@ export default function NewsAdminPage() {
             fetch('/api/admin/news?take=1').then(r => r.json()),
             fetch('/api/admin/news?take=1&isHidden=true').then(r => r.json()),
             fetch('/api/admin/news?take=1&dateFrom=' + new Date().toISOString().split('T')[0]).then(r => r.json()),
-        ]).then(([all, hidden, today]) => {
+            // Fila de curadoria: draft + ready (aguardando publicação)
+            fetch('/api/admin/news?take=1&status=draft').then(r => r.json()),
+            fetch('/api/admin/news?take=1&status=ready').then(r => r.json()),
+        ]).then(([all, hidden, today, drafts, ready]) => {
             setStats({
-                total:  all.pagination?.total   ?? 0,
-                hidden: hidden.pagination?.total ?? 0,
-                today:  today.pagination?.total  ?? 0,
+                total:  all.pagination?.total    ?? 0,
+                hidden: hidden.pagination?.total  ?? 0,
+                today:  today.pagination?.total   ?? 0,
+                queue: (drafts.pagination?.total ?? 0) + (ready.pagination?.total ?? 0),
             })
         }).catch(() => {})
     }, [])
@@ -220,6 +226,7 @@ export default function NewsAdminPage() {
     if (filterSource) extraParams.source = filterSource
     if (filterStatus === 'hidden')  extraParams.isHidden = 'true'
     if (filterStatus === 'visible') extraParams.isHidden = 'false'
+    if (filterStatus === 'queue')   extraParams.status = 'ready'
 
     const columns: Column<News>[] = [
         {
@@ -291,9 +298,12 @@ export default function NewsAdminPage() {
         {
             key: 'isHidden',
             label: 'Status',
-            render: (news) => news.isHidden
-                ? <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/15 text-red-400 rounded text-[11px] font-semibold"><EyeOff size={10} /> Oculta</span>
-                : <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/15 text-emerald-400 rounded text-[11px] font-semibold"><Eye size={10} /> Visível</span>,
+            render: (news) => {
+                if (news.isHidden) return <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/15 text-red-400 rounded text-[11px] font-semibold"><EyeOff size={10} /> Oculta</span>
+                if (news.status === 'draft')  return <span className="flex items-center gap-1 px-2 py-0.5 bg-zinc-700/60 text-zinc-400 rounded text-[11px] font-semibold">Rascunho</span>
+                if (news.status === 'ready')  return <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded text-[11px] font-semibold"><Send size={10} /> Pronta</span>
+                return <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/15 text-emerald-400 rounded text-[11px] font-semibold"><Eye size={10} /> Visível</span>
+            },
         },
     ]
 
@@ -339,18 +349,46 @@ export default function NewsAdminPage() {
         fetchStats()
     }
 
+    const handlePublish = async (news: News) => {
+        await fetch(`/api/admin/news?id=${news.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'published' }),
+        })
+        refetchTable()
+        fetchStats()
+    }
+
+    const handleBulkPublish = async (ids: string[], clearSelection: () => void) => {
+        const res = await fetch('/api/admin/news?bulk=publish', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids }),
+        })
+        if (res.ok) {
+            clearSelection()
+            refetchTable()
+            fetchStats()
+        }
+    }
+
     return (
         <AdminLayout title="Notícias">
             <div className="space-y-5">
 
                 {/* ── Stats ────────────────────────────────────────────── */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                     {[
-                        { label: 'Total', value: stats?.total, color: 'text-white' },
-                        { label: 'Ocultas', value: stats?.hidden, color: 'text-amber-400' },
-                        { label: 'Hoje', value: stats?.today, color: 'text-emerald-400' },
-                    ].map(({ label, value, color }) => (
-                        <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-center">
+                        { label: 'Total', value: stats?.total, color: 'text-white', onClick: undefined },
+                        { label: 'Fila', value: stats?.queue, color: stats?.queue ? 'text-blue-400' : 'text-zinc-600', onClick: () => setFilterStatus(prev => prev === 'queue' ? '' : 'queue') },
+                        { label: 'Ocultas', value: stats?.hidden, color: 'text-amber-400', onClick: undefined },
+                        { label: 'Hoje', value: stats?.today, color: 'text-emerald-400', onClick: undefined },
+                    ].map(({ label, value, color, onClick }) => (
+                        <div
+                            key={label}
+                            onClick={onClick}
+                            className={`rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-center ${onClick ? 'cursor-pointer hover:border-blue-500/40 transition-colors' : ''} ${filterStatus === 'queue' && label === 'Fila' ? 'border-blue-500/40 bg-blue-500/5' : ''}`}
+                        >
                             <p className={`text-2xl font-black tabular-nums ${color}`}>
                                 {value === undefined ? <Loader2 size={18} className="animate-spin mx-auto text-zinc-600" /> : value.toLocaleString('pt-BR')}
                             </p>
@@ -386,6 +424,16 @@ export default function NewsAdminPage() {
 
                         {/* Status filter */}
                         <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setFilterStatus(prev => prev === 'queue' ? '' : 'queue')}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
+                                    filterStatus === 'queue'
+                                        ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                                        : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                                }`}
+                            >
+                                <Send size={11} /> Fila
+                            </button>
                             <button
                                 onClick={() => setFilterStatus(prev => prev === 'visible' ? '' : 'visible')}
                                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
@@ -455,6 +503,15 @@ export default function NewsAdminPage() {
                     filters={
                         <></>  // filters are rendered in toolbar above
                     }
+                    bulkActions={(ids, clearSelection) => (
+                        <button
+                            onClick={() => handleBulkPublish(ids, clearSelection)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors"
+                        >
+                            <Send size={12} />
+                            Publicar ({ids.length})
+                        </button>
+                    )}
                     actions={(news) => (
                         <div className="flex items-center gap-0.5">
                             <Link
@@ -471,6 +528,15 @@ export default function NewsAdminPage() {
                                 translationStatus={news.translationStatus}
                                 onDone={(artists) => setLocalArtistsOverride(prev => ({ ...prev, [news.id]: artists }))}
                             />
+                            {news.status !== 'published' && (
+                                <button
+                                    onClick={e => { e.stopPropagation(); handlePublish(news) }}
+                                    title="Publicar no site"
+                                    className="p-1.5 rounded transition-colors text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                                >
+                                    <Send size={13} />
+                                </button>
+                            )}
                             <button
                                 onClick={e => { e.stopPropagation(); handleToggleHidden(news) }}
                                 title={news.isHidden ? 'Tornar visível' : 'Ocultar do site'}
