@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const entityType = searchParams.get('entityType') ?? ''
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '10')))
+    const limit = Math.min(300, Math.max(1, parseInt(searchParams.get('limit') ?? '10')))
     const hiddenParam = searchParams.get('hidden')
     const isHidden = hiddenParam === 'true' ? true : hiddenParam === 'false' ? false : undefined
 
