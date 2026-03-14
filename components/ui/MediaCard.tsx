@@ -3,7 +3,6 @@
 import React, { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { getStreamingConfig } from '@/lib/config/streaming-platforms'
@@ -45,37 +44,18 @@ export function MediaCard({
 
     // 3D Tilt Logic
     const ref = useRef<HTMLDivElement>(null)
-    const x = useMotionValue(0)
-    const y = useMotionValue(0)
-
-    const mouseXSpring = useSpring(x)
-    const mouseYSpring = useSpring(y)
-
-    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["15deg", "-15deg"])
-    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-15deg", "15deg"])
+    const [tilt, setTilt] = useState({ x: 0, y: 0 })
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!ref.current) return
-
         const rect = ref.current.getBoundingClientRect()
-
-        const width = rect.width
-        const height = rect.height
-
-        const mouseX = e.clientX - rect.left
-        const mouseY = e.clientY - rect.top
-
-        const xPct = mouseX / width - 0.5
-        const yPct = mouseY / height - 0.5
-
-        x.set(xPct)
-        y.set(yPct)
+        setTilt({
+            x: (e.clientX - rect.left) / rect.width - 0.5,
+            y: (e.clientY - rect.top) / rect.height - 0.5,
+        })
     }
 
-    const handleMouseLeave = () => {
-        x.set(0)
-        y.set(0)
-    }
+    const handleMouseLeave = () => setTilt({ x: 0, y: 0 })
 
     const getFavoriteType = () => {
         switch (type) {
@@ -89,14 +69,14 @@ export function MediaCard({
 
     return (
         <div className="relative group cursor-pointer">
-        <motion.div
+        <div
             ref={ref}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={{
-                rotateY,
-                rotateX,
+                transform: `perspective(800px) rotateX(${tilt.y * -15}deg) rotateY(${tilt.x * 15}deg)`,
                 transformStyle: "preserve-3d",
+                transition: "transform 150ms ease-out",
             }}
             className="relative"
         >
@@ -196,7 +176,7 @@ export function MediaCard({
                 </div>
             </Link>
 
-        </motion.div>
+        </div>
 
             {/* Actions Layer — fora do motion.div para não participar do 3D tilt */}
             <div className="absolute top-3 right-3 z-30">

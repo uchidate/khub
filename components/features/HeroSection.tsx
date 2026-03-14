@@ -1,6 +1,5 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
@@ -81,11 +80,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
 
                 {/* ── Left: headline + CTA ── */}
                 <div className="min-w-0">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                    >
+                    <div className="animate-slide-up">
                         <p className="inline-flex items-center gap-1.5 text-neon-pink font-black tracking-widest uppercase text-[10px] mb-4 px-3 py-1 rounded-full border border-neon-pink/30 bg-neon-pink/10">
                             A plataforma Hallyu do Brasil
                         </p>
@@ -117,31 +112,21 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 </a>
                             ))}
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Rotating CTA */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.15 }}
-                        className="flex gap-3 items-center"
+                    <div
+                        className="flex gap-3 items-center animate-slide-up"
+                        style={{ animationDelay: '0.15s', animationFillMode: 'both' }}
                     >
                         <div className="h-10 flex items-center">
-                            <AnimatePresence mode="wait">
-                                <motion.div
-                                    key={ctaIndex}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -8 }}
-                                    transition={{ duration: 0.25 }}
-                                >
-                                    <Link href={currentCta.href} className="btn-primary flex items-center gap-2 group text-sm">
-                                        <currentCta.icon className="w-4 h-4 flex-shrink-0" />
-                                        <span>{currentCta.label}</span>
-                                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 flex-shrink-0" />
-                                    </Link>
-                                </motion.div>
-                            </AnimatePresence>
+                            <div key={ctaIndex} className="animate-fade-in">
+                                <Link href={currentCta.href} className="btn-primary flex items-center gap-2 group text-sm">
+                                    <currentCta.icon className="w-4 h-4 flex-shrink-0" />
+                                    <span>{currentCta.label}</span>
+                                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 flex-shrink-0" />
+                                </Link>
+                            </div>
                         </div>
                         <div className="flex gap-0 items-center">
                             {ROTATING_CTAS.map((cta, i) => (
@@ -157,16 +142,14 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 </button>
                             ))}
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
 
                 {/* ── Right: live content (desktop only) ── */}
                 {hasRightPanel && (
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.7, delay: 0.3 }}
-                        className="hidden lg:flex flex-col gap-3"
+                    <div
+                        className="hidden lg:flex flex-col gap-3 animate-slide-in-right"
+                        style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
                     >
                         {/* Trending artists card */}
                         {trendingArtists.length > 0 && (
@@ -247,14 +230,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                         </div>
                                     )}
                                 </div>
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={currentNews.id}
-                                        initial={{ opacity: 0, x: 8 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -8 }}
-                                        transition={{ duration: 0.25 }}
-                                    >
+                                <div key={currentNews.id} className="animate-fade-in">
                                         <Link href={`/news/${currentNews.id}`} className="flex gap-3 items-center px-4 pb-4 group">
                                             {currentNews.imageUrl && (
                                                 <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-zinc-800">
@@ -276,21 +252,19 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                                 </p>
                                             </div>
                                         </Link>
-                                    </motion.div>
-                                </AnimatePresence>
+                                    </div>
+                                
                             </div>
                         )}
-                    </motion.div>
+                    </div>
                 )}
             </div>
 
             {/* ── Trending strip (mobile only) ─────────────────────────── */}
             {trendingArtists.length > 0 && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                    className="relative z-30 border-t border-white/8 bg-black/50 backdrop-blur-sm mt-8 lg:hidden"
+                <div
+                    className="relative z-30 border-t border-white/8 bg-black/50 backdrop-blur-sm mt-8 lg:hidden animate-fade-in"
+                    style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
                 >
                     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
                         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -320,7 +294,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                             ))}
                         </div>
                     </div>
-                </motion.div>
+                </div>
             )}
 
         </section>

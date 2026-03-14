@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, AlertCircle, Star, Music, Globe } from 'lucide-react'
-import { motion } from 'framer-motion'
+
 
 function GoogleIcon() {
   return (
@@ -116,11 +116,8 @@ function LoginForm() {
       <BrandPanel />
 
       <div className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-6 sm:p-12">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-sm"
+        <div
+          className="w-full max-w-sm animate-slide-up"
         >
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-10">
@@ -138,14 +135,10 @@ function LoginForm() {
           </div>
 
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400"
-            >
+            <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 animate-slide-down">
               <AlertCircle size={16} className="shrink-0" />
               <p className="text-sm">{error}</p>
-            </motion.div>
+            </div>
           )}
 
           <button
@@ -229,7 +222,7 @@ function LoginForm() {
               Criar conta grátis
             </Link>
           </p>
-        </motion.div>
+        </div>
       </div>
     </div>
   )

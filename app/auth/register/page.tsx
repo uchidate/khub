@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, User, AlertCircle, CheckCircle, Star, Music, Globe } from 'lucide-react'
-import { motion } from 'framer-motion'
+
 
 function GoogleIcon() {
   return (
@@ -179,11 +179,7 @@ export default function RegisterPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-950/40 via-black to-black" />
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="relative z-10 max-w-sm w-full text-center px-6"
-        >
+        <div className="relative z-10 max-w-sm w-full text-center px-6 animate-scale-in">
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10">
             <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-5 ring-1 ring-green-500/30">
               <CheckCircle className="text-green-400" size={32} />
@@ -195,7 +191,7 @@ export default function RegisterPage() {
               <span className="text-sm text-zinc-500">Redirecionando</span>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     )
   }
@@ -205,12 +201,7 @@ export default function RegisterPage() {
       <BrandPanel />
 
       <div className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-sm py-8"
-        >
+        <div className="w-full max-w-sm py-8 animate-slide-up">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-10">
             <Link href="/">
@@ -227,14 +218,10 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400"
-            >
+            <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 animate-slide-down">
               <AlertCircle size={16} className="shrink-0" />
               <p className="text-sm">{error}</p>
-            </motion.div>
+            </div>
           )}
 
           <button
@@ -296,7 +283,7 @@ export default function RegisterPage() {
               Entrar
             </Link>
           </p>
-        </motion.div>
+        </div>
       </div>
     </div>
   )

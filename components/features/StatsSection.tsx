@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Users, Film, Newspaper, TrendingUp } from 'lucide-react'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 interface StatsData {
@@ -59,30 +58,22 @@ export function StatsSection({ stats }: StatsSectionProps) {
 
             <div className="relative max-w-[1400px] mx-auto">
                 <div className="text-center mb-8">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                    >
+                    <div className="animate-slide-up">
                         <span className="text-xs font-black uppercase tracking-[0.3em] text-purple-400 mb-4 block">
                             Números em Tempo Real
                         </span>
                         <h2 className="text-3xl md:text-5xl font-display font-black dark:text-white text-zinc-900 italic tracking-tighter uppercase">
                             O Universo Hallyu
                         </h2>
-                    </motion.div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                     {statsList.map((stat, index) => (
-                        <motion.div
+                        <div
                             key={stat.label}
-                            initial={{ opacity: 0, y: 40 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: index * 0.1 }}
-                            className="group"
+                            className="group animate-slide-up"
+                            style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
                         >
                             <Link href={stat.href} className="block">
                                 <div className={`relative p-4 md:p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} dark:border-white/10 dark:hover:border-white/20 border border-zinc-200 hover:border-zinc-300 transition-all hover:scale-105 backdrop-blur-sm overflow-hidden`}>
@@ -109,7 +100,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                                     <div className={`absolute -bottom-10 -right-10 w-32 h-32 ${stat.color} opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity`} />
                                 </div>
                             </Link>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             </div>
