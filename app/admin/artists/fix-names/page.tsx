@@ -120,8 +120,13 @@ function parseLineSyncTmdb(line: string): LogLine {
             return { text: `⏳ [${parts[0]}] ${parts.slice(1).join(':')}`, type: 'progress' }
         }
         case 'ENRICHED': {
-            const [name, fields] = payload.split(':')
-            return { text: `✅ ${name} — atualizados: ${fields}`, type: 'success' }
+            const colonIdx = payload.indexOf(':')
+            const name = colonIdx > 0 ? payload.slice(0, colonIdx) : payload
+            const fields = colonIdx > 0 ? payload.slice(colonIdx + 1) : ''
+            const fieldDisplay = fields
+                .replace('bio/pt-BR', 'bio [PT-BR ✓]')
+                .replace('bio/en', 'bio [EN]')
+            return { text: `✅ ${name} — atualizados: ${fieldDisplay}`, type: 'success' }
         }
         case 'COMPLETE':
             return { text: `✓ Já completo: ${payload}`, type: 'progress' }

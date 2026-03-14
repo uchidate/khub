@@ -182,10 +182,16 @@ export async function POST(req: NextRequest) {
                     const bioPt = tmdbPt?.biography?.trim() || null
                     const bioEn = tmdb.biography?.trim() || null
                     const bioValue = bioPt || bioEn || null
+                    const bioLang = bioPt ? 'pt-BR' : 'en'
                     if (bioValue && canUpdate(!artist.bio, 'bio')) {
                         updates.bio = bioValue
                         updatedSources.bio = { source: bioPt ? 'tmdb_pt' : 'tmdb_en', at: now }
-                        updatedFields.push('bio')
+                        updatedFields.push(`bio/${bioLang}`)
+                        // Se bio veio em PT-BR, marcar como já traduzida
+                        if (bioPt) {
+                            updates.translationStatus = 'completed'
+                            updates.translatedAt = new Date()
+                        }
                     }
 
                     // Data de nascimento
@@ -249,6 +255,15 @@ export async function POST(req: NextRequest) {
                         where: { id: artist.id },
                         data: updates,
                     })
+
+                    // Se bio veio em PT-BR, criar ContentTranslation para registrar como traduzida
+                    if (bioValue && bioPt && updates.bio) {
+                        await prisma.contentTranslation.upsert({
+                            where: { entityType_entityId_field_locale: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR' } },
+                            create: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR', value: bioValue, status: 'approved', sourceLang: 'pt' },
+                            update: { value: bioValue, status: 'approved', sourceLang: 'pt' },
+                        }).catch(() => {})
+                    }
 
                     send(`ENRICHED:${artist.nameRomanized}:${updatedFields.join(',')}`)
                     enriched++
