@@ -120,6 +120,20 @@ export async function POST(req: NextRequest) {
         take: limit,
     })
 
+    // Sinopses já traduzidas por IA: busca em lote antes de processar
+    // Protege contra sobrescrita — tokens já foram gastos, só permissão individual para reprocessar
+    const productionIds = productions.map(p => p.id)
+    const existingCTs = await prisma.contentTranslation.findMany({
+        where: {
+            entityType: 'production',
+            entityId: { in: productionIds },
+            field: 'synopsis',
+            status: { in: ['approved', 'translated'] },
+        },
+        select: { entityId: true },
+    })
+    const aiTranslatedSynopsis = new Set(existingCTs.map(ct => ct.entityId))
+
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
         async start(controller) {
@@ -185,10 +199,12 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Sinopse — smart respeita synopsisSource=manual
+                    // Não sobrescrever se já foi traduzida por IA (tokens foram gastos)
                     const synopsisPt = (pt?.overview as string) || null
                     const synopsisEn = (en?.overview as string) || null
                     const synopsisValue = synopsisPt || synopsisEn
-                    if (synopsisValue && canUpdate(!prod.synopsis, prod.synopsisSource === 'manual')) {
+                    const synopsisAiProtected = aiTranslatedSynopsis.has(prod.id)
+                    if (synopsisValue && canUpdate(!prod.synopsis, prod.synopsisSource === 'manual') && !synopsisAiProtected) {
                         updates.synopsis = synopsisValue
                         updates.synopsisSource = synopsisPt ? 'tmdb_pt' : 'tmdb_en'
                         updatedFields.push('sinopse')
