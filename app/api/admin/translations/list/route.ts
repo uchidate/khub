@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   const skip = (page - 1) * limit
 
   try {
-    let items: { id: string; label: string; fields: string[] }[] = []
+    let items: Record<string, unknown>[] = []
     let total = 0
 
     if (entityType === 'artist') {
@@ -66,10 +66,10 @@ export async function GET(req: NextRequest) {
         ...(idFilter ? { id: idFilter } : {}),
       }
       const [artists, count] = await Promise.all([
-        prisma.artist.findMany({ where, select: { id: true, nameRomanized: true }, orderBy: { nameRomanized: 'asc' }, skip, take: limit }),
+        prisma.artist.findMany({ where, select: { id: true, nameRomanized: true, bio: true }, orderBy: { nameRomanized: 'asc' }, skip, take: limit }),
         prisma.artist.count({ where }),
       ])
-      items = artists.map(a => ({ id: a.id, label: a.nameRomanized, fields: ['bio'] }))
+      items = artists.map(a => ({ id: a.id, label: a.nameRomanized, fields: ['bio'], snippet: a.bio?.slice(0, 220) ?? undefined }))
       total = count
 
     } else if (entityType === 'group') {
@@ -81,14 +81,13 @@ export async function GET(req: NextRequest) {
         ...(idFilter ? { id: idFilter } : {}),
       }
       const [groups, count] = await Promise.all([
-        prisma.musicalGroup.findMany({ where, select: { id: true, name: true }, orderBy: { name: 'asc' }, skip, take: limit }),
+        prisma.musicalGroup.findMany({ where, select: { id: true, name: true, bio: true }, orderBy: { name: 'asc' }, skip, take: limit }),
         prisma.musicalGroup.count({ where }),
       ])
-      items = groups.map(g => ({ id: g.id, label: g.name, fields: ['bio'] }))
+      items = groups.map(g => ({ id: g.id, label: g.name, fields: ['bio'], snippet: g.bio?.slice(0, 220) ?? undefined }))
       total = count
 
     } else if (entityType === 'production') {
-      // Productions: status via translationStatus + ContentTranslation
       const idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
       const where = {
         isHidden: false,
@@ -116,6 +115,7 @@ export async function GET(req: NextRequest) {
         label: p.titlePt,
         subtitle: p.titleKr ?? undefined,
         fields: ['synopsis'],
+        snippet: p.synopsis?.slice(0, 220) ?? undefined,
         synopsisSource: p.synopsisSource,
         hasSynopsis: !!p.synopsis,
         translationStatus: p.translationStatus,
@@ -123,27 +123,62 @@ export async function GET(req: NextRequest) {
       total = count
 
     } else if (entityType === 'news') {
-      // News: status vem de ContentTranslation para o campo 'title'
-      const idFilter = statusFilter
-        ? await resolveStatusIds('news', 'title', statusFilter)
-        : null
+      // News: reconcilia duas pipelines — ContentTranslation (nova) e news.translationStatus (legada)
+      let idFilter: { in: string[] } | { notIn: string[] } | null = null
+      let extraWhere: Record<string, unknown> = {}
+
+      if (statusFilter === 'pending') {
+        // Sem ContentTranslation E translationStatus != 'completed'
+        const ctIds = await prisma.contentTranslation.findMany({
+          where: { entityType: 'news', field: 'title', locale: 'pt-BR' },
+          select: { entityId: true },
+        })
+        idFilter = { notIn: ctIds.map(t => t.entityId) }
+        extraWhere = { translationStatus: { not: 'completed' as const } }
+      } else if (statusFilter === 'draft') {
+        // ContentTranslation status='draft' OU news.translationStatus='completed' sem CT
+        const [ctDraft, ctAll] = await Promise.all([
+          prisma.contentTranslation.findMany({ where: { entityType: 'news', field: 'title', locale: 'pt-BR', status: 'draft' }, select: { entityId: true } }),
+          prisma.contentTranslation.findMany({ where: { entityType: 'news', field: 'title', locale: 'pt-BR' }, select: { entityId: true } }),
+        ])
+        const ctAllSet = new Set(ctAll.map(t => t.entityId))
+        const legacy = await prisma.news.findMany({ where: { translationStatus: 'completed' }, select: { id: true } })
+        const legacyIds = legacy.filter(n => !ctAllSet.has(n.id)).map(n => n.id)
+        const allDraftIds = ctDraft.map(t => t.entityId).concat(legacyIds)
+        idFilter = { in: Array.from(new Set(allDraftIds)) }
+      } else if (statusFilter === 'approved') {
+        idFilter = await resolveStatusIds('news', 'title', 'approved')
+      }
+
       const where = {
         ...(q ? { title: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
+        ...extraWhere,
       }
       const [newsList, count] = await Promise.all([
-        prisma.news.findMany({ where, select: { id: true, title: true, originalTitle: true }, orderBy: { publishedAt: 'desc' }, skip, take: limit }),
+        prisma.news.findMany({
+          where,
+          select: { id: true, title: true, originalTitle: true, translationStatus: true, originalContent: true, contentMd: true },
+          orderBy: { publishedAt: 'desc' },
+          skip, take: limit,
+        }),
         prisma.news.count({ where }),
       ])
-      items = newsList.map(n => ({ id: n.id, label: n.originalTitle ?? n.title, fields: ['title', 'contentMd'] }))
+      items = newsList.map(n => ({
+        id: n.id,
+        label: n.originalTitle ?? n.title,
+        fields: ['title', 'contentMd'],
+        snippet: (n.originalContent ?? n.contentMd)?.slice(0, 220) ?? undefined,
+        newsTranslationStatus: n.translationStatus,
+      }))
       total = count
     }
 
     // Productions: enriquecer com status via ContentTranslation (como artists/groups)
     // (continua para o bloco de lookup abaixo)
 
-    // Busca traduções existentes para os IDs retornados (artists, groups, news)
-    const ids = items.map(i => i.id)
+    // Busca traduções existentes para os IDs retornados
+    const ids = items.map(i => i.id as string)
     const existingTranslations = ids.length > 0
       ? await prisma.contentTranslation.findMany({
           where: { entityType, entityId: { in: ids }, locale: 'pt-BR' },
@@ -160,18 +195,26 @@ export async function GET(req: NextRequest) {
 
     // Enriquece items com status de tradução
     const enriched = items.map(item => {
-      const tMap = translationMap.get(item.id)
-      const fieldStatuses = item.fields.map(f => tMap?.get(f) ?? 'pending')
+      const id = item.id as string
+      const fields = item.fields as string[]
+      const tMap = translationMap.get(id)
+      const fieldStatuses = fields.map(f => tMap?.get(f) ?? 'pending')
       // Status geral: todos approved → approved; algum draft/approved → draft; senão pending
-      const overallStatus: TranslationStatus = fieldStatuses.every(s => s === 'approved')
+      let overallStatus: TranslationStatus = fieldStatuses.every(s => s === 'approved')
         ? 'approved'
         : fieldStatuses.some(s => s === 'draft' || s === 'approved')
           ? 'draft'
           : 'pending'
+      // Para news: se newsTranslationStatus='completed' e sem ContentTranslation → tratar como draft
+      const newsStatus = item.newsTranslationStatus as string | undefined
+      if (overallStatus === 'pending' && newsStatus === 'completed') {
+        overallStatus = 'draft'
+      }
+      const { newsTranslationStatus: _nts, ...restItem } = item
       return {
-        ...item,
+        ...restItem,
         status: overallStatus,
-        fieldStatuses: Object.fromEntries(item.fields.map((f, i) => [f, fieldStatuses[i]])),
+        fieldStatuses: Object.fromEntries(fields.map((f, i) => [f, fieldStatuses[i]])),
       }
     })
 

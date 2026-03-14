@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
@@ -21,6 +21,7 @@ interface TranslationItem {
   label: string
   subtitle?: string
   fields: string[]
+  snippet?: string
   status?: 'pending' | 'draft' | 'approved'
   fieldStatuses?: Record<string, string>
   // production-specific
@@ -131,6 +132,9 @@ function TranslationsPageContent() {
   const [loading, setLoading] = useState(false)
   const [statsLoading, setStatsLoading] = useState(true)
 
+  const [singleTranslating, setSingleTranslating] = useState<Set<string>>(new Set())
+  const [singleDone, setSingleDone] = useState<Set<string>>(new Set())
+
   const [running, setRunning] = useState(false)
   const [runResult, setRunResult] = useState<string | null>(null)
   const [progressLog, setProgressLog] = useState<ProgressEvent[]>([])
@@ -177,6 +181,26 @@ function TranslationsPageContent() {
   const stopTimer = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
   }
+
+  const handleTranslateSingle = useCallback(async (id: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSingleTranslating(prev => { const n = new Set(prev); n.add(id); return n })
+    try {
+      await fetch('/api/admin/translations/single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityType: activeTab, id }),
+      })
+      setSingleDone(prev => { const n = new Set(prev); n.add(id); return n })
+      setTimeout(() => {
+        setSingleDone(prev => { const n = new Set(prev); n.delete(id); return n })
+        fetchItems()
+      }, 1500)
+    } finally {
+      setSingleTranslating(prev => { const n = new Set(prev); n.delete(id); return n })
+    }
+  }, [activeTab, fetchItems])
 
   const handleRunBatch = () => {
     if (!TRANSLATABLE_TYPES.includes(activeTab)) {
@@ -465,41 +489,69 @@ function TranslationsPageContent() {
                 const editHref = isProduction
                   ? `/admin/translations/production/${item.id}`
                   : `/admin/translations/${activeTab}/${item.id}`
+                const isTranslating = singleTranslating.has(item.id)
+                const isDone = singleDone.has(item.id)
+                const canSingleTranslate = canTranslate && item.status !== 'approved'
                 return (
                   <li key={item.id}>
                     <Link
                       href={editHref}
-                      className="flex items-center gap-4 px-4 py-3 hover:bg-zinc-800/50 transition-colors group"
+                      className="flex items-start gap-4 px-4 py-3 hover:bg-zinc-800/50 transition-colors group"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-zinc-100 truncate">{item.label}</div>
-                        {item.subtitle && (
-                          <div className="text-xs text-zinc-500 truncate mt-0.5">{item.subtitle}</div>
-                        )}
-                        {!isProduction && item.fields && (
-                          <div className="text-xs text-zinc-600 mt-0.5">
-                            {item.fields.map(f => FIELD_LABELS[f] ?? f).join(', ')}
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-zinc-100 truncate">{item.label}</span>
+                          {item.subtitle && (
+                            <span className="text-xs text-zinc-600 truncate hidden sm:inline">{item.subtitle}</span>
+                          )}
+                        </div>
+                        {item.snippet && (
+                          <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">
+                            {item.snippet}
+                          </p>
                         )}
                         {isProduction && item.synopsisSource && item.status !== 'draft' && item.status !== 'approved' && (
-                          <div className="text-xs text-zinc-600 mt-0.5">
+                          <div className="text-[10px] text-zinc-600 mt-0.5">
                             Origem: {SYNOPSIS_SOURCE_LABELS[item.synopsisSource]?.label ?? item.synopsisSource}
                           </div>
                         )}
                       </div>
 
-                      {/* Badge de status */}
-                      {isProduction
-                        ? <ProductionBadge item={item} />
-                        : item.status ? (
-                          <span className={`px-2.5 py-0.5 rounded text-xs font-bold ${STATUS_COLORS[item.status]}`}>
-                            {STATUS_LABELS[item.status]}
-                          </span>
-                        ) : null}
+                      <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                        {/* Botão traduzir individual */}
+                        {canSingleTranslate && (
+                          <button
+                            onClick={(e) => handleTranslateSingle(item.id, e)}
+                            disabled={isTranslating}
+                            title="Traduzir este item com IA"
+                            className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold transition-colors disabled:opacity-50 ${
+                              isDone
+                                ? 'bg-green-900/40 text-green-400 border border-green-700/30'
+                                : 'bg-zinc-800 text-zinc-500 hover:bg-purple-900/40 hover:text-purple-400 border border-white/5 hover:border-purple-700/30'
+                            }`}
+                          >
+                            {isTranslating
+                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                              : isDone
+                                ? <CheckCircle className="w-3 h-3" />
+                                : <Sparkles className="w-3 h-3" />}
+                            {isDone ? 'Traduzido' : 'IA'}
+                          </button>
+                        )}
 
-                      {isProduction
-                        ? <Pencil className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-400 flex-shrink-0" />
-                        : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400 flex-shrink-0" />}
+                        {/* Badge de status */}
+                        {isProduction
+                          ? <ProductionBadge item={item} />
+                          : item.status ? (
+                            <span className={`px-2.5 py-0.5 rounded text-xs font-bold ${STATUS_COLORS[item.status]}`}>
+                              {STATUS_LABELS[item.status]}
+                            </span>
+                          ) : null}
+
+                        {isProduction
+                          ? <Pencil className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-400" />
+                          : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400" />}
+                      </div>
                     </Link>
                   </li>
                 )

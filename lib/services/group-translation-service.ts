@@ -213,6 +213,32 @@ Requisitos:
         }
     }
 
+    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed' }> {
+        const group = await this.prisma.musicalGroup.findUnique({
+            where: { id },
+            select: { id: true, name: true, bio: true },
+        })
+        if (!group || !group.bio) {
+            return { name: group?.name ?? id, status: 'skipped' }
+        }
+        try {
+            if (this.isAlreadyInPortuguese(group.bio)) {
+                return { name: group.name, status: 'skipped' }
+            }
+            const detectedLang = detectLanguage(group.bio)
+            const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang
+            const translatedBio = await this.translateBioToPortuguese(group.name, group.bio, sourceLang)
+            await this.prisma.contentTranslation.upsert({
+                where: { entityType_entityId_field_locale: { entityType: 'group', entityId: group.id, field: 'bio', locale: 'pt-BR' } },
+                create: { entityType: 'group', entityId: group.id, field: 'bio', locale: 'pt-BR', value: translatedBio, status: 'draft', sourceLang },
+                update: { value: translatedBio, status: 'draft', sourceLang },
+            })
+            return { name: group.name, status: 'translated' }
+        } catch {
+            return { name: group.name, status: 'failed' }
+        }
+    }
+
     async getTranslationStats(): Promise<{
         pending: number;
         translated: number;

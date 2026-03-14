@@ -227,6 +227,37 @@ Requisitos:
         }
     }
 
+    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed' }> {
+        const artist = await this.prisma.artist.findUnique({
+            where: { id },
+            select: { id: true, nameRomanized: true, bio: true, roles: true },
+        })
+        if (!artist || !artist.bio) {
+            return { name: artist?.nameRomanized ?? id, status: 'skipped' }
+        }
+        try {
+            if (this.isAlreadyInPortuguese(artist.bio)) {
+                await this.markAsCompleted(artist.id)
+                return { name: artist.nameRomanized, status: 'skipped' }
+            }
+            const detectedLang = detectLanguage(artist.bio)
+            const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang
+            const translatedBio = await this.translateBioToPortuguese(
+                artist.nameRomanized, artist.bio, artist.roles[0] || 'Artista', sourceLang
+            )
+            await this.prisma.contentTranslation.upsert({
+                where: { entityType_entityId_field_locale: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR' } },
+                create: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR', value: translatedBio, status: 'draft', sourceLang },
+                update: { value: translatedBio, status: 'draft', sourceLang },
+            })
+            await this.markAsCompleted(artist.id)
+            return { name: artist.nameRomanized, status: 'translated' }
+        } catch {
+            await this.prisma.artist.update({ where: { id }, data: { translationStatus: 'failed' } }).catch(() => {})
+            return { name: artist.nameRomanized, status: 'failed' }
+        }
+    }
+
     async retryFailedTranslations(limit: number = 5): Promise<number> {
         console.log(`🔄 Retrying failed translations (limit: ${limit})...`);
 
