@@ -179,6 +179,8 @@ const nextConfig = {
                 hostname: '*.archive.org',
             },
         ],
+        imageSizes: [16, 32, 48, 64, 96, 128, 160, 256, 384],
+        formats: ['image/avif', 'image/webp'],
     },
 };
 
