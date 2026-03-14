@@ -21,6 +21,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const entityType = searchParams.get('entityType') ?? ''
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '10')))
+    const hiddenParam = searchParams.get('hidden')
+    const isHidden = hiddenParam === 'true' ? true : hiddenParam === 'false' ? false : undefined
 
     if (!['artist', 'group', 'production'].includes(entityType)) {
         return NextResponse.json({ error: 'entityType inválido. Use "artist", "group" ou "production".' }, { status: 400 })
@@ -40,17 +42,17 @@ export async function GET(req: NextRequest) {
                     const service = getArtistTranslationService(prisma)
                     result = await service.translatePendingArtists(limit, (p) => {
                         send(controller, { type: 'progress', ...p })
-                    })
+                    }, isHidden)
                 } else if (entityType === 'production') {
                     const service = getProductionTranslationService(prisma)
                     result = await service.translatePendingProductions(limit, (p) => {
                         send(controller, { type: 'progress', ...p })
-                    })
+                    }, isHidden)
                 } else {
                     const service = getGroupTranslationService(prisma)
                     result = await service.translatePendingGroups(limit, (p) => {
                         send(controller, { type: 'progress', ...p })
-                    })
+                    }, isHidden)
                 }
 
                 send(controller, { type: 'done', ...result })
