@@ -4,12 +4,24 @@ import { createLogger } from '@/lib/utils/logger'
 const log = createLogger('ARTIST_VISIBILITY')
 
 /**
+ * Critério de "produção publicamente visível" — deve espelhar o filtro da
+ * página pública /artists/[id] para que visibilidade e filmografia sejam consistentes.
+ */
+const PUBLIC_PRODUCTION_FILTER = {
+  isHidden: false,
+  flaggedAsNonKorean: false,
+  ageRating: { in: ['L', '10', '12', '14', '16'] as string[] },
+}
+
+/**
  * Avalia se um artista deve estar oculto ou visível com base nas suas produções.
  *
  * Regras:
  * 1. Artista com produção de conteúdo sexual adulto → sempre oculto (não pode ser mostrado)
- * 2. Artista com pelo menos uma produção visível → visível (auto-show)
- * 3. Artista sem produções OU com todas as produções ocultas → oculto (auto-hide)
+ * 2. Artista com pelo menos uma produção publicamente visível → visível (auto-show)
+ * 3. Artista sem produções visíveis → oculto (auto-hide)
+ *
+ * "Produção visível" = isHidden=false + classificada (ageRating L/10/12/14/16) + não-flagged
  *
  * O campo `autoHidden=true` indica que o sistema ocultou o artista automaticamente.
  * Artistas ocultados manualmente pelo admin (autoHidden=false, isHidden=true) não são
@@ -52,11 +64,11 @@ export class ArtistVisibilityService {
       return { changed: false, isHidden: true }
     }
 
-    // Verificar se tem pelo menos uma produção visível
+    // Verificar se tem pelo menos uma produção publicamente visível
     const visibleProduction = await prisma.artistProduction.findFirst({
       where: {
         artistId,
-        production: { isHidden: false },
+        production: PUBLIC_PRODUCTION_FILTER,
       },
     })
 
@@ -114,12 +126,12 @@ export class ArtistVisibilityService {
   }> {
     log.info(`Starting artist visibility reconciliation (limit: ${limit})`)
 
-    // Candidatos a ocultar: visíveis, sem produção visível
+    // Candidatos a ocultar: visíveis, sem produção publicamente visível
     const toHide = await prisma.artist.findMany({
       where: {
         isHidden: false,
         productions: {
-          none: { production: { isHidden: false } },
+          none: { production: PUBLIC_PRODUCTION_FILTER },
         },
       },
       select: { id: true },
@@ -132,7 +144,7 @@ export class ArtistVisibilityService {
         isHidden: true,
         autoHidden: true,
         productions: {
-          some: { production: { isHidden: false } },
+          some: { production: PUBLIC_PRODUCTION_FILTER },
         },
         NOT: {
           productions: {

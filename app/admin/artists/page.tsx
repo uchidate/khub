@@ -55,6 +55,7 @@ interface ArtistStats {
   noSocialAttempted: number
   noSocialNoTmdb: number
   noProductions: number
+  autoHidden: number
   koreanNoTmdb: number
 }
 
@@ -66,6 +67,7 @@ type FilterType =
   | 'no_social' | 'no_social_pending' | 'no_social_attempted' | 'no_social_no_tmdb'
   | 'no_romanized' | 'no_romanized_pending' | 'no_romanized_attempted' | 'no_romanized_no_tmdb'
   | 'no_productions'
+  | 'auto_hidden'
   | 'flagged'
   | 'korean_no_tmdb'
 
@@ -326,6 +328,7 @@ function StatsBar({ stats, filter, onFilter }: {
   const isNoSocial = filter.startsWith('no_social')
   const isNoRomanized = filter.startsWith('no_romanized')
   const isNoProductions = filter === 'no_productions'
+  const isAutoHidden = filter === 'auto_hidden'
 
   const mainTabs = [
     { label: 'Todos', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-zinc-400' },
@@ -334,6 +337,7 @@ function StatsBar({ stats, filter, onFilter }: {
     { label: 'Sem Foto', value: 'no_photo' as FilterType, count: stats?.noPhoto ?? null, dot: 'bg-orange-400' },
     { label: 'Sem Redes', value: 'no_social' as FilterType, count: stats?.noSocialTotal ?? null, dot: 'bg-blue-400' },
     { label: 'Sem Produção', value: 'no_productions' as FilterType, count: stats?.noProductions ?? null, dot: 'bg-yellow-500' },
+    { label: 'Auto-ocultos', value: 'auto_hidden' as FilterType, count: stats?.autoHidden ?? null, dot: 'bg-zinc-500' },
     { label: 'Flagged', value: 'flagged' as FilterType, count: stats?.flagged ?? null, dot: 'bg-red-400' },
   ]
 
@@ -369,7 +373,7 @@ function StatsBar({ stats, filter, onFilter }: {
   ]
 
   const subTabs = isTodos ? todosSubs : isNoHangul ? hangulSubs : isNoPhoto ? photoSubs : isNoSocial ? socialSubs : isNoRomanized ? romanizedSubs : []
-  const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : isNoSocial ? 'no_social' : isNoRomanized ? 'no_romanized' : 'no_productions'
+  const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : isNoSocial ? 'no_social' : isNoRomanized ? 'no_romanized' : isAutoHidden ? 'auto_hidden' : 'no_productions'
 
   return (
     <div className="space-y-2">
@@ -382,6 +386,7 @@ function StatsBar({ stats, filter, onFilter }: {
             : tab.value === 'no_social' ? isNoSocial
             : tab.value === 'no_romanized' ? isNoRomanized
             : tab.value === 'no_productions' ? isNoProductions
+            : tab.value === 'auto_hidden' ? isAutoHidden
             : filter === tab.value
           return (
             <button key={tab.value} onClick={() => onFilter(tab.value)}

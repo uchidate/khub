@@ -172,6 +172,7 @@ export async function GET(request: NextRequest) {
       : filter === 'no_group_unsynced'   ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null }
       : filter === 'no_group_solo'       ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } }
       : filter === 'no_productions'      ? { ...active, productions: { none: {} } }
+      : filter === 'auto_hidden'         ? { isHidden: true, autoHidden: true }
       : {}
 
     const searchWhere = search

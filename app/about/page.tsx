@@ -2,57 +2,90 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-    title: 'Sobre nós | HallyuHub',
-    description: 'Conheça o HallyuHub, o maior portal de cultura coreana em português. Nossa missão é conectar fãs brasileiros com artistas K-Pop, K-Dramas e notícias traduzidas.',
+    title: 'Sobre | HallyuHub',
+    description: 'Conheça o HallyuHub — o portal de referência da cultura coreana em português. Perfis de artistas, K-Dramas, notícias e um feed personalizado para fãs brasileiros.',
     openGraph: {
         title: 'Sobre o HallyuHub',
-        description: 'Conheça o HallyuHub, o maior portal de cultura coreana em português. Nossa missão é conectar fãs brasileiros com artistas K-Pop, K-Dramas e notícias traduzidas.',
+        description: 'Conheça o HallyuHub — o portal de referência da cultura coreana em português. Perfis de artistas, K-Dramas, notícias e um feed personalizado para fãs brasileiros.',
         url: 'https://www.hallyuhub.com.br/about',
         type: 'website',
     },
 }
 
+const pillars = [
+    {
+        label: 'Artistas',
+        heading: 'Perfis completos',
+        body: 'Discografia, filmografia, grupos musicais, redes sociais e tudo sobre os ídolos e atores que você acompanha — em um único lugar, em português.',
+    },
+    {
+        label: 'Produções',
+        heading: 'Dramas & filmes',
+        body: 'Catálogo completo de K-Dramas e filmes coreanos com sinopse, elenco e onde assistir no Brasil.',
+    },
+    {
+        label: 'Notícias',
+        heading: 'Feed personalizado',
+        body: 'Acompanhe as últimas novidades sobre os artistas que você segue. Siga favoritos e receba um feed feito para você.',
+    },
+]
+
 export default function AboutPage() {
     return (
         <div className="pt-24 md:pt-40 pb-32 px-4 sm:px-12 md:px-20 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/10 blur-[150px] -z-10" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-pink-600/10 blur-[150px] -z-10" />
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-600/10 blur-[160px] -z-10" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-pink-600/10 blur-[160px] -z-10" />
 
             <div className="max-w-4xl mx-auto">
-                <header className="mb-20">
-                    <span className="text-purple-500 font-black text-xs tracking-[0.3em] uppercase mb-4 block">Manifesto</span>
+
+                {/* Header */}
+                <header className="mb-24">
+                    <span className="text-purple-500 font-black text-xs tracking-[0.3em] uppercase mb-5 block">Sobre</span>
                     <h1 className="text-6xl md:text-8xl font-black mb-8 hallyu-gradient-text tracking-tighter uppercase leading-none">
-                        PAIXÃO PELA <br />
-                        ONDA COREANA
+                        CULTURA COREANA<br />
+                        EM PORTUGUÊS
                     </h1>
-                    <p className="text-2xl text-zinc-400 leading-relaxed font-medium">
-                        O HallyuHub é mais do que um portal. É a maior hub de cultura coreana em língua portuguesa, desenhado para conectar fãs com o conteúdo que amam.
+                    <p className="text-xl md:text-2xl text-zinc-400 leading-relaxed max-w-2xl">
+                        O HallyuHub é o portal de referência da Hallyu Wave para o público brasileiro — artistas, produções e notícias reunidos em uma plataforma moderna e acessível.
                     </p>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-24">
-                    <div className="space-y-6">
-                        <h2 className="text-3xl font-black uppercase text-white">Missão</h2>
-                        <p className="text-zinc-500 text-lg leading-relaxed">
-                            Eliminar as barreiras linguísticas e geográficas, trazendo informações precisas, perfis ricos e as últimas novidades de Seul diretamente para o Brasil com uma interface de classe mundial.
+                {/* Missão */}
+                <section className="mb-20">
+                    <div className="border-l-2 border-purple-500 pl-8">
+                        <h2 className="text-xs font-black tracking-[0.3em] uppercase text-purple-500 mb-4">Missão</h2>
+                        <p className="text-2xl md:text-3xl font-bold text-white leading-snug">
+                            Eliminar as barreiras linguísticas entre o Brasil e a Coreia do Sul, entregando informações precisas e conteúdo de qualidade para os fãs que movem essa cultura.
                         </p>
                     </div>
-                    <div className="space-y-6">
-                        <h2 className="text-3xl font-black uppercase text-white">V1 & Futuro</h2>
-                        <p className="text-zinc-500 text-lg leading-relaxed font-bold">
-                            Esta versão 1.0 lança as bases de dados e design. No futuro, a V2 integrará inteligência artificial generativa para criar experiências personalizadas e recomendações imersivas.
-                        </p>
+                </section>
+
+                {/* Pilares */}
+                <section className="mb-24">
+                    <h2 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-500 mb-10">O que oferecemos</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {pillars.map(({ label, heading, body }) => (
+                            <div key={label} className="p-8 rounded-3xl bg-white/[0.03] border border-white/[0.06] space-y-3">
+                                <span className="text-purple-400 text-xs font-black tracking-widest uppercase">{label}</span>
+                                <h3 className="text-xl font-black text-white">{heading}</h3>
+                                <p className="text-zinc-500 text-sm leading-relaxed">{body}</p>
+                            </div>
+                        ))}
                     </div>
+                </section>
+
+                {/* CTA */}
+                <div className="p-10 md:p-14 bg-white text-black rounded-[40px] text-center mb-10">
+                    <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter uppercase italic leading-none">
+                        O Brasil também é Hallyu.
+                    </h2>
+                    <p className="text-zinc-600 font-semibold mb-0 max-w-md mx-auto leading-snug text-lg">
+                        Feito por fãs, para fãs. Com carinho e tecnologia.
+                    </p>
                 </div>
 
-                <div className="p-12 bg-white text-black rounded-[40px] text-center mb-10">
-                    <h2 className="text-4xl font-black mb-4 tracking-tighter uppercase italic">O Futuro é Hallyu.</h2>
-                    <p className="font-bold text-zinc-600 mb-8 max-w-lg mx-auto leading-tight">Junte-se à revolução da cultura coreana com o portal mais moderno do país.</p>
-                    <div className="w-16 h-1 w-full bg-purple-600 mx-auto rounded-full" />
-                </div>
-
-                {/* Social + Contato */}
-                <div className="flex flex-wrap gap-4 justify-center">
+                {/* Links */}
+                <div className="flex flex-wrap gap-4 justify-center pt-2">
                     <a
                         href="https://www.instagram.com/hallyuhub_br/"
                         target="_blank"
@@ -68,6 +101,7 @@ export default function AboutPage() {
                         Fale conosco
                     </Link>
                 </div>
+
             </div>
         </div>
     )

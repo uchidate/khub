@@ -34,6 +34,7 @@ export async function GET() {
     noRatingNoTmdb,
     noTmdb,
     hasTmdb,
+    hiddenFromPublic,
   ] = await Promise.all([
     prisma.production.count(),
     prisma.production.count({ where: { artists: { none: {} } } }),
@@ -54,6 +55,17 @@ export async function GET() {
     prisma.production.count({ where: { tmdbId: null } }),
     // com TMDB ID
     prisma.production.count({ where: { tmdbId: { not: null } } }),
+    // visíveis no DB mas excluídas da filmografia pública (sem classificação, 18+ ou flagged)
+    prisma.production.count({
+      where: {
+        isHidden: false,
+        OR: [
+          { ageRating: null },
+          { ageRating: '18' },
+          { flaggedAsNonKorean: true },
+        ],
+      },
+    }),
   ])
 
   return NextResponse.json({
@@ -68,5 +80,6 @@ export async function GET() {
     noRatingNoTmdb,
     noTmdb,
     hasTmdb,
+    hiddenFromPublic,
   })
 }
