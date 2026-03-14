@@ -146,15 +146,18 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 </motion.div>
                             </AnimatePresence>
                         </div>
-                        <div className="flex gap-1 items-center">
-                            {ROTATING_CTAS.map((_, i) => (
+                        <div className="flex gap-0 items-center">
+                            {ROTATING_CTAS.map((cta, i) => (
                                 <button
                                     key={i}
                                     onClick={() => setCtaIndex(i)}
-                                    className={`rounded-full transition-all duration-300 ${
+                                    aria-label={`Ir para ${cta.label}`}
+                                    className="flex items-center justify-center w-8 h-8"
+                                >
+                                    <span className={`rounded-full transition-all duration-300 ${
                                         i === ctaIndex ? 'bg-neon-pink w-4 h-1.5' : 'bg-zinc-600 hover:bg-zinc-400 w-1.5 h-1.5'
-                                    }`}
-                                />
+                                    }`} />
+                                </button>
                             ))}
                         </div>
                     </motion.div>
@@ -229,17 +232,20 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                         Últimas Notícias
                                     </p>
                                     {latestNews.length > 1 && (
-                                        <div className="flex gap-1">
-                                            {latestNews.map((_, i) => (
+                                        <div className="flex gap-0">
+                                            {latestNews.map((news, i) => (
                                                 <button
                                                     key={i}
                                                     onClick={() => setNewsIndex(i)}
-                                                    className={`rounded-full transition-all duration-300 ${
+                                                    aria-label={`Ver notícia ${i + 1}: ${news.title}`}
+                                                    className="flex items-center justify-center w-6 h-6"
+                                                >
+                                                    <span className={`rounded-full transition-all duration-300 ${
                                                         i === newsIndex
                                                             ? 'bg-neon-cyan w-3 h-1'
                                                             : 'bg-zinc-700 hover:bg-zinc-500 w-1 h-1'
-                                                    }`}
-                                                />
+                                                    }`} />
+                                                </button>
                                             ))}
                                         </div>
                                     )}
