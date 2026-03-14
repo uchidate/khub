@@ -17,6 +17,7 @@ import { TMDBProductionData } from '../types/tmdb'
 import { getSlackService } from './slack-notification-service'
 import { getOrchestrator } from '../ai/orchestrator-factory'
 import { createLogger } from '../utils/logger'
+import { getArtistVisibilityService } from './artist-visibility-service'
 
 const log = createLogger('FILMOGRAPHY')
 
@@ -207,6 +208,8 @@ export class FilmographySyncService {
       })
 
       result.success = true
+      // Reavaliar visibilidade após sync
+      void getArtistVisibilityService().evaluate(artistId).catch(() => {})
     } catch (error) {
       result.errors.push((error as Error).message)
 
@@ -345,6 +348,8 @@ export class FilmographySyncService {
       }
 
       result.success = true
+      // Reavaliar visibilidade após sync via AI
+      void getArtistVisibilityService().evaluate(artistId).catch(() => {})
     } catch (error: any) {
       result.errors.push(error.message)
     } finally {
