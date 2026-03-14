@@ -69,11 +69,11 @@ export async function getAiCostByDay(days: number): Promise<AiDayStat[]> {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
     const rows = await prisma.$queryRaw<Array<{ date: Date; cost: number; calls: bigint }>>`
         SELECT
-            DATE_TRUNC('day', "created_at") AS date,
-            SUM(cost)::float                AS cost,
-            COUNT(*)                        AS calls
+            DATE_TRUNC('day', "createdAt") AS date,
+            SUM(cost)::float               AS cost,
+            COUNT(*)                       AS calls
         FROM ai_usage_log
-        WHERE created_at >= ${since}
+        WHERE "createdAt" >= ${since}
         GROUP BY 1
         ORDER BY 1 ASC
     `
