@@ -88,7 +88,30 @@ export async function GET(req: NextRequest) {
       total = count
 
     } else if (entityType === 'production') {
-      const idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
+      let idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
+      if (statusFilter === 'pending') {
+        // Excluir também produções com sinopse já em PT-BR (synopsisSource='tmdb_pt')
+        const alreadyPt = await prisma.production.findMany({
+          where: { synopsisSource: 'tmdb_pt', isHidden: false },
+          select: { id: true },
+        })
+        const excludeIds = alreadyPt.map(p => p.id)
+        if (excludeIds.length > 0) {
+          const base = idFilter && 'notIn' in idFilter ? idFilter.notIn : []
+          idFilter = { notIn: Array.from(new Set([...base, ...excludeIds])) }
+        }
+      } else if (statusFilter === 'approved') {
+        // Incluir também produções com synopsisSource='tmdb_pt' mesmo sem CT
+        const alreadyPt = await prisma.production.findMany({
+          where: { synopsisSource: 'tmdb_pt', isHidden: false },
+          select: { id: true },
+        })
+        const extraIds = alreadyPt.map(p => p.id)
+        if (extraIds.length > 0) {
+          const base = idFilter && 'in' in idFilter ? idFilter.in : []
+          idFilter = { in: Array.from(new Set([...base, ...extraIds])) }
+        }
+      }
       const where = {
         isHidden: false,
         synopsis: { not: null as null },
@@ -205,6 +228,10 @@ export async function GET(req: NextRequest) {
         : fieldStatuses.some(s => s === 'draft' || s === 'approved')
           ? 'draft'
           : 'pending'
+      // Para productions: synopsisSource='tmdb_pt' = já está em PT-BR → tratar como approved
+      if (overallStatus === 'pending' && (item.synopsisSource as string) === 'tmdb_pt') {
+        overallStatus = 'approved'
+      }
       // Para news: se newsTranslationStatus='completed' e sem ContentTranslation → tratar como draft
       const newsStatus = item.newsTranslationStatus as string | undefined
       if (overallStatus === 'pending' && newsStatus === 'completed') {

@@ -10,10 +10,10 @@ type EntityType = 'artist' | 'group' | 'production' | 'news'
 type StatusFilter = '' | 'pending' | 'draft' | 'approved'
 
 interface Stats {
-  artist:     { total: number; translated: number }
-  group:      { total: number; translated: number }
+  artist:     { total: number; translated: number; pending: number }
+  group:      { total: number; translated: number; pending: number }
   production: { total: number; translated: number; pending: number; failed: number; noSynopsis: number }
-  news:       { total: number; translated: number }
+  news:       { total: number; translated: number; pending: number }
 }
 
 interface TranslationItem {
@@ -252,6 +252,7 @@ function TranslationsPageContent() {
             const s = stats?.[type]
             const pct = s && s.total > 0 ? Math.round((s.translated / s.total) * 100) : 0
             const prodS = type === 'production' ? (s as Stats['production'] | undefined) : undefined
+            const pendingCount = (s as { pending?: number } | undefined)?.pending ?? 0
             return (
               <button
                 key={type}
@@ -276,18 +277,18 @@ function TranslationsPageContent() {
                     <span className="text-sm font-normal text-zinc-500">/{s?.total ?? 0}</span>
                   </div>
                 )}
-                {/* Sub-stats para produção */}
-                {prodS && !statsLoading && (
+                {/* Sub-stats: pendentes para todos, extras para produção */}
+                {s && !statsLoading && (
                   <div className="mt-1 flex gap-2 flex-wrap">
-                    {prodS.pending > 0 && (
-                      <span className="text-[10px] text-amber-500 font-medium">{prodS.pending} pendentes</span>
+                    {pendingCount > 0 && (
+                      <span className="text-[10px] text-amber-500 font-medium">{pendingCount} pendentes</span>
                     )}
-                    {prodS.failed > 0 && (
+                    {prodS?.failed && prodS.failed > 0 ? (
                       <span className="text-[10px] text-red-400 font-medium">{prodS.failed} falhas</span>
-                    )}
-                    {prodS.noSynopsis > 0 && (
+                    ) : null}
+                    {prodS?.noSynopsis && prodS.noSynopsis > 0 ? (
                       <span className="text-[10px] text-zinc-600">{prodS.noSynopsis} sem sinopse</span>
-                    )}
+                    ) : null}
                   </div>
                 )}
                 {s && s.total > 0 && (
