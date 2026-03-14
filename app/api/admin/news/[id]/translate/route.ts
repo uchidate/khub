@@ -150,6 +150,7 @@ export async function POST(
         if (b.type === 'video')          return `[Vídeo](${b.url})`
         if (b.type === 'twitter_embed')  return `[Tweet](${b.url})`
         if (b.type === 'instagram_embed') return `[Instagram](${b.url})`
+        if (b.type === 'tiktok_embed')   return `[TikTok](${b.url})`
         return ''
     }).filter(Boolean).join('\n\n')
 

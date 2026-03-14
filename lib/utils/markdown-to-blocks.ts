@@ -63,7 +63,7 @@ export function markdownToBlocks(markdown: string): NewsBlock[] {
         // TikTok embed — bare URL or [text](url)
         const tiktokUrl = chunk.match(/^(?:\[([^\]]*)\]\()?(https?:\/\/(?:www\.)?(?:tiktok\.com|vm\.tiktok\.com)\/[^\s)]+)\)?$/)
         if (tiktokUrl) {
-            blocks.push({ type: 'video', url: tiktokUrl[2] })
+            blocks.push({ type: 'tiktok_embed', url: tiktokUrl[2] })
             continue
         }
 

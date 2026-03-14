@@ -18,6 +18,8 @@ import { getTMDBDiscoveryService } from '@/lib/services/tmdb-discovery-service';
 import { getOrchestrator } from '@/lib/ai/orchestrator-factory';
 import { getSlackService } from '@/lib/services/slack-notification-service';
 import { getNewsNotificationService } from '@/lib/services/news-notification-service';
+import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks';
+import { cleanContentBySource } from '@/lib/utils/content-cleaner';
 
 const log = createLogger('CRON');
 
@@ -188,6 +190,7 @@ async function runCronProcessing(lockId: string) {
                             publishedAt: news.publishedAt,
                             source: news.source || null,
                             translationStatus: 'pending',
+                            blocks: markdownToBlocks(cleanContentBySource(news.originalContent || news.contentMd || '', news.source ?? undefined)) as object[],
                         },
                     });
 
