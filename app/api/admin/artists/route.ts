@@ -171,6 +171,7 @@ export async function GET(request: NextRequest) {
       : filter === 'no_group'            ? { ...active, memberships: { none: { isActive: true } } }
       : filter === 'no_group_unsynced'   ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null }
       : filter === 'no_group_solo'       ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } }
+      : filter === 'no_productions'      ? { ...active, productions: { none: {} } }
       : {}
 
     const searchWhere = search
@@ -300,6 +301,19 @@ export async function PATCH(request: NextRequest) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
+    const bulk = searchParams.get('bulk')
+
+    // ── Bulk hide/show: PATCH ?bulk=hide  { ids: [...] } ──────────────────────
+    if (bulk === 'hide' || bulk === 'show') {
+      const body = await request.json()
+      const { ids } = z.object({ ids: z.array(z.string()).min(1) }).parse(body)
+      const isHidden = bulk === 'hide'
+      await prisma.artist.updateMany({ where: { id: { in: ids } }, data: { isHidden } })
+      await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'Artist', details: `Bulk ${isHidden ? 'ocultou' : 'restaurou'} ${ids.length} artista(s) — IDs: ${ids.join(', ')}` })
+      revalidatePath('/artists')
+      return NextResponse.json({ updated: ids.length })
+    }
+
     const artistId = searchParams.get('id')
 
     if (!artistId) {

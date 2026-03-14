@@ -64,6 +64,7 @@ export async function GET() {
     withGroup,
     noGroupUnsynced,
     noGroupSolo,
+    noProductions,
     koreanNoTmdbRaw,
     noRomanizedRaw,
     noRomanizedPendingRaw,
@@ -100,6 +101,8 @@ export async function GET() {
     prisma.artist.count({ where: { ...active, memberships: { some: { isActive: true } } } }),
     prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null } }),
     prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } } }),
+    // no productions
+    prisma.artist.count({ where: { ...active, productions: { none: {} } } }),
     // nome errado (Hangul no nameRomanized) E sem tmdbId — requer curadoria manual
     prisma.$queryRaw<[{ count: bigint }]>`
       SELECT COUNT(*) FROM "Artist"
@@ -159,6 +162,7 @@ export async function GET() {
     noGroup,
     noGroupUnsynced,
     noGroupSolo,
+    noProductions,
     koreanNoTmdb,
     noRomanized,
     noRomanizedPending,

@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus } from 'lucide-react'
+import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -54,6 +54,7 @@ interface ArtistStats {
   noSocialPending: number
   noSocialAttempted: number
   noSocialNoTmdb: number
+  noProductions: number
   koreanNoTmdb: number
 }
 
@@ -64,6 +65,7 @@ type FilterType =
   | 'no_photo' | 'no_photo_pending' | 'no_photo_attempted' | 'no_photo_no_tmdb'
   | 'no_social' | 'no_social_pending' | 'no_social_attempted' | 'no_social_no_tmdb'
   | 'no_romanized' | 'no_romanized_pending' | 'no_romanized_attempted' | 'no_romanized_no_tmdb'
+  | 'no_productions'
   | 'flagged'
   | 'korean_no_tmdb'
 
@@ -323,6 +325,7 @@ function StatsBar({ stats, filter, onFilter }: {
   const isNoPhoto = filter.startsWith('no_photo')
   const isNoSocial = filter.startsWith('no_social')
   const isNoRomanized = filter.startsWith('no_romanized')
+  const isNoProductions = filter === 'no_productions'
 
   const mainTabs = [
     { label: 'Todos', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-zinc-400' },
@@ -330,6 +333,7 @@ function StatsBar({ stats, filter, onFilter }: {
     { label: 'Sem Romanizado', value: 'no_romanized' as FilterType, count: stats?.noRomanized ?? null, dot: 'bg-amber-400' },
     { label: 'Sem Foto', value: 'no_photo' as FilterType, count: stats?.noPhoto ?? null, dot: 'bg-orange-400' },
     { label: 'Sem Redes', value: 'no_social' as FilterType, count: stats?.noSocialTotal ?? null, dot: 'bg-blue-400' },
+    { label: 'Sem Produção', value: 'no_productions' as FilterType, count: stats?.noProductions ?? null, dot: 'bg-yellow-500' },
     { label: 'Flagged', value: 'flagged' as FilterType, count: stats?.flagged ?? null, dot: 'bg-red-400' },
   ]
 
@@ -365,7 +369,7 @@ function StatsBar({ stats, filter, onFilter }: {
   ]
 
   const subTabs = isTodos ? todosSubs : isNoHangul ? hangulSubs : isNoPhoto ? photoSubs : isNoSocial ? socialSubs : isNoRomanized ? romanizedSubs : []
-  const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : isNoSocial ? 'no_social' : 'no_romanized'
+  const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : isNoSocial ? 'no_social' : isNoRomanized ? 'no_romanized' : 'no_productions'
 
   return (
     <div className="space-y-2">
@@ -377,6 +381,7 @@ function StatsBar({ stats, filter, onFilter }: {
             : tab.value === 'no_photo' ? isNoPhoto
             : tab.value === 'no_social' ? isNoSocial
             : tab.value === 'no_romanized' ? isNoRomanized
+            : tab.value === 'no_productions' ? isNoProductions
             : filter === tab.value
           return (
             <button key={tab.value} onClick={() => onFilter(tab.value)}
@@ -590,6 +595,18 @@ export default function ArtistsAdminPage() {
   const handleCreate = () => setFormOpen(true)
   const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
+  const handleBulkHide = async (ids: string[], clearSelection: () => void) => {
+    const res = await fetch('/api/admin/artists?bulk=hide', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    if (!res.ok) return
+    clearSelection()
+    refetchTable()
+    fetchStats()
+  }
+
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     if (typeof data.stageNames === 'string') {
       data.stageNames = data.stageNames
@@ -655,6 +672,15 @@ export default function ArtistsAdminPage() {
           extraParams={filter ? { filter } : undefined}
           editHref={(artist) => `/admin/artists/${artist.id}`}
           onDelete={handleDelete}
+          bulkActions={(ids, clearSelection) => (
+            <button
+              onClick={() => handleBulkHide(ids, clearSelection)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-700/50 border border-zinc-600/40 text-zinc-300 rounded-lg text-sm hover:bg-zinc-600/50 transition-colors font-medium"
+            >
+              <EyeOff size={14} />
+              Ocultar {ids.length}
+            </button>
+          )}
           searchPlaceholder="Buscar por nome..."
           actions={(artist) => (
             <div className="flex items-center gap-1">

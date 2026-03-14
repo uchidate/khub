@@ -20,6 +20,8 @@ interface DataTableProps<T> {
   /** If provided, renders an anchor link instead of a callback button for editing */
   editHref?: (item: T) => string
   onDelete?: (ids: string[]) => void
+  /** Extra bulk action buttons rendered in toolbar when rows are selected. Receives selected IDs and a clearSelection callback. */
+  bulkActions?: (ids: string[], clearSelection: () => void) => React.ReactNode
   actions?: (item: T) => React.ReactNode
   searchPlaceholder?: string
   filters?: React.ReactNode
@@ -89,6 +91,7 @@ export function DataTable<T extends { id: string }>({
   onEdit,
   editHref,
   onDelete,
+  bulkActions,
   actions,
   searchPlaceholder = 'Buscar',
   filters,
@@ -159,10 +162,12 @@ export function DataTable<T extends { id: string }>({
     else setSelected(new Set(data.map((d) => d.id)))
   }
 
+  const clearSelection = () => setSelected(new Set())
+
   const handleDeleteSelected = () => {
     if (onDelete && selected.size > 0) {
       onDelete(Array.from(selected))
-      setSelected(new Set())
+      clearSelection()
     }
   }
 
@@ -199,6 +204,7 @@ export function DataTable<T extends { id: string }>({
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {filters}
+          {selected.size > 0 && bulkActions && bulkActions(Array.from(selected), clearSelection)}
           {selected.size > 0 && onDelete && (
             <button
               onClick={handleDeleteSelected}
