@@ -6,7 +6,6 @@ import { getErrorMessage } from '@/lib/utils/error'
 export const dynamic = 'force-dynamic'
 
 type TranslationStatus = 'pending' | 'draft' | 'approved'
-type ProductionStatusFilter = '' | 'pending' | 'pt' | 'en' | 'manual'
 
 /**
  * Resolve IDs de entidades que batem com o filtro de status, consultando ContentTranslation.
@@ -91,11 +90,6 @@ export async function GET(req: NextRequest) {
     } else if (entityType === 'production') {
       // Productions: status via translationStatus + ContentTranslation
       const idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
-      const prodStatusFilter = statusFilter === 'pending'
-        ? { translationStatus: 'pending', synopsis: { not: null as null } }
-        : statusFilter === 'approved'
-          ? { translationStatus: 'completed' }
-          : {}
       const where = {
         isHidden: false,
         synopsis: { not: null as null },

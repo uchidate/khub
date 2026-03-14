@@ -20,8 +20,8 @@ import { getSlackService } from '@/lib/services/slack-notification-service';
 import { getNewsNotificationService } from '@/lib/services/news-notification-service';
 import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks';
 import { cleanContentBySource } from '@/lib/utils/content-cleaner';
-import { getArtistTranslationService } from '@/lib/services/artist-translation-service';
-import { getProductionTranslationService } from '@/lib/services/production-translation-service';
+// import { getArtistTranslationService } from '@/lib/services/artist-translation-service'
+// import { getProductionTranslationService } from '@/lib/services/production-translation-service'
 
 const log = createLogger('CRON');
 
