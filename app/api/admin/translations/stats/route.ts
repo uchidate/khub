@@ -27,6 +27,22 @@ export async function GET() {
     const prodCtIds = prodCtRows.map(r => r.entityId)
     const prodCtTranslatedIds = prodCtRows.filter(r => r.status === 'draft' || r.status === 'approved').map(r => r.entityId)
 
+    // Pré-busca IDs de artistas com bio PT-BR via TMDB (sem CT)
+    const [artistCtRows, artistTmdbPtBioRows] = await Promise.all([
+      prisma.contentTranslation.findMany({
+        where: { entityType: 'artist', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
+        select: { entityId: true },
+      }),
+      prisma.artist.findMany({
+        where: { isHidden: false, bio: { not: null }, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+        select: { id: true },
+      }),
+    ])
+    const artistTranslatedIds = Array.from(new Set([
+      ...artistCtRows.map(r => r.entityId),
+      ...artistTmdbPtBioRows.map(r => r.id),
+    ]))
+
     const [
       artistTotal,
       groupTotal,
@@ -38,7 +54,6 @@ export async function GET() {
       productionFailed,
       productionNoSynopsis,
       newsTotal,
-      artistTranslated,
       groupTranslated,
       newsTranslated,
     ] = await Promise.all([
@@ -66,9 +81,6 @@ export async function GET() {
       // news total: todas as notícias não ocultas
       prisma.news.count({ where: { isHidden: false } }),
       prisma.contentTranslation.count({
-        where: { entityType: 'artist', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
-      }),
-      prisma.contentTranslation.count({
         where: { entityType: 'group', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
       }),
       // news traduzidas: CT (nova pipeline) OU translationStatus='completed' (legada)
@@ -84,7 +96,7 @@ export async function GET() {
     ])
 
     return NextResponse.json({
-      artist:     { total: artistTotal,     translated: artistTranslated,     pending: Math.max(0, artistTotal - artistTranslated) },
+      artist:     { total: artistTotal,     translated: artistTranslatedIds.length, pending: Math.max(0, artistTotal - artistTranslatedIds.length) },
       group:      { total: groupTotal,      translated: groupTranslated,      pending: Math.max(0, groupTotal - groupTranslated) },
       production: { total: productionTotal, translated: productionTranslated, pending: productionPending, failed: productionFailed, noSynopsis: productionNoSynopsis },
       news:       { total: newsTotal,       translated: newsTranslated,       pending: Math.max(0, newsTotal - newsTranslated) },

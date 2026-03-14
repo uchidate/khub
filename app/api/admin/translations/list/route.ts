@@ -58,7 +58,30 @@ export async function GET(req: NextRequest) {
     let total = 0
 
     if (entityType === 'artist') {
-      const idFilter = await resolveStatusIds('artist', 'bio', statusFilter)
+      let idFilter = await resolveStatusIds('artist', 'bio', statusFilter)
+      if (statusFilter === 'pending') {
+        // Excluir também artistas com bio já em PT-BR (fieldSources.bio.source='tmdb_pt')
+        const tmdbPtBioArtists = await prisma.artist.findMany({
+          where: { isHidden: false, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+          select: { id: true },
+        })
+        const tmdbPtIds = tmdbPtBioArtists.map(a => a.id)
+        if (tmdbPtIds.length > 0) {
+          const base = idFilter && 'notIn' in idFilter ? idFilter.notIn : []
+          idFilter = { notIn: Array.from(new Set([...base, ...tmdbPtIds])) }
+        }
+      } else if (statusFilter === 'approved') {
+        // Incluir também artistas com bio PT-BR do TMDB mesmo sem CT
+        const tmdbPtBioArtists = await prisma.artist.findMany({
+          where: { isHidden: false, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+          select: { id: true },
+        })
+        const tmdbPtIds = tmdbPtBioArtists.map(a => a.id)
+        if (tmdbPtIds.length > 0) {
+          const base = idFilter && 'in' in idFilter ? idFilter.in : []
+          idFilter = { in: Array.from(new Set([...base, ...tmdbPtIds])) }
+        }
+      }
       const where = {
         bio: { not: null as null },
         isHidden: false,
@@ -66,10 +89,13 @@ export async function GET(req: NextRequest) {
         ...(idFilter ? { id: idFilter } : {}),
       }
       const [artists, count] = await Promise.all([
-        prisma.artist.findMany({ where, select: { id: true, nameRomanized: true, bio: true }, orderBy: { nameRomanized: 'asc' }, skip, take: limit }),
+        prisma.artist.findMany({ where, select: { id: true, nameRomanized: true, bio: true, fieldSources: true }, orderBy: { nameRomanized: 'asc' }, skip, take: limit }),
         prisma.artist.count({ where }),
       ])
-      items = artists.map(a => ({ id: a.id, label: a.nameRomanized, fields: ['bio'], snippet: a.bio?.slice(0, 220) ?? undefined }))
+      items = artists.map(a => ({
+        id: a.id, label: a.nameRomanized, fields: ['bio'], snippet: a.bio?.slice(0, 220) ?? undefined,
+        artistBioSource: (a.fieldSources as Record<string, { source: string }> | null)?.bio?.source ?? null,
+      }))
       total = count
 
     } else if (entityType === 'group') {
@@ -232,12 +258,16 @@ export async function GET(req: NextRequest) {
       if (overallStatus === 'pending' && (item.synopsisSource as string) === 'tmdb_pt') {
         overallStatus = 'approved'
       }
+      // Para artists: fieldSources.bio.source='tmdb_pt' = bio já em PT-BR → tratar como approved
+      if (overallStatus === 'pending' && (item.artistBioSource as string) === 'tmdb_pt') {
+        overallStatus = 'approved'
+      }
       // Para news: se newsTranslationStatus='completed' e sem ContentTranslation → tratar como draft
       const newsStatus = item.newsTranslationStatus as string | undefined
       if (overallStatus === 'pending' && newsStatus === 'completed') {
         overallStatus = 'draft'
       }
-      const { newsTranslationStatus: _nts, ...restItem } = item
+      const { newsTranslationStatus: _nts, artistBioSource: _abs, ...restItem } = item
       return {
         ...restItem,
         status: overallStatus,
