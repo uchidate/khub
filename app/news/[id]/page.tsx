@@ -116,7 +116,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
     // Deduplica com generateMetadata via React.cache
     const news = await getNews(params.id)
 
-    if (!news || news.isHidden) {
+    if (!news || news.isHidden || news.status !== 'published') {
         notFound()
     }
 

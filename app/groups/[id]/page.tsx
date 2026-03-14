@@ -124,7 +124,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
         }),
         memberArtistIds.length > 0
             ? prisma.news.findMany({
-                where: { artists: { some: { artistId: { in: memberArtistIds } } } },
+                where: { isHidden: false, status: 'published', artists: { some: { artistId: { in: memberArtistIds } } } },
                 take: 6,
                 orderBy: { publishedAt: 'desc' },
                 select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true, contentMd: true },

@@ -190,6 +190,7 @@ async function runCronProcessing(lockId: string) {
                             publishedAt: news.publishedAt,
                             source: news.source || null,
                             translationStatus: 'pending',
+                            status: 'draft',
                             blocks: markdownToBlocks(cleanContentBySource(news.originalContent || news.contentMd || '', news.source ?? undefined)) as object[],
                         },
                     });

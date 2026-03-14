@@ -148,7 +148,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
     const [artistNews, instagramPosts, newsCount, bioPt, relatedArtists] = await Promise.all([
         prisma.news.findMany({
-            where: { artists: { some: { artistId: params.id } } },
+            where: { isHidden: false, status: 'published', artists: { some: { artistId: params.id } } },
             select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
             orderBy: { publishedAt: 'desc' },
             take: 6,

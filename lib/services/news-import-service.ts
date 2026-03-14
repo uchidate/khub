@@ -198,6 +198,7 @@ export async function importOne(
             contentType,
             tags:            [],
             blocks:          blocks as object[],
+            status:          'draft',
         },
     })
 

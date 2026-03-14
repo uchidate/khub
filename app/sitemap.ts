@@ -48,6 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.news.findMany({
+                where: { isHidden: false, status: 'published' },
                 select: { id: true, publishedAt: true },
                 orderBy: { publishedAt: 'desc' },
             }),
