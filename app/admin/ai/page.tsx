@@ -20,17 +20,35 @@ function fmtMs(ms: number) {
     return `${ms}ms`
 }
 
+const emptySummary: ReturnType<typeof getAiSummary> extends Promise<infer T> ? T : never = {
+    totalCalls: 0, successCalls: 0, errorCalls: 0, successRate: 100,
+    totalCostUsd: 0, avgLatencyMs: 0,
+    callsByProvider: {}, callsByFeature: {}, costByProvider: {},
+}
+
 export default async function AiDashboardPage() {
     const session = await getServerSession(authOptions)
     if (session?.user?.role !== 'admin') redirect('/admin')
 
-    const [summary, costByDay, monthlySpend, configs, logsResult] = await Promise.all([
-        getAiSummary(30),
-        getAiCostByDay(14),
-        getMonthlySpend(),
-        getAllAiConfigs(),
-        getAiRecentLogs({ limit: 25 }),
-    ])
+    let summary = emptySummary
+    let costByDay: Awaited<ReturnType<typeof getAiCostByDay>> = []
+    let monthlySpend: Awaited<ReturnType<typeof getMonthlySpend>> = { byProvider: {}, total: 0 }
+    let configs: Awaited<ReturnType<typeof getAllAiConfigs>> = []
+    let logsResult: Awaited<ReturnType<typeof getAiRecentLogs>> = { logs: [], total: 0, pages: 0 }
+    let loadError: string | null = null
+
+    try {
+        ;[summary, costByDay, monthlySpend, configs, logsResult] = await Promise.all([
+            getAiSummary(30),
+            getAiCostByDay(14),
+            getMonthlySpend(),
+            getAllAiConfigs(),
+            getAiRecentLogs({ limit: 25 }),
+        ])
+    } catch (err: unknown) {
+        loadError = err instanceof Error ? err.message : String(err)
+        console.error('[AI Dashboard] Failed to load data:', loadError)
+    }
 
     const maxCost  = Math.max(...costByDay.map(d => d.cost), 0.0001)
     const maxCalls = Math.max(...costByDay.map(d => d.calls), 1)
@@ -52,6 +70,14 @@ export default async function AiDashboardPage() {
     return (
         <AdminLayout title="Dashboard de IA">
             <div className="space-y-6">
+                {loadError && (
+                    <div className="bg-red-900/20 border border-red-700/40 rounded-xl p-4">
+                        <p className="text-xs font-bold text-red-400 mb-1">Erro ao carregar dados do dashboard</p>
+                        <p className="text-xs text-red-500/80 font-mono break-all">{loadError}</p>
+                        <p className="text-xs text-zinc-600 mt-2">Verifique se as tabelas <code>ai_usage_log</code> e <code>ai_config</code> existem no banco. Execute <code>prisma migrate deploy</code> se necessário.</p>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
