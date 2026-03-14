@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown } from 'lucide-react'
@@ -116,7 +116,7 @@ function ProductionBadge({ item }: { item: TranslationItem }) {
   return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">Pendente</span>
 }
 
-export default function TranslationsPage() {
+function TranslationsPageContent() {
   const searchParams = useSearchParams()
   const [stats, setStats] = useState<Stats | null>(null)
   const initialTab = (searchParams.get('tab') as EntityType | null) ?? 'artist'
@@ -533,5 +533,13 @@ export default function TranslationsPage() {
         </div>
       </div>
     </AdminLayout>
+  )
+}
+
+export default function TranslationsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TranslationsPageContent />
+    </Suspense>
   )
 }
