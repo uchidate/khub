@@ -53,6 +53,11 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '20')
   const skip = (page - 1) * limit
+  // hidden=true → só ocultos; hidden=false → só visíveis; ausente → todos
+  const hiddenParam = searchParams.get('hidden')
+  const hiddenWhere = hiddenParam === 'true' ? { isHidden: true }
+    : hiddenParam === 'false' ? { isHidden: false }
+    : {}
 
   try {
     let where: any = {}
@@ -61,6 +66,7 @@ export async function GET(request: NextRequest) {
       case 'suspicious':
         // Artistas sem nome Hangul E sem local de nascimento coreano
         where = {
+          ...hiddenWhere,
           AND: [
             { flaggedAsNonKorean: false },
             {
@@ -77,6 +83,7 @@ export async function GET(request: NextRequest) {
         // Artistas adicionados nos últimos 7 dias
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         where = {
+          ...hiddenWhere,
           createdAt: { gte: sevenDaysAgo },
           flaggedAsNonKorean: false,
         }
@@ -85,17 +92,17 @@ export async function GET(request: NextRequest) {
 
       case 'flagged':
         // Artistas já flagged
-        where = { flaggedAsNonKorean: true }
+        where = { ...hiddenWhere, flaggedAsNonKorean: true }
         break
 
       case 'adult':
-        where = buildAdultArtistCondition()
+        where = { ...hiddenWhere, ...buildAdultArtistCondition() }
         break
 
       case 'all':
       default:
         // Todos os artistas (sem flagged)
-        where = { flaggedAsNonKorean: false }
+        where = { ...hiddenWhere, flaggedAsNonKorean: false }
         break
     }
 
@@ -103,11 +110,11 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('stats') === '1') {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       const [suspicious, recent, flagged, adult, all] = await Promise.all([
-        prisma.artist.count({ where: { flaggedAsNonKorean: false, OR: [{ nameHangul: null }, { placeOfBirth: null }] } }),
-        prisma.artist.count({ where: { createdAt: { gte: sevenDaysAgo }, flaggedAsNonKorean: false } }),
-        prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
-        prisma.artist.count({ where: buildAdultArtistCondition() }),
-        prisma.artist.count({ where: { flaggedAsNonKorean: false } }),
+        prisma.artist.count({ where: { ...hiddenWhere, flaggedAsNonKorean: false, OR: [{ nameHangul: null }, { placeOfBirth: null }] } }),
+        prisma.artist.count({ where: { ...hiddenWhere, createdAt: { gte: sevenDaysAgo }, flaggedAsNonKorean: false } }),
+        prisma.artist.count({ where: { ...hiddenWhere, flaggedAsNonKorean: true } }),
+        prisma.artist.count({ where: { ...hiddenWhere, ...buildAdultArtistCondition() } }),
+        prisma.artist.count({ where: { ...hiddenWhere, flaggedAsNonKorean: false } }),
       ])
       return NextResponse.json({ suspicious, recent, flagged, adult, all })
     }
@@ -141,6 +148,17 @@ export async function GET(request: NextRequest) {
       }),
       prisma.artist.count({ where }),
     ])
+
+    // Conta produções ocultas por artista (batch)
+    const artistIds = artists.map(a => a.id)
+    const hiddenProdRows = artistIds.length > 0
+      ? await prisma.artistProduction.groupBy({
+          by: ['artistId'],
+          where: { artistId: { in: artistIds }, production: { isHidden: true } },
+          _count: { productionId: true },
+        })
+      : []
+    const hiddenProdMap = new Map(hiddenProdRows.map(r => [r.artistId, r._count.productionId]))
 
     // Calcular métricas de suspeição para cada artista
     const artistsWithScore = artists.map(artist => {
@@ -193,6 +211,7 @@ export async function GET(request: NextRequest) {
         ...artist,
         suspicionScore,
         suspicionReasons: reasons,
+        hiddenProductionsCount: hiddenProdMap.get(artist.id) ?? 0,
       }
     })
 

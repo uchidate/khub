@@ -24,6 +24,7 @@ type Artist = {
   suspicionScore: number
   suspicionReasons: string[]
   _count: { productions: number; memberships: number }
+  hiddenProductionsCount: number
 }
 
 type Filter = 'suspicious' | 'recent' | 'flagged' | 'adult' | 'all'
@@ -80,6 +81,7 @@ export default function ArtistModerationPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('suspicious')
+  const [hiddenFilter, setHiddenFilter] = useState<'all' | 'visible' | 'hidden'>('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -92,16 +94,18 @@ export default function ArtistModerationPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/artists/moderation?stats=1&filter=all')
+      const hiddenParam = hiddenFilter === 'hidden' ? '&hidden=true' : hiddenFilter === 'visible' ? '&hidden=false' : ''
+      const res = await fetch(`/api/admin/artists/moderation?stats=1&filter=all${hiddenParam}`)
       if (res.ok) setStats(await res.json())
     } catch { /* ignore */ }
-  }, [])
+  }, [hiddenFilter])
 
   const fetchArtists = useCallback(async (p = page) => {
     setLoading(true)
     setSelected(new Set())
     try {
-      const res = await fetch(`/api/admin/artists/moderation?filter=${filter}&page=${p}&limit=20`)
+      const hiddenParam = hiddenFilter === 'hidden' ? '&hidden=true' : hiddenFilter === 'visible' ? '&hidden=false' : ''
+      const res = await fetch(`/api/admin/artists/moderation?filter=${filter}&page=${p}&limit=20${hiddenParam}`)
       const data = await res.json()
       if (res.ok) {
         setArtists(data.artists)
@@ -111,10 +115,10 @@ export default function ArtistModerationPage() {
     } catch { /* ignore */ } finally {
       setLoading(false)
     }
-  }, [filter, page])
+  }, [filter, hiddenFilter, page])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-  useEffect(() => { setPage(1); fetchArtists(1) }, [filter, fetchArtists])
+  useEffect(() => { setPage(1); fetchArtists(1) }, [filter, hiddenFilter, fetchArtists])
   useEffect(() => { fetchArtists(page) }, [page, fetchArtists])
 
   function openConfirm(opts: typeof modal) { setModal({ ...opts, open: true }) }
@@ -218,7 +222,7 @@ export default function ArtistModerationPage() {
         )}
 
         {/* Filter tabs */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
           <div className="flex flex-wrap gap-2">
             {filterTabs.map(f => {
               const isActive = filter === f.key
@@ -243,6 +247,23 @@ export default function ArtistModerationPage() {
                 </button>
               )
             })}
+          </div>
+          {/* Subfiltro visibilidade */}
+          <div className="flex items-center gap-1 pt-1 border-t border-zinc-800">
+            <span className="text-xs text-zinc-600 mr-1">Visibilidade:</span>
+            {(['all', 'visible', 'hidden'] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setHiddenFilter(v)}
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+                  hiddenFilter === v
+                    ? 'bg-zinc-600 text-white'
+                    : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+                }`}
+              >
+                {v === 'all' ? 'Todos' : v === 'visible' ? 'Visíveis' : 'Ocultos'}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -384,7 +405,7 @@ export default function ArtistModerationPage() {
                           ? <span>{artist.placeOfBirth}</span>
                           : <span className="text-red-400/70">Sem local de nascimento</span>}
                         <span>·</span>
-                        <span>{artist._count.productions} prod.</span>
+                        <span>{artist._count.productions} prod.{artist.hiddenProductionsCount > 0 && <span className="text-zinc-600 ml-0.5">({artist.hiddenProductionsCount} ocultas)</span>}</span>
                         <span>{artist._count.memberships} grupos</span>
                         {artist.tmdbId && <span className="text-blue-400/80">TMDB ✓</span>}
                       </div>
