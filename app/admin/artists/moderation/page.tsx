@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
-  Shield, CheckCircle, Trash2, RefreshCw,
+  Shield, CheckCircle, EyeOff, RefreshCw,
   ShieldAlert, Flag, FlagOff, CheckSquare, Square, Minus,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -136,11 +136,11 @@ export default function ArtistModerationPage() {
     } finally { removeActioning(ids) }
   }
 
-  async function doDelete(ids: string[]) {
+  async function doHide(ids: string[]) {
     addActioning(ids)
     try {
-      const res = await fetch('/api/admin/artists/moderation', {
-        method: 'DELETE',
+      const res = await fetch('/api/admin/artists?bulk=hide', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids }),
       })
@@ -148,26 +148,24 @@ export default function ArtistModerationPage() {
     } finally { removeActioning(ids) }
   }
 
-  function handleDelete(artist: Artist) {
+  function handleHide(artist: Artist) {
     openConfirm({
       open: true,
-      title: 'Remover artista',
-      message: `"${artist.nameRomanized}" será removido permanentemente. Esta ação não pode ser desfeita.`,
-      confirmLabel: 'Remover',
-      destructive: true,
-      onConfirm: () => doDelete([artist.id]),
+      title: 'Ocultar artista',
+      message: `"${artist.nameRomanized}" ficará oculto do site público. É possível restaurar depois em Admin → Artistas.`,
+      confirmLabel: 'Ocultar',
+      onConfirm: () => doHide([artist.id]),
     })
   }
 
-  function handleBulkDelete() {
+  function handleBulkHide() {
     const ids = Array.from(selected)
     openConfirm({
       open: true,
-      title: `Remover ${ids.length} artistas`,
-      message: `${ids.length} artistas serão removidos permanentemente.`,
-      confirmLabel: 'Remover todos',
-      destructive: true,
-      onConfirm: () => doDelete(ids),
+      title: `Ocultar ${ids.length} artistas`,
+      message: `${ids.length} artistas ficarão ocultos do site público. É possível restaurar depois em Admin → Artistas.`,
+      confirmLabel: 'Ocultar todos',
+      onConfirm: () => doHide(ids),
     })
   }
 
@@ -293,10 +291,10 @@ export default function ArtistModerationPage() {
               </>
             )}
             <button
-              onClick={handleBulkDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-red-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+              onClick={handleBulkHide}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
             >
-              <Trash2 size={12} /> Remover
+              <EyeOff size={12} /> Ocultar
             </button>
             <button onClick={() => setSelected(new Set())} className="text-zinc-500 hover:text-zinc-300 transition-colors text-xs">
               Limpar
@@ -440,12 +438,12 @@ export default function ArtistModerationPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(artist)}
+                          onClick={() => handleHide(artist)}
                           disabled={isActioning}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-red-400 transition-colors disabled:opacity-50 border border-zinc-700"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors disabled:opacity-50 border border-zinc-700"
                         >
-                          {isActioning ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                          Remover
+                          {isActioning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
+                          Ocultar
                         </button>
                         <Link href={`/artists/${artist.id}`} target="_blank" className="text-xs text-purple-400 hover:underline">
                           Ver →
