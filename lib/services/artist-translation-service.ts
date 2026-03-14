@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { getOrchestrator } from '../ai/orchestrator-factory';
+import { detectLanguage } from './language-detection-service';
 
 /**
  * Artist Translation Service
@@ -63,14 +64,20 @@ export class ArtistTranslationService {
                     continue;
                 }
 
+                // TMDB sempre retorna bios em inglês; detectLanguage resolve casos de bio manual/coreana
+                const detectedLang = detectLanguage(artist.bio || '')
+                // Se não reconhecível (texto muito curto, ex: nome apenas), assume inglês
+                const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang;
+
                 // Notifica início do processamento ANTES da chamada de IA
                 onProgress?.({ current: i + 1, total, name: artist.nameRomanized, status: 'processing' });
-                console.log(`  🔄 Translating: ${artist.nameRomanized}...`);
+                console.log(`  🔄 Translating [${sourceLang}]: ${artist.nameRomanized}...`);
 
                 const translatedBio = await this.translateBioToPortuguese(
                     artist.nameRomanized,
                     artist.bio || '',
-                    artist.roles[0] || 'Artista'
+                    artist.roles[0] || 'Artista',
+                    sourceLang
                 );
 
                 // Salva tradução em ContentTranslation (preserva bio original intacto)
@@ -90,10 +97,12 @@ export class ArtistTranslationService {
                         locale: 'pt-BR',
                         value: translatedBio,
                         status: 'draft',
+                        sourceLang,
                     },
                     update: {
                         value: translatedBio,
                         status: 'draft',
+                        sourceLang,
                     },
                 });
 
@@ -137,7 +146,8 @@ export class ArtistTranslationService {
     private async translateBioToPortuguese(
         artistName: string,
         biography: string,
-        role: string
+        role: string,
+        sourceLang: string = 'en'
     ): Promise<string> {
         if (!biography || biography.trim().length === 0) {
             return `${artistName} é ${role} conhecido(a) na indústria do entretenimento coreano.`;
@@ -147,7 +157,7 @@ export class ArtistTranslationService {
             return this.enrichAndTranslate(artistName, biography, role);
         }
 
-        return this.translateWithAI(artistName, biography);
+        return this.translateWithAI(artistName, biography, sourceLang);
     }
 
     private async enrichAndTranslate(
@@ -185,10 +195,15 @@ Requisitos:
 
     private async translateWithAI(
         artistName: string,
-        text: string
+        text: string,
+        sourceLang: string = 'en'
     ): Promise<string> {
         try {
-            const prompt = `Traduza a seguinte biografia para português brasileiro de forma natural e profissional:
+            // Coreano → DeepSeek (melhor suporte); inglês/unknown → Ollama
+            const provider = sourceLang === 'ko' ? 'deepseek' : 'ollama';
+            const langLabel = sourceLang === 'ko' ? 'coreano' : 'inglês';
+
+            const prompt = `Traduza a seguinte biografia de ${langLabel} para português brasileiro de forma natural e profissional:
 
 ${text}
 
@@ -202,7 +217,7 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ translation: string }>(
                 prompt,
                 '{ "translation": "string (biografia traduzida para português)" }',
-                { preferredProvider: 'ollama' }
+                { preferredProvider: provider }
             );
 
             return result.translation;

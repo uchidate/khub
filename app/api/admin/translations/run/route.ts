@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
 import { getArtistTranslationService } from '@/lib/services/artist-translation-service'
 import { getGroupTranslationService } from '@/lib/services/group-translation-service'
+import { getProductionTranslationService } from '@/lib/services/production-translation-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,8 +22,8 @@ export async function GET(req: NextRequest) {
     const entityType = searchParams.get('entityType') ?? ''
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '10')))
 
-    if (!['artist', 'group'].includes(entityType)) {
-        return NextResponse.json({ error: 'entityType inválido. Use "artist" ou "group".' }, { status: 400 })
+    if (!['artist', 'group', 'production'].includes(entityType)) {
+        return NextResponse.json({ error: 'entityType inválido. Use "artist", "group" ou "production".' }, { status: 400 })
     }
 
     const encoder = new TextEncoder()
@@ -38,6 +39,11 @@ export async function GET(req: NextRequest) {
                 if (entityType === 'artist') {
                     const service = getArtistTranslationService(prisma)
                     result = await service.translatePendingArtists(limit, (p) => {
+                        send(controller, { type: 'progress', ...p })
+                    })
+                } else if (entityType === 'production') {
+                    const service = getProductionTranslationService(prisma)
+                    result = await service.translatePendingProductions(limit, (p) => {
                         send(controller, { type: 'progress', ...p })
                     })
                 } else {
@@ -92,7 +98,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ ok: true, entityType, ...result })
         }
 
-        return NextResponse.json({ error: 'entityType inválido. Use "artist" ou "group".' }, { status: 400 })
+        if (entityType === 'production') {
+            const service = getProductionTranslationService(prisma)
+            const result = await service.translatePendingProductions(limit)
+            return NextResponse.json({ ok: true, entityType, ...result })
+        }
+
+        return NextResponse.json({ error: 'entityType inválido. Use "artist", "group" ou "production".' }, { status: 400 })
     } catch (err) {
         return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 })
     }

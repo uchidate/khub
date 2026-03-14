@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { getOrchestrator } from '../ai/orchestrator-factory';
+import { detectLanguage } from './language-detection-service';
 
 /**
  * Group Translation Service
@@ -69,13 +70,19 @@ export class GroupTranslationService {
                     continue;
                 }
 
+                // TMDB sempre retorna bios em inglês; detectLanguage resolve casos de bio manual/coreana
+                const detectedLang = detectLanguage(group.bio || '')
+                // Se não reconhecível (texto muito curto), assume inglês
+                const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang;
+
                 // Notifica início do processamento ANTES da chamada de IA
                 onProgress?.({ current: i + 1, total, name: group.name, status: 'processing' });
-                console.log(`  🔄 Translating: ${group.name}...`);
+                console.log(`  🔄 Translating [${sourceLang}]: ${group.name}...`);
 
                 const translatedBio = await this.translateBioToPortuguese(
                     group.name,
-                    group.bio || ''
+                    group.bio || '',
+                    sourceLang
                 );
 
                 // Salva tradução em ContentTranslation (preserva bio original intacto)
@@ -95,10 +102,12 @@ export class GroupTranslationService {
                         locale: 'pt-BR',
                         value: translatedBio,
                         status: 'draft',
+                        sourceLang,
                     },
                     update: {
                         value: translatedBio,
                         status: 'draft',
+                        sourceLang,
                     },
                 });
 
@@ -126,7 +135,8 @@ export class GroupTranslationService {
 
     private async translateBioToPortuguese(
         groupName: string,
-        biography: string
+        biography: string,
+        sourceLang: string = 'en'
     ): Promise<string> {
         if (!biography || biography.trim().length === 0) {
             return `${groupName} é um grupo musical sul-coreano da indústria do K-pop.`;
@@ -136,7 +146,7 @@ export class GroupTranslationService {
             return this.enrichAndTranslate(groupName, biography);
         }
 
-        return this.translateWithAI(groupName, biography);
+        return this.translateWithAI(groupName, biography, sourceLang);
     }
 
     private async enrichAndTranslate(
@@ -170,10 +180,15 @@ Requisitos:
 
     private async translateWithAI(
         groupName: string,
-        text: string
+        text: string,
+        sourceLang: string = 'en'
     ): Promise<string> {
         try {
-            const prompt = `Traduza a seguinte biografia de grupo musical para português brasileiro de forma natural e profissional:
+            // Coreano → DeepSeek (melhor suporte); inglês/unknown → Ollama
+            const provider = sourceLang === 'ko' ? 'deepseek' : 'ollama';
+            const langLabel = sourceLang === 'ko' ? 'coreano' : 'inglês';
+
+            const prompt = `Traduza a seguinte biografia de grupo musical de ${langLabel} para português brasileiro de forma natural e profissional:
 
 ${text}
 
@@ -188,7 +203,7 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ translation: string }>(
                 prompt,
                 '{ "translation": "string (biografia traduzida para português)" }',
-                { preferredProvider: 'ollama' }
+                { preferredProvider: provider }
             );
 
             return result.translation;

@@ -20,6 +20,8 @@ import { getSlackService } from '@/lib/services/slack-notification-service';
 import { getNewsNotificationService } from '@/lib/services/news-notification-service';
 import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks';
 import { cleanContentBySource } from '@/lib/utils/content-cleaner';
+import { getArtistTranslationService } from '@/lib/services/artist-translation-service';
+import { getProductionTranslationService } from '@/lib/services/production-translation-service';
 
 const log = createLogger('CRON');
 
@@ -476,55 +478,11 @@ async function runCronProcessing(lockId: string) {
                 }
             }
 
-            // Prioridade 3: Artistas com bio em inglês → traduzir para PT-BR (usa Ollama)
-            if (normalizedCount < 2) {
-                const artistWithEnglishBio = await prisma.artist.findFirst({
-                    where: { bio: { not: null } },
-                    orderBy: { updatedAt: 'asc' }
-                });
-
-                if (artistWithEnglishBio?.bio && isLikelyEnglish(artistWithEnglishBio.bio)) {
-                    const orchestrator = getOrchestrator();
-                    const result: any = await orchestrator.generateStructured(
-                        `Traduza a seguinte biografia para português brasileiro de forma natural e profissional. Mantenha 2-3 frases, tom acessível:\n\n${artistWithEnglishBio.bio}`,
-                        '{ "bio": "string (biografia em português brasileiro)" }',
-                        { maxTokens: 200 }
-                    );
-                    if (result?.bio && result.bio.length > 20 && !isLikelyEnglish(result.bio)) {
-                        await prisma.artist.update({
-                            where: { id: artistWithEnglishBio.id },
-                            data: { bio: result.bio }
-                        });
-                        normalizedCount++;
-                        log.info(`Fixed English bio: ${artistWithEnglishBio.nameRomanized}`);
-                    }
-                }
-            }
-
-            // Prioridade 4: Produções com synopsis em inglês → traduzir para PT-BR
-            if (normalizedCount < 2) {
-                const productionWithEnglishSynopsis = await prisma.production.findFirst({
-                    where: { synopsis: { not: null } },
-                    orderBy: { updatedAt: 'asc' }
-                });
-
-                if (productionWithEnglishSynopsis?.synopsis && isLikelyEnglish(productionWithEnglishSynopsis.synopsis)) {
-                    const orchestrator = getOrchestrator();
-                    const result: any = await orchestrator.generateStructured(
-                        `Traduza a seguinte sinopse para português brasileiro de forma natural. Mantenha 2-3 frases, sem spoilers:\n\n${productionWithEnglishSynopsis.synopsis}`,
-                        '{ "synopsis": "string (sinopse em português brasileiro)" }',
-                        { maxTokens: 200 }
-                    );
-                    if (result?.synopsis && result.synopsis.length > 20 && !isLikelyEnglish(result.synopsis)) {
-                        await prisma.production.update({
-                            where: { id: productionWithEnglishSynopsis.id },
-                            data: { synopsis: result.synopsis }
-                        });
-                        normalizedCount++;
-                        log.info(`Fixed English synopsis: ${productionWithEnglishSynopsis.titlePt}`);
-                    }
-                }
-            }
+            // Prioridade 3 e 4: Tradução de bios e sinopses
+            // ⚠️ Desativado no cron — tradução consome tokens e deve ser acionada
+            // manualmente pelo admin em /admin/translations.
+            // Os serviços ArtistTranslationService e ProductionTranslationService
+            // estão disponíveis via POST /api/admin/translations/run.
 
             // Prioridade 5: Notícias antigas sem markdown ou em inglês → reformatar e traduzir
             if (normalizedCount < 2) {

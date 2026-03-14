@@ -236,6 +236,9 @@ model Production {
   productionStatus   String?   // "Returning Series" | "Ended" | "Cancelled" | "In Production"
   // Cast sync tracking
   castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
+  // Translation tracking
+  translationStatus  String             @default("pending") // 'pending' | 'completed' | 'failed'
+  translatedAt       DateTime?
   // Moderation fields
   flaggedAsNonKorean  Boolean            @default(false)
   flaggedAt           DateTime?
@@ -264,6 +267,8 @@ model Production {
   @@index([isAdultContent])
   @@index([adultContentType])
   @@index([adultCheckedAt])
+  @@index([translationStatus])
+  @@index([translationStatus, synopsis])
 }
 
 model ArtistProduction {
@@ -768,6 +773,7 @@ model ContentTranslation {
   locale     String   // "pt-BR" (expansível para outros locales)
   value      String   @db.Text
   status     String   @default("draft") // "draft" | "approved" | "ai"
+  sourceLang String?  // idioma de origem detectado: "ko" | "en" | "pt" | "unknown"
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

@@ -89,28 +89,28 @@ export async function GET(req: NextRequest) {
       total = count
 
     } else if (entityType === 'production') {
-      // Para productions: filtra por synopsisSource diretamente (não usa ContentTranslation)
-      const prodFilter = searchParams.get('status') as ProductionStatusFilter | null
-      const synopsisSourceFilter =
-        prodFilter === 'pending'  ? { synopsis: null as null }
-        : prodFilter === 'pt'     ? { synopsisSource: 'tmdb_pt' }
-        : prodFilter === 'en'     ? { synopsisSource: { in: ['tmdb_en', 'ai'] } }
-        : prodFilter === 'manual' ? { synopsisSource: 'manual' }
-        : {}
+      // Productions: status via translationStatus + ContentTranslation
+      const idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
+      const prodStatusFilter = statusFilter === 'pending'
+        ? { translationStatus: 'pending', synopsis: { not: null as null } }
+        : statusFilter === 'approved'
+          ? { translationStatus: 'completed' }
+          : {}
       const where = {
         isHidden: false,
+        synopsis: { not: null as null },
         ...(q ? {
           OR: [
             { titlePt: { contains: q, mode: 'insensitive' as const } },
             { titleKr: { contains: q, mode: 'insensitive' as const } },
           ],
         } : {}),
-        ...synopsisSourceFilter,
+        ...(idFilter ? { id: idFilter } : {}),
       }
       const [prods, count] = await Promise.all([
         prisma.production.findMany({
           where,
-          select: { id: true, titlePt: true, titleKr: true, synopsis: true, synopsisSource: true },
+          select: { id: true, titlePt: true, titleKr: true, synopsis: true, synopsisSource: true, translationStatus: true },
           orderBy: [{ year: 'desc' }, { titlePt: 'asc' }],
           skip,
           take: limit,
@@ -124,6 +124,7 @@ export async function GET(req: NextRequest) {
         fields: ['synopsis'],
         synopsisSource: p.synopsisSource,
         hasSynopsis: !!p.synopsis,
+        translationStatus: p.translationStatus,
       }))
       total = count
 
@@ -144,10 +145,8 @@ export async function GET(req: NextRequest) {
       total = count
     }
 
-    // Productions usam synopsisSource diretamente — não precisam de ContentTranslation lookup
-    if (entityType === 'production') {
-      return NextResponse.json({ items, total, page, totalPages: Math.ceil(total / limit) })
-    }
+    // Productions: enriquecer com status via ContentTranslation (como artists/groups)
+    // (continua para o bloco de lookup abaixo)
 
     // Busca traduções existentes para os IDs retornados (artists, groups, news)
     const ids = items.map(i => i.id)
