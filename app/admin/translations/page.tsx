@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
@@ -116,8 +117,12 @@ function ProductionBadge({ item }: { item: TranslationItem }) {
 }
 
 export default function TranslationsPage() {
+  const searchParams = useSearchParams()
   const [stats, setStats] = useState<Stats | null>(null)
-  const [activeTab, setActiveTab] = useState<EntityType>('artist')
+  const initialTab = (searchParams.get('tab') as EntityType | null) ?? 'artist'
+  const [activeTab, setActiveTab] = useState<EntityType>(
+    ['artist', 'group', 'production', 'news'].includes(initialTab) ? initialTab : 'artist'
+  )
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
   const [q, setQ] = useState('')
   const [items, setItems] = useState<TranslationItem[]>([])

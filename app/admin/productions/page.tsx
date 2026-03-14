@@ -10,7 +10,7 @@ import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import {
   Plus, Users, RefreshCw, ShieldCheck, RotateCcw, CalendarSearch,
   ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
-  Check, AlertCircle, Film, Star,
+  Check, AlertCircle, Film, Star, Languages,
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1007,7 +1007,14 @@ export default function ProductionsPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-3">
-            <p className="text-zinc-400 text-sm">Gerencie dramas, filmes e outras produções da plataforma</p>
+            <div className="flex items-center gap-3">
+              <p className="text-zinc-400 text-sm">Gerencie dramas, filmes e outras produções da plataforma</p>
+              <Link href="/admin/translations?tab=production"
+                className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
+                <Languages size={11} />
+                Traduções
+              </Link>
+            </div>
             <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
           </div>
           {/* Desktop: all buttons in a row */}

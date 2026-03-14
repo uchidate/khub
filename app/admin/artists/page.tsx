@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus, EyeOff } from 'lucide-react'
+import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus, EyeOff, Languages } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -659,7 +659,14 @@ export default function ArtistsAdminPage() {
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-3 min-w-0 flex-1">
-            <p className="text-zinc-400 text-sm -mt-6">Gerencie artistas de K-Drama e K-Pop</p>
+            <div className="flex items-center gap-3 -mt-6">
+              <p className="text-zinc-400 text-sm">Gerencie artistas de K-Drama e K-Pop</p>
+              <Link href="/admin/translations?tab=artist"
+                className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
+                <Languages size={11} />
+                Traduções
+              </Link>
+            </div>
             <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
           </div>
           <button
