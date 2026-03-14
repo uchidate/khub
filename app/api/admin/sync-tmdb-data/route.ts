@@ -126,6 +126,21 @@ export async function POST(req: NextRequest) {
         take: limit,
     })
 
+    // Campos já traduzidos por IA: busca em lote antes de processar
+    // Protege contra sobrescrita — tokens já foram gastos, só permissão individual para reprocessar
+    const artistIds = artists.map(a => a.id)
+    const existingCTs = await prisma.contentTranslation.findMany({
+        where: {
+            entityType: 'artist',
+            entityId: { in: artistIds },
+            status: { in: ['approved', 'translated'] },
+        },
+        select: { entityId: true, field: true },
+    })
+    // Set de "entityId:field" com tradução IA existente
+    const aiTranslatedFields = new Set(existingCTs.map(ct => `${ct.entityId}:${ct.field}`))
+    const hasAiTranslation = (artistId: string, field: string) => aiTranslatedFields.has(`${artistId}:${field}`)
+
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
         async start(controller) {
@@ -183,7 +198,9 @@ export async function POST(req: NextRequest) {
                     const bioEn = tmdb.biography?.trim() || null
                     const bioValue = bioPt || bioEn || null
                     const bioLang = bioPt ? 'pt-BR' : 'en'
-                    if (bioValue && canUpdate(!artist.bio, 'bio')) {
+                    // Não sobrescrever bio se já foi traduzida por IA (tokens foram gastos)
+                    const bioAiProtected = hasAiTranslation(artist.id, 'bio')
+                    if (bioValue && canUpdate(!artist.bio, 'bio') && !bioAiProtected) {
                         updates.bio = bioValue
                         updatedSources.bio = { source: bioPt ? 'tmdb_pt' : 'tmdb_en', at: now }
                         updatedFields.push(`bio/${bioLang}`)
@@ -192,6 +209,11 @@ export async function POST(req: NextRequest) {
                             updates.translationStatus = 'completed'
                             updates.translatedAt = new Date()
                         }
+                    } else if (bioAiProtected && bioValue && !artist.bio) {
+                        // Caso raro: CT existe mas bio está vazia — preenche sem sobrescrever CT
+                        updates.bio = bioValue
+                        updatedSources.bio = { source: bioPt ? 'tmdb_pt' : 'tmdb_en', at: now }
+                        updatedFields.push(`bio/${bioLang}`)
                     }
 
                     // Data de nascimento
@@ -256,8 +278,8 @@ export async function POST(req: NextRequest) {
                         data: updates,
                     })
 
-                    // Se bio veio em PT-BR, criar ContentTranslation para registrar como traduzida
-                    if (bioValue && bioPt && updates.bio) {
+                    // Se bio veio em PT-BR e não havia CT existente, criar ContentTranslation
+                    if (bioValue && bioPt && updates.bio && !bioAiProtected) {
                         await prisma.contentTranslation.upsert({
                             where: { entityType_entityId_field_locale: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR' } },
                             create: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR', value: bioValue, status: 'approved', sourceLang: 'pt' },
