@@ -147,10 +147,11 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                             </AnimatePresence>
                         </div>
                         <div className="flex gap-1 items-center">
-                            {ROTATING_CTAS.map((_, i) => (
+                            {ROTATING_CTAS.map((cta, i) => (
                                 <button
                                     key={i}
                                     onClick={() => setCtaIndex(i)}
+                                    aria-label={`Ir para ${cta.label}`}
                                     className={`rounded-full transition-all duration-300 ${
                                         i === ctaIndex ? 'bg-neon-pink w-4 h-1.5' : 'bg-zinc-600 hover:bg-zinc-400 w-1.5 h-1.5'
                                     }`}
@@ -230,10 +231,11 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                     </p>
                                     {latestNews.length > 1 && (
                                         <div className="flex gap-1">
-                                            {latestNews.map((_, i) => (
+                                            {latestNews.map((news, i) => (
                                                 <button
                                                     key={i}
                                                     onClick={() => setNewsIndex(i)}
+                                                    aria-label={`Ver notícia ${i + 1}: ${news.title}`}
                                                     className={`rounded-full transition-all duration-300 ${
                                                         i === newsIndex
                                                             ? 'bg-neon-cyan w-3 h-1'
