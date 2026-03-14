@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, Save, ExternalLink, Clock } from 'lucide-react'
+import { ArrowLeft, Save, ExternalLink, Clock, CheckCircle2, FileEdit } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
@@ -21,6 +21,7 @@ interface Translation {
   value: string
   status: TranslationStatus
   updatedAt: string
+  sourceLang?: string
 }
 
 interface LogEntry {
@@ -62,6 +63,11 @@ const ENTITY_CONFIG: Record<EntityType, { label: string; backLabel: string; fiel
   },
 }
 
+const STATUS_LABELS: Record<TranslationStatus, string> = {
+  draft: 'Rascunho',
+  approved: 'Aprovado',
+  ai: 'Traduzido (IA)',
+}
 
 export default function TranslationEditorPage() {
   const params = useParams()
@@ -171,26 +177,36 @@ export default function TranslationEditorPage() {
       ? `/admin/groups/${entityId}`
       : entityType === 'production'
         ? `/admin/productions/${entityId}`
-        : null
+        : entityType === 'news'
+          ? `/admin/news/${entityId}`
+          : null
 
   return (
     <AdminLayout title={`Traduzir: ${entityName || '...'}`}>
       <div className="max-w-6xl mx-auto space-y-6">
 
-        {/* Header */}
-        <div className="flex items-center gap-3">
+        {/* Breadcrumb / header */}
+        <div className="flex items-center gap-3 flex-wrap">
           <Link
             href="/admin/translations"
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
+            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> {config?.backLabel ?? 'Traduções'}
+            <ArrowLeft className="w-4 h-4" />
+            {config?.backLabel ?? 'Traduções'}
           </Link>
+          {entityName && (
+            <>
+              <span className="text-zinc-700">/</span>
+              <span className="text-sm text-zinc-400 truncate max-w-xs">{entityName}</span>
+            </>
+          )}
           {adminLink && (
             <Link
               href={adminLink}
-              className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700 ml-auto"
+              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 ml-auto transition-colors border border-white/10 rounded-lg px-2.5 py-1.5 hover:bg-zinc-800"
             >
-              Ver no admin <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5" />
+              Ver no admin
             </Link>
           )}
         </div>
@@ -198,43 +214,68 @@ export default function TranslationEditorPage() {
         {/* Campos */}
         {config?.fields.map(fieldConfig => {
           const original = originals[fieldConfig.originalKey] ?? originals[fieldConfig.key]
+          const translation = translations[fieldConfig.key]
+          const currentStatus = statuses[fieldConfig.key] ?? 'draft'
+
           return (
-            <div key={fieldConfig.key} className="bg-white rounded-lg border border-gray-200">
-              <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                <h2 className="font-medium text-gray-800">{fieldConfig.label}</h2>
-                {translations[fieldConfig.key] && (
-                  <span className="text-xs text-gray-400">
-                    · atualizado {new Date(translations[fieldConfig.key]!.updatedAt).toLocaleString('pt-BR')}
+            <div key={fieldConfig.key} className="bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
+              {/* Field header */}
+              <div className="px-4 py-3 border-b border-white/10 flex items-center gap-3 bg-zinc-800/40">
+                <FileEdit className="w-4 h-4 text-zinc-500" />
+                <h2 className="font-semibold text-zinc-200 text-sm">{fieldConfig.label}</h2>
+                {translation?.sourceLang && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-blue-700/30">
+                    {translation.sourceLang}
+                  </span>
+                )}
+                {translation?.status && (
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                    translation.status === 'approved'
+                      ? 'bg-green-900/40 text-green-400 border-green-700/30'
+                      : translation.status === 'draft' || translation.status === 'ai'
+                        ? 'bg-yellow-900/40 text-yellow-400 border-yellow-700/30'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                  }`}>
+                    {STATUS_LABELS[translation.status] ?? translation.status}
+                  </span>
+                )}
+                {translation?.updatedAt && (
+                  <span className="text-xs text-zinc-600 ml-auto">
+                    atualizado {new Date(translation.updatedAt).toLocaleString('pt-BR')}
                   </span>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/5">
                 {/* Original */}
-                <div className="p-4">
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Original (EN/KR)</div>
+                <div className="p-4 bg-zinc-950/30">
+                  <div className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest mb-3">
+                    Original (EN/KR)
+                  </div>
                   {original ? (
                     fieldConfig.multiline ? (
-                      <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+                      <div className="text-sm text-zinc-400 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto pr-1 scrollbar-thin">
                         {original}
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-700">{original}</div>
+                      <div className="text-sm text-zinc-400">{original}</div>
                     )
                   ) : (
-                    <div className="text-sm text-gray-400 italic">Sem conteúdo original</div>
+                    <div className="text-sm text-zinc-600 italic">Sem conteúdo original</div>
                   )}
                 </div>
 
                 {/* Tradução */}
                 <div className="p-4 space-y-3">
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tradução (PT-BR)</div>
+                  <div className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">
+                    Tradução (PT-BR)
+                  </div>
                   {fieldConfig.multiline ? (
                     <textarea
                       value={drafts[fieldConfig.key] ?? ''}
                       onChange={e => setDrafts(d => ({ ...d, [fieldConfig.key]: e.target.value }))}
                       rows={10}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-y"
                       placeholder="Digite a tradução..."
                     />
                   ) : (
@@ -242,23 +283,48 @@ export default function TranslationEditorPage() {
                       type="text"
                       value={drafts[fieldConfig.key] ?? ''}
                       onChange={e => setDrafts(d => ({ ...d, [fieldConfig.key]: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
                       placeholder="Digite a tradução..."
                     />
                   )}
-                  <div className="flex items-center gap-3">
-                    <select
-                      value={statuses[fieldConfig.key] ?? 'draft'}
-                      onChange={e => setStatuses(s => ({ ...s, [fieldConfig.key]: e.target.value as TranslationStatus }))}
-                      className="text-sm border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="draft">Rascunho</option>
-                      <option value="approved">Aprovado</option>
-                    </select>
+
+                  {/* Status toggle + salvar */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Toggle de status */}
+                    <div className="flex rounded-lg overflow-hidden border border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setStatuses(s => ({ ...s, [fieldConfig.key]: 'draft' }))}
+                        className={`px-3 py-1.5 text-xs font-bold transition-colors ${
+                          currentStatus === 'draft' || currentStatus === 'ai'
+                            ? 'bg-zinc-700 text-zinc-200'
+                            : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                        }`}
+                      >
+                        Rascunho
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStatuses(s => ({ ...s, [fieldConfig.key]: 'approved' }))}
+                        className={`px-3 py-1.5 text-xs font-bold transition-colors border-l border-white/10 ${
+                          currentStatus === 'approved'
+                            ? 'bg-green-900/50 text-green-300'
+                            : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                        Aprovado
+                      </button>
+                    </div>
+
                     <button
                       onClick={() => handleSave(fieldConfig.key)}
                       disabled={saving[fieldConfig.key]}
-                      className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-colors ml-auto ${
+                        saved[fieldConfig.key]
+                          ? 'bg-green-700 text-white'
+                          : 'bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-50'
+                      }`}
                     >
                       <Save className="w-3.5 h-3.5" />
                       {saved[fieldConfig.key] ? 'Salvo!' : saving[fieldConfig.key] ? 'Salvando...' : 'Salvar'}
@@ -271,31 +337,36 @@ export default function TranslationEditorPage() {
         })}
 
         {/* Histórico */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <h2 className="font-medium text-gray-800">Histórico de alterações</h2>
+        <div className="bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
+          <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2 bg-zinc-800/40">
+            <Clock className="w-4 h-4 text-zinc-500" />
+            <h2 className="font-semibold text-sm text-zinc-200">Histórico de alterações</h2>
           </div>
           {logsLoading ? (
-            <div className="p-6 text-center text-gray-400 text-sm">Carregando...</div>
+            <div className="p-6 text-center text-zinc-600 text-sm">Carregando...</div>
           ) : logs.length === 0 ? (
-            <div className="p-6 text-center text-gray-400 text-sm">Nenhuma alteração registrada</div>
+            <div className="p-6 text-center text-zinc-600 text-sm">Nenhuma alteração registrada</div>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-white/5">
               {logs.map(log => (
-                <li key={log.id} className="px-4 py-3 text-sm">
-                  <div className="flex items-center gap-2 text-gray-500 mb-1">
-                    <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                <li key={log.id} className="px-4 py-3 text-sm hover:bg-zinc-800/30 transition-colors">
+                  <div className="flex items-center gap-2 text-zinc-500 mb-1.5">
+                    <span className="font-mono text-xs bg-zinc-800 border border-white/10 px-1.5 py-0.5 rounded text-zinc-400">
                       {log.field}
                     </span>
-                    <span>{log.changedBy}</span>
-                    <span className="ml-auto text-xs text-gray-400">
+                    <span className="text-xs text-zinc-500">{log.changedBy}</span>
+                    {log.source && log.source !== 'manual' && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-900/30 text-purple-400 border border-purple-700/20">
+                        {log.source}
+                      </span>
+                    )}
+                    <span className="ml-auto text-xs text-zinc-600">
                       {new Date(log.createdAt).toLocaleString('pt-BR')}
                     </span>
                   </div>
-                  <div className="text-gray-700 line-clamp-2">{log.newValue}</div>
+                  <div className="text-zinc-300 line-clamp-2 text-sm">{log.newValue}</div>
                   {log.previousValue && (
-                    <div className="text-gray-400 line-clamp-1 text-xs mt-0.5">
+                    <div className="text-zinc-600 line-clamp-1 text-xs mt-0.5">
                       anterior: {log.previousValue}
                     </div>
                   )}

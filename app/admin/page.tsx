@@ -5,6 +5,7 @@ import {
   Users, Activity, Film, Newspaper, Music2, Building2,
   Mic2, ImageOff, UserX, AlertTriangle, Plus, Settings,
   RefreshCw, ChevronRight, Flag, MessageSquare, UserPlus,
+  Languages, Sparkles,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
@@ -26,6 +27,7 @@ export default async function AdminPage() {
     artistsWithoutImage, groupsWithoutImage, newsWithoutImage,
     artistsWithoutBio, groupsWithoutBio,
     pendingReports, flaggedComments, newUsers7d,
+    artistsWithBio, artistBioTranslated, pendingProductionTranslations,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.artist.count(),
@@ -62,7 +64,15 @@ export default async function AdminPage() {
     prisma.report.count({ where: { status: 'PENDING' } }),
     prisma.comment.count({ where: { status: 'FLAGGED' } }),
     prisma.user.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 86400_000) } } }),
+    // Artistas com bio visíveis
+    prisma.artist.count({ where: { bio: { not: null }, isHidden: false } }),
+    // Artistas com bio já traduzida (pt-BR)
+    prisma.contentTranslation.count({ where: { entityType: 'artist', field: 'bio', locale: 'pt-BR' } }),
+    // Produções com sinopse ainda pendente de tradução
+    prisma.production.count({ where: { isHidden: false, synopsis: { not: null }, translationStatus: 'pending' } }),
   ])
+
+  const pendingArtistTranslations = Math.max(0, artistsWithBio - artistBioTranslated)
 
   type ActivityEvent = { type: string; label: string; href: string; time: Date; color: string }
   const activityEvents: ActivityEvent[] = [
@@ -71,15 +81,15 @@ export default async function AdminPage() {
       time: u.createdAt, color: 'purple',
     })),
     ...recentNews.map(n => ({
-      type: 'Notícia', label: n.title, href: `/news/${n.id}`,
+      type: 'Notícia', label: n.title, href: `/admin/news/${n.id}`,
       time: n.createdAt, color: 'pink',
     })),
     ...recentArtists.map(a => ({
-      type: 'Artista', label: a.nameRomanized, href: `/artists/${a.id}`,
+      type: 'Artista', label: a.nameRomanized, href: `/admin/artists/${a.id}`,
       time: a.createdAt, color: 'cyan',
     })),
     ...recentProductions.map(p => ({
-      type: 'Produção', label: p.titlePt, href: `/productions/${p.id}`,
+      type: 'Produção', label: p.titlePt, href: `/admin/productions/${p.id}`,
       time: p.createdAt, color: 'yellow',
     })),
   ].sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 10)
@@ -114,11 +124,13 @@ export default async function AdminPage() {
   ].filter(i => i.count > 0)
 
   const attentionItems = [
-    { label: 'Artistas sem foto',    count: artistsWithoutImage, href: '/admin/artists?filter=no_photo', icon: ImageOff,  severity: artistsWithoutImage > 20 ? 'high' : 'medium' as const },
-    { label: 'Artistas sem bio',     count: artistsWithoutBio,   href: '/admin/artists',                 icon: UserX,     severity: artistsWithoutBio > 30 ? 'high' : 'low' as const },
-    { label: 'Grupos sem foto',      count: groupsWithoutImage,  href: '/admin/groups',                  icon: ImageOff,  severity: groupsWithoutImage > 5 ? 'high' : 'medium' as const },
-    { label: 'Grupos sem bio',       count: groupsWithoutBio,    href: '/admin/groups',                  icon: UserX,     severity: 'low' as const },
-    { label: 'Notícias sem imagem',  count: newsWithoutImage,    href: '/admin/news',                    icon: Newspaper, severity: newsWithoutImage > 10 ? 'medium' : 'low' as const },
+    { label: 'Artistas sem foto',           count: artistsWithoutImage,        href: '/admin/artists?filter=no_photo', icon: ImageOff,  severity: artistsWithoutImage > 20 ? 'high' : 'medium' as const },
+    { label: 'Artistas sem bio',            count: artistsWithoutBio,          href: '/admin/artists',                 icon: UserX,     severity: artistsWithoutBio > 30 ? 'high' : 'low' as const },
+    { label: 'Grupos sem foto',             count: groupsWithoutImage,         href: '/admin/groups',                  icon: ImageOff,  severity: groupsWithoutImage > 5 ? 'high' : 'medium' as const },
+    { label: 'Grupos sem bio',              count: groupsWithoutBio,           href: '/admin/groups',                  icon: UserX,     severity: 'low' as const },
+    { label: 'Notícias sem imagem',         count: newsWithoutImage,           href: '/admin/news',                    icon: Newspaper, severity: newsWithoutImage > 10 ? 'medium' : 'low' as const },
+    { label: 'Bios sem tradução (PT-BR)',   count: pendingArtistTranslations,  href: '/admin/translations?tab=artist', icon: Languages, severity: 'low' as const },
+    { label: 'Sinopses sem tradução',       count: pendingProductionTranslations, href: '/admin/translations?tab=production', icon: Languages, severity: 'low' as const },
   ].filter(i => i.count > 0)
 
   const severityColors = {
@@ -128,10 +140,12 @@ export default async function AdminPage() {
   }
 
   const quickActions = [
-    { label: 'Novo Artista',   href: '/admin/artists/new',    icon: Plus },
-    { label: 'Nova Notícia',   href: '/admin/news/new',       icon: Plus },
-    { label: 'Moderar',        href: '/admin/artists/moderation', icon: RefreshCw },
-    { label: 'Configurações',  href: '/admin/settings',       icon: Settings },
+    { label: 'Novo Artista',      href: '/admin/artists/new',         icon: Plus },
+    { label: 'Nova Notícia',      href: '/admin/news/new',            icon: Plus },
+    { label: 'Traduções',         href: '/admin/translations',        icon: Languages },
+    { label: 'Enriquecimento',    href: '/admin/artists/fix-names',   icon: Sparkles },
+    { label: 'Moderar',           href: '/admin/artists/moderation',  icon: RefreshCw },
+    { label: 'Configurações',     href: '/admin/settings',            icon: Settings },
   ]
 
   return (
@@ -188,11 +202,11 @@ export default async function AdminPage() {
           ))}
         </div>
 
-        {/* Quick Actions — 2 cols no mobile, 4 no tablet+ */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {/* Quick Actions — 3 cols no mobile, 6 no desktop */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {quickActions.map(({ label, href, icon: Icon }) => (
             <Link key={href} href={href}
-              className="flex items-center gap-3 sm:flex-col sm:items-center p-3 sm:p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors sm:text-center group">
+              className="flex flex-col items-center p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors text-center group">
               <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors flex-shrink-0">
                 <Icon className="w-4 h-4 text-purple-400" />
               </div>

@@ -6,8 +6,9 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
-import { Plus, Users, Music2, EyeOff, Instagram, Twitter, Youtube, ExternalLink, Globe, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Users, Music2, EyeOff, Instagram, Twitter, Youtube, ExternalLink, Globe, Pencil, Trash2, Languages } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -301,7 +302,14 @@ export default function GroupsPage() {
     <AdminLayout title="Grupos Musicais">
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <p className="text-zinc-400 text-sm -mt-4">Gerencie os grupos musicais da plataforma</p>
+          <div className="flex items-center gap-3 -mt-4">
+            <p className="text-zinc-400 text-sm">Gerencie os grupos musicais da plataforma</p>
+            <Link href="/admin/translations?tab=group"
+              className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
+              <Languages size={11} />
+              Traduções
+            </Link>
+          </div>
           <button
             onClick={handleCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all flex-shrink-0"

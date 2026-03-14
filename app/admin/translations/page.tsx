@@ -1,19 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
-// Para artistas/grupos/news: pending | draft | approved
-// Para productions: '' | 'pending' | 'pt' | 'en' | 'manual'
-type StatusFilter = '' | 'pending' | 'draft' | 'approved' | 'pt' | 'en' | 'manual'
+type StatusFilter = '' | 'pending' | 'draft' | 'approved'
 
 interface Stats {
   artist:     { total: number; translated: number }
   group:      { total: number; translated: number }
-  production: { total: number; translated: number; noSynopsis: number }
+  production: { total: number; translated: number; pending: number; failed: number; noSynopsis: number }
   news:       { total: number; translated: number }
 }
 
@@ -27,6 +26,7 @@ interface TranslationItem {
   // production-specific
   synopsisSource?: string | null
   hasSynopsis?: boolean
+  translationStatus?: string
 }
 
 interface ProgressEvent {
@@ -62,11 +62,10 @@ const SYNOPSIS_SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
   manual:  { label: 'Manual',       cls: 'bg-amber-900/40 text-amber-400 border-amber-700/30' },
 }
 
-// Filtros por aba
 const FILTERS_BY_TAB: Record<EntityType, [StatusFilter, string][]> = {
   artist:     [['', 'Todos'], ['pending', 'Sem tradução'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
   group:      [['', 'Todos'], ['pending', 'Sem tradução'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
-  production: [['', 'Todos'], ['pending', 'Sem sinopse'], ['pt', 'pt-BR'], ['en', 'en (original)'], ['manual', 'Manual']],
+  production: [['', 'Todos'], ['pending', 'Pendentes'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
   news:       [['', 'Todos'], ['pending', 'Sem tradução'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
 }
 
@@ -78,15 +77,52 @@ const FIELD_LABELS: Record<string, string> = {
   contentMd: 'conteúdo',
 }
 
+// Tipos que suportam tradução automática via IA
+const TRANSLATABLE_TYPES: EntityType[] = ['artist', 'group', 'production']
+
+const BATCH_LIMIT_OPTIONS = [5, 10, 25, 50]
+
 function formatElapsed(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0')
   const s = (seconds % 60).toString().padStart(2, '0')
   return `${m}:${s}`
 }
 
-export default function TranslationsPage() {
+function ProductionBadge({ item }: { item: TranslationItem }) {
+  // Prioridade: status da tradução CT > synopsisSource
+  if (!item.hasSynopsis) {
+    return (
+      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-600 border border-zinc-700">
+        Sem sinopse
+      </span>
+    )
+  }
+  // Tradução CT existe
+  if (item.status === 'approved') {
+    return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-900/40 text-green-400 border border-green-700/30">Revisado</span>
+  }
+  if (item.status === 'draft') {
+    return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-900/40 text-yellow-400 border border-yellow-700/30">Traduzido (IA)</span>
+  }
+  // Ainda não tem tradução CT — mostra a origem
+  if (item.synopsisSource && SYNOPSIS_SOURCE_LABELS[item.synopsisSource]) {
+    const src = SYNOPSIS_SOURCE_LABELS[item.synopsisSource]
+    return (
+      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${src.cls}`}>
+        {src.label}
+      </span>
+    )
+  }
+  return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">Pendente</span>
+}
+
+function TranslationsPageContent() {
+  const searchParams = useSearchParams()
   const [stats, setStats] = useState<Stats | null>(null)
-  const [activeTab, setActiveTab] = useState<EntityType>('artist')
+  const initialTab = (searchParams.get('tab') as EntityType | null) ?? 'artist'
+  const [activeTab, setActiveTab] = useState<EntityType>(
+    ['artist', 'group', 'production', 'news'].includes(initialTab) ? initialTab : 'artist'
+  )
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
   const [q, setQ] = useState('')
   const [items, setItems] = useState<TranslationItem[]>([])
@@ -100,6 +136,8 @@ export default function TranslationsPage() {
   const [progressLog, setProgressLog] = useState<ProgressEvent[]>([])
   const [currentItem, setCurrentItem] = useState<ProgressEvent | null>(null)
   const [elapsed, setElapsed] = useState(0)
+  const [batchLimit, setBatchLimit] = useState(10)
+  const [batchPanelOpen, setBatchPanelOpen] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
 
@@ -141,12 +179,13 @@ export default function TranslationsPage() {
   }
 
   const handleRunBatch = () => {
-    if (!['artist', 'group'].includes(activeTab)) {
-      setRunResult('Tradução automática disponível apenas para Artistas e Grupos.')
+    if (!TRANSLATABLE_TYPES.includes(activeTab)) {
+      setRunResult('Tradução automática não disponível para este tipo.')
       return
     }
     setRunning(true); setRunResult(null); setProgressLog([]); setCurrentItem(null); startTimer()
-    const params = new URLSearchParams({ entityType: activeTab, limit: '10' })
+    setBatchPanelOpen(true)
+    const params = new URLSearchParams({ entityType: activeTab, limit: String(batchLimit) })
     const es = new EventSource(`/api/admin/translations/run?${params}`)
     es.onmessage = (event) => {
       const data = JSON.parse(event.data) as ProgressEvent & { type: string; translated?: number; skipped?: number; failed?: number; message?: string }
@@ -174,6 +213,10 @@ export default function TranslationsPage() {
   const processedCount = progressLog.length
 
   const isProduction = activeTab === 'production'
+  const prodStats = stats?.production
+  const canTranslate = TRANSLATABLE_TYPES.includes(activeTab)
+
+  const showBatchPanel = batchPanelOpen && (running || progressLog.length > 0)
 
   return (
     <AdminLayout title="Traduções">
@@ -184,6 +227,7 @@ export default function TranslationsPage() {
           {(['artist', 'group', 'production', 'news'] as EntityType[]).map(type => {
             const s = stats?.[type]
             const pct = s && s.total > 0 ? Math.round((s.translated / s.total) * 100) : 0
+            const prodS = type === 'production' ? (s as Stats['production'] | undefined) : undefined
             return (
               <button
                 key={type}
@@ -194,15 +238,31 @@ export default function TranslationsPage() {
                     : 'border-white/10 bg-zinc-900 hover:bg-zinc-800'
                 }`}
               >
-                <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{ENTITY_LABELS[type]}</div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{ENTITY_LABELS[type]}</span>
+                  {TRANSLATABLE_TYPES.includes(type) && (
+                    <span className="text-[10px] text-zinc-600 font-medium">IA</span>
+                  )}
+                </div>
                 {statsLoading ? (
                   <div className="mt-2 h-7 bg-zinc-800 rounded animate-pulse" />
                 ) : (
                   <div className="mt-1 text-2xl font-black text-white">
                     {s?.translated ?? 0}
                     <span className="text-sm font-normal text-zinc-500">/{s?.total ?? 0}</span>
-                    {type === 'production' && s && (s as Stats['production']).noSynopsis > 0 && (
-                      <span className="ml-2 text-xs font-bold text-zinc-600">({(s as Stats['production']).noSynopsis} sem sinopse)</span>
+                  </div>
+                )}
+                {/* Sub-stats para produção */}
+                {prodS && !statsLoading && (
+                  <div className="mt-1 flex gap-2 flex-wrap">
+                    {prodS.pending > 0 && (
+                      <span className="text-[10px] text-amber-500 font-medium">{prodS.pending} pendentes</span>
+                    )}
+                    {prodS.failed > 0 && (
+                      <span className="text-[10px] text-red-400 font-medium">{prodS.failed} falhas</span>
+                    )}
+                    {prodS.noSynopsis > 0 && (
+                      <span className="text-[10px] text-zinc-600">{prodS.noSynopsis} sem sinopse</span>
                     )}
                   </div>
                 )}
@@ -219,8 +279,8 @@ export default function TranslationsPage() {
           })}
         </div>
 
-        {/* Painel de tradução em tempo real */}
-        {(running || progressLog.length > 0) && (
+        {/* Painel de tradução em tempo real — colapsável */}
+        {showBatchPanel && (
           <div className="bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -237,8 +297,11 @@ export default function TranslationsPage() {
                 {skippedCount > 0 && <span>{skippedCount} ignorados</span>}
                 {failedCount > 0 && <span className="text-red-400 font-medium">{failedCount} ✗</span>}
                 {!running && (
-                  <button onClick={() => { setProgressLog([]); setRunResult(null); setElapsed(0) }} className="text-zinc-600 hover:text-zinc-400 text-xs underline">
-                    Limpar
+                  <button
+                    onClick={() => { setProgressLog([]); setRunResult(null); setElapsed(0); setBatchPanelOpen(false) }}
+                    className="text-zinc-600 hover:text-zinc-400 text-xs underline"
+                  >
+                    Fechar
                   </button>
                 )}
               </div>
@@ -276,15 +339,9 @@ export default function TranslationsPage() {
               <div className={`px-4 py-2 text-sm border-t ${
                 runResult.startsWith('erro') ? 'bg-red-900/20 text-red-400 border-red-900/30' : 'bg-green-900/20 text-green-400 border-green-900/30'
               }`}>
-                {runResult.startsWith('erro') ? `❌ ${runResult}` : `✅ ${runResult}`}
+                {runResult.startsWith('erro') ? `Erro: ${runResult}` : `Concluido: ${runResult}`}
               </div>
             )}
-          </div>
-        )}
-
-        {runResult && progressLog.length === 0 && (
-          <div className={`px-4 py-2 rounded-xl text-sm ${runResult.startsWith('erro') ? 'bg-red-900/20 text-red-400' : 'bg-green-900/20 text-green-400'}`}>
-            {runResult.startsWith('erro') ? `❌ ${runResult}` : `✅ ${runResult}`}
           </div>
         )}
 
@@ -303,24 +360,65 @@ export default function TranslationsPage() {
                 }`}
               >
                 {ENTITY_LABELS[type]}
+                {/* Badge de pendências */}
+                {type === 'production' && stats?.production.pending && stats.production.pending > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400">
+                    {stats.production.pending}
+                  </span>
+                )}
               </button>
             ))}
             <div className="ml-auto flex items-center gap-2 pb-3">
-              <Link href="/admin/translations/log" className="text-xs text-zinc-600 hover:text-zinc-400 px-2">
-                Log →
+              {/* Link para log — ícone */}
+              <Link
+                href="/admin/translations/log"
+                title="Ver log de traduções"
+                className="p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors rounded-lg hover:bg-zinc-800"
+              >
+                <History className="w-4 h-4" />
               </Link>
-              {['artist', 'group'].includes(activeTab) && (
-                <button
-                  onClick={handleRunBatch}
-                  disabled={running}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
-                >
-                  <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
-                  {running ? 'Traduzindo...' : 'Traduzir (IA)'}
-                </button>
+              {canTranslate && (
+                <>
+                  {/* Seletor de limite do lote */}
+                  <div className="relative">
+                    <select
+                      value={batchLimit}
+                      onChange={e => setBatchLimit(Number(e.target.value))}
+                      disabled={running}
+                      className="appearance-none pl-2 pr-6 py-1.5 bg-zinc-800 border border-white/10 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50 cursor-pointer"
+                      title="Quantidade por lote"
+                    >
+                      {BATCH_LIMIT_OPTIONS.map(n => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500 pointer-events-none" />
+                  </div>
+                  <button
+                    onClick={handleRunBatch}
+                    disabled={running}
+                    title={`Traduzir próximos ${batchLimit} ${ENTITY_LABELS[activeTab].toLowerCase()} pendentes`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
+                  >
+                    <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
+                    {running ? 'Traduzindo...' : 'Traduzir (IA)'}
+                  </button>
+                </>
               )}
             </div>
           </div>
+
+          {/* Info contextual para produções */}
+          {isProduction && prodStats && !statsLoading && prodStats.pending > 0 && (
+            <div className="mx-4 mt-4 px-3 py-2 rounded-lg bg-amber-900/10 border border-amber-700/20 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-400">
+                <strong>{prodStats.pending}</strong> sinopses pendentes de tradução.
+                Clique em <strong>Traduzir (IA)</strong> para processar em lotes.
+                A sinopse original é preservada — a tradução fica em ContentTranslation.
+              </p>
+            </div>
+          )}
 
           {/* Busca + filtros de status */}
           <div className="p-4 flex flex-wrap gap-3 items-center border-b border-white/5">
@@ -365,7 +463,7 @@ export default function TranslationsPage() {
             <ul className="divide-y divide-white/5">
               {items.map(item => {
                 const editHref = isProduction
-                  ? `/admin/productions/${item.id}`
+                  ? `/admin/translations/production/${item.id}`
                   : `/admin/translations/${activeTab}/${item.id}`
                 return (
                   <li key={item.id}>
@@ -383,24 +481,21 @@ export default function TranslationsPage() {
                             {item.fields.map(f => FIELD_LABELS[f] ?? f).join(', ')}
                           </div>
                         )}
+                        {isProduction && item.synopsisSource && item.status !== 'draft' && item.status !== 'approved' && (
+                          <div className="text-xs text-zinc-600 mt-0.5">
+                            Origem: {SYNOPSIS_SOURCE_LABELS[item.synopsisSource]?.label ?? item.synopsisSource}
+                          </div>
+                        )}
                       </div>
 
                       {/* Badge de status */}
-                      {isProduction ? (
-                        item.hasSynopsis === false || !item.synopsisSource ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-600 border border-zinc-700">
-                            Sem sinopse
+                      {isProduction
+                        ? <ProductionBadge item={item} />
+                        : item.status ? (
+                          <span className={`px-2.5 py-0.5 rounded text-xs font-bold ${STATUS_COLORS[item.status]}`}>
+                            {STATUS_LABELS[item.status]}
                           </span>
-                        ) : SYNOPSIS_SOURCE_LABELS[item.synopsisSource] ? (
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${SYNOPSIS_SOURCE_LABELS[item.synopsisSource].cls}`}>
-                            {SYNOPSIS_SOURCE_LABELS[item.synopsisSource].label}
-                          </span>
-                        ) : null
-                      ) : item.status ? (
-                        <span className={`px-2.5 py-0.5 rounded text-xs font-bold ${STATUS_COLORS[item.status]}`}>
-                          {STATUS_LABELS[item.status]}
-                        </span>
-                      ) : null}
+                        ) : null}
 
                       {isProduction
                         ? <Pencil className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-400 flex-shrink-0" />
@@ -438,5 +533,13 @@ export default function TranslationsPage() {
         </div>
       </div>
     </AdminLayout>
+  )
+}
+
+export default function TranslationsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TranslationsPageContent />
+    </Suspense>
   )
 }
