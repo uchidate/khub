@@ -17,7 +17,9 @@ export async function GET() {
       artistTotal,
       groupTotal,
       productionTotal,
-      productionPtBR,
+      productionTranslated,
+      productionPending,
+      productionFailed,
       productionNoSynopsis,
       newsTotal,
       artistTranslated,
@@ -26,10 +28,16 @@ export async function GET() {
     ] = await Promise.all([
       prisma.artist.count({ where: { bio: { not: null }, isHidden: false } }),
       prisma.musicalGroup.count({ where: { bio: { not: null }, isHidden: false } }),
-      // productions: total visíveis
-      prisma.production.count({ where: { isHidden: false } }),
-      // productions com sinopse em pt-BR
-      prisma.production.count({ where: { isHidden: false, synopsisSource: 'tmdb_pt' } }),
+      // productions: total visíveis com sinopse
+      prisma.production.count({ where: { isHidden: false, synopsis: { not: null } } }),
+      // productions com tradução PT-BR via ContentTranslation
+      prisma.contentTranslation.count({
+        where: { entityType: 'production', field: 'synopsis', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
+      }),
+      // productions com sinopse ainda pendente de tradução
+      prisma.production.count({ where: { isHidden: false, synopsis: { not: null }, translationStatus: 'pending' } }),
+      // productions com falha na tradução
+      prisma.production.count({ where: { isHidden: false, translationStatus: 'failed' } }),
       // productions sem sinopse
       prisma.production.count({ where: { isHidden: false, synopsis: null } }),
       prisma.news.count({ where: { translationStatus: 'completed' } }),
@@ -48,7 +56,7 @@ export async function GET() {
     return NextResponse.json({
       artist:     { total: artistTotal,     translated: artistTranslated },
       group:      { total: groupTotal,      translated: groupTranslated },
-      production: { total: productionTotal, translated: productionPtBR, noSynopsis: productionNoSynopsis },
+      production: { total: productionTotal, translated: productionTranslated, pending: productionPending, failed: productionFailed, noSynopsis: productionNoSynopsis },
       news:       { total: newsTotal,       translated: newsTranslated },
     })
   } catch (err) {

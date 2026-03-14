@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { getTranslation } from "@/lib/translations"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
@@ -55,10 +56,11 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         }
     }
 
-    const description = production.synopsis || `${production.titlePt} (${production.titleKr}) - ${production.type} ${production.year ? `de ${production.year}` : ''}`
+    const synopsisMeta = await getTranslation('production', production.id, 'synopsis') ?? production.synopsis
+    const description = synopsisMeta || `${production.titlePt} (${production.titleKr}) - ${production.type} ${production.year ? `de ${production.year}` : ''}`
     const castNames = production.artists.slice(0, 3).map(a => a.artist.nameRomanized).join(', ')
-    const fullDescription = production.synopsis
-        ? `${production.synopsis.slice(0, 120)}...${castNames ? ` Elenco: ${castNames}` : ''}`
+    const fullDescription = synopsisMeta
+        ? `${synopsisMeta.slice(0, 120)}...${castNames ? ` Elenco: ${castNames}` : ''}`
         : description
 
     return {
@@ -153,6 +155,10 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
 
     const relatedProductions = [...byArtist, ...byTag, ...byType]
 
+    // Busca sinopse traduzida (PT-BR) — fallback para o campo original
+    const synopsisPt = await getTranslation('production', production.id, 'synopsis')
+    const synopsis = synopsisPt ?? production.synopsis
+
     const galleryUrls = (production.galleryUrls as string[] | null) || []
 
     const heroImageMobile = production.imageUrl || production.backdropUrl
@@ -182,7 +188,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 "@type": schemaType,
                 "name": production.titlePt,
                 "alternateName": production.titleKr ?? undefined,
-                "description": production.synopsis?.slice(0, 300) ?? undefined,
+                "description": synopsis?.slice(0, 300) ?? undefined,
                 "image": production.imageUrl ?? undefined,
                 "url": `${BASE_URL}/productions/${production.id}`,
                 "inLanguage": "ko",
@@ -322,10 +328,10 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 <div className="grid md:grid-cols-3 gap-16">
                     {/* Main column */}
                     <div className="md:col-span-2 space-y-10">
-                        {production.synopsis && (
+                        {synopsis && (
                             <div>
                                 <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Sinopse</h3>
-                                <p className="text-zinc-400 leading-relaxed font-medium text-lg">{production.synopsis}</p>
+                                <p className="text-zinc-400 leading-relaxed font-medium text-lg">{synopsis}</p>
                             </div>
                         )}
 
