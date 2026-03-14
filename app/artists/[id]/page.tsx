@@ -250,7 +250,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 {/* Hero content */}
                 <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-12 md:px-20 pb-10 md:pb-14">
                     <div className="flex items-end gap-8">
-                    <div className="flex flex-col gap-2 flex-1 max-w-2xl">
+                    <div className="flex flex-col gap-2 flex-1 min-w-0">
                         {/* Roles + group + birthday countdown */}
                         <div className="flex items-center gap-2 flex-wrap">
                             {getRoleLabels(roles, artist.gender).map(role => (
