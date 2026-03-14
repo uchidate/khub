@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, Tv2 } from 'lucide-react'
@@ -76,15 +75,7 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
             </div>
 
             {/* Content area */}
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.22, ease: 'easeOut' }}
-                    className="relative rounded-2xl overflow-hidden"
-                >
+            <div key={activeTab} className="relative rounded-2xl overflow-hidden animate-slide-up">
                     {/* Blurred ambient background */}
                     {featured?.posterUrl && (
                         <div className="absolute inset-0 z-0 overflow-hidden">
@@ -120,8 +111,8 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                             ))}
                         </div>
                     </div>
-                </motion.div>
-            </AnimatePresence>
+                </div>
+            
         </section>
     )
 }
@@ -138,14 +129,14 @@ function ShowCard({
     onClick: () => void
 }) {
     const inner = (
-        <motion.div
+        <div
             className="flex-shrink-0 w-[72px] md:w-20 cursor-pointer"
-            animate={{
-                scale: isFeatured ? 1.6 : 1,
+            style={{
+                transform: `scale(${isFeatured ? 1.6 : 1})`,
                 zIndex: isFeatured ? 10 : 0,
+                transformOrigin: '50% 50%',
+                transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
-            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-            style={{ originX: 0.5, originY: 0.5 }}
             onClick={onClick}
         >
             <div className={`
@@ -189,17 +180,12 @@ function ShowCard({
 
                 {/* Platform badge (featured only) */}
                 {isFeatured && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                        className={`absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black ${cfg.bgColor} ${cfg.textColor}`}
-                    >
+                    <div className={`absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black animate-fade-in ${cfg.bgColor} ${cfg.textColor}`}>
                         #{show.rank} {cfg.label}
-                    </motion.div>
+                    </div>
                 )}
             </div>
-        </motion.div>
+        </div>
     )
 
     return show.productionId && isFeatured

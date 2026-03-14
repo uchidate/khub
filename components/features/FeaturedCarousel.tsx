@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
@@ -23,6 +22,7 @@ const SWIPE_THRESHOLD = 50
 export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isPaused, setIsPaused] = useState(false)
+    const touchStartX = useRef(0)
 
     const nextSlide = useCallback(() => {
         setCurrentIndex((prev) => (prev + 1) % news.length)
@@ -61,22 +61,16 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
         >
-            {/* Slides — drag="x" habilita swipe no mobile */}
-            <AnimatePresence mode="wait">
-                <motion.div
+            {/* Slides */}
+            <div
                     key={currentIndex}
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ duration: 0.5, ease: 'easeInOut' }}
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.15}
-                    onDragEnd={(_, info) => {
-                        if (info.offset.x > SWIPE_THRESHOLD) prevSlide()
-                        else if (info.offset.x < -SWIPE_THRESHOLD) nextSlide()
+                    onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+                    onTouchEnd={(e) => {
+                        const diff = touchStartX.current - e.changedTouches[0].clientX
+                        if (diff > SWIPE_THRESHOLD) nextSlide()
+                        else if (diff < -SWIPE_THRESHOLD) prevSlide()
                     }}
-                    className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                    className="absolute inset-0 animate-fade-in"
                 >
                     <Link href={`/news/${currentNews.id}`} className="block w-full h-full" draggable={false}>
                         {/* Background Image */}
@@ -128,8 +122,8 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
                             </div>
                         </div>
                     </Link>
-                </motion.div>
-            </AnimatePresence>
+                </div>
+            
 
             {/* Navigation Arrows */}
             {news.length > 1 && (
@@ -169,16 +163,14 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
 
             {/* Swipe hint — aparece só no mobile, some após 3s */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:hidden pointer-events-none">
-                <motion.div
-                    initial={{ opacity: 0.6 }}
-                    animate={{ opacity: 0 }}
-                    transition={{ delay: 2.5, duration: 1 }}
+                <div
                     className="flex items-center gap-1 px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full"
+                    style={{ animation: 'fadeIn 0.5s ease-out, fadeOut 1s ease-in 2.5s forwards' }}
                 >
                     <ChevronLeft className="w-3 h-3 text-zinc-400" />
                     <span className="text-[10px] text-zinc-400 font-medium">deslize</span>
                     <ChevronRight className="w-3 h-3 text-zinc-400" />
-                </motion.div>
+                </div>
             </div>
         </div>
     )

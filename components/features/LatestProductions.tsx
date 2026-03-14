@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Sparkles, Calendar, Star, Trophy } from 'lucide-react'
@@ -69,11 +68,10 @@ export function LatestProductions({
             {/* Grid de Produções */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {productions.map((production, index) => (
-                    <motion.div
+                    <div
                         key={production.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05, duration: 0.3 }}
+                        className="animate-slide-up"
+                        style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
                     >
                         <Link
                             href={`/productions/${production.id}`}
@@ -151,7 +149,7 @@ export function LatestProductions({
                                 </div>
                             </div>
                         </Link>
-                    </motion.div>
+                    </div>
                 ))}
             </div>
 

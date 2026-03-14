@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, Calendar, User } from 'lucide-react'
@@ -54,11 +53,10 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
             {/* Grid de Notícias Recomendadas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {news.map((item, index) => (
-                    <motion.div
+                    <div
                         key={item.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1, duration: 0.3 }}
+                        className="animate-slide-up"
+                        style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
                     >
                         <Link
                             href={`/news/${item.id}`}
@@ -134,7 +132,7 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
                                 </div>
                             </div>
                         </Link>
-                    </motion.div>
+                    </div>
                 ))}
             </div>
 

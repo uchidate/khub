@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { X, Play } from 'lucide-react'
 
 interface TrailerModalProps {
@@ -50,27 +49,17 @@ export function TrailerModal({ trailerUrl, title }: TrailerModalProps) {
             </button>
 
             {mounted && createPortal(
-                <AnimatePresence>
+                <>
                     {isOpen && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
                             {/* Backdrop */}
-                            <motion.div
-                                key="backdrop"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
+                            <div
                                 onClick={() => setIsOpen(false)}
-                                className="absolute inset-0 bg-black/90 backdrop-blur-md"
+                                className="absolute inset-0 bg-black/90 backdrop-blur-md animate-fade-in"
                             />
 
                             {/* Modal Content */}
-                            <motion.div
-                                key="modal"
-                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                                className="relative w-full max-w-5xl aspect-video bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10"
-                            >
+                            <div className="relative w-full max-w-5xl aspect-video bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-scale-in">
                                 <button
                                     onClick={() => setIsOpen(false)}
                                     aria-label="Fechar trailer"
@@ -87,10 +76,10 @@ export function TrailerModal({ trailerUrl, title }: TrailerModalProps) {
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowFullScreen
                                 />
-                            </motion.div>
+                            </div>
                         </div>
                     )}
-                </AnimatePresence>,
+                </>,
                 document.body
             )}
         </>
