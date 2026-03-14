@@ -146,10 +146,16 @@ function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
     )
 }
 
-function ReprocessButton({ newsId, onDone }: { newsId: string; onDone: (artists: LinkedArtist[]) => void }) {
+function ReprocessButton({ newsId, translationStatus, onDone }: { newsId: string; translationStatus: string | null; onDone: (artists: LinkedArtist[]) => void }) {
     const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
     const handle = async (e: React.MouseEvent) => {
         e.stopPropagation()
+        if (translationStatus === 'completed') {
+            const ok = window.confirm(
+                'Esta notícia já foi traduzida para português.\n\nReprocessar irá consumir tokens de IA para traduzir novamente.\n\nTem certeza?'
+            )
+            if (!ok) return
+        }
         setState('loading')
         try {
             const res = await fetch(`/api/admin/news/reprocess?id=${newsId}`, { method: 'POST' })
@@ -462,6 +468,7 @@ export default function NewsAdminPage() {
                             </Link>
                             <ReprocessButton
                                 newsId={news.id}
+                                translationStatus={news.translationStatus}
                                 onDone={(artists) => setLocalArtistsOverride(prev => ({ ...prev, [news.id]: artists }))}
                             />
                             <button
