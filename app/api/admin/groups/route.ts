@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { revalidatePath } from 'next/cache'
+import { detectLanguage } from '@/lib/services/language-detection-service'
 
 const log = createLogger('ADMIN-GROUPS')
 
@@ -257,6 +258,19 @@ export async function PATCH(request: NextRequest) {
       where: { id: groupId },
       data: updateData as Parameters<typeof prisma.musicalGroup.update>[0]['data'],
     })
+
+    // Auto-tradução: se bio foi salva em português, criar/atualizar ContentTranslation automaticamente
+    const savedBio = (updateData as Record<string, unknown>).bio as string | null | undefined
+    if (savedBio && typeof savedBio === 'string') {
+      const lang = detectLanguage(savedBio)
+      if (lang === 'pt') {
+        await prisma.contentTranslation.upsert({
+          where: { entityType_entityId_field_locale: { entityType: 'group', entityId: groupId, field: 'bio', locale: 'pt-BR' } },
+          create: { entityType: 'group', entityId: groupId, field: 'bio', locale: 'pt-BR', value: savedBio, status: 'approved', sourceLang: 'pt' },
+          update: { value: savedBio, status: 'approved', sourceLang: 'pt' },
+        }).catch(() => {})
+      }
+    }
 
     revalidatePath(`/groups/${groupId}`)
     revalidatePath('/groups')

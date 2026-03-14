@@ -6,6 +6,7 @@ import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { revalidatePath } from 'next/cache'
 import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
+import { detectLanguage } from '@/lib/services/language-detection-service'
 
 const log = createLogger('ADMIN-PRODUCTIONS')
 
@@ -222,6 +223,22 @@ export async function PATCH(request: NextRequest) {
       where: { id: productionId },
       data: { ...validated, titlePt: resolvedTitlePt, synopsisSource: resolvedSynopsisSource },
     })
+
+    // Auto-tradução: se sinopse foi salva em português, criar/atualizar ContentTranslation automaticamente
+    if (validated.synopsis) {
+      const isPt = resolvedSynopsisSource === 'tmdb_pt' || detectLanguage(validated.synopsis) === 'pt'
+      if (isPt) {
+        await prisma.contentTranslation.upsert({
+          where: { entityType_entityId_field_locale: { entityType: 'production', entityId: productionId, field: 'synopsis', locale: 'pt-BR' } },
+          create: { entityType: 'production', entityId: productionId, field: 'synopsis', locale: 'pt-BR', value: validated.synopsis, status: 'approved', sourceLang: 'pt' },
+          update: { value: validated.synopsis, status: 'approved', sourceLang: 'pt' },
+        }).catch(() => {})
+        await prisma.production.update({
+          where: { id: productionId },
+          data: { translationStatus: 'completed', translatedAt: new Date() },
+        }).catch(() => {})
+      }
+    }
 
     // Se visibilidade da produção mudou, reavaliar artistas vinculados
     if (validated.isHidden !== undefined && validated.isHidden !== existing.isHidden) {

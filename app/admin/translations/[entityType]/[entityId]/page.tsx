@@ -6,6 +6,18 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ArrowLeft, Save, ExternalLink, Clock, CheckCircle2, FileEdit } from 'lucide-react'
 import Link from 'next/link'
 
+// Detecção simplificada client-side (sem depender do server)
+function detectOriginalLang(text: string): 'ko' | 'en' | 'pt' | 'unknown' {
+  if (!text || text.trim().length < 15) return 'unknown'
+  const sample = text.slice(0, 400)
+  if ((sample.match(/[\uAC00-\uD7AF]/g) ?? []).length >= 3) return 'ko'
+  const ptHits = [/\bé\b/, /\bsão\b/, /\bpara\b/, /\btambém\b/, /\bnão\b/, /\bcom\b/, /\bdo\b/, /\bda\b/, /\bno\b/, /\bna\b/].filter(r => r.test(sample)).length
+  if (ptHits >= 3) return 'pt'
+  const enHits = [/\bthe\b/i, /\bis\b/i, /\band\b/i, /\bwith\b/i, /\bhas\b/i, /\bin\b/i, /\bof\b/i].filter(r => r.test(sample)).length
+  if (enHits >= 3) return 'en'
+  return 'unknown'
+}
+
 type EntityType = 'artist' | 'group' | 'production' | 'news'
 type TranslationStatus = 'draft' | 'approved' | 'ai'
 
@@ -98,19 +110,32 @@ export default function TranslationEditorPage() {
     if (!res.ok) return
     const data = await res.json()
 
+    let newOriginals: Record<string, string | null> = {}
     if (entityType === 'artist') {
       setEntityName(data.nameRomanized)
-      setOriginals({ bio: data.bio })
+      newOriginals = { bio: data.bio }
     } else if (entityType === 'group') {
       setEntityName(data.name)
-      setOriginals({ bio: data.bio })
+      newOriginals = { bio: data.bio }
     } else if (entityType === 'production') {
       setEntityName(data.titlePt)
-      setOriginals({ synopsis: data.synopsis, tagline: data.tagline })
+      newOriginals = { synopsis: data.synopsis, tagline: data.tagline }
     } else if (entityType === 'news') {
       setEntityName(data.originalTitle ?? data.title)
-      setOriginals({ title: data.originalTitle ?? data.title, contentMd: data.originalContent ?? data.contentMd })
+      newOriginals = { title: data.originalTitle ?? data.title, contentMd: data.originalContent ?? data.contentMd }
     }
+    setOriginals(newOriginals)
+
+    // Se original já é PT-BR, pré-preencher tradução para facilitar aprovação
+    setDrafts(prev => {
+      const next = { ...prev }
+      for (const [key, val] of Object.entries(newOriginals)) {
+        if (val && !next[key] && detectOriginalLang(val) === 'pt') {
+          next[key] = val
+        }
+      }
+      return next
+    })
   }, [entityType, entityId])
 
   // Busca traduções existentes
@@ -249,8 +274,15 @@ export default function TranslationEditorPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/5">
                 {/* Original */}
                 <div className="p-4 bg-zinc-950/30">
-                  <div className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest mb-3">
-                    Original (EN/KR)
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">Original</span>
+                    {(() => {
+                      const lang = original ? detectOriginalLang(original) : 'unknown'
+                      if (lang === 'pt') return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-900/30 text-green-400 border border-green-700/20">PT-BR</span>
+                      if (lang === 'ko') return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-900/30 text-blue-400 border border-blue-700/20">KR</span>
+                      if (lang === 'en') return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-zinc-700 text-zinc-400 border border-zinc-600">EN</span>
+                      return null
+                    })()}
                   </div>
                   {original ? (
                     fieldConfig.multiline ? (
