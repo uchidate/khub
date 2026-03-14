@@ -58,7 +58,7 @@ function BlockItem({ block }: { block: NewsBlock }) {
                         src={block.url}
                         alt={block.caption || ''}
                         referrerPolicy="no-referrer"
-                        className="rounded-2xl w-full object-cover border border-white/10 shadow-xl"
+                        className="rounded-2xl w-full md:w-auto max-w-full border border-white/10 shadow-xl"
                     />
                     {block.caption && (
                         <span className="block text-center text-xs text-zinc-500 mt-2 italic">

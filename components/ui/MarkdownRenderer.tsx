@@ -177,7 +177,7 @@ function buildComponents(source?: string | null): Components {
                     src={src}
                     alt={alt || ''}
                     referrerPolicy="no-referrer"
-                    className="rounded-2xl w-full object-cover border border-white/10 shadow-xl"
+                    className="rounded-2xl w-full md:w-auto max-w-full border border-white/10 shadow-xl"
                 />
                 {alt && (
                     <span className="block text-center text-xs text-zinc-500 mt-2 italic">
