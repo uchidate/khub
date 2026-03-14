@@ -483,6 +483,26 @@ async function runCronProcessing(lockId: string) {
             // manualmente pelo admin em /admin/translations.
             // Os serviços ArtistTranslationService e ProductionTranslationService
             // estão disponíveis via POST /api/admin/translations/run.
+            //
+            // Para reativar, descomente o bloco abaixo:
+            //
+            // if (normalizedCount < 2) {
+            //     const artistService = getArtistTranslationService(prisma)
+            //     const artistResult = await artistService.translatePendingArtists(1)
+            //     if (artistResult.translated > 0 || artistResult.skipped > 0) {
+            //         normalizedCount++
+            //         log.info(`Translated artist bio (translated: ${artistResult.translated}, skipped: ${artistResult.skipped})`)
+            //     }
+            // }
+            //
+            // if (normalizedCount < 2) {
+            //     const productionService = getProductionTranslationService(prisma)
+            //     const prodResult = await productionService.translatePendingProductions(1)
+            //     if (prodResult.translated > 0 || prodResult.skipped > 0) {
+            //         normalizedCount++
+            //         log.info(`Translated production synopsis (translated: ${prodResult.translated}, skipped: ${prodResult.skipped})`)
+            //     }
+            // }
 
             // Prioridade 5: Notícias antigas sem markdown ou em inglês → reformatar e traduzir
             if (normalizedCount < 2) {
