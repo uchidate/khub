@@ -63,13 +63,17 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
     return (
         <section className="relative w-full overflow-hidden pt-24 pb-8 md:pt-28 md:pb-10">
 
-            {/* Background — CSS background-image não é candidato LCP */}
+            {/* Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black z-10" />
-                <div
+                <Image
+                    src="https://images.unsplash.com/photo-1574169208507-84376144848b?q=60&w=1200"
+                    alt=""
+                    fill
+                    priority
                     aria-hidden="true"
-                    className="absolute inset-0 bg-cover bg-center opacity-25"
-                    style={{ backgroundImage: "url('https://images.unsplash.com/photo-1574169208507-84376144848b?q=60&w=1200')" }}
+                    className="object-cover opacity-25"
+                    sizes="100vw"
                 />
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyber-purple/20 blur-[120px] rounded-full z-20" />
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-neon-pink/10 blur-[120px] rounded-full z-20" />
