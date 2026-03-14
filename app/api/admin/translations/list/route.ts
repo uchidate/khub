@@ -52,31 +52,62 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '30')))
   const skip = (page - 1) * limit
+  // hidden=true → entidades ocultas; hidden=false/ausente → apenas visíveis
+  const hiddenParam = searchParams.get('hidden')
+  const isHiddenFilter: boolean | undefined = hiddenParam === 'true' ? true : hiddenParam === 'false' ? false : undefined
+  // undefined = comportamento padrão (isHidden: false) para visíveis
+  const isHiddenWhere = isHiddenFilter === true ? true : false
 
   try {
     let items: Record<string, unknown>[] = []
     let total = 0
 
     if (entityType === 'artist') {
-      const idFilter = await resolveStatusIds('artist', 'bio', statusFilter)
+      let idFilter = await resolveStatusIds('artist', 'bio', statusFilter)
+      if (statusFilter === 'pending') {
+        // Excluir também artistas com bio já em PT-BR (fieldSources.bio.source='tmdb_pt')
+        const tmdbPtBioArtists = await prisma.artist.findMany({
+          where: { isHidden: isHiddenWhere, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+          select: { id: true },
+        })
+        const tmdbPtIds = tmdbPtBioArtists.map(a => a.id)
+        if (tmdbPtIds.length > 0) {
+          const base = idFilter && 'notIn' in idFilter ? idFilter.notIn : []
+          idFilter = { notIn: Array.from(new Set([...base, ...tmdbPtIds])) }
+        }
+      } else if (statusFilter === 'approved') {
+        // Incluir também artistas com bio PT-BR do TMDB mesmo sem CT
+        const tmdbPtBioArtists = await prisma.artist.findMany({
+          where: { isHidden: isHiddenWhere, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+          select: { id: true },
+        })
+        const tmdbPtIds = tmdbPtBioArtists.map(a => a.id)
+        if (tmdbPtIds.length > 0) {
+          const base = idFilter && 'in' in idFilter ? idFilter.in : []
+          idFilter = { in: Array.from(new Set([...base, ...tmdbPtIds])) }
+        }
+      }
       const where = {
         bio: { not: null as null },
-        isHidden: false,
+        isHidden: isHiddenWhere,
         ...(q ? { nameRomanized: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
       }
       const [artists, count] = await Promise.all([
-        prisma.artist.findMany({ where, select: { id: true, nameRomanized: true, bio: true }, orderBy: { nameRomanized: 'asc' }, skip, take: limit }),
+        prisma.artist.findMany({ where, select: { id: true, nameRomanized: true, bio: true, fieldSources: true }, orderBy: { nameRomanized: 'asc' }, skip, take: limit }),
         prisma.artist.count({ where }),
       ])
-      items = artists.map(a => ({ id: a.id, label: a.nameRomanized, fields: ['bio'], snippet: a.bio?.slice(0, 220) ?? undefined }))
+      items = artists.map(a => ({
+        id: a.id, label: a.nameRomanized, fields: ['bio'], snippet: a.bio?.slice(0, 220) ?? undefined,
+        artistBioSource: (a.fieldSources as Record<string, { source: string }> | null)?.bio?.source ?? null,
+      }))
       total = count
 
     } else if (entityType === 'group') {
       const idFilter = await resolveStatusIds('group', 'bio', statusFilter)
       const where = {
         bio: { not: null as null },
-        isHidden: false,
+        isHidden: isHiddenWhere,
         ...(q ? { name: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
       }
@@ -88,9 +119,32 @@ export async function GET(req: NextRequest) {
       total = count
 
     } else if (entityType === 'production') {
-      const idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
+      let idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
+      if (statusFilter === 'pending') {
+        // Excluir também produções com sinopse já em PT-BR (synopsisSource='tmdb_pt')
+        const alreadyPt = await prisma.production.findMany({
+          where: { synopsisSource: 'tmdb_pt', isHidden: isHiddenWhere },
+          select: { id: true },
+        })
+        const excludeIds = alreadyPt.map(p => p.id)
+        if (excludeIds.length > 0) {
+          const base = idFilter && 'notIn' in idFilter ? idFilter.notIn : []
+          idFilter = { notIn: Array.from(new Set([...base, ...excludeIds])) }
+        }
+      } else if (statusFilter === 'approved') {
+        // Incluir também produções com synopsisSource='tmdb_pt' mesmo sem CT
+        const alreadyPt = await prisma.production.findMany({
+          where: { synopsisSource: 'tmdb_pt', isHidden: isHiddenWhere },
+          select: { id: true },
+        })
+        const extraIds = alreadyPt.map(p => p.id)
+        if (extraIds.length > 0) {
+          const base = idFilter && 'in' in idFilter ? idFilter.in : []
+          idFilter = { in: Array.from(new Set([...base, ...extraIds])) }
+        }
+      }
       const where = {
-        isHidden: false,
+        isHidden: isHiddenWhere,
         synopsis: { not: null as null },
         ...(q ? {
           OR: [
@@ -151,6 +205,7 @@ export async function GET(req: NextRequest) {
       }
 
       const where = {
+        isHidden: isHiddenWhere,
         ...(q ? { title: { contains: q, mode: 'insensitive' as const } } : {}),
         ...(idFilter ? { id: idFilter } : {}),
         ...extraWhere,
@@ -205,12 +260,20 @@ export async function GET(req: NextRequest) {
         : fieldStatuses.some(s => s === 'draft' || s === 'approved')
           ? 'draft'
           : 'pending'
+      // Para productions: synopsisSource='tmdb_pt' = já está em PT-BR → tratar como approved
+      if (overallStatus === 'pending' && (item.synopsisSource as string) === 'tmdb_pt') {
+        overallStatus = 'approved'
+      }
+      // Para artists: fieldSources.bio.source='tmdb_pt' = bio já em PT-BR → tratar como approved
+      if (overallStatus === 'pending' && (item.artistBioSource as string) === 'tmdb_pt') {
+        overallStatus = 'approved'
+      }
       // Para news: se newsTranslationStatus='completed' e sem ContentTranslation → tratar como draft
       const newsStatus = item.newsTranslationStatus as string | undefined
       if (overallStatus === 'pending' && newsStatus === 'completed') {
         overallStatus = 'draft'
       }
-      const { newsTranslationStatus: _nts, ...restItem } = item
+      const { newsTranslationStatus: _nts, artistBioSource: _abs, ...restItem } = item
       return {
         ...restItem,
         status: overallStatus,
