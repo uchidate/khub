@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
@@ -197,7 +197,10 @@ function PublishButton({ post, onDone }: { post: BlogPost; onDone: () => void })
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AdminBlogPage() {
-    const toast = useAdminToast()
+    const toast    = useAdminToast()
+    const toastRef = useRef(toast)
+    useEffect(() => { toastRef.current = toast })
+
     const [activeTab,    setActiveTab]   = useState<Tab>('suggestions')
     const [suggestions,  setSuggestions] = useState<NewsSuggestion[]>([])
     const [loading,      setLoading]     = useState(false)
@@ -215,11 +218,11 @@ export default function AdminBlogPage() {
             )
             setSuggestions(blogPending)
         } catch {
-            toast.error('Erro ao carregar sugestões')
+            toastRef.current.error('Erro ao carregar sugestões')
         } finally {
             setLoading(false)
         }
-    }, [toast])
+    }, [])
 
     useEffect(() => {
         if (activeTab === 'suggestions') fetchSuggestions()
@@ -235,13 +238,13 @@ export default function AdminBlogPage() {
             })
             const data = await res.json()
             if (res.ok) {
-                toast.success(`${data.processed} posts gerados como rascunho`)
+                toastRef.current.success(`${data.processed} posts gerados como rascunho`)
                 await fetchSuggestions()
             } else {
-                toast.error(data.error ?? 'Erro ao gerar posts')
+                toastRef.current.error(data.error ?? 'Erro ao gerar posts')
             }
         } catch {
-            toast.error('Erro de rede')
+            toastRef.current.error('Erro de rede')
         } finally {
             setGeneratingAll(false)
         }
