@@ -70,8 +70,9 @@ services:
     environment:
       - DEPLOY_ENV=production
       - TZ=America/Sao_Paulo
-      # Ollama: configurado mas inativo — provider principal é DeepSeek/OpenAI
+      # Ollama: desabilitado — setar OLLAMA_ENABLED=true para reativar (OLLAMA_BASE_URL preservado no .env.production)
       - OLLAMA_MODEL=phi3:mini
+      - OLLAMA_ENABLED=false
       # Limitar heap do Node.js — GC agressivo antes do limite Docker, evita OOM kill
       - NODE_OPTIONS=--max-old-space-size=5120
     env_file:
