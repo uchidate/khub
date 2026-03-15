@@ -23,9 +23,6 @@ let _instance: AIOrchestrator | null = null
 export function getOrchestrator(): AIOrchestrator {
   if (!_instance) {
     _instance = new AIOrchestrator({
-      // geminiApiKey: process.env.GEMINI_API_KEY, // DESABILITADO: API key expirada
-      openaiApiKey:   process.env.OPENAI_API_KEY,
-      claudeApiKey:   process.env.ANTHROPIC_API_KEY,
       deepseekApiKey: process.env.DEEPSEEK_API_KEY,
       ollamaBaseUrl:  process.env.OLLAMA_BASE_URL,
     })

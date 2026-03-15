@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
-    Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink, Download, RotateCcw, Send,
+    Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink,
+    Download, RotateCcw, Send, Check, X,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -149,16 +150,18 @@ function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
     )
 }
 
-function ReprocessButton({ newsId, translationStatus, onDone }: { newsId: string; translationStatus: string | null; onDone: (artists: LinkedArtist[]) => void }) {
-    const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
-    const handle = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        if (translationStatus === 'completed') {
-            const ok = window.confirm(
-                'Esta notícia já foi traduzida para português.\n\nReprocessar irá consumir tokens de IA para traduzir novamente.\n\nTem certeza?'
-            )
-            if (!ok) return
-        }
+/**
+ * ReprocessButton com 2-step inline confirm quando a notícia já está traduzida.
+ * Evita window.confirm() e mantém o padrão do admin.
+ */
+function ReprocessButton({ newsId, translationStatus, onDone }: {
+    newsId: string
+    translationStatus: string | null
+    onDone: (artists: LinkedArtist[]) => void
+}) {
+    const [state, setState] = useState<'idle' | 'confirm' | 'loading' | 'ok' | 'err'>('idle')
+
+    const execute = async () => {
         setState('loading')
         try {
             const res = await fetch(`/api/admin/news/reprocess?id=${newsId}`, { method: 'POST' })
@@ -171,6 +174,38 @@ function ReprocessButton({ newsId, translationStatus, onDone }: { newsId: string
         } catch { setState('err') }
         finally { setTimeout(() => setState('idle'), 2500) }
     }
+
+    const handle = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (translationStatus === 'completed' && state === 'idle') {
+            setState('confirm')
+            return
+        }
+        execute()
+    }
+
+    if (state === 'confirm') {
+        return (
+            <span className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                <span className="text-[10px] text-amber-400 font-medium mr-0.5">Reprocessar?</span>
+                <button
+                    onClick={() => execute()}
+                    title="Confirmar reprocessamento"
+                    className="p-1 rounded text-emerald-400 hover:bg-emerald-400/10 transition-colors"
+                >
+                    <Check size={12} />
+                </button>
+                <button
+                    onClick={() => setState('idle')}
+                    title="Cancelar"
+                    className="p-1 rounded text-zinc-500 hover:bg-zinc-700 transition-colors"
+                >
+                    <X size={12} />
+                </button>
+            </span>
+        )
+    }
+
     return (
         <button
             onClick={handle}
@@ -200,38 +235,34 @@ export default function NewsAdminPage() {
 
     // Filters
     const [filterSource, setFilterSource] = useState<string>('')
-    const [filterStatus, setFilterStatus] = useState<'' | 'visible' | 'hidden' | 'queue'>('')
+    const [filterStatus, setFilterStatus] = useState<'' | 'visible' | 'hidden' | 'queue' | 'today'>('')
 
     // Stats
     const [stats, setStats] = useState<NewsStats | null>(null)
 
     const fetchStats = useCallback(() => {
-        Promise.all([
-            fetch('/api/admin/news?take=1').then(r => r.json()),
-            fetch('/api/admin/news?take=1&isHidden=true').then(r => r.json()),
-            fetch('/api/admin/news?take=1&dateFrom=' + new Date().toISOString().split('T')[0]).then(r => r.json()),
-            // Fila de curadoria: draft + ready (aguardando publicação)
-            fetch('/api/admin/news?take=1&status=draft').then(r => r.json()),
-            fetch('/api/admin/news?take=1&status=ready').then(r => r.json()),
-        ]).then(([all, hidden, today, drafts, ready]) => {
-            setStats({
-                total:  all.pagination?.total    ?? 0,
-                hidden: hidden.pagination?.total  ?? 0,
-                today:  today.pagination?.total   ?? 0,
-                queue: (drafts.pagination?.total ?? 0) + (ready.pagination?.total ?? 0),
-            })
-        }).catch(() => {})
+        fetch('/api/admin/news/stats')
+            .then(r => r.json())
+            .then(setStats)
+            .catch(() => {})
     }, [])
 
     useEffect(() => { fetchStats() }, [fetchStats])
 
-    const extraParams: Record<string, string> = {}
-    if (filterSource) extraParams.source = filterSource
-    if (filterStatus === 'hidden')  extraParams.isHidden = 'true'
-    if (filterStatus === 'visible') extraParams.isHidden = 'false'
-    if (filterStatus === 'queue')   extraParams.status = 'ready'
+    // Build extra params for DataTable — memoized so DataTable doesn't re-render on unrelated state changes
+    const extraParams = useMemo<Record<string, string>>(() => {
+        const p: Record<string, string> = {}
+        if (filterSource)                  p.source   = filterSource
+        if (filterStatus === 'hidden')     p.isHidden = 'true'
+        if (filterStatus === 'visible')    p.isHidden = 'false'
+        if (filterStatus === 'queue')      p.status   = 'ready'
+        if (filterStatus === 'today') {
+            p.dateFrom = new Date().toISOString().split('T')[0]
+        }
+        return p
+    }, [filterSource, filterStatus])
 
-    const columns: Column<News>[] = [
+    const columns: Column<News>[] = useMemo(() => [
         {
             key: 'imageUrl',
             label: '',
@@ -304,11 +335,12 @@ export default function NewsAdminPage() {
             render: (news) => {
                 if (news.isHidden) return <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/15 text-red-400 rounded text-[11px] font-semibold"><EyeOff size={10} /> Oculta</span>
                 if (news.status === 'draft')  return <span className="flex items-center gap-1 px-2 py-0.5 bg-zinc-700/60 text-zinc-400 rounded text-[11px] font-semibold">Rascunho</span>
-                if (news.status === 'ready')  return <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded text-[11px] font-semibold"><Send size={10} /> Pronta</span>
+                if (news.status === 'ready')  return <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded text-[11px] font-semibold"><CheckCircle size={10} /> Pronta</span>
                 return <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/15 text-emerald-400 rounded text-[11px] font-semibold"><Eye size={10} /> Visível</span>
             },
         },
-    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    ], [localArtistsOverride])
 
     const handleFormSubmit = async (data: Record<string, unknown>) => {
         if (data.publishedAt && typeof data.publishedAt === 'string') {
@@ -324,6 +356,7 @@ export default function NewsAdminPage() {
             const e = await res.json()
             throw new Error(e.error || 'Erro ao salvar notícia')
         }
+        toast.saved()
         refetchTable()
         fetchStats()
     }
@@ -351,21 +384,26 @@ export default function NewsAdminPage() {
     }
 
     const handleToggleHidden = async (news: News) => {
-        await fetch(`/api/admin/news?id=${news.id}`, {
+        const willHide = !news.isHidden
+        const res = await fetch(`/api/admin/news?id=${news.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isHidden: !news.isHidden }),
+            body: JSON.stringify({ isHidden: willHide }),
         })
+        if (!res.ok) { toast.error('Erro ao alterar visibilidade'); return }
+        toast.success(willHide ? 'Notícia ocultada' : 'Notícia tornada visível')
         refetchTable()
         fetchStats()
     }
 
     const handlePublish = async (news: News) => {
-        await fetch(`/api/admin/news?id=${news.id}`, {
+        const res = await fetch(`/api/admin/news?id=${news.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'published' }),
         })
+        if (!res.ok) { toast.error('Erro ao publicar notícia'); return }
+        toast.success('Notícia publicada')
         refetchTable()
         fetchStats()
     }
@@ -376,134 +414,161 @@ export default function NewsAdminPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ids }),
         })
-        if (res.ok) {
-            clearSelection()
-            refetchTable()
-            fetchStats()
-        }
+        if (!res.ok) { toast.error('Erro ao publicar notícias'); return }
+        toast.success(`${ids.length} notícia${ids.length > 1 ? 's publicadas' : ' publicada'}`)
+        clearSelection()
+        refetchTable()
+        fetchStats()
     }
 
+    const clearFilters = () => { setFilterSource(''); setFilterStatus('') }
+    const hasFilters = !!(filterSource || filterStatus)
+
+    const STAT_CARDS = [
+        {
+            label: 'Total',
+            value: stats?.total,
+            color: 'text-white',
+            filterValue: '' as const,
+            activeColor: 'border-zinc-600',
+        },
+        {
+            label: 'Fila',
+            value: stats?.queue,
+            color: stats?.queue ? 'text-blue-400' : 'text-zinc-600',
+            filterValue: 'queue' as const,
+            activeColor: 'border-blue-500/40 bg-blue-500/5',
+            hint: 'draft + pronta',
+        },
+        {
+            label: 'Ocultas',
+            value: stats?.hidden,
+            color: stats?.hidden ? 'text-amber-400' : 'text-zinc-600',
+            filterValue: 'hidden' as const,
+            activeColor: 'border-amber-500/40 bg-amber-500/5',
+        },
+        {
+            label: 'Hoje',
+            value: stats?.today,
+            color: stats?.today ? 'text-emerald-400' : 'text-zinc-600',
+            filterValue: 'today' as const,
+            activeColor: 'border-emerald-500/40 bg-emerald-500/5',
+        },
+    ]
+
     return (
-        <AdminLayout title="Notícias" subtitle="Gerencie notícias do K-Pop e K-Drama">
-            <div className="space-y-5">
+        <AdminLayout
+            title="Notícias"
+            subtitle="Gerencie notícias do K-Pop e K-Drama"
+            actions={
+                <div className="flex items-center gap-2">
+                    <Link
+                        href="/admin/news/reprocess"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-400 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all text-xs"
+                    >
+                        <RotateCcw size={13} />
+                        Reprocessar
+                    </Link>
+                    <Link
+                        href="/admin/news/import"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-400 font-medium rounded-lg hover:border-emerald-500/50 hover:text-emerald-300 transition-all text-xs"
+                    >
+                        <Download size={13} />
+                        Importar
+                    </Link>
+                    <button
+                        onClick={() => { setEditingNews(null); setFormOpen(true) }}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all text-sm"
+                    >
+                        <Plus size={15} />
+                        Nova
+                    </button>
+                </div>
+            }
+        >
+            <div className="space-y-4">
 
-                {/* ── Stats ────────────────────────────────────────────── */}
-                <div className="grid grid-cols-4 gap-3">
-                    {[
-                        { label: 'Total', value: stats?.total, color: 'text-white', onClick: undefined },
-                        { label: 'Fila', value: stats?.queue, color: stats?.queue ? 'text-blue-400' : 'text-zinc-600', onClick: () => setFilterStatus(prev => prev === 'queue' ? '' : 'queue') },
-                        { label: 'Ocultas', value: stats?.hidden, color: 'text-amber-400', onClick: undefined },
-                        { label: 'Hoje', value: stats?.today, color: 'text-emerald-400', onClick: undefined },
-                    ].map(({ label, value, color, onClick }) => (
-                        <div
-                            key={label}
-                            onClick={onClick}
-                            className={`rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-center ${onClick ? 'cursor-pointer hover:border-blue-500/40 transition-colors' : ''} ${filterStatus === 'queue' && label === 'Fila' ? 'border-blue-500/40 bg-blue-500/5' : ''}`}
-                        >
-                            <p className={`text-2xl font-black tabular-nums ${color}`}>
-                                {value === undefined ? <Loader2 size={18} className="animate-spin mx-auto text-zinc-600" /> : value.toLocaleString('pt-BR')}
-                            </p>
-                            <p className="text-[11px] text-zinc-500 mt-0.5">{label}</p>
-                        </div>
-                    ))}
+                {/* ── Stats ─────────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {STAT_CARDS.map(({ label, value, color, filterValue, activeColor, hint }) => {
+                        const isActive = filterStatus === filterValue && filterValue !== ''
+                        return (
+                            <button
+                                key={label}
+                                onClick={() => setFilterStatus(prev => prev === filterValue ? '' : filterValue)}
+                                className={`rounded-xl border bg-zinc-900/40 px-4 py-3 text-center transition-colors hover:border-zinc-600 ${
+                                    isActive ? activeColor : 'border-zinc-800'
+                                }`}
+                            >
+                                <p className={`text-2xl font-black tabular-nums ${color}`}>
+                                    {value === undefined
+                                        ? <Loader2 size={18} className="animate-spin mx-auto text-zinc-600" />
+                                        : value.toLocaleString('pt-BR')
+                                    }
+                                </p>
+                                <p className="text-[11px] text-zinc-500 mt-0.5">
+                                    {label}
+                                    {hint && <span className="text-zinc-700 ml-1">· {hint}</span>}
+                                </p>
+                            </button>
+                        )
+                    })}
                 </div>
 
-                {/* ── Toolbar ──────────────────────────────────────────── */}
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                    {/* Filters */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {/* Source filter */}
-                        <div className="flex items-center gap-1 flex-wrap">
-                            {SOURCES.map(s => {
-                                const c = SOURCE_COLORS[s]
-                                const active = filterSource === s
-                                return (
-                                    <button
-                                        key={s}
-                                        onClick={() => setFilterSource(prev => prev === s ? '' : s)}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
-                                            active && c
-                                                ? `${c.bg} ${c.text} ${c.border}`
-                                                : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-                                        }`}
-                                    >
-                                        {s}
-                                    </button>
-                                )
-                            })}
-                        </div>
-
-                        {/* Status filter */}
-                        <div className="flex items-center gap-1">
+                {/* ── Filters ───────────────────────────────────────────── */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    {/* Source filter pills */}
+                    {SOURCES.map(s => {
+                        const c = SOURCE_COLORS[s]
+                        const active = filterSource === s
+                        return (
                             <button
-                                onClick={() => setFilterStatus(prev => prev === 'queue' ? '' : 'queue')}
-                                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
-                                    filterStatus === 'queue'
-                                        ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                                key={s}
+                                onClick={() => setFilterSource(prev => prev === s ? '' : s)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
+                                    active && c
+                                        ? `${c.bg} ${c.text} ${c.border}`
                                         : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
                                 }`}
                             >
-                                <Send size={11} /> Fila
+                                {s}
                             </button>
-                            <button
-                                onClick={() => setFilterStatus(prev => prev === 'visible' ? '' : 'visible')}
-                                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
-                                    filterStatus === 'visible'
-                                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                                        : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-                                }`}
-                            >
-                                <Eye size={11} /> Visíveis
-                            </button>
-                            <button
-                                onClick={() => setFilterStatus(prev => prev === 'hidden' ? '' : 'hidden')}
-                                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
-                                    filterStatus === 'hidden'
-                                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                                        : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-                                }`}
-                            >
-                                <EyeOff size={11} /> Ocultas
-                            </button>
-                        </div>
+                        )
+                    })}
 
-                        {(filterSource || filterStatus) && (
-                            <button
-                                onClick={() => { setFilterSource(''); setFilterStatus('') }}
-                                className="text-[11px] text-zinc-600 hover:text-zinc-300 px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors"
-                            >
-                                Limpar filtros
-                            </button>
-                        )}
-                    </div>
+                    {/* Separator */}
+                    <span className="text-zinc-700 select-none">·</span>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href="/admin/news/import"
-                            className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-emerald-500/50 hover:text-emerald-300 transition-all text-sm"
-                        >
-                            <Download size={14} />
-                            Importar
-                        </Link>
-                        <Link
-                            href="/admin/news/reprocess"
-                            className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all text-sm"
-                        >
-                            <RotateCcw size={14} />
-                            Reprocessar
-                        </Link>
+                    {/* Status filter pills */}
+                    {([
+                        { value: 'queue'   as const, label: 'Fila',     icon: <Send size={11} />,    active: 'bg-blue-500/15 text-blue-300 border-blue-500/30'    },
+                        { value: 'visible' as const, label: 'Visíveis', icon: <Eye size={11} />,     active: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+                        { value: 'hidden'  as const, label: 'Ocultas',  icon: <EyeOff size={11} />, active: 'bg-amber-500/15 text-amber-300 border-amber-500/30'  },
+                    ] as const).map(pill => (
                         <button
-                            onClick={() => { setEditingNews(null); setFormOpen(true) }}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all text-sm"
+                            key={pill.value}
+                            onClick={() => setFilterStatus(prev => prev === pill.value ? '' : pill.value)}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
+                                filterStatus === pill.value
+                                    ? pill.active
+                                    : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                            }`}
                         >
-                            <Plus size={15} />
-                            Nova
+                            {pill.icon} {pill.label}
                         </button>
-                    </div>
+                    ))}
+
+                    {hasFilters && (
+                        <button
+                            onClick={clearFilters}
+                            className="text-[11px] text-zinc-600 hover:text-zinc-300 px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors"
+                        >
+                            Limpar filtros
+                        </button>
+                    )}
                 </div>
 
-                {/* ── Table ────────────────────────────────────────────── */}
+                {/* ── Table ─────────────────────────────────────────────── */}
                 <DataTable<News>
                     columns={columns}
                     apiUrl="/api/admin/news"
@@ -511,9 +576,6 @@ export default function NewsAdminPage() {
                     editHref={(news) => `/admin/news/${news.id}/edit?returnTo=/admin/news`}
                     onDelete={(ids) => { setSelectedIds(ids); setDeleteOpen(true) }}
                     searchPlaceholder="Buscar por título ou conteúdo..."
-                    filters={
-                        <></>  // filters are rendered in toolbar above
-                    }
                     bulkActions={(ids, clearSelection) => (
                         <button
                             onClick={() => handleBulkPublish(ids, clearSelection)}

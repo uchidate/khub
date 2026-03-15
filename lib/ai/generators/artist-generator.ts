@@ -118,7 +118,7 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ artists: string[] }>(
                 prompt,
                 schema,
-                { preferredProvider: 'gemini' }
+                { preferredProvider: 'deepseek' }
             );
 
             console.log(`✅ AI suggested: ${result.artists.join(', ')}`);
@@ -179,7 +179,7 @@ Se a informação não estiver na biografia, use seu conhecimento geral para pre
             }>(
                 prompt,
                 '{ "birthName": "string", "height": "string", "bloodType": "string", "zodiacSign": "string" }',
-                { preferredProvider: 'gemini' }
+                { preferredProvider: 'deepseek' }
             );
 
             return result;
@@ -280,7 +280,7 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
         }>(prompt, schema, {
             ...options,
             systemPrompt: SYSTEM_PROMPTS.artist,
-            preferredProvider: 'gemini', // Usa Gemini Free Tier como fallback
+            preferredProvider: 'deepseek', // Usa DeepSeek como provider principal
         });
 
         // Search for real artist image using Aliases

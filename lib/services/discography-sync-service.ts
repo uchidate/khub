@@ -144,7 +144,7 @@ export class DiscographySyncService {
         const aiResult = await this.getOrchestrator().generateStructured<{ albums: AlbumData[] }>(
             prompt,
             schema,
-            { preferredProvider: 'gemini' }
+            { preferredProvider: 'deepseek' }
         );
 
         if (!aiResult.albums || aiResult.albums.length === 0) {

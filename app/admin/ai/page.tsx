@@ -55,10 +55,7 @@ export default async function AiDashboardPage() {
 
     const providerColors: Record<string, string> = {
         deepseek: 'bg-blue-500',
-        openai:   'bg-emerald-500',
-        claude:   'bg-orange-500',
         ollama:   'bg-purple-500',
-        gemini:   'bg-yellow-500',
     }
 
     const featureEntries = Object.entries(summary.callsByFeature)

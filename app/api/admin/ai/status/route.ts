@@ -44,7 +44,7 @@ export async function GET() {
     const orchStats = getOrchestratorStats()
 
     // Status de cada provider pelo config
-    const providerNames = ['deepseek', 'ollama', 'openai', 'claude', 'gemini'] as const
+    const providerNames = ['deepseek', 'ollama'] as const
 
     for (const name of providerNames) {
         const stats = orchStats?.providerStats[name]
@@ -69,15 +69,6 @@ export async function GET() {
                 break
             case 'ollama':
                 providerStatuses[name].configured = !!process.env.OLLAMA_BASE_URL
-                break
-            case 'openai':
-                providerStatuses[name].configured = !!process.env.OPENAI_API_KEY
-                break
-            case 'claude':
-                providerStatuses[name].configured = !!process.env.ANTHROPIC_API_KEY
-                break
-            case 'gemini':
-                providerStatuses[name].configured = !!process.env.GEMINI_API_KEY
                 break
         }
 
@@ -117,11 +108,9 @@ export async function GET() {
 
     // Informações do ambiente
     const envInfo = {
+        DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY ? '✅ configurado' : '❌ não configurado',
         OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL ? '✅ configurado' : '❌ não configurado',
         OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'phi3 (padrão)',
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY ? '✅ configurado' : '❌ não configurado',
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ? '✅ configurado' : '❌ não configurado',
-        GEMINI_API_KEY: process.env.GEMINI_API_KEY ? '✅ configurado (mas desabilitado no código)' : '❌ não configurado',
         DEPLOY_ENV: process.env.DEPLOY_ENV || 'não definido',
     }
 
@@ -155,8 +144,8 @@ function generateRecommendations(
         recs.push('💡 Ollama configurado. Para modelos mais rápidos no servidor: OLLAMA_MODEL=tinyllama (rápido) ou OLLAMA_MODEL=phi3 (qualidade)')
     }
 
-    if (!providers.openai?.configured && !providers.claude?.configured && !providers.gemini?.configured) {
-        recs.push('🚨 Nenhum provider cloud configurado. Se Ollama falhar, não há fallback disponível.')
+    if (!providers.deepseek?.configured) {
+        recs.push('🚨 DeepSeek não configurado. Configure DEEPSEEK_API_KEY para usar geração de conteúdo.')
     }
 
     if (test && !test.success && test.latencyMs > 45000) {

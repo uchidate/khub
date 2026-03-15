@@ -3,7 +3,7 @@
  * Configurações centralizadas para todos os providers de IA
  */
 
-export type AIProviderType = 'gemini' | 'openai' | 'claude' | 'ollama' | 'deepseek';
+export type AIProviderType = 'ollama' | 'deepseek';
 
 export interface AIProviderConfig {
   name: AIProviderType;
@@ -56,51 +56,6 @@ export interface OrchestratorStats {
 
 // Configurações padrão dos providers
 export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
-  gemini: {
-    name: 'gemini',
-    displayName: 'Google Gemini',
-    enabled: true,
-    priority: 1, // Maior prioridade (gratuito)
-    costPer1kTokens: 0, // Tier gratuito
-    rateLimit: {
-      requestsPerMinute: 15, // Limite do tier gratuito
-      tokensPerMinute: 1000000,
-    },
-    models: {
-      default: 'gemini-2.0-flash',
-      alternatives: ['gemini-1.5-flash', 'gemini-1.5-pro'],
-    },
-  },
-  openai: {
-    name: 'openai',
-    displayName: 'OpenAI',
-    enabled: true,
-    priority: 2,
-    costPer1kTokens: 0.00015, // gpt-4o-mini
-    rateLimit: {
-      requestsPerMinute: 500,
-      tokensPerMinute: 200000,
-    },
-    models: {
-      default: 'gpt-4o-mini',
-      alternatives: ['gpt-3.5-turbo'],
-    },
-  },
-  claude: {
-    name: 'claude',
-    displayName: 'Anthropic Claude',
-    enabled: true,
-    priority: 3,
-    costPer1kTokens: 0.00025, // claude-3-haiku
-    rateLimit: {
-      requestsPerMinute: 50,
-      tokensPerMinute: 100000,
-    },
-    models: {
-      default: 'claude-3-5-haiku-20241022',
-      alternatives: ['claude-3-haiku-20240307'],
-    },
-  },
   deepseek: {
     name: 'deepseek',
     displayName: 'DeepSeek',
