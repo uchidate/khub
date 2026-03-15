@@ -435,24 +435,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             </div>
                         )}
 
-                        {/* Stats */}
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Film className="w-3.5 h-3.5 text-purple-400 mx-auto mb-1" />
-                                <div className="text-base font-black text-purple-400">{artist.productions.length}</div>
-                                <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Produções</p>
-                            </div>
-                            <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Disc3 className="w-3.5 h-3.5 text-emerald-400 mx-auto mb-1" />
-                                <div className="text-base font-black text-emerald-400">{artist.albums.length}</div>
-                                <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Lançamentos</p>
-                            </div>
-                            <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
-                                <Newspaper className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1" />
-                                <div className="text-base font-black text-amber-400">{newsCount}</div>
-                                <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wide mt-0.5">Notícias</p>
-                            </div>
-                        </div>
 
                     </div>
 
@@ -469,23 +451,19 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         {/* Perfil Biográfico */}
                         {profileSections.length >= 2 && (
                             <section>
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4 text-purple-400" />
-                                        <span className="text-sm font-black text-white uppercase tracking-widest">Perfil</span>
-                                    </div>
-                                    <div className="flex-1 h-px bg-white/5" />
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <ul className="space-y-4">
                                     {profileSections.map((sec, i) => (
-                                        <div key={i} className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
-                                            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500">
-                                                {sec.title}
+                                        <li key={i} className="flex items-start gap-3">
+                                            <span className="mt-1 w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0">
+                                                <Sparkles className="w-2.5 h-2.5" />
                                             </span>
-                                            <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
-                                        </div>
+                                            <div>
+                                                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500 block mb-1">{sec.title}</span>
+                                                <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
+                                            </div>
+                                        </li>
                                     ))}
-                                </div>
+                                </ul>
                             </section>
                         )}
 
@@ -517,9 +495,13 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                     <h3 className="text-sm font-black text-white uppercase tracking-widest">Filmografia</h3>
                                 </div>
                                 <div className="flex-1 h-px bg-white/5" />
-                                {artist.productions.length > 0 && (
-                                    <span className="text-xs text-zinc-600 font-bold flex-shrink-0">{artist.productions.length} {artist.productions.length !== 1 ? 'produções' : 'produção'}</span>
-                                )}
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="flex items-center gap-1 text-xs font-bold text-purple-400"><Film className="w-3 h-3" />{artist.productions.length}</span>
+                                    <span className="text-zinc-700">·</span>
+                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-400"><Disc3 className="w-3 h-3" />{artist.albums.length}</span>
+                                    <span className="text-zinc-700">·</span>
+                                    <span className="flex items-center gap-1 text-xs font-bold text-amber-400"><Newspaper className="w-3 h-3" />{newsCount}</span>
+                                </div>
                             </div>
                             {artist.productions.length > 0 ? (
                                 <div className="space-y-4">

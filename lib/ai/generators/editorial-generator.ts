@@ -177,7 +177,7 @@ export async function generateArtistEditorial(artist: {
 
     const prompt = `Atue como um redator biográfico focado em dados e cronologia.
 
-Escreva a biografia de **${artist.nameRomanized}** (${artist.roles.join(', ')}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}) organizada em exatamente 4 parágrafos curtos, cada um com um título de uma ou duas palavras.
+Escreva a biografia de **${artist.nameRomanized}** (${artist.roles.join(', ')}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}) organizada em exatamente 3 parágrafos curtos, cada um com um título de uma ou duas palavras.
 
 ${artist.bio ? `Contexto biográfico: "${artist.bio.slice(0, 500)}"` : ''}
 
@@ -185,10 +185,9 @@ Estrutura obrigatória:
 - Parágrafo 1 — Origem: marcos históricos e primeiros grandes sucessos.
 - Parágrafo 2 — Projetos: produções atuais (2024–2026), desempenho em plataformas de streaming e novos lançamentos.
 - Parágrafo 3 — Reconhecimento: prêmios reais, competências técnicas e atuação comercial/marcas.
-- Parágrafo 4 — Curiosidades: fatos objetivos fora da atuação; inclua ao menos uma curiosidade inesperada ou engraçada.
 
 Regras:
-- Títulos de no máximo 2 palavras (ex: "Trajetória", "Projetos", "Prêmios", "Curiosidades").
+- Títulos de no máximo 2 palavras (ex: "Origem", "Projetos", "Reconhecimento").
 - Priorize fatos concretos, marcos de audiência, prêmios reais e produções específicas.
 - NÃO use frases de efeito como "exemplo de resiliência", "atingiu novo patamar", "ícone global".
 - NÃO use adjetivos subjetivos — se o artista é talentoso, cite o prêmio, não o adjetivo.
@@ -196,9 +195,6 @@ Regras:
 - Tom: seco, informativo, profissional e direto ao ponto.
 
 Formato de saída — use EXATAMENTE este padrão (sem variações):
-**[Título]**
-[conteúdo]
-
 **[Título]**
 [conteúdo]
 
