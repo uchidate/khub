@@ -220,7 +220,19 @@ export default async function AiDashboardPage() {
                 </div>
 
                 {/* Recent logs */}
-                <AiLogsTable initialLogs={logsResult.logs.map(l => ({ ...l, createdAt: new Date(l.createdAt).toISOString() }))} />
+                <AiLogsTable initialLogs={logsResult.logs.map(l => ({
+                    id:         l.id,
+                    provider:   l.provider,
+                    model:      l.model,
+                    feature:    l.feature,
+                    tokensIn:   l.tokensIn,
+                    tokensOut:  l.tokensOut,
+                    cost:       l.cost,
+                    durationMs: l.durationMs,
+                    status:     l.status,
+                    errorMsg:   l.errorMsg,
+                    createdAt:  new Date(l.createdAt as unknown as string).toISOString(),
+                }))} />
             </div>
         </AdminLayout>
     )
