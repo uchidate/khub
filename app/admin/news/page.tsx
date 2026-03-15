@@ -8,7 +8,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
     Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink,
-    Download, RotateCcw, Send, Check, X,
+    Download, RotateCcw, Send, Check, X, Sparkles,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -218,6 +218,50 @@ function ReprocessButton({ newsId, translationStatus, onDone }: {
             }`}
         >
             <RefreshCw size={13} className={state === 'loading' ? 'animate-spin' : ''} />
+        </button>
+    )
+}
+
+function GenerateBlogButton({ newsId, onDone }: { newsId: string; onDone: () => void }) {
+    const toast = useAdminToast()
+    const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
+
+    const handle = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setState('loading')
+        try {
+            const res = await fetch(`/api/admin/news/${newsId}/generate-blog-post`, { method: 'POST' })
+            const data = await res.json()
+            if (!res.ok) {
+                toast.error(data.error ?? 'Erro ao gerar blog post')
+                setState('err')
+            } else {
+                toast.success(`Blog post criado como rascunho: "${data.title}"`)
+                setState('ok')
+                onDone()
+            }
+        } catch {
+            setState('err')
+        } finally {
+            setTimeout(() => setState('idle'), 3000)
+        }
+    }
+
+    return (
+        <button
+            onClick={handle}
+            disabled={state === 'loading'}
+            title="Gerar blog post a partir desta notícia (salvo como rascunho)"
+            className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
+                state === 'ok'  ? 'text-emerald-400 bg-emerald-400/10' :
+                state === 'err' ? 'text-red-400 bg-red-400/10' :
+                'text-zinc-500 hover:text-purple-300 hover:bg-purple-400/10'
+            }`}
+        >
+            {state === 'loading'
+                ? <Loader2 size={13} className="animate-spin" />
+                : <Sparkles size={13} />
+            }
         </button>
     )
 }
@@ -601,6 +645,9 @@ export default function NewsAdminPage() {
                                 translationStatus={news.translationStatus}
                                 onDone={(artists) => setLocalArtistsOverride(prev => ({ ...prev, [news.id]: artists }))}
                             />
+                            {news.status === 'published' && (
+                                <GenerateBlogButton newsId={news.id} onDone={refetchTable} />
+                            )}
                             {news.status !== 'published' && (
                                 <button
                                     onClick={e => { e.stopPropagation(); handlePublish(news) }}
