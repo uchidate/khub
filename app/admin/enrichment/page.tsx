@@ -3,315 +3,458 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Sparkles, Loader2, Play, RefreshCw, AlertCircle, CheckCircle, DollarSign, ChevronDown, ChevronUp } from 'lucide-react'
-type EnrichmentTarget = 'artist_bio' | 'artist_editorial' | 'artist_curiosidades' | 'production_review' | 'news_editorial_note' | 'news_blog_post'
+import Image from 'next/image'
+import {
+    Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
+    CheckCircle, Circle, DollarSign, ChevronRight, Play,
+} from 'lucide-react'
 
-interface DryRunData {
-    counts: Record<EnrichmentTarget, number>
-    estimates: Record<EnrichmentTarget, number>
-    totalEstimate: number
-    budgets: Record<string, {
-        budgetUsd: number | null
-        spentUsd: number
-        remainingUsd: number | null
-        exceeded: boolean
-        enabled: boolean
-    }>
+type Tab = 'artists' | 'productions' | 'news'
+
+interface QueueItem {
+    id:               string
+    name:             string
+    imageUrl?:        string
+    subtitle?:        string
+    missingFields:    string[]
+    presentFields:    string[]
+    totalFields:      number
+    completenessScore: number
+    priority:         number
+    estimatedCost:    number
 }
 
-interface RunResult {
-    target: EnrichmentTarget
-    processed: number
-    failed: number
-    totalCostUsd: number
-    failures?: { id: string; error: string }[]
+interface QueueData {
+    items:             QueueItem[]
+    total:             number
+    totalCostEstimate: number
 }
 
-const TARGET_LABELS: Record<EnrichmentTarget, string> = {
-    artist_bio:           'Bio de Artista',
-    artist_editorial:     'Análise Editorial de Artista',
-    artist_curiosidades:  'Curiosidades sobre Artista',
-    production_review:    'Review Editorial de Produção',
-    news_editorial_note:  'Nota Editorial de Notícia',
-    news_blog_post:       'Blog Post a partir de Notícia',
+// Field display config per tab
+const FIELD_LABELS: Record<Tab, Record<string, { label: string; target: string }>> = {
+    artists: {
+        bio:          { label: 'Bio',         target: 'artist_bio' },
+        editorial:    { label: 'Análise',     target: 'artist_editorial' },
+        curiosidades: { label: 'Curiosidades', target: 'artist_curiosidades' },
+    },
+    productions: {
+        review: { label: 'Review', target: 'production_review' },
+    },
+    news: {
+        nota: { label: 'Nota',      target: 'news_editorial_note' },
+        blog: { label: 'Blog Post', target: 'news_blog_post' },
+    },
 }
 
-const TARGET_FEATURE: Record<EnrichmentTarget, string> = {
-    artist_bio:           'artist_bio_enrichment',
-    artist_editorial:     'artist_editorial',
-    artist_curiosidades:  'artist_curiosidades',
-    production_review:    'production_review',
-    news_editorial_note:  'news_editorial_note',
-    news_blog_post:       'blog_post_generation',
+const TAB_CONFIG: Record<Tab, { label: string; icon: React.ElementType; batchLimit: number }> = {
+    artists:    { label: 'Artistas',   icon: Users,     batchLimit: 10 },
+    productions: { label: 'Produções', icon: Film,      batchLimit: 5  },
+    news:       { label: 'Notícias',   icon: Newspaper, batchLimit: 20 },
 }
 
-const TARGET_DESCRIPTION: Record<EnrichmentTarget, string> = {
-    artist_bio:           'Gera bio extensa (400+ palavras) em PT-BR para artistas sem bio.',
-    artist_editorial:     'Gera análise editorial original sobre carreira e impacto do artista.',
-    artist_curiosidades:  'Gera 6 curiosidades autorais sobre cada artista.',
-    production_review:    'Gera review editorial + nota + "por que assistir" para doramas/filmes.',
-    news_editorial_note:  'Gera nota contextual (100-150 palavras) para notícias traduzidas.',
-    news_blog_post:       'Gera blog post completo (500-700 palavras) a partir de notícias publicadas. Salvo como rascunho.',
+function CompletenessBar({ score, present, total }: { score: number; present: number; total: number }) {
+    const color = score === 100 ? 'bg-emerald-500' : score > 0 ? 'bg-blue-500' : 'bg-zinc-700'
+    return (
+        <div className="flex items-center gap-2">
+            <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${score}%` }} />
+            </div>
+            <span className="text-[10px] text-zinc-500 shrink-0">{present}/{total}</span>
+        </div>
+    )
+}
+
+function FieldChip({ label, done }: { label: string; done: boolean }) {
+    return (
+        <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md border ${
+            done
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                : 'border-zinc-700/60 bg-zinc-800/60 text-zinc-500'
+        }`}>
+            {done
+                ? <CheckCircle className="w-2.5 h-2.5" />
+                : <Circle className="w-2.5 h-2.5" />
+            }
+            {label}
+        </span>
+    )
+}
+
+function EnrichButton({
+    label,
+    entityId,
+    target,
+    disabled,
+    onDone,
+}: {
+    label: string
+    entityId: string
+    target: string
+    disabled: boolean
+    onDone: (entityId: string, field: string) => void
+}) {
+    const [loading, setLoading]  = useState(false)
+    const [done,    setDone]     = useState(false)
+    const [error,   setError]    = useState(false)
+    const toast = useAdminToast()
+
+    // field key = last part of target (e.g. 'artist_bio' → 'bio')
+    const fieldKey = target.split('_').slice(1).join('_') || target
+
+    async function handleClick() {
+        if (loading || done || disabled) return
+        setLoading(true)
+        setError(false)
+        try {
+            const res = await fetch('/api/admin/enrichment', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ target, entityId }),
+            })
+            const data = await res.json()
+            if (res.ok && data.processed > 0) {
+                setDone(true)
+                onDone(entityId, fieldKey)
+            } else {
+                setError(true)
+                toast.error(data.error ?? 'Erro ao enriquecer')
+            }
+        } catch {
+            setError(true)
+            toast.error('Erro de rede')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (done) {
+        return (
+            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
+                <CheckCircle className="w-3 h-3" /> Feito
+            </span>
+        )
+    }
+
+    return (
+        <button
+            onClick={handleClick}
+            disabled={loading || disabled}
+            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md transition-all disabled:opacity-40 ${
+                error
+                    ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
+                    : 'bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+            }`}
+        >
+            {loading
+                ? <Loader2 className="w-3 h-3 animate-spin" />
+                : <Sparkles className="w-3 h-3" />
+            }
+            {loading ? 'Gerando...' : label}
+        </button>
+    )
 }
 
 export default function EnrichmentPage() {
     const toast = useAdminToast()
-    const [dryRun, setDryRun] = useState<DryRunData | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [running, setRunning] = useState<EnrichmentTarget | null>(null)
-    const [results, setResults] = useState<Record<string, RunResult>>({})
-    const [limits, setLimits] = useState<Record<EnrichmentTarget, number>>({
-        artist_bio:           10,
-        artist_editorial:     10,
-        artist_curiosidades:  10,
-        production_review:    5,
-        news_editorial_note:  20,
-        news_blog_post:       5,
-    })
-    const [overwrite, setOverwrite] = useState(false)
-    const [expandedFailures, setExpandedFailures] = useState<string | null>(null)
+    const [activeTab, setActiveTab] = useState<Tab>('artists')
+    const [queue,     setQueue]     = useState<Record<Tab, QueueData | null>>({ artists: null, productions: null, news: null })
+    const [loading,   setLoading]   = useState(false)
+    const [batchRunning, setBatchRunning] = useState(false)
 
-    const fetchDryRun = useCallback(async () => {
+    const fetchQueue = useCallback(async (tab: Tab) => {
         setLoading(true)
         try {
-            const r = await fetch('/api/admin/enrichment')
-            const data = await r.json()
-            setDryRun(data)
+            const res  = await fetch(`/api/admin/enrichment/queue?tab=${tab}&limit=30`)
+            const data = await res.json() as QueueData
+            setQueue(prev => ({ ...prev, [tab]: data }))
         } catch {
-            toast.error('Erro ao carregar dados de enriquecimento')
+            toast.error('Erro ao carregar fila')
         } finally {
             setLoading(false)
         }
     }, [toast])
 
-    useEffect(() => { fetchDryRun() }, [fetchDryRun])
+    useEffect(() => {
+        fetchQueue(activeTab)
+    }, [activeTab, fetchQueue])
 
-    async function runEnrichment(target: EnrichmentTarget) {
-        const count = dryRun?.counts[target] ?? 0
-        const limit = limits[target]
-        const estimate = (dryRun?.estimates[target] ?? 0) * (limit / (count || 1))
-
-        if (!confirm(
-            `Gerar "${TARGET_LABELS[target]}" para ${Math.min(limit, count)} itens?\n` +
-            `Custo estimado: $${estimate.toFixed(4)}\n\n` +
-            `Esta ação não pode ser desfeita.`
-        )) return
-
-        setRunning(target)
-        try {
-            const res = await fetch('/api/admin/enrichment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target, limit, overwrite }),
+    function handleItemDone(entityId: string, field: string) {
+        setQueue(prev => {
+            const tabData = prev[activeTab]
+            if (!tabData) return prev
+            const updatedItems = tabData.items.map(item => {
+                if (item.id !== entityId) return item
+                const missingFields  = item.missingFields.filter(f => f !== field)
+                const presentFields  = [...item.presentFields, field]
+                const completeness   = Math.round((presentFields.length / item.totalFields) * 100)
+                return { ...item, missingFields, presentFields, completenessScore: completeness }
             })
-            const data = await res.json() as RunResult & { error?: string }
+            return { ...prev, [activeTab]: { ...tabData, items: updatedItems } }
+        })
+    }
 
-            if (!res.ok) {
-                toast.error(data.error ?? 'Erro ao executar enriquecimento')
-                return
+    async function runBatch() {
+        const cfg = TAB_CONFIG[activeTab]
+        const limit = cfg.batchLimit
+
+        const targetMap: Record<Tab, string[]> = {
+            artists:     ['artist_bio', 'artist_editorial', 'artist_curiosidades'],
+            productions: ['production_review'],
+            news:        ['news_editorial_note', 'news_blog_post'],
+        }
+        const targets = targetMap[activeTab]
+
+        setBatchRunning(true)
+        try {
+            for (const target of targets) {
+                const res = await fetch('/api/admin/enrichment', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ target, limit }),
+                })
+                const data = await res.json()
+                if (!res.ok) {
+                    toast.error(data.error ?? `Erro em ${target}`)
+                    continue
+                }
+                if (data.processed > 0) {
+                    toast.success(`${data.processed} ${target.replace('_', ' ')} gerados`)
+                }
             }
-
-            setResults(prev => ({ ...prev, [target]: data }))
-            toast.success(`${data.processed} itens gerados • $${data.totalCostUsd.toFixed(4)}`)
-            await fetchDryRun()
+            await fetchQueue(activeTab)
         } catch {
-            toast.error('Erro ao executar enriquecimento')
+            toast.error('Erro no lote')
         } finally {
-            setRunning(null)
+            setBatchRunning(false)
         }
     }
 
-    const targets: EnrichmentTarget[] = [
-        'artist_bio',
-        'artist_editorial',
-        'artist_curiosidades',
-        'production_review',
-        'news_editorial_note',
-        'news_blog_post',
-    ]
+    const currentQueue   = queue[activeTab]
+    const visibleItems   = currentQueue?.items ?? []
+    const totalInQueue   = currentQueue?.total ?? 0
+    const totalCost      = currentQueue?.totalCostEstimate ?? 0
+    const cfg            = TAB_CONFIG[activeTab]
+    const fieldMap       = FIELD_LABELS[activeTab]
 
     return (
-        <AdminLayout title="Enriquecimento de Conteúdo">
-            <div className="space-y-6">
+        <AdminLayout title="Smart Queue — Enriquecimento">
+            <div className="space-y-5">
 
-                {/* Intro */}
-                <div className="bg-zinc-900/60 border border-white/8 rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-                        <Sparkles className="w-5 h-5 text-purple-400 mt-0.5 shrink-0" />
-                        <div>
-                            <p className="text-sm font-semibold text-white mb-1">Geração de conteúdo editorial via DeepSeek-V3</p>
-                            <p className="text-xs text-zinc-400">
-                                Gera conteúdo autoral original (bios, análises, reviews, notas) para satisfazer requisitos
-                                do Google AdSense (300-500 palavras por página). O custo é rastreado individualmente por feature.
-                            </p>
+                {/* Header summary */}
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-xs text-zinc-500 mt-1">
+                            Itens priorizados por relevância e completude. Gere conteúdo editorial com IA para satisfazer AdSense (300–500 palavras/página).
+                        </p>
+                    </div>
+                    {totalCost > 0 && (
+                        <div className="shrink-0 text-right">
+                            <div className="flex items-center gap-1 text-xs text-zinc-400">
+                                <DollarSign className="w-3.5 h-3.5 text-zinc-500" />
+                                <span className="font-mono font-semibold text-white">${totalCost.toFixed(4)}</span>
+                            </div>
+                            <p className="text-[10px] text-zinc-600">custo estimado (top 30)</p>
                         </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* Overwrite toggle */}
-                <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={overwrite}
-                            onChange={e => setOverwrite(e.target.checked)}
-                            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-purple-500 focus:ring-purple-500"
-                        />
-                        <span className="text-sm text-zinc-300">Sobrescrever conteúdo existente</span>
-                    </label>
-                    <button
-                        onClick={fetchDryRun}
-                        disabled={loading}
-                        className="ml-auto flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                        Atualizar
-                    </button>
-                </div>
-
-                {/* Cards por target */}
-                {loading && !dryRun ? (
-                    <div className="flex justify-center py-12">
-                        <Loader2 className="w-6 h-6 text-zinc-600 animate-spin" />
-                    </div>
-                ) : (
-                    <div className="grid gap-4">
-                        {targets.map(target => {
-                            const count    = dryRun?.counts[target] ?? 0
-                            const estimate = dryRun?.estimates[target] ?? 0
-                            const feature  = TARGET_FEATURE[target]
-                            const budget   = dryRun?.budgets[feature]
-                            const result   = results[target]
-                            const isRunning = running === target
-                            const exceeded  = budget?.exceeded ?? false
-                            const limit     = limits[target]
-                            const estimateForLimit = count > 0 ? estimate * (Math.min(limit, count) / count) : 0
-
+                {/* Tab bar + actions */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1 bg-zinc-900/60 border border-white/6 rounded-xl p-1">
+                        {(Object.entries(TAB_CONFIG) as [Tab, typeof cfg][]).map(([tab, c]) => {
+                            const Icon  = c.icon
+                            const count = queue[tab]?.total
                             return (
-                                <div key={target} className={`border rounded-xl p-4 transition-colors ${
-                                    exceeded
-                                        ? 'border-red-500/30 bg-red-900/10'
-                                        : 'border-white/8 bg-zinc-900/40'
-                                }`}>
-                                    <div className="flex items-start justify-between gap-4 mb-3">
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <h3 className="text-sm font-semibold text-white">
-                                                    {TARGET_LABELS[target]}
-                                                </h3>
-                                                {exceeded && (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30">
-                                                        Budget esgotado
-                                                    </span>
-                                                )}
-                                                {result && (
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                                                        <CheckCircle className="w-3 h-3" />
-                                                        {result.processed} gerados
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-zinc-500 mt-0.5">{TARGET_DESCRIPTION[target]}</p>
-                                        </div>
-
-                                        {/* Stats */}
-                                        <div className="shrink-0 text-right">
-                                            <div className="text-sm font-bold text-white">{count.toLocaleString()}</div>
-                                            <div className="text-[11px] text-zinc-500">itens pendentes</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Budget bar */}
-                                    {budget?.budgetUsd != null && (
-                                        <div className="mb-3">
-                                            <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-1">
-                                                <span>Budget mensal: ${budget.budgetUsd.toFixed(2)}</span>
-                                                <span className={exceeded ? 'text-red-400' : 'text-zinc-400'}>
-                                                    gasto: ${budget.spentUsd.toFixed(4)} / restante: ${(budget.remainingUsd ?? 0).toFixed(4)}
-                                                </span>
-                                            </div>
-                                            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all ${exceeded ? 'bg-red-500' : 'bg-purple-500'}`}
-                                                    style={{ width: `${Math.min(100, (budget.spentUsd / budget.budgetUsd) * 100)}%` }}
-                                                />
-                                            </div>
-                                        </div>
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                        activeTab === tab
+                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                    }`}
+                                >
+                                    <Icon className="w-3.5 h-3.5" />
+                                    {c.label}
+                                    {count != null && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                            activeTab === tab
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-zinc-800 text-zinc-400'
+                                        }`}>
+                                            {count}
+                                        </span>
                                     )}
-
-                                    {/* Controls */}
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-2">
-                                            <label className="text-xs text-zinc-500">Limite:</label>
-                                            <input
-                                                type="number"
-                                                min={1}
-                                                max={50}
-                                                value={limit}
-                                                onChange={e => setLimits(prev => ({ ...prev, [target]: parseInt(e.target.value) || 1 }))}
-                                                className="w-16 px-2 py-1 rounded bg-zinc-800 border border-white/8 text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50"
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center gap-1 text-xs text-zinc-500">
-                                            <DollarSign className="w-3 h-3" />
-                                            ~${estimateForLimit.toFixed(4)}
-                                        </div>
-
-                                        <button
-                                            onClick={() => runEnrichment(target)}
-                                            disabled={isRunning || !!running || count === 0 || exceeded}
-                                            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-40 transition-colors"
-                                        >
-                                            {isRunning
-                                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
-                                                : <><Play className="w-3.5 h-3.5" /> Gerar {Math.min(limit, count)}</>
-                                            }
-                                        </button>
-                                    </div>
-
-                                    {/* Failures */}
-                                    {result?.failed > 0 && (
-                                        <div className="mt-3">
-                                            <button
-                                                onClick={() => setExpandedFailures(expandedFailures === target ? null : target)}
-                                                className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"
-                                            >
-                                                <AlertCircle className="w-3.5 h-3.5" />
-                                                {result.failed} erro{result.failed !== 1 ? 's' : ''}
-                                                {expandedFailures === target ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                            </button>
-                                            {expandedFailures === target && result.failures && (
-                                                <div className="mt-2 space-y-1">
-                                                    {result.failures.map(f => (
-                                                        <div key={f.id} className="text-[10px] font-mono text-red-400/70 bg-red-900/10 rounded px-2 py-1">
-                                                            {f.id}: {f.error}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
+                                </button>
                             )
                         })}
                     </div>
-                )}
 
-                {/* Total estimate */}
-                {dryRun && (
-                    <div className="border border-white/8 rounded-xl p-4 flex items-center justify-between">
-                        <div>
-                            <p className="text-xs text-zinc-500">Custo total estimado (todos os itens pendentes)</p>
-                            <p className="text-sm font-bold text-white mt-0.5">${dryRun.totalEstimate.toFixed(4)}</p>
-                        </div>
-                        <div className="text-xs text-zinc-600 text-right">
-                            <p>Budget configurado em</p>
-                            <p className="text-zinc-500">/admin/ai/config</p>
-                        </div>
+                    <div className="ml-auto flex items-center gap-2">
+                        <button
+                            onClick={() => fetchQueue(activeTab)}
+                            disabled={loading}
+                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1.5 rounded-lg hover:bg-zinc-800"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                            Atualizar
+                        </button>
+
+                        <button
+                            onClick={runBatch}
+                            disabled={batchRunning || loading || totalInQueue === 0}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
+                        >
+                            {batchRunning
+                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
+                                : <><Play className="w-3.5 h-3.5" /> Gerar próximos {cfg.batchLimit}</>
+                            }
+                        </button>
+                    </div>
+                </div>
+
+                {/* Queue list */}
+                {loading && !currentQueue ? (
+                    <div className="flex justify-center py-16">
+                        <Loader2 className="w-6 h-6 text-zinc-600 animate-spin" />
+                    </div>
+                ) : visibleItems.length === 0 ? (
+                    <div className="text-center py-16 border border-dashed border-white/6 rounded-xl">
+                        <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
+                        <p className="text-sm font-medium text-white">Tudo enriquecido!</p>
+                        <p className="text-xs text-zinc-500 mt-1">Nenhum item pendente nesta categoria.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {visibleItems.map((item, idx) => (
+                            <QueueItemRow
+                                key={item.id}
+                                item={item}
+                                rank={idx + 1}
+                                tab={activeTab}
+                                fieldMap={fieldMap}
+                                onDone={handleItemDone}
+                                batchRunning={batchRunning}
+                            />
+                        ))}
+
+                        {totalInQueue > visibleItems.length && (
+                            <p className="text-center text-xs text-zinc-600 pt-2">
+                                +{totalInQueue - visibleItems.length} itens não exibidos · use "Gerar próximos" para processar em lote
+                            </p>
+                        )}
                     </div>
                 )}
             </div>
         </AdminLayout>
+    )
+}
+
+function QueueItemRow({
+    item,
+    rank,
+    tab,
+    fieldMap,
+    onDone,
+    batchRunning,
+}: {
+    item:         QueueItem
+    rank:         number
+    tab:          Tab
+    fieldMap:     Record<string, { label: string; target: string }>
+    onDone:       (entityId: string, field: string) => void
+    batchRunning: boolean
+}) {
+    const allPresent = item.missingFields.length === 0
+
+    return (
+        <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all group ${
+            allPresent
+                ? 'border-emerald-500/20 bg-emerald-900/5'
+                : 'border-white/6 bg-zinc-900/40 hover:border-blue-500/20 hover:bg-zinc-900/60'
+        }`}>
+            {/* Rank */}
+            <span className="text-[10px] text-zinc-700 font-mono w-5 text-center shrink-0">{rank}</span>
+
+            {/* Thumbnail */}
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/6">
+                {item.imageUrl ? (
+                    <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        width={40}
+                        height={40}
+                        className="object-cover w-full h-full"
+                        unoptimized
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-zinc-700" />
+                    </div>
+                )}
+            </div>
+
+            {/* Name + subtitle + completeness */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-white truncate">{item.name}</span>
+                    {item.subtitle && (
+                        <span className="text-[11px] text-zinc-500 truncate hidden sm:block">{item.subtitle}</span>
+                    )}
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                    <CompletenessBar
+                        score={item.completenessScore}
+                        present={item.presentFields.length}
+                        total={item.totalFields}
+                    />
+                </div>
+                <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                    {Object.entries(fieldMap).map(([key, cfg]) => (
+                        <FieldChip
+                            key={key}
+                            label={cfg.label}
+                            done={item.presentFields.includes(key)}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* Cost estimate */}
+            <div className="shrink-0 text-right hidden md:block">
+                <span className="text-[10px] text-zinc-600 font-mono">~${item.estimatedCost.toFixed(4)}</span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
+                {item.missingFields.length === 0 ? (
+                    <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Completo
+                    </span>
+                ) : (
+                    item.missingFields.map(field => {
+                        const cfg = fieldMap[field]
+                        if (!cfg) return null
+                        return (
+                            <EnrichButton
+                                key={field}
+                                label={cfg.label}
+                                entityId={item.id}
+                                target={cfg.target}
+                                disabled={batchRunning}
+                                onDone={onDone}
+                            />
+                        )
+                    })
+                )}
+                <a
+                    href={tab === 'artists' ? `/admin/artists/${item.id}/edit` : tab === 'productions' ? `/admin/productions/${item.id}/edit` : `/admin/news/${item.id}/edit`}
+                    className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Abrir"
+                >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                </a>
+            </div>
+        </div>
     )
 }
