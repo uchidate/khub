@@ -454,44 +454,46 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             format="horizontal"
                         />
 
-                        {/* Análise Editorial */}
-                        {artist.analiseEditorial && (
-                            <section>
-                                <div className="relative rounded-2xl overflow-hidden border border-white/6 bg-gradient-to-br from-purple-950/30 via-zinc-900/60 to-zinc-900/80 p-5 sm:p-6">
-                                    {/* Glow accent */}
-                                    <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl pointer-events-none" />
+                        {/* Perfil Biográfico (4 blocos) */}
+                        {artist.analiseEditorial && (() => {
+                            // Parse structured format: **Title**\nContent
+                            const sections: { title: string; content: string }[] = []
+                            const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
+                            let m: RegExpExecArray | null
+                            while ((m = pattern.exec(artist.analiseEditorial!)) !== null) {
+                                const content = m[2].trim()
+                                if (content) sections.push({ title: m[1].trim(), content })
+                            }
 
-                                    {/* Header */}
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400/80 bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-full">
-                                            ✦ Nossa Análise
-                                        </span>
-                                        <span className="text-[10px] text-zinc-600">por HallyuHub</span>
+                            if (sections.length >= 2) {
+                                // New structured format
+                                return (
+                                    <section>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {sections.map((sec, i) => (
+                                                <div key={i} className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-600">
+                                                        {sec.title}
+                                                    </span>
+                                                    <p className="text-sm text-zinc-400 leading-relaxed">{sec.content}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )
+                            }
+
+                            // Fallback: old unstructured text
+                            return (
+                                <section>
+                                    <div className="space-y-4">
+                                        {artist.analiseEditorial!.split('\n\n').filter(Boolean).map((p, i) => (
+                                            <p key={i} className="text-sm text-zinc-400 leading-relaxed">{p}</p>
+                                        ))}
                                     </div>
-
-                                    {/* Text */}
-                                    {(() => {
-                                        const paragraphs = artist.analiseEditorial!.split('\n\n').filter(Boolean)
-                                        return (
-                                            <div className="space-y-4">
-                                                {paragraphs.map((p, i) => (
-                                                    <p
-                                                        key={i}
-                                                        className={`leading-relaxed ${
-                                                            i === 0
-                                                                ? 'text-[15px] text-zinc-200 font-medium'
-                                                                : 'text-sm text-zinc-400'
-                                                        }`}
-                                                    >
-                                                        {p}
-                                                    </p>
-                                                ))}
-                                            </div>
-                                        )
-                                    })()}
-                                </div>
-                            </section>
-                        )}
+                                </section>
+                            )
+                        })()}
 
                         {/* Curiosidades */}
                         {artist.curiosidades && artist.curiosidades.length > 0 && (

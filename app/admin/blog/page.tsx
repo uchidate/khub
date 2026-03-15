@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
-import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { useToast } from '@/lib/hooks/useToast'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
@@ -57,15 +57,19 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 }
 
 // ─── Suggestion Row ───────────────────────────────────────────────────────────
+// Does NOT use any global hook — receives stable callbacks from parent
 
 function SuggestionRow({
     item,
     onGenerated,
+    onError,
+    onSuccess,
 }: {
-    item: NewsSuggestion
+    item:        NewsSuggestion
     onGenerated: (id: string) => void
+    onError:     (msg: string) => void
+    onSuccess:   (msg: string) => void
 }) {
-    const toast = useAdminToast()
     const [loading, setLoading] = useState(false)
     const [done,    setDone]    = useState(false)
 
@@ -81,13 +85,13 @@ function SuggestionRow({
             const data = await res.json()
             if (res.ok && data.processed > 0) {
                 setDone(true)
-                toast.success('Blog post gerado como rascunho')
+                onSuccess('Blog post gerado como rascunho')
                 onGenerated(item.id)
             } else {
-                toast.error(data.error ?? 'Erro ao gerar blog post')
+                onError(data.error ?? 'Erro ao gerar blog post')
             }
         } catch {
-            toast.error('Erro de rede')
+            onError('Erro de rede')
         } finally {
             setLoading(false)
         }
@@ -197,36 +201,39 @@ function PublishButton({ post, onDone }: { post: BlogPost; onDone: () => void })
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AdminBlogPage() {
-    const toast    = useAdminToast()
-    const toastRef = useRef(toast)
-    useEffect(() => { toastRef.current = toast })
+    // Use Zustand selector → addToast is stable, component won't re-render on toast changes
+    const addToast = useToast(s => s.addToast)
+    const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
+    const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
 
-    const [activeTab,    setActiveTab]   = useState<Tab>('suggestions')
-    const [suggestions,  setSuggestions] = useState<NewsSuggestion[]>([])
-    const [loading,      setLoading]     = useState(false)
-    const [hiddenIds,    setHiddenIds]   = useState<Set<string>>(new Set())
+    const [activeTab,     setActiveTab]    = useState<Tab>('suggestions')
+    const [suggestions,   setSuggestions]  = useState<NewsSuggestion[]>([])
+    const [loading,       setLoading]      = useState(false)
+    const [hiddenIds,     setHiddenIds]    = useState<Set<string>>(new Set())
     const [generatingAll, setGeneratingAll] = useState(false)
 
     const fetchSuggestions = useCallback(async () => {
         setLoading(true)
         try {
-            const res  = await fetch('/api/admin/enrichment/queue?tab=news&limit=50')
+            const res  = await fetch('/api/admin/enrichment/queue?tab=news&limit=20')
             const data = await res.json()
-            // queue returns items with field 'nota' and 'blog' — filter those missing 'blog'
-            const blogPending = (data.items ?? []).filter(
-                (i: NewsSuggestion) => i.missingFields.includes('blog')
+            setSuggestions(
+                (data.items ?? []).filter((i: NewsSuggestion) => i.missingFields.includes('blog'))
             )
-            setSuggestions(blogPending)
         } catch {
-            toastRef.current.error('Erro ao carregar sugestões')
+            showError('Erro ao carregar sugestões')
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [showError])
 
     useEffect(() => {
         if (activeTab === 'suggestions') fetchSuggestions()
     }, [activeTab, fetchSuggestions])
+
+    const handleGenerated = useCallback((id: string) => {
+        setHiddenIds(prev => { const next = new Set(prev); next.add(id); return next })
+    }, [])
 
     async function generateBatch() {
         setGeneratingAll(true)
@@ -238,13 +245,13 @@ export default function AdminBlogPage() {
             })
             const data = await res.json()
             if (res.ok) {
-                toastRef.current.success(`${data.processed} posts gerados como rascunho`)
+                showSuccess(`${data.processed} posts gerados como rascunho`)
                 await fetchSuggestions()
             } else {
-                toastRef.current.error(data.error ?? 'Erro ao gerar posts')
+                showError(data.error ?? 'Erro ao gerar posts')
             }
         } catch {
-            toastRef.current.error('Erro de rede')
+            showError('Erro de rede')
         } finally {
             setGeneratingAll(false)
         }
@@ -415,7 +422,9 @@ export default function AdminBlogPage() {
                                     <SuggestionRow
                                         key={item.id}
                                         item={item}
-                                        onGenerated={(id) => setHiddenIds(prev => { const next = new Set(prev); next.add(id); return next })}
+                                        onGenerated={handleGenerated}
+                                        onError={showError}
+                                        onSuccess={showSuccess}
                                     />
                                 ))}
                             </div>
