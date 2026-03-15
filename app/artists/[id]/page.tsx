@@ -16,6 +16,7 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ExpandableBio } from "@/components/ui/ExpandableBio"
+import { ExpandableProfile } from "@/components/ui/ExpandableProfile"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
@@ -190,6 +191,17 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
     const allGroups = artist.memberships
 
+    // Parse analiseEditorial into structured sections for ExpandableProfile
+    const profileSections: { title: string; content: string }[] = []
+    if (artist.analiseEditorial) {
+        const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
+        let m: RegExpExecArray | null
+        while ((m = pattern.exec(artist.analiseEditorial)) !== null) {
+            const content = m[2].trim()
+            if (content) profileSections.push({ title: m[1].trim(), content })
+        }
+    }
+
     return (
         <div className="min-h-screen bg-black">
             <ViewTracker artistId={artist.id} />
@@ -293,12 +305,16 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             )}
                         </div>
 
-                        {/* Bio — só desktop; no mobile fica no conteúdo abaixo */}
-                        {(bioPt ?? artist.bio) && (
+                        {/* Bio / Perfil — só desktop; no mobile fica no conteúdo abaixo */}
+                        {profileSections.length >= 2 ? (
+                            <div className="hidden md:block">
+                                <ExpandableProfile sections={profileSections} />
+                            </div>
+                        ) : (bioPt ?? artist.bio) ? (
                             <div className="hidden md:block">
                                 <ExpandableBio bio={bioPt ?? artist.bio!} />
                             </div>
-                        )}
+                        ) : null}
 
                         {/* Stats — só desktop */}
                         <div className="hidden md:flex items-center gap-4 flex-wrap">
@@ -339,12 +355,16 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-4 lg:space-y-6 lg:col-span-1">
 
-                        {/* Bio mobile — antes das informações, só no mobile */}
-                        {(bioPt ?? artist.bio) && (
+                        {/* Bio / Perfil mobile — antes das informações, só no mobile */}
+                        {profileSections.length >= 2 ? (
+                            <div className="md:hidden">
+                                <ExpandableProfile sections={profileSections} />
+                            </div>
+                        ) : (bioPt ?? artist.bio) ? (
                             <div className="md:hidden">
                                 <ExpandableBio bio={bioPt ?? artist.bio!} />
                             </div>
-                        )}
+                        ) : null}
 
                         {/* Informações */}
                         <div className="rounded-2xl bg-zinc-900/50 border border-white/5 overflow-hidden">
@@ -454,46 +474,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             format="horizontal"
                         />
 
-                        {/* Perfil Biográfico (4 blocos) */}
-                        {artist.analiseEditorial && (() => {
-                            // Parse structured format: **Title**\nContent
-                            const sections: { title: string; content: string }[] = []
-                            const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
-                            let m: RegExpExecArray | null
-                            while ((m = pattern.exec(artist.analiseEditorial!)) !== null) {
-                                const content = m[2].trim()
-                                if (content) sections.push({ title: m[1].trim(), content })
-                            }
-
-                            if (sections.length >= 2) {
-                                // New structured format
-                                return (
-                                    <section>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {sections.map((sec, i) => (
-                                                <div key={i} className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
-                                                    <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-600">
-                                                        {sec.title}
-                                                    </span>
-                                                    <p className="text-sm text-zinc-400 leading-relaxed">{sec.content}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-                                )
-                            }
-
-                            // Fallback: old unstructured text
-                            return (
-                                <section>
-                                    <div className="space-y-4">
-                                        {artist.analiseEditorial!.split('\n\n').filter(Boolean).map((p, i) => (
-                                            <p key={i} className="text-sm text-zinc-400 leading-relaxed">{p}</p>
-                                        ))}
-                                    </div>
-                                </section>
-                            )
-                        })()}
 
                         {/* Curiosidades */}
                         {artist.curiosidades && artist.curiosidades.length > 0 && (
