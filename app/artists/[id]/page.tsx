@@ -451,19 +451,17 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         {/* Perfil Biográfico */}
                         {profileSections.length >= 2 && (
                             <section>
-                                <ul className="space-y-4">
+                                <div className="space-y-5">
                                     {profileSections.map((sec, i) => (
-                                        <li key={i} className="flex items-start gap-3">
-                                            <span className="mt-1 w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0">
-                                                <Sparkles className="w-2.5 h-2.5" />
-                                            </span>
-                                            <div>
-                                                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500 block mb-1">{sec.title}</span>
-                                                <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
+                                        <div key={i}>
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <span className="text-sm font-black text-white uppercase tracking-widest">{sec.title}</span>
+                                                <div className="flex-1 h-px bg-white/5" />
                                             </div>
-                                        </li>
+                                            <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
+                                        </div>
                                     ))}
-                                </ul>
+                                </div>
                             </section>
                         )}
 
