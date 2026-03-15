@@ -33,14 +33,23 @@ export async function GET(req: Request) {
     const url   = new URL(req.url)
     const tab   = (url.searchParams.get('tab') ?? 'artists') as QueueTab
     const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '30'), 100)
+    const q     = url.searchParams.get('q')?.trim() ?? ''
 
     let items: QueueItem[] = []
     let total = 0
     let totalCostEstimate = 0
 
     if (tab === 'artists') {
-        const artists = await prisma.artist.findMany({
-            where: {
+        const baseWhere = q
+            ? {
+                isHidden:           false,
+                flaggedAsNonKorean: false,
+                OR: [
+                    { nameRomanized: { contains: q, mode: 'insensitive' as const } },
+                    { nameHangul:    { contains: q, mode: 'insensitive' as const } },
+                ],
+            }
+            : {
                 isHidden:           false,
                 flaggedAsNonKorean: false,
                 OR: [
@@ -48,7 +57,10 @@ export async function GET(req: Request) {
                     { analiseEditorial: null },
                     { curiosidades:    { isEmpty: true } },
                 ],
-            },
+            }
+
+        const artists = await prisma.artist.findMany({
+            where: baseWhere,
             select: {
                 id:              true,
                 nameRomanized:   true,
@@ -64,17 +76,7 @@ export async function GET(req: Request) {
             take: limit,
         })
 
-        total = await prisma.artist.count({
-            where: {
-                isHidden:           false,
-                flaggedAsNonKorean: false,
-                OR: [
-                    { bio:             null },
-                    { analiseEditorial: null },
-                    { curiosidades:    { isEmpty: true } },
-                ],
-            },
-        })
+        total = await prisma.artist.count({ where: baseWhere })
 
         items = artists.map(a => {
             const missingFields: string[] = []
@@ -115,12 +117,23 @@ export async function GET(req: Request) {
     }
 
     if (tab === 'productions') {
-        const productions = await prisma.production.findMany({
-            where: {
+        const prodWhere = q
+            ? {
+                isHidden:           false,
+                flaggedAsNonKorean: false,
+                OR: [
+                    { titlePt: { contains: q, mode: 'insensitive' as const } },
+                    { titleKr: { contains: q, mode: 'insensitive' as const } },
+                ],
+            }
+            : {
                 isHidden:           false,
                 flaggedAsNonKorean: false,
                 editorialReview:    null,
-            },
+            }
+
+        const productions = await prisma.production.findMany({
+            where: prodWhere,
             select: {
                 id:           true,
                 titlePt:      true,
@@ -135,40 +148,47 @@ export async function GET(req: Request) {
             take: limit,
         })
 
-        total = await prisma.production.count({
-            where: {
-                isHidden:           false,
-                flaggedAsNonKorean: false,
-                editorialReview:    null,
-            },
-        })
+        total = await prisma.production.count({ where: prodWhere })
 
-        items = productions.map(p => ({
-            id:               p.id,
-            name:             p.titlePt,
-            imageUrl:         p.imageUrl ?? undefined,
-            subtitle:         [p.type, p.year?.toString()].filter(Boolean).join(' · '),
-            missingFields:    ['review'],
-            presentFields:    [],
-            totalFields:      1,
-            completenessScore: 0,
-            priority:         p.voteAverage ?? 0,
-            estimatedCost:    EDITORIAL_COST_ESTIMATES.production_review,
-        }))
+        items = productions.map(p => {
+            const missing  = p.editorialReview ? [] : ['review']
+            const present  = p.editorialReview ? ['review'] : []
+            const score    = Math.round((present.length / 1) * 100)
+            return {
+                id:               p.id,
+                name:             p.titlePt,
+                imageUrl:         p.imageUrl ?? undefined,
+                subtitle:         [p.type, p.year?.toString()].filter(Boolean).join(' · '),
+                missingFields:    missing,
+                presentFields:    present,
+                totalFields:      1,
+                completenessScore: score,
+                priority:         p.voteAverage ?? 0,
+                estimatedCost:    missing.length ? EDITORIAL_COST_ESTIMATES.production_review : 0,
+            }
+        })
 
         totalCostEstimate = items.reduce((sum, i) => sum + i.estimatedCost, 0)
     }
 
     if (tab === 'news') {
-        const newsList = await prisma.news.findMany({
-            where: {
+        const newsWhere = q
+            ? {
+                isHidden: false,
+                status:   'published',
+                title:    { contains: q, mode: 'insensitive' as const },
+            }
+            : {
                 isHidden: false,
                 status:   'published',
                 OR: [
                     { editorialNote:      null },
                     { blogPostGeneratedAt: null },
                 ],
-            },
+            }
+
+        const newsList = await prisma.news.findMany({
+            where: newsWhere,
             select: {
                 id:                  true,
                 title:               true,
@@ -183,16 +203,7 @@ export async function GET(req: Request) {
             take: limit,
         })
 
-        total = await prisma.news.count({
-            where: {
-                isHidden: false,
-                status:   'published',
-                OR: [
-                    { editorialNote:      null },
-                    { blogPostGeneratedAt: null },
-                ],
-            },
-        })
+        total = await prisma.news.count({ where: newsWhere })
 
         items = newsList.map(n => {
             const missingFields: string[] = []

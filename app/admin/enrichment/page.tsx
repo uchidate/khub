@@ -6,7 +6,7 @@ import { useToast } from '@/lib/hooks/useToast'
 import Image from 'next/image'
 import {
     Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
-    CheckCircle, Circle, DollarSign, ChevronRight, Play,
+    CheckCircle, Circle, DollarSign, ChevronRight, Play, Search, X,
 } from 'lucide-react'
 
 type Tab = 'artists' | 'productions' | 'news'
@@ -154,6 +154,9 @@ export default function EnrichmentPage() {
     const [queue,        setQueue]        = useState<Record<Tab, QueueData | null>>({ artists: null, productions: null, news: null })
     const [loading,      setLoading]      = useState(false)
     const [batchRunning, setBatchRunning] = useState(false)
+    const [searchQuery,  setSearchQuery]  = useState('')
+    const [searchInput,  setSearchInput]  = useState('')
+    const [searchResults, setSearchResults] = useState<QueueData | null>(null)
 
     const fetchQueue = useCallback(async (tab: Tab) => {
         setLoading(true)
@@ -168,9 +171,28 @@ export default function EnrichmentPage() {
         }
     }, [showError])
 
+    const fetchSearch = useCallback(async (q: string, tab: Tab) => {
+        if (!q.trim()) { setSearchResults(null); return }
+        setLoading(true)
+        try {
+            const res  = await fetch(`/api/admin/enrichment/queue?tab=${tab}&limit=20&q=${encodeURIComponent(q)}`)
+            const data = await res.json() as QueueData
+            setSearchResults(data)
+        } catch {
+            showError('Erro na busca')
+        } finally {
+            setLoading(false)
+        }
+    }, [showError])
+
     useEffect(() => {
         fetchQueue(activeTab)
     }, [activeTab, fetchQueue])
+
+    useEffect(() => {
+        if (!searchQuery) { setSearchResults(null); return }
+        fetchSearch(searchQuery, activeTab)
+    }, [searchQuery, activeTab, fetchSearch])
 
     function handleItemDone(entityId: string, field: string) {
         setQueue(prev => {
@@ -216,7 +238,8 @@ export default function EnrichmentPage() {
         }
     }
 
-    const currentQueue = queue[activeTab]
+    const isSearching  = searchQuery.trim().length > 0
+    const currentQueue = isSearching ? searchResults : queue[activeTab]
     const visibleItems = currentQueue?.items ?? []
     const totalInQueue = currentQueue?.total ?? 0
     const totalCost    = currentQueue?.totalCostEstimate ?? 0
@@ -242,6 +265,41 @@ export default function EnrichmentPage() {
                         </div>
                     )}
                 </div>
+
+                {/* Search */}
+                <form
+                    onSubmit={e => { e.preventDefault(); setSearchQuery(searchInput) }}
+                    className="flex items-center gap-2"
+                >
+                    <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={e => {
+                                setSearchInput(e.target.value)
+                                if (!e.target.value) setSearchQuery('')
+                            }}
+                            placeholder={`Buscar ${TAB_CONFIG[activeTab].label.toLowerCase()}...`}
+                            className="w-full pl-9 pr-8 py-2 text-sm bg-zinc-900/60 border border-white/8 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 focus:bg-zinc-900 transition-all"
+                        />
+                        {searchInput && (
+                            <button
+                                type="button"
+                                onClick={() => { setSearchInput(''); setSearchQuery('') }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        type="submit"
+                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all border border-white/6"
+                    >
+                        Buscar
+                    </button>
+                </form>
 
                 {/* Tab bar + actions */}
                 <div className="flex items-center gap-2 flex-wrap">
@@ -284,7 +342,7 @@ export default function EnrichmentPage() {
                         </button>
                         <button
                             onClick={runBatch}
-                            disabled={batchRunning || loading || totalInQueue === 0}
+                            disabled={batchRunning || loading || totalInQueue === 0 || isSearching}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
                         >
                             {batchRunning
@@ -302,9 +360,19 @@ export default function EnrichmentPage() {
                     </div>
                 ) : visibleItems.length === 0 ? (
                     <div className="text-center py-16 border border-dashed border-white/6 rounded-xl">
-                        <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                        <p className="text-sm font-medium text-white">Tudo enriquecido!</p>
-                        <p className="text-xs text-zinc-500 mt-1">Nenhum item pendente nesta categoria.</p>
+                        {isSearching ? (
+                            <>
+                                <Search className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
+                                <p className="text-sm font-medium text-white">Nenhum resultado</p>
+                                <p className="text-xs text-zinc-500 mt-1">Tente outro termo de busca.</p>
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
+                                <p className="text-sm font-medium text-white">Tudo enriquecido!</p>
+                                <p className="text-xs text-zinc-500 mt-1">Nenhum item pendente nesta categoria.</p>
+                            </>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-2">
@@ -322,7 +390,10 @@ export default function EnrichmentPage() {
                         ))}
                         {totalInQueue > visibleItems.length && (
                             <p className="text-center text-xs text-zinc-600 pt-2">
-                                +{totalInQueue - visibleItems.length} itens não exibidos · use &quot;Gerar próximos&quot; para processar em lote
+                                {isSearching
+                                    ? `+${totalInQueue - visibleItems.length} resultados não exibidos · refine a busca`
+                                    : `+${totalInQueue - visibleItems.length} itens não exibidos · use "Gerar próximos" para processar em lote`
+                                }
                             </p>
                         )}
                     </div>
