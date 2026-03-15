@@ -24,12 +24,9 @@ interface FormState {
 }
 
 const PROVIDER_OPTIONS = [
-    { value: '',         label: 'Auto (round-robin)' },
+    { value: '',         label: 'Auto (DeepSeek → Ollama)' },
     { value: 'deepseek', label: 'DeepSeek-V3' },
-    { value: 'openai',   label: 'OpenAI (gpt-4o-mini)' },
-    { value: 'claude',   label: 'Claude (Haiku)' },
     { value: 'ollama',   label: 'Ollama (local)' },
-    { value: 'gemini',   label: 'Gemini (desabilitado)' },
 ]
 
 export default function AiConfigPage() {

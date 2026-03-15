@@ -1,7 +1,4 @@
 import { BaseAIProvider } from './providers/base-provider';
-import { GeminiProvider } from './providers/gemini-provider';
-import { OpenAIProvider } from './providers/openai-provider';
-import { ClaudeProvider } from './providers/claude-provider';
 import { DeepSeekProvider } from './providers/deepseek-provider';
 import { OllamaProvider } from './providers/ollama-provider';
 import { PROVIDER_CONFIGS } from './ai-config';
@@ -22,23 +19,11 @@ export class AIOrchestrator {
     private maxRetries: number = 3;
 
     constructor(config: {
-        geminiApiKey?: string;
-        openaiApiKey?: string;
-        claudeApiKey?: string;
         deepseekApiKey?: string;
         ollamaBaseUrl?: string;
         maxRetries?: number;
     }) {
         // Inicializar providers disponíveis
-        if (config.geminiApiKey) {
-            this.providers.set('gemini', new GeminiProvider(config.geminiApiKey));
-        }
-        if (config.openaiApiKey) {
-            this.providers.set('openai', new OpenAIProvider(config.openaiApiKey));
-        }
-        if (config.claudeApiKey) {
-            this.providers.set('claude', new ClaudeProvider(config.claudeApiKey));
-        }
         if (config.deepseekApiKey) {
             this.providers.set('deepseek', new DeepSeekProvider(config.deepseekApiKey));
         }

@@ -288,7 +288,7 @@ export class FilmographySyncService {
       const aiResult = await orchestrator.generateStructured<{ productions: any[] }>(
         prompt,
         schema,
-        { preferredProvider: 'gemini' }
+        { preferredProvider: 'deepseek' }
       )
 
       if (!aiResult.productions || aiResult.productions.length === 0) {

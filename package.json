@@ -27,7 +27,6 @@
     "postinstall": "prisma generate && prisma generate --schema=prisma-kpopping/schema.prisma --config=prisma-kpopping/prisma.config.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
     "@google/generative-ai": "^0.24.1",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@next/third-parties": "^16.1.6",
