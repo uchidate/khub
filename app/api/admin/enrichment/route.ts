@@ -104,16 +104,20 @@ export async function POST(req: Request) {
     if (error) return error
 
     const body = await req.json() as {
-        target: EnrichmentTarget
-        limit: number
+        target:    EnrichmentTarget
+        limit?:    number
         overwrite?: boolean
+        entityId?: string  // single-item enrichment
     }
 
-    const { target, limit, overwrite = false } = body
+    const { target, limit = 1, overwrite = false, entityId } = body
 
-    if (!target || !limit || limit < 1 || limit > 50) {
+    if (!target) {
+        return NextResponse.json({ error: 'target obrigatório.' }, { status: 400 })
+    }
+    if (!entityId && (limit < 1 || limit > 50)) {
         return NextResponse.json(
-            { error: 'Parâmetros inválidos. target obrigatório, limit entre 1 e 50.' },
+            { error: 'Parâmetros inválidos. limit entre 1 e 50.' },
             { status: 400 }
         )
     }
@@ -137,11 +141,13 @@ export async function POST(req: Request) {
             case 'artist_bio': {
                 const artists = await prisma.artist.findMany({
                     where: {
-                        isHidden: false,
-                        flaggedAsNonKorean: false,
-                        ...(overwrite ? {} : { bio: null }),
+                        ...(entityId ? { id: entityId } : {
+                            isHidden: false,
+                            flaggedAsNonKorean: false,
+                            ...(overwrite ? {} : { bio: null }),
+                        }),
                     },
-                    take: limit,
+                    take: entityId ? 1 : limit,
                     select: {
                         id: true, nameRomanized: true, nameHangul: true, roles: true,
                         birthDate: true, birthName: true, placeOfBirth: true, bio: true,
@@ -172,11 +178,13 @@ export async function POST(req: Request) {
             case 'artist_editorial': {
                 const artists = await prisma.artist.findMany({
                     where: {
-                        isHidden: false,
-                        flaggedAsNonKorean: false,
-                        ...(overwrite ? {} : { analiseEditorial: null }),
+                        ...(entityId ? { id: entityId } : {
+                            isHidden: false,
+                            flaggedAsNonKorean: false,
+                            ...(overwrite ? {} : { analiseEditorial: null }),
+                        }),
                     },
-                    take: limit,
+                    take: entityId ? 1 : limit,
                     select: {
                         id: true, nameRomanized: true, roles: true, bio: true,
                         memberships: { select: { group: { select: { name: true } } } },
@@ -205,11 +213,13 @@ export async function POST(req: Request) {
             case 'artist_curiosidades': {
                 const artists = await prisma.artist.findMany({
                     where: {
-                        isHidden: false,
-                        flaggedAsNonKorean: false,
-                        ...(overwrite ? {} : { curiosidades: { isEmpty: true } }),
+                        ...(entityId ? { id: entityId } : {
+                            isHidden: false,
+                            flaggedAsNonKorean: false,
+                            ...(overwrite ? {} : { curiosidades: { isEmpty: true } }),
+                        }),
                     },
-                    take: limit,
+                    take: entityId ? 1 : limit,
                     select: {
                         id: true, nameRomanized: true, nameHangul: true, roles: true, bio: true,
                         memberships: { select: { group: { select: { name: true } } } },
@@ -238,11 +248,13 @@ export async function POST(req: Request) {
             case 'production_review': {
                 const productions = await prisma.production.findMany({
                     where: {
-                        isHidden: false,
-                        flaggedAsNonKorean: false,
-                        ...(overwrite ? {} : { editorialReview: null }),
+                        ...(entityId ? { id: entityId } : {
+                            isHidden: false,
+                            flaggedAsNonKorean: false,
+                            ...(overwrite ? {} : { editorialReview: null }),
+                        }),
                     },
-                    take: limit,
+                    take: entityId ? 1 : limit,
                     select: {
                         id: true, titlePt: true, titleKr: true, type: true, year: true,
                         synopsis: true, tagline: true, voteAverage: true,
@@ -277,11 +289,13 @@ export async function POST(req: Request) {
             case 'news_editorial_note': {
                 const newsList = await prisma.news.findMany({
                     where: {
-                        isHidden: false,
-                        status: 'published',
-                        ...(overwrite ? {} : { editorialNote: null }),
+                        ...(entityId ? { id: entityId } : {
+                            isHidden: false,
+                            status: 'published',
+                            ...(overwrite ? {} : { editorialNote: null }),
+                        }),
                     },
-                    take: limit,
+                    take: entityId ? 1 : limit,
                     select: { id: true, title: true, contentMd: true, source: true },
                     orderBy: { publishedAt: 'desc' },
                 })
@@ -307,11 +321,13 @@ export async function POST(req: Request) {
             case 'news_blog_post': {
                 const newsList = await prisma.news.findMany({
                     where: {
-                        isHidden: false,
-                        status: 'published',
-                        ...(overwrite ? {} : { blogPostGeneratedAt: null }),
+                        ...(entityId ? { id: entityId } : {
+                            isHidden: false,
+                            status: 'published',
+                            ...(overwrite ? {} : { blogPostGeneratedAt: null }),
+                        }),
                     },
-                    take: limit,
+                    take: entityId ? 1 : limit,
                     select: { id: true, title: true, contentMd: true, source: true, tags: true },
                     orderBy: { publishedAt: 'desc' },
                 })
