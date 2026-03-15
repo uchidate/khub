@@ -38,6 +38,9 @@ const artistSchema = z.object({
   bio: z.string().optional(),
   primaryImageUrl: z.string().nullable().optional(), // aceita qualquer string ou null — admin-only
   socialLinks: z.record(z.string(), z.string()).optional(),  // JSON: { instagram: "...", etc }
+  analiseEditorial: z.string().optional(),
+  curiosidades: z.array(z.string()).optional(),
+  flaggedAsNonKorean: z.boolean().optional(),
   tmdbId: z.string().optional(),
   mbid: z.string().optional(),                  // MusicBrainz artist ID
   agencyId: z.string().optional(),
@@ -73,6 +76,13 @@ export async function GET(request: NextRequest) {
           gender: true,
           roles: true,
           bio: true,
+          birthName: true,
+          height: true,
+          zodiacSign: true,
+          socialLinks: true,
+          analiseEditorial: true,
+          curiosidades: true,
+          flaggedAsNonKorean: true,
           discographySyncAt: true,
           tmdbId: true,
           mbid: true,
@@ -340,6 +350,10 @@ export async function PATCH(request: NextRequest) {
     }
     if (validated.nameHangul === '') data.nameHangul = null
     if (validated.placeOfBirth === '') data.placeOfBirth = null
+    if (validated.birthName === '') data.birthName = null
+    if (validated.height === '') data.height = null
+    if (validated.zodiacSign === '') data.zodiacSign = null
+    if (validated.analiseEditorial === '') data.analiseEditorial = null
     if (validated.tmdbId === '') data.tmdbId = null
     if (validated.mbid === '') {
       data.mbid = null
