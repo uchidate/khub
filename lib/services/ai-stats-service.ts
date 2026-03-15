@@ -78,7 +78,7 @@ export async function getAiCostByDay(days: number): Promise<AiDayStat[]> {
         ORDER BY 1 ASC
     `
     return rows.map(r => ({
-        date:  r.date.toISOString().slice(0, 10),
+        date:  new Date(r.date).toISOString().slice(0, 10),
         cost:  r.cost,
         calls: Number(r.calls),
     }))
