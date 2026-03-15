@@ -11,9 +11,7 @@ interface ErrorProps {
 
 export default function AdminError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Admin page error:', error)
-    }
+    console.error('[admin] Page error:', error.message, error.digest ?? '')
   }, [error])
 
   return (
@@ -32,9 +30,11 @@ export default function AdminError({ error, reset }: ErrorProps) {
           </p>
         </div>
 
-        {process.env.NODE_ENV === 'development' && (
+        {(error.message || error.digest) && (
           <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg text-left">
-            <p className="text-xs font-mono text-red-400 break-all">{error.message}</p>
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-xs font-mono text-red-400 break-all">{error.message}</p>
+            )}
             {error.digest && (
               <p className="text-xs font-mono text-zinc-500 mt-1">digest: {error.digest}</p>
             )}
