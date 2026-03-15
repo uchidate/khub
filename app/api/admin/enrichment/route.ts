@@ -10,6 +10,7 @@ import {
     generateArtistCuriosidades,
     generateProductionReview,
     generateNewsEditorialNote,
+    generateBlogPostFromNews,
     EDITORIAL_COST_ESTIMATES,
 } from '@/lib/ai/generators/editorial-generator'
 
@@ -21,6 +22,7 @@ export type EnrichmentTarget =
     | 'artist_curiosidades'
     | 'production_review'
     | 'news_editorial_note'
+    | 'news_blog_post'
 
 const TARGET_TO_FEATURE: Record<EnrichmentTarget, string> = {
     artist_bio:           'artist_bio_enrichment',
@@ -28,6 +30,7 @@ const TARGET_TO_FEATURE: Record<EnrichmentTarget, string> = {
     artist_curiosidades:  'artist_curiosidades',
     production_review:    'production_review',
     news_editorial_note:  'news_editorial_note',
+    news_blog_post:       'blog_post_generation',
 }
 
 /**
@@ -44,6 +47,7 @@ export async function GET() {
         artistsWithoutCuriosidades,
         productionsWithoutReview,
         newsWithoutNote,
+        newsWithoutBlogPost,
         budgets,
     ] = await Promise.all([
         prisma.artist.count({
@@ -61,6 +65,9 @@ export async function GET() {
         prisma.news.count({
             where: { isHidden: false, status: 'published', editorialNote: null },
         }),
+        prisma.news.count({
+            where: { isHidden: false, status: 'published', blogPostGeneratedAt: null },
+        }),
         getAllEditorialBudgetStatuses(),
     ])
 
@@ -70,6 +77,7 @@ export async function GET() {
         artist_curiosidades:  artistsWithoutCuriosidades,
         production_review:    productionsWithoutReview,
         news_editorial_note:  newsWithoutNote,
+        news_blog_post:       newsWithoutBlogPost,
     }
 
     const estimates = {
@@ -78,6 +86,7 @@ export async function GET() {
         artist_curiosidades:  artistsWithoutCuriosidades  * EDITORIAL_COST_ESTIMATES.artist_curiosidades,
         production_review:    productionsWithoutReview    * EDITORIAL_COST_ESTIMATES.production_review,
         news_editorial_note:  newsWithoutNote             * EDITORIAL_COST_ESTIMATES.news_editorial_note,
+        news_blog_post:       newsWithoutBlogPost         * EDITORIAL_COST_ESTIMATES.blog_post_generation,
     }
 
     const totalEstimate = Object.values(estimates).reduce((a, b) => a + b, 0)
@@ -285,6 +294,61 @@ export async function POST(req: Request) {
                             where: { id: news.id },
                             data: { editorialNote: r.editorialNote, editorialNoteGeneratedAt: new Date() },
                         })
+                        processed.push(news.id)
+                        totalCost += r.cost
+                    } catch (err) {
+                        failed.push({ id: news.id, error: getErrorMessage(err) })
+                        if (getErrorMessage(err).includes('Budget')) break
+                    }
+                }
+                break
+            }
+
+            case 'news_blog_post': {
+                const newsList = await prisma.news.findMany({
+                    where: {
+                        isHidden: false,
+                        status: 'published',
+                        ...(overwrite ? {} : { blogPostGeneratedAt: null }),
+                    },
+                    take: limit,
+                    select: { id: true, title: true, contentMd: true, source: true, tags: true },
+                    orderBy: { publishedAt: 'desc' },
+                })
+
+                const authorId = (adminSession?.user as { id?: string })?.id
+                if (!authorId) {
+                    return NextResponse.json({ error: 'Sessão inválida' }, { status: 401 })
+                }
+
+                for (const news of newsList) {
+                    try {
+                        await assertBudgetAvailable('blog_post_generation')
+                        const r = await generateBlogPostFromNews(news)
+
+                        const baseSlug = r.slug
+                        let slug = baseSlug
+                        const existing = await prisma.blogPost.findUnique({ where: { slug } })
+                        if (existing) slug = `${baseSlug}-${Date.now().toString(36)}`
+
+                        await prisma.blogPost.create({
+                            data: {
+                                slug,
+                                title:          r.title,
+                                excerpt:        r.excerpt,
+                                contentMd:      r.contentMd,
+                                tags:           r.tags,
+                                readingTimeMin: r.readingTimeMin,
+                                status:         'DRAFT',
+                                authorId,
+                            },
+                        })
+
+                        await prisma.news.update({
+                            where: { id: news.id },
+                            data: { blogPostGeneratedAt: new Date() },
+                        })
+
                         processed.push(news.id)
                         totalCost += r.cost
                     } catch (err) {

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Sparkles, Loader2, Play, RefreshCw, AlertCircle, CheckCircle, DollarSign, ChevronDown, ChevronUp } from 'lucide-react'
-type EnrichmentTarget = 'artist_bio' | 'artist_editorial' | 'artist_curiosidades' | 'production_review' | 'news_editorial_note'
+type EnrichmentTarget = 'artist_bio' | 'artist_editorial' | 'artist_curiosidades' | 'production_review' | 'news_editorial_note' | 'news_blog_post'
 
 interface DryRunData {
     counts: Record<EnrichmentTarget, number>
@@ -33,6 +33,7 @@ const TARGET_LABELS: Record<EnrichmentTarget, string> = {
     artist_curiosidades:  'Curiosidades sobre Artista',
     production_review:    'Review Editorial de Produção',
     news_editorial_note:  'Nota Editorial de Notícia',
+    news_blog_post:       'Blog Post a partir de Notícia',
 }
 
 const TARGET_FEATURE: Record<EnrichmentTarget, string> = {
@@ -41,6 +42,7 @@ const TARGET_FEATURE: Record<EnrichmentTarget, string> = {
     artist_curiosidades:  'artist_curiosidades',
     production_review:    'production_review',
     news_editorial_note:  'news_editorial_note',
+    news_blog_post:       'blog_post_generation',
 }
 
 const TARGET_DESCRIPTION: Record<EnrichmentTarget, string> = {
@@ -49,6 +51,7 @@ const TARGET_DESCRIPTION: Record<EnrichmentTarget, string> = {
     artist_curiosidades:  'Gera 6 curiosidades autorais sobre cada artista.',
     production_review:    'Gera review editorial + nota + "por que assistir" para doramas/filmes.',
     news_editorial_note:  'Gera nota contextual (100-150 palavras) para notícias traduzidas.',
+    news_blog_post:       'Gera blog post completo (500-700 palavras) a partir de notícias publicadas. Salvo como rascunho.',
 }
 
 export default function EnrichmentPage() {
@@ -63,6 +66,7 @@ export default function EnrichmentPage() {
         artist_curiosidades:  10,
         production_review:    5,
         news_editorial_note:  20,
+        news_blog_post:       5,
     })
     const [overwrite, setOverwrite] = useState(false)
     const [expandedFailures, setExpandedFailures] = useState<string | null>(null)
@@ -123,6 +127,7 @@ export default function EnrichmentPage() {
         'artist_curiosidades',
         'production_review',
         'news_editorial_note',
+        'news_blog_post',
     ]
 
     return (

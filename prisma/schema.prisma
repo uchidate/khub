@@ -319,6 +319,7 @@ model News {
   blocks              Json?                 // Editor de blocos (Opção A) — array de NewsBlock tipados
   editorialNote       String?               // nosso comentário/contexto autoral sobre a notícia (100-200 palavras)
   editorialNoteGeneratedAt DateTime?        // quando a nota foi gerada/atualizada
+  blogPostGeneratedAt DateTime?             // quando um blog post foi gerado a partir desta notícia
   isHidden            Boolean               @default(false) // Oculto do site público pelo admin
   status              String                @default("published") // 'draft' | 'ready' | 'published'
   createdAt           DateTime              @default(now())
