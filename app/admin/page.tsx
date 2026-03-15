@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
+import { Sparkline } from '@/components/admin/Sparkline'
 import prisma from '@/lib/prisma'
 
 export default async function AdminPage() {
@@ -71,6 +72,29 @@ export default async function AdminPage() {
     prisma.artist.count({ where: { bio: { not: null }, isHidden: false } }),
     prisma.contentTranslation.count({ where: { entityType: 'artist', field: 'bio', locale: 'pt-BR' } }),
   ])
+
+  // ── Sparklines (7-day daily trend) ─────────────────────────────────────────
+  type DayCount = { day: string; count: number }
+  function toSparkArray(rows: DayCount[]): number[] {
+    const map = new Map(rows.map(r => [r.day.slice(0, 10), r.count]))
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (6 - i))
+      return map.get(d.toISOString().slice(0, 10)) ?? 0
+    })
+  }
+  const [usersSparkRaw, artistsSparkRaw, productionsSparkRaw, newsSparkRaw] = await Promise.all([
+    prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "User"       WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
+    prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "Artist"     WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
+    prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "Production" WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
+    prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "News"       WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
+  ])
+  const sparks = {
+    users:       toSparkArray(usersSparkRaw),
+    artists:     toSparkArray(artistsSparkRaw),
+    productions: toSparkArray(productionsSparkRaw),
+    news:        toSparkArray(newsSparkRaw),
+    groups:      [0, 0, 0, 0, 0, 0, 0],
+  }
 
   const pendingArtistTranslations = Math.max(0, artistsWithBio - artistBioTranslated)
   const totalPendingTranslations  = pendingArtistTranslations + pendingProductionTranslations
@@ -141,11 +165,11 @@ export default async function AdminPage() {
   }
 
   const stats = [
-    { label: 'Usuários',  value: totalUsers,       new: newUsers,       icon: Users,    href: '/admin/users',       sub: `+${newUsers7d} esta semana` },
-    { label: 'Artistas',  value: totalArtists,     new: newArtists,     icon: Mic2,     href: '/admin/artists',     sub: null },
-    { label: 'Produções', value: totalProductions, new: newProductions,  icon: Film,    href: '/admin/productions', sub: null },
-    { label: 'Notícias',  value: totalNews,        new: newNews,        icon: Newspaper, href: '/admin/news',       sub: null },
-    { label: 'Grupos',    value: totalGroups,      new: 0,              icon: Users,    href: '/admin/groups',      sub: null },
+    { label: 'Usuários',  value: totalUsers,       new: newUsers,       icon: Users,    href: '/admin/users',       sub: `+${newUsers7d} esta semana`, spark: sparks.users,       sparkColor: '#3b82f6' },
+    { label: 'Artistas',  value: totalArtists,     new: newArtists,     icon: Mic2,     href: '/admin/artists',     sub: null,                         spark: sparks.artists,     sparkColor: '#ec4899' },
+    { label: 'Produções', value: totalProductions, new: newProductions,  icon: Film,    href: '/admin/productions', sub: null,                         spark: sparks.productions, sparkColor: '#f59e0b' },
+    { label: 'Notícias',  value: totalNews,        new: newNews,        icon: Newspaper, href: '/admin/news',       sub: null,                         spark: sparks.news,        sparkColor: '#06b6d4' },
+    { label: 'Grupos',    value: totalGroups,      new: 0,              icon: Users,    href: '/admin/groups',      sub: null,                         spark: sparks.groups,      sparkColor: '#a855f7' },
   ]
 
   // Pipeline steps com % de progresso visual
@@ -253,23 +277,28 @@ export default async function AdminPage() {
               <Link
                 key={stat.label}
                 href={stat.href}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 hover:border-zinc-700 hover:shadow-[0_0_0_1px_rgba(59,130,246,0.1)] transition-all group flex flex-col gap-1"
+                className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 hover:border-zinc-700 hover:shadow-[0_0_0_1px_rgba(59,130,246,0.12)] transition-all group flex flex-col gap-1"
               >
-                <stat.icon className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-500 transition-colors" />
-                <div className="flex items-end gap-1.5 mt-0.5">
-                  <p className="text-xl font-black text-white tabular-nums">{stat.value.toLocaleString('pt-BR')}</p>
+                <div className="flex items-center justify-between">
+                  <stat.icon className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-500 transition-colors" />
                   {stat.new > 0 && (
-                    <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded-full mb-0.5">
+                    <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded-full">
                       +{stat.new}
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-zinc-500 font-medium">{stat.label}</p>
-                {stat.sub && (
-                  <p className="text-[9px] text-zinc-700 flex items-center gap-0.5">
-                    <TrendingUp className="w-2.5 h-2.5" />{stat.sub}
-                  </p>
-                )}
+                <p className="text-xl font-black text-white tabular-nums mt-0.5">{stat.value.toLocaleString('pt-BR')}</p>
+                <div className="flex items-end justify-between mt-auto pt-1">
+                  <div>
+                    <p className="text-[11px] text-zinc-500 font-medium">{stat.label}</p>
+                    {stat.sub && (
+                      <p className="text-[9px] text-zinc-700 flex items-center gap-0.5 mt-0.5">
+                        <TrendingUp className="w-2.5 h-2.5" />{stat.sub}
+                      </p>
+                    )}
+                  </div>
+                  <Sparkline data={stat.spark} color={stat.sparkColor} width={44} height={18} className="opacity-80 group-hover:opacity-100 transition-opacity" />
+                </div>
               </Link>
             ))}
           </div>
