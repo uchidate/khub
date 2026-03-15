@@ -29,7 +29,7 @@ const emptySummary: ReturnType<typeof getAiSummary> extends Promise<infer T> ? T
 export default async function AiDashboardPage() {
     console.log('[AI Dashboard] render start')
     const session = await getServerSession(authOptions)
-    if (session?.user?.role !== 'admin') redirect('/admin')
+    if (session?.user?.role?.toLowerCase() !== 'admin') redirect('/admin')
 
     let summary = emptySummary
     let costByDay: Awaited<ReturnType<typeof getAiCostByDay>> = []
