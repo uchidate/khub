@@ -8,6 +8,7 @@ import {
   Languages, Sparkles,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
 import prisma from '@/lib/prisma'
 
 export default async function AdminPage() {
@@ -157,26 +158,8 @@ export default async function AdminPage() {
           Olá, <span className="text-white font-semibold">{session.user.name}</span>
         </p>
 
-        {/* Urgente — só mostra se houver itens */}
-        {urgentItems.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {urgentItems.map(item => (
-              <Link key={item.label} href={item.href}
-                className="flex items-center justify-between px-4 py-3 rounded-xl bg-red-500/5 border border-red-500/30 hover:bg-red-500/10 transition-colors group">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-red-500/20 flex items-center justify-center">
-                    <item.icon className="w-3.5 h-3.5 text-red-400" />
-                  </div>
-                  <span className="text-sm font-bold text-red-300">{item.label}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-lg font-black text-red-400">{item.count}</span>
-                  <ChevronRight className="w-4 h-4 text-red-500/60 group-hover:text-red-400 transition-colors" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* Urgente — live, polling a cada 30s, atualiza title da aba */}
+        <LiveUrgentPanel initial={{ reports: pendingReports, comments: flaggedComments }} />
 
         {/* Stats — 2 cols no mobile, 3 no tablet, 6 no desktop */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -300,6 +283,9 @@ export default async function AdminPage() {
             )}
           </div>
         </div>
+
+        {/* Widget IA */}
+        <AiWidget />
 
       </div>
     </AdminLayout>
