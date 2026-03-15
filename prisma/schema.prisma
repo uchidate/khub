@@ -29,6 +29,10 @@ model MusicalGroup {
   nameHangul      String?
   mbid            String?                 @unique // MusicBrainz group ID
   bio             String?
+  // Conteúdo editorial original
+  analiseEditorial   String?  @db.Text
+  curiosidades       String[]
+  editorialGeneratedAt DateTime?
   profileImageUrl String?
   debutDate       DateTime?
   disbandDate     DateTime?               // null = grupo ativo
@@ -41,6 +45,7 @@ model MusicalGroup {
   members              ArtistGroupMembership[]
   kpoppingSuggestions  KpoppingMembershipSuggestion[]
   userFavorites        Favorite[]
+  blogPosts            BlogPostGroup[]
   // Instagram sync (RSS.app)
   instagramFeedUrl  String?               // RSS.app JSON feed URL
   instagramLastSync DateTime?             // última sincronização bem-sucedida
@@ -91,11 +96,16 @@ model Artist {
   bloodType          String?
   zodiacSign         String?
   bio                String?
+  // Conteúdo editorial original (gerado via IA ou escrito manualmente)
+  analiseEditorial   String?            @db.Text // análise autoral 400+ palavras PT-BR
+  curiosidades       String[]                    // 5-8 curiosidades autorais
+  editorialGeneratedAt DateTime?                 // quando o conteúdo editorial foi gerado/atualizado
   primaryImageUrl    String?
   socialLinks        Json?
   agency             Agency?            @relation(fields: [agencyId], references: [id])
   agencyId           String?
   productions        ArtistProduction[]
+  blogPosts          BlogPostArtist[]
   // TMDB sync tracking
   tmdbId             String? @unique // TMDB person ID
   tmdbSyncStatus     String? // 'SYNCED', 'NOT_FOUND', 'ERROR'
@@ -225,6 +235,12 @@ model Production {
   voteAverage        Float? // TMDB rating
   trailerUrl         String? // YouTube trailer URL
   tagline            String? // Slogan/frase de impacto do TMDB
+  // Conteúdo editorial original
+  editorialReview    String?  @db.Text // nossa análise, 400+ palavras PT-BR
+  editorialRating    Float?             // nossa nota (0-10)
+  whyWatch           String?            // "Por que assistir?" — parágrafo curto autoral
+  editorialGeneratedAt DateTime?        // quando foi gerado/atualizado
+  blogPosts          BlogPostProduction[]
   // Classificação etária DJCTQ
   ageRating          String? // 'L' | '10' | '12' | '14' | '16' | '18'
   ageRatingSyncAt    DateTime? // última tentativa de busca de classificação (com ou sem resultado)
@@ -301,6 +317,8 @@ model News {
   viewCount           Int                   @default(0)
   trendingScore       Float                 @default(0.0)
   blocks              Json?                 // Editor de blocos (Opção A) — array de NewsBlock tipados
+  editorialNote       String?               // nosso comentário/contexto autoral sobre a notícia (100-200 palavras)
+  editorialNoteGeneratedAt DateTime?        // quando a nota foi gerada/atualizada
   isHidden            Boolean               @default(false) // Oculto do site público pelo admin
   status              String                @default("published") // 'draft' | 'ready' | 'published'
   createdAt           DateTime              @default(now())
@@ -953,11 +971,46 @@ model BlogPost {
   publishedAt    DateTime?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  // Relações com entidades do site para cross-linking
+  relatedArtists     BlogPostArtist[]
+  relatedGroups      BlogPostGroup[]
+  relatedProductions BlogPostProduction[]
 
   @@index([status, publishedAt])
   @@index([authorId])
   @@index([slug])
   @@index([featured, status])
+}
+
+// Junction tables para relações BlogPost ↔ entidades
+model BlogPostArtist {
+  blogPostId String
+  artistId   String
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  artist     Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, artistId])
+  @@index([artistId])
+}
+
+model BlogPostGroup {
+  blogPostId String
+  groupId    String
+  blogPost   BlogPost     @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  group      MusicalGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, groupId])
+  @@index([groupId])
+}
+
+model BlogPostProduction {
+  blogPostId   String
+  productionId String
+  blogPost     BlogPost   @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  production   Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, productionId])
+  @@index([productionId])
 }
 
 // ─── IA ──────────────────────────────────────────────────────────────────────

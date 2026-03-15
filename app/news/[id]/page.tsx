@@ -321,6 +321,16 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                     )}
                 </article>
 
+                {/* Nota editorial da equipe HallyuHub */}
+                {(news as unknown as { editorialNote?: string }).editorialNote && (
+                    <aside className="mt-8 p-5 rounded-xl border-l-4 border-purple-500 bg-purple-900/10 border border-purple-500/20">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-2">Perspectiva HallyuHub</p>
+                        <p className="text-sm text-zinc-300 leading-relaxed italic">
+                            {(news as unknown as { editorialNote?: string }).editorialNote}
+                        </p>
+                    </aside>
+                )}
+
                 {/* Artistas — após o conteúdo */}
                 {news.artists.length > 0 && (
                     <section className="mt-12 pt-10 border-t border-white/5">

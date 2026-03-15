@@ -91,6 +91,10 @@ export default async function NewsPage() {
                 backHref="/"
             />
 
+            <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-8">
+                As últimas notícias do K-pop, K-drama e entretenimento coreano, traduzidas e contextualizadas para o público brasileiro. Acompanhe comebacks, lançamentos, premiações e muito mais com a perspectiva do HallyuHub.
+            </p>
+
             <Suspense fallback={<LoadingSkeleton />}>
                 <NewsContent />
             </Suspense>

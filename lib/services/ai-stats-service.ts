@@ -101,6 +101,21 @@ export async function getMonthlySpend(): Promise<{ byProvider: Record<string, nu
     return { byProvider, total }
 }
 
+/** Gasto mensal agrupado por feature (para budget enforcement) */
+export async function getMonthlySpendByFeature(): Promise<Record<string, number>> {
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    const rows = await prisma.aiUsageLog.groupBy({
+        by:    ['feature'],
+        where: { createdAt: { gte: startOfMonth }, status: 'success' },
+        _sum:  { cost: true },
+    })
+
+    return Object.fromEntries(rows.map(r => [r.feature, r._sum.cost ?? 0]))
+}
+
 /** Logs recentes com filtros opcionais */
 export async function getAiRecentLogs(opts: {
     limit:     number

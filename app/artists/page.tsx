@@ -48,6 +48,10 @@ export default async function ArtistsPage() {
                 backHref="/"
             />
 
+            <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-8">
+                O HallyuHub reúne os perfis mais completos de artistas do K-pop e K-drama em português. Explore carreiras, discografias, filmografias e as últimas notícias de cada artista — tudo em um só lugar para os fãs brasileiros do Hallyu.
+            </p>
+
             <Suspense>
                 <ArtistsList />
             </Suspense>
