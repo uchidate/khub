@@ -175,19 +175,20 @@ export async function generateArtistEditorial(artist: {
     const groups = artist.memberships?.map(m => m.group.name).join(', ') || 'solo'
     const feature: AiFeature = 'artist_editorial'
 
-    const prompt = `Escreva uma análise editorial em português brasileiro sobre o artista **${artist.nameRomanized}**, ${artist.roles.join(', ')} ${groups !== 'solo' ? `do grupo ${groups}` : '(carreira solo)'}.
+    const prompt = `Você é redator do HallyuHub, o maior site brasileiro de K-pop e K-drama. Escreva um texto sobre o artista **${artist.nameRomanized}** (${artist.roles.join(', ')}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}) para a seção "Nossa Análise" da página do artista.
 
-${artist.bio ? `Contexto biográfico: "${artist.bio.slice(0, 400)}"` : ''}
+${artist.bio ? `Contexto: "${artist.bio.slice(0, 400)}"` : ''}
 
-A análise deve:
-- Ter entre 350 e 450 palavras
-- Ser escrita na perspectiva editorial do HallyuHub (site brasileiro de K-pop)
-- Analisar o estilo artístico, influência no K-pop e relevância para o público brasileiro
-- Incluir uma perspectiva sobre o impacto cultural do artista no Brasil
-- Ser original, opinativa e agregar valor além da simples biografia
-- Usar tom profissional mas acessível para fãs
+O texto deve:
+- Ter entre 300 e 380 palavras, dividido em 3 parágrafos
+- Soar como uma editora de uma revista de cultura pop escrevendo para fãs jovens adultos — entusiasmado, cativante, mas sem ser infantil
+- Transmitir genuína admiração e entusiasmo pelo artista, como se o autor fosse fã
+- Destacar o que torna esse artista único: presença de palco, versatilidade, conexão com os fãs, marcos na carreira
+- Conectar o artista com o público brasileiro: por que ele ressoa tanto no Brasil?
+- Usar linguagem viva, com ritmo e energia — sem jargões acadêmicos nem frases de press release
+- O primeiro parágrafo deve prender a atenção imediatamente (pode começar com uma observação forte, uma imagem vívida ou uma afirmação impactante)
 
-Responda APENAS com o texto da análise, sem título nem cabeçalho.`
+Responda APENAS com o texto, sem título, sem cabeçalho, sem marcadores.`
 
     try {
         const result = await orchestrator.generate(prompt, {
