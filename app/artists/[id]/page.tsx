@@ -466,29 +466,26 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         />
 
 
-                        {/* Nossa Análise */}
-                        {profileSections.length > 0 && (
+                        {/* Perfil Biográfico */}
+                        {profileSections.length >= 2 && (
                             <section>
                                 <div className="flex items-center gap-3 mb-5">
                                     <div className="flex items-center gap-2">
                                         <Sparkles className="w-4 h-4 text-purple-400" />
-                                        <span className="text-sm font-black text-white uppercase tracking-widest">Nossa Análise</span>
+                                        <span className="text-sm font-black text-white uppercase tracking-widest">Perfil</span>
                                     </div>
                                     <div className="flex-1 h-px bg-white/5" />
                                 </div>
-                                <ul className="space-y-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {profileSections.map((sec, i) => (
-                                        <li key={i} className="flex items-start gap-3 text-zinc-300 text-sm leading-relaxed">
-                                            <span className="mt-0.5 w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0">
-                                                <Sparkles className="w-2.5 h-2.5" />
+                                        <div key={i} className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500">
+                                                {sec.title}
                                             </span>
-                                            <div>
-                                                <span className="text-[10px] font-black uppercase tracking-wider text-purple-400 mr-1.5">{sec.title} —</span>
-                                                {sec.content}
-                                            </div>
-                                        </li>
+                                            <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
+                                        </div>
                                     ))}
-                                </ul>
+                                </div>
                             </section>
                         )}
 
