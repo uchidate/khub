@@ -457,16 +457,38 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         {/* Análise Editorial */}
                         {artist.analiseEditorial && (
                             <section>
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-black text-white uppercase tracking-widest">Nossa Análise</span>
+                                <div className="relative rounded-2xl overflow-hidden border border-white/6 bg-gradient-to-br from-purple-950/30 via-zinc-900/60 to-zinc-900/80 p-5 sm:p-6">
+                                    {/* Glow accent */}
+                                    <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl pointer-events-none" />
+
+                                    {/* Header */}
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400/80 bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-full">
+                                            ✦ Nossa Análise
+                                        </span>
+                                        <span className="text-[10px] text-zinc-600">por HallyuHub</span>
                                     </div>
-                                    <div className="flex-1 h-px bg-white/5" />
-                                </div>
-                                <div className="prose prose-invert prose-sm max-w-none text-zinc-300 leading-relaxed">
-                                    {artist.analiseEditorial.split('\n\n').map((p, i) => (
-                                        <p key={i}>{p}</p>
-                                    ))}
+
+                                    {/* Text */}
+                                    {(() => {
+                                        const paragraphs = artist.analiseEditorial!.split('\n\n').filter(Boolean)
+                                        return (
+                                            <div className="space-y-4">
+                                                {paragraphs.map((p, i) => (
+                                                    <p
+                                                        key={i}
+                                                        className={`leading-relaxed ${
+                                                            i === 0
+                                                                ? 'text-[15px] text-zinc-200 font-medium'
+                                                                : 'text-sm text-zinc-400'
+                                                        }`}
+                                                    >
+                                                        {p}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        )
+                                    })()}
                                 </div>
                             </section>
                         )}
