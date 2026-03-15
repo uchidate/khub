@@ -101,6 +101,7 @@ export default function EditProductionPage() {
             })
             .catch(() => toast.error('Erro ao carregar produção'))
             .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const set = (key: keyof Production, value: unknown) => {

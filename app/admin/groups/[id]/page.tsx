@@ -135,6 +135,7 @@ export default function EditGroupPage() {
             })
             .catch(() => toast.error('Erro ao carregar grupo'))
             .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {

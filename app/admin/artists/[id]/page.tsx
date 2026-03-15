@@ -82,6 +82,7 @@ export default function EditArtistPage() {
             })
             .catch(() => toast.error('Erro ao carregar artista'))
             .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const set = (key: keyof Artist, value: unknown) => {
