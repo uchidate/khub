@@ -146,7 +146,7 @@ export class ArtistTranslationService {
     private isAlreadyInPortuguese(text: string): boolean {
         const ptWords = ['é', 'conhecido', 'conhecida', 'brasileiro', 'brasileira', 'artista', 'na', 'do', 'da'];
         const lowerText = text.toLowerCase();
-        const matchCount = ptWords.filter(word => lowerText.includes(word)).length;
+        const matchCount = ptWords.filter(word => new RegExp(`\\b${word}\\b`).test(lowerText)).length;
         return matchCount >= 2;
     }
 
