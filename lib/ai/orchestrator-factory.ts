@@ -22,9 +22,10 @@ let _instance: AIOrchestrator | null = null
  */
 export function getOrchestrator(): AIOrchestrator {
   if (!_instance) {
+    const ollamaEnabled = process.env.OLLAMA_ENABLED !== 'false'
     _instance = new AIOrchestrator({
       deepseekApiKey: process.env.DEEPSEEK_API_KEY,
-      ollamaBaseUrl:  process.env.OLLAMA_BASE_URL,
+      ollamaBaseUrl:  ollamaEnabled ? process.env.OLLAMA_BASE_URL : undefined,
     })
 
     console.log('✅ AIOrchestrator singleton criado')

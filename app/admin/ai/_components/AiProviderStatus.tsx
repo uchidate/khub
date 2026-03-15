@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Loader2, Zap, AlertTriangle } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Loader2, Zap, AlertTriangle, FlaskConical } from 'lucide-react'
 
 interface ProviderStatus {
     name:                     string
@@ -37,21 +37,37 @@ function fmtCost(v: number) {
 export default function AiProviderStatus() {
     const [data,    setData]    = useState<StatusResponse | null>(null)
     const [loading, setLoading] = useState(true)
+    const [testing, setTesting] = useState(false)
     const [error,   setError]   = useState<string | null>(null)
 
-    useEffect(() => {
-        fetch('/api/admin/ai/status')
+    const load = useCallback((withTest = false) => {
+        if (withTest) setTesting(true); else setLoading(true)
+        const url = withTest ? '/api/admin/ai/status?test=true' : '/api/admin/ai/status'
+        fetch(url)
             .then(r => r.json())
             .then(setData)
             .catch(() => setError('Erro ao carregar status'))
-            .finally(() => setLoading(false))
+            .finally(() => { setLoading(false); setTesting(false) })
     }, [])
+
+    useEffect(() => { load() }, [load])
 
     return (
         <div className="bg-zinc-900 border border-white/8 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Status dos providers</p>
-                {loading && <Loader2 className="w-3 h-3 text-zinc-600 animate-spin" />}
+                <div className="flex items-center gap-2">
+                    {(loading || testing) && <Loader2 className="w-3 h-3 text-zinc-600 animate-spin" />}
+                    <button
+                        onClick={() => load(true)}
+                        disabled={loading || testing}
+                        title="Executar teste de latência ao vivo (faz chamada real à API)"
+                        className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-40"
+                    >
+                        <FlaskConical className="w-3 h-3" />
+                        {testing ? 'Testando...' : 'Testar'}
+                    </button>
+                </div>
             </div>
 
             {error && (

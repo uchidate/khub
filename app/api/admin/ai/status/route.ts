@@ -10,14 +10,15 @@ export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/admin/ai/status
- * Diagnóstico em tempo real de todos os providers de IA.
- * Verifica disponibilidade, circuit breakers e faz teste de latência.
+ * Diagnóstico dos providers de IA: circuit breakers, config e estatísticas.
+ * Passe ?test=true para também executar um teste de latência ao vivo (mais lento).
  */
-export async function GET() {
+export async function GET(req: Request) {
     const { error } = await requireAdmin()
     if (error) return error
 
     const startTime = Date.now()
+    const runTest   = new URL(req.url).searchParams.get('test') === 'true'
 
     // Testar cada provider configurado
     const testPrompt = 'Responda com exatamente: {"ok": true}'
@@ -68,7 +69,8 @@ export async function GET() {
                 providerStatuses[name].configured = !!process.env.DEEPSEEK_API_KEY
                 break
             case 'ollama':
-                providerStatuses[name].configured = !!process.env.OLLAMA_BASE_URL
+                providerStatuses[name].configured =
+                    !!process.env.OLLAMA_BASE_URL && process.env.OLLAMA_ENABLED !== 'false'
                 break
         }
 
@@ -78,31 +80,33 @@ export async function GET() {
         }
     }
 
-    // Teste rápido de latência: testar o provider ativo
+    // Teste rápido de latência — apenas se ?test=true for passado explicitamente
     let testResult: { provider: string; latencyMs: number; success: boolean; error?: string } | null = null
 
-    try {
-        const orchestrator = getOrchestrator()
-        const testStart = Date.now()
+    if (runTest) {
+        try {
+            const orchestrator = getOrchestrator()
+            const testStart = Date.now()
 
-        const result = await orchestrator.generateStructured<{ ok: boolean }>(
-            testPrompt,
-            testSchema,
-            { maxTokens: 20 }
-        )
+            const result = await orchestrator.generateStructured<{ ok: boolean }>(
+                testPrompt,
+                testSchema,
+                { maxTokens: 20 }
+            )
 
-        testResult = {
-            provider: 'auto',
-            latencyMs: Date.now() - testStart,
-            success: result.ok === true,
-        }
-    } catch (err: unknown) {
-        log.error('AI provider test failed', { error: getErrorMessage(err) })
-        testResult = {
-            provider: 'none',
-            latencyMs: Date.now() - startTime,
-            success: false,
-            error: getErrorMessage(err),
+            testResult = {
+                provider: 'auto',
+                latencyMs: Date.now() - testStart,
+                success: result.ok === true,
+            }
+        } catch (err: unknown) {
+            log.error('AI provider test failed', { error: getErrorMessage(err) })
+            testResult = {
+                provider: 'none',
+                latencyMs: Date.now() - startTime,
+                success: false,
+                error: getErrorMessage(err),
+            }
         }
     }
 
