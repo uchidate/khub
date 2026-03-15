@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
     Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink, Download, RotateCcw, Send,
 } from 'lucide-react'
@@ -189,8 +190,10 @@ function ReprocessButton({ newsId, translationStatus, onDone }: { newsId: string
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NewsAdminPage() {
+    const toast = useAdminToast()
     const [formOpen, setFormOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
+    const [deleteLoading, setDeleteLoading] = useState(false)
     const [editingNews, setEditingNews] = useState<News | null>(null)
     const [selectedIds, setSelectedIds] = useState<string[]>([])
     const [localArtistsOverride, setLocalArtistsOverride] = useState<Record<string, LinkedArtist[]>>({})
@@ -326,17 +329,25 @@ export default function NewsAdminPage() {
     }
 
     const handleDeleteConfirm = async () => {
-        const res = await fetch('/api/admin/news', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: selectedIds }),
-        })
-        if (!res.ok) {
-            const e = await res.json()
-            throw new Error(e.error || 'Erro ao deletar notícias')
+        setDeleteLoading(true)
+        try {
+            const res = await fetch('/api/admin/news', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selectedIds }),
+            })
+            if (!res.ok) {
+                const e = await res.json()
+                toast.error(e.error || 'Erro ao deletar notícias')
+                return
+            }
+            toast.deleted(`${selectedIds.length} notícia${selectedIds.length > 1 ? 's' : ''}`)
+            setDeleteOpen(false)
+            refetchTable()
+            fetchStats()
+        } finally {
+            setDeleteLoading(false)
         }
-        refetchTable()
-        fetchStats()
     }
 
     const handleToggleHidden = async (news: News) => {
@@ -373,7 +384,7 @@ export default function NewsAdminPage() {
     }
 
     return (
-        <AdminLayout title="Notícias">
+        <AdminLayout title="Notícias" subtitle="Gerencie notícias do K-Pop e K-Drama">
             <div className="space-y-5">
 
                 {/* ── Stats ────────────────────────────────────────────── */}
@@ -569,12 +580,15 @@ export default function NewsAdminPage() {
                 onSubmit={handleFormSubmit}
             />
 
-            <DeleteConfirm
+            <ConfirmDialog
                 open={deleteOpen}
-                count={selectedIds.length}
-                entityName="notícia"
-                onClose={() => setDeleteOpen(false)}
+                title={`Excluir ${selectedIds.length} notícia${selectedIds.length > 1 ? 's' : ''}?`}
+                description="Esta ação não pode ser desfeita. Os dados serão removidos permanentemente."
+                confirmLabel="Excluir"
+                variant="danger"
+                loading={deleteLoading}
                 onConfirm={handleDeleteConfirm}
+                onCancel={() => setDeleteOpen(false)}
             />
         </AdminLayout>
     )

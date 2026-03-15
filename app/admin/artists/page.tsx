@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus, EyeOff, Languages } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -462,8 +463,10 @@ const formFields: FormField[] = [
 
 export default function ArtistsAdminPage() {
   const router = useRouter()
+  const toast = useAdminToast()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [filter, setFilter] = useState<FilterType>('')
   const [stats, setStats] = useState<ArtistStats | null>(null)
@@ -606,7 +609,8 @@ export default function ArtistsAdminPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids }),
     })
-    if (!res.ok) return
+    if (!res.ok) { toast.error('Erro ao ocultar artistas'); return }
+    toast.success(`${ids.length} artista${ids.length > 1 ? 's' : ''} ocultado${ids.length > 1 ? 's' : ''}`)
     clearSelection()
     refetchTable()
     fetchStats()
@@ -632,6 +636,7 @@ export default function ArtistsAdminPage() {
     }
 
     const created = await res.json()
+    toast.saved()
     refetchTable()
     fetchStats()
     // Navigate to full edit page after creation
@@ -639,44 +644,52 @@ export default function ArtistsAdminPage() {
   }
 
   const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/artists', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
+    setDeleteLoading(true)
+    try {
+      const res = await fetch('/api/admin/artists', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      })
 
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error || 'Erro ao deletar artistas')
+      if (!res.ok) {
+        const err = await res.json()
+        toast.error(err.error || 'Erro ao deletar artistas')
+        return
+      }
+
+      toast.deleted(`${selectedIds.length} artista${selectedIds.length > 1 ? 's' : ''}`)
+      setDeleteOpen(false)
+      refetchTable()
+      fetchStats()
+    } finally {
+      setDeleteLoading(false)
     }
-
-    refetchTable()
-    fetchStats()
   }
 
   return (
-    <AdminLayout title="Artistas">
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="space-y-3 min-w-0 flex-1">
-            <div className="flex items-center gap-3 -mt-6">
-              <p className="text-zinc-400 text-sm">Gerencie artistas de K-Drama e K-Pop</p>
-              <Link href="/admin/translations?tab=artist"
-                className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
-                <Languages size={11} />
-                Traduções
-              </Link>
-            </div>
-            <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
-          </div>
+    <AdminLayout
+      title="Artistas"
+      subtitle="Gerencie artistas de K-Drama e K-Pop"
+      actions={
+        <div className="flex items-center gap-2">
+          <Link href="/admin/translations?tab=artist"
+            className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-1 rounded-lg transition-colors">
+            <Languages size={11} />
+            Traduções
+          </Link>
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all flex-shrink-0"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
           >
             <Plus size={18} />
             Novo Artista
           </button>
         </div>
+      }
+    >
+      <div className="space-y-4">
+        <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
 
         <DataTable<Artist>
           columns={columns}
@@ -766,12 +779,15 @@ export default function ArtistsAdminPage() {
         onSubmit={handleFormSubmit}
       />
 
-      <DeleteConfirm
+      <ConfirmDialog
         open={deleteOpen}
-        count={selectedIds.length}
-        entityName="artista"
-        onClose={() => setDeleteOpen(false)}
+        title={`Excluir ${selectedIds.length} artista${selectedIds.length > 1 ? 's' : ''}?`}
+        description="Esta ação não pode ser desfeita. Os dados serão removidos permanentemente."
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deleteLoading}
         onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteOpen(false)}
       />
     </AdminLayout>
   )

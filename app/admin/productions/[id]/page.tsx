@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check } from 'lucide-react'
+import { PageHeader } from '@/components/admin/PageHeader'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check } from 'lucide-react'
 
 interface Production {
     id: string
@@ -73,12 +75,11 @@ const AGE_RATINGS = [
 export default function EditProductionPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
+    const toast = useAdminToast()
     const returnToRef = useRef<string | null>(null)
     const [production, setProduction] = useState<Production | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
-    const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Production>>({})
 
     useEffect(() => {
@@ -98,8 +99,9 @@ export default function EditProductionPage() {
                 setProduction(data)
                 setForm(data)
             })
-            .catch(() => setError('Erro ao carregar produção'))
+            .catch(() => toast.error('Erro ao carregar produção'))
             .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const set = (key: keyof Production, value: unknown) => {
@@ -172,8 +174,6 @@ export default function EditProductionPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSaving(true)
-        setError('')
-        setSuccess('')
         try {
             const body: Record<string, unknown> = { ...form }
             // Ensure numeric fields are numbers, not strings
@@ -200,16 +200,15 @@ export default function EditProductionPage() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || 'Erro ao salvar')
+                toast.error(err.error || 'Erro ao salvar')
+                return
             }
-            setSuccess('Salvo com sucesso!')
+            toast.saved()
             if (returnToRef.current) {
-                setTimeout(() => router.push(returnToRef.current!), 800)
-            } else {
-                setTimeout(() => setSuccess(''), 3000)
+                router.push(returnToRef.current!)
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao salvar')
+            toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
         } finally {
             setSaving(false)
         }
@@ -222,26 +221,22 @@ export default function EditProductionPage() {
     return (
         <AdminLayout title={production ? `Editar: ${production.titlePt}` : 'Editar Produção'}>
             <div className="max-w-4xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="flex items-center gap-4 mb-8">
-                    <button
-                        onClick={() => returnToRef.current ? router.push(returnToRef.current) : router.back()}
-                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Voltar
-                    </button>
+                <PageHeader
+                    title={production ? production.titlePt : 'Editar Produção'}
+                    backHref="/admin/productions"
+                    backLabel="Produções"
+                >
                     {production && (
                         <Link
                             href={`/productions/${id}`}
                             target="_blank"
-                            className="flex items-center gap-1.5 text-zinc-500 hover:text-purple-400 transition-colors text-sm ml-auto"
+                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 px-3 py-1.5 rounded-lg transition-colors"
                         >
                             Ver no site
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="w-3 h-3" />
                         </Link>
                     )}
-                </div>
+                </PageHeader>
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
@@ -822,10 +817,6 @@ export default function EditProductionPage() {
                                 </div>
                             </label>
                         </div>
-
-                        {/* Feedback */}
-                        {error && <p className="text-sm text-red-400 font-medium">{error}</p>}
-                        {success && <p className="text-sm text-green-400 font-medium">{success}</p>}
 
                         {/* Actions */}
                         <div className="flex items-center gap-3 pt-2">

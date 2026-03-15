@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Plus, Users, Music2, EyeOff, Instagram, Twitter, Youtube, ExternalLink, Globe, Pencil, Trash2, Languages } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -136,8 +137,10 @@ const formFields: FormField[] = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function GroupsPage() {
+  const toast = useAdminToast()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const [membersOpen, setMembersOpen] = useState(false)
   const [managingGroup, setManagingGroup] = useState<MusicalGroup | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -257,20 +260,28 @@ export default function GroupsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao salvar') }
+    if (!res.ok) { const e = await res.json(); toast.error(e.error || 'Erro ao salvar'); return }
+    toast.saved()
     refetchTable()
     fetchStats()
   }
 
   const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/groups', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao deletar') }
-    refetchTable()
-    fetchStats()
+    setDeleteLoading(true)
+    try {
+      const res = await fetch('/api/admin/groups', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      })
+      if (!res.ok) { const e = await res.json(); toast.error(e.error || 'Erro ao deletar'); return }
+      toast.deleted(`${selectedIds.length} grupo${selectedIds.length > 1 ? 's' : ''}`)
+      setDeleteOpen(false)
+      refetchTable()
+      fetchStats()
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   const statusFilterEl = (
@@ -299,25 +310,27 @@ export default function GroupsPage() {
   )
 
   return (
-    <AdminLayout title="Grupos Musicais">
-      <div className="space-y-5">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3 -mt-4">
-            <p className="text-zinc-400 text-sm">Gerencie os grupos musicais da plataforma</p>
-            <Link href="/admin/translations?tab=group"
-              className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
-              <Languages size={11} />
-              Traduções
-            </Link>
-          </div>
+    <AdminLayout
+      title="Grupos Musicais"
+      subtitle="Gerencie os grupos musicais da plataforma"
+      actions={
+        <div className="flex items-center gap-2">
+          <Link href="/admin/translations?tab=group"
+            className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-1 rounded-lg transition-colors">
+            <Languages size={11} />
+            Traduções
+          </Link>
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all flex-shrink-0"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
           >
             <Plus size={16} />
             Novo Grupo
           </button>
         </div>
+      }
+    >
+      <div className="space-y-5">
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -441,12 +454,15 @@ export default function GroupsPage() {
         onSubmit={handleFormSubmit}
       />
 
-      <DeleteConfirm
+      <ConfirmDialog
         open={deleteOpen}
-        count={selectedIds.length}
-        entityName="grupo musical"
-        onClose={() => setDeleteOpen(false)}
+        title={`Excluir ${selectedIds.length} grupo${selectedIds.length > 1 ? 's' : ''}?`}
+        description="Esta ação não pode ser desfeita. Os dados serão removidos permanentemente."
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deleteLoading}
         onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteOpen(false)}
       />
 
       {managingGroup && (

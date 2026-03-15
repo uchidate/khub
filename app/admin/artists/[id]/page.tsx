@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, User, Search, CheckCircle, XCircle, Download } from 'lucide-react'
+import { PageHeader } from '@/components/admin/PageHeader'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink } from 'lucide-react'
 
 type FieldSource = { source: 'manual' | 'tmdb' | 'wikidata' | 'system'; at: string; by?: string }
 type FieldSources = Record<string, FieldSource>
@@ -46,12 +48,11 @@ interface TMDBPreview {
 export default function EditArtistPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
+    const toast = useAdminToast()
     const returnToRef = useRef<string | null>(null)
     const [artist, setArtist] = useState<Artist | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
-    const [success, setSuccess] = useState('')
     const [form, setForm] = useState<Partial<Artist>>({})
 
     useEffect(() => {
@@ -79,8 +80,9 @@ export default function EditArtistPage() {
                     gender: data.gender != null ? String(data.gender) : '',
                 })
             })
-            .catch(() => setError('Erro ao carregar artista'))
+            .catch(() => toast.error('Erro ao carregar artista'))
             .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const set = (key: keyof Artist, value: unknown) => {
@@ -131,8 +133,6 @@ export default function EditArtistPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSaving(true)
-        setError('')
-        setSuccess('')
         try {
             const body: Record<string, unknown> = {
                 nameRomanized: form.nameRomanized,
@@ -163,16 +163,15 @@ export default function EditArtistPage() {
                 const detail = err.details?.[0]
                     ? ` (campo: ${err.details[0].path?.join('.') ?? '?'} — ${err.details[0].message})`
                     : ''
-                throw new Error((err.error || 'Erro ao salvar') + detail)
+                toast.error((err.error || 'Erro ao salvar') + detail)
+                return
             }
-            setSuccess('Salvo com sucesso!')
+            toast.saved()
             if (returnToRef.current) {
-                setTimeout(() => router.push(returnToRef.current!), 800)
-            } else {
-                setTimeout(() => setSuccess(''), 3000)
+                router.push(returnToRef.current!)
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao salvar')
+            toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
         } finally {
             setSaving(false)
         }
@@ -221,26 +220,22 @@ export default function EditArtistPage() {
     return (
         <AdminLayout title={artist ? `Editar: ${artist.nameRomanized}` : 'Editar Artista'}>
             <div className="max-w-3xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="flex items-center gap-4 mb-8">
-                    <button
-                        onClick={() => returnToRef.current ? router.push(returnToRef.current) : router.back()}
-                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Voltar
-                    </button>
+                <PageHeader
+                    title={artist ? artist.nameRomanized : 'Editar Artista'}
+                    backHref="/admin/artists"
+                    backLabel="Artistas"
+                >
                     {artist && (
                         <Link
                             href={`/artists/${id}`}
                             target="_blank"
-                            className="flex items-center gap-1.5 text-zinc-500 hover:text-purple-400 transition-colors text-sm ml-auto"
+                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 px-3 py-1.5 rounded-lg transition-colors"
                         >
                             Ver no site
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="w-3 h-3" />
                         </Link>
                     )}
-                </div>
+                </PageHeader>
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
@@ -576,10 +571,6 @@ export default function EditArtistPage() {
                                 </div>
                             </label>
                         </div>
-
-                        {/* Feedback */}
-                        {error && <p className="text-sm text-red-400 font-medium">{error}</p>}
-                        {success && <p className="text-sm text-green-400 font-medium">{success}</p>}
 
                         {/* Actions */}
                         <div className="flex items-center gap-3 pt-2">
