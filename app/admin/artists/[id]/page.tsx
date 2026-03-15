@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink, Sparkles } from 'lucide-react'
+import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink, Sparkles, Plus, Trash2, AlertTriangle } from 'lucide-react'
 
 type FieldSource = { source: 'manual' | 'tmdb' | 'wikidata' | 'system'; at: string; by?: string }
 type FieldSources = Record<string, FieldSource>
@@ -16,16 +16,23 @@ interface Artist {
     id: string
     nameRomanized: string
     nameHangul: string | null
+    birthName: string | null
     stageNames: string[]
     primaryImageUrl: string | null
     birthDate: string | null
     placeOfBirth: string | null
+    height: string | null
+    zodiacSign: string | null
     gender: string | null
     roles: string[]
     bio: string | null
+    analiseEditorial: string | null
+    curiosidades: string[]
+    socialLinks: Record<string, string> | null
     tmdbId: string | null
     mbid: string | null
     isHidden: boolean
+    flaggedAsNonKorean: boolean
     fieldSources: FieldSources | null
 }
 
@@ -45,6 +52,22 @@ interface TMDBPreview {
     alsoKnownAs: string[]
 }
 
+const ZODIAC_SIGNS = [
+    'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes',
+]
+
+const KNOWN_SOCIAL_KEYS = [
+    { key: 'instagram', label: 'Instagram' },
+    { key: 'twitter', label: 'Twitter/X' },
+    { key: 'youtube', label: 'YouTube' },
+    { key: 'tiktok', label: 'TikTok' },
+    { key: 'weibo', label: 'Weibo' },
+    { key: 'vlive', label: 'V Live' },
+    { key: 'facebook', label: 'Facebook' },
+    { key: 'website', label: 'Website' },
+]
+
 export default function EditArtistPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
@@ -55,6 +78,8 @@ export default function EditArtistPage() {
     const [saving, setSaving] = useState(false)
     const [generatingEditorial, setGeneratingEditorial] = useState(false)
     const [form, setForm] = useState<Partial<Artist>>({})
+    // Social links edit state: array of [key, value] pairs
+    const [socialPairs, setSocialPairs] = useState<[string, string][]>([])
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -67,7 +92,6 @@ export default function EditArtistPage() {
     const [previewLoading, setPreviewLoading] = useState(false)
     const [previewError, setPreviewError] = useState('')
     const [bioSource, setBioSource] = useState<'tmdb_pt' | 'tmdb_en' | null>(null)
-    // Campos aplicados via TMDB nesta sessão (não serão marcados como manuais ao salvar)
     const [tmdbAppliedFields, setTmdbAppliedFields] = useState<Set<string>>(new Set())
 
     useEffect(() => {
@@ -80,6 +104,8 @@ export default function EditArtistPage() {
                     birthDate: data.birthDate ? new Date(data.birthDate).toISOString().split('T')[0] : '',
                     gender: data.gender != null ? String(data.gender) : '',
                 })
+                const links = (data.socialLinks as Record<string, string> | null) ?? {}
+                setSocialPairs(Object.entries(links))
             })
             .catch(() => toast.error('Erro ao carregar artista'))
             .finally(() => setLoading(false))
@@ -88,18 +114,15 @@ export default function EditArtistPage() {
 
     const set = (key: keyof Artist, value: unknown) => {
         setForm(prev => ({ ...prev, [key]: value }))
-        // Limpa preview se tmdbId mudou
         if (key === 'tmdbId') {
             setTmdbPreview(null)
             setPreviewError('')
         }
     }
-    // Edição manual: remove o campo de tmdbAppliedFields (para ser marcado como manual ao salvar)
     const setManual = (key: keyof Artist, value: unknown) => {
         set(key, value)
         setTmdbAppliedFields(prev => { const s = new Set(Array.from(prev)); s.delete(key as string); return s })
     }
-    // Aplicação a partir do TMDB: adiciona o campo em tmdbAppliedFields (não será marcado como manual)
     const applyFromTmdb = (key: keyof Artist, value: unknown) => {
         set(key, value)
         setTmdbAppliedFields(prev => new Set(Array.from(prev).concat(key as string)))
@@ -135,23 +158,35 @@ export default function EditArtistPage() {
         e.preventDefault()
         setSaving(true)
         try {
+            // Build socialLinks from pairs
+            const socialLinks = socialPairs.length > 0
+                ? Object.fromEntries(socialPairs.filter(([k, v]) => k.trim() && v.trim()))
+                : null
+
             const body: Record<string, unknown> = {
                 nameRomanized: form.nameRomanized,
                 nameHangul: form.nameHangul || '',
+                birthName: form.birthName || '',
                 stageNames: typeof form.stageNames === 'string'
                     ? (form.stageNames as string).split(',').map((s: string) => s.trim()).filter(Boolean)
                     : (form.stageNames ?? []),
                 primaryImageUrl: form.primaryImageUrl || '',
                 birthDate: form.birthDate || '',
                 placeOfBirth: form.placeOfBirth || '',
+                height: form.height || '',
+                zodiacSign: form.zodiacSign || '',
                 gender: form.gender ? parseInt(form.gender as string) : null,
                 roles: typeof form.roles === 'string'
                     ? (form.roles as string).split(',').map((s: string) => s.trim()).filter(Boolean)
                     : (form.roles ?? []),
                 bio: form.bio || '',
+                analiseEditorial: form.analiseEditorial || '',
+                curiosidades: form.curiosidades ?? [],
+                socialLinks: socialLinks ?? {},
                 tmdbId: form.tmdbId || '',
                 mbid: form.mbid || '',
                 isHidden: form.isHidden ?? false,
+                flaggedAsNonKorean: form.flaggedAsNonKorean ?? false,
                 tmdbSyncedFields: Array.from(tmdbAppliedFields),
             }
             const res = await fetch(`/api/admin/artists?id=${id}`, {
@@ -190,6 +225,8 @@ export default function EditArtistPage() {
             const data = await res.json()
             if (!res.ok) { toast.error(data.error ?? 'Erro ao gerar conteúdo editorial'); return }
             if (data.generated.bio) setForm(prev => ({ ...prev, bio: data.generated.bio }))
+            if (data.generated.editorial) setForm(prev => ({ ...prev, analiseEditorial: data.generated.editorial }))
+            if (data.generated.curiosidades) setForm(prev => ({ ...prev, curiosidades: data.generated.curiosidades }))
             toast.success(`Conteúdo gerado! Custo: $${data.totalCostUsd.toFixed(4)}`)
             if (Object.keys(data.errors ?? {}).length > 0) {
                 toast.error('Alguns campos falharam: ' + Object.values(data.errors).join('; '))
@@ -204,7 +241,6 @@ export default function EditArtistPage() {
     const inputCls = "w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
     const labelCls = "block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5"
 
-    // Utilitário: badge de origem do campo (manual/tmdb) ao lado do label
     const sources = (form.fieldSources ?? {}) as FieldSources
     const SourceBadge = ({ field }: { field: string }) => {
         const src = sources[field]
@@ -273,7 +309,7 @@ export default function EditArtistPage() {
 
                 {artist && (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Foto + nomes */}
+                        {/* Foto + nomes principais */}
                         <div className="flex gap-5 items-start">
                             <div className="w-24 flex-shrink-0">
                                 {form.primaryImageUrl ? (
@@ -314,15 +350,15 @@ export default function EditArtistPage() {
                             </div>
                         </div>
 
-                        {/* Nomes artísticos + gênero */}
+                        {/* Nome real + Nomes artísticos + Gênero */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <FieldLabel label="Nomes Artísticos (separados por vírgula)" field="stageNames" />
+                                <label className={labelCls}>Nome Real (Birth Name)</label>
                                 <input
                                     type="text"
-                                    value={(form.stageNames ?? []).join(', ')}
-                                    onChange={e => setManual('stageNames', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                                    placeholder="IU, Lee Ji-eun"
+                                    value={form.birthName ?? ''}
+                                    onChange={e => setManual('birthName', e.target.value)}
+                                    placeholder="Kim Ji-eun"
                                     className={inputCls}
                                 />
                             </div>
@@ -338,6 +374,18 @@ export default function EditArtistPage() {
                                     <option value="1">Feminino</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Nomes artísticos */}
+                        <div>
+                            <FieldLabel label="Nomes Artísticos (separados por vírgula)" field="stageNames" />
+                            <input
+                                type="text"
+                                value={(form.stageNames ?? []).join(', ')}
+                                onChange={e => setManual('stageNames', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                placeholder="IU, Lee Ji-eun"
+                                className={inputCls}
+                            />
                         </div>
 
                         {/* Nascimento + local */}
@@ -360,6 +408,33 @@ export default function EditArtistPage() {
                                     placeholder="Seul, Coreia do Sul"
                                     className={inputCls}
                                 />
+                            </div>
+                        </div>
+
+                        {/* Altura + Signo */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelCls}>Altura</label>
+                                <input
+                                    type="text"
+                                    value={form.height ?? ''}
+                                    onChange={e => setManual('height', e.target.value)}
+                                    placeholder="163 cm"
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Signo</label>
+                                <select
+                                    value={form.zodiacSign ?? ''}
+                                    onChange={e => setManual('zodiacSign', e.target.value)}
+                                    className={inputCls}
+                                >
+                                    <option value="">Não informado</option>
+                                    {ZODIAC_SIGNS.map(s => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
@@ -429,6 +504,134 @@ export default function EditArtistPage() {
                                     Buscar do TMDB
                                 </button>
                             )}
+                        </div>
+
+                        {/* Análise Editorial */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Análise Editorial</span>
+                                {form.analiseEditorial && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-purple-500/10 text-purple-400 border-purple-500/30">
+                                        {form.analiseEditorial.length} chars
+                                    </span>
+                                )}
+                            </div>
+                            <textarea
+                                value={form.analiseEditorial ?? ''}
+                                onChange={e => setManual('analiseEditorial', e.target.value)}
+                                placeholder={'**Perfil Artístico**\nTexto sobre a trajetória...\n\n**Estilo Musical**\nTexto sobre o estilo...'}
+                                rows={8}
+                                className={inputCls + ' resize-y font-mono text-xs'}
+                            />
+                            <p className="mt-1 text-[10px] text-zinc-600">
+                                Formato: <code className="text-zinc-500">**Título da Seção**</code> seguido de nova linha e conteúdo
+                            </p>
+                        </div>
+
+                        {/* Curiosidades */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                                    Curiosidades ({(form.curiosidades ?? []).length})
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setForm(prev => ({ ...prev, curiosidades: [...(prev.curiosidades ?? []), ''] }))}
+                                    className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors"
+                                >
+                                    <Plus className="w-3 h-3" /> Adicionar
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {(form.curiosidades ?? []).length === 0 && (
+                                    <p className="text-xs text-zinc-600 py-2">Nenhuma curiosidade. Gere via IA ou adicione manualmente.</p>
+                                )}
+                                {(form.curiosidades ?? []).map((item, i) => (
+                                    <div key={i} className="flex gap-2 items-start">
+                                        <span className="text-[10px] text-zinc-600 font-mono mt-2.5 w-5 text-right flex-shrink-0">{i + 1}</span>
+                                        <textarea
+                                            value={item}
+                                            onChange={e => {
+                                                const next = [...(form.curiosidades ?? [])]
+                                                next[i] = e.target.value
+                                                setForm(prev => ({ ...prev, curiosidades: next }))
+                                            }}
+                                            rows={2}
+                                            className={inputCls + ' resize-none text-xs flex-1'}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const next = (form.curiosidades ?? []).filter((_, j) => j !== i)
+                                                setForm(prev => ({ ...prev, curiosidades: next }))
+                                            }}
+                                            className="mt-2 text-zinc-600 hover:text-red-400 transition-colors flex-shrink-0"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Redes Sociais */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                                    Redes Sociais ({socialPairs.length})
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSocialPairs(prev => [...prev, ['', '']])}
+                                    className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors"
+                                >
+                                    <Plus className="w-3 h-3" /> Adicionar
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {socialPairs.length === 0 && (
+                                    <p className="text-xs text-zinc-600 py-2">Nenhum link social. Sincronize via Wikidata/MusicBrainz ou adicione manualmente.</p>
+                                )}
+                                {socialPairs.map(([key, value], i) => (
+                                    <div key={i} className="flex gap-2 items-center">
+                                        <select
+                                            value={key}
+                                            onChange={e => {
+                                                const next: [string, string][] = [...socialPairs]
+                                                next[i] = [e.target.value, value]
+                                                setSocialPairs(next)
+                                            }}
+                                            className="w-36 px-2 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500/50"
+                                        >
+                                            <option value="">Plataforma...</option>
+                                            {KNOWN_SOCIAL_KEYS.map(({ key: k, label }) => (
+                                                <option key={k} value={k}>{label}</option>
+                                            ))}
+                                            {!KNOWN_SOCIAL_KEYS.some(x => x.key === key) && key && (
+                                                <option value={key}>{key}</option>
+                                            )}
+                                        </select>
+                                        <input
+                                            type="text"
+                                            value={value}
+                                            onChange={e => {
+                                                const next: [string, string][] = [...socialPairs]
+                                                next[i] = [key, e.target.value]
+                                                setSocialPairs(next)
+                                            }}
+                                            placeholder="https://..."
+                                            className={inputCls + ' flex-1'}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setSocialPairs(prev => prev.filter((_, j) => j !== i))}
+                                            className="text-zinc-600 hover:text-red-400 transition-colors flex-shrink-0"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Conteúdo Editorial (IA) */}
@@ -574,7 +777,6 @@ export default function EditArtistPage() {
                                         )}
                                     </div>
                                 </div>
-                                {/* Aplicar campos vazios do TMDB */}
                                 <div className="flex flex-wrap gap-2 pt-1 border-t border-white/5">
                                     <span className="text-[10px] text-zinc-500 self-center">Aplicar ao artista (só campos vazios):</span>
                                     {tmdbPreview.photoUrl && !form.primaryImageUrl && (
@@ -627,7 +829,7 @@ export default function EditArtistPage() {
                                         type="checkbox"
                                         className="sr-only peer"
                                         checked={form.isHidden ?? false}
-                                        onChange={e => set('isHidden' as any, e.target.checked)}
+                                        onChange={e => set('isHidden' as keyof Artist, e.target.checked)}
                                     />
                                     <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
@@ -640,6 +842,31 @@ export default function EditArtistPage() {
                                         {form.isHidden
                                             ? 'Este artista não aparece em listagens públicas'
                                             : 'Este artista aparece normalmente no site'}
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Moderação */}
+                        <div className="border border-amber-500/20 rounded-xl p-4 bg-amber-900/5">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div className="relative flex-shrink-0">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={form.flaggedAsNonKorean ?? false}
+                                        onChange={e => set('flaggedAsNonKorean' as keyof Artist, e.target.checked)}
+                                    />
+                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-amber-600 rounded-full transition-colors" />
+                                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                                        <p className="text-sm font-bold text-zinc-200">Flaggado como não-coreano</p>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 mt-0.5">
+                                        Exclui este artista de enrichment automático e filas de moderação
                                     </p>
                                 </div>
                             </label>
