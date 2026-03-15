@@ -16,7 +16,6 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ExpandableBio } from "@/components/ui/ExpandableBio"
-import { ExpandableProfile } from "@/components/ui/ExpandableProfile"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
@@ -305,12 +304,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             )}
                         </div>
 
-                        {/* Bio / Perfil — só desktop; no mobile fica no conteúdo abaixo */}
-                        {profileSections.length >= 2 ? (
-                            <div className="hidden md:block">
-                                <ExpandableProfile sections={profileSections} />
-                            </div>
-                        ) : (bioPt ?? artist.bio) ? (
+                        {/* Bio — só desktop; no mobile fica no conteúdo abaixo */}
+                        {(bioPt ?? artist.bio) ? (
                             <div className="hidden md:block">
                                 <ExpandableBio bio={bioPt ?? artist.bio!} />
                             </div>
@@ -355,12 +350,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-4 lg:space-y-6 lg:col-span-1">
 
-                        {/* Bio / Perfil mobile — antes das informações, só no mobile */}
-                        {profileSections.length >= 2 ? (
-                            <div className="md:hidden">
-                                <ExpandableProfile sections={profileSections} />
-                            </div>
-                        ) : (bioPt ?? artist.bio) ? (
+                        {/* Bio mobile — antes das informações, só no mobile */}
+                        {(bioPt ?? artist.bio) ? (
                             <div className="md:hidden">
                                 <ExpandableBio bio={bioPt ?? artist.bio!} />
                             </div>
@@ -474,6 +465,29 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             format="horizontal"
                         />
 
+
+                        {/* Perfil Biográfico */}
+                        {profileSections.length >= 2 && (
+                            <section>
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-purple-400" />
+                                        <span className="text-sm font-black text-white uppercase tracking-widest">Perfil</span>
+                                    </div>
+                                    <div className="flex-1 h-px bg-white/5" />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {profileSections.map((sec, i) => (
+                                        <div key={i} className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 flex flex-col gap-2">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500">
+                                                {sec.title}
+                                            </span>
+                                            <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Curiosidades */}
                         {artist.curiosidades && artist.curiosidades.length > 0 && (
