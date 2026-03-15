@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink } from 'lucide-react'
+import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink, Sparkles } from 'lucide-react'
 
 type FieldSource = { source: 'manual' | 'tmdb' | 'wikidata' | 'system'; at: string; by?: string }
 type FieldSources = Record<string, FieldSource>
@@ -53,6 +53,7 @@ export default function EditArtistPage() {
     const [artist, setArtist] = useState<Artist | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [generatingEditorial, setGeneratingEditorial] = useState(false)
     const [form, setForm] = useState<Partial<Artist>>({})
 
     useEffect(() => {
@@ -174,6 +175,29 @@ export default function EditArtistPage() {
             toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
         } finally {
             setSaving(false)
+        }
+    }
+
+    const handleGenerateEditorial = async (fields: string[]) => {
+        if (!id) return
+        setGeneratingEditorial(true)
+        try {
+            const res = await fetch(`/api/admin/artists/${id}/generate-editorial`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ generate: fields }),
+            })
+            const data = await res.json()
+            if (!res.ok) { toast.error(data.error ?? 'Erro ao gerar conteúdo editorial'); return }
+            if (data.generated.bio) setForm(prev => ({ ...prev, bio: data.generated.bio }))
+            toast.success(`Conteúdo gerado! Custo: $${data.totalCostUsd.toFixed(4)}`)
+            if (Object.keys(data.errors ?? {}).length > 0) {
+                toast.error('Alguns campos falharam: ' + Object.values(data.errors).join('; '))
+            }
+        } catch {
+            toast.error('Erro ao gerar conteúdo editorial')
+        } finally {
+            setGeneratingEditorial(false)
         }
     }
 
@@ -405,6 +429,55 @@ export default function EditArtistPage() {
                                     Buscar do TMDB
                                 </button>
                             )}
+                        </div>
+
+                        {/* Conteúdo Editorial (IA) */}
+                        <div className="border border-purple-500/20 rounded-xl p-4 bg-purple-900/5">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-purple-400" />
+                                    <span className="text-sm font-semibold text-white">Conteúdo Editorial</span>
+                                    <span className="text-[10px] text-zinc-500 font-mono">DeepSeek-V3</span>
+                                </div>
+                                <Link
+                                    href="/admin/enrichment"
+                                    className="text-[10px] text-zinc-600 hover:text-purple-400 transition-colors"
+                                >
+                                    Ver lote →
+                                </Link>
+                            </div>
+                            <p className="text-xs text-zinc-500 mb-3">
+                                Gera conteúdo autoral em PT-BR (bio 400+ palavras, análise editorial, curiosidades). Salve antes de gerar.
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleGenerateEditorial(['bio'])}
+                                    disabled={generatingEditorial}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-purple-300 border border-purple-500/30 hover:border-purple-500/60 disabled:opacity-40 transition-colors"
+                                >
+                                    {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                    Bio (~$0.002)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleGenerateEditorial(['editorial', 'curiosidades'])}
+                                    disabled={generatingEditorial}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-purple-300 border border-purple-500/30 hover:border-purple-500/60 disabled:opacity-40 transition-colors"
+                                >
+                                    {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                    Análise + Curiosidades (~$0.003)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleGenerateEditorial(['bio', 'editorial', 'curiosidades'])}
+                                    disabled={generatingEditorial}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/40 disabled:opacity-40 transition-colors"
+                                >
+                                    {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                    Tudo (~$0.005)
+                                </button>
+                            </div>
                         </div>
 
                         {/* TMDB + MBID */}

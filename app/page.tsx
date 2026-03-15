@@ -4,6 +4,8 @@ import { unstable_cache } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
+import Link from "next/link"
+import Image from "next/image"
 import { HeroSection } from "@/components/features/HeroSection"
 import { TrendingArtists } from "@/components/features/TrendingArtists"
 import { TrendingGroups } from "@/components/features/TrendingGroups"
@@ -35,7 +37,7 @@ const getHomePublicData = unstable_cache(
     async () => {
         const [
             artistCount, productionCount, newsCount, totalViews,
-            featuredNewsRaw, trendingArtists, topNewsRaw, streamingShowsRaw, trendingGroupsRaw,
+            featuredNewsRaw, trendingArtists, topNewsRaw, streamingShowsRaw, trendingGroupsRaw, featuredBlogPostsRaw,
         ] = await Promise.all([
             prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
             prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
@@ -92,6 +94,17 @@ const getHomePublicData = unstable_cache(
                     _count: { select: { members: true } },
                 },
             }).catch(() => [] as { id: string; name: string; nameHangul: string | null; profileImageUrl: string | null; debutDate: Date | null; disbandDate: Date | null; _count: { members: number } }[]),
+            prisma.blogPost.findMany({
+                where: { status: 'PUBLISHED' },
+                take: 4,
+                orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
+                select: {
+                    id: true, slug: true, title: true, excerpt: true,
+                    coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+                    category: { select: { name: true, slug: true } },
+                    tags: true,
+                },
+            }).catch(() => [] as { id: string; slug: string; title: string; excerpt: string | null; coverImageUrl: string | null; publishedAt: Date | null; readingTimeMin: number; category: { name: string; slug: string } | null; tags: string[] }[]),
         ])
 
         return {
@@ -113,6 +126,10 @@ const getHomePublicData = unstable_cache(
             })),
             streamingShowsRaw,
             trendingGroups: trendingGroupsRaw,
+            featuredBlogPosts: featuredBlogPostsRaw.map(p => ({
+                ...p,
+                publishedAt: p.publishedAt?.toISOString() ?? null,
+            })),
         }
     },
     ['home-page-public-data'],
@@ -134,7 +151,7 @@ export default async function Home() {
         applyAgeRatingFilter(undefined, session),
     ])
 
-    const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups } = publicData
+    const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups, featuredBlogPosts } = publicData
 
     // Paraleliza as 3 queries que dependem do ageRatingFilter e da sessão
     const [latestProductionsRaw, topRatedProductions, userWithFavorites] = await Promise.all([
@@ -263,6 +280,64 @@ export default async function Home() {
                 {(latestProductions.length > 0 || topRatedProductions.length > 0) && (
                     <ScrollReveal delay={0.2}>
                         <ProductionsTabs latest={latestProductions} topRated={topRatedProductions} />
+                    </ScrollReveal>
+                )}
+
+                {/* 5.5 Blog Editorial — conteúdo original */}
+                {featuredBlogPosts.length > 0 && (
+                    <ScrollReveal delay={0.22}>
+                        <section>
+                            <div className="flex items-center justify-between mb-5">
+                                <div className="flex items-center gap-3">
+                                    <h2 className="text-sm font-black text-white uppercase tracking-widest">Do Blog</h2>
+                                    <span className="text-xs text-zinc-600">Análises e opiniões exclusivas</span>
+                                </div>
+                                <Link href="/blog" className="text-xs text-zinc-500 hover:text-purple-400 transition-colors font-semibold">
+                                    Ver todos →
+                                </Link>
+                            </div>
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {featuredBlogPosts.map(post => (
+                                    <Link
+                                        key={post.id}
+                                        href={`/blog/${post.slug}`}
+                                        className="group flex flex-col bg-zinc-900/60 rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/30 transition-all"
+                                    >
+                                        {post.coverImageUrl ? (
+                                            <div className="relative aspect-video overflow-hidden">
+                                                <Image
+                                                    src={post.coverImageUrl}
+                                                    alt={post.title}
+                                                    fill
+                                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="aspect-video bg-gradient-to-br from-purple-900/40 to-zinc-900 flex items-center justify-center">
+                                                <span className="text-2xl font-black text-purple-800">HH</span>
+                                            </div>
+                                        )}
+                                        <div className="p-4 flex-1 flex flex-col">
+                                            {post.category && (
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1.5">
+                                                    {post.category.name}
+                                                </span>
+                                            )}
+                                            <h3 className="text-sm font-bold text-white leading-snug group-hover:text-purple-300 transition-colors line-clamp-2 mb-2">
+                                                {post.title}
+                                            </h3>
+                                            {post.excerpt && (
+                                                <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2 flex-1">{post.excerpt}</p>
+                                            )}
+                                            <div className="mt-3 text-[10px] text-zinc-600 font-medium">
+                                                {post.readingTimeMin} min de leitura
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
                     </ScrollReveal>
                 )}
 

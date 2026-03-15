@@ -335,6 +335,41 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             </div>
                         )}
 
+                        {/* Nossa Análise Editorial */}
+                        {(production.whyWatch || production.editorialReview) && (
+                            <div className="space-y-6 border-t border-white/5 pt-8">
+                                {production.whyWatch && (
+                                    <div className="flex items-start gap-4 p-4 rounded-xl bg-purple-900/10 border border-purple-500/20">
+                                        <div className="shrink-0 mt-0.5 w-7 h-7 rounded-full bg-purple-600/20 flex items-center justify-center">
+                                            <span className="text-purple-400 text-xs font-black">▶</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">Por que assistir</p>
+                                            <p className="text-sm text-zinc-300 leading-relaxed">{production.whyWatch}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {production.editorialReview && (
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nossa Análise</h3>
+                                            {production.editorialRating != null && (
+                                                <span className="px-2 py-0.5 rounded bg-purple-600/20 text-purple-300 text-xs font-black border border-purple-500/30">
+                                                    {production.editorialRating.toFixed(1)}/10
+                                                </span>
+                                            )}
+                                            <div className="flex-1 h-px bg-white/5" />
+                                        </div>
+                                        <div className="space-y-3 text-zinc-400 leading-relaxed text-sm">
+                                            {production.editorialReview.split('\n\n').map((p, i) => (
+                                                <p key={i}>{p}</p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {tags.length > 0 && (
                             <div>
                                 <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Tags</h3>

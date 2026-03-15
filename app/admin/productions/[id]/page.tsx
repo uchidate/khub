@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check } from 'lucide-react'
+import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles } from 'lucide-react'
 
 interface Production {
     id: string
@@ -80,6 +80,7 @@ export default function EditProductionPage() {
     const [production, setProduction] = useState<Production | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [generatingEditorial, setGeneratingEditorial] = useState(false)
     const [form, setForm] = useState<Partial<Production>>({})
 
     useEffect(() => {
@@ -816,6 +817,51 @@ export default function EditProductionPage() {
                                     </p>
                                 </div>
                             </label>
+                        </div>
+
+                        {/* Conteúdo Editorial (IA) */}
+                        <div className="border border-purple-500/20 rounded-xl p-4 bg-purple-900/5">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-purple-400" />
+                                    <span className="text-sm font-semibold text-white">Review Editorial</span>
+                                    <span className="text-[10px] text-zinc-500 font-mono">DeepSeek-V3</span>
+                                </div>
+                                <Link href="/admin/enrichment" className="text-[10px] text-zinc-600 hover:text-purple-400 transition-colors">
+                                    Ver lote →
+                                </Link>
+                            </div>
+                            <p className="text-xs text-zinc-500 mb-3">
+                                Gera review editorial (350-450 palavras), "por que assistir" e nossa nota (0-10) em PT-BR. ~$0.0025
+                            </p>
+                            <button
+                                type="button"
+                                disabled={generatingEditorial}
+                                onClick={async () => {
+                                    if (!id) return
+                                    setGeneratingEditorial(true)
+                                    try {
+                                        const res = await fetch(`/api/admin/productions/${id}/generate-editorial`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ overwrite: false }),
+                                        })
+                                        const data = await res.json()
+                                        if (!res.ok) { toast.error(data.error ?? 'Erro ao gerar review'); return }
+                                        toast.success(`Review gerada! Custo: $${data.totalCostUsd.toFixed(4)}`)
+                                    } catch {
+                                        toast.error('Erro ao gerar review')
+                                    } finally {
+                                        setGeneratingEditorial(false)
+                                    }
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/40 disabled:opacity-40 transition-colors"
+                            >
+                                {generatingEditorial
+                                    ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
+                                    : <><Sparkles className="w-3.5 h-3.5" /> Gerar Review</>
+                                }
+                            </button>
                         </div>
 
                         {/* Actions */}

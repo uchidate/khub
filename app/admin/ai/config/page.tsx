@@ -31,7 +31,7 @@ const PROVIDER_OPTIONS = [
 
 export default function AiConfigPage() {
     const router = useRouter()
-    const [configs,  setConfigs]  = useState<AiConfigRow[]>([])
+    const [_configs, setConfigs]  = useState<AiConfigRow[]>([])
     const [forms,    setForms]    = useState<Record<string, FormState>>({})
     const [saving,   setSaving]   = useState<string | null>(null)
     const [saved,    setSaved]    = useState<string | null>(null)

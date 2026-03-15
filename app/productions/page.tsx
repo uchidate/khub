@@ -44,6 +44,10 @@ export default async function ProductionsPage() {
                 backHref="/"
             />
 
+            <p className="text-sm text-zinc-500 leading-relaxed max-w-2xl mb-8">
+                Descubra doramas, filmes e séries coreanas com sinopses detalhadas, elenco completo e onde assistir no Brasil. Do romance à ação, do thriller ao drama histórico — encontre sua próxima obsessão coreana aqui.
+            </p>
+
             <Suspense>
                 <ProductionsList />
             </Suspense>

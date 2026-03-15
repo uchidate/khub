@@ -454,6 +454,43 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             format="horizontal"
                         />
 
+                        {/* Análise Editorial */}
+                        {artist.analiseEditorial && (
+                            <section>
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-black text-white uppercase tracking-widest">Nossa Análise</span>
+                                    </div>
+                                    <div className="flex-1 h-px bg-white/5" />
+                                </div>
+                                <div className="prose prose-invert prose-sm max-w-none text-zinc-300 leading-relaxed">
+                                    {artist.analiseEditorial.split('\n\n').map((p, i) => (
+                                        <p key={i}>{p}</p>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Curiosidades */}
+                        {artist.curiosidades && artist.curiosidades.length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-3 mb-5">
+                                    <span className="text-sm font-black text-white uppercase tracking-widest">Curiosidades</span>
+                                    <div className="flex-1 h-px bg-white/5" />
+                                </div>
+                                <ul className="space-y-3">
+                                    {artist.curiosidades.map((c, i) => (
+                                        <li key={i} className="flex items-start gap-3 text-zinc-300 text-sm leading-relaxed">
+                                            <span className="mt-1 w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 text-[10px] font-black flex items-center justify-center shrink-0">
+                                                {i + 1}
+                                            </span>
+                                            {c}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+                        )}
+
                         {/* Filmography */}
                         <section>
                             <div className="flex items-center gap-3 mb-5">
