@@ -34,8 +34,21 @@ export class ArtistTranslationService {
     }> {
         console.log(`🌐 Starting batch translation (limit: ${limit})...`);
 
+        // Usa ContentTranslation como fonte de verdade (não o campo legado translationStatus)
+        const existingCTs = await this.prisma.contentTranslation.findMany({
+            where: { entityType: 'artist', field: 'bio', locale: 'pt-BR' },
+            select: { entityId: true },
+        });
+        const translatedIds = existingCTs.map(t => t.entityId);
+
         const pendingArtists = await this.prisma.artist.findMany({
-            where: { translationStatus: 'pending', ...(isHidden !== undefined ? { isHidden } : {}) },
+            where: {
+                bio: { not: null },
+                isHidden: isHidden ?? false,
+                id: { notIn: translatedIds },
+                // Exclui artistas com bio já em pt-BR do TMDB (não precisam de tradução)
+                NOT: { fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+            },
             orderBy: { createdAt: 'asc' },
             take: limit,
             select: {

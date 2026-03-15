@@ -30,15 +30,23 @@ export class ProductionTranslationService {
     ): Promise<{ translated: number; failed: number; skipped: number }> {
         console.log(`🌐 Starting production translation batch (limit: ${limit})...`)
 
+        // Usa ContentTranslation como fonte de verdade (não o campo legado translationStatus)
+        const existingCTs = await this.prisma.contentTranslation.findMany({
+            where: { entityType: 'production', field: 'synopsis', locale: 'pt-BR' },
+            select: { entityId: true },
+        })
+        const translatedIds = existingCTs.map(t => t.entityId)
+
         const pending = await this.prisma.production.findMany({
             where: {
-                translationStatus: 'pending',
                 synopsis: { not: null },
+                synopsisSource: { not: 'tmdb_pt' }, // já está em pt-BR, não precisa traduzir
                 isHidden: isHidden ?? false,
+                id: { notIn: translatedIds },
             },
             orderBy: { createdAt: 'asc' },
             take: limit,
-            select: { id: true, titlePt: true, synopsis: true, synopsisSource: true, translationStatus: true },
+            select: { id: true, titlePt: true, synopsis: true, synopsisSource: true },
         })
 
         console.log(`📊 Found ${pending.length} productions pending translation`)
