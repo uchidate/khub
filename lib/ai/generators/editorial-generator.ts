@@ -182,12 +182,12 @@ Escreva a biografia de **${artist.nameRomanized}** (${artist.roles.join(', ')}${
 ${artist.bio ? `Contexto biográfico: "${artist.bio.slice(0, 500)}"` : ''}
 
 Estrutura obrigatória:
-- Parágrafo 1 — Origem: marcos históricos e primeiros grandes sucessos.
+- Parágrafo 1 — Perfil: marcos históricos e primeiros grandes sucessos.
 - Parágrafo 2 — Projetos: produções atuais (2024–2026), desempenho em plataformas de streaming e novos lançamentos.
 - Parágrafo 3 — Reconhecimento: prêmios reais, competências técnicas e atuação comercial/marcas.
 
 Regras:
-- Títulos de no máximo 2 palavras (ex: "Origem", "Projetos", "Reconhecimento").
+- Títulos de no máximo 2 palavras (ex: "Perfil", "Projetos", "Reconhecimento").
 - Priorize fatos concretos, marcos de audiência, prêmios reais e produções específicas.
 - NÃO use frases de efeito como "exemplo de resiliência", "atingiu novo patamar", "ícone global".
 - NÃO use adjetivos subjetivos — se o artista é talentoso, cite o prêmio, não o adjetivo.
