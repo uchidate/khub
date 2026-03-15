@@ -128,7 +128,7 @@ export class GroupTranslationService {
     private isAlreadyInPortuguese(text: string): boolean {
         const ptWords = ['é', 'são', 'grupo', 'formado', 'composto', 'lançou', 'debutou', 'conhecido', 'do', 'da'];
         const lowerText = text.toLowerCase();
-        const matchCount = ptWords.filter(word => lowerText.includes(word)).length;
+        const matchCount = ptWords.filter(word => new RegExp(`\\b${word}\\b`).test(lowerText)).length;
         return matchCount >= 2;
     }
 
