@@ -5,7 +5,10 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, ExternalLink, Save, RefreshCw, Users, Trash2 } from 'lucide-react'
+import { PageHeader } from '@/components/admin/PageHeader'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { ExternalLink, Save, RefreshCw, Users, Trash2 } from 'lucide-react'
 
 interface MusicalGroup {
     id: string
@@ -104,14 +107,13 @@ function groupToForm(group: MusicalGroup): FormState {
 export default function EditGroupPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
+    const toast = useAdminToast()
     const returnToRef = useRef<string | null>(null)
     const [group, setGroup] = useState<MusicalGroup | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState(false)
-    const [error, setError] = useState('')
-    const [success, setSuccess] = useState('')
     const [form, setForm] = useState<FormState | null>(null)
     const [agencies, setAgencies] = useState<Agency[]>([])
 
@@ -131,7 +133,7 @@ export default function EditGroupPage() {
                 setForm(groupToForm(groupData))
                 setAgencies(agencyData?.data ?? [])
             })
-            .catch(() => setError('Erro ao carregar grupo'))
+            .catch(() => toast.error('Erro ao carregar grupo'))
             .finally(() => setLoading(false))
     }, [id])
 
@@ -141,7 +143,6 @@ export default function EditGroupPage() {
 
     const handleDelete = async () => {
         setDeleting(true)
-        setError('')
         try {
             const res = await fetch('/api/admin/groups', {
                 method: 'DELETE',
@@ -150,12 +151,12 @@ export default function EditGroupPage() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || 'Erro ao excluir')
+                toast.error(err.error || 'Erro ao excluir')
+                setConfirmDelete(false)
+                return
             }
+            toast.deleted('Grupo')
             router.push('/admin/groups')
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao excluir')
-            setConfirmDelete(false)
         } finally {
             setDeleting(false)
         }
@@ -165,8 +166,6 @@ export default function EditGroupPage() {
         e.preventDefault()
         if (!form) return
         setSaving(true)
-        setError('')
-        setSuccess('')
         try {
             // Assemble socialLinks
             const socialLinks: Record<string, string> = {}
@@ -205,16 +204,15 @@ export default function EditGroupPage() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || 'Erro ao salvar')
+                toast.error(err.error || 'Erro ao salvar')
+                return
             }
-            setSuccess('Salvo com sucesso!')
+            toast.saved()
             if (returnToRef.current) {
-                setTimeout(() => router.push(returnToRef.current!), 800)
-            } else {
-                setTimeout(() => setSuccess(''), 3000)
+                router.push(returnToRef.current!)
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao salvar')
+            toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
         } finally {
             setSaving(false)
         }
@@ -226,65 +224,43 @@ export default function EditGroupPage() {
     return (
         <AdminLayout title={group ? `Editar: ${group.name}` : 'Editar Grupo'}>
             <div className="max-w-3xl mx-auto px-4 py-8">
-                {/* Header */}
-                {error && (
-                    <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-2">
-                        <span className="flex-shrink-0">⚠</span>
-                        <span>{error}</span>
-                    </div>
-                )}
-                <div className="flex items-center gap-3 mb-8 flex-wrap">
-                    <button
-                        onClick={() => returnToRef.current ? router.push(returnToRef.current) : router.back()}
-                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Voltar
-                    </button>
-                    <div className="ml-auto flex items-center gap-2">
-                        {group && (
-                            <Link
-                                href={`/groups/${id}`}
-                                target="_blank"
-                                className="flex items-center gap-1.5 text-zinc-500 hover:text-purple-400 transition-colors text-sm"
-                            >
-                                Ver no site
-                                <ExternalLink className="w-3.5 h-3.5" />
-                            </Link>
-                        )}
-                        {group && !confirmDelete && (
-                            <button
-                                type="button"
-                                onClick={() => setConfirmDelete(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-red-950 border border-zinc-700 hover:border-red-800 text-zinc-400 hover:text-red-400 rounded-lg text-sm font-medium transition-colors"
-                            >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Excluir
-                            </button>
-                        )}
-                        {group && confirmDelete && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-red-400 font-medium">Confirmar?</span>
-                                <button
-                                    type="button"
-                                    onClick={handleDelete}
-                                    disabled={deleting}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-600 disabled:bg-red-900 text-white rounded-lg text-xs font-bold transition-colors"
-                                >
-                                    {deleting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                                    {deleting ? 'Excluindo...' : 'Sim, excluir'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setConfirmDelete(false)}
-                                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-colors"
-                                >
-                                    Não
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <PageHeader
+                    title={group ? group.name : 'Editar Grupo'}
+                    backHref="/admin/groups"
+                    backLabel="Grupos"
+                >
+                    {group && (
+                        <Link
+                            href={`/groups/${id}`}
+                            target="_blank"
+                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                            Ver no site
+                            <ExternalLink className="w-3 h-3" />
+                        </Link>
+                    )}
+                    {group && (
+                        <button
+                            type="button"
+                            onClick={() => setConfirmDelete(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-red-950 border border-zinc-700 hover:border-red-800 text-zinc-400 hover:text-red-400 rounded-lg text-xs font-medium transition-colors"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Excluir
+                        </button>
+                    )}
+                </PageHeader>
+
+                <ConfirmDialog
+                    open={confirmDelete}
+                    title="Excluir este grupo?"
+                    description="Esta ação não pode ser desfeita. Todos os dados do grupo serão removidos permanentemente."
+                    confirmLabel="Excluir"
+                    variant="danger"
+                    loading={deleting}
+                    onConfirm={handleDelete}
+                    onCancel={() => setConfirmDelete(false)}
+                />
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
@@ -509,9 +485,6 @@ export default function EditGroupPage() {
                                 </div>
                             </label>
                         </div>
-
-                        {/* Feedback */}
-                        {success && <p className="text-sm text-green-400 font-medium">{success}</p>}
 
                         {/* Actions */}
                         <div className="flex items-center gap-3 pt-2">

@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
   Plus, Users, RefreshCw, ShieldCheck, RotateCcw, CalendarSearch,
   ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
@@ -553,8 +554,10 @@ const formFields: FormField[] = [
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ProductionsPage() {
+  const toast = useAdminToast()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const [editingProduction, setEditingProduction] = useState<Production | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [syncingId, setSyncingId] = useState<string | null>(null)
@@ -911,18 +914,26 @@ export default function ProductionsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao salvar') }
+    if (!res.ok) { const err = await res.json(); toast.error(err.error || 'Erro ao salvar'); return }
+    toast.saved()
     refetchTable(); fetchStats()
   }
 
   const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/productions', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
-    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao deletar') }
-    refetchTable(); fetchStats()
+    setDeleteLoading(true)
+    try {
+      const res = await fetch('/api/admin/productions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      })
+      if (!res.ok) { const err = await res.json(); toast.error(err.error || 'Erro ao deletar'); return }
+      toast.deleted(`${selectedIds.length} produção${selectedIds.length > 1 ? 'ões' : ''}`)
+      setDeleteOpen(false)
+      refetchTable(); fetchStats()
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   // ─── Table columns ─────────────────────────────────────────────────────────
@@ -1002,7 +1013,7 @@ export default function ProductionsPage() {
   const newCount = importSelected.size
 
   return (
-    <AdminLayout title="Produções">
+    <AdminLayout title="Produções" subtitle="Gerencie dramas, filmes e outras produções da plataforma">
       <div className="space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -1511,12 +1522,15 @@ export default function ProductionsPage() {
         onSubmit={handleFormSubmit}
       />
 
-      <DeleteConfirm
+      <ConfirmDialog
         open={deleteOpen}
-        count={selectedIds.length}
-        entityName="produção"
-        onClose={() => setDeleteOpen(false)}
+        title={`Excluir ${selectedIds.length} produção${selectedIds.length > 1 ? 'ões' : ''}?`}
+        description="Esta ação não pode ser desfeita. Os dados serão removidos permanentemente."
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deleteLoading}
         onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteOpen(false)}
       />
     </AdminLayout>
   )
