@@ -34,25 +34,23 @@ export class GroupTranslationService {
     }> {
         console.log(`🌐 Starting group translation batch (limit: ${limit})...`);
 
-        // Buscar grupos com bio mas sem ContentTranslation pt-BR
-        const existingTranslations = await this.prisma.contentTranslation.findMany({
+        // Usa ContentTranslation como fonte de verdade; filtra no banco com limite
+        const existingCTs = await this.prisma.contentTranslation.findMany({
             where: { entityType: 'group', field: 'bio', locale: 'pt-BR' },
             select: { entityId: true },
         });
-        const translatedIds = new Set(existingTranslations.map(t => t.entityId));
+        const translatedIds = existingCTs.map(t => t.entityId);
 
-        const groups = await this.prisma.musicalGroup.findMany({
+        const pending = await this.prisma.musicalGroup.findMany({
             where: {
                 bio: { not: null },
                 isHidden: isHidden ?? false,
+                id: { notIn: translatedIds },
             },
             orderBy: { createdAt: 'asc' },
+            take: limit,
             select: { id: true, name: true, nameHangul: true, bio: true },
         });
-
-        const pending = groups
-            .filter(g => !translatedIds.has(g.id))
-            .slice(0, limit);
 
         console.log(`📊 Found ${pending.length} groups pending translation`);
 
