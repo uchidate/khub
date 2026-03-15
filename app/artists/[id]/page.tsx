@@ -449,21 +449,30 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
 
                         {/* Perfil Biográfico */}
-                        {profileSections.length >= 2 && (
-                            <section>
-                                <div className="space-y-5">
-                                    {profileSections.map((sec, i) => (
-                                        <div key={i}>
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <span className="text-sm font-black text-white uppercase tracking-widest">{sec.title}</span>
-                                                <div className="flex-1 h-px bg-white/5" />
-                                            </div>
-                                            <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                        {profileSections.length >= 2 && (() => {
+                            const sectionIcons = [User, Film, Sparkles]
+                            return (
+                                <section>
+                                    <div className="space-y-5">
+                                        {profileSections.map((sec, i) => {
+                                            const Icon = sectionIcons[i] ?? Sparkles
+                                            return (
+                                                <div key={i}>
+                                                    <div className="flex items-center gap-3 mb-3">
+                                                        <span className="w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0">
+                                                            <Icon className="w-2.5 h-2.5" />
+                                                        </span>
+                                                        <span className="text-sm font-black text-white uppercase tracking-widest">{sec.title}</span>
+                                                        <div className="flex-1 h-px bg-white/5" />
+                                                    </div>
+                                                    <p className="text-sm text-zinc-300 leading-relaxed pl-8">{sec.content}</p>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </section>
+                            )
+                        })()}
 
                         {/* Curiosidades */}
                         {artist.curiosidades && artist.curiosidades.length > 0 && (

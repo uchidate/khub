@@ -414,7 +414,11 @@ function QueueItemRow({
     onError:      (msg: string) => void
     batchRunning: boolean
 }) {
+    const [showReprocess, setShowReprocess] = useState(false)
     const allPresent = item.missingFields.length === 0
+    const fieldsToShow = (allPresent && showReprocess)
+        ? Object.keys(fieldMap)
+        : item.missingFields
 
     return (
         <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all group ${
@@ -456,12 +460,21 @@ function QueueItemRow({
             </div>
 
             <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
-                {allPresent ? (
-                    <span className="text-[10px] text-emerald-400 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> Completo
-                    </span>
+                {allPresent && !showReprocess ? (
+                    <>
+                        <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" /> Completo
+                        </span>
+                        <button
+                            onClick={() => setShowReprocess(true)}
+                            className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all opacity-0 group-hover:opacity-100"
+                            title="Reprocessar"
+                        >
+                            <RefreshCw className="w-3 h-3" /> Reprocessar
+                        </button>
+                    </>
                 ) : (
-                    item.missingFields.map(field => {
+                    fieldsToShow.map(field => {
                         const c = fieldMap[field]
                         if (!c) return null
                         return (
