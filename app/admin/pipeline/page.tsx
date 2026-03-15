@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
-  Workflow, ArrowRight, Newspaper, Mic2, Film,
-  Eye, EyeOff, Languages, CheckCircle2, Clock,
+  ArrowRight, Newspaper, Mic2, Film,
+  EyeOff, Languages, CheckCircle2, Clock,
   Sparkles, ExternalLink,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'

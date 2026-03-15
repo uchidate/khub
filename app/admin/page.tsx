@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Users, Activity, Film, Newspaper, Mic2, ImageOff, UserX, AlertTriangle,
+  Users, Activity, Film, Newspaper, Mic2, AlertTriangle,
   Settings, Flag, MessageSquare, Languages, Sparkles, Workflow,
   ArrowRight, TrendingUp, ChevronRight, FileText,
 } from 'lucide-react'
@@ -19,7 +19,6 @@ export default async function AdminPage() {
   const today     = new Date(now); today.setHours(0, 0, 0, 0)
   const ago30     = new Date(Date.now() - 30 * 86400_000)
   const ago7      = new Date(Date.now() - 7  * 86400_000)
-  const ago24h    = new Date(Date.now() - 24 * 3600_000)
 
   const [
     totalUsers, totalArtists, totalProductions, totalNews, totalGroups,
@@ -28,7 +27,7 @@ export default async function AdminPage() {
     // Pipeline de notícias (hoje)
     newsImportedToday, newsPublishedToday, newsQueueToday, newsHidden,
     // Traduções pendentes
-    pendingArtistBioTranslations, pendingProductionTranslations,
+    _artistBioTranslationsDup, pendingProductionTranslations,
     // Enriquecimento pendente
     artistsWithoutBio, artistsWithoutImage, groupsWithoutBio,
     // Alertas urgentes
