@@ -7,69 +7,84 @@ export const dynamic = 'force-dynamic'
 
 // GET /api/admin/translations/stats
 // Retorna totais de entidades com conteúdo traduzível vs. já traduzidas.
-// Productions usam synopsisSource diretamente; demais entidades usam ContentTranslation.
+// Todos os counts são intersectados com o conjunto real (visível + com conteúdo),
+// evitando inflação por registros CT de entidades ocultas ou sem conteúdo.
 export async function GET() {
   const { error } = await requireAdmin()
   if (error) return error
 
   try {
-    // Pré-busca IDs de ContentTranslation para news (ambas as pipelines)
-    const newsCtIds = await prisma.contentTranslation.findMany({
-      where: { entityType: 'news', field: 'title', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
-      select: { entityId: true },
-    }).then(rows => rows.map(r => r.entityId))
-
-    // Pré-busca IDs de ContentTranslation para productions (evita subquery aninhada)
-    const prodCtRows = await prisma.contentTranslation.findMany({
-      where: { entityType: 'production', field: 'synopsis', locale: 'pt-BR' },
-      select: { entityId: true, status: true },
-    })
-    const prodCtIds = prodCtRows.map(r => r.entityId)
-    const prodCtTranslatedIds = prodCtRows.filter(r => r.status === 'draft' || r.status === 'approved').map(r => r.entityId)
-
-    // Pré-busca IDs de artistas com bio PT-BR via TMDB (sem CT)
-    const [artistCtRows, artistTmdbPtBioRows] = await Promise.all([
+    // Pré-busca IDs de CT por entityType (sem filtro de isHidden/bio — usados como referência)
+    const [artistCtIds, groupCtIds, prodCtRows, newsCtIds] = await Promise.all([
       prisma.contentTranslation.findMany({
         where: { entityType: 'artist', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
         select: { entityId: true },
+      }).then(rows => rows.map(r => r.entityId)),
+      prisma.contentTranslation.findMany({
+        where: { entityType: 'group', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
+        select: { entityId: true },
+      }).then(rows => rows.map(r => r.entityId)),
+      prisma.contentTranslation.findMany({
+        where: { entityType: 'production', field: 'synopsis', locale: 'pt-BR' },
+        select: { entityId: true, status: true },
       }),
-      prisma.artist.findMany({
-        where: { isHidden: false, bio: { not: null }, fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
-        select: { id: true },
-      }),
+      prisma.contentTranslation.findMany({
+        where: { entityType: 'news', field: 'title', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
+        select: { entityId: true },
+      }).then(rows => rows.map(r => r.entityId)),
     ])
-    const artistTranslatedIds = Array.from(new Set([
-      ...artistCtRows.map(r => r.entityId),
-      ...artistTmdbPtBioRows.map(r => r.id),
-    ]))
 
-    // Pré-busca IDs de groups sem CT (para pendentes ocultos)
-    const groupCtIds = await prisma.contentTranslation.findMany({
-      where: { entityType: 'group', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
-      select: { entityId: true },
-    }).then(rows => rows.map(r => r.entityId))
+    const prodCtIds = prodCtRows.map(r => r.entityId)
+    const prodCtTranslatedIds = prodCtRows.filter(r => r.status === 'draft' || r.status === 'approved').map(r => r.entityId)
 
     const [
       artistTotal,
+      // translated: intersecta com conjunto real (visível + com bio)
+      artistTranslated,
+      // pending: visível + com bio + sem CT + sem tmdb_pt
+      artistPending,
       groupTotal,
+      // translated: intersecta com conjunto real
+      groupTranslated,
       productionTotal,
-      // traduzidas = tem CT draft/approved OU synopsisSource='tmdb_pt'
       productionTranslated,
-      // pendentes = sem CT e sem tmdb_pt
       productionPending,
       productionFailed,
       productionNoSynopsis,
       newsTotal,
-      groupTranslated,
       newsTranslated,
-      // pendentes entre ocultos
+      // pendentes ocultos
       artistHiddenPending,
       groupHiddenPending,
       productionHiddenPending,
       newsHiddenPending,
     ] = await Promise.all([
       prisma.artist.count({ where: { bio: { not: null }, isHidden: false } }),
+      // artist translated: tem CT OU bio já em pt-BR do TMDB — apenas visíveis com bio
+      prisma.artist.count({
+        where: {
+          bio: { not: null },
+          isHidden: false,
+          OR: [
+            { id: { in: artistCtIds } },
+            { fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+          ],
+        },
+      }),
+      // artist pending: sem CT E sem tmdb_pt — apenas visíveis com bio
+      prisma.artist.count({
+        where: {
+          bio: { not: null },
+          isHidden: false,
+          id: { notIn: artistCtIds },
+          NOT: { fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
+        },
+      }),
       prisma.musicalGroup.count({ where: { bio: { not: null }, isHidden: false } }),
+      // group translated: intersecta com visíveis com bio
+      prisma.musicalGroup.count({
+        where: { bio: { not: null }, isHidden: false, id: { in: groupCtIds } },
+      }),
       prisma.production.count({ where: { isHidden: false, synopsis: { not: null } } }),
       prisma.production.count({
         where: {
@@ -89,12 +104,7 @@ export async function GET() {
       }),
       prisma.production.count({ where: { isHidden: false, translationStatus: 'failed' } }),
       prisma.production.count({ where: { isHidden: false, synopsis: null } }),
-      // news total: todas as notícias não ocultas
       prisma.news.count({ where: { isHidden: false } }),
-      prisma.contentTranslation.count({
-        where: { entityType: 'group', field: 'bio', locale: 'pt-BR', status: { in: ['draft', 'approved'] } },
-      }),
-      // news traduzidas: CT (nova pipeline) OU translationStatus='completed' (legada)
       prisma.news.count({
         where: {
           isHidden: false,
@@ -104,11 +114,13 @@ export async function GET() {
           ],
         },
       }),
-      // pendentes ocultos (isHidden: true sem tradução)
+      // pendentes ocultos: sem CT e sem tmdb_pt
       prisma.artist.count({
         where: {
-          isHidden: true, bio: { not: null },
-          id: { notIn: artistTranslatedIds },
+          isHidden: true,
+          bio: { not: null },
+          id: { notIn: artistCtIds },
+          NOT: { fieldSources: { path: ['bio', 'source'], equals: 'tmdb_pt' } },
         },
       }),
       prisma.musicalGroup.count({
@@ -131,10 +143,10 @@ export async function GET() {
     ])
 
     return NextResponse.json({
-      artist:     { total: artistTotal,     translated: artistTranslatedIds.length, pending: Math.max(0, artistTotal - artistTranslatedIds.length),     hiddenPending: artistHiddenPending },
-      group:      { total: groupTotal,      translated: groupTranslated,      pending: Math.max(0, groupTotal - groupTranslated),      hiddenPending: groupHiddenPending },
+      artist:     { total: artistTotal,     translated: artistTranslated, pending: artistPending,      hiddenPending: artistHiddenPending },
+      group:      { total: groupTotal,      translated: groupTranslated,  pending: Math.max(0, groupTotal - groupTranslated), hiddenPending: groupHiddenPending },
       production: { total: productionTotal, translated: productionTranslated, pending: productionPending, failed: productionFailed, noSynopsis: productionNoSynopsis, hiddenPending: productionHiddenPending },
-      news:       { total: newsTotal,       translated: newsTranslated,       pending: Math.max(0, newsTotal - newsTranslated),       hiddenPending: newsHiddenPending },
+      news:       { total: newsTotal,       translated: newsTranslated,   pending: Math.max(0, newsTotal - newsTranslated),   hiddenPending: newsHiddenPending },
     })
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 })
