@@ -27,6 +27,7 @@ const emptySummary: ReturnType<typeof getAiSummary> extends Promise<infer T> ? T
 }
 
 export default async function AiDashboardPage() {
+    console.log('[AI Dashboard] render start')
     const session = await getServerSession(authOptions)
     if (session?.user?.role !== 'admin') redirect('/admin')
 
@@ -45,13 +46,20 @@ export default async function AiDashboardPage() {
             getAllAiConfigs(),
             getAiRecentLogs({ limit: 25 }),
         ])
+        console.log('[AI Dashboard] data loaded — logs:', logsResult.logs.length, 'costByDay:', costByDay.length)
     } catch (err: unknown) {
         loadError = err instanceof Error ? err.message : String(err)
-        console.error('[AI Dashboard] Failed to load data:', loadError)
+        console.error('[AI Dashboard] LOAD ERROR:', loadError, err instanceof Error ? err.stack : '')
     }
 
-    const maxCost  = Math.max(...costByDay.map(d => d.cost), 0.0001)
-    const maxCalls = Math.max(...costByDay.map(d => d.calls), 1)
+    let maxCost = 0.0001
+    let maxCalls = 1
+    try {
+        maxCost  = Math.max(...costByDay.map(d => d.cost), 0.0001)
+        maxCalls = Math.max(...costByDay.map(d => d.calls), 1)
+    } catch (err: unknown) {
+        console.error('[AI Dashboard] maxCost/maxCalls error:', err)
+    }
 
     const providerColors: Record<string, string> = {
         deepseek: 'bg-blue-500',
@@ -63,6 +71,7 @@ export default async function AiDashboardPage() {
     const totalFeatureCalls = featureEntries.reduce((s, [, c]) => s + c, 0) || 1
 
     const budgetByFeature = Object.fromEntries(configs.map(c => [c.feature, c.monthlyBudgetUsd]))
+    console.log('[AI Dashboard] render JSX start')
 
     return (
         <AdminLayout title="Dashboard de IA">
