@@ -185,6 +185,12 @@ export async function GET(req: Request) {
     }
 
     if (tab === 'news') {
+        const newsFieldClause = (() => {
+            if (field === 'nota') return [{ editorialNote: null }]
+            if (field === 'blog') return [{ blogPostGeneratedAt: null }]
+            return [{ editorialNote: null }, { blogPostGeneratedAt: null }]
+        })()
+
         const newsWhere = q
             ? {
                 isHidden: false,
@@ -194,10 +200,7 @@ export async function GET(req: Request) {
             : {
                 isHidden: false,
                 status:   'published',
-                OR: [
-                    { editorialNote:      null },
-                    { blogPostGeneratedAt: null },
-                ],
+                OR: newsFieldClause,
             }
 
         const newsList = await prisma.news.findMany({
