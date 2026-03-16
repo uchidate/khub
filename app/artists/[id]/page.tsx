@@ -15,7 +15,6 @@ import { ReportButton } from "@/components/ui/ReportButton"
 import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
-import { ExpandableBio } from "@/components/ui/ExpandableBio"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
@@ -190,9 +189,10 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
     const allGroups = artist.memberships
 
-    // Profile sections: only analiseEditorial (bio goes to hero via ExpandableBio)
+    // Profile sections: bio as "Perfil" + analiseEditorial sections
     const profileSections: { title: string; content: string }[] = []
     const bioText = bioPt ?? artist.bio
+    if (bioText) profileSections.push({ title: 'Perfil', content: bioText })
     if (artist.analiseEditorial) {
         const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
         let m: RegExpExecArray | null
@@ -318,12 +318,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             </div>
                         </div>
 
-                        {/* Bio — só desktop */}
-                        {bioText && (
-                            <div className="hidden md:block max-w-xl">
-                                <ExpandableBio bio={bioText} />
-                            </div>
-                        )}
                     </div>
 
                     {/* Portrait card — só desktop, igual ao poster das produções */}
@@ -442,13 +436,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''}
                             format="horizontal"
                         />
-
-                        {/* Bio — só mobile */}
-                        {bioText && (
-                            <div className="md:hidden">
-                                <ExpandableBio bio={bioText} />
-                            </div>
-                        )}
 
                         {/* Perfil Biográfico */}
                         {profileSections.length >= 1 && (() => {
