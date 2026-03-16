@@ -6,28 +6,35 @@ import { useToast } from '@/lib/hooks/useToast'
 import Image from 'next/image'
 import {
     Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
-    CheckCircle, Circle, DollarSign, ChevronRight, Play, Search, X,
+    CheckCircle, DollarSign, ChevronRight, Play, Search, X, Zap,
 } from 'lucide-react'
 
 type Tab = 'artists' | 'productions' | 'news'
 
 interface QueueItem {
-    id:               string
-    name:             string
-    imageUrl?:        string
-    subtitle?:        string
-    missingFields:    string[]
-    presentFields:    string[]
-    totalFields:      number
+    id:                string
+    name:              string
+    imageUrl?:         string
+    subtitle?:         string
+    missingFields:     string[]
+    presentFields:     string[]
+    totalFields:       number
     completenessScore: number
-    priority:         number
-    estimatedCost:    number
+    priority:          number
+    estimatedCost:     number
 }
 
 interface QueueData {
     items:             QueueItem[]
     total:             number
     totalCostEstimate: number
+}
+
+interface BudgetStatus { feature: string; allowed: boolean; [k: string]: unknown }
+interface StatsData {
+    counts:        Record<string, number>
+    totalEstimate: number
+    budgets:       BudgetStatus[] | undefined
 }
 
 // Field display config per tab
@@ -44,6 +51,20 @@ const FIELD_LABELS: Record<Tab, Record<string, { label: string; target: string }
         nota: { label: 'Nota',      target: 'news_editorial_note' },
         blog: { label: 'Blog Post', target: 'news_blog_post' },
     },
+}
+
+// Maps field key → stats count key (from GET /api/admin/enrichment)
+const STATS_COUNT_KEYS: Record<Tab, Record<string, string>> = {
+    artists:     { bio: 'artist_bio', editorial: 'artist_editorial', curiosidades: 'artist_curiosidades' },
+    productions: { review: 'production_review' },
+    news:        { nota: 'news_editorial_note', blog: 'news_blog_post' },
+}
+
+// Maps field key → budget feature key
+const BUDGET_FEATURE_KEYS: Record<Tab, Record<string, string>> = {
+    artists:     { bio: 'artist_bio_enrichment', editorial: 'artist_editorial', curiosidades: 'artist_curiosidades' },
+    productions: { review: 'production_review' },
+    news:        { nota: 'news_editorial_note', blog: 'blog_post_generation' },
 }
 
 const TAB_CONFIG: Record<Tab, { label: string; icon: React.ElementType; batchLimit: number }> = {
@@ -64,20 +85,6 @@ function CompletenessBar({ score, present, total }: { score: number; present: nu
     )
 }
 
-function FieldChip({ label, done }: { label: string; done: boolean }) {
-    return (
-        <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md border ${
-            done
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                : 'border-zinc-700/60 bg-zinc-800/60 text-zinc-500'
-        }`}>
-            {done ? <CheckCircle className="w-2.5 h-2.5" /> : <Circle className="w-2.5 h-2.5" />}
-            {label}
-        </span>
-    )
-}
-
-// EnrichButton recebe callbacks — sem useAdminToast próprio
 function EnrichButton({
     label, entityId, target, disabled, present, onDone, onError,
 }: {
@@ -89,9 +96,9 @@ function EnrichButton({
     onDone:   (entityId: string, field: string) => void
     onError:  (msg: string) => void
 }) {
-    const [loading,   setLoading]   = useState(false)
-    const [justDone,  setJustDone]  = useState(false)
-    const [error,     setError]     = useState(false)
+    const [loading,  setLoading]  = useState(false)
+    const [justDone, setJustDone] = useState(false)
+    const [error,    setError]    = useState(false)
 
     const fieldKey = target.split('_').slice(1).join('_') || target
 
@@ -100,7 +107,7 @@ function EnrichButton({
         setLoading(true)
         setError(false)
         try {
-            const res = await fetch('/api/admin/enrichment', {
+            const res  = await fetch('/api/admin/enrichment', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ target, entityId }),
@@ -151,19 +158,83 @@ function EnrichButton({
     )
 }
 
+function ProcessAllButton({
+    item, fieldMap, disabled, onDone, onError,
+}: {
+    item:     QueueItem
+    fieldMap: Record<string, { label: string; target: string }>
+    disabled: boolean
+    onDone:   (entityId: string, field: string) => void
+    onError:  (msg: string) => void
+}) {
+    const [loading,  setLoading]  = useState(false)
+    const [justDone, setJustDone] = useState(false)
+
+    const missing = item.missingFields
+        .map(f => ({ field: f, ...fieldMap[f] }))
+        .filter(c => c.target)
+
+    if (missing.length === 0) return null
+
+    async function handleClick() {
+        if (loading || disabled) return
+        setLoading(true)
+        try {
+            for (const c of missing) {
+                const res  = await fetch('/api/admin/enrichment', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ target: c.target, entityId: item.id }),
+                })
+                const data = await res.json()
+                if (res.ok && data.processed > 0) onDone(item.id, c.field)
+                else onError(data.error ?? `Erro em ${c.label}`)
+            }
+            setJustDone(true)
+            setTimeout(() => setJustDone(false), 2000)
+        } catch {
+            onError('Erro de rede')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <button
+            onClick={handleClick}
+            disabled={loading || disabled}
+            title={`Gerar: ${missing.map(c => c.label).join(', ')}`}
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition-all disabled:opacity-40"
+        >
+            {justDone
+                ? <CheckCircle className="w-3 h-3" />
+                : loading
+                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                    : <Zap className="w-3 h-3" />
+            }
+            {justDone ? 'Feito' : loading ? 'Gerando...' : 'Tudo'}
+        </button>
+    )
+}
+
 export default function EnrichmentPage() {
-    // Seletor Zustand — addToast é estável, sem re-renders por toasts
-    const addToast   = useToast(s => s.addToast)
+    const addToast    = useToast(s => s.addToast)
     const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
     const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
 
-    const [activeTab,    setActiveTab]    = useState<Tab>('artists')
-    const [queue,        setQueue]        = useState<Record<Tab, QueueData | null>>({ artists: null, productions: null, news: null })
-    const [loading,      setLoading]      = useState(false)
-    const [batchRunning, setBatchRunning] = useState(false)
-    const [searchQuery,  setSearchQuery]  = useState('')
-    const [searchInput,  setSearchInput]  = useState('')
-    const [searchResults, setSearchResults] = useState<QueueData | null>(null)
+    const [activeTab,           setActiveTab]           = useState<Tab>('artists')
+    const [queue,               setQueue]               = useState<Record<Tab, QueueData | null>>({ artists: null, productions: null, news: null })
+    const [stats,               setStats]               = useState<StatsData | null>(null)
+    const [loading,             setLoading]             = useState(false)
+    const [batchRunning,        setBatchRunning]        = useState(false)
+    const [batchProgress,       setBatchProgress]       = useState<string | null>(null)
+    const [searchQuery,         setSearchQuery]         = useState('')
+    const [searchInput,         setSearchInput]         = useState('')
+    const [searchResults,       setSearchResults]       = useState<QueueData | null>(null)
+    const [fieldFilter,         setFieldFilter]         = useState<string>('all')
+    const [selectedBatchFields, setSelectedBatchFields] = useState<Set<string>>(
+        new Set(Object.keys(FIELD_LABELS.artists))
+    )
 
     const fetchQueue = useCallback(async (tab: Tab) => {
         setLoading(true)
@@ -177,6 +248,14 @@ export default function EnrichmentPage() {
             setLoading(false)
         }
     }, [showError])
+
+    const fetchStats = useCallback(async () => {
+        try {
+            const res  = await fetch('/api/admin/enrichment')
+            const data = await res.json() as StatsData
+            setStats(data)
+        } catch { /* silently fail */ }
+    }, [])
 
     const fetchSearch = useCallback(async (q: string, tab: Tab) => {
         if (!q.trim()) { setSearchResults(null); return }
@@ -194,7 +273,11 @@ export default function EnrichmentPage() {
 
     useEffect(() => {
         fetchQueue(activeTab)
+        setFieldFilter('all')
+        setSelectedBatchFields(new Set(Object.keys(FIELD_LABELS[activeTab])))
     }, [activeTab, fetchQueue])
+
+    useEffect(() => { fetchStats() }, [fetchStats])
 
     useEffect(() => {
         if (!searchQuery) { setSearchResults(null); return }
@@ -202,32 +285,38 @@ export default function EnrichmentPage() {
     }, [searchQuery, activeTab, fetchSearch])
 
     function handleItemDone(entityId: string, field: string) {
-        setQueue(prev => {
-            const tabData = prev[activeTab]
-            if (!tabData) return prev
-            const updatedItems = tabData.items.map(item => {
-                if (item.id !== entityId) return item
-                const missingFields = item.missingFields.filter(f => f !== field)
-                const presentFields = [...item.presentFields, field]
-                const completeness  = Math.round((presentFields.length / item.totalFields) * 100)
-                return { ...item, missingFields, presentFields, completenessScore: completeness }
-            })
-            return { ...prev, [activeTab]: { ...tabData, items: updatedItems } }
-        })
+        const update = (tabData: QueueData | null): QueueData | null => {
+            if (!tabData) return tabData
+            return {
+                ...tabData,
+                items: tabData.items.map(item => {
+                    if (item.id !== entityId) return item
+                    const missingFields = item.missingFields.filter(f => f !== field)
+                    const presentFields = [...item.presentFields, field]
+                    return {
+                        ...item, missingFields, presentFields,
+                        completenessScore: Math.round((presentFields.length / item.totalFields) * 100),
+                    }
+                }),
+            }
+        }
+        setQueue(prev => ({ ...prev, [activeTab]: update(prev[activeTab]) }))
+        if (searchResults) setSearchResults(prev => prev ? update(prev) : null)
     }
 
     async function runBatch() {
-        const cfg    = TAB_CONFIG[activeTab]
-        const limit  = cfg.batchLimit
-        const targets: Record<Tab, string[]> = {
-            artists:     ['artist_bio', 'artist_editorial', 'artist_curiosidades'],
-            productions: ['production_review'],
-            news:        ['news_editorial_note', 'news_blog_post'],
-        }
+        const fieldMap = FIELD_LABELS[activeTab]
+        const targets  = Object.entries(fieldMap)
+            .filter(([key]) => selectedBatchFields.has(key))
+            .map(([, c]) => ({ label: c.label, target: c.target }))
 
+        if (targets.length === 0) { showError('Selecione pelo menos um campo'); return }
+
+        const limit = TAB_CONFIG[activeTab].batchLimit
         setBatchRunning(true)
         try {
-            for (const target of targets[activeTab]) {
+            for (const { label, target } of targets) {
+                setBatchProgress(`Gerando ${label}...`)
                 const res  = await fetch('/api/admin/enrichment', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -235,43 +324,78 @@ export default function EnrichmentPage() {
                 })
                 const data = await res.json()
                 if (!res.ok) { showError(data.error ?? `Erro em ${target}`); continue }
-                if (data.processed > 0) showSuccess(`${data.processed} ${target.replace('_', ' ')} gerados`)
+                if (data.processed > 0) showSuccess(`${data.processed} ${label} gerados`)
             }
-            await fetchQueue(activeTab)
+            await Promise.all([fetchQueue(activeTab), fetchStats()])
         } catch {
             showError('Erro no lote')
         } finally {
             setBatchRunning(false)
+            setBatchProgress(null)
         }
+    }
+
+    function toggleBatchField(key: string) {
+        setSelectedBatchFields(prev => {
+            const next = new Set(prev)
+            if (next.has(key)) next.delete(key)
+            else next.add(key)
+            return next
+        })
     }
 
     const isSearching  = searchQuery.trim().length > 0
     const currentQueue = isSearching ? searchResults : queue[activeTab]
-    const visibleItems = currentQueue?.items ?? []
+    const allItems     = currentQueue?.items ?? []
+    const visibleItems = fieldFilter === 'all'
+        ? allItems
+        : allItems.filter(item => item.missingFields.includes(fieldFilter))
     const totalInQueue = currentQueue?.total ?? 0
-    const totalCost    = currentQueue?.totalCostEstimate ?? 0
     const cfg          = TAB_CONFIG[activeTab]
     const fieldMap     = FIELD_LABELS[activeTab]
+    const statsKeys    = STATS_COUNT_KEYS[activeTab]
+    const budgetKeys   = BUDGET_FEATURE_KEYS[activeTab]
 
     return (
         <AdminLayout title="Smart Queue — Enriquecimento">
             <div className="space-y-5">
 
-                {/* Header summary */}
-                <div className="flex items-start justify-between gap-4">
-                    <p className="text-xs text-zinc-500 mt-1">
-                        Itens priorizados por relevância e completude. Gere conteúdo editorial com IA para satisfazer AdSense (300–500 palavras/página).
-                    </p>
-                    {totalCost > 0 && (
-                        <div className="shrink-0 text-right">
-                            <div className="flex items-center gap-1 text-xs text-zinc-400">
-                                <DollarSign className="w-3.5 h-3.5 text-zinc-500" />
-                                <span className="font-mono font-semibold text-white">${totalCost.toFixed(4)}</span>
+                {/* Stats bar */}
+                {stats && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {Object.entries(statsKeys).map(([fieldKey, countKey]) => {
+                            const count     = stats.counts[countKey] ?? 0
+                            const label     = fieldMap[fieldKey]?.label ?? fieldKey
+                            const budgetKey = budgetKeys[fieldKey]
+                            const budgetOk  = !budgetKey || stats.budgets?.find(b => b.feature === budgetKey)?.allowed !== false
+                            return (
+                                <div key={fieldKey} className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">{label}</p>
+                                        <p className={`text-xl font-black tabular-nums ${count === 0 ? 'text-emerald-400' : 'text-white'}`}>{count}</p>
+                                        <p className="text-[10px] text-zinc-600">pendentes</p>
+                                    </div>
+                                    <div
+                                        className={`w-2 h-2 rounded-full shrink-0 ${budgetOk ? 'bg-emerald-500' : 'bg-red-500'}`}
+                                        title={budgetOk ? 'Budget OK' : 'Budget esgotado'}
+                                    />
+                                </div>
+                            )
+                        })}
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Custo Total</p>
+                                <p className="text-xl font-black font-mono text-white">${stats.totalEstimate.toFixed(3)}</p>
+                                <p className="text-[10px] text-zinc-600">estimado geral</p>
                             </div>
-                            <p className="text-[10px] text-zinc-600">custo estimado (top 30)</p>
+                            <DollarSign className="w-4 h-4 text-zinc-600 shrink-0" />
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
+
+                <p className="text-xs text-zinc-500">
+                    Itens priorizados por relevância e completude. Gere conteúdo editorial com IA para satisfazer AdSense (300–500 palavras/página).
+                </p>
 
                 {/* Search */}
                 <form
@@ -287,7 +411,7 @@ export default function EnrichmentPage() {
                                 setSearchInput(e.target.value)
                                 if (!e.target.value) setSearchQuery('')
                             }}
-                            placeholder={`Buscar ${TAB_CONFIG[activeTab].label.toLowerCase()}...`}
+                            placeholder={`Buscar ${cfg.label.toLowerCase()}...`}
                             className="w-full pl-9 pr-8 py-2 text-sm bg-zinc-900/60 border border-white/8 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 focus:bg-zinc-900 transition-all"
                         />
                         {searchInput && (
@@ -308,7 +432,7 @@ export default function EnrichmentPage() {
                     </button>
                 </form>
 
-                {/* Tab bar + actions */}
+                {/* Tab bar + filter chips + refresh */}
                 <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-1 bg-zinc-900/60 border border-white/6 rounded-xl p-1">
                         {(Object.entries(TAB_CONFIG) as [Tab, typeof cfg][]).map(([tab, c]) => {
@@ -338,26 +462,75 @@ export default function EnrichmentPage() {
                         })}
                     </div>
 
-                    <div className="ml-auto flex items-center gap-2">
+                    {/* Field filter chips */}
+                    <div className="flex items-center gap-1 flex-wrap">
                         <button
-                            onClick={() => fetchQueue(activeTab)}
+                            onClick={() => setFieldFilter('all')}
+                            className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
+                                fieldFilter === 'all'
+                                    ? 'bg-zinc-700 text-white'
+                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                            }`}
+                        >
+                            Todos
+                        </button>
+                        {Object.entries(fieldMap).map(([key, c]) => {
+                            const count = stats?.counts[statsKeys[key]] ?? 0
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => setFieldFilter(fieldFilter === key ? 'all' : key)}
+                                    className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
+                                        fieldFilter === key
+                                            ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+                                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                                    }`}
+                                >
+                                    Sem {c.label}{count > 0 ? ` (${count})` : ''}
+                                </button>
+                            )
+                        })}
+                    </div>
+
+                    <div className="ml-auto">
+                        <button
+                            onClick={() => { fetchQueue(activeTab); fetchStats() }}
                             disabled={loading}
                             className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1.5 rounded-lg hover:bg-zinc-800"
                         >
                             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                             Atualizar
                         </button>
-                        <button
-                            onClick={runBatch}
-                            disabled={batchRunning || loading || totalInQueue === 0 || isSearching}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
-                        >
-                            {batchRunning
-                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
-                                : <><Play className="w-3.5 h-3.5" /> Gerar próximos {cfg.batchLimit}</>
-                            }
-                        </button>
                     </div>
+                </div>
+
+                {/* Batch field selector + run */}
+                <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl bg-zinc-900/30 border border-white/5">
+                    <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest shrink-0">Lote:</span>
+                    {Object.entries(fieldMap).map(([key, c]) => (
+                        <button
+                            key={key}
+                            onClick={() => toggleBatchField(key)}
+                            disabled={batchRunning}
+                            className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all disabled:opacity-40 ${
+                                selectedBatchFields.has(key)
+                                    ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
+                                    : 'bg-transparent border-white/8 text-zinc-600 hover:text-zinc-400 hover:border-white/15'
+                            }`}
+                        >
+                            {selectedBatchFields.has(key) ? '✓' : '○'} {c.label}
+                        </button>
+                    ))}
+                    <button
+                        onClick={runBatch}
+                        disabled={batchRunning || loading || totalInQueue === 0 || isSearching || selectedBatchFields.size === 0}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20 ml-auto"
+                    >
+                        {batchRunning
+                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{batchProgress ?? 'Gerando...'}</>
+                            : <><Play className="w-3.5 h-3.5" />Gerar próximos {cfg.batchLimit}</>
+                        }
+                    </button>
                 </div>
 
                 {/* Queue list */}
@@ -372,6 +545,12 @@ export default function EnrichmentPage() {
                                 <Search className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
                                 <p className="text-sm font-medium text-white">Nenhum resultado</p>
                                 <p className="text-xs text-zinc-500 mt-1">Tente outro termo de busca.</p>
+                            </>
+                        ) : fieldFilter !== 'all' ? (
+                            <>
+                                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
+                                <p className="text-sm font-medium text-white">Nenhum item sem &ldquo;{fieldMap[fieldFilter]?.label}&rdquo;</p>
+                                <p className="text-xs text-zinc-500 mt-1">Todos os itens visíveis têm este campo preenchido.</p>
                             </>
                         ) : (
                             <>
@@ -395,11 +574,11 @@ export default function EnrichmentPage() {
                                 batchRunning={batchRunning}
                             />
                         ))}
-                        {totalInQueue > visibleItems.length && (
+                        {totalInQueue > allItems.length && (
                             <p className="text-center text-xs text-zinc-600 pt-2">
                                 {isSearching
-                                    ? `+${totalInQueue - visibleItems.length} resultados não exibidos · refine a busca`
-                                    : `+${totalInQueue - visibleItems.length} itens não exibidos · use "Gerar próximos" para processar em lote`
+                                    ? `+${totalInQueue - allItems.length} resultados não exibidos · refine a busca`
+                                    : `+${totalInQueue - allItems.length} itens não exibidos · use "Gerar próximos" para processar em lote`
                                 }
                             </p>
                         )}
@@ -458,6 +637,13 @@ function QueueItemRow({
             </div>
 
             <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
+                <ProcessAllButton
+                    item={item}
+                    fieldMap={fieldMap}
+                    disabled={batchRunning}
+                    onDone={onDone}
+                    onError={onError}
+                />
                 {Object.entries(fieldMap).map(([field, c]) => (
                     <EnrichButton
                         key={field}
@@ -471,7 +657,11 @@ function QueueItemRow({
                     />
                 ))}
                 <a
-                    href={tab === 'artists' ? `/admin/artists/${item.id}/edit` : tab === 'productions' ? `/admin/productions/${item.id}/edit` : `/admin/news/${item.id}/edit`}
+                    href={
+                        tab === 'artists'     ? `/admin/artists/${item.id}/edit` :
+                        tab === 'productions' ? `/admin/productions/${item.id}/edit` :
+                        `/admin/news/${item.id}/edit`
+                    }
                     className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
                     title="Abrir"
                 >
