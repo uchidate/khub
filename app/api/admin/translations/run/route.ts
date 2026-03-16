@@ -5,6 +5,7 @@ import { getErrorMessage } from '@/lib/utils/error'
 import { getArtistTranslationService } from '@/lib/services/artist-translation-service'
 import { getGroupTranslationService } from '@/lib/services/group-translation-service'
 import { getProductionTranslationService } from '@/lib/services/production-translation-service'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +54,16 @@ export async function GET(req: NextRequest) {
                     result = await service.translatePendingGroups(limit, (p) => {
                         send(controller, { type: 'progress', ...p })
                     }, isHidden)
+                }
+
+                // Invalida cache ISR de todas as páginas do tipo traduzido
+                if (entityType === 'artist') {
+                    revalidatePath('/artists/[id]', 'page')
+                } else if (entityType === 'group') {
+                    revalidatePath('/groups/[id]', 'page')
+                } else if (entityType === 'production') {
+                    revalidatePath('/productions/[id]', 'page')
+                    revalidatePath('/artists/[id]', 'page') // filmografia
                 }
 
                 send(controller, { type: 'done', ...result })

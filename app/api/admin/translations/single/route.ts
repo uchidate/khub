@@ -5,6 +5,7 @@ import { getErrorMessage } from '@/lib/utils/error'
 import { getArtistTranslationService } from '@/lib/services/artist-translation-service'
 import { getGroupTranslationService } from '@/lib/services/group-translation-service'
 import { getProductionTranslationService } from '@/lib/services/production-translation-service'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,18 +29,26 @@ export async function POST(req: NextRequest) {
         if (entityType === 'artist') {
             const service = getArtistTranslationService(prisma)
             const result = await service.translateSingle(id)
+            revalidatePath(`/artists/${id}`)
             return NextResponse.json(result)
         }
 
         if (entityType === 'group') {
             const service = getGroupTranslationService(prisma)
             const result = await service.translateSingle(id)
+            revalidatePath(`/groups/${id}`)
             return NextResponse.json(result)
         }
 
         if (entityType === 'production') {
             const service = getProductionTranslationService(prisma)
             const result = await service.translateSingle(id)
+            revalidatePath(`/productions/${id}`)
+            const casts = await prisma.artistProduction.findMany({
+                where: { productionId: id },
+                select: { artistId: true },
+            })
+            casts.forEach(({ artistId }) => revalidatePath(`/artists/${artistId}`))
             return NextResponse.json(result)
         }
 

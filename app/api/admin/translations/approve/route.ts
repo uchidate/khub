@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
 import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,6 +36,21 @@ export async function PATCH(req: NextRequest) {
       },
       data: { status: 'approved' },
     })
+
+    // Invalida cache ISR das páginas públicas afetadas
+    if (entityType === 'production') {
+      ids.forEach(id => revalidatePath(`/productions/${id}`))
+      const casts = await prisma.artistProduction.findMany({
+        where: { productionId: { in: ids } },
+        select: { artistId: true },
+      })
+      const uniqueArtistIds = Array.from(new Set(casts.map(c => c.artistId)))
+      uniqueArtistIds.forEach(id => revalidatePath(`/artists/${id}`))
+    } else if (entityType === 'artist') {
+      ids.forEach(id => revalidatePath(`/artists/${id}`))
+    } else if (entityType === 'group') {
+      ids.forEach(id => revalidatePath(`/groups/${id}`))
+    }
 
     return NextResponse.json({ ok: true, updated: result.count })
   } catch (err) {
