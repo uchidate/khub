@@ -240,6 +240,7 @@ export default function EnrichmentPage() {
         setLoading(true)
         try {
             const res  = await fetch(`/api/admin/enrichment/queue?tab=${tab}&limit=30`)
+            if (!res.ok) return
             const data = await res.json() as QueueData
             setQueue(prev => ({ ...prev, [tab]: data }))
         } catch {
@@ -252,8 +253,9 @@ export default function EnrichmentPage() {
     const fetchStats = useCallback(async () => {
         try {
             const res  = await fetch('/api/admin/enrichment')
+            if (!res.ok) return
             const data = await res.json() as StatsData
-            setStats(data)
+            if (data?.counts && typeof data.totalEstimate === 'number') setStats(data)
         } catch { /* silently fail */ }
     }, [])
 
@@ -364,7 +366,7 @@ export default function EnrichmentPage() {
                 {stats && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {Object.entries(statsKeys).map(([fieldKey, countKey]) => {
-                            const count     = stats.counts[countKey] ?? 0
+                            const count     = stats.counts?.[countKey] ?? 0
                             const label     = fieldMap[fieldKey]?.label ?? fieldKey
                             const budgetKey = budgetKeys[fieldKey]
                             const budgetOk  = !budgetKey || !stats.budgets?.[budgetKey]?.exceeded
@@ -385,7 +387,7 @@ export default function EnrichmentPage() {
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
                             <div className="flex-1 min-w-0">
                                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Custo Total</p>
-                                <p className="text-xl font-black font-mono text-white">${stats.totalEstimate.toFixed(3)}</p>
+                                <p className="text-xl font-black font-mono text-white">${(stats.totalEstimate ?? 0).toFixed(3)}</p>
                                 <p className="text-[10px] text-zinc-600">estimado geral</p>
                             </div>
                             <DollarSign className="w-4 h-4 text-zinc-600 shrink-0" />
