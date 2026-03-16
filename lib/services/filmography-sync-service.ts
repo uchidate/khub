@@ -291,12 +291,12 @@ export class FilmographySyncService {
         { preferredProvider: 'deepseek' }
       )
 
-      if (!aiResult.productions || aiResult.productions.length === 0) {
+      if (!aiResult.parsed.productions || aiResult.parsed.productions.length === 0) {
         result.success = true
         return result
       }
 
-      for (const prodData of aiResult.productions) {
+      for (const prodData of aiResult.parsed.productions) {
         try {
           // Check for existing production to avoid duplicates
           let production = await prisma.production.findFirst({

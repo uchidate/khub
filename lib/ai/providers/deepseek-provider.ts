@@ -41,6 +41,7 @@ export class DeepSeekProvider extends BaseAIProvider {
                 messages,
                 temperature: options?.temperature ?? 0.7,
                 max_tokens: options?.maxTokens ?? 2048,
+                ...(options?.json_mode ? { response_format: { type: 'json_object' as const } } : {}),
             })
 
             const text = completion.choices[0]?.message?.content || ''

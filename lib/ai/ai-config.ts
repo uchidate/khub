@@ -28,6 +28,7 @@ export interface GenerateOptions {
   preferredProvider?: AIProviderType;
   systemPrompt?: string;
   excludeList?: string[];
+  json_mode?: boolean // Force JSON output via response_format (DeepSeek/OpenAI)
   /** Feature que originou a chamada — usada para logging de uso */
   feature?: import('./ai-usage-logger').AiFeature;
 }

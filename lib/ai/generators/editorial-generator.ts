@@ -130,8 +130,8 @@ Responda APENAS com o parágrafo, sem título, sem introdução, sem notas.`
         const result = await orchestrator.generate(prompt, {
             feature,
             preferredProvider: 'deepseek',
-            maxTokens: 700,
-            temperature: 0.7,
+            maxTokens: 400,
+            temperature: 0.4,
         })
 
         logAiUsage({
@@ -225,8 +225,8 @@ Formato de saída — use EXATAMENTE este padrão (sem variações):
         const result = await orchestrator.generate(prompt, {
             feature,
             preferredProvider: 'deepseek',
-            maxTokens: 650,
-            temperature: 0.75,
+            maxTokens: 500,
+            temperature: 0.5,
         })
 
         logAiUsage({
@@ -294,22 +294,14 @@ Responda SOMENTE com JSON válido no formato:
         const result = await orchestrator.generateStructured<{ curiosidades: string[] }>(
             prompt,
             '{"curiosidades": ["string"]}',
-            { feature, preferredProvider: 'deepseek', maxTokens: 500, temperature: 0.8 }
+            { feature, preferredProvider: 'deepseek', maxTokens: 400, temperature: 0.8 }
         )
 
-        // Calcular custo aproximado (generateStructured não retorna tokensIn/Out diretamente)
-        const cost = EDITORIAL_COST_ESTIMATES.artist_curiosidades
-
-        logAiUsage({
-            provider: 'deepseek', model: 'deepseek-chat', feature,
-            durationMs: Date.now() - t0, status: 'success',
-        })
-
         return {
-            curiosidades: result.curiosidades.slice(0, 8),
-            tokensIn: 0,
-            tokensOut: 0,
-            cost,
+            curiosidades: result.parsed.curiosidades.slice(0, 8),
+            tokensIn: result.tokensIn ?? 0,
+            tokensOut: result.tokensOut ?? 0,
+            cost: result.cost ?? 0,
         }
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
@@ -366,18 +358,13 @@ Para a nota editorial (0-10), use critérios: roteiro, atuação, produção, im
             feature, preferredProvider: 'deepseek', maxTokens: 750, temperature: 0.7,
         })
 
-        logAiUsage({
-            provider: 'deepseek', model: 'deepseek-chat', feature,
-            durationMs: Date.now() - t0, status: 'success',
-        })
-
         return {
-            editorialReview: result.editorialReview.trim(),
-            whyWatch: result.whyWatch.trim(),
-            editorialRating: Math.min(10, Math.max(0, result.editorialRating)),
-            tokensIn: 0,
-            tokensOut: 0,
-            cost: EDITORIAL_COST_ESTIMATES.production_review,
+            editorialReview: result.parsed.editorialReview.trim(),
+            whyWatch: result.parsed.whyWatch.trim(),
+            editorialRating: Math.min(10, Math.max(0, result.parsed.editorialRating)),
+            tokensIn: result.tokensIn ?? 0,
+            tokensOut: result.tokensOut ?? 0,
+            cost: result.cost ?? 0,
         }
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
@@ -488,32 +475,27 @@ Responda SOMENTE com JSON válido:
             feature, preferredProvider: 'deepseek', maxTokens: 1200, temperature: 0.8,
         })
 
-        const wordCount = result.contentMd.split(/\s+/).length
+        const wordCount = result.parsed.contentMd.split(/\s+/).length
         const readingTimeMin = Math.max(1, Math.round(wordCount / 200))
 
         // Gerar slug a partir do título
-        const slug = result.title
+        const slug = result.parsed.title
             .toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-z0-9\s-]/g, '')
             .replace(/\s+/g, '-')
             .slice(0, 80)
 
-        logAiUsage({
-            provider: 'deepseek', model: 'deepseek-chat', feature,
-            durationMs: Date.now() - t0, status: 'success',
-        })
-
         return {
-            title: result.title,
+            title: result.parsed.title,
             slug,
-            excerpt: result.excerpt,
-            contentMd: result.contentMd,
-            tags: result.tags.slice(0, 8),
+            excerpt: result.parsed.excerpt,
+            contentMd: result.parsed.contentMd,
+            tags: result.parsed.tags.slice(0, 8),
             readingTimeMin,
-            tokensIn: 0,
-            tokensOut: 0,
-            cost: EDITORIAL_COST_ESTIMATES.blog_post_generation,
+            tokensIn: result.tokensIn ?? 0,
+            tokensOut: result.tokensOut ?? 0,
+            cost: result.cost ?? 0,
         }
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)

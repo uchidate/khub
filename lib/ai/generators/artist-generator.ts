@@ -79,7 +79,7 @@ Requisitos:
                 }
             );
 
-            return bioResult.bio;
+            return bioResult.parsed.bio;
         } catch (error: any) {
             console.warn(`⚠️  Ollama bio generation failed: ${error.message}`);
             // Fallback para bio simples
@@ -121,16 +121,16 @@ Requisitos:
                 { preferredProvider: 'deepseek' }
             );
 
-            console.log(`✅ AI suggested: ${result.artists.join(', ')}`);
+            console.log(`✅ AI suggested: ${result.parsed.artists.join(', ')}`);
 
             // Atualiza cache
             _aiDiscoveryCache = {
-                artists: result.artists,
+                artists: result.parsed.artists,
                 timestamp: now
             };
             console.log(`💾 Cached AI discovery (TTL: 1h)`);
 
-            return result.artists;
+            return result.parsed.artists;
         } catch (error: any) {
             console.warn(`⚠️ AI discovery failed: ${error.message}. Using safe fallbacks.`);
             // Fallback para nomes muito famosos caso a AI falhe totalmente
@@ -182,7 +182,7 @@ Se a informação não estiver na biografia, use seu conhecimento geral para pre
                 { preferredProvider: 'deepseek' }
             );
 
-            return result;
+            return result.parsed;
         } catch (error: any) {
             console.warn(`⚠️  Gemini meta enrichment failed for ${artistName}: ${error.message}`);
             return {};
@@ -285,19 +285,19 @@ Escolha artistas variados (diferentes grupos, agências, etc).`;
 
         // Search for real artist image using Aliases
         const aliases = [];
-        if (result.nameHangul) aliases.push(result.nameHangul);
-        if (result.stageNames) {
-            aliases.push(...result.stageNames.split(',').map(s => s.trim()));
+        if (result.parsed.nameHangul) aliases.push(result.parsed.nameHangul);
+        if (result.parsed.stageNames) {
+            aliases.push(...result.parsed.stageNames.split(',').map((s: string) => s.trim()));
         }
 
-        console.log(`🔍 Searching for real image of ${result.nameRomanized} (Aliases: ${aliases.join(', ')})...`);
-        const imageResult = await this.imageSearch.findArtistImage(result.nameRomanized, aliases);
+        console.log(`🔍 Searching for real image of ${result.parsed.nameRomanized} (Aliases: ${aliases.join(', ')})...`);
+        const imageResult = await this.imageSearch.findArtistImage(result.parsed.nameRomanized, aliases);
 
         return {
-            ...result,
-            birthDate: new Date(result.birthDate),
-            primaryImageUrl: imageResult?.url || result.primaryImageUrl,
-            agencyName: result.agencyName,
+            ...result.parsed,
+            birthDate: new Date(result.parsed.birthDate),
+            primaryImageUrl: imageResult?.url || result.parsed.primaryImageUrl,
+            agencyName: result.parsed.agencyName,
         };
     }
 

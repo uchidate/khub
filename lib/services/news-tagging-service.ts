@@ -195,8 +195,8 @@ Rules:
                 { preferredProvider: 'ollama' }
             );
 
-            if (result.tags?.length) {
-                for (const t of result.tags) {
+            if (result.parsed.tags?.length) {
+                for (const t of result.parsed.tags) {
                     const clean = t.trim();
                     if (clean && !tags.some(existing => existing.toLowerCase() === clean.toLowerCase())) {
                         tags.push(clean);

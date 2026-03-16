@@ -200,7 +200,7 @@ Requisitos:
                 { preferredProvider: 'ollama' }
             );
 
-            return result.bio;
+            return result.parsed.bio;
         } catch (error: any) {
             console.warn(`⚠️  Enrichment failed: ${error.message}`);
             return `${artistName} é ${role} de destaque na indústria do entretenimento coreano, reconhecido(a) por seu talento e versatilidade.`;
@@ -234,7 +234,7 @@ Requisitos:
                 { preferredProvider: provider }
             );
 
-            return result.translation;
+            return result.parsed.translation;
         } catch (error: any) {
             console.warn(`⚠️  Translation failed: ${error.message}`);
             return text;

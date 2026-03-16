@@ -147,11 +147,11 @@ export class DiscographySyncService {
             { preferredProvider: 'deepseek' }
         );
 
-        if (!aiResult.albums || aiResult.albums.length === 0) {
+        if (!aiResult.parsed.albums || aiResult.parsed.albums.length === 0) {
             return 0;
         }
 
-        return await this.saveAlbums(artistId, aiResult.albums);
+        return await this.saveAlbums(artistId, aiResult.parsed.albums);
     }
 
     /**
