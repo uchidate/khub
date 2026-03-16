@@ -4,22 +4,13 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { ADULT_KEYWORDS } from '@/lib/constants/moderation'
+
+export { ADULT_KEYWORDS }
 
 const log = createLogger('PRODUCTION_MODERATION')
 
 export const dynamic = 'force-dynamic'
-
-// Palavras-chave para detectar conteúdo adulto nos títulos
-export const ADULT_KEYWORDS = [
-  'porn', 'porno', 'pornô', 'xxx', 'jav',
-  'gravure', 'av idol', 'av girl', 'av model',
-  'hentai', 'erotic film', 'erotic movie', 'erotic drama',
-  'adult film', 'adult video', 'adult movie', 'adult content',
-  'nude model', 'nude film', 'softcore', 'hardcore',
-  'fetish', 'bdsm', 'onlyfans', 'camgirl', 'cam girl',
-  'sex tape', 'sex film', 'sex movie',
-  'uncensored', 'leaked sex', 'explicit content',
-]
 
 function buildAdultCondition() {
   return {
@@ -196,6 +187,7 @@ export async function GET(request: NextRequest) {
           isAdultContent: true,
           adultCheckedAt: true,
           isHidden: true,
+          ageRating: true,
           _count: { select: { artists: true, userFavorites: true } },
         },
         skip,
