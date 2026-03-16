@@ -1,172 +1,70 @@
 /**
  * Age Rating Filter Utility
  *
- * Função centralizada para aplicar filtros de classificação etária em queries de Production.
- * Respeita SystemSettings (admin) e UserContentPreferences (usuário logado).
+ * Retorna um where clause Prisma para excluir conteúdo adulto nas queries de Production.
+ *
+ * Regra: bloquear apenas ageRating='18' e isAdultContent=true.
+ * NULL é sempre permitido — são K-Dramas/filmes sem classificação do TMDB.
  *
  * Usado em:
  * - /api/productions/list
+ * - /api/search, /api/search/full, /api/search/global
+ * - /api/artists/[id]/filmography
  * - Home (recém adicionados, bem avaliados)
- * - Grupos (produções do grupo)
- * - Qualquer outro endpoint que liste produções
  */
 
 import prisma from '@/lib/prisma'
-import { getServerSession, type Session } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { unstable_cache } from 'next/cache'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 
-export type AgeRatingWhereClause = {
-  ageRating?: any
-  OR?: any[]
-} | Record<string, never>
+export type AgeRatingWhereClause = Record<string, unknown>
 
-/**
- * Aplica filtro de classificação etária baseado em:
- * 1. SystemSettings (limites globais definidos pelo admin)
- * 2. UserContentPreferences (preferências do usuário logado, se houver)
- * 3. Padrão seguro para visitantes não-logados (L, 10, 12, 14, 16)
- *
- * @param overrideRating - Permite override manual (ex: filtro "all" ou rating específico na UI)
- * @returns Objeto where clause do Prisma para filtrar por ageRating
- */
-const DEFAULT_AGE_RATING_SETTINGS = {
-  id: 'singleton',
-  allowAdultContent: false,
-  allowUnclassifiedContent: false,
-  betaMode: false,
-  premiumEnabled: false,
-  createdAt: new Date(0),
-  updatedAt: new Date(0),
-}
+const DEFAULT_SETTINGS = { allowAdultContent: false }
 
-// Cache system settings for 5 minutes — changes only via admin panel
+// Cache system settings for 5 minutes
 const getCachedSystemSettings = unstable_cache(
   async () => {
-    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return DEFAULT_AGE_RATING_SETTINGS
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return DEFAULT_SETTINGS
     try {
-      let settings = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
-      if (!settings) {
-        settings = await prisma.systemSettings.create({
-          data: { id: 'singleton', allowAdultContent: false, allowUnclassifiedContent: false },
-        })
-      }
-      return settings
+      const settings = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
+      return { allowAdultContent: settings?.allowAdultContent ?? false }
     } catch {
-      return DEFAULT_AGE_RATING_SETTINGS
+      return DEFAULT_SETTINGS
     }
   },
   ['system-settings'],
   { revalidate: 300, tags: ['system-settings'] }
 )
 
+/**
+ * Retorna filtro Prisma para excluir conteúdo adulto.
+ * NULL ageRating é sempre permitido (K-Dramas legítimos sem rating TMDB).
+ * ageRating='18' e isAdultContent=true são sempre bloqueados (salvo allowAdultContent=true no admin).
+ *
+ * @param overrideRating - Filtro de rating específico selecionado pelo usuário na UI
+ */
 export async function applyAgeRatingFilter(
   overrideRating?: string,
-  existingSession?: Session | null
 ): Promise<AgeRatingWhereClause> {
-  // 1. Buscar configurações globais (cached 5 min)
-  const systemSettings = await getCachedSystemSettings()
+  const { allowAdultContent } = await getCachedSystemSettings()
 
-  // 2. Override explícito via UI (ex: filtro "all" ou rating específico)
-  if (overrideRating === 'all') {
-    // Mostrar tudo, mas ainda respeitar limites do admin
-    const where: AgeRatingWhereClause = {}
-
-    // Filtrar 18+ se admin bloqueou
-    if (!systemSettings.allowAdultContent) {
-      where.ageRating = { not: '18' }
-    }
-
-    // Filtrar não classificados se admin bloqueou
-    if (!systemSettings.allowUnclassifiedContent) {
-      if (where.ageRating) {
-        // Já tem filtro de 18+, adicionar também filtro de null
-        where.ageRating = { not: null, notIn: ['18'] }
-      } else {
-        where.ageRating = { not: null }
-      }
-    }
-
-    return where
-  }
-
-  if (overrideRating) {
-    // Rating específico selecionado na UI (ex: "L", "10", "18")
-    // Validar contra limites do admin
-    if (overrideRating === '18' && !systemSettings.allowAdultContent) {
-      // Admin bloqueou 18+, não mostrar nada
-      return { ageRating: 'BLOCKED_BY_ADMIN' } // valor impossível = retorna vazio
-    }
-
-    if (overrideRating === 'null' && !systemSettings.allowUnclassifiedContent) {
-      // Admin bloqueou não classificados, não mostrar nada
-      return { ageRating: 'BLOCKED_BY_ADMIN' }
-    }
-
+  // Filtro de rating específico selecionado na UI
+  if (overrideRating && overrideRating !== 'all') {
+    if (overrideRating === '18' && !allowAdultContent) return { ageRating: '__BLOCKED__' }
     return { ageRating: overrideRating === 'null' ? null : overrideRating }
   }
 
-  // 3. Buscar preferências do usuário logado (se houver)
-  // Reutiliza sessão existente se fornecida, evita double JWT verification
-  const session = existingSession !== undefined ? existingSession : await getServerSession(authOptions)
-  let userPreferences: string[] | null = null
-
-  if (session?.user?.email) {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { contentPreferences: true },
-    })
-    userPreferences = user?.contentPreferences?.allowedRatings || null
-  }
-
-  // 4. Aplicar filtro baseado em preferências ou padrão
-  let where: AgeRatingWhereClause = {}
-
-  if (userPreferences && userPreferences.length > 0) {
-    // Usuário logado com preferências definidas
-    const ratings = userPreferences.filter(r => r !== 'null')
-    const includeNull = userPreferences.includes('null')
-
-    // Filtrar ratings bloqueados pelo admin
-    const allowedRatings = ratings.filter(r => {
-      if (r === '18' && !systemSettings.allowAdultContent) return false
-      return true
-    })
-
-    const allowNull = includeNull && systemSettings.allowUnclassifiedContent
-
-    if (allowNull && allowedRatings.length > 0) {
-      where.OR = [
-        { ageRating: { in: allowedRatings } },
-        { ageRating: null },
-      ]
-    } else if (allowNull) {
-      where.ageRating = null
-    } else if (allowedRatings.length > 0) {
-      where.ageRating = { in: allowedRatings }
-    } else {
-      // Usuário não tem nenhuma preferência válida (tudo bloqueado pelo admin)
-      where.ageRating = 'NO_ALLOWED_RATINGS' // valor impossível = retorna vazio
-    }
-  } else {
-    // Visitante não-logado ou usuário sem preferências → padrão seguro
-    // Padrão: L, 10, 12, 14, 16 (sem 18+ e null)
-    const defaultRatings = ['L', '10', '12', '14', '16']
-
-    // Filtrar baseado em limites do admin
-    const allowedRatings = defaultRatings.filter(r => {
-      if (r === '18' && !systemSettings.allowAdultContent) return false
-      return true
-    })
-
-    if (allowedRatings.length > 0) {
-      where.ageRating = { in: allowedRatings }
-    } else {
-      // Caso extremo: admin bloqueou tudo (improvável)
-      where.ageRating = 'NO_ALLOWED_RATINGS'
+  // Filtro padrão: bloquear apenas adulto explícito
+  // AND+OR para tratar NULL corretamente (NOT(NULL)=NULL em SQL)
+  if (!allowAdultContent) {
+    return {
+      AND: [
+        { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
+        { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
+      ],
     }
   }
 
-  return where
+  // Admin habilitou conteúdo adulto: apenas bloquear isAdultContent sexual
+  return {}
 }
