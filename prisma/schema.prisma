@@ -259,6 +259,7 @@ model Production {
   flaggedAsNonKorean  Boolean            @default(false)
   flaggedAt           DateTime?
   isHidden            Boolean            @default(false) // Oculto do site público pelo admin
+  isTakenDown         Boolean            @default(false) // Takedown legal ativo
   isAdultContent      Boolean?           // null = não verificado, true = adulto, false = ok
   adultContentType    String?            // 'sexual' | 'violent' | 'other' — subtipo quando isAdultContent=true
   adultCheckedAt      DateTime?          // quando foi verificado pelo DeepSeek
@@ -267,6 +268,7 @@ model Production {
   userFavorites      Favorite[]
   watchEntries       WatchEntry[]
   streamingShows     StreamingShow[]
+  takedowns          ProductionTakedown[]
 
   @@index([type])
   @@index([year])
@@ -279,6 +281,8 @@ model Production {
   @@index([ageRatingSyncAt])
   @@index([flaggedAsNonKorean])
   @@index([isHidden])
+  @@index([isTakenDown])
+  @@index([isTakenDown, isHidden])
   @@index([flaggedAsNonKorean, isHidden]) // production listing filter
   @@index([isAdultContent])
   @@index([adultContentType])
@@ -296,6 +300,30 @@ model ArtistProduction {
   castOrder    Int?
 
   @@id([artistId, productionId])
+}
+
+model ProductionTakedown {
+  id               String         @id @default(cuid())
+  production       Production     @relation(fields: [productionId], references: [id])
+  productionId     String
+  reason           TakedownReason
+  noticeReference  String?        @db.VarChar(500)
+  noticeDate       DateTime?
+  hiddenBy         User           @relation("TakedownHiddenBy", fields: [hiddenById], references: [id])
+  hiddenById       String
+  hiddenAt         DateTime       @default(now())
+  restoredBy       User?          @relation("TakedownRestoredBy", fields: [restoredById], references: [id])
+  restoredById     String?
+  restoredAt       DateTime?
+  restoredReason   String?        @db.Text
+  notes            String?        @db.Text
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+
+  @@index([productionId])
+  @@index([isActive])
+  @@index([productionId, isActive])
+  @@map("production_takedowns")
 }
 
 model News {
@@ -397,6 +425,8 @@ model User {
   auditLogs              AuditLog[]
   lists                  UserList[]
   blogPosts              BlogPost[]             @relation("BlogPosts")
+  takedownsIssued        ProductionTakedown[]   @relation("TakedownHiddenBy")
+  takedownsRestored      ProductionTakedown[]   @relation("TakedownRestoredBy")
 
   @@index([email])
 }
@@ -724,6 +754,13 @@ enum KpoppingSuggestionStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum TakedownReason {
+  DMCA
+  COPYRIGHT
+  LEGAL_NOTICE
+  MANUAL
 }
 
 // Reports de problemas enviados por usuários nas páginas públicas

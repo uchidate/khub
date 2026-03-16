@@ -8,7 +8,7 @@ import {
   Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
-  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2,
+  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -76,8 +76,9 @@ const navSections: NavSection[] = [
       {
         href: '/admin/productions', label: 'Produções', icon: Film, exact: true,
         subItems: [
-          { href: '/admin/filmography',            label: 'Filmografias', icon: Clapperboard },
-          { href: '/admin/productions/moderation', label: 'Moderação',    icon: AlertTriangle },
+          { href: '/admin/filmography',                    label: 'Filmografias', icon: Clapperboard },
+          { href: '/admin/productions/moderation',         label: 'Moderação',    icon: AlertTriangle },
+          { href: '/admin/productions/takedowns',          label: 'Takedowns',    icon: ShieldAlert },
         ],
       },
       { href: '/admin/blog', label: 'Blog', icon: FileText, isNew: true },
@@ -164,7 +165,7 @@ const SECTION_LABELS: Record<string, string> = {
   analytics: 'Analytics', 'fix-names': 'Enriq. TMDB', duplicates: 'Enriq. MB',
   'social-links': 'Redes Sociais', moderation: 'Moderação', import: 'Importar',
   reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync',
-  discography: 'Discografia', log: 'Log', pipeline: 'Pipeline',
+  discography: 'Discografia', log: 'Log', pipeline: 'Pipeline', takedowns: 'Takedowns',
 }
 
 function isIdSegment(s: string) {

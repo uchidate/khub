@@ -214,6 +214,20 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Guard: impedir restauração acidental de produção com takedown ativo
+    if (validated.isHidden === false) {
+      const current = await prisma.production.findUnique({
+        where: { id: productionId },
+        select: { isTakenDown: true },
+      })
+      if (current?.isTakenDown) {
+        return NextResponse.json(
+          { error: 'Produção com takedown legal ativo não pode ser restaurada por este endpoint. Use /api/admin/productions/[id]/restore.' },
+          { status: 409 }
+        )
+      }
+    }
+
     // If synopsis is being manually edited, mark source as 'manual'
     const resolvedSynopsisSource = validated.synopsis !== undefined && !validated.synopsisSource
       ? 'manual'
