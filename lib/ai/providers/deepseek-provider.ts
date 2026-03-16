@@ -47,7 +47,9 @@ export class DeepSeekProvider extends BaseAIProvider {
             const tokensIn  = completion.usage?.prompt_tokens     || 0
             const tokensOut = completion.usage?.completion_tokens || 0
             const tokensUsed = tokensIn + tokensOut
-            const cost = this.config.costPer1kTokens * (tokensUsed / 1000)
+            const inputCost  = this.config.costPer1kTokens * (tokensIn / 1000)
+            const outputCost = (this.config.outputCostPer1kTokens ?? this.config.costPer1kTokens) * (tokensOut / 1000)
+            const cost = inputCost + outputCost
 
             this.recordSuccess(tokensUsed, cost)
 
