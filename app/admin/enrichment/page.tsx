@@ -34,7 +34,7 @@ interface QueueData {
 const FIELD_LABELS: Record<Tab, Record<string, { label: string; target: string }>> = {
     artists: {
         bio:          { label: 'Bio',         target: 'artist_bio' },
-        editorial:    { label: 'Análise',     target: 'artist_editorial' },
+        editorial:    { label: 'Projetos',     target: 'artist_editorial' },
         curiosidades: { label: 'Curiosidades', target: 'artist_curiosidades' },
     },
     productions: {

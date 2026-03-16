@@ -97,26 +97,27 @@ export async function generateArtistBio(artist: {
     const roles = artist.roles.join(', ') || 'artista'
     const agency = artist.agency?.name || 'agência não informada'
 
-    const prompt = `Escreva uma biografia detalhada e envolvente em português brasileiro sobre o artista de K-pop/K-drama **${artist.nameRomanized}** (${artist.nameHangul || 'nome hangul não disponível'}).
+    const prompt = `Atue como redator biográfico focado em dados e cronologia.
+
+Escreva um parágrafo de perfil sobre **${artist.nameRomanized}** (${roles}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}).
 
 Informações disponíveis:
-- Papéis: ${roles}
-- Grupo(s): ${groups}
 - Agência: ${agency}
 - Local de nascimento: ${artist.placeOfBirth || 'não informado'}
 - Nome de nascimento: ${artist.birthName || 'não informado'}
-${artist.bio ? `- Bio resumida existente: "${artist.bio.slice(0, 300)}"` : ''}
+${artist.bio ? `- Contexto existente: "${artist.bio.slice(0, 300)}"` : ''}
 
-A biografia deve:
-- Ter entre 400 e 500 palavras
-- Ser escrita em português brasileiro fluente e natural
-- Cobrir início de carreira, trajetória, conquistas e impacto cultural
-- Ser informativa e interessante para fãs brasileiros do K-pop
-- NÃO inventar datas, prêmios ou fatos específicos que você não tem certeza
-- Usar expressões como "é reconhecido/a por", "ficou conhecido/a", "tem conquistado"
-- Terminar com uma frase sobre o impacto atual ou legado do artista
+O parágrafo deve:
+- Ter entre 80 e 120 palavras
+- Cobrir: origem, quando e como entrou no entretenimento, debut e primeiros grandes sucessos
+- Priorizar fatos concretos e datas (quando souber com certeza)
+- NÃO inventar datas, prêmios ou fatos específicos
+- NÃO usar adjetivos subjetivos — foque em marcos factuais
+- NÃO usar emojis
+- Tom: seco, informativo, direto ao ponto
+- Escrito em português brasileiro
 
-Responda APENAS com a biografia, sem título, sem introdução, sem notas.`
+Responda APENAS com o parágrafo, sem título, sem introdução, sem notas.`
 
     const feature: AiFeature = 'artist_bio_enrichment'
 
@@ -177,17 +178,16 @@ export async function generateArtistEditorial(artist: {
 
     const prompt = `Atue como um redator biográfico focado em dados e cronologia.
 
-Escreva a biografia de **${artist.nameRomanized}** (${artist.roles.join(', ')}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}) organizada em exatamente 3 parágrafos curtos, cada um com um título de uma ou duas palavras.
+Escreva sobre **${artist.nameRomanized}** (${artist.roles.join(', ')}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}) em exatamente 2 parágrafos curtos, cada um com um título de uma ou duas palavras.
 
 ${artist.bio ? `Contexto biográfico: "${artist.bio.slice(0, 500)}"` : ''}
 
 Estrutura obrigatória:
-- Parágrafo 1 — Perfil: marcos históricos e primeiros grandes sucessos.
-- Parágrafo 2 — Projetos: produções atuais (2024–2026), desempenho em plataformas de streaming e novos lançamentos.
-- Parágrafo 3 — Reconhecimento: prêmios reais, competências técnicas e atuação comercial/marcas.
+- Parágrafo 1 — Projetos: produções atuais (2024–2026), desempenho em plataformas de streaming e novos lançamentos.
+- Parágrafo 2 — Reconhecimento: prêmios reais, competências técnicas e atuação comercial/marcas.
 
 Regras:
-- Títulos de no máximo 2 palavras (ex: "Perfil", "Projetos", "Reconhecimento").
+- Títulos de no máximo 2 palavras (ex: "Projetos", "Reconhecimento").
 - Priorize fatos concretos, marcos de audiência, prêmios reais e produções específicas.
 - NÃO use frases de efeito como "exemplo de resiliência", "atingiu novo patamar", "ícone global".
 - NÃO use adjetivos subjetivos — se o artista é talentoso, cite o prêmio, não o adjetivo.
@@ -195,9 +195,6 @@ Regras:
 - Tom: seco, informativo, profissional e direto ao ponto.
 
 Formato de saída — use EXATAMENTE este padrão (sem variações):
-**[Título]**
-[conteúdo]
-
 **[Título]**
 [conteúdo]
 

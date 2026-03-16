@@ -190,8 +190,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
     const allGroups = artist.memberships
 
-    // Parse analiseEditorial into structured sections for ExpandableProfile
+    // Profile sections: only analiseEditorial (bio goes to hero via ExpandableBio)
     const profileSections: { title: string; content: string }[] = []
+    const bioText = bioPt ?? artist.bio
     if (artist.analiseEditorial) {
         const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
         let m: RegExpExecArray | null
@@ -304,12 +305,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             )}
                         </div>
 
-                        {/* Bio — só desktop; no mobile fica no conteúdo abaixo */}
-                        {(bioPt ?? artist.bio) ? (
-                            <div className="hidden md:block">
-                                <ExpandableBio bio={bioPt ?? artist.bio!} />
-                            </div>
-                        ) : null}
 
                         {/* Stats — só desktop */}
                         <div className="hidden md:flex items-center gap-4 flex-wrap">
@@ -322,6 +317,13 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 <span className="text-sm font-bold">{artist.favoriteCount.toLocaleString('pt-BR')} fãs</span>
                             </div>
                         </div>
+
+                        {/* Bio — só desktop */}
+                        {bioText && (
+                            <div className="hidden md:block max-w-xl">
+                                <ExpandableBio bio={bioText} />
+                            </div>
+                        )}
                     </div>
 
                     {/* Portrait card — só desktop, igual ao poster das produções */}
@@ -350,12 +352,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-4 lg:space-y-6 lg:col-span-1">
 
-                        {/* Bio mobile — antes das informações, só no mobile */}
-                        {(bioPt ?? artist.bio) ? (
-                            <div className="md:hidden">
-                                <ExpandableBio bio={bioPt ?? artist.bio!} />
-                            </div>
-                        ) : null}
 
                         {/* Informações */}
                         <div className="rounded-2xl bg-zinc-900/50 border border-white/5 overflow-hidden">
@@ -447,9 +443,15 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             format="horizontal"
                         />
 
+                        {/* Bio — só mobile */}
+                        {bioText && (
+                            <div className="md:hidden">
+                                <ExpandableBio bio={bioText} />
+                            </div>
+                        )}
 
                         {/* Perfil Biográfico */}
-                        {profileSections.length >= 2 && (() => {
+                        {profileSections.length >= 1 && (() => {
                             const sectionIcons = [User, Film, Sparkles]
                             return (
                                 <section>
