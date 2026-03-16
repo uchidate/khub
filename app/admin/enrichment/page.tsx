@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useToast } from '@/lib/hooks/useToast'
 import Image from 'next/image'
 import {
     Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
     CheckCircle, DollarSign, ChevronRight, Play, Search, X, Zap,
+    EyeOff, Eye, ChevronDown,
 } from 'lucide-react'
 
 type Tab = 'artists' | 'productions' | 'news'
@@ -37,7 +38,6 @@ interface StatsData {
     budgets:       Record<string, BudgetStatus> | undefined
 }
 
-// Field display config per tab
 const FIELD_LABELS: Record<Tab, Record<string, { label: string; target: string }>> = {
     artists: {
         bio:          { label: 'Bio',         target: 'artist_bio' },
@@ -53,19 +53,27 @@ const FIELD_LABELS: Record<Tab, Record<string, { label: string; target: string }
     },
 }
 
-// Maps field key → stats count key (from GET /api/admin/enrichment)
 const STATS_COUNT_KEYS: Record<Tab, Record<string, string>> = {
     artists:     { bio: 'artist_bio', editorial: 'artist_editorial', curiosidades: 'artist_curiosidades' },
     productions: { review: 'production_review' },
     news:        { nota: 'news_editorial_note', blog: 'news_blog_post' },
 }
 
-// Maps field key → budget feature key
 const BUDGET_FEATURE_KEYS: Record<Tab, Record<string, string>> = {
     artists:     { bio: 'artist_bio_enrichment', editorial: 'artist_editorial', curiosidades: 'artist_curiosidades' },
     productions: { review: 'production_review' },
     news:        { nota: 'news_editorial_note', blog: 'blog_post_generation' },
 }
+
+// All stats keys across all tabs for the global overview
+const ALL_STATS: { tab: Tab; field: string; label: string; icon: React.ElementType }[] = [
+    { tab: 'artists',     field: 'bio',          label: 'Artistas · Bio',          icon: Users },
+    { tab: 'artists',     field: 'editorial',    label: 'Artistas · Projetos',     icon: Users },
+    { tab: 'artists',     field: 'curiosidades', label: 'Artistas · Curiosidades', icon: Users },
+    { tab: 'productions', field: 'review',       label: 'Produções · Review',      icon: Film  },
+    { tab: 'news',        field: 'nota',         label: 'Notícias · Nota',         icon: Newspaper },
+    { tab: 'news',        field: 'blog',         label: 'Notícias · Blog',         icon: Newspaper },
+]
 
 const TAB_CONFIG: Record<Tab, { label: string; icon: React.ElementType; batchLimit: number }> = {
     artists:     { label: 'Artistas',  icon: Users,     batchLimit: 10 },
@@ -227,26 +235,42 @@ export default function EnrichmentPage() {
     const [stats,               setStats]               = useState<StatsData | null>(null)
     const [loading,             setLoading]             = useState(false)
     const [batchRunning,        setBatchRunning]        = useState(false)
-    const [batchProgress,       setBatchProgress]       = useState<string | null>(null)
+    const [batchProgress,       setBatchProgress]       = useState<{ step: number; total: number; label: string } | null>(null)
     const [searchQuery,         setSearchQuery]         = useState('')
-    const [searchInput,         setSearchInput]         = useState('')
     const [searchResults,       setSearchResults]       = useState<QueueData | null>(null)
     const [fieldFilter,         setFieldFilter]         = useState<string>('all')
+    const [hideComplete,        setHideComplete]        = useState(true)
+    const [loadingMore,         setLoadingMore]         = useState(false)
     const [selectedBatchFields, setSelectedBatchFields] = useState<Set<string>>(
         new Set(Object.keys(FIELD_LABELS.artists))
     )
+    const searchDebounce  = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const pendingFieldRef = useRef<string>('all')
 
-    const fetchQueue = useCallback(async (tab: Tab) => {
-        setLoading(true)
+    const fetchQueue = useCallback(async (tab: Tab, append = false, offset = 0, field = 'all') => {
+        if (!append) setLoading(true)
+        else setLoadingMore(true)
         try {
-            const res  = await fetch(`/api/admin/enrichment/queue?tab=${tab}&limit=30`)
+            const params = new URLSearchParams({ tab, limit: '30', offset: String(offset) })
+            if (field && field !== 'all') params.set('field', field)
+            const res  = await fetch(`/api/admin/enrichment/queue?${params}`)
             if (!res.ok) return
             const data = await res.json() as QueueData
-            setQueue(prev => ({ ...prev, [tab]: data }))
+            setQueue(prev => {
+                if (!append) return { ...prev, [tab]: data }
+                const existing = prev[tab]
+                return {
+                    ...prev,
+                    [tab]: existing
+                        ? { ...data, items: [...existing.items, ...data.items] }
+                        : data
+                }
+            })
         } catch {
             showError('Erro ao carregar fila')
         } finally {
             setLoading(false)
+            setLoadingMore(false)
         }
     }, [showError])
 
@@ -274,17 +298,24 @@ export default function EnrichmentPage() {
     }, [showError])
 
     useEffect(() => {
-        fetchQueue(activeTab)
-        setFieldFilter('all')
+        const f = pendingFieldRef.current
+        pendingFieldRef.current = 'all'
+        fetchQueue(activeTab, false, 0, f)
+        setFieldFilter(f)
         setSelectedBatchFields(new Set(Object.keys(FIELD_LABELS[activeTab])))
+        setSearchQuery('')
+        setSearchResults(null)
     }, [activeTab, fetchQueue])
 
     useEffect(() => { fetchStats() }, [fetchStats])
 
-    useEffect(() => {
-        if (!searchQuery) { setSearchResults(null); return }
-        fetchSearch(searchQuery, activeTab)
-    }, [searchQuery, activeTab, fetchSearch])
+    // Auto-search with debounce
+    function handleSearchInput(value: string) {
+        setSearchQuery(value)
+        if (searchDebounce.current) clearTimeout(searchDebounce.current)
+        if (!value.trim()) { setSearchResults(null); return }
+        searchDebounce.current = setTimeout(() => fetchSearch(value, activeTab), 400)
+    }
 
     function handleItemDone(entityId: string, field: string) {
         const update = (tabData: QueueData | null): QueueData | null => {
@@ -316,9 +347,11 @@ export default function EnrichmentPage() {
 
         const limit = TAB_CONFIG[activeTab].batchLimit
         setBatchRunning(true)
+        let totalProcessed = 0
         try {
-            for (const { label, target } of targets) {
-                setBatchProgress(`Gerando ${label}...`)
+            for (let i = 0; i < targets.length; i++) {
+                const { label, target } = targets[i]
+                setBatchProgress({ step: i + 1, total: targets.length, label })
                 const res  = await fetch('/api/admin/enrichment', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -326,9 +359,12 @@ export default function EnrichmentPage() {
                 })
                 const data = await res.json()
                 if (!res.ok) { showError(data.error ?? `Erro em ${target}`); continue }
-                if (data.processed > 0) showSuccess(`${data.processed} ${label} gerados`)
+                if (data.processed > 0) {
+                    totalProcessed += data.processed
+                    showSuccess(`${data.processed} ${label} gerados`)
+                }
             }
-            await Promise.all([fetchQueue(activeTab), fetchStats()])
+            if (totalProcessed > 0) await Promise.all([fetchQueue(activeTab, false, 0, fieldFilter), fetchStats()])
         } catch {
             showError('Erro no lote')
         } finally {
@@ -349,92 +385,112 @@ export default function EnrichmentPage() {
     const isSearching  = searchQuery.trim().length > 0
     const currentQueue = isSearching ? searchResults : queue[activeTab]
     const allItems     = currentQueue?.items ?? []
-    const visibleItems = fieldFilter === 'all'
+    const filteredByField = fieldFilter === 'all'
         ? allItems
         : allItems.filter(item => item.missingFields.includes(fieldFilter))
+    const visibleItems = hideComplete
+        ? filteredByField.filter(item => item.missingFields.length > 0)
+        : filteredByField
     const totalInQueue = currentQueue?.total ?? 0
     const cfg          = TAB_CONFIG[activeTab]
     const fieldMap     = FIELD_LABELS[activeTab]
     const statsKeys    = STATS_COUNT_KEYS[activeTab]
     const budgetKeys   = BUDGET_FEATURE_KEYS[activeTab]
 
+    // Estimated cost of running the batch
+    const batchCostEstimate = (() => {
+        if (!currentQueue) return 0
+        const itemsToProcess = currentQueue.items.slice(0, cfg.batchLimit)
+        return itemsToProcess.reduce((sum, item) => sum + item.estimatedCost * selectedBatchFields.size, 0)
+    })()
+
+    const completeCount = allItems.filter(i => i.missingFields.length === 0).length
+
     return (
         <AdminLayout title="Smart Queue — Enriquecimento">
             <div className="space-y-5">
 
-                {/* Stats bar */}
+                {/* Global stats overview — always visible, all tabs */}
                 {stats && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {Object.entries(statsKeys).map(([fieldKey, countKey]) => {
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                        {ALL_STATS.map(({ tab, field, label }) => {
+                            const countKey  = STATS_COUNT_KEYS[tab][field]
+                            const budgetKey = BUDGET_FEATURE_KEYS[tab][field]
                             const count     = stats.counts?.[countKey] ?? 0
-                            const label     = fieldMap[fieldKey]?.label ?? fieldKey
-                            const budgetKey = budgetKeys[fieldKey]
                             const budgetOk  = !budgetKey || !stats.budgets?.[budgetKey]?.exceeded
+                            const isActive  = tab === activeTab
                             return (
-                                <div key={fieldKey} className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">{label}</p>
-                                        <p className={`text-xl font-black tabular-nums ${count === 0 ? 'text-emerald-400' : 'text-white'}`}>{count}</p>
-                                        <p className="text-[10px] text-zinc-600">pendentes</p>
+                                <button
+                                    key={`${tab}-${field}`}
+                                    onClick={() => {
+                                        if (tab === activeTab) {
+                                            // Same tab — just filter
+                                            setFieldFilter(field)
+                                            fetchQueue(tab, false, 0, field)
+                                        } else {
+                                            // Different tab — set ref so useEffect picks it up
+                                            pendingFieldRef.current = field
+                                            setActiveTab(tab)
+                                        }
+                                    }}
+                                    className={`text-left p-2.5 rounded-xl border transition-all ${
+                                        isActive && fieldFilter === field
+                                            ? 'bg-blue-900/20 border-blue-500/30'
+                                            : 'bg-zinc-900/40 border-white/5 hover:border-white/10 hover:bg-zinc-900/60'
+                                    }`}
+                                >
+                                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-black truncate">{label}</p>
+                                    <p className={`text-lg font-black tabular-nums leading-tight ${count === 0 ? 'text-emerald-400' : 'text-white'}`}>
+                                        {count}
+                                    </p>
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${budgetOk ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                        <span className="text-[9px] text-zinc-600">{budgetOk ? 'ok' : 'esgotado'}</span>
                                     </div>
-                                    <div
-                                        className={`w-2 h-2 rounded-full shrink-0 ${budgetOk ? 'bg-emerald-500' : 'bg-red-500'}`}
-                                        title={budgetOk ? 'Budget OK' : 'Budget esgotado'}
-                                    />
-                                </div>
+                                </button>
                             )
                         })}
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Custo Total</p>
-                                <p className="text-xl font-black font-mono text-white">${(stats.totalEstimate ?? 0).toFixed(3)}</p>
-                                <p className="text-[10px] text-zinc-600">estimado geral</p>
-                            </div>
-                            <DollarSign className="w-4 h-4 text-zinc-600 shrink-0" />
-                        </div>
                     </div>
                 )}
 
-                <p className="text-xs text-zinc-500">
-                    Itens priorizados por relevância e completude. Gere conteúdo editorial com IA para satisfazer AdSense (300–500 palavras/página).
-                </p>
+                {/* Cost + session summary */}
+                <div className="flex items-center gap-4 text-xs text-zinc-600">
+                    <span className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3" />
+                        Custo total estimado: <span className="text-zinc-400 font-mono">${(stats?.totalEstimate ?? 0).toFixed(3)}</span>
+                    </span>
+                    {currentQueue && (
+                        <span>
+                            Fila: <span className="text-zinc-400">{totalInQueue}</span> itens
+                            {completeCount > 0 && (
+                                <span className="text-zinc-600"> · {completeCount} completos</span>
+                            )}
+                        </span>
+                    )}
+                </div>
 
-                {/* Search */}
-                <form
-                    onSubmit={e => { e.preventDefault(); setSearchQuery(searchInput) }}
-                    className="flex items-center gap-2"
-                >
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
-                        <input
-                            type="text"
-                            value={searchInput}
-                            onChange={e => {
-                                setSearchInput(e.target.value)
-                                if (!e.target.value) setSearchQuery('')
-                            }}
-                            placeholder={`Buscar ${cfg.label.toLowerCase()}...`}
-                            className="w-full pl-9 pr-8 py-2 text-sm bg-zinc-900/60 border border-white/8 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 focus:bg-zinc-900 transition-all"
-                        />
-                        {searchInput && (
-                            <button
-                                type="button"
-                                onClick={() => { setSearchInput(''); setSearchQuery('') }}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
-                            >
-                                <X className="w-3.5 h-3.5" />
-                            </button>
-                        )}
-                    </div>
-                    <button
-                        type="submit"
-                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all border border-white/6"
-                    >
-                        Buscar
-                    </button>
-                </form>
+                {/* Search — auto-search with debounce */}
+                <div className="relative max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => handleSearchInput(e.target.value)}
+                        placeholder={`Buscar ${cfg.label.toLowerCase()}...`}
+                        className="w-full pl-9 pr-8 py-2 text-sm bg-zinc-900/60 border border-white/8 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 focus:bg-zinc-900 transition-all"
+                    />
+                    {searchQuery && (
+                        <button
+                            type="button"
+                            onClick={() => handleSearchInput('')}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                </div>
 
-                {/* Tab bar + filter chips + refresh */}
+                {/* Tab bar + filter chips + hide-complete + refresh */}
                 <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-1 bg-zinc-900/60 border border-white/6 rounded-xl p-1">
                         {(Object.entries(TAB_CONFIG) as [Tab, typeof cfg][]).map(([tab, c]) => {
@@ -467,7 +523,7 @@ export default function EnrichmentPage() {
                     {/* Field filter chips */}
                     <div className="flex items-center gap-1 flex-wrap">
                         <button
-                            onClick={() => setFieldFilter('all')}
+                            onClick={() => { setFieldFilter('all'); fetchQueue(activeTab, false, 0, 'all') }}
                             className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
                                 fieldFilter === 'all'
                                     ? 'bg-zinc-700 text-white'
@@ -478,10 +534,11 @@ export default function EnrichmentPage() {
                         </button>
                         {Object.entries(fieldMap).map(([key, c]) => {
                             const count = stats?.counts[statsKeys[key]] ?? 0
+                            const next  = fieldFilter === key ? 'all' : key
                             return (
                                 <button
                                     key={key}
-                                    onClick={() => setFieldFilter(fieldFilter === key ? 'all' : key)}
+                                    onClick={() => { setFieldFilter(next); fetchQueue(activeTab, false, 0, next) }}
                                     className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
                                         fieldFilter === key
                                             ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
@@ -494,9 +551,23 @@ export default function EnrichmentPage() {
                         })}
                     </div>
 
+                    {/* Hide complete toggle */}
+                    <button
+                        onClick={() => setHideComplete(v => !v)}
+                        className={`flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
+                            hideComplete
+                                ? 'bg-zinc-800 border-white/10 text-zinc-300'
+                                : 'bg-transparent border-white/6 text-zinc-600 hover:text-zinc-400'
+                        }`}
+                        title={hideComplete ? 'Mostrar completos' : 'Ocultar completos'}
+                    >
+                        {hideComplete ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        {hideComplete ? 'Ocultando completos' : 'Mostrar completos'}
+                    </button>
+
                     <div className="ml-auto">
                         <button
-                            onClick={() => { fetchQueue(activeTab); fetchStats() }}
+                            onClick={() => { fetchQueue(activeTab, false, 0, fieldFilter); fetchStats() }}
                             disabled={loading}
                             className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1.5 rounded-lg hover:bg-zinc-800"
                         >
@@ -506,7 +577,7 @@ export default function EnrichmentPage() {
                     </div>
                 </div>
 
-                {/* Batch field selector + run */}
+                {/* Batch field selector + cost estimate + run */}
                 <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl bg-zinc-900/30 border border-white/5">
                     <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest shrink-0">Lote:</span>
                     {Object.entries(fieldMap).map(([key, c]) => (
@@ -523,14 +594,27 @@ export default function EnrichmentPage() {
                             {selectedBatchFields.has(key) ? '✓' : '○'} {c.label}
                         </button>
                     ))}
+
+                    {/* Estimated cost for batch */}
+                    {batchCostEstimate > 0 && !batchRunning && (
+                        <span className="text-[10px] text-zinc-600 font-mono ml-1">
+                            ~${batchCostEstimate.toFixed(4)}
+                        </span>
+                    )}
+
                     <button
                         onClick={runBatch}
                         disabled={batchRunning || loading || totalInQueue === 0 || isSearching || selectedBatchFields.size === 0}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20 ml-auto"
                     >
-                        {batchRunning
-                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{batchProgress ?? 'Gerando...'}</>
-                            : <><Play className="w-3.5 h-3.5" />Gerar próximos {cfg.batchLimit}</>
+                        {batchRunning && batchProgress
+                            ? <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                {batchProgress.label} ({batchProgress.step}/{batchProgress.total})
+                              </>
+                            : batchRunning
+                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Gerando...</>
+                                : <><Play className="w-3.5 h-3.5" />Gerar próximos {cfg.batchLimit}</>
                         }
                     </button>
                 </div>
@@ -554,6 +638,14 @@ export default function EnrichmentPage() {
                                 <p className="text-sm font-medium text-white">Nenhum item sem &ldquo;{fieldMap[fieldFilter]?.label}&rdquo;</p>
                                 <p className="text-xs text-zinc-500 mt-1">Todos os itens visíveis têm este campo preenchido.</p>
                             </>
+                        ) : hideComplete && completeCount > 0 ? (
+                            <>
+                                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
+                                <p className="text-sm font-medium text-white">Todos os itens carregados estão completos!</p>
+                                <button onClick={() => setHideComplete(false)} className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors">
+                                    Mostrar {completeCount} itens completos
+                                </button>
+                            </>
                         ) : (
                             <>
                                 <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
@@ -576,12 +668,24 @@ export default function EnrichmentPage() {
                                 batchRunning={batchRunning}
                             />
                         ))}
-                        {totalInQueue > allItems.length && (
-                            <p className="text-center text-xs text-zinc-600 pt-2">
-                                {isSearching
-                                    ? `+${totalInQueue - allItems.length} resultados não exibidos · refine a busca`
-                                    : `+${totalInQueue - allItems.length} itens não exibidos · use "Gerar próximos" para processar em lote`
+
+                        {/* Load more */}
+                        {!isSearching && allItems.length < totalInQueue && (
+                            <button
+                                onClick={() => fetchQueue(activeTab, true, allItems.length, fieldFilter)}
+                                disabled={loadingMore}
+                                className="w-full flex items-center justify-center gap-2 py-3 text-xs text-zinc-500 hover:text-zinc-300 transition-colors border border-dashed border-white/6 rounded-xl hover:border-white/12"
+                            >
+                                {loadingMore
+                                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Carregando...</>
+                                    : <><ChevronDown className="w-3.5 h-3.5" />Carregar mais ({totalInQueue - allItems.length} restantes)</>
                                 }
+                            </button>
+                        )}
+
+                        {isSearching && totalInQueue > allItems.length && (
+                            <p className="text-center text-xs text-zinc-600 pt-2">
+                                +{totalInQueue - allItems.length} resultados · refine a busca
                             </p>
                         )}
                     </div>

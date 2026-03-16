@@ -30,16 +30,31 @@ export async function GET(req: Request) {
     const { error } = await requireAdmin()
     if (error) return error
 
-    const url   = new URL(req.url)
-    const tab   = (url.searchParams.get('tab') ?? 'artists') as QueueTab
-    const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '30'), 100)
-    const q     = url.searchParams.get('q')?.trim() ?? ''
+    const url    = new URL(req.url)
+    const tab    = (url.searchParams.get('tab') ?? 'artists') as QueueTab
+    const limit  = Math.min(parseInt(url.searchParams.get('limit') ?? '30'), 100)
+    const offset = parseInt(url.searchParams.get('offset') ?? '0')
+    const q      = url.searchParams.get('q')?.trim() ?? ''
+    const field  = url.searchParams.get('field')?.trim() ?? ''
 
     let items: QueueItem[] = []
     let total = 0
     let totalCostEstimate = 0
 
     if (tab === 'artists') {
+        // Field-specific missing clause
+        const fieldMissingClause = (() => {
+            if (field === 'bio')          return [{ bio: null }]
+            if (field === 'editorial')    return [{ analiseEditorial: null }]
+            if (field === 'curiosidades') return [{ curiosidades: { isEmpty: true } }, { curiosidades: { equals: null } }]
+            return [
+                { bio: null },
+                { analiseEditorial: null },
+                { curiosidades: { isEmpty: true } },
+                { curiosidades: { equals: null } },
+            ]
+        })()
+
         const baseWhere = q
             ? {
                 isHidden:           false,
@@ -52,12 +67,7 @@ export async function GET(req: Request) {
             : {
                 isHidden:           false,
                 flaggedAsNonKorean: false,
-                OR: [
-                    { bio:             null },
-                    { analiseEditorial: null },
-                    { curiosidades:    { isEmpty: true } },
-                    { curiosidades:    { equals: null } },
-                ],
+                OR: fieldMissingClause,
             }
 
         const artists = await prisma.artist.findMany({
@@ -75,6 +85,7 @@ export async function GET(req: Request) {
             },
             orderBy: { trendingScore: 'desc' },
             take: limit,
+            skip: offset,
         })
 
         total = await prisma.artist.count({ where: baseWhere })
@@ -147,6 +158,7 @@ export async function GET(req: Request) {
             },
             orderBy: { voteAverage: 'desc' },
             take: limit,
+            skip: offset,
         })
 
         total = await prisma.production.count({ where: prodWhere })
@@ -202,6 +214,7 @@ export async function GET(req: Request) {
             },
             orderBy: { publishedAt: 'desc' },
             take: limit,
+            skip: offset,
         })
 
         total = await prisma.news.count({ where: newsWhere })
