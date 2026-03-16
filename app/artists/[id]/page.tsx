@@ -456,7 +456,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                         <span className="text-sm font-black text-white uppercase tracking-widest">{sec.title}</span>
                                                         <div className="flex-1 h-px bg-white/5" />
                                                     </div>
-                                                    <p className="text-sm text-zinc-300 leading-relaxed pl-8">{sec.content}</p>
+                                                    <p className="text-sm text-zinc-300 leading-relaxed pl-8 text-justify">{sec.content}</p>
                                                 </div>
                                             )
                                         })}
@@ -474,7 +474,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 </div>
                                 <ul className="space-y-3">
                                     {artist.curiosidades.map((c, i) => (
-                                        <li key={i} className="flex items-start gap-3 text-zinc-300 text-sm leading-relaxed">
+                                        <li key={i} className="flex items-start gap-3 text-zinc-300 text-sm leading-relaxed text-justify">
                                             <span className="mt-1 w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 text-[10px] font-black flex items-center justify-center shrink-0">
                                                 {i + 1}
                                             </span>
