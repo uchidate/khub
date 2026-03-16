@@ -7,7 +7,18 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles } from 'lucide-react'
+import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles, ShieldAlert, RotateCcw } from 'lucide-react'
+import { TakedownModal } from '@/components/admin/TakedownModal'
+import { RestoreModal } from '@/components/admin/RestoreModal'
+
+interface TakedownRecord {
+    id: string
+    reason: string
+    noticeReference: string | null
+    noticeDate: string | null
+    hiddenAt: string
+    hiddenBy: { id: string; name: string | null; email: string }
+}
 
 interface Production {
     id: string
@@ -33,6 +44,7 @@ interface Production {
     productionStatus: string | null
     network: string | null
     isHidden: boolean
+    isTakenDown: boolean
 }
 
 interface TmdbPreview {
@@ -92,6 +104,9 @@ export default function EditProductionPage() {
     const [fetchingTmdb, setFetchingTmdb] = useState(false)
     const [tmdbError, setTmdbError] = useState('')
     const [syncedFields, setSyncedFields] = useState<Set<string>>(new Set())
+    const [showTakedownModal, setShowTakedownModal] = useState(false)
+    const [showRestoreModal, setShowRestoreModal] = useState(false)
+    const [activeTakedown, setActiveTakedown] = useState<TakedownRecord | null>(null)
 
     useEffect(() => {
         fetch(`/api/admin/productions/by-id?id=${id}`)
@@ -99,6 +114,15 @@ export default function EditProductionPage() {
             .then(data => {
                 setProduction(data)
                 setForm(data)
+                if (data.isTakenDown) {
+                    fetch(`/api/admin/productions/${id}/takedown`)
+                        .then(r => r.json())
+                        .then((history: TakedownRecord[]) => {
+                            const active = history.find((t: TakedownRecord & { isActive?: boolean }) => (t as TakedownRecord & { isActive: boolean }).isActive !== false)
+                            if (active) setActiveTakedown(active)
+                        })
+                        .catch(() => {})
+                }
             })
             .catch(() => toast.error('Erro ao carregar produção'))
             .finally(() => setLoading(false))
@@ -250,6 +274,32 @@ export default function EditProductionPage() {
                 )}
 
                 {production && (
+                    <>
+                    {/* Banner de takedown ativo */}
+                    {production.isTakenDown && (
+                        <div className="mb-6 rounded-xl border border-red-700/60 bg-red-950/30 p-4">
+                            <div className="flex items-start gap-3">
+                                <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-400" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-red-300">Takedown Legal Ativo</p>
+                                    {activeTakedown && (
+                                        <div className="mt-1 space-y-0.5 text-xs text-red-400/80">
+                                            <p>Tipo: <span className="font-medium text-red-300">{activeTakedown.reason}</span></p>
+                                            {activeTakedown.noticeReference && (
+                                                <p>Referência: <span className="font-medium text-red-300">{activeTakedown.noticeReference}</span></p>
+                                            )}
+                                            {activeTakedown.noticeDate && (
+                                                <p>Data da notificação: <span className="font-medium text-red-300">{new Date(activeTakedown.noticeDate).toLocaleDateString('pt-BR')}</span></p>
+                                            )}
+                                            <p>Ocultado em: <span className="font-medium text-red-300">{new Date(activeTakedown.hiddenAt).toLocaleString('pt-BR')}</span> por <span className="font-medium text-red-300">{activeTakedown.hiddenBy.name ?? activeTakedown.hiddenBy.email}</span></p>
+                                        </div>
+                                    )}
+                                    <p className="mt-2 text-xs text-red-500">Esta produção está oculta do site público por motivo legal. Use o botão &quot;Restaurar&quot; para remover o takedown.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Sincronizar do TMDB — botões principal */}
                         {production.tmdbId && (
@@ -865,7 +915,7 @@ export default function EditProductionPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-3 pt-2">
+                        <div className="flex items-center gap-3 pt-2 flex-wrap">
                             <button
                                 type="submit"
                                 disabled={saving}
@@ -880,8 +930,81 @@ export default function EditProductionPage() {
                             >
                                 Cancelar
                             </Link>
+
+                            {/* Takedown / Restore buttons */}
+                            {!production.isTakenDown && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTakedownModal(true)}
+                                    className="ml-auto flex items-center gap-2 px-4 py-2.5 bg-red-900/30 hover:bg-red-900/50 border border-red-700/50 text-red-400 rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    <ShieldAlert className="w-4 h-4" />
+                                    Notificação Legal
+                                </button>
+                            )}
+                            {production.isTakenDown && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRestoreModal(true)}
+                                    className="ml-auto flex items-center gap-2 px-4 py-2.5 bg-yellow-900/30 hover:bg-yellow-900/50 border border-yellow-700/50 text-yellow-400 rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Restaurar
+                                </button>
+                            )}
                         </div>
                     </form>
+
+                    {/* Modals */}
+                    {showTakedownModal && (
+                        <TakedownModal
+                            productionId={id}
+                            productionTitle={production.titlePt}
+                            onSuccess={() => {
+                                setShowTakedownModal(false)
+                                // Reload production data
+                                setLoading(true)
+                                fetch(`/api/admin/productions/by-id?id=${id}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        setProduction(data)
+                                        setForm(data)
+                                        if (data.isTakenDown) {
+                                            fetch(`/api/admin/productions/${id}/takedown`)
+                                                .then(r => r.json())
+                                                .then((history: TakedownRecord[]) => {
+                                                    const active = history.find((t: TakedownRecord & { isActive?: boolean }) => (t as TakedownRecord & { isActive: boolean }).isActive !== false)
+                                                    if (active) setActiveTakedown(active)
+                                                })
+                                                .catch(() => {})
+                                        }
+                                    })
+                                    .finally(() => setLoading(false))
+                                toast.success('Takedown emitido com sucesso')
+                            }}
+                            onClose={() => setShowTakedownModal(false)}
+                        />
+                    )}
+                    {showRestoreModal && activeTakedown && (
+                        <RestoreModal
+                            productionId={id}
+                            productionTitle={production.titlePt}
+                            takedownReason={activeTakedown.reason}
+                            onSuccess={() => {
+                                setShowRestoreModal(false)
+                                setActiveTakedown(null)
+                                // Reload production data
+                                setLoading(true)
+                                fetch(`/api/admin/productions/by-id?id=${id}`)
+                                    .then(r => r.json())
+                                    .then(data => { setProduction(data); setForm(data) })
+                                    .finally(() => setLoading(false))
+                                toast.success('Produção restaurada com sucesso')
+                            }}
+                            onClose={() => setShowRestoreModal(false)}
+                        />
+                    )}
+                    </>
                 )}
             </div>
         </AdminLayout>
