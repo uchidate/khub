@@ -148,7 +148,7 @@ export default async function Home() {
     // Paraleliza dados públicos + filtro etário (independentes entre si)
     const [publicData, ageRatingFilter] = await Promise.all([
         getHomePublicData(),
-        applyAgeRatingFilter(undefined, session),
+        applyAgeRatingFilter(),
     ])
 
     const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups, featuredBlogPosts } = publicData
