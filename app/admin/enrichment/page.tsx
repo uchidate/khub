@@ -101,7 +101,7 @@ function EnrichButton({
     target:   string
     disabled: boolean
     present:  boolean
-    onDone:   (entityId: string, field: string) => void
+    onDone:   (entityId: string, field: string, cost: number) => void
     onError:  (msg: string) => void
 }) {
     const [loading,  setLoading]  = useState(false)
@@ -123,7 +123,7 @@ function EnrichButton({
             const data = await res.json()
             if (res.ok && data.processed > 0) {
                 setJustDone(true)
-                onDone(entityId, fieldKey)
+                onDone(entityId, fieldKey, data.totalCostUsd ?? 0)
                 setTimeout(() => setJustDone(false), 2000)
             } else {
                 setError(true)
@@ -172,7 +172,7 @@ function ProcessAllButton({
     item:     QueueItem
     fieldMap: Record<string, { label: string; target: string }>
     disabled: boolean
-    onDone:   (entityId: string, field: string) => void
+    onDone:   (entityId: string, field: string, cost: number) => void
     onError:  (msg: string) => void
 }) {
     const [loading,  setLoading]  = useState(false)
@@ -187,6 +187,7 @@ function ProcessAllButton({
     async function handleClick() {
         if (loading || disabled) return
         setLoading(true)
+        let totalCost = 0
         try {
             for (const c of missing) {
                 const res  = await fetch('/api/admin/enrichment', {
@@ -195,9 +196,12 @@ function ProcessAllButton({
                     body:    JSON.stringify({ target: c.target, entityId: item.id }),
                 })
                 const data = await res.json()
-                if (res.ok && data.processed > 0) onDone(item.id, c.field)
-                else onError(data.error ?? `Erro em ${c.label}`)
+                if (res.ok && data.processed > 0) {
+                    onDone(item.id, c.field, data.totalCostUsd ?? 0)
+                    totalCost += data.totalCostUsd ?? 0
+                } else onError(data.error ?? `Erro em ${c.label}`)
             }
+            void totalCost
             setJustDone(true)
             setTimeout(() => setJustDone(false), 2000)
         } catch {
@@ -235,7 +239,7 @@ export default function EnrichmentPage() {
     const [stats,               setStats]               = useState<StatsData | null>(null)
     const [loading,             setLoading]             = useState(false)
     const [batchRunning,        setBatchRunning]        = useState(false)
-    const [batchProgress,       setBatchProgress]       = useState<{ step: number; total: number; label: string } | null>(null)
+    const [batchProgress,       setBatchProgress]       = useState<{ step: number; total: number; label: string; stepProcessed: number } | null>(null)
     const [searchQuery,         setSearchQuery]         = useState('')
     const [searchResults,       setSearchResults]       = useState<QueueData | null>(null)
     const [fieldFilter,         setFieldFilter]         = useState<string>('all')
@@ -244,6 +248,7 @@ export default function EnrichmentPage() {
     const [selectedBatchFields, setSelectedBatchFields] = useState<Set<string>>(
         new Set(Object.keys(FIELD_LABELS.artists))
     )
+    const [sessionStats, setSessionStats] = useState<{ processed: number; cost: number }>({ processed: 0, cost: 0 })
     const searchDebounce  = useRef<ReturnType<typeof setTimeout> | null>(null)
     const pendingFieldRef = useRef<string>('all')
 
@@ -317,7 +322,8 @@ export default function EnrichmentPage() {
         searchDebounce.current = setTimeout(() => fetchSearch(value, activeTab), 400)
     }
 
-    function handleItemDone(entityId: string, field: string) {
+    function handleItemDone(entityId: string, field: string, cost: number) {
+        setSessionStats(prev => ({ processed: prev.processed + 1, cost: prev.cost + cost }))
         const update = (tabData: QueueData | null): QueueData | null => {
             if (!tabData) return tabData
             return {
@@ -348,10 +354,11 @@ export default function EnrichmentPage() {
         const limit = TAB_CONFIG[activeTab].batchLimit
         setBatchRunning(true)
         let totalProcessed = 0
+        let batchTotalCost = 0
         try {
             for (let i = 0; i < targets.length; i++) {
                 const { label, target } = targets[i]
-                setBatchProgress({ step: i + 1, total: targets.length, label })
+                setBatchProgress({ step: i + 1, total: targets.length, label, stepProcessed: 0 })
                 const res  = await fetch('/api/admin/enrichment', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -361,9 +368,12 @@ export default function EnrichmentPage() {
                 if (!res.ok) { showError(data.error ?? `Erro em ${target}`); continue }
                 if (data.processed > 0) {
                     totalProcessed += data.processed
+                    batchTotalCost += data.totalCostUsd ?? 0
                     showSuccess(`${data.processed} ${label} gerados`)
                 }
+                setBatchProgress({ step: i + 1, total: targets.length, label, stepProcessed: data.processed ?? 0 })
             }
+            if (batchTotalCost > 0) setSessionStats(prev => ({ processed: prev.processed + totalProcessed, cost: prev.cost + batchTotalCost }))
             if (totalProcessed > 0) await Promise.all([fetchQueue(activeTab, false, 0, fieldFilter), fetchStats()])
         } catch {
             showError('Erro no lote')
@@ -395,13 +405,17 @@ export default function EnrichmentPage() {
     const cfg          = TAB_CONFIG[activeTab]
     const fieldMap     = FIELD_LABELS[activeTab]
     const statsKeys    = STATS_COUNT_KEYS[activeTab]
-    const budgetKeys   = BUDGET_FEATURE_KEYS[activeTab]
 
     // Estimated cost of running the batch
     const batchCostEstimate = (() => {
         if (!currentQueue) return 0
         const itemsToProcess = currentQueue.items.slice(0, cfg.batchLimit)
-        return itemsToProcess.reduce((sum, item) => sum + item.estimatedCost * selectedBatchFields.size, 0)
+        // Only include cost for selected missing fields (proportional estimate)
+        return itemsToProcess.reduce((sum, item) => {
+            const selectedMissing = item.missingFields.filter(f => selectedBatchFields.has(f))
+            if (selectedMissing.length === 0 || item.missingFields.length === 0) return sum
+            return sum + item.estimatedCost * (selectedMissing.length / item.missingFields.length)
+        }, 0)
     })()
 
     const completeCount = allItems.filter(i => i.missingFields.length === 0).length
@@ -454,17 +468,27 @@ export default function EnrichmentPage() {
                 )}
 
                 {/* Cost + session summary */}
-                <div className="flex items-center gap-4 text-xs text-zinc-600">
+                <div className="flex items-center gap-4 flex-wrap text-xs text-zinc-600">
                     <span className="flex items-center gap-1">
                         <DollarSign className="w-3 h-3" />
-                        Custo total estimado: <span className="text-zinc-400 font-mono">${(stats?.totalEstimate ?? 0).toFixed(3)}</span>
+                        Custo geral estimado: <span className="text-zinc-400 font-mono">${(stats?.totalEstimate ?? 0).toFixed(3)}</span>
                     </span>
                     {currentQueue && (
                         <span>
                             Fila: <span className="text-zinc-400">{totalInQueue}</span> itens
+                            {currentQueue.totalCostEstimate > 0 && (
+                                <> · ~<span className="text-zinc-400 font-mono">${currentQueue.totalCostEstimate.toFixed(4)}</span></>
+                            )}
                             {completeCount > 0 && (
                                 <span className="text-zinc-600"> · {completeCount} completos</span>
                             )}
+                        </span>
+                    )}
+                    {sessionStats.processed > 0 && (
+                        <span className="flex items-center gap-1 text-emerald-500/70">
+                            <CheckCircle className="w-3 h-3" />
+                            Sessão: {sessionStats.processed} gerados
+                            {sessionStats.cost > 0 && <> · <span className="font-mono">${sessionStats.cost.toFixed(4)}</span></>}
                         </span>
                     )}
                 </div>
@@ -610,7 +634,7 @@ export default function EnrichmentPage() {
                         {batchRunning && batchProgress
                             ? <>
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                {batchProgress.label} ({batchProgress.step}/{batchProgress.total})
+                                {batchProgress.label} ({batchProgress.step}/{batchProgress.total}){batchProgress.stepProcessed > 0 ? ` — ${batchProgress.stepProcessed}` : ''}
                               </>
                             : batchRunning
                                 ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Gerando...</>
@@ -656,11 +680,10 @@ export default function EnrichmentPage() {
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {visibleItems.map((item, idx) => (
+                        {visibleItems.map((item) => (
                             <QueueItemRow
                                 key={item.id}
                                 item={item}
-                                rank={idx + 1}
                                 tab={activeTab}
                                 fieldMap={fieldMap}
                                 onDone={handleItemDone}
@@ -696,13 +719,12 @@ export default function EnrichmentPage() {
 }
 
 function QueueItemRow({
-    item, rank, tab, fieldMap, onDone, onError, batchRunning,
+    item, tab, fieldMap, onDone, onError, batchRunning,
 }: {
     item:         QueueItem
-    rank:         number
     tab:          Tab
     fieldMap:     Record<string, { label: string; target: string }>
-    onDone:       (entityId: string, field: string) => void
+    onDone:       (entityId: string, field: string, cost: number) => void
     onError:      (msg: string) => void
     batchRunning: boolean
 }) {
@@ -714,8 +736,6 @@ function QueueItemRow({
                 ? 'border-emerald-500/20 bg-emerald-900/5'
                 : 'border-white/6 bg-zinc-900/40 hover:border-blue-500/20 hover:bg-zinc-900/60'
         }`}>
-            <span className="text-[10px] text-zinc-700 font-mono w-5 text-center shrink-0">{rank}</span>
-
             <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/6">
                 {item.imageUrl ? (
                     <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
