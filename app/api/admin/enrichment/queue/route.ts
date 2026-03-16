@@ -56,6 +56,7 @@ export async function GET(req: Request) {
                     { bio:             null },
                     { analiseEditorial: null },
                     { curiosidades:    { isEmpty: true } },
+                    { curiosidades:    { equals: null } },
                 ],
             }
 

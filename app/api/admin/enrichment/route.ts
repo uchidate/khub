@@ -58,7 +58,7 @@ export async function GET() {
             where: { isHidden: false, flaggedAsNonKorean: false, analiseEditorial: null },
         }),
         prisma.artist.count({
-            where: { isHidden: false, flaggedAsNonKorean: false, curiosidades: { isEmpty: true } },
+            where: { isHidden: false, flaggedAsNonKorean: false, OR: [{ curiosidades: { isEmpty: true } }, { curiosidades: { equals: null } }] },
         }),
         prisma.production.count({
             where: { isHidden: false, flaggedAsNonKorean: false, editorialReview: null },
@@ -224,7 +224,7 @@ export async function POST(req: Request) {
                         ...(entityId ? { id: entityId } : {
                             isHidden: false,
                             flaggedAsNonKorean: false,
-                            ...(overwrite ? {} : { curiosidades: { isEmpty: true } }),
+                            ...(overwrite ? {} : { OR: [{ curiosidades: { isEmpty: true } }, { curiosidades: { equals: null } }] }),
                         }),
                     },
                     take: entityId ? 1 : limit,
