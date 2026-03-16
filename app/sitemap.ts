@@ -41,8 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 where: {
                     flaggedAsNonKorean: false,
                     isHidden: false,
-                    // Excluir conteúdo adulto: ageRating='18' ou flagrado pela IA
-                    NOT: [{ ageRating: '18' }, { isAdultContent: true }],
+                    // Excluir conteúdo adulto: ageRating='18' ou isAdultContent=true
+                    // AND+OR explícito para não excluir NULL (NOT(NULL)=NULL em SQL)
+                    AND: [
+                        { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
+                        { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
+                    ],
                 },
                 select: { id: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },

@@ -13,9 +13,11 @@ const log = createLogger('ARTIST_VISIBILITY')
 const PUBLIC_PRODUCTION_FILTER = {
   isHidden: false,
   flaggedAsNonKorean: false,
-  NOT: [
-    { ageRating: '18' },
-    { isAdultContent: true },
+  // NULL é explicitamente permitido — produções sem classificação são K-Dramas/filmes legítimos.
+  // Usar AND+OR em vez de NOT para evitar o gotcha de SQL NULL (NOT(NULL) = NULL ≠ TRUE).
+  AND: [
+    { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
+    { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
   ],
 }
 
