@@ -47,9 +47,8 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     }
     if (production.isHidden) return { title: 'Produção não encontrada - HallyuHub', robots: { index: false, follow: false } }
 
-    // Conteúdo oculto por faixa etária (18+ ou não classificado) não deve ser indexado
-    const SAFE_RATINGS = ['L', '10', '12', '14', '16']
-    if (!production.ageRating || !SAFE_RATINGS.includes(production.ageRating)) {
+    // Conteúdo adulto (18+) não deve ser indexado. Sem classificação = permitido.
+    if (production.ageRating === '18') {
         return {
             title: production.titlePt,
             robots: { index: false, follow: false },
