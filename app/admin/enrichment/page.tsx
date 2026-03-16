@@ -30,11 +30,11 @@ interface QueueData {
     totalCostEstimate: number
 }
 
-interface BudgetStatus { feature: string; allowed: boolean; [k: string]: unknown }
+interface BudgetStatus { exceeded: boolean; enabled: boolean; [k: string]: unknown }
 interface StatsData {
     counts:        Record<string, number>
     totalEstimate: number
-    budgets:       BudgetStatus[] | undefined
+    budgets:       Record<string, BudgetStatus> | undefined
 }
 
 // Field display config per tab
@@ -367,7 +367,7 @@ export default function EnrichmentPage() {
                             const count     = stats.counts[countKey] ?? 0
                             const label     = fieldMap[fieldKey]?.label ?? fieldKey
                             const budgetKey = budgetKeys[fieldKey]
-                            const budgetOk  = !budgetKey || stats.budgets?.find(b => b.feature === budgetKey)?.allowed !== false
+                            const budgetOk  = !budgetKey || !stats.budgets?.[budgetKey]?.exceeded
                             return (
                                 <div key={fieldKey} className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
                                     <div className="flex-1 min-w-0">
