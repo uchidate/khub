@@ -6,11 +6,17 @@ const log = createLogger('ARTIST_VISIBILITY')
 /**
  * Critério de "produção publicamente visível" — deve espelhar o filtro da
  * página pública /artists/[id] para que visibilidade e filmografia sejam consistentes.
+ *
+ * Regra: excluir apenas ageRating='18' ou isAdultContent=true.
+ * Sem classificação (null) = permitido — são K-Dramas/filmes sem rating TMDB.
  */
 const PUBLIC_PRODUCTION_FILTER = {
   isHidden: false,
   flaggedAsNonKorean: false,
-  ageRating: { in: ['L', '10', '12', '14', '16'] as string[] },
+  NOT: [
+    { ageRating: '18' },
+    { isAdultContent: true },
+  ],
 }
 
 /**
