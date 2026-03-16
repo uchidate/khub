@@ -41,8 +41,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 where: {
                     flaggedAsNonKorean: false,
                     isHidden: false,
-                    // Excluir do SEO conteúdo oculto por faixa etária (18+ e não classificados)
-                    ageRating: { in: ['L', '10', '12', '14', '16'] },
+                    // Excluir apenas conteúdo adulto (18+); sem classificação = permitido
+                    NOT: { ageRating: '18' },
                 },
                 select: { id: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
