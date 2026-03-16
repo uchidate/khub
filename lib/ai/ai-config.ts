@@ -62,8 +62,8 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
     displayName: 'DeepSeek',
     enabled: true,
     priority: 1, // Alta prioridade — barato e rápido
-    costPer1kTokens:       0.00027,  // DeepSeek-V3: $0.27/MTok input
-    outputCostPer1kTokens: 0.00110,  // DeepSeek-V3: $1.10/MTok output
+    costPer1kTokens:       0.00014,  // DeepSeek-V3: $0.14/MTok input
+    outputCostPer1kTokens: 0.00028,  // DeepSeek-V3: $0.28/MTok output
     rateLimit: {
       requestsPerMinute: 60,
       tokensPerMinute: 60000,

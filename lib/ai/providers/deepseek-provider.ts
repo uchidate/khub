@@ -6,7 +6,7 @@ import type { GenerateOptions, GenerationResult } from '../ai-config'
 /**
  * Provider para DeepSeek (API compatível com OpenAI)
  * Modelo padrão: deepseek-chat (DeepSeek-V3)
- * Custo: ~$0.27/MTok input, $1.10/MTok output
+ * Custo: ~$0.14/MTok input, $0.28/MTok output
  */
 export class DeepSeekProvider extends BaseAIProvider {
     private client: OpenAI

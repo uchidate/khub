@@ -63,19 +63,19 @@ export interface BlogPostResult {
 
 /**
  * Estimativa de custo por feature (em USD), usando DeepSeek-V3:
- * Input: $0.27/MTok = $0.00027/1K | Output: $1.10/MTok = $0.00110/1K
+ * Input: $0.14/MTok = $0.00014/1K | Output: $0.28/MTok = $0.00028/1K
  * Estimativa: ~500 tok input + ~800 tok output por chamada
- *   = (0.5 × 0.00027) + (0.8 × 0.00110) ≈ $0.00102
+ *   = (0.5 × 0.00014) + (0.8 × 0.00028) ≈ $0.000294
  */
 export const EDITORIAL_COST_ESTIMATES: Record<string, number> = {
-    artist_bio_enrichment:  0.0015,  // ~600 in + 1000 out
-    artist_editorial:       0.0012,  // ~500 in + 800 out
-    artist_curiosidades:    0.0008,  // ~400 in + 500 out
-    group_bio_enrichment:   0.0015,
-    group_editorial:        0.0012,
-    production_review:      0.0018,  // ~600 in + 1200 out (review + whyWatch + rating)
-    news_editorial_note:    0.0005,  // ~400 in + 300 out
-    blog_post_generation:   0.0035,  // ~800 in + 2500 out
+    artist_bio_enrichment:  0.0004,  // ~600 in + 1000 out ≈ $0.00037
+    artist_editorial:       0.0003,  // ~500 in + 800 out  ≈ $0.00029
+    artist_curiosidades:    0.0002,  // ~400 in + 500 out  ≈ $0.00020
+    group_bio_enrichment:   0.0004,
+    group_editorial:        0.0003,
+    production_review:      0.0005,  // ~600 in + 1200 out ≈ $0.00042
+    news_editorial_note:    0.0001,  // ~400 in + 300 out  ≈ $0.00014
+    blog_post_generation:   0.0008,  // ~800 in + 2500 out ≈ $0.00081
 }
 
 // ─── Funções de geração ────────────────────────────────────────────────────────
