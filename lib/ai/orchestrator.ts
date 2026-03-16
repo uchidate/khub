@@ -132,7 +132,7 @@ export class AIOrchestrator {
         prompt: string,
         schema: string,
         options?: GenerateOptions
-    ): Promise<T> {
+    ): Promise<GenerationResult & { parsed: T }> {
         const preferredProvider = options?.preferredProvider;
         let providersToTry: AIProviderType[];
 
@@ -163,12 +163,31 @@ export class AIOrchestrator {
                 continue;
             }
 
+            const t0 = Date.now()
             try {
                 console.log(`🔄 Attempting structured generation with ${providerName}...`);
                 const result = await provider.generateStructured<T>(prompt, schema, options);
                 console.log(`✅ Successfully generated structured data with ${providerName}`);
+                logAiUsage({
+                    provider:   result.provider,
+                    model:      result.model,
+                    feature:    options?.feature ?? 'unknown',
+                    tokensIn:   result.tokensIn,
+                    tokensOut:  result.tokensOut,
+                    cost:       result.cost ?? 0,
+                    durationMs: Date.now() - t0,
+                    status:     'success',
+                })
                 return result;
             } catch (error: any) {
+                logAiUsage({
+                    provider:   providerName,
+                    model:      PROVIDER_CONFIGS[providerName]?.models?.default ?? 'unknown',
+                    feature:    options?.feature ?? 'unknown',
+                    durationMs: Date.now() - t0,
+                    status:     'error',
+                    errorMsg:   error.message,
+                })
                 lastError = error;
                 attempts++;
                 console.warn(`⚠️  ${providerName} failed (attempt ${attempts}): ${error.message}`);

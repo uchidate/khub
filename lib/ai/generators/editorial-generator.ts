@@ -61,16 +61,21 @@ export interface BlogPostResult {
 
 // ─── Estimativas de custo (dry-run) ───────────────────────────────────────────
 
-/** Estimativa de custo por feature (em USD), usando DeepSeek-V3 como base */
+/**
+ * Estimativa de custo por feature (em USD), usando DeepSeek-V3:
+ * Input: $0.14/MTok = $0.00014/1K | Output: $0.28/MTok = $0.00028/1K
+ * Estimativa: ~500 tok input + ~800 tok output por chamada
+ *   = (0.5 × 0.00014) + (0.8 × 0.00028) ≈ $0.000294
+ */
 export const EDITORIAL_COST_ESTIMATES: Record<string, number> = {
-    artist_bio_enrichment:  0.0020,
-    artist_editorial:       0.0020,
-    artist_curiosidades:    0.0010,
-    group_bio_enrichment:   0.0020,
-    group_editorial:        0.0020,
-    production_review:      0.0025,
-    news_editorial_note:    0.0005,
-    blog_post_generation:   0.0030,
+    artist_bio_enrichment:  0.0004,  // ~600 in + 1000 out ≈ $0.00037
+    artist_editorial:       0.0003,  // ~500 in + 800 out  ≈ $0.00029
+    artist_curiosidades:    0.0002,  // ~400 in + 500 out  ≈ $0.00020
+    group_bio_enrichment:   0.0004,
+    group_editorial:        0.0003,
+    production_review:      0.0005,  // ~600 in + 1200 out ≈ $0.00042
+    news_editorial_note:    0.0001,  // ~400 in + 300 out  ≈ $0.00014
+    blog_post_generation:   0.0008,  // ~800 in + 2500 out ≈ $0.00081
 }
 
 // ─── Funções de geração ────────────────────────────────────────────────────────
@@ -125,8 +130,8 @@ Responda APENAS com o parágrafo, sem título, sem introdução, sem notas.`
         const result = await orchestrator.generate(prompt, {
             feature,
             preferredProvider: 'deepseek',
-            maxTokens: 700,
-            temperature: 0.7,
+            maxTokens: 400,
+            temperature: 0.4,
         })
 
         logAiUsage({
@@ -220,8 +225,8 @@ Formato de saída — use EXATAMENTE este padrão (sem variações):
         const result = await orchestrator.generate(prompt, {
             feature,
             preferredProvider: 'deepseek',
-            maxTokens: 650,
-            temperature: 0.75,
+            maxTokens: 500,
+            temperature: 0.5,
         })
 
         logAiUsage({
@@ -289,22 +294,14 @@ Responda SOMENTE com JSON válido no formato:
         const result = await orchestrator.generateStructured<{ curiosidades: string[] }>(
             prompt,
             '{"curiosidades": ["string"]}',
-            { feature, preferredProvider: 'deepseek', maxTokens: 500, temperature: 0.8 }
+            { feature, preferredProvider: 'deepseek', maxTokens: 400, temperature: 0.8 }
         )
 
-        // Calcular custo aproximado (generateStructured não retorna tokensIn/Out diretamente)
-        const cost = EDITORIAL_COST_ESTIMATES.artist_curiosidades
-
-        logAiUsage({
-            provider: 'deepseek', model: 'deepseek-chat', feature,
-            durationMs: Date.now() - t0, status: 'success',
-        })
-
         return {
-            curiosidades: result.curiosidades.slice(0, 8),
-            tokensIn: 0,
-            tokensOut: 0,
-            cost,
+            curiosidades: result.parsed.curiosidades.slice(0, 8),
+            tokensIn: result.tokensIn ?? 0,
+            tokensOut: result.tokensOut ?? 0,
+            cost: result.cost ?? 0,
         }
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
@@ -361,18 +358,13 @@ Para a nota editorial (0-10), use critérios: roteiro, atuação, produção, im
             feature, preferredProvider: 'deepseek', maxTokens: 750, temperature: 0.7,
         })
 
-        logAiUsage({
-            provider: 'deepseek', model: 'deepseek-chat', feature,
-            durationMs: Date.now() - t0, status: 'success',
-        })
-
         return {
-            editorialReview: result.editorialReview.trim(),
-            whyWatch: result.whyWatch.trim(),
-            editorialRating: Math.min(10, Math.max(0, result.editorialRating)),
-            tokensIn: 0,
-            tokensOut: 0,
-            cost: EDITORIAL_COST_ESTIMATES.production_review,
+            editorialReview: result.parsed.editorialReview.trim(),
+            whyWatch: result.parsed.whyWatch.trim(),
+            editorialRating: Math.min(10, Math.max(0, result.parsed.editorialRating)),
+            tokensIn: result.tokensIn ?? 0,
+            tokensOut: result.tokensOut ?? 0,
+            cost: result.cost ?? 0,
         }
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
@@ -483,32 +475,27 @@ Responda SOMENTE com JSON válido:
             feature, preferredProvider: 'deepseek', maxTokens: 1200, temperature: 0.8,
         })
 
-        const wordCount = result.contentMd.split(/\s+/).length
+        const wordCount = result.parsed.contentMd.split(/\s+/).length
         const readingTimeMin = Math.max(1, Math.round(wordCount / 200))
 
         // Gerar slug a partir do título
-        const slug = result.title
+        const slug = result.parsed.title
             .toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-z0-9\s-]/g, '')
             .replace(/\s+/g, '-')
             .slice(0, 80)
 
-        logAiUsage({
-            provider: 'deepseek', model: 'deepseek-chat', feature,
-            durationMs: Date.now() - t0, status: 'success',
-        })
-
         return {
-            title: result.title,
+            title: result.parsed.title,
             slug,
-            excerpt: result.excerpt,
-            contentMd: result.contentMd,
-            tags: result.tags.slice(0, 8),
+            excerpt: result.parsed.excerpt,
+            contentMd: result.parsed.contentMd,
+            tags: result.parsed.tags.slice(0, 8),
             readingTimeMin,
-            tokensIn: 0,
-            tokensOut: 0,
-            cost: EDITORIAL_COST_ESTIMATES.blog_post_generation,
+            tokensIn: result.tokensIn ?? 0,
+            tokensOut: result.tokensOut ?? 0,
+            cost: result.cost ?? 0,
         }
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)

@@ -65,25 +65,22 @@ export abstract class BaseAIProvider {
      */
     async generateStructured<T>(
         prompt: string,
-        schema: string,
+        _schema: string,
         options?: GenerateOptions
-    ): Promise<T> {
-        const structuredPrompt = `${prompt}\n\nResponda APENAS com um JSON válido seguindo este schema:\n${schema}\n\nNão inclua nenhum texto adicional, apenas o JSON.`;
-
-        const result = await this.generate(structuredPrompt, options);
+    ): Promise<GenerationResult & { parsed: T }> {
+        const result = await this.generate(prompt, { ...options, json_mode: true })
 
         try {
-            // Remove markdown code blocks se existirem
-            let content = result.content.trim();
+            let content = result.content.trim()
             if (content.startsWith('```json')) {
-                content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '')
             } else if (content.startsWith('```')) {
-                content = content.replace(/```\n?/g, '');
+                content = content.replace(/```\n?/g, '')
             }
 
-            return JSON.parse(content) as T;
+            return { ...result, parsed: JSON.parse(content) as T }
         } catch (error) {
-            throw new Error(`Failed to parse JSON response from ${this.name}: ${error}`);
+            throw new Error(`Failed to parse JSON response from ${this.name}: ${error}`)
         }
     }
 

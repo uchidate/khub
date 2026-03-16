@@ -170,7 +170,7 @@ Requisitos:
                 { preferredProvider: 'ollama' }
             );
 
-            return result.bio;
+            return result.parsed.bio;
         } catch (error: any) {
             console.warn(`⚠️  Enrichment failed: ${error.message}`);
             return `${groupName} é um grupo de K-pop de destaque na indústria do entretenimento sul-coreano.`;
@@ -205,7 +205,7 @@ Requisitos:
                 { preferredProvider: provider }
             );
 
-            return result.translation;
+            return result.parsed.translation;
         } catch (error: any) {
             console.warn(`⚠️  Translation failed: ${error.message}`);
             return text;

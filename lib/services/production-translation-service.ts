@@ -143,7 +143,7 @@ export class ProductionTranslationService {
             { preferredProvider: provider }
         )
 
-        return result.synopsis
+        return result.parsed.synopsis
     }
 
     async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed' }> {

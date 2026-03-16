@@ -97,7 +97,7 @@ export async function GET(req: Request) {
             testResult = {
                 provider: 'auto',
                 latencyMs: Date.now() - testStart,
-                success: result.ok === true,
+                success: result.parsed.ok === true,
             }
         } catch (err: unknown) {
             log.error('AI provider test failed', { error: getErrorMessage(err) })

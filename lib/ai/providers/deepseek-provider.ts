@@ -6,7 +6,7 @@ import type { GenerateOptions, GenerationResult } from '../ai-config'
 /**
  * Provider para DeepSeek (API compatível com OpenAI)
  * Modelo padrão: deepseek-chat (DeepSeek-V3)
- * Custo: ~$0.27/MTok input, $1.10/MTok output
+ * Custo: ~$0.14/MTok input, $0.28/MTok output
  */
 export class DeepSeekProvider extends BaseAIProvider {
     private client: OpenAI
@@ -41,13 +41,16 @@ export class DeepSeekProvider extends BaseAIProvider {
                 messages,
                 temperature: options?.temperature ?? 0.7,
                 max_tokens: options?.maxTokens ?? 2048,
+                ...(options?.json_mode ? { response_format: { type: 'json_object' as const } } : {}),
             })
 
             const text = completion.choices[0]?.message?.content || ''
             const tokensIn  = completion.usage?.prompt_tokens     || 0
             const tokensOut = completion.usage?.completion_tokens || 0
             const tokensUsed = tokensIn + tokensOut
-            const cost = this.config.costPer1kTokens * (tokensUsed / 1000)
+            const inputCost  = this.config.costPer1kTokens * (tokensIn / 1000)
+            const outputCost = (this.config.outputCostPer1kTokens ?? this.config.costPer1kTokens) * (tokensOut / 1000)
+            const cost = inputCost + outputCost
 
             this.recordSuccess(tokensUsed, cost)
 

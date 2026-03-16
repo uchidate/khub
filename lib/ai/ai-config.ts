@@ -10,7 +10,8 @@ export interface AIProviderConfig {
   displayName: string;
   enabled: boolean;
   priority: number; // Menor = maior prioridade
-  costPer1kTokens: number; // Em USD
+  costPer1kTokens: number; // Em USD (input — fallback se outputCostPer1kTokens não definido)
+  outputCostPer1kTokens?: number; // Em USD (output — se diferente do input)
   rateLimit: {
     requestsPerMinute: number;
     tokensPerMinute?: number;
@@ -27,6 +28,7 @@ export interface GenerateOptions {
   preferredProvider?: AIProviderType;
   systemPrompt?: string;
   excludeList?: string[];
+  json_mode?: boolean // Force JSON output via response_format (DeepSeek/OpenAI)
   /** Feature que originou a chamada — usada para logging de uso */
   feature?: import('./ai-usage-logger').AiFeature;
 }
@@ -61,7 +63,8 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
     displayName: 'DeepSeek',
     enabled: true,
     priority: 1, // Alta prioridade — barato e rápido
-    costPer1kTokens: 0.00027, // DeepSeek-V3: $0.27/MTok input
+    costPer1kTokens:       0.00014,  // DeepSeek-V3: $0.14/MTok input
+    outputCostPer1kTokens: 0.00028,  // DeepSeek-V3: $0.28/MTok output
     rateLimit: {
       requestsPerMinute: 60,
       tokensPerMinute: 60000,
