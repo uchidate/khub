@@ -660,8 +660,8 @@ function QueueItemRow({
                 ))}
                 <a
                     href={
-                        tab === 'artists'     ? `/admin/artists/${item.id}/edit` :
-                        tab === 'productions' ? `/admin/productions/${item.id}/edit` :
+                        tab === 'artists'     ? `/admin/artists/${item.id}` :
+                        tab === 'productions' ? `/admin/productions/${item.id}` :
                         `/admin/news/${item.id}/edit`
                     }
                     className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
