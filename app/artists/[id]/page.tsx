@@ -16,7 +16,7 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { getTranslation } from "@/lib/translations"
+import { getTranslation, getTranslations } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -149,7 +149,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
     // Step 2: queries secundárias todas em paralelo (incluindo relatedArtists)
     const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
-    const [artistNews, instagramPosts, newsCount, bioPt, relatedArtists] = await Promise.all([
+    const productionIds = artist.productions.map(ap => ap.production.id)
+    const [artistNews, instagramPosts, newsCount, bioPt, productionTranslations, relatedArtists] = await Promise.all([
         prisma.news.findMany({
             where: { isHidden: false, status: 'published', artists: { some: { artistId: params.id } } },
             select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
@@ -164,6 +165,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
         }),
         prisma.news.count({ where: { artists: { some: { artistId: params.id } } } }),
         getTranslation('artist', params.id, 'bio', 'pt-BR'),
+        getTranslations('production', productionIds, ['synopsis']),
         activeGroupId
             ? prisma.artist.findMany({
                 where: {
@@ -543,7 +545,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                         {production.year && <span className="text-[10px] font-bold text-purple-400">{production.year}</span>}
                                                         {production.titleKr && <span className="text-[10px] text-zinc-600 font-medium truncate">{production.titleKr}</span>}
                                                     </div>
-                                                    {production.synopsis && <p className="text-zinc-500 text-xs md:text-sm leading-relaxed line-clamp-2">{production.synopsis}</p>}
+                                                    {(() => { const syn = productionTranslations.get(production.id)?.get('synopsis') ?? production.synopsis; return syn ? <p className="text-zinc-500 text-xs md:text-sm leading-relaxed line-clamp-2">{syn}</p> : null })()}
                                                 </div>
                                             </Link>
                                             <div className="absolute top-2.5 right-2.5">
