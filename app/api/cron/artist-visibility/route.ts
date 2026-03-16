@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
+import { revalidatePath } from 'next/cache'
 import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service'
 import { createLogger } from '@/lib/utils/logger'
@@ -50,6 +51,10 @@ export async function POST(request: NextRequest) {
     log.info(`Starting artist visibility reconciliation (limit: ${limit})`)
     const result = await getArtistVisibilityService().reconcileAll(limit)
     log.info('Artist visibility reconciliation complete', result)
+    // Invalida cache ISR da listagem se houve mudanças
+    if (result.shown > 0 || result.hidden > 0) {
+      revalidatePath('/artists')
+    }
     return NextResponse.json({ ok: true, ...result })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
