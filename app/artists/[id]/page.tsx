@@ -192,7 +192,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     // Profile sections: bio as "Perfil" + analiseEditorial sections
     const profileSections: { title: string; content: string }[] = []
     const bioText = bioPt ?? artist.bio
-    if (bioText) profileSections.push({ title: 'Perfil', content: bioText })
     if (artist.analiseEditorial) {
         const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
         let m: RegExpExecArray | null
@@ -201,6 +200,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
             if (content) profileSections.push({ title: m[1].trim(), content })
         }
     }
+    // Adiciona bio como "Perfil" apenas se analise não tiver essa seção (evita duplicata)
+    const hasPerfilInAnalise = profileSections.some(s => s.title.toLowerCase() === 'perfil')
+    if (bioText && !hasPerfilInAnalise) profileSections.unshift({ title: 'Perfil', content: bioText })
 
     return (
         <div className="min-h-screen bg-black">
