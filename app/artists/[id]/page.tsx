@@ -36,7 +36,11 @@ const getArtist = cache(async (id: string) => {
                 where: {
                     production: {
                         flaggedAsNonKorean: false,
-                        ageRating: { in: ['L', '10', '12', '14', '16'] },
+                        isHidden: false,
+                        AND: [
+                            { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
+                            { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
+                        ],
                     }
                 },
                 include: { production: true },
