@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,6 +80,21 @@ export async function PUT(req: NextRequest) {
         },
       }),
     ])
+
+    // Invalida cache ISR das páginas públicas afetadas
+    if (entityType === 'artist') {
+      revalidatePath(`/artists/${entityId}`)
+    } else if (entityType === 'group') {
+      revalidatePath(`/groups/${entityId}`)
+    } else if (entityType === 'production') {
+      revalidatePath(`/productions/${entityId}`)
+      // Invalida também as páginas de artistas que têm esta produção na filmografia
+      const casts = await prisma.artistProduction.findMany({
+        where: { productionId: entityId },
+        select: { artistId: true },
+      })
+      casts.forEach(({ artistId }) => revalidatePath(`/artists/${artistId}`))
+    }
 
     return NextResponse.json({ translation })
   } catch (err) {

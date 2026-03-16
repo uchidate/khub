@@ -3,17 +3,17 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
 type StatusFilter = '' | 'pending' | 'draft' | 'approved'
 
 interface Stats {
-  artist:     { total: number; translated: number; pending: number; hiddenPending: number }
-  group:      { total: number; translated: number; pending: number; hiddenPending: number }
-  production: { total: number; translated: number; pending: number; failed: number; noSynopsis: number; hiddenPending: number }
-  news:       { total: number; translated: number; pending: number; hiddenPending: number }
+  artist:     { total: number; translated: number; approved: number; draft: number; pending: number; hiddenPending: number }
+  group:      { total: number; translated: number; approved: number; draft: number; pending: number; hiddenPending: number }
+  production: { total: number; translated: number; approved: number; draft: number; pending: number; failed: number; noSynopsis: number; hiddenPending: number }
+  news:       { total: number; translated: number; approved: number; draft: number; pending: number; hiddenPending: number }
 }
 
 interface TranslationItem {
@@ -156,6 +156,9 @@ function TranslationsPageContent() {
   const [singleTranslating, setSingleTranslating] = useState<Set<string>>(new Set())
   const [singleDone, setSingleDone] = useState<Set<string>>(new Set())
 
+  const [bulkTranslating, setBulkTranslating] = useState(false)
+  const [bulkTranslateProgress, setBulkTranslateProgress] = useState(0)
+
   const [running, setRunning] = useState(false)
   const [runResult, setRunResult] = useState<string | null>(null)
   const [progressLog, setProgressLog] = useState<ProgressEvent[]>([])
@@ -243,6 +246,29 @@ function TranslationsPageContent() {
       ids.forEach(id => setApproving(prev => { const n = new Set(prev); n.delete(id); return n }))
     }
   }, [activeTab, fetchItems, fetchStats])
+
+  const handleBulkTranslate = useCallback(async () => {
+    if (!TRANSLATABLE_TYPES.includes(activeTab)) return
+    setBulkTranslating(true)
+    setBulkTranslateProgress(0)
+    const ids = Array.from(selected)
+    let done = 0
+    for (const id of ids) {
+      try {
+        await fetch('/api/admin/translations/single', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entityType: activeTab, id }),
+        })
+      } catch { /* continua */ }
+      done++
+      setBulkTranslateProgress(done)
+    }
+    setBulkTranslating(false)
+    setSelected(new Set())
+    await fetchItems()
+    await fetchStats()
+  }, [selected, activeTab, fetchItems, fetchStats])
 
   const handleBulkApprove = useCallback(async () => {
     setBulkApproving(true)
@@ -369,12 +395,21 @@ function TranslationsPageContent() {
                   </div>
                 )}
                 {s && s.total > 0 && (
-                  <div className="mt-2 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  <div className="mt-2 h-1.5 bg-zinc-800 rounded-full overflow-hidden flex">
+                    <div className="h-full bg-green-500 transition-all" style={{ width: `${Math.round(((s as { approved?: number }).approved ?? 0) / s.total * 100)}%` }} />
+                    <div className="h-full bg-yellow-500/70 transition-all" style={{ width: `${Math.round(((s as { draft?: number }).draft ?? 0) / s.total * 100)}%` }} />
                   </div>
                 )}
                 {s && s.total > 0 && (
-                  <div className="mt-1 text-[10px] text-zinc-600">{pct}% pt-BR</div>
+                  <div className="mt-1 flex gap-2 text-[10px] flex-wrap">
+                    {((s as { approved?: number }).approved ?? 0) > 0 && (
+                      <span className="text-green-500">{(s as { approved: number }).approved} rev.</span>
+                    )}
+                    {((s as { draft?: number }).draft ?? 0) > 0 && (
+                      <span className="text-yellow-500/80">{(s as { draft: number }).draft} IA</span>
+                    )}
+                    <span className="text-zinc-600 ml-auto">{pct}%</span>
+                  </div>
                 )}
               </button>
             )
@@ -607,11 +642,21 @@ function TranslationsPageContent() {
 
           {/* Barra de ações em massa */}
           {selected.size > 0 && (
-            <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20">
+            <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20 flex-wrap">
               <span className="text-xs text-zinc-400">{selected.size} selecionados</span>
+              {canTranslate && (
+                <button
+                  onClick={handleBulkTranslate}
+                  disabled={bulkTranslating || bulkApproving}
+                  className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-purple-700 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {bulkTranslating ? `Traduzindo ${bulkTranslateProgress}/${selected.size}...` : 'Traduzir (IA)'}
+                </button>
+              )}
               <button
                 onClick={handleBulkApprove}
-                disabled={bulkApproving}
+                disabled={bulkApproving || bulkTranslating}
                 className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
               >
                 <CheckCircle className="w-3 h-3" />
@@ -621,14 +666,14 @@ function TranslationsPageContent() {
                 onClick={() => setSelected(new Set())}
                 className="text-xs text-zinc-600 hover:text-zinc-400"
               >
-                Limpar seleção
+                Limpar
               </button>
               {draftCount > 0 && (
                 <button
                   onClick={selectAllDraft}
                   className="text-xs text-zinc-600 hover:text-zinc-400 ml-auto"
                 >
-                  Selecionar todos rascunhos ({draftCount})
+                  Sel. todos rascunhos ({draftCount})
                 </button>
               )}
             </div>
@@ -636,13 +681,21 @@ function TranslationsPageContent() {
 
           {/* Header de seleção quando há rascunhos visíveis */}
           {selected.size === 0 && draftCount > 0 && (
-            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-white/5">
+            <div className="flex items-center gap-3 px-4 py-1.5 border-b border-white/5">
               <button
                 onClick={selectAllDraft}
                 className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
               >
                 Selecionar {draftCount} rascunho{draftCount !== 1 ? 's' : ''} desta página
               </button>
+              {statusFilter === 'draft' && (
+                <button
+                  onClick={() => handleApprove(items.map(i => i.id))}
+                  className="text-[11px] text-green-600 hover:text-green-400 transition-colors ml-auto"
+                >
+                  Aprovar todos desta página ({draftCount})
+                </button>
+              )}
             </div>
           )}
 
@@ -657,6 +710,10 @@ function TranslationsPageContent() {
                 const editHref = isProduction
                   ? `/admin/translations/production/${item.id}`
                   : `/admin/translations/${activeTab}/${item.id}`
+              const publicHref = activeTab === 'artist' ? `/artists/${item.id}`
+                : activeTab === 'group' ? `/groups/${item.id}`
+                : activeTab === 'production' ? `/productions/${item.id}`
+                : null
                 const isTranslating = singleTranslating.has(item.id)
                 const isDone = singleDone.has(item.id)
                 const isApprovingItem = approving.has(item.id)
@@ -697,13 +754,19 @@ function TranslationsPageContent() {
                               {item.snippet}
                             </p>
                           )}
-                          {/* Preview PT-BR */}
+                          {/* Preview PT-BR via ContentTranslation */}
                           {item.ptSnippet && (item.status === 'draft' || item.status === 'approved') && (
                             <p className="text-xs text-purple-400/70 mt-1 line-clamp-2 leading-relaxed">
                               <span className="text-zinc-600 mr-1">pt-BR:</span>{item.ptSnippet}
                             </p>
                           )}
-                          {isProduction && item.synopsisSource && item.status !== 'draft' && item.status !== 'approved' && (
+                          {/* Produções TMDB·pt: sinopse já está em PT no campo original */}
+                          {isProduction && item.synopsisSource === 'tmdb_pt' && !item.ptSnippet && item.snippet && (
+                            <p className="text-xs text-green-400/60 mt-1 line-clamp-2 leading-relaxed">
+                              <span className="text-green-700 mr-1">tmdb·pt:</span>{item.snippet}
+                            </p>
+                          )}
+                          {isProduction && item.synopsisSource && item.synopsisSource !== 'tmdb_pt' && item.status !== 'draft' && item.status !== 'approved' && (
                             <div className="text-[10px] text-zinc-600 mt-0.5">
                               Origem: {SYNOPSIS_SOURCE_LABELS[item.synopsisSource]?.label ?? item.synopsisSource}
                             </div>
@@ -711,6 +774,19 @@ function TranslationsPageContent() {
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                          {/* Link para página pública */}
+                          {publicHref && (
+                            <Link
+                              href={publicHref}
+                              target="_blank"
+                              onClick={e => e.stopPropagation()}
+                              className="p-1 text-zinc-700 hover:text-zinc-400 transition-colors flex-shrink-0"
+                              title="Ver página pública"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          )}
+
                           {/* Botão aprovar inline */}
                           {canApprove && (
                             <button
