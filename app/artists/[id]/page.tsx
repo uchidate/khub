@@ -15,7 +15,6 @@ import { ReportButton } from "@/components/ui/ReportButton"
 import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
-import { ExpandableBio } from "@/components/ui/ExpandableBio"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
@@ -190,8 +189,10 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
     const allGroups = artist.memberships
 
-    // Parse analiseEditorial into structured sections for ExpandableProfile
+    // Profile sections: bio as "Perfil" + analiseEditorial sections
     const profileSections: { title: string; content: string }[] = []
+    const bioText = bioPt ?? artist.bio
+    if (bioText) profileSections.push({ title: 'Perfil', content: bioText })
     if (artist.analiseEditorial) {
         const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
         let m: RegExpExecArray | null
@@ -304,12 +305,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             )}
                         </div>
 
-                        {/* Bio — só desktop; no mobile fica no conteúdo abaixo */}
-                        {(bioPt ?? artist.bio) ? (
-                            <div className="hidden md:block">
-                                <ExpandableBio bio={bioPt ?? artist.bio!} />
-                            </div>
-                        ) : null}
 
                         {/* Stats — só desktop */}
                         <div className="hidden md:flex items-center gap-4 flex-wrap">
@@ -322,6 +317,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 <span className="text-sm font-bold">{artist.favoriteCount.toLocaleString('pt-BR')} fãs</span>
                             </div>
                         </div>
+
                     </div>
 
                     {/* Portrait card — só desktop, igual ao poster das produções */}
@@ -350,12 +346,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-4 lg:space-y-6 lg:col-span-1">
 
-                        {/* Bio mobile — antes das informações, só no mobile */}
-                        {(bioPt ?? artist.bio) ? (
-                            <div className="md:hidden">
-                                <ExpandableBio bio={bioPt ?? artist.bio!} />
-                            </div>
-                        ) : null}
 
                         {/* Informações */}
                         <div className="rounded-2xl bg-zinc-900/50 border border-white/5 overflow-hidden">
@@ -447,23 +437,31 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             format="horizontal"
                         />
 
-
                         {/* Perfil Biográfico */}
-                        {profileSections.length >= 2 && (
-                            <section>
-                                <div className="space-y-5">
-                                    {profileSections.map((sec, i) => (
-                                        <div key={i}>
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <span className="text-sm font-black text-white uppercase tracking-widest">{sec.title}</span>
-                                                <div className="flex-1 h-px bg-white/5" />
-                                            </div>
-                                            <p className="text-sm text-zinc-300 leading-relaxed">{sec.content}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                        {profileSections.length >= 1 && (() => {
+                            const sectionIcons = [User, Film, Sparkles]
+                            return (
+                                <section>
+                                    <div className="space-y-5">
+                                        {profileSections.map((sec, i) => {
+                                            const Icon = sectionIcons[i] ?? Sparkles
+                                            return (
+                                                <div key={i}>
+                                                    <div className="flex items-center gap-3 mb-3">
+                                                        <span className="w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0">
+                                                            <Icon className="w-2.5 h-2.5" />
+                                                        </span>
+                                                        <span className="text-sm font-black text-white uppercase tracking-widest">{sec.title}</span>
+                                                        <div className="flex-1 h-px bg-white/5" />
+                                                    </div>
+                                                    <p className="text-sm text-zinc-300 leading-relaxed pl-8">{sec.content}</p>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </section>
+                            )
+                        })()}
 
                         {/* Curiosidades */}
                         {artist.curiosidades && artist.curiosidades.length > 0 && (
