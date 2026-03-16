@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
@@ -165,6 +166,7 @@ export async function POST(req: Request) {
                             where: { id: artist.id },
                             data: { bio: r.bio, editorialGeneratedAt: new Date() },
                         })
+                        revalidatePath(`/artists/${artist.id}`)
                         processed.push(artist.id)
                         totalCost += r.cost
                     } catch (err) {
@@ -205,6 +207,7 @@ export async function POST(req: Request) {
                             where: { id: artist.id },
                             data: { analiseEditorial: r.analiseEditorial, editorialGeneratedAt: new Date() },
                         })
+                        revalidatePath(`/artists/${artist.id}`)
                         processed.push(artist.id)
                         totalCost += r.cost
                     } catch (err) {
@@ -245,6 +248,7 @@ export async function POST(req: Request) {
                             where: { id: artist.id },
                             data: { curiosidades: r.curiosidades, editorialGeneratedAt: new Date() },
                         })
+                        revalidatePath(`/artists/${artist.id}`)
                         processed.push(artist.id)
                         totalCost += r.cost
                     } catch (err) {
@@ -286,6 +290,7 @@ export async function POST(req: Request) {
                                 editorialGeneratedAt: new Date(),
                             },
                         })
+                        revalidatePath(`/productions/${production.id}`)
                         processed.push(production.id)
                         totalCost += r.cost
                     } catch (err) {
@@ -318,6 +323,7 @@ export async function POST(req: Request) {
                             where: { id: news.id },
                             data: { editorialNote: r.editorialNote, editorialNoteGeneratedAt: new Date() },
                         })
+                        revalidatePath(`/news/${news.id}`)
                         processed.push(news.id)
                         totalCost += r.cost
                     } catch (err) {
