@@ -186,8 +186,13 @@ export async function POST(req: Request) {
                     },
                     take: entityId ? 1 : limit,
                     select: {
-                        id: true, nameRomanized: true, roles: true, bio: true,
+                        id: true, nameRomanized: true, nameHangul: true,
+                        roles: true, gender: true, birthDate: true, bio: true,
                         memberships: { select: { group: { select: { name: true } } } },
+                        productions: {
+                            select: { production: { select: { titlePt: true } } },
+                            take: 3,
+                        },
                     },
                     orderBy: { trendingScore: 'desc' },
                 })
@@ -221,8 +226,13 @@ export async function POST(req: Request) {
                     },
                     take: entityId ? 1 : limit,
                     select: {
-                        id: true, nameRomanized: true, nameHangul: true, roles: true, bio: true,
+                        id: true, nameRomanized: true, nameHangul: true,
+                        roles: true, gender: true, birthDate: true, bio: true,
                         memberships: { select: { group: { select: { name: true } } } },
+                        productions: {
+                            select: { production: { select: { titlePt: true } } },
+                            take: 3,
+                        },
                     },
                     orderBy: { trendingScore: 'desc' },
                 })

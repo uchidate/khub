@@ -166,9 +166,13 @@ Responda APENAS com o parágrafo, sem título, sem introdução, sem notas.`
  */
 export async function generateArtistEditorial(artist: {
     nameRomanized: string
+    nameHangul?: string | null
     roles: string[]
+    gender?: number | null
+    birthDate?: Date | null
     bio?: string | null
     memberships?: { group: { name: string } }[]
+    productions?: { production: { titlePt: string } }[]
 }): Promise<ArtistEditorialResult> {
     const orchestrator = getOrchestrator()
     const t0 = Date.now()
@@ -176,9 +180,20 @@ export async function generateArtistEditorial(artist: {
     const groups = artist.memberships?.map(m => m.group.name).join(', ') || 'solo'
     const feature: AiFeature = 'artist_editorial'
 
+    const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
+    const knownFor  = artist.productions?.slice(0, 3).map(p => p.production.titlePt).join(', ') || null
+
     const prompt = `Atue como um redator biográfico focado em dados e cronologia.
 
-Escreva sobre **${artist.nameRomanized}** (${artist.roles.join(', ')}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}) em exatamente 2 parágrafos curtos, cada um com um título de uma ou duas palavras.
+IDENTIFICAÇÃO DO ARTISTA (use estes dados para garantir que o conteúdo seja sobre a pessoa correta):
+- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}
+- Ano de nascimento: ${birthYear ?? 'não informado'}
+- Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
+- Profissão: ${artist.roles.join(', ')}
+- Grupo/carreira: ${groups !== 'solo' ? groups : 'carreira solo'}
+${knownFor ? `- Produções conhecidas: ${knownFor}` : ''}
+
+Escreva 2 parágrafos curtos, cada um com um título de uma ou duas palavras.
 
 ${artist.bio ? `Contexto biográfico: "${artist.bio.slice(0, 500)}"` : ''}
 
@@ -234,17 +249,31 @@ Formato de saída — use EXATAMENTE este padrão (sem variações):
 export async function generateArtistCuriosidades(artist: {
     nameRomanized: string
     nameHangul?: string | null
+    gender?: number | null
+    birthDate?: Date | null
     bio?: string | null
     roles: string[]
     memberships?: { group: { name: string } }[]
+    productions?: { production: { titlePt: string } }[]
 }): Promise<ArtistCuriosidadesResult> {
     const orchestrator = getOrchestrator()
     const t0 = Date.now()
     const feature: AiFeature = 'artist_curiosidades'
 
-    const prompt = `Crie 6 curiosidades interessantes sobre o artista **${artist.nameRomanized}** (K-pop/K-drama) para o site HallyuHub em português brasileiro.
+    const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
+    const knownFor  = artist.productions?.slice(0, 3).map(p => p.production.titlePt).join(', ') || null
+    const groups    = artist.memberships?.map(m => m.group.name).join(', ') || null
 
-${artist.bio ? `Contexto: "${artist.bio.slice(0, 300)}"` : ''}
+    const prompt = `Crie 6 curiosidades interessantes sobre o artista para o site HallyuHub em português brasileiro.
+
+IDENTIFICAÇÃO DO ARTISTA (use estes dados para garantir que o conteúdo seja sobre a pessoa correta):
+- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}
+- Ano de nascimento: ${birthYear ?? 'não informado'}
+- Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
+- Profissão: ${artist.roles.join(', ')} (K-pop/K-drama)
+${groups ? `- Grupo: ${groups}` : '- Carreira solo'}
+${knownFor ? `- Produções conhecidas: ${knownFor}` : ''}
+${artist.bio ? `- Contexto biográfico: "${artist.bio.slice(0, 300)}"` : ''}
 
 As curiosidades devem:
 - Ser factuais e verificáveis (não invente datas ou números exatos que não sabe)
