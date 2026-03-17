@@ -100,6 +100,7 @@ model Artist {
   analiseEditorial   String?            @db.Text // análise autoral 400+ palavras PT-BR
   curiosidades       String[]                    // 5-8 curiosidades autorais
   editorialGeneratedAt DateTime?                 // quando o conteúdo editorial foi gerado/atualizado
+  editorialCuratedAt   DateTime?                 // quando a curadoria humana foi concluída
   primaryImageUrl    String?
   socialLinks        Json?
   agency             Agency?            @relation(fields: [agencyId], references: [id])

@@ -104,27 +104,27 @@ export async function generateArtistBio(artist: {
     const genderLabel = artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'
     const birthDateStr = artist.birthDate ? new Date(artist.birthDate).toISOString().slice(0, 10) : null
 
-    const prompt = `Atue como redator biográfico especializado em entretenimento coreano.
+    const prompt = `Atue como redator biográfico focado em dados e cronologia, especializado em entretenimento coreano.
 
-⚠️ IDENTIFICAÇÃO OBRIGATÓRIA — verifique antes de escrever:
-- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` / ${artist.nameHangul}` : ''}
-- Gênero: ${genderLabel}
+Escreva um parágrafo de perfil rico e informativo sobre ${artist.nameRomanized} (${roles}).
+
+Dados de identificação — use para confirmar que você está escrevendo sobre a pessoa correta:
+- Nome hangul: ${artist.nameHangul ?? 'não informado'}
 - Data de nascimento: ${birthDateStr ?? 'não informada'}
+- Gênero: ${genderLabel}
 - Local de nascimento: ${artist.placeOfBirth || 'não informado'}
 - Nome de nascimento: ${artist.birthName || 'não informado'}
 - Agência: ${agency}
 ${artist.bio ? `- Bio de referência: "${artist.bio.slice(0, 300)}"` : ''}
 
-⚠️ REGRA ANTI-CONFUSÃO: Existem vários artistas sul-coreanos com nomes romanizados similares. Use nome em hangul e data de nascimento completa para identificar a pessoa CORRETA. Só escreva fatos que você tem certeza absoluta que são desta pessoa específica. Sem suposições, sem fatos de outra pessoa, sem inventar. Se não tiver certeza sobre algo, escreva de forma genérica (ex: "artista sul-coreana", "profissão: ${roles}").
+⚠️ IMPORTANTE: Existem artistas sul-coreanos com nomes romanizados similares. Confirme pelo nome em hangul e data de nascimento que você está escrevendo sobre a pessoa correta antes de incluir qualquer fato. NÃO atribua fatos, produções ou prêmios de outro artista. Se não tiver certeza sobre um fato específico, omita-o.
 
-Escreva um parágrafo de perfil sobre ${artist.nameRomanized} (${roles}).
-
-Regras:
-- Entre 80 e 120 palavras
-- Gênero gramatical correto (nascido/nascida, conhecida/conhecido, etc.)
-- Apenas fatos verificados e certos sobre esta pessoa
+O parágrafo deve:
+- Ter entre 100 e 150 palavras
+- Ser interessante, rico em detalhes relevantes: origem, carreira, estilo, destaques
+- Usar gênero gramatical correto (nascido/nascida, conhecida/conhecido, etc.)
 - NÃO usar emojis
-- Tom: informativo, direto ao ponto
+- Tom: envolvente, informativo, direto
 - Português brasileiro
 
 Responda APENAS com o parágrafo, sem título, sem introdução, sem notas.`
@@ -190,25 +190,26 @@ export async function generateArtistEditorial(artist: {
 
     const birthDateStr = artist.birthDate ? new Date(artist.birthDate).toISOString().slice(0, 10) : null
 
-    const prompt = `Atue como redator editorial especializado em entretenimento coreano.
+    const prompt = `Atue como redator biográfico focado em dados e cronologia, especializado em entretenimento coreano.
 
-⚠️ IDENTIFICAÇÃO OBRIGATÓRIA — verifique antes de escrever:
+Dados de identificação — use para confirmar que você está escrevendo sobre a pessoa correta:
 - Nome: ${artist.nameRomanized}${artist.nameHangul ? ` / ${artist.nameHangul}` : ''}
 - Data de nascimento: ${birthDateStr ?? 'não informada'}
 - Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
 - Profissão: ${artist.roles.join(', ')}
 ${artist.bio ? `- Bio: "${artist.bio.slice(0, 500)}"` : ''}
 
-⚠️ REGRA ANTI-CONFUSÃO: Existem vários artistas sul-coreanos com nomes romanizados similares. Use nome em hangul e data de nascimento completa para identificar a pessoa CORRETA. Só escreva fatos que você tem certeza absoluta que são desta pessoa específica. Sem suposições, sem fatos de outra pessoa, sem inventar. Se não tiver certeza sobre algo, prefira falar de forma genérica sobre a carreira.
+⚠️ IMPORTANTE: Existem artistas sul-coreanos com nomes romanizados similares. Confirme pelo nome em hangul e data de nascimento que você está escrevendo sobre a pessoa correta. NÃO atribua fatos, produções ou prêmios de outro artista. Se não tiver certeza sobre um fato específico, omita-o.
 
-Escreva 2 parágrafos curtos com título de uma ou duas palavras cada.
+Escreva 2 parágrafos curtos com título de uma ou duas palavras cada, com informações ricas e concretas.
 
 Estrutura:
-- Parágrafo 1 — Projetos: carreira e trabalhos mais relevantes.
-- Parágrafo 2 — Reconhecimento: prêmios, destaques ou impacto.
+- Parágrafo 1 — Projetos: trabalhos mais relevantes, desempenho, lançamentos recentes.
+- Parágrafo 2 — Reconhecimento: prêmios reais, competências técnicas, impacto comercial.
 
 Regras:
 - Títulos de no máximo 2 palavras.
+- Priorize fatos concretos, marcos de audiência e prêmios reais.
 - NÃO use frases de efeito como "exemplo de resiliência", "atingiu novo patamar", "ícone global".
 - NÃO use adjetivos subjetivos sem fato concreto.
 - NÃO use emojis.
@@ -267,22 +268,24 @@ export async function generateArtistCuriosidades(artist: {
 
     const birthDateStr = artist.birthDate ? new Date(artist.birthDate).toISOString().slice(0, 10) : null
 
-    const prompt = `Crie 6 curiosidades sobre o artista para o site HallyuHub em português brasileiro.
+    const prompt = `Atue como redator biográfico focado em dados e cronologia, especializado em entretenimento coreano.
 
-⚠️ IDENTIFICAÇÃO OBRIGATÓRIA — verifique antes de escrever:
+Crie 6 curiosidades interessantes e variadas sobre o artista para o site HallyuHub em português brasileiro.
+
+Dados de identificação — use para confirmar que você está escrevendo sobre a pessoa correta:
 - Nome: ${artist.nameRomanized}${artist.nameHangul ? ` / ${artist.nameHangul}` : ''}
 - Data de nascimento: ${birthDateStr ?? 'não informada'}
 - Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
 - Profissão: ${artist.roles.join(', ')} (K-pop/K-drama)
 ${artist.bio ? `- Bio: "${artist.bio.slice(0, 300)}"` : ''}
 
-⚠️ REGRA ANTI-CONFUSÃO: Use nome em hangul e data de nascimento completa para identificar a pessoa CORRETA. Só inclua fatos que você tem certeza absoluta que são desta pessoa. Sem suposições, sem fatos de outra pessoa, sem inventar. Se não tiver certeza sobre algo, prefira curiosidades gerais sobre o universo K-pop/K-drama ou sobre a profissão.
+⚠️ IMPORTANTE: Existem artistas sul-coreanos com nomes romanizados similares. Confirme pelo nome em hangul e data de nascimento que você está escrevendo sobre a pessoa correta. NÃO atribua fatos, produções ou prêmios de outro artista. Se não tiver certeza sobre um fato específico, omita-o.
 
 Regras:
 - 1 a 2 frases por curiosidade
-- Somente fatos verificados e certos sobre esta pessoa; sem suposições, sem confusão com outros artistas
+- Variadas: personalidade, história, conquistas, habilidades, conexão com fãs, curiosidades da carreira
+- Somente fatos corretos sobre esta pessoa; sem confusão com outros artistas
 - Português brasileiro natural
-- Variadas: personalidade, carreira, universo K-pop
 
 Responda SOMENTE com JSON válido no formato:
 {"curiosidades": ["curiosidade 1", "curiosidade 2", "curiosidade 3", "curiosidade 4", "curiosidade 5", "curiosidade 6"]}`
