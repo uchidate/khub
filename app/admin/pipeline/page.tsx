@@ -388,6 +388,17 @@ export default async function PipelinePage({ searchParams }: Props) {
                   href={`/admin/enrichment?q=${encodeURIComponent(a.nameRomanized)}`}
                   tag="curar"
                   tagColor="pending"
+                  actions={
+                    <Link
+                      href={`/artists/${a.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                    >
+                      <ExternalLink size={9} />
+                      Ver perfil público
+                    </Link>
+                  }
                 />
               ))}
             </PipelineColumn>
