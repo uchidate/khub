@@ -154,7 +154,6 @@ export async function POST(req: Request) {
                         gender: true, birthDate: true, birthName: true, placeOfBirth: true, bio: true,
                         agency: { select: { name: true } },
                         memberships: { select: { group: { select: { name: true } }, isActive: true } },
-                        productions: { select: { production: { select: { titlePt: true } } }, take: 4 },
                     },
                     orderBy: { trendingScore: 'desc' },
                 })
@@ -198,10 +197,6 @@ export async function POST(req: Request) {
                         id: true, nameRomanized: true, nameHangul: true,
                         roles: true, gender: true, birthDate: true, bio: true,
                         memberships: { select: { group: { select: { name: true } } } },
-                        productions: {
-                            select: { production: { select: { titlePt: true } } },
-                            take: 3,
-                        },
                     },
                     orderBy: { trendingScore: 'desc' },
                 })
@@ -239,10 +234,6 @@ export async function POST(req: Request) {
                         id: true, nameRomanized: true, nameHangul: true,
                         roles: true, gender: true, birthDate: true, bio: true,
                         memberships: { select: { group: { select: { name: true } } } },
-                        productions: {
-                            select: { production: { select: { titlePt: true } } },
-                            take: 3,
-                        },
                     },
                     orderBy: { trendingScore: 'desc' },
                 })

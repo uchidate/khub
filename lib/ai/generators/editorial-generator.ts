@@ -94,7 +94,6 @@ export async function generateArtistBio(artist: {
     placeOfBirth?: string | null
     agency?: { name: string } | null
     memberships?: { group: { name: string }; isActive: boolean }[]
-    productions?: { production: { titlePt: string } }[]
     bio?: string | null
 }): Promise<ArtistBioResult> {
     const orchestrator = getOrchestrator()
@@ -104,7 +103,6 @@ export async function generateArtistBio(artist: {
     const roles = artist.roles.join(', ') || 'artista'
     const agency = artist.agency?.name || 'agência não informada'
     const genderLabel = artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'
-    const knownFor = artist.productions?.slice(0, 4).map(p => p.production.titlePt).join(', ') || null
     const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
 
     const prompt = `Atue como redator biográfico focado em dados e cronologia.
@@ -117,16 +115,15 @@ Informações disponíveis:
 - Local de nascimento: ${artist.placeOfBirth || 'não informado'}
 - Nome de nascimento: ${artist.birthName || 'não informado'}
 - Agência: ${agency}
-${knownFor ? `- Produções conhecidas (use APENAS estas): ${knownFor}` : '- Produções: não informadas — NÃO mencionar produções específicas'}
 ${artist.bio ? `- Contexto existente: "${artist.bio.slice(0, 300)}"` : ''}
 
 O parágrafo deve:
 - Ter entre 80 e 120 palavras
-- Usar corretamente o gênero gramatical da pessoa (nascido/nascida, conhecido/conhecida, etc.)
-- Cobrir: origem, quando e como entrou no entretenimento, debut e primeiros grandes sucessos
-- Mencionar apenas as produções listadas acima — NÃO inventar outras
-- Priorizar fatos concretos e datas (quando souber com certeza)
-- NÃO inventar datas, prêmios ou fatos específicos não listados
+- Usar corretamente o gênero gramatical (nascido/nascida, conhecido/conhecida, etc.)
+- Cobrir: origem, quando e como entrou no entretenimento, debut e trajetória inicial
+- NÃO mencionar títulos de produções específicas
+- Priorizar fatos concretos quando disponíveis
+- NÃO inventar datas, prêmios ou fatos específicos
 - NÃO usar adjetivos subjetivos — foque em marcos factuais
 - NÃO usar emojis
 - Tom: seco, informativo, direto ao ponto
@@ -187,7 +184,6 @@ export async function generateArtistEditorial(artist: {
     birthDate?: Date | null
     bio?: string | null
     memberships?: { group: { name: string } }[]
-    productions?: { production: { titlePt: string } }[]
 }): Promise<ArtistEditorialResult> {
     const orchestrator = getOrchestrator()
     const t0 = Date.now()
@@ -196,7 +192,6 @@ export async function generateArtistEditorial(artist: {
     const feature: AiFeature = 'artist_editorial'
 
     const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
-    const knownFor  = artist.productions?.slice(0, 3).map(p => p.production.titlePt).join(', ') || null
 
     const prompt = `Atue como um redator biográfico focado em dados e cronologia.
 
@@ -206,19 +201,18 @@ IDENTIFICAÇÃO DO ARTISTA (use estes dados para garantir que o conteúdo seja s
 - Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
 - Profissão: ${artist.roles.join(', ')}
 - Grupo/carreira: ${groups !== 'solo' ? groups : 'carreira solo'}
-${knownFor ? `- Produções conhecidas: ${knownFor}` : ''}
 
 Escreva 2 parágrafos curtos, cada um com um título de uma ou duas palavras.
 
 ${artist.bio ? `Contexto biográfico: "${artist.bio.slice(0, 500)}"` : ''}
 
 Estrutura obrigatória:
-- Parágrafo 1 — Projetos: produções atuais (2024–2026), desempenho em plataformas de streaming e novos lançamentos.
+- Parágrafo 1 — Projetos: trabalhos recentes, desempenho e novos lançamentos.
 - Parágrafo 2 — Reconhecimento: prêmios reais, competências técnicas e atuação comercial/marcas.
 
 Regras:
 - Títulos de no máximo 2 palavras (ex: "Projetos", "Reconhecimento").
-- Priorize fatos concretos, marcos de audiência, prêmios reais e produções específicas.
+- Priorize fatos concretos, marcos de audiência e prêmios reais.
 - NÃO use frases de efeito como "exemplo de resiliência", "atingiu novo patamar", "ícone global".
 - NÃO use adjetivos subjetivos — se o artista é talentoso, cite o prêmio, não o adjetivo.
 - NÃO use emojis.
@@ -269,14 +263,12 @@ export async function generateArtistCuriosidades(artist: {
     bio?: string | null
     roles: string[]
     memberships?: { group: { name: string } }[]
-    productions?: { production: { titlePt: string } }[]
 }): Promise<ArtistCuriosidadesResult> {
     const orchestrator = getOrchestrator()
     const t0 = Date.now()
     const feature: AiFeature = 'artist_curiosidades'
 
     const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
-    const knownFor  = artist.productions?.slice(0, 3).map(p => p.production.titlePt).join(', ') || null
     const groups    = artist.memberships?.map(m => m.group.name).join(', ') || null
 
     const prompt = `Crie 6 curiosidades interessantes sobre o artista para o site HallyuHub em português brasileiro.
@@ -287,7 +279,6 @@ IDENTIFICAÇÃO DO ARTISTA (use estes dados para garantir que o conteúdo seja s
 - Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
 - Profissão: ${artist.roles.join(', ')} (K-pop/K-drama)
 ${groups ? `- Grupo: ${groups}` : '- Carreira solo'}
-${knownFor ? `- Produções conhecidas: ${knownFor}` : ''}
 ${artist.bio ? `- Contexto biográfico: "${artist.bio.slice(0, 300)}"` : ''}
 
 As curiosidades devem:
