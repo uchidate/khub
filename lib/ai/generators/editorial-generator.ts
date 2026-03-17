@@ -99,35 +99,33 @@ export async function generateArtistBio(artist: {
     const orchestrator = getOrchestrator()
     const t0 = Date.now()
 
-    const groups = artist.memberships?.map(m => m.group.name).join(', ') || 'solo'
     const roles = artist.roles.join(', ') || 'artista'
     const agency = artist.agency?.name || 'agência não informada'
     const genderLabel = artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'
-    const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
+    const birthDateStr = artist.birthDate ? new Date(artist.birthDate).toISOString().slice(0, 10) : null
 
-    const prompt = `Atue como redator biográfico focado em dados e cronologia.
+    const prompt = `Atue como redator biográfico especializado em entretenimento coreano.
 
-Escreva um parágrafo de perfil sobre **${artist.nameRomanized}** (${roles}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}).
-
-Informações disponíveis:
+⚠️ IDENTIFICAÇÃO OBRIGATÓRIA — verifique antes de escrever:
+- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` / ${artist.nameHangul}` : ''}
 - Gênero: ${genderLabel}
-- Ano de nascimento: ${birthYear ?? 'não informado'}
+- Data de nascimento: ${birthDateStr ?? 'não informada'}
 - Local de nascimento: ${artist.placeOfBirth || 'não informado'}
 - Nome de nascimento: ${artist.birthName || 'não informado'}
 - Agência: ${agency}
-${artist.bio ? `- Contexto existente: "${artist.bio.slice(0, 300)}"` : ''}
+${artist.bio ? `- Bio de referência: "${artist.bio.slice(0, 300)}"` : ''}
 
-O parágrafo deve:
-- Ter entre 80 e 120 palavras
-- Usar corretamente o gênero gramatical (nascido/nascida, conhecido/conhecida, etc.)
-- Cobrir: origem, quando e como entrou no entretenimento, debut e trajetória inicial
-- NÃO mencionar títulos de produções específicas
-- Priorizar fatos concretos quando disponíveis
-- NÃO inventar datas, prêmios ou fatos específicos
-- NÃO usar adjetivos subjetivos — foque em marcos factuais
+⚠️ REGRA ANTI-CONFUSÃO: Existem vários artistas sul-coreanos com nomes romanizados similares. Use nome em hangul e data de nascimento completa para identificar a pessoa CORRETA. Só escreva fatos que você tem certeza absoluta que são desta pessoa específica. Sem suposições, sem fatos de outra pessoa, sem inventar. Se não tiver certeza sobre algo, escreva de forma genérica (ex: "artista sul-coreana", "profissão: ${roles}").
+
+Escreva um parágrafo de perfil sobre ${artist.nameRomanized} (${roles}).
+
+Regras:
+- Entre 80 e 120 palavras
+- Gênero gramatical correto (nascido/nascida, conhecida/conhecido, etc.)
+- Apenas fatos verificados e certos sobre esta pessoa
 - NÃO usar emojis
-- Tom: seco, informativo, direto ao ponto
-- Escrito em português brasileiro
+- Tom: informativo, direto ao ponto
+- Português brasileiro
 
 Responda APENAS com o parágrafo, sem título, sem introdução, sem notas.`
 
@@ -188,37 +186,36 @@ export async function generateArtistEditorial(artist: {
     const orchestrator = getOrchestrator()
     const t0 = Date.now()
 
-    const groups = artist.memberships?.map(m => m.group.name).join(', ') || 'solo'
     const feature: AiFeature = 'artist_editorial'
 
-    const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
+    const birthDateStr = artist.birthDate ? new Date(artist.birthDate).toISOString().slice(0, 10) : null
 
-    const prompt = `Atue como um redator biográfico focado em dados e cronologia.
+    const prompt = `Atue como redator editorial especializado em entretenimento coreano.
 
-IDENTIFICAÇÃO DO ARTISTA (use estes dados para garantir que o conteúdo seja sobre a pessoa correta):
-- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}
-- Ano de nascimento: ${birthYear ?? 'não informado'}
+⚠️ IDENTIFICAÇÃO OBRIGATÓRIA — verifique antes de escrever:
+- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` / ${artist.nameHangul}` : ''}
+- Data de nascimento: ${birthDateStr ?? 'não informada'}
 - Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
 - Profissão: ${artist.roles.join(', ')}
-- Grupo/carreira: ${groups !== 'solo' ? groups : 'carreira solo'}
+${artist.bio ? `- Bio: "${artist.bio.slice(0, 500)}"` : ''}
 
-Escreva 2 parágrafos curtos, cada um com um título de uma ou duas palavras.
+⚠️ REGRA ANTI-CONFUSÃO: Existem vários artistas sul-coreanos com nomes romanizados similares. Use nome em hangul e data de nascimento completa para identificar a pessoa CORRETA. Só escreva fatos que você tem certeza absoluta que são desta pessoa específica. Sem suposições, sem fatos de outra pessoa, sem inventar. Se não tiver certeza sobre algo, prefira falar de forma genérica sobre a carreira.
 
-${artist.bio ? `Contexto biográfico: "${artist.bio.slice(0, 500)}"` : ''}
+Escreva 2 parágrafos curtos com título de uma ou duas palavras cada.
 
-Estrutura obrigatória:
-- Parágrafo 1 — Projetos: trabalhos recentes, desempenho e novos lançamentos.
-- Parágrafo 2 — Reconhecimento: prêmios reais, competências técnicas e atuação comercial/marcas.
+Estrutura:
+- Parágrafo 1 — Projetos: carreira e trabalhos mais relevantes.
+- Parágrafo 2 — Reconhecimento: prêmios, destaques ou impacto.
 
 Regras:
-- Títulos de no máximo 2 palavras (ex: "Projetos", "Reconhecimento").
-- Priorize fatos concretos, marcos de audiência e prêmios reais.
+- Títulos de no máximo 2 palavras.
 - NÃO use frases de efeito como "exemplo de resiliência", "atingiu novo patamar", "ícone global".
-- NÃO use adjetivos subjetivos — se o artista é talentoso, cite o prêmio, não o adjetivo.
+- NÃO use adjetivos subjetivos sem fato concreto.
 - NÃO use emojis.
-- Tom: seco, informativo, profissional e direto ao ponto.
+- Tom: seco, informativo, profissional.
+- Português brasileiro.
 
-Formato de saída — use EXATAMENTE este padrão (sem variações):
+Formato de saída — use EXATAMENTE este padrão:
 **[Título]**
 [conteúdo]
 
@@ -268,25 +265,24 @@ export async function generateArtistCuriosidades(artist: {
     const t0 = Date.now()
     const feature: AiFeature = 'artist_curiosidades'
 
-    const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
-    const groups    = artist.memberships?.map(m => m.group.name).join(', ') || null
+    const birthDateStr = artist.birthDate ? new Date(artist.birthDate).toISOString().slice(0, 10) : null
 
-    const prompt = `Crie 6 curiosidades interessantes sobre o artista para o site HallyuHub em português brasileiro.
+    const prompt = `Crie 6 curiosidades sobre o artista para o site HallyuHub em português brasileiro.
 
-IDENTIFICAÇÃO DO ARTISTA (use estes dados para garantir que o conteúdo seja sobre a pessoa correta):
-- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}
-- Ano de nascimento: ${birthYear ?? 'não informado'}
+⚠️ IDENTIFICAÇÃO OBRIGATÓRIA — verifique antes de escrever:
+- Nome: ${artist.nameRomanized}${artist.nameHangul ? ` / ${artist.nameHangul}` : ''}
+- Data de nascimento: ${birthDateStr ?? 'não informada'}
 - Gênero: ${artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'}
 - Profissão: ${artist.roles.join(', ')} (K-pop/K-drama)
-${groups ? `- Grupo: ${groups}` : '- Carreira solo'}
-${artist.bio ? `- Contexto biográfico: "${artist.bio.slice(0, 300)}"` : ''}
+${artist.bio ? `- Bio: "${artist.bio.slice(0, 300)}"` : ''}
 
-As curiosidades devem:
-- Ser factuais e verificáveis (não invente datas ou números exatos que não sabe)
-- Ser variadas: personalidade, talento, história, conquistas, conexão com fãs
-- Ter entre 1 e 2 frases cada
-- Ser escritas em português brasileiro natural
-- Agregar valor para fãs que já conhecem o artista
+⚠️ REGRA ANTI-CONFUSÃO: Use nome em hangul e data de nascimento completa para identificar a pessoa CORRETA. Só inclua fatos que você tem certeza absoluta que são desta pessoa. Sem suposições, sem fatos de outra pessoa, sem inventar. Se não tiver certeza sobre algo, prefira curiosidades gerais sobre o universo K-pop/K-drama ou sobre a profissão.
+
+Regras:
+- 1 a 2 frases por curiosidade
+- Somente fatos verificados e certos sobre esta pessoa; sem suposições, sem confusão com outros artistas
+- Português brasileiro natural
+- Variadas: personalidade, carreira, universo K-pop
 
 Responda SOMENTE com JSON válido no formato:
 {"curiosidades": ["curiosidade 1", "curiosidade 2", "curiosidade 3", "curiosidade 4", "curiosidade 5", "curiosidade 6"]}`
