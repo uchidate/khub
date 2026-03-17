@@ -245,6 +245,8 @@ export async function PUT(request: NextRequest) {
     if (parsed.flaggedAsNonKorean !== undefined) {
       data.flaggedAsNonKorean = parsed.flaggedAsNonKorean
       data.flaggedAt = parsed.flaggedAsNonKorean ? new Date() : null
+      // Non-Korean productions are automatically hidden
+      if (parsed.flaggedAsNonKorean === true) data.isHidden = true
     }
     if (parsed.isHidden !== undefined) {
       data.isHidden = parsed.isHidden

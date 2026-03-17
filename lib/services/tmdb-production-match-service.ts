@@ -243,10 +243,11 @@ export class TmdbProductionMatchService {
     const updateData: Record<string, unknown> = {
       tmdbId,
       tmdbType,
-      // AUTO-FLAG if not Korean-origin
+      // AUTO-FLAG if not Korean-origin — also hide immediately
       ...(details && !isKorean ? {
         flaggedAsNonKorean: true,
         flaggedAt: new Date(),
+        isHidden: true,
       } : {}),
     }
     const fieldsUpdated: string[] = ['tmdbId', 'tmdbType']

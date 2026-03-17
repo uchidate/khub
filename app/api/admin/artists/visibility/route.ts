@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 // Espelha o PUBLIC_PRODUCTION_FILTER do ArtistVisibilityService
 const PUBLIC_PRODUCTION_FILTER = {
     isHidden: false,
-    flaggedAsNonKorean: false,
+    // flaggedAsNonKorean check removed — non-Korean productions now always have isHidden=true
     AND: [
         { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
         { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
