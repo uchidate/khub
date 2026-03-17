@@ -40,14 +40,14 @@ interface Stats {
 }
 
 const REASON_CONFIG: Record<HideReason, { label: string; cls: string; description: string }> = {
-    adult_content:      { label: 'Conteúdo adulto',     cls: 'bg-red-900/40 text-red-400 border-red-700/30',    description: 'Participa de produção com conteúdo sexual adulto — não pode ser mostrado automaticamente.' },
-    hidden_productions: { label: 'Prod. ocultas/18+',   cls: 'bg-orange-900/40 text-orange-400 border-orange-700/30', description: 'Todas as produções estão ocultas ou têm classificação 18+.' },
-    no_productions:     { label: 'Sem produções',        cls: 'bg-zinc-800 text-zinc-500 border-zinc-700',      description: 'Nenhuma produção vinculada.' },
+    adult_content:      { label: 'Conteúdo adulto',          cls: 'bg-red-900/40 text-red-400 border-red-700/30',       description: 'Participa de produção com conteúdo sexual adulto — não pode ser mostrado automaticamente.' },
+    hidden_productions: { label: 'Só prod. não-coreanas/18+', cls: 'bg-amber-900/40 text-amber-400 border-amber-700/30', description: 'Todas as produções são não-coreanas, estão ocultas ou têm classificação 18+.' },
+    no_productions:     { label: 'Sem produções',             cls: 'bg-zinc-800 text-zinc-500 border-zinc-700',          description: 'Nenhuma produção vinculada.' },
 }
 
 const REASON_FILTERS: [ReasonFilter, string][] = [
     ['all',                'Todos'],
-    ['hidden_productions', 'Prod. ocultas/18+'],
+    ['hidden_productions', 'Só não-coreanas/ocultas'],
     ['no_productions',     'Sem produções'],
     ['adult_content',      'Conteúdo adulto'],
 ]
@@ -171,7 +171,7 @@ export default function ArtistVisibilityPage() {
 
     const statCards = [
         { label: 'Auto-ocultos total', value: stats?.totalAutoHidden, cls: 'text-amber-400' },
-        { label: 'Prod. ocultas/18+',  value: stats?.hiddenProductions, cls: 'text-orange-400' },
+        { label: 'Não-coreanas/ocultas', value: stats?.hiddenProductions, cls: 'text-amber-400' },
         { label: 'Sem produções',      value: stats?.noProductions,     cls: 'text-zinc-500' },
         { label: 'Conteúdo adulto',    value: stats?.adultContent,      cls: 'text-red-400' },
     ]
@@ -193,7 +193,7 @@ export default function ArtistVisibilityPage() {
                 {/* Explicação */}
                 <div className="px-4 py-3 rounded-xl border border-zinc-700/40 bg-zinc-900/60 text-xs text-zinc-400 space-y-1.5">
                     <p className="font-semibold text-zinc-300">Como funciona o auto-hide de artistas</p>
-                    <p>Um artista fica <span className="text-amber-400">auto-oculto</span> quando não possui nenhuma produção visível. Produção visível = <span className="text-zinc-200">não está oculta + classificação não é 18+ + não é conteúdo adulto sexual.</span></p>
+                    <p>Um artista fica <span className="text-amber-400">auto-oculto</span> quando não possui nenhuma produção <strong>coreana</strong> visível. Produção coreana visível = <span className="text-zinc-200">não está flagged como não-coreana + não está oculta + classificação não é 18+ + não é conteúdo adulto sexual.</span></p>
                     <p>Artistas com conteúdo adulto sexual <span className="text-red-400 font-medium">não podem ser mostrados</span> aqui — precisam ser tratados na página de moderação.</p>
                     <p>Usar <span className="text-green-400 font-medium">Mostrar</span> seta <code className="bg-zinc-800 px-1 rounded">autoHidden=false</code> — o sistema deixa de re-ocultar esse artista nos próximos ciclos de reconciliação.</p>
                 </div>
