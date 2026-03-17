@@ -5,7 +5,7 @@ import { getErrorMessage } from '@/lib/utils/error'
 
 export const dynamic = 'force-dynamic'
 
-type TranslationStatus = 'pending' | 'draft' | 'approved'
+type TranslationStatus = 'pending' | 'draft' | 'approved' | 'no_synopsis'
 
 /**
  * Resolve IDs de entidades que batem com o filtro de status, consultando ContentTranslation.
@@ -122,22 +122,60 @@ export async function GET(req: NextRequest) {
       total = count
 
     } else if (entityType === 'production') {
+      // Caso especial: sem sinopse
+      if (statusFilter === 'no_synopsis') {
+        const where = {
+          isHidden: isHiddenWhere,
+          OR: [{ synopsis: null as null }, { synopsis: '' }],
+          ...(q ? {
+            OR: [
+              { titlePt: { contains: q, mode: 'insensitive' as const } },
+              { titleKr: { contains: q, mode: 'insensitive' as const } },
+            ],
+          } : {}),
+        }
+        const [prods, count] = await Promise.all([
+          prisma.production.findMany({
+            where,
+            select: { id: true, titlePt: true, titleKr: true, synopsis: true, synopsisSource: true, translationStatus: true },
+            orderBy: [{ year: 'desc' }, { titlePt: 'asc' }],
+            skip,
+            take: limit,
+          }),
+          prisma.production.count({ where }),
+        ])
+        return NextResponse.json({
+          items: prods.map(p => ({
+            id: p.id, label: p.titlePt, subtitle: p.titleKr ?? undefined,
+            fields: ['synopsis'], snippet: undefined,
+            synopsisSource: p.synopsisSource, hasSynopsis: false, translationStatus: p.translationStatus,
+            status: 'no_synopsis',
+          })),
+          total: count, page, totalPages: Math.ceil(count / limit),
+        })
+      }
+
+      // Fontes que indicam sinopse já em PT: tmdb_pt (TMDB pt-BR) ou manual (admin escreveu em PT)
+      const PT_SOURCES = ['tmdb_pt', 'manual']
+      // Fontes de rascunho legado: 'ai' (IA traduziu direto no campo synopsis, antes do ContentTranslation)
+      const DRAFT_SOURCES = ['ai']
+
       let idFilter = await resolveStatusIds('production', 'synopsis', statusFilter)
       if (statusFilter === 'pending') {
-        // Excluir também produções com sinopse já em PT-BR (synopsisSource='tmdb_pt')
-        const alreadyPt = await prisma.production.findMany({
-          where: { synopsisSource: 'tmdb_pt', isHidden: isHiddenWhere },
+        // Excluir produções com sinopse já em PT-BR (tmdb_pt, manual) ou rascunho legado (ai)
+        const alreadyHandled = await prisma.production.findMany({
+          where: { synopsisSource: { in: [...PT_SOURCES, ...DRAFT_SOURCES] }, isHidden: isHiddenWhere },
           select: { id: true },
         })
-        const excludeIds = alreadyPt.map(p => p.id)
+        const excludeIds = alreadyHandled.map(p => p.id)
         if (excludeIds.length > 0) {
           const base = idFilter && 'notIn' in idFilter ? idFilter.notIn : []
           idFilter = { notIn: Array.from(new Set([...base, ...excludeIds])) }
         }
       } else if (statusFilter === 'approved') {
-        // Incluir também produções com synopsisSource='tmdb_pt' mesmo sem CT
+        // Incluir produções com synopsisSource indicando PT-BR nativo (tmdb_pt ou manual)
         const alreadyPt = await prisma.production.findMany({
-          where: { synopsisSource: 'tmdb_pt', isHidden: isHiddenWhere },
+          where: { synopsisSource: { in: PT_SOURCES }, isHidden: isHiddenWhere },
           select: { id: true },
         })
         const extraIds = alreadyPt.map(p => p.id)
@@ -145,10 +183,27 @@ export async function GET(req: NextRequest) {
           const base = idFilter && 'in' in idFilter ? idFilter.in : []
           idFilter = { in: Array.from(new Set([...base, ...extraIds])) }
         }
+      } else if (statusFilter === 'draft') {
+        // Incluir rascunho legado: synopsisSource='ai' sem CT
+        const ctIds = await resolveStatusIds('production', 'synopsis', null)
+        const legacyDraft = await prisma.production.findMany({
+          where: {
+            synopsisSource: { in: DRAFT_SOURCES },
+            isHidden: isHiddenWhere,
+            id: ctIds ? {} : {},  // sem filtro extra — já incluído via CT acima
+          },
+          select: { id: true },
+        })
+        const legacyIds = legacyDraft.map(p => p.id)
+        if (legacyIds.length > 0) {
+          const base = idFilter && 'in' in idFilter ? idFilter.in : []
+          idFilter = { in: Array.from(new Set([...base, ...legacyIds])) }
+        }
       }
       const where = {
         isHidden: isHiddenWhere,
         synopsis: { not: null as null },
+        NOT: [{ synopsis: '' }],
         ...(q ? {
           OR: [
             { titlePt: { contains: q, mode: 'insensitive' as const } },
@@ -266,9 +321,15 @@ export async function GET(req: NextRequest) {
         : fieldStatuses.some(s => s === 'draft' || s === 'approved')
           ? 'draft'
           : 'pending'
-      // Para productions: synopsisSource='tmdb_pt' = já está em PT-BR → tratar como approved
-      if (overallStatus === 'pending' && (item.synopsisSource as string) === 'tmdb_pt') {
-        overallStatus = 'approved'
+      // Para productions: synopsisSource indica que a sinopse já está em PT-BR
+      if (overallStatus === 'pending') {
+        const src = item.synopsisSource as string | null
+        if (src === 'tmdb_pt' || src === 'manual') {
+          overallStatus = 'approved'
+        } else if (src === 'ai') {
+          // Legado: IA traduziu e salvou direto no campo synopsis (antes do ContentTranslation)
+          overallStatus = 'draft'
+        }
       }
       // Para artists: fieldSources.bio.source='tmdb_pt' = bio já em PT-BR → tratar como approved
       if (overallStatus === 'pending' && (item.bioSource as string) === 'tmdb_pt') {

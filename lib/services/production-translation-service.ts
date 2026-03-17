@@ -27,7 +27,7 @@ export class ProductionTranslationService {
         limit = 5,
         onProgress?: (p: { current: number; total: number; name: string; status: 'processing' | 'translated' | 'skipped' | 'failed' }) => void,
         isHidden?: boolean
-    ): Promise<{ translated: number; failed: number; skipped: number }> {
+    ): Promise<{ translated: number; failed: number; skipped: number; totalCostUsd: number }> {
         console.log(`🌐 Starting production translation batch (limit: ${limit})...`)
 
         // Usa ContentTranslation como fonte de verdade (não o campo legado translationStatus)
@@ -40,7 +40,7 @@ export class ProductionTranslationService {
         const pending = await this.prisma.production.findMany({
             where: {
                 synopsis: { not: null },
-                synopsisSource: { not: 'tmdb_pt' }, // já está em pt-BR, não precisa traduzir
+                synopsisSource: { notIn: ['tmdb_pt', 'manual', 'ai'] }, // já em pt-BR, não precisa traduzir
                 isHidden: isHidden ?? false,
                 id: { notIn: translatedIds },
             },
@@ -51,7 +51,7 @@ export class ProductionTranslationService {
 
         console.log(`📊 Found ${pending.length} productions pending translation`)
 
-        let translated = 0, failed = 0, skipped = 0
+        let translated = 0, failed = 0, skipped = 0, totalCostUsd = 0
         const total = pending.length
 
         for (let i = 0; i < pending.length; i++) {
@@ -78,7 +78,8 @@ export class ProductionTranslationService {
                 onProgress?.({ current: i + 1, total, name: prod.titlePt, status: 'processing' })
                 console.log(`  🔄 Translating [${lang}]: ${prod.titlePt}...`)
 
-                const translatedSynopsis = await this.translateSynopsis(prod.titlePt, synopsis, lang)
+                const { text: translatedSynopsis, cost } = await this.translateSynopsis(prod.titlePt, synopsis, lang)
+                totalCostUsd += cost
 
                 await this.prisma.contentTranslation.upsert({
                     where: {
@@ -121,8 +122,8 @@ export class ProductionTranslationService {
             }
         }
 
-        console.log(`✅ Production translation batch complete: ${translated} translated, ${failed} failed, ${skipped} skipped`)
-        return { translated, failed, skipped }
+        console.log(`✅ Production translation batch complete: ${translated} translated, ${failed} failed, ${skipped} skipped, $${totalCostUsd.toFixed(5)}`)
+        return { translated, failed, skipped, totalCostUsd }
     }
 
     private async markCompleted(productionId: string): Promise<void> {
@@ -132,7 +133,7 @@ export class ProductionTranslationService {
         })
     }
 
-    private async translateSynopsis(title: string, synopsis: string, lang: DetectedLang): Promise<string> {
+    private async translateSynopsis(title: string, synopsis: string, lang: DetectedLang): Promise<{ text: string; cost: number }> {
         // Coreano → DeepSeek (melhor suporte); inglês/unknown → Ollama
         const provider = lang === 'ko' ? 'deepseek' : 'ollama'
         const langLabel = lang === 'ko' ? 'coreano' : 'inglês'
@@ -140,19 +141,19 @@ export class ProductionTranslationService {
         const result = await this.getOrchestrator().generateStructured<{ synopsis: string }>(
             `Traduza a seguinte sinopse de ${langLabel} para português brasileiro de forma natural. Preserve nomes próprios (artistas, personagens, locais). Máximo 3 frases concisas:\n\nProdução: ${title}\n\n${synopsis}`,
             '{ "synopsis": "string (sinopse em português brasileiro, máx. 3 frases)" }',
-            { preferredProvider: provider }
+            { preferredProvider: provider, feature: 'production_translation' }
         )
 
-        return result.parsed.synopsis
+        return { text: result.parsed.synopsis, cost: result.cost ?? 0 }
     }
 
-    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed' }> {
+    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed'; cost: number }> {
         const prod = await this.prisma.production.findUnique({
             where: { id },
             select: { id: true, titlePt: true, synopsis: true, synopsisSource: true },
         })
         if (!prod || !prod.synopsis) {
-            return { name: prod?.titlePt ?? id, status: 'skipped' }
+            return { name: prod?.titlePt ?? id, status: 'skipped', cost: 0 }
         }
         try {
             const langHint: DetectedLang | null =
@@ -162,19 +163,19 @@ export class ProductionTranslationService {
             const lang: DetectedLang = langHint ?? detectLanguage(prod.synopsis)
             if (lang === 'pt') {
                 await this.markCompleted(prod.id)
-                return { name: prod.titlePt, status: 'skipped' }
+                return { name: prod.titlePt, status: 'skipped', cost: 0 }
             }
-            const translatedSynopsis = await this.translateSynopsis(prod.titlePt, prod.synopsis, lang)
+            const { text: translatedSynopsis, cost } = await this.translateSynopsis(prod.titlePt, prod.synopsis, lang)
             await this.prisma.contentTranslation.upsert({
                 where: { entityType_entityId_field_locale: { entityType: 'production', entityId: prod.id, field: 'synopsis', locale: 'pt-BR' } },
                 create: { entityType: 'production', entityId: prod.id, field: 'synopsis', locale: 'pt-BR', value: translatedSynopsis, status: 'draft', sourceLang: lang },
                 update: { value: translatedSynopsis, status: 'draft', sourceLang: lang },
             })
             await this.markCompleted(prod.id)
-            return { name: prod.titlePt, status: 'translated' }
+            return { name: prod.titlePt, status: 'translated', cost }
         } catch {
             await this.prisma.production.update({ where: { id }, data: { translationStatus: 'failed' } }).catch(() => {})
-            return { name: prod.titlePt, status: 'failed' }
+            return { name: prod.titlePt, status: 'failed', cost: 0 }
         }
     }
 

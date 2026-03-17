@@ -113,35 +113,39 @@ export async function GET() {
       prisma.musicalGroup.count({
         where: { bio: { not: null }, isHidden: false, id: { in: groupApprovedCtIds } },
       }),
-      prisma.production.count({ where: { isHidden: false, synopsis: { not: null } } }),
+      // production total: com sinopse não-vazia
+      prisma.production.count({ where: { isHidden: false, synopsis: { not: null }, NOT: [{ synopsis: '' }] } }),
+      // production translated: tem CT OU synopsisSource indica PT-BR nativo/manual/ai
       prisma.production.count({
         where: {
-          isHidden: false, synopsis: { not: null },
+          isHidden: false, synopsis: { not: null }, NOT: [{ synopsis: '' }],
           OR: [
-            { synopsisSource: 'tmdb_pt' },
+            { synopsisSource: { in: ['tmdb_pt', 'manual', 'ai'] } },
             { id: { in: prodCtTranslatedIds } },
           ],
         },
       }),
+      // production pending: sem CT E synopsisSource não indica PT-BR
       prisma.production.count({
         where: {
-          isHidden: false, synopsis: { not: null },
-          synopsisSource: { not: 'tmdb_pt' },
+          isHidden: false, synopsis: { not: null }, NOT: [{ synopsis: '' }],
+          synopsisSource: { notIn: ['tmdb_pt', 'manual', 'ai'] },
           id: { notIn: prodCtIds },
         },
       }),
-      // production approved: synopsisSource='tmdb_pt' OU CT aprovado
+      // production approved: synopsisSource PT-BR nativo/manual OU CT aprovado
       prisma.production.count({
         where: {
-          isHidden: false, synopsis: { not: null },
+          isHidden: false, synopsis: { not: null }, NOT: [{ synopsis: '' }],
           OR: [
-            { synopsisSource: 'tmdb_pt' },
+            { synopsisSource: { in: ['tmdb_pt', 'manual'] } },
             { id: { in: prodCtApprovedIds } },
           ],
         },
       }),
       prisma.production.count({ where: { isHidden: false, translationStatus: 'failed' } }),
-      prisma.production.count({ where: { isHidden: false, synopsis: null } }),
+      // noSynopsis: synopsis null ou vazia
+      prisma.production.count({ where: { isHidden: false, OR: [{ synopsis: null }, { synopsis: '' }] } }),
       prisma.news.count({ where: { isHidden: false } }),
       prisma.news.count({
         where: {
@@ -175,8 +179,8 @@ export async function GET() {
       }),
       prisma.production.count({
         where: {
-          isHidden: true, synopsis: { not: null },
-          synopsisSource: { not: 'tmdb_pt' },
+          isHidden: true, synopsis: { not: null }, NOT: [{ synopsis: '' }],
+          synopsisSource: { notIn: ['tmdb_pt', 'manual', 'ai'] },
           id: { notIn: prodCtIds },
         },
       }),

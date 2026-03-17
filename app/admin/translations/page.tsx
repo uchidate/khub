@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles, ExternalLink } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles, ExternalLink, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
-type StatusFilter = '' | 'pending' | 'draft' | 'approved'
+type StatusFilter = '' | 'pending' | 'draft' | 'approved' | 'no_synopsis'
 
 interface Stats {
   artist:     { total: number; translated: number; approved: number; draft: number; pending: number; hiddenPending: number }
@@ -24,7 +24,7 @@ interface TranslationItem {
   snippet?: string
   ptSnippet?: string
   bioSource?: string | null
-  status?: 'pending' | 'draft' | 'approved'
+  status?: 'pending' | 'draft' | 'approved' | 'no_synopsis'
   fieldStatuses?: Record<string, string>
   // production-specific
   synopsisSource?: string | null
@@ -68,7 +68,7 @@ const SYNOPSIS_SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
 const FILTERS_BY_TAB: Record<EntityType, [StatusFilter, string][]> = {
   artist:     [['', 'Todos'], ['pending', 'Sem tradução'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
   group:      [['', 'Todos'], ['pending', 'Sem tradução'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
-  production: [['', 'Todos'], ['pending', 'Pendentes'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
+  production: [['', 'Todos'], ['pending', 'Pendentes'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados'], ['no_synopsis', 'Sem sinopse']],
   news:       [['', 'Todos'], ['pending', 'Sem tradução'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
 }
 
@@ -166,6 +166,8 @@ function TranslationsPageContent() {
   const [elapsed, setElapsed] = useState(0)
   const [batchLimit, setBatchLimit] = useState(10)
   const [batchPanelOpen, setBatchPanelOpen] = useState(false)
+  const [sessionStats, setSessionStats] = useState<{ translated: number; cost: number }>({ translated: 0, cost: 0 })
+  const [historicalCost, setHistoricalCost] = useState<{ allTime: number; last30d: number } | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
 
@@ -198,6 +200,11 @@ function TranslationsPageContent() {
   useEffect(() => { setPage(1); setSelected(new Set()) }, [statusFilter, hiddenFilter, q, sourceFilter])
   useEffect(() => { fetchItems() }, [fetchItems])
   useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [progressLog, currentItem])
+  useEffect(() => {
+    fetch('/api/admin/translations/cost').then(r => r.ok ? r.json() : null).then(d => {
+      if (d) setHistoricalCost({ allTime: d.allTime, last30d: d.last30d })
+    })
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); fetchItems() }
 
@@ -312,13 +319,17 @@ function TranslationsPageContent() {
     else params.set('hidden', 'false')
     const es = new EventSource(`/api/admin/translations/run?${params}`)
     es.onmessage = (event) => {
-      const data = JSON.parse(event.data) as ProgressEvent & { type: string; translated?: number; skipped?: number; failed?: number; message?: string }
+      const data = JSON.parse(event.data) as ProgressEvent & { type: string; translated?: number; skipped?: number; failed?: number; totalCostUsd?: number; message?: string }
       if (data.type === 'progress') {
         if (data.status === 'processing') setCurrentItem(data)
         else { setCurrentItem(null); setProgressLog(prev => [...prev, data]) }
       } else if (data.type === 'done') {
         es.close(); stopTimer(); setRunning(false); setCurrentItem(null)
-        setRunResult(`Traduzidos: ${data.translated ?? 0} · Ignorados: ${data.skipped ?? 0} · Falhas: ${data.failed ?? 0}`)
+        const cost = data.totalCostUsd ?? 0
+        setSessionStats(prev => ({ translated: prev.translated + (data.translated ?? 0), cost: prev.cost + cost }))
+        if (cost > 0) setHistoricalCost(prev => prev ? { allTime: prev.allTime + cost, last30d: prev.last30d + cost } : null)
+        const costStr = cost > 0 ? ` · $${cost.toFixed(4)}` : ''
+        setRunResult(`Traduzidos: ${data.translated ?? 0} · Ignorados: ${data.skipped ?? 0} · Falhas: ${data.failed ?? 0}${costStr}`)
         fetchStats(); fetchItems()
       } else if (data.type === 'error') {
         es.close(); stopTimer(); setRunning(false); setCurrentItem(null)
@@ -415,6 +426,34 @@ function TranslationsPageContent() {
             )
           })}
         </div>
+
+        {/* Widget de custo */}
+        {(historicalCost !== null || sessionStats.translated > 0) && (
+          <div className="flex flex-wrap gap-3 items-center px-4 py-2.5 rounded-xl border border-white/10 bg-zinc-900">
+            <DollarSign className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
+            {historicalCost !== null && (
+              <>
+                <span className="text-xs text-zinc-500">
+                  Total histórico: <span className="text-zinc-300 font-mono">${historicalCost.allTime.toFixed(4)}</span>
+                </span>
+                <span className="text-xs text-zinc-600">·</span>
+                <span className="text-xs text-zinc-500">
+                  Últimos 30 dias: <span className="text-zinc-300 font-mono">${historicalCost.last30d.toFixed(4)}</span>
+                </span>
+              </>
+            )}
+            {sessionStats.translated > 0 && (
+              <>
+                {historicalCost !== null && <span className="text-xs text-zinc-700">|</span>}
+                <span className="text-xs text-emerald-500/80 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Sessão: {sessionStats.translated} traduzidos
+                  {sessionStats.cost > 0 && <> · <span className="font-mono">${sessionStats.cost.toFixed(4)}</span></>}
+                </span>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Painel de tradução em tempo real — colapsável */}
         {showBatchPanel && (
@@ -718,7 +757,7 @@ function TranslationsPageContent() {
                 const isDone = singleDone.has(item.id)
                 const isApprovingItem = approving.has(item.id)
                 const isSelectedItem = selected.has(item.id)
-                const canSingleTranslate = canTranslate && item.status !== 'approved'
+                const canSingleTranslate = canTranslate && item.status !== 'approved' && item.status !== 'no_synopsis'
                 const canApprove = item.status === 'draft'
                 return (
                   <li key={item.id} className={isSelectedItem ? 'bg-purple-900/10' : ''}>

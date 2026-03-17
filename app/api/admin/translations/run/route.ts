@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const stream = new ReadableStream({
         async start(controller) {
             try {
-                let result: { translated: number; failed: number; skipped: number }
+                let result: { translated: number; failed: number; skipped: number; totalCostUsd: number }
 
                 if (entityType === 'artist') {
                     const service = getArtistTranslationService(prisma)

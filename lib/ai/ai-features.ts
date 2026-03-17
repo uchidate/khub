@@ -6,6 +6,7 @@ export type AiFeature =
     | 'artist_generation'
     | 'artist_translation'
     | 'group_translation'
+    | 'production_translation'
     | 'production_generation'
     | 'news_tagging'
     // Enriquecimento de conteúdo editorial
@@ -25,6 +26,7 @@ export const AI_FEATURES: Exclude<AiFeature, 'unknown'>[] = [
     'artist_generation',
     'artist_translation',
     'group_translation',
+    'production_translation',
     'production_generation',
     'news_tagging',
     'artist_bio_enrichment',
@@ -43,6 +45,7 @@ export const FEATURE_LABELS: Record<AiFeature, string> = {
     artist_generation:      'Geração de Artistas',
     artist_translation:     'Tradução de Artistas',
     group_translation:      'Tradução de Grupos',
+    production_translation: 'Tradução de Produções',
     production_generation:  'Geração de Produções',
     news_tagging:           'Tagueamento de Notícias',
     artist_bio_enrichment:  'Bio de Artista (enriquecimento)',

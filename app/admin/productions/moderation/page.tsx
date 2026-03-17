@@ -8,9 +8,10 @@ import {
   Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2,
   Search, ChevronLeft, ChevronRight, Flag, FlagOff, CheckSquare,
   Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp, EyeOff, Eye,
-  Pencil, ArrowUpDown,
+  Pencil, ArrowUpDown, X,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { ADULT_KEYWORDS } from '@/lib/constants/moderation'
 
 type Production = {
   id: string
@@ -29,6 +30,7 @@ type Production = {
   isAdultContent: boolean | null
   adultCheckedAt: string | null
   isHidden: boolean
+  ageRating: string | null
   _count: { artists: number; userFavorites: number }
   suspicionScore: number
   suspicionReasons: string[]
@@ -41,17 +43,14 @@ type Sort = 'createdAt_desc' | 'titlePt_asc' | 'score_desc'
 
 const VALID_FILTERS: Filter[] = ['suspicious', 'recent', 'flagged', 'adult', 'hidden', 'all']
 
-// Mesmas palavras-chave do backend para highlight no card
-const ADULT_KEYWORDS = [
-  'porn', 'porno', 'pornô', 'xxx', 'jav',
-  'gravure', 'av idol', 'av girl', 'av model',
-  'hentai', 'erotic film', 'erotic movie', 'erotic drama',
-  'adult film', 'adult video', 'adult movie', 'adult content',
-  'nude model', 'nude film', 'softcore', 'hardcore',
-  'fetish', 'bdsm', 'onlyfans', 'camgirl', 'cam girl',
-  'sex tape', 'sex film', 'sex movie',
-  'uncensored', 'leaked sex', 'explicit content',
-]
+const AGE_RATING_COLORS: Record<string, string> = {
+  'L':  'bg-green-600/20 text-green-400 border-green-600/30',
+  '10': 'bg-blue-600/20 text-blue-400 border-blue-600/30',
+  '12': 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30',
+  '14': 'bg-orange-600/20 text-orange-400 border-orange-600/30',
+  '16': 'bg-red-600/20 text-red-400 border-red-600/30',
+  '18': 'bg-pink-700/30 text-pink-300 border-pink-600/40',
+}
 
 function detectAdultKeywords(title: string): string[] {
   const lower = title.toLowerCase()
@@ -124,13 +123,12 @@ function ReviewHideModal({ open, onClose, onDone }: {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
       <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
-        {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-800">
           <ShieldAlert size={18} className="text-pink-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-semibold">Revisar antes de ocultar</h3>
+            <h3 className="text-white font-semibold">Revisar antes de ocultar por keyword</h3>
             <p className="text-xs text-zinc-500">
-              {loading ? 'Carregando...' : `${items.length} produção(ões) por keyword · ${selected.size} selecionadas`}
+              {loading ? 'Carregando...' : `${items.length} produção(ões) · ${selected.size} selecionadas`}
             </p>
           </div>
           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors shrink-0">
@@ -138,7 +136,6 @@ function ReviewHideModal({ open, onClose, onDone }: {
           </button>
         </div>
 
-        {/* Controls */}
         <div className="px-5 py-3 border-b border-zinc-800 flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-40">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
@@ -157,7 +154,6 @@ function ReviewHideModal({ open, onClose, onDone }: {
           </button>
         </div>
 
-        {/* List */}
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2 min-h-0">
           {loading ? (
             <div className="flex justify-center py-10">
@@ -203,7 +199,6 @@ function ReviewHideModal({ open, onClose, onDone }: {
           )}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 px-5 py-2 border-t border-zinc-800">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="text-zinc-400 hover:text-white disabled:opacity-30 transition-colors">
@@ -216,7 +211,6 @@ function ReviewHideModal({ open, onClose, onDone }: {
           </div>
         )}
 
-        {/* Footer */}
         <div className="flex items-center gap-3 px-5 py-4 border-t border-zinc-800">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 text-sm transition-colors">
             Cancelar
@@ -280,6 +274,17 @@ function ScoreBar({ score }: { score: number }) {
       </div>
       <span className={`text-xs font-bold tabular-nums shrink-0 ${label}`}>{score}</span>
     </div>
+  )
+}
+
+// ——— Age rating badge ———
+function AgeRatingBadge({ rating }: { rating: string | null }) {
+  if (!rating) return null
+  const cls = AGE_RATING_COLORS[rating] ?? 'bg-zinc-700/50 text-zinc-400 border-zinc-600/40'
+  return (
+    <span className={`text-xs px-1.5 py-0.5 border rounded font-bold tabular-nums ${cls}`}>
+      {rating === 'L' ? 'L' : `+${rating}`}
+    </span>
   )
 }
 
@@ -356,6 +361,7 @@ function ProductionCard({
             </div>
             {/* Status badges — top-right vertical stack */}
             <div className="shrink-0 flex flex-col items-end gap-1">
+              <AgeRatingBadge rating={prod.ageRating} />
               {prod.isHidden && (
                 <span className="text-xs px-1.5 py-0.5 bg-zinc-700/60 text-zinc-400 border border-zinc-600/40 rounded flex items-center gap-1">
                   <EyeOff size={10} /> Oculto
@@ -457,6 +463,264 @@ function ProductionCard({
   )
 }
 
+// ——— Adult Pipeline Panel ———
+// Unifies: auto-hide (IA confirmed), keyword-hide, and DeepSeek analysis into a single 3-step workflow.
+function AdultPipelinePanel({
+  stats,
+  autoHidePreview,
+  autoHideDone,
+  autoHideRunning,
+  hideByKeywordsDone,
+  reviewModalOpen,
+  aiStats,
+  aiLimit,
+  aiOnlyUnchecked,
+  aiOnlyNoRating,
+  aiRunning,
+  aiLog,
+  aiDone,
+  onAutoHide,
+  onOpenReviewModal,
+  setAiLimit,
+  setAiOnlyUnchecked,
+  setAiOnlyNoRating,
+  onRunAi,
+}: {
+  stats: Stats | null
+  autoHidePreview: { adultVisible: number; artistsFromAdult: number } | null
+  autoHideDone: { hiddenProductions: number } | null
+  autoHideRunning: boolean
+  hideByKeywordsDone: number | null
+  reviewModalOpen: boolean
+  aiStats: { total: number; noRating: number; checked: number; unchecked: number; uncheckedNoRating: number; isAdult: number; notAdult: number } | null
+  aiLimit: number
+  aiOnlyUnchecked: boolean
+  aiOnlyNoRating: boolean
+  aiRunning: boolean
+  aiLog: { title: string; isAdult: boolean | null; error?: boolean }[]
+  aiDone: boolean
+  onAutoHide: () => void
+  onOpenReviewModal: () => void
+  setAiLimit: (n: number) => void
+  setAiOnlyUnchecked: (b: boolean) => void
+  setAiOnlyNoRating: (b: boolean) => void
+  onRunAi: () => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  const adultCount = stats?.adult ?? 0
+  const autoHideCount = autoHidePreview?.adultVisible ?? 0
+  const aiUnchecked = aiStats?.uncheckedNoRating ?? 0
+
+  // Urgent badge: show count of issues that need action
+  const urgentCount = (autoHideDone ? 0 : autoHideCount) + (!hideByKeywordsDone && adultCount > 0 ? 1 : 0)
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors"
+      >
+        <ShieldAlert size={16} className={urgentCount > 0 ? 'text-pink-400 shrink-0' : 'text-zinc-500 shrink-0'} />
+        <span className="text-sm font-medium text-white flex-1 text-left">Pipeline: Conteúdo Adulto</span>
+        <div className="flex items-center gap-2 mr-1">
+          {!autoHideDone && autoHideCount > 0 && (
+            <span className="text-xs px-2 py-0.5 bg-pink-600/20 text-pink-400 border border-pink-500/30 rounded-full font-medium">
+              {autoHideCount} confirmar
+            </span>
+          )}
+          {aiUnchecked > 0 && (
+            <span className="text-xs px-2 py-0.5 bg-yellow-600/15 text-yellow-400 border border-yellow-600/30 rounded-full">
+              {aiUnchecked} pendentes
+            </span>
+          )}
+          {autoHideDone && hideByKeywordsDone !== null && (
+            <span className="text-xs text-green-400 flex items-center gap-1">
+              <CheckCircle size={12} /> Pipeline limpo
+            </span>
+          )}
+        </div>
+        {open ? <ChevronUp size={16} className="text-zinc-500 shrink-0" /> : <ChevronDown size={16} className="text-zinc-500 shrink-0" />}
+      </button>
+
+      {open && (
+        <div className="border-t border-zinc-800 divide-y divide-zinc-800/60">
+          {/* Step 1: IA Analysis */}
+          <div className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-purple-300">1</span>
+              </div>
+              <span className="text-sm font-medium text-white">Analisar com DeepSeek</span>
+              {aiStats && (
+                <span className="text-xs text-zinc-500 ml-auto">
+                  {aiStats.checked}/{aiStats.total} verificados · {aiStats.isAdult} adultos
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-zinc-400">Qtd:</label>
+                <select
+                  value={aiLimit}
+                  onChange={e => setAiLimit(Number(e.target.value))}
+                  disabled={aiRunning}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                >
+                  {[5, 10, 20, 30, 50].map(n => (
+                    <option key={n} value={n}>{n} produções</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-zinc-400">Escopo:</label>
+                <select
+                  value={aiOnlyUnchecked ? 'unchecked' : 'all'}
+                  onChange={e => setAiOnlyUnchecked(e.target.value === 'unchecked')}
+                  disabled={aiRunning}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="unchecked">Não verificadas ({aiStats?.unchecked ?? '?'})</option>
+                  <option value="all">Todas (re-verificar)</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-zinc-400">Classificação:</label>
+                <select
+                  value={aiOnlyNoRating ? 'no_rating' : 'all'}
+                  onChange={e => setAiOnlyNoRating(e.target.value === 'no_rating')}
+                  disabled={aiRunning}
+                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="no_rating">Sem classificação ({aiStats?.uncheckedNoRating ?? '?'})</option>
+                  <option value="all">Qualquer</option>
+                </select>
+              </div>
+              <button
+                onClick={onRunAi}
+                disabled={aiRunning}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                {aiRunning
+                  ? <><RefreshCw size={12} className="animate-spin" /> Analisando...</>
+                  : <><Sparkles size={12} /> Analisar</>
+                }
+              </button>
+            </div>
+
+            {aiStats && (
+              <div className="flex gap-2 flex-wrap text-xs">
+                <span className="px-2 py-1 bg-zinc-800 rounded text-zinc-400">Total: <strong className="text-white">{aiStats.total}</strong></span>
+                <span className="px-2 py-1 bg-green-600/10 border border-green-600/20 rounded text-green-400">Verificadas: <strong>{aiStats.checked}</strong></span>
+                <span className="px-2 py-1 bg-yellow-600/10 border border-yellow-600/20 rounded text-yellow-400">Pendentes: <strong>{aiStats.uncheckedNoRating}</strong></span>
+                <span className="px-2 py-1 bg-pink-600/10 border border-pink-600/20 rounded text-pink-400">Adultos: <strong>{aiStats.isAdult}</strong></span>
+              </div>
+            )}
+
+            {aiLog.length > 0 && (
+              <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 max-h-36 overflow-y-auto space-y-1">
+                {aiLog.map((entry, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    {entry.error
+                      ? <XCircle size={11} className="text-red-400 shrink-0" />
+                      : entry.isAdult
+                      ? <ShieldAlert size={11} className="text-pink-400 shrink-0" />
+                      : <CheckCircle size={11} className="text-green-400 shrink-0" />
+                    }
+                    <span className={`flex-1 truncate ${entry.error ? 'text-red-400' : entry.isAdult ? 'text-pink-300' : 'text-zinc-400'}`}>
+                      {entry.title}
+                    </span>
+                    {!entry.error && (
+                      <span className={`shrink-0 font-medium ${entry.isAdult ? 'text-pink-400' : 'text-green-400'}`}>
+                        {entry.isAdult ? 'ADULTO' : 'OK'}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {aiDone && (
+              <p className="text-xs text-green-400 flex items-center gap-1.5">
+                <CheckCircle size={12} /> Análise concluída — filtre &quot;Conteúdo adulto&quot; para ver novos resultados.
+              </p>
+            )}
+          </div>
+
+          {/* Step 2: Hide confirmed by IA */}
+          <div className="p-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="w-5 h-5 rounded-full bg-pink-600/20 border border-pink-500/30 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-pink-300">2</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">Ocultar confirmadas pela IA</p>
+                {autoHidePreview ? (
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {autoHideDone
+                      ? `${autoHideDone.hiddenProductions} produção(ões) ocultadas`
+                      : autoHidePreview.adultVisible === 0
+                      ? 'Nenhuma produção adulta visível no momento'
+                      : `${autoHidePreview.adultVisible} produção(ões) adultas ainda visíveis`}
+                  </p>
+                ) : (
+                  <p className="text-xs text-zinc-600 mt-0.5">Carregando...</p>
+                )}
+              </div>
+              {autoHideDone ? (
+                <span className="text-xs text-green-400 flex items-center gap-1.5">
+                  <CheckCircle size={13} /> {autoHideDone.hiddenProductions} ocultadas
+                </span>
+              ) : autoHidePreview && autoHidePreview.adultVisible > 0 ? (
+                <button
+                  onClick={onAutoHide}
+                  disabled={autoHideRunning}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-pink-700/40 text-pink-200 hover:bg-pink-700/60 border border-pink-600/40 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {autoHideRunning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
+                  Ocultar {autoHidePreview.adultVisible}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Step 3: Hide by keywords */}
+          <div className="p-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="w-5 h-5 rounded-full bg-yellow-600/20 border border-yellow-600/30 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-yellow-300">3</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">Ocultar por palavras-chave</p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {hideByKeywordsDone !== null
+                    ? `${hideByKeywordsDone} produções ocultadas`
+                    : adultCount > 0
+                    ? `${adultCount} produções suspeitas por keyword ou IA`
+                    : 'Nenhuma produção suspeita por keyword no momento'}
+                </p>
+              </div>
+              {hideByKeywordsDone !== null ? (
+                <span className="text-xs text-green-400 flex items-center gap-1.5">
+                  <CheckCircle size={13} /> {hideByKeywordsDone} ocultadas
+                </span>
+              ) : adultCount > 0 ? (
+                <button
+                  onClick={onOpenReviewModal}
+                  disabled={reviewModalOpen}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-yellow-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <EyeOff size={12} /> Revisar e ocultar
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ——— Main page ———
 function ProductionModerationContent() {
   const router = useRouter()
@@ -483,17 +747,12 @@ function ProductionModerationContent() {
     confirmLabel: string; destructive?: boolean; onConfirm: () => void
   }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} })
 
-  // DeepSeek analysis panel
+  // Adult pipeline state
   const [autoHidePreview, setAutoHidePreview] = useState<{ adultVisible: number; artistsFromAdult: number } | null>(null)
   const [autoHideRunning, setAutoHideRunning] = useState(false)
   const [autoHideDone, setAutoHideDone] = useState<{ hiddenProductions: number } | null>(null)
-
-  // Keyword-based bulk hide
-  const [hideByKeywordsRunning, setHideByKeywordsRunning] = useState(false)
   const [hideByKeywordsDone, setHideByKeywordsDone] = useState<number | null>(null)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
-
-  const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [aiStats, setAiStats] = useState<{
     total: number; noRating: number; checked: number
     unchecked: number; uncheckedNoRating: number; isAdult: number; notAdult: number
@@ -538,8 +797,16 @@ function ProductionModerationContent() {
     }
   }, [filter, debouncedSearch, sort])
 
+  const fetchAiStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/productions/adult-check')
+      if (res.ok) setAiStats(await res.json())
+    } catch { /* ignore */ }
+  }, [])
+
   useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => { fetchProductions(1) }, [fetchProductions])
+  useEffect(() => { fetchAiStats() }, [fetchAiStats])
 
   useEffect(() => {
     fetch('/api/admin/productions/auto-hide')
@@ -568,25 +835,12 @@ function ProductionModerationContent() {
     }
   }
 
-  async function handleHideByKeywords() {
-    setReviewModalOpen(true)
-  }
-
   async function onReviewDone(count: number) {
     setHideByKeywordsDone(count)
     setReviewModalOpen(false)
     await fetchProductions(1)
     await fetchStats()
   }
-
-  const fetchAiStats = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/productions/adult-check')
-      if (res.ok) setAiStats(await res.json())
-    } catch { /* ignore */ }
-  }, [])
-
-  useEffect(() => { if (aiPanelOpen) fetchAiStats() }, [aiPanelOpen, fetchAiStats])
 
   async function runAiAnalysis() {
     setAiRunning(true)
@@ -790,7 +1044,6 @@ function ProductionModerationContent() {
     { key: 'all', label: 'Todas', count: stats?.all },
   ]
 
-  // Stats cards config with filter keys for click navigation
   const statsCards: { label: string; value: number; color: string; filterKey: Filter }[] = stats
     ? [
         { label: 'Suspeitas', value: stats.suspicious, color: 'text-red-400', filterKey: 'suspicious' },
@@ -825,7 +1078,9 @@ function ProductionModerationContent() {
               <button
                 key={s.label}
                 onClick={() => handleFilterChange(s.filterKey)}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center hover:border-zinc-700 transition-colors"
+                className={`bg-zinc-900 border rounded-xl p-3 text-center hover:border-zinc-700 transition-colors ${
+                  filter === s.filterKey ? 'border-purple-600/50 ring-1 ring-purple-600/30' : 'border-zinc-800'
+                }`}
               >
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString()}</div>
                 <div className="text-xs text-zinc-500 mt-0.5">{s.label}</div>
@@ -834,183 +1089,35 @@ function ProductionModerationContent() {
           </div>
         )}
 
-        {/* Auto-hide panel */}
-        {autoHidePreview && autoHidePreview.adultVisible > 0 && (
-          <div className="bg-pink-600/10 border border-pink-600/30 rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
-            <EyeOff size={16} className="text-pink-400 shrink-0" />
-            <span className="text-sm text-pink-300 flex-1 min-w-fit">
-              {autoHidePreview.adultVisible} produção(ões) confirmadas como adultas ainda visíveis no site
-            </span>
-            {autoHideDone ? (
-              <span className="text-xs text-green-400 flex items-center gap-1.5">
-                <CheckCircle size={13} /> {autoHideDone.hiddenProductions} ocultada(s)
-              </span>
-            ) : (
-              <button
-                onClick={() => openConfirm({
-                  open: true,
-                  title: `Ocultar ${autoHidePreview.adultVisible} produções adultas`,
-                  message: `${autoHidePreview.adultVisible} produções confirmadas como conteúdo adulto pela IA serão ocultadas do site público. Os artistas não serão afetados.`,
-                  confirmLabel: 'Ocultar produções',
-                  destructive: true,
-                  onConfirm: runAutoHide,
-                })}
-                disabled={autoHideRunning}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-pink-700/40 text-pink-200 hover:bg-pink-700/60 border border-pink-600/40 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {autoHideRunning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
-                Ocultar agora
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Keyword-based bulk hide banner */}
-        {stats && stats.adult > 0 && !hideByKeywordsDone && (
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
-            <ShieldAlert size={15} className="text-pink-400 shrink-0" />
-            <span className="text-sm text-zinc-300 flex-1 min-w-fit">
-              <span className="text-pink-400 font-medium">{stats.adult}</span> produções suspeitas por keyword ou IA
-            </span>
-            <button
-              onClick={handleHideByKeywords}
-              disabled={hideByKeywordsRunning}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-yellow-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {hideByKeywordsRunning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
-              Ocultar todas por keyword
-            </button>
-          </div>
-        )}
-        {hideByKeywordsDone !== null && (
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 flex items-center gap-2">
-            <CheckCircle size={14} className="text-green-400" />
-            <span className="text-sm text-green-400">{hideByKeywordsDone} produções ocultadas por keyword</span>
-          </div>
-        )}
-
-        {/* DeepSeek AI Analysis Panel */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <button
-            onClick={() => setAiPanelOpen(o => !o)}
-            className="w-full flex items-center gap-2 px-4 py-3 hover:bg-zinc-800/50 transition-colors"
-          >
-            <Sparkles size={16} className="text-purple-400 shrink-0" />
-            <span className="text-sm font-medium text-white flex-1 text-left">Analisar com DeepSeek</span>
-            {aiStats && (
-              <span className="text-xs text-zinc-500 mr-2">
-                {aiStats.checked}/{aiStats.total} verificados · {aiStats.isAdult} adultos · {aiStats.uncheckedNoRating} sem classificação pendentes
-              </span>
-            )}
-            {aiPanelOpen ? <ChevronUp size={16} className="text-zinc-500" /> : <ChevronDown size={16} className="text-zinc-500" />}
-          </button>
-
-          {aiPanelOpen && (
-            <div className="border-t border-zinc-800 p-4 space-y-4">
-              {/* Config */}
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-zinc-400">Quantidade:</label>
-                  <select
-                    value={aiLimit}
-                    onChange={e => setAiLimit(Number(e.target.value))}
-                    disabled={aiRunning}
-                    className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
-                  >
-                    {[5, 10, 20, 30, 50].map(n => (
-                      <option key={n} value={n}>{n} produções</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-zinc-400">Verificadas:</label>
-                  <select
-                    value={aiOnlyUnchecked ? 'unchecked' : 'all'}
-                    onChange={e => setAiOnlyUnchecked(e.target.value === 'unchecked')}
-                    disabled={aiRunning}
-                    className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
-                  >
-                    <option value="unchecked">Apenas não verificadas ({aiStats?.unchecked ?? '?'})</option>
-                    <option value="all">Todas (re-verificar)</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-zinc-400">Classificação:</label>
-                  <select
-                    value={aiOnlyNoRating ? 'no_rating' : 'all'}
-                    onChange={e => setAiOnlyNoRating(e.target.value === 'no_rating')}
-                    disabled={aiRunning}
-                    className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
-                  >
-                    <option value="no_rating">Sem classificação etária ({aiStats?.uncheckedNoRating ?? '?'})</option>
-                    <option value="all">Qualquer (incluindo classificadas)</option>
-                  </select>
-                </div>
-                <button
-                  onClick={runAiAnalysis}
-                  disabled={aiRunning}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
-                >
-                  {aiRunning
-                    ? <><RefreshCw size={13} className="animate-spin" /> Analisando...</>
-                    : <><Sparkles size={13} /> Iniciar análise</>
-                  }
-                </button>
-              </div>
-
-              {/* Stats bar */}
-              {aiStats && (
-                <div className="flex gap-2 flex-wrap text-xs">
-                  <span className="px-2 py-1 bg-zinc-800 rounded-lg text-zinc-400">
-                    Total: <strong className="text-white">{aiStats.total}</strong>
-                  </span>
-                  <span className="px-2 py-1 bg-zinc-800 rounded-lg text-zinc-400">
-                    Sem classificação: <strong className="text-yellow-300">{aiStats.noRating}</strong>
-                  </span>
-                  <span className="px-2 py-1 bg-green-600/10 border border-green-600/20 rounded-lg text-green-400">
-                    Verificadas: <strong>{aiStats.checked}</strong>
-                  </span>
-                  <span className="px-2 py-1 bg-yellow-600/10 border border-yellow-600/20 rounded-lg text-yellow-400">
-                    Pendentes (sem class.): <strong>{aiStats.uncheckedNoRating}</strong>
-                  </span>
-                  <span className="px-2 py-1 bg-pink-600/10 border border-pink-600/20 rounded-lg text-pink-400">
-                    Adultos detectados: <strong>{aiStats.isAdult}</strong>
-                  </span>
-                </div>
-              )}
-
-              {/* Log */}
-              {aiLog.length > 0 && (
-                <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
-                  {aiLog.map((entry, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs">
-                      {entry.error
-                        ? <XCircle size={12} className="text-red-400 shrink-0" />
-                        : entry.isAdult
-                        ? <ShieldAlert size={12} className="text-pink-400 shrink-0" />
-                        : <CheckCircle size={12} className="text-green-400 shrink-0" />
-                      }
-                      <span className={`flex-1 truncate ${entry.error ? 'text-red-400' : entry.isAdult ? 'text-pink-300' : 'text-zinc-400'}`}>
-                        {entry.title}
-                      </span>
-                      {!entry.error && (
-                        <span className={`shrink-0 font-medium ${entry.isAdult ? 'text-pink-400' : 'text-green-400'}`}>
-                          {entry.isAdult ? 'ADULTO' : 'OK'}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {aiDone && (
-                <p className="text-xs text-green-400 flex items-center gap-1.5">
-                  <CheckCircle size={13} /> Análise concluída. Recarregue o filtro &quot;Conteúdo adulto&quot; para ver novos resultados.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Adult Pipeline Panel — unified 3-step workflow */}
+        <AdultPipelinePanel
+          stats={stats}
+          autoHidePreview={autoHidePreview}
+          autoHideDone={autoHideDone}
+          autoHideRunning={autoHideRunning}
+          hideByKeywordsDone={hideByKeywordsDone}
+          reviewModalOpen={reviewModalOpen}
+          aiStats={aiStats}
+          aiLimit={aiLimit}
+          aiOnlyUnchecked={aiOnlyUnchecked}
+          aiOnlyNoRating={aiOnlyNoRating}
+          aiRunning={aiRunning}
+          aiLog={aiLog}
+          aiDone={aiDone}
+          onAutoHide={() => openConfirm({
+            open: true,
+            title: `Ocultar ${autoHidePreview?.adultVisible ?? 0} produções adultas`,
+            message: `${autoHidePreview?.adultVisible ?? 0} produções confirmadas como conteúdo adulto pela IA serão ocultadas do site público.`,
+            confirmLabel: 'Ocultar produções',
+            destructive: true,
+            onConfirm: runAutoHide,
+          })}
+          onOpenReviewModal={() => setReviewModalOpen(true)}
+          setAiLimit={setAiLimit}
+          setAiOnlyUnchecked={setAiOnlyUnchecked}
+          setAiOnlyNoRating={setAiOnlyNoRating}
+          onRunAi={runAiAnalysis}
+        />
 
         {/* Filters + Sort + Search */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
@@ -1064,8 +1171,16 @@ function ProductionModerationContent() {
                 placeholder="Buscar por título..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-8 pr-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full pl-8 pr-8 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
               />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
         </div>

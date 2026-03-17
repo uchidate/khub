@@ -31,6 +31,7 @@ export class ArtistTranslationService {
         translated: number;
         failed: number;
         skipped: number;
+        totalCostUsd: number;
     }> {
         console.log(`🌐 Starting batch translation (limit: ${limit})...`);
 
@@ -65,6 +66,7 @@ export class ArtistTranslationService {
         let translated = 0;
         let failed = 0;
         let skipped = 0;
+        let totalCostUsd = 0;
         const total = pendingArtists.length;
 
         for (let i = 0; i < pendingArtists.length; i++) {
@@ -87,12 +89,13 @@ export class ArtistTranslationService {
                 onProgress?.({ current: i + 1, total, name: artist.nameRomanized, status: 'processing' });
                 console.log(`  🔄 Translating [${sourceLang}]: ${artist.nameRomanized}...`);
 
-                const translatedBio = await this.translateBioToPortuguese(
+                const { text: translatedBio, cost } = await this.translateBioToPortuguese(
                     artist.nameRomanized,
                     artist.bio || '',
                     artist.roles[0] || 'Artista',
                     sourceLang
                 );
+                totalCostUsd += cost;
 
                 // Salva tradução em ContentTranslation (preserva bio original intacto)
                 await this.prisma.contentTranslation.upsert({
@@ -139,8 +142,8 @@ export class ArtistTranslationService {
             }
         }
 
-        console.log(`✅ Translation batch complete: ${translated} translated, ${failed} failed, ${skipped} skipped`);
-        return { translated, failed, skipped };
+        console.log(`✅ Translation batch complete: ${translated} translated, ${failed} failed, ${skipped} skipped, $${totalCostUsd.toFixed(5)}`);
+        return { translated, failed, skipped, totalCostUsd };
     }
 
     private isAlreadyInPortuguese(text: string): boolean {
@@ -162,9 +165,9 @@ export class ArtistTranslationService {
         biography: string,
         role: string,
         sourceLang: string = 'en'
-    ): Promise<string> {
+    ): Promise<{ text: string; cost: number }> {
         if (!biography || biography.trim().length === 0) {
-            return `${artistName} é ${role} conhecido(a) na indústria do entretenimento coreano.`;
+            return { text: `${artistName} é ${role} conhecido(a) na indústria do entretenimento coreano.`, cost: 0 };
         }
 
         if (biography.length < 100) {
@@ -178,7 +181,7 @@ export class ArtistTranslationService {
         artistName: string,
         biography: string,
         role: string
-    ): Promise<string> {
+    ): Promise<{ text: string; cost: number }> {
         try {
             const prompt = `Crie uma biografia profissional em português brasileiro para o(a) artista coreano(a) ${artistName}.
 
@@ -197,13 +200,13 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ bio: string }>(
                 prompt,
                 '{ "bio": "string (biografia em português, 2-3 frases)" }',
-                { preferredProvider: 'ollama' }
+                { preferredProvider: 'deepseek', feature: 'artist_translation' }
             );
 
-            return result.parsed.bio;
+            return { text: result.parsed.bio, cost: result.cost ?? 0 };
         } catch (error: any) {
             console.warn(`⚠️  Enrichment failed: ${error.message}`);
-            return `${artistName} é ${role} de destaque na indústria do entretenimento coreano, reconhecido(a) por seu talento e versatilidade.`;
+            return { text: `${artistName} é ${role} de destaque na indústria do entretenimento coreano, reconhecido(a) por seu talento e versatilidade.`, cost: 0 };
         }
     }
 
@@ -211,10 +214,9 @@ Requisitos:
         artistName: string,
         text: string,
         sourceLang: string = 'en'
-    ): Promise<string> {
+    ): Promise<{ text: string; cost: number }> {
         try {
-            // Coreano → DeepSeek (melhor suporte); inglês/unknown → Ollama
-            const provider = sourceLang === 'ko' ? 'deepseek' : 'ollama';
+            // DeepSeek para todas as traduções — melhor qualidade e suporte a KO/EN
             const langLabel = sourceLang === 'ko' ? 'coreano' : 'inglês';
 
             const prompt = `Traduza a seguinte biografia de ${langLabel} para português brasileiro de forma natural e profissional:
@@ -231,32 +233,32 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ translation: string }>(
                 prompt,
                 '{ "translation": "string (biografia traduzida para português)" }',
-                { preferredProvider: provider }
+                { preferredProvider: 'deepseek', feature: 'artist_translation' }
             );
 
-            return result.parsed.translation;
+            return { text: result.parsed.translation, cost: result.cost ?? 0 };
         } catch (error: any) {
             console.warn(`⚠️  Translation failed: ${error.message}`);
-            return text;
+            return { text, cost: 0 };
         }
     }
 
-    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed' }> {
+    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed'; cost: number }> {
         const artist = await this.prisma.artist.findUnique({
             where: { id },
             select: { id: true, nameRomanized: true, bio: true, roles: true },
         })
         if (!artist || !artist.bio) {
-            return { name: artist?.nameRomanized ?? id, status: 'skipped' }
+            return { name: artist?.nameRomanized ?? id, status: 'skipped', cost: 0 }
         }
         try {
             if (this.isAlreadyInPortuguese(artist.bio)) {
                 await this.markAsCompleted(artist.id)
-                return { name: artist.nameRomanized, status: 'skipped' }
+                return { name: artist.nameRomanized, status: 'skipped', cost: 0 }
             }
             const detectedLang = detectLanguage(artist.bio)
             const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang
-            const translatedBio = await this.translateBioToPortuguese(
+            const { text: translatedBio, cost } = await this.translateBioToPortuguese(
                 artist.nameRomanized, artist.bio, artist.roles[0] || 'Artista', sourceLang
             )
             await this.prisma.contentTranslation.upsert({
@@ -265,10 +267,10 @@ Requisitos:
                 update: { value: translatedBio, status: 'draft', sourceLang },
             })
             await this.markAsCompleted(artist.id)
-            return { name: artist.nameRomanized, status: 'translated' }
+            return { name: artist.nameRomanized, status: 'translated', cost }
         } catch {
             await this.prisma.artist.update({ where: { id }, data: { translationStatus: 'failed' } }).catch(() => {})
-            return { name: artist.nameRomanized, status: 'failed' }
+            return { name: artist.nameRomanized, status: 'failed', cost: 0 }
         }
     }
 
