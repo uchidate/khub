@@ -12,7 +12,7 @@ import { MobileSearchOverlay } from "@/components/features/MobileSearchOverlay"
 import { NotificationBell } from "@/components/features/NotificationBell"
 import { useSession } from "next-auth/react"
 
-const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?: boolean; betaMode?: boolean }) => {
+const NavBar = () => {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
@@ -38,7 +38,6 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
         { label: "Produções", href: "/productions" },
         { label: "Notícias", href: "/news" },
         { label: "Blog", href: "/blog", secondary: true },  // oculto em lg, visível em xl+
-        ...(premiumEnabled ? [{ label: "Premium", href: "/premium" }] : []),
     ]
 
     return (
@@ -93,7 +92,7 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
 
                             {/* User menu - Always visible */}
                             <div className="hidden md:block">
-                                <UserMenu premiumEnabled={premiumEnabled} />
+                                <UserMenu />
                             </div>
 
                             {/* Mobile actions grouped */}
@@ -107,7 +106,7 @@ const NavBar = ({ premiumEnabled = false, betaMode = false }: { premiumEnabled?:
                                     <Search className="w-5 h-5" />
                                 </button>
                                 <ThemeToggle />
-                                <UserMenu premiumEnabled={premiumEnabled} />
+                                <UserMenu />
                             </div>
                         </div>
                     </div>

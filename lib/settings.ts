@@ -6,8 +6,7 @@ const DEFAULT_SETTINGS = {
   id: 'singleton',
   allowAdultContent: false,
   allowUnclassifiedContent: false,
-  betaMode: false,
-  premiumEnabled: false,
+  maintenanceMode: false,
   createdAt: new Date(0),
   updatedAt: new Date(0),
 }
@@ -28,8 +27,7 @@ export const getSystemSettings = unstable_cache(
             id: 'singleton',
             allowAdultContent: false,
             allowUnclassifiedContent: false,
-            betaMode: true,
-            premiumEnabled: false,
+            maintenanceMode: false,
           },
         })
       }
