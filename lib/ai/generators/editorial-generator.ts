@@ -88,11 +88,13 @@ export async function generateArtistBio(artist: {
     nameRomanized: string
     nameHangul?: string | null
     roles: string[]
+    gender?: number | null
     birthDate?: Date | null
     birthName?: string | null
     placeOfBirth?: string | null
     agency?: { name: string } | null
     memberships?: { group: { name: string }; isActive: boolean }[]
+    productions?: { production: { titlePt: string } }[]
     bio?: string | null
 }): Promise<ArtistBioResult> {
     const orchestrator = getOrchestrator()
@@ -101,22 +103,28 @@ export async function generateArtistBio(artist: {
     const groups = artist.memberships?.map(m => m.group.name).join(', ') || 'solo'
     const roles = artist.roles.join(', ') || 'artista'
     const agency = artist.agency?.name || 'agência não informada'
+    const genderLabel = artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'
+    const knownFor = artist.productions?.slice(0, 4).map(p => p.production.titlePt).join(', ') || null
 
     const prompt = `Atue como redator biográfico focado em dados e cronologia.
 
 Escreva um parágrafo de perfil sobre **${artist.nameRomanized}** (${roles}${groups !== 'solo' ? `, integrante de ${groups}` : ', carreira solo'}).
 
 Informações disponíveis:
+- Gênero: ${genderLabel}
 - Agência: ${agency}
 - Local de nascimento: ${artist.placeOfBirth || 'não informado'}
 - Nome de nascimento: ${artist.birthName || 'não informado'}
+${knownFor ? `- Produções conhecidas: ${knownFor}` : ''}
 ${artist.bio ? `- Contexto existente: "${artist.bio.slice(0, 300)}"` : ''}
 
 O parágrafo deve:
 - Ter entre 80 e 120 palavras
+- Usar corretamente o gênero gramatical da pessoa (nascido/nascida, conhecido/conhecida, etc.)
 - Cobrir: origem, quando e como entrou no entretenimento, debut e primeiros grandes sucessos
+- Mencionar apenas as produções listadas acima — NÃO inventar outras
 - Priorizar fatos concretos e datas (quando souber com certeza)
-- NÃO inventar datas, prêmios ou fatos específicos
+- NÃO inventar datas, prêmios ou fatos específicos não listados
 - NÃO usar adjetivos subjetivos — foque em marcos factuais
 - NÃO usar emojis
 - Tom: seco, informativo, direto ao ponto

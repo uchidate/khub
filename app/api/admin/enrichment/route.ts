@@ -151,9 +151,10 @@ export async function POST(req: Request) {
                     take: entityId ? 1 : limit,
                     select: {
                         id: true, nameRomanized: true, nameHangul: true, roles: true,
-                        birthDate: true, birthName: true, placeOfBirth: true, bio: true,
+                        gender: true, birthDate: true, birthName: true, placeOfBirth: true, bio: true,
                         agency: { select: { name: true } },
                         memberships: { select: { group: { select: { name: true } }, isActive: true } },
+                        productions: { select: { production: { select: { titlePt: true } } }, take: 4 },
                     },
                     orderBy: { trendingScore: 'desc' },
                 })
