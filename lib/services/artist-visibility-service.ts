@@ -4,15 +4,15 @@ import { createLogger } from '@/lib/utils/logger'
 const log = createLogger('ARTIST_VISIBILITY')
 
 /**
- * Critério de "produção publicamente visível" — deve espelhar o filtro da
- * página pública /artists/[id] para que visibilidade e filmografia sejam consistentes.
+ * Critério de "produção publicamente visível" para fins de auto-hide de artistas.
  *
- * Regra: excluir apenas ageRating='18' ou isAdultContent=true.
+ * Regra: produção deve estar não-oculta e sem conteúdo adulto/18+.
+ * flaggedAsNonKorean NÃO é critério — se a produção está pública, o artista
+ * que nela aparece deve ser visível (independente de ser coreano ou não).
  * Sem classificação (null) = permitido — são K-Dramas/filmes sem rating TMDB.
  */
 const PUBLIC_PRODUCTION_FILTER = {
   isHidden: false,
-  flaggedAsNonKorean: false,
   // NULL é explicitamente permitido — produções sem classificação são K-Dramas/filmes legítimos.
   // Usar AND+OR em vez de NOT para evitar o gotcha de SQL NULL (NOT(NULL) = NULL ≠ TRUE).
   AND: [

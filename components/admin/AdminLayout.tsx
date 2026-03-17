@@ -64,6 +64,7 @@ const navSections: NavSection[] = [
           { href: '/admin/artists/duplicates',   label: 'Enriq. MB',    icon: GitMerge },
           { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
           { href: '/admin/artists/moderation',   label: 'Moderação',    icon: AlertTriangle },
+          { href: '/admin/artists/visibility',   label: 'Visibilidade', icon: EyeOff },
         ],
       },
       {
