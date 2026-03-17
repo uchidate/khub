@@ -7,7 +7,7 @@ import Image from 'next/image'
 import {
     Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
     CheckCircle, DollarSign, ChevronRight, Play, Search, X, Zap,
-    EyeOff, Eye, ChevronDown,
+    EyeOff, Eye, ChevronDown, PenLine, ChevronUp, Plus, Trash2, Save,
 } from 'lucide-react'
 
 type Tab = 'artists' | 'productions' | 'news'
@@ -728,72 +728,294 @@ function QueueItemRow({
     onError:      (msg: string) => void
     batchRunning: boolean
 }) {
+    const [curating, setCurating] = useState(false)
     const allPresent = item.missingFields.length === 0
+    const canCurate  = tab === 'artists' && item.presentFields.length > 0
 
     return (
-        <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all group ${
-            allPresent
-                ? 'border-emerald-500/20 bg-emerald-900/5'
-                : 'border-white/6 bg-zinc-900/40 hover:border-blue-500/20 hover:bg-zinc-900/60'
+        <div className={`rounded-xl border transition-all ${
+            curating
+                ? 'border-amber-500/30 bg-zinc-900/60'
+                : allPresent
+                    ? 'border-emerald-500/20 bg-emerald-900/5'
+                    : 'border-white/6 bg-zinc-900/40 hover:border-blue-500/20 hover:bg-zinc-900/60'
         }`}>
-            <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/6">
-                {item.imageUrl ? (
-                    <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <Sparkles className="w-4 h-4 text-zinc-700" />
-                    </div>
-                )}
-            </div>
-
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white truncate">{item.name}</span>
-                    {item.subtitle && (
-                        <span className="text-[11px] text-zinc-500 truncate hidden sm:block">{item.subtitle}</span>
+            {/* Main row */}
+            <div className="flex items-center gap-3 p-3 group">
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/6">
+                    {item.imageUrl ? (
+                        <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-zinc-700" />
+                        </div>
                     )}
                 </div>
-                <div className="mt-1.5">
-                    <CompletenessBar score={item.completenessScore} present={item.presentFields.length} total={item.totalFields} />
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-white truncate">{item.name}</span>
+                        {item.subtitle && (
+                            <span className="text-[11px] text-zinc-500 truncate hidden sm:block">{item.subtitle}</span>
+                        )}
+                    </div>
+                    <div className="mt-1.5">
+                        <CompletenessBar score={item.completenessScore} present={item.presentFields.length} total={item.totalFields} />
+                    </div>
                 </div>
-            </div>
 
-            <div className="shrink-0 text-right hidden md:block">
-                <span className="text-[10px] text-zinc-600 font-mono">~${item.estimatedCost.toFixed(4)}</span>
-            </div>
+                <div className="shrink-0 text-right hidden md:block">
+                    <span className="text-[10px] text-zinc-600 font-mono">~${item.estimatedCost.toFixed(4)}</span>
+                </div>
 
-            <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
-                <ProcessAllButton
-                    item={item}
-                    fieldMap={fieldMap}
-                    disabled={batchRunning}
-                    onDone={onDone}
-                    onError={onError}
-                />
-                {Object.entries(fieldMap).map(([field, c]) => (
-                    <EnrichButton
-                        key={field}
-                        label={c.label}
-                        entityId={item.id}
-                        target={c.target}
+                <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
+                    <ProcessAllButton
+                        item={item}
+                        fieldMap={fieldMap}
                         disabled={batchRunning}
-                        present={item.presentFields.includes(field)}
                         onDone={onDone}
                         onError={onError}
                     />
-                ))}
-                <a
-                    href={
-                        tab === 'artists'     ? `/admin/artists/${item.id}` :
-                        tab === 'productions' ? `/admin/productions/${item.id}` :
-                        `/admin/news/${item.id}/edit`
-                    }
-                    className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Abrir"
-                >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                </a>
+                    {Object.entries(fieldMap).map(([field, c]) => (
+                        <EnrichButton
+                            key={field}
+                            label={c.label}
+                            entityId={item.id}
+                            target={c.target}
+                            disabled={batchRunning}
+                            present={item.presentFields.includes(field)}
+                            onDone={onDone}
+                            onError={onError}
+                        />
+                    ))}
+                    {canCurate && (
+                        <button
+                            onClick={() => setCurating(v => !v)}
+                            title={curating ? 'Fechar curadoria' : 'Curar conteúdo gerado'}
+                            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md transition-all ${
+                                curating
+                                    ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300'
+                                    : 'bg-zinc-800/60 border border-white/8 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200 opacity-0 group-hover:opacity-100'
+                            }`}
+                        >
+                            {curating ? <ChevronUp className="w-3 h-3" /> : <PenLine className="w-3 h-3" />}
+                            {curating ? 'Fechar' : 'Curar'}
+                        </button>
+                    )}
+                    <a
+                        href={
+                            tab === 'artists'     ? `/admin/artists/${item.id}` :
+                            tab === 'productions' ? `/admin/productions/${item.id}` :
+                            `/admin/news/${item.id}/edit`
+                        }
+                        className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Abrir página completa"
+                    >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </a>
+                </div>
             </div>
+
+            {/* Curation panel */}
+            {curating && (
+                <CurationPanel
+                    entityId={item.id}
+                    onClose={() => setCurating(false)}
+                />
+            )}
+        </div>
+    )
+}
+
+interface EditorialContent {
+    nameRomanized:        string
+    nameHangul:           string | null
+    bio:                  string | null
+    analiseEditorial:     string | null
+    curiosidades:         string[]
+    editorialGeneratedAt: string | null
+}
+
+function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () => void }) {
+    const addToast   = useToast(s => s.addToast)
+    const [loading,  setLoading]  = useState(true)
+    const [saving,   setSaving]   = useState(false)
+    const [original, setOriginal] = useState<EditorialContent | null>(null)
+    const [bio,           setBio]           = useState('')
+    const [editorial,     setEditorial]     = useState('')
+    const [curiosidades,  setCuriosidades]  = useState<string[]>([])
+
+    useEffect(() => {
+        fetch(`/api/admin/artists/${entityId}/editorial`)
+            .then(r => r.json())
+            .then((d: EditorialContent) => {
+                setOriginal(d)
+                setBio(d.bio ?? '')
+                setEditorial(d.analiseEditorial ?? '')
+                setCuriosidades(d.curiosidades?.length ? d.curiosidades : [''])
+                setLoading(false)
+            })
+            .catch(() => {
+                addToast({ type: 'error', message: 'Erro ao carregar conteúdo', duration: 4000 })
+                onClose()
+            })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [entityId])
+
+    async function handleSave() {
+        setSaving(true)
+        try {
+            const body: Record<string, unknown> = {}
+            if (bio      !== (original?.bio              ?? '')) body.bio              = bio
+            if (editorial !== (original?.analiseEditorial ?? '')) body.analiseEditorial = editorial
+            const filteredCurio = curiosidades.filter(c => c.trim())
+            const origCurio     = original?.curiosidades ?? []
+            if (JSON.stringify(filteredCurio) !== JSON.stringify(origCurio)) body.curiosidades = filteredCurio
+
+            if (Object.keys(body).length === 0) {
+                addToast({ type: 'success', message: 'Sem alterações para salvar', duration: 2000 })
+                onClose()
+                return
+            }
+
+            const res = await fetch(`/api/admin/artists/${entityId}/editorial`, {
+                method:  'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(body),
+            })
+            if (res.ok) {
+                addToast({ type: 'success', message: 'Conteúdo curado salvo', duration: 3000 })
+                onClose()
+            } else {
+                const d = await res.json()
+                addToast({ type: 'error', message: d.error ?? 'Erro ao salvar', duration: 5000 })
+            }
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    function updateCuriosidade(i: number, value: string) {
+        setCuriosidades(prev => prev.map((c, idx) => idx === i ? value : c))
+    }
+    function removeCuriosidade(i: number) {
+        setCuriosidades(prev => prev.filter((_, idx) => idx !== i))
+    }
+    function addCuriosidade() {
+        setCuriosidades(prev => [...prev, ''])
+    }
+
+    const genAt = original?.editorialGeneratedAt
+        ? new Date(original.editorialGeneratedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : null
+
+    return (
+        <div className="border-t border-amber-500/20 px-4 pb-4 pt-3 space-y-4">
+            {loading ? (
+                <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-5 h-5 text-zinc-500 animate-spin" />
+                </div>
+            ) : (
+                <>
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-semibold text-amber-400">
+                                Curadoria — {original?.nameRomanized}{original?.nameHangul ? ` (${original.nameHangul})` : ''}
+                            </p>
+                            {genAt && (
+                                <p className="text-[10px] text-zinc-600 mt-0.5">Gerado em {genAt}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Bio */}
+                    {(bio !== '' || original?.bio !== null) && (
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bio</label>
+                            <textarea
+                                value={bio}
+                                onChange={e => setBio(e.target.value)}
+                                rows={5}
+                                className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-sans leading-relaxed"
+                                placeholder="Bio do artista..."
+                            />
+                        </div>
+                    )}
+
+                    {/* Análise editorial */}
+                    {(editorial !== '' || original?.analiseEditorial !== null) && (
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Análise Editorial</label>
+                            <textarea
+                                value={editorial}
+                                onChange={e => setEditorial(e.target.value)}
+                                rows={8}
+                                className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-mono leading-relaxed"
+                                placeholder="**Projetos**&#10;...&#10;&#10;**Reconhecimento**&#10;..."
+                            />
+                        </div>
+                    )}
+
+                    {/* Curiosidades */}
+                    {curiosidades.length > 0 && (
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                                Curiosidades ({curiosidades.filter(c => c.trim()).length})
+                            </label>
+                            <div className="space-y-2">
+                                {curiosidades.map((c, i) => (
+                                    <div key={i} className="flex gap-2 items-start">
+                                        <span className="text-[10px] text-zinc-600 font-mono pt-2.5 shrink-0 w-4 text-right">{i + 1}.</span>
+                                        <textarea
+                                            value={c}
+                                            onChange={e => updateCuriosidade(i, e.target.value)}
+                                            rows={2}
+                                            className="flex-1 px-3 py-2 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none font-sans leading-relaxed"
+                                            placeholder={`Curiosidade ${i + 1}...`}
+                                        />
+                                        <button
+                                            onClick={() => removeCuriosidade(i)}
+                                            className="mt-1.5 p-1.5 text-zinc-600 hover:text-red-400 transition-colors rounded-md hover:bg-red-500/10"
+                                            title="Remover"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={addCuriosidade}
+                                    className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-zinc-800"
+                                >
+                                    <Plus className="w-3 h-3" />
+                                    Adicionar curiosidade
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-white/6">
+                        <button
+                            onClick={onClose}
+                            disabled={saving}
+                            className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors rounded-lg hover:bg-zinc-800 disabled:opacity-40"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-all disabled:opacity-40 shadow-lg shadow-amber-500/20"
+                        >
+                            {saving
+                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Salvando...</>
+                                : <><Save className="w-3.5 h-3.5" />Salvar curadoria</>
+                            }
+                        </button>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
