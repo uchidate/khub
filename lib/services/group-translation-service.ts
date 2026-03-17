@@ -31,6 +31,7 @@ export class GroupTranslationService {
         translated: number;
         failed: number;
         skipped: number;
+        totalCostUsd: number;
     }> {
         console.log(`🌐 Starting group translation batch (limit: ${limit})...`);
 
@@ -57,6 +58,7 @@ export class GroupTranslationService {
         let translated = 0;
         let failed = 0;
         let skipped = 0;
+        let totalCostUsd = 0;
         const total = pending.length;
 
         for (let i = 0; i < pending.length; i++) {
@@ -78,11 +80,12 @@ export class GroupTranslationService {
                 onProgress?.({ current: i + 1, total, name: group.name, status: 'processing' });
                 console.log(`  🔄 Translating [${sourceLang}]: ${group.name}...`);
 
-                const translatedBio = await this.translateBioToPortuguese(
+                const { text: translatedBio, cost } = await this.translateBioToPortuguese(
                     group.name,
                     group.bio || '',
                     sourceLang
                 );
+                totalCostUsd += cost;
 
                 // Salva tradução em ContentTranslation (preserva bio original intacto)
                 await this.prisma.contentTranslation.upsert({
@@ -121,8 +124,8 @@ export class GroupTranslationService {
             }
         }
 
-        console.log(`✅ Group translation batch complete: ${translated} translated, ${failed} failed, ${skipped} skipped`);
-        return { translated, failed, skipped };
+        console.log(`✅ Group translation batch complete: ${translated} translated, ${failed} failed, ${skipped} skipped, $${totalCostUsd.toFixed(5)}`);
+        return { translated, failed, skipped, totalCostUsd };
     }
 
     private isAlreadyInPortuguese(text: string): boolean {
@@ -136,9 +139,9 @@ export class GroupTranslationService {
         groupName: string,
         biography: string,
         sourceLang: string = 'en'
-    ): Promise<string> {
+    ): Promise<{ text: string; cost: number }> {
         if (!biography || biography.trim().length === 0) {
-            return `${groupName} é um grupo musical sul-coreano da indústria do K-pop.`;
+            return { text: `${groupName} é um grupo musical sul-coreano da indústria do K-pop.`, cost: 0 };
         }
 
         if (biography.length < 100) {
@@ -151,7 +154,7 @@ export class GroupTranslationService {
     private async enrichAndTranslate(
         groupName: string,
         biography: string
-    ): Promise<string> {
+    ): Promise<{ text: string; cost: number }> {
         try {
             const prompt = `Crie uma biografia profissional em português brasileiro para o grupo de K-pop ${groupName}.
 
@@ -167,13 +170,13 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ bio: string }>(
                 prompt,
                 '{ "bio": "string (biografia em português, 2-3 frases)" }',
-                { preferredProvider: 'ollama' }
+                { preferredProvider: 'deepseek', feature: 'group_translation' }
             );
 
-            return result.parsed.bio;
+            return { text: result.parsed.bio, cost: result.cost ?? 0 };
         } catch (error: any) {
             console.warn(`⚠️  Enrichment failed: ${error.message}`);
-            return `${groupName} é um grupo de K-pop de destaque na indústria do entretenimento sul-coreano.`;
+            return { text: `${groupName} é um grupo de K-pop de destaque na indústria do entretenimento sul-coreano.`, cost: 0 };
         }
     }
 
@@ -181,10 +184,9 @@ Requisitos:
         groupName: string,
         text: string,
         sourceLang: string = 'en'
-    ): Promise<string> {
+    ): Promise<{ text: string; cost: number }> {
         try {
-            // Coreano → DeepSeek (melhor suporte); inglês/unknown → Ollama
-            const provider = sourceLang === 'ko' ? 'deepseek' : 'ollama';
+            // DeepSeek para todas as traduções — melhor qualidade e suporte a KO/EN
             const langLabel = sourceLang === 'ko' ? 'coreano' : 'inglês';
 
             const prompt = `Traduza a seguinte biografia de grupo musical de ${langLabel} para português brasileiro de forma natural e profissional:
@@ -202,39 +204,39 @@ Requisitos:
             const result = await this.getOrchestrator().generateStructured<{ translation: string }>(
                 prompt,
                 '{ "translation": "string (biografia traduzida para português)" }',
-                { preferredProvider: provider }
+                { preferredProvider: 'deepseek', feature: 'group_translation' }
             );
 
-            return result.parsed.translation;
+            return { text: result.parsed.translation, cost: result.cost ?? 0 };
         } catch (error: any) {
             console.warn(`⚠️  Translation failed: ${error.message}`);
-            return text;
+            return { text, cost: 0 };
         }
     }
 
-    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed' }> {
+    async translateSingle(id: string): Promise<{ name: string; status: 'translated' | 'skipped' | 'failed'; cost: number }> {
         const group = await this.prisma.musicalGroup.findUnique({
             where: { id },
             select: { id: true, name: true, bio: true },
         })
         if (!group || !group.bio) {
-            return { name: group?.name ?? id, status: 'skipped' }
+            return { name: group?.name ?? id, status: 'skipped', cost: 0 }
         }
         try {
             if (this.isAlreadyInPortuguese(group.bio)) {
-                return { name: group.name, status: 'skipped' }
+                return { name: group.name, status: 'skipped', cost: 0 }
             }
             const detectedLang = detectLanguage(group.bio)
             const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang
-            const translatedBio = await this.translateBioToPortuguese(group.name, group.bio, sourceLang)
+            const { text: translatedBio, cost } = await this.translateBioToPortuguese(group.name, group.bio, sourceLang)
             await this.prisma.contentTranslation.upsert({
                 where: { entityType_entityId_field_locale: { entityType: 'group', entityId: group.id, field: 'bio', locale: 'pt-BR' } },
                 create: { entityType: 'group', entityId: group.id, field: 'bio', locale: 'pt-BR', value: translatedBio, status: 'draft', sourceLang },
                 update: { value: translatedBio, status: 'draft', sourceLang },
             })
-            return { name: group.name, status: 'translated' }
+            return { name: group.name, status: 'translated', cost }
         } catch {
-            return { name: group.name, status: 'failed' }
+            return { name: group.name, status: 'failed', cost: 0 }
         }
     }
 
