@@ -105,6 +105,7 @@ export async function generateArtistBio(artist: {
     const agency = artist.agency?.name || 'agência não informada'
     const genderLabel = artist.gender === 1 ? 'feminino' : artist.gender === 0 ? 'masculino' : 'não informado'
     const knownFor = artist.productions?.slice(0, 4).map(p => p.production.titlePt).join(', ') || null
+    const birthYear = artist.birthDate ? new Date(artist.birthDate).getFullYear() : null
 
     const prompt = `Atue como redator biográfico focado em dados e cronologia.
 
@@ -112,10 +113,11 @@ Escreva um parágrafo de perfil sobre **${artist.nameRomanized}** (${roles}${gro
 
 Informações disponíveis:
 - Gênero: ${genderLabel}
-- Agência: ${agency}
+- Ano de nascimento: ${birthYear ?? 'não informado'}
 - Local de nascimento: ${artist.placeOfBirth || 'não informado'}
 - Nome de nascimento: ${artist.birthName || 'não informado'}
-${knownFor ? `- Produções conhecidas: ${knownFor}` : ''}
+- Agência: ${agency}
+${knownFor ? `- Produções conhecidas (use APENAS estas): ${knownFor}` : '- Produções: não informadas — NÃO mencionar produções específicas'}
 ${artist.bio ? `- Contexto existente: "${artist.bio.slice(0, 300)}"` : ''}
 
 O parágrafo deve:
