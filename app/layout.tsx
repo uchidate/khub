@@ -14,7 +14,6 @@ import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
-import { getSystemSettings } from "@/lib/settings"
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -79,8 +78,6 @@ export default async function RootLayout({
 }: {
     children: React.ReactNode
 }) {
-    const settings = await getSystemSettings()
-
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
             <head>
@@ -147,7 +144,7 @@ export default async function RootLayout({
                     {/* Decorative top accent bar */}
                     <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
                     <div className="min-h-screen flex flex-col">
-                        <NavBar premiumEnabled={settings.premiumEnabled} />
+                        <NavBar />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>

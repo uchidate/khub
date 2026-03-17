@@ -23,8 +23,7 @@ export async function GET() {
         id: 'singleton',
         allowAdultContent: false,
         allowUnclassifiedContent: false,
-        betaMode: true,
-        premiumEnabled: false,
+        maintenanceMode: false,
       },
     })
   }
@@ -42,37 +41,29 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json() as {
-      allowAdultContent: boolean
-      allowUnclassifiedContent: boolean
-      betaMode: boolean
-      premiumEnabled: boolean
+      allowAdultContent?: boolean
+      allowUnclassifiedContent?: boolean
+      maintenanceMode?: boolean
     }
 
-    // Validação
-    if (typeof body.allowAdultContent !== 'boolean' ||
-        typeof body.allowUnclassifiedContent !== 'boolean' ||
-        typeof body.betaMode !== 'boolean' ||
-        typeof body.premiumEnabled !== 'boolean') {
-      return NextResponse.json(
-        { error: 'Invalid settings format' },
-        { status: 400 }
-      )
+    const data: Record<string, boolean> = {}
+    if (typeof body.allowAdultContent === 'boolean') data.allowAdultContent = body.allowAdultContent
+    if (typeof body.allowUnclassifiedContent === 'boolean') data.allowUnclassifiedContent = body.allowUnclassifiedContent
+    if (typeof body.maintenanceMode === 'boolean') data.maintenanceMode = body.maintenanceMode
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'Nenhum campo válido para atualizar' }, { status: 400 })
     }
 
     const settings = await prisma.systemSettings.upsert({
       where: { id: 'singleton' },
-      update: {
-        allowAdultContent: body.allowAdultContent,
-        allowUnclassifiedContent: body.allowUnclassifiedContent,
-        betaMode: body.betaMode,
-        premiumEnabled: body.premiumEnabled,
-      },
+      update: data,
       create: {
         id: 'singleton',
-        allowAdultContent: body.allowAdultContent,
-        allowUnclassifiedContent: body.allowUnclassifiedContent,
-        betaMode: body.betaMode,
-        premiumEnabled: body.premiumEnabled,
+        allowAdultContent: false,
+        allowUnclassifiedContent: false,
+        maintenanceMode: false,
+        ...data,
       },
     })
 
@@ -80,9 +71,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, settings })
   } catch (err) {
     console.error('Error updating content settings:', err)
-    return NextResponse.json(
-      { error: 'Failed to update settings' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Falha ao atualizar configurações' }, { status: 500 })
   }
 }

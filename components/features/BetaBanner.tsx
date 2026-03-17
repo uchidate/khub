@@ -1,10 +1,4 @@
-import { getSystemSettings } from '@/lib/settings'
-import { BetaBannerClient } from './BetaBannerClient'
-
+// BetaBanner removed — betaMode setting no longer exists.
 export async function BetaBanner() {
-  const settings = await getSystemSettings()
-
-  if (!settings.betaMode) return null
-
-  return <BetaBannerClient />
+  return null
 }
