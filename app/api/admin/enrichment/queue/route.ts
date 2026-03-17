@@ -55,10 +55,10 @@ export async function GET(req: Request) {
             ]
         })()
 
+        // When searching by name, show all artists (including hidden/flagged) so admin can
+        // enrich any artist explicitly. Visibility filter only applies in browse/queue mode.
         const baseWhere = q
             ? {
-                isHidden:           false,
-                flaggedAsNonKorean: false,
                 OR: [
                     { nameRomanized: { contains: q, mode: 'insensitive' as const } },
                     { nameHangul:    { contains: q, mode: 'insensitive' as const } },
@@ -129,10 +129,9 @@ export async function GET(req: Request) {
     }
 
     if (tab === 'productions') {
+        // Search by name: show all productions regardless of visibility so admin can enrich any item.
         const prodWhere = q
             ? {
-                isHidden:           false,
-                flaggedAsNonKorean: false,
                 OR: [
                     { titlePt: { contains: q, mode: 'insensitive' as const } },
                     { titleKr: { contains: q, mode: 'insensitive' as const } },
