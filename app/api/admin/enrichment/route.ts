@@ -166,6 +166,12 @@ export async function POST(req: Request) {
                             where: { id: artist.id },
                             data: { bio: r.bio, editorialGeneratedAt: new Date() },
                         })
+                        // Sync ContentTranslation so the page always shows the latest bio
+                        await prisma.contentTranslation.upsert({
+                            where: { entityType_entityId_field_locale: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR' } },
+                            update: { value: r.bio, status: 'approved' },
+                            create: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR', value: r.bio, status: 'approved' },
+                        })
                         revalidatePath(`/artists/${artist.id}`)
                         processed.push(artist.id)
                         totalCost += r.cost
