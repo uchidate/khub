@@ -151,9 +151,10 @@ export async function POST(req: Request) {
                     take: entityId ? 1 : limit,
                     select: {
                         id: true, nameRomanized: true, nameHangul: true, roles: true,
-                        birthDate: true, birthName: true, placeOfBirth: true, bio: true,
+                        gender: true, birthDate: true, birthName: true, placeOfBirth: true, bio: true,
                         agency: { select: { name: true } },
                         memberships: { select: { group: { select: { name: true } }, isActive: true } },
+                        productions: { select: { production: { select: { titlePt: true } } }, take: 4 },
                     },
                     orderBy: { trendingScore: 'desc' },
                 })
@@ -165,6 +166,12 @@ export async function POST(req: Request) {
                         await prisma.artist.update({
                             where: { id: artist.id },
                             data: { bio: r.bio, editorialGeneratedAt: new Date() },
+                        })
+                        // Sync ContentTranslation so the page always shows the latest bio
+                        await prisma.contentTranslation.upsert({
+                            where: { entityType_entityId_field_locale: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR' } },
+                            update: { value: r.bio, status: 'approved' },
+                            create: { entityType: 'artist', entityId: artist.id, field: 'bio', locale: 'pt-BR', value: r.bio, status: 'approved' },
                         })
                         revalidatePath(`/artists/${artist.id}`)
                         processed.push(artist.id)
