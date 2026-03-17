@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useToast } from '@/lib/hooks/useToast'
@@ -231,6 +231,10 @@ function ProcessAllButton({
 }
 
 export default function EnrichmentPage() {
+    return <Suspense><EnrichmentPageInner /></Suspense>
+}
+
+function EnrichmentPageInner() {
     const addToast    = useToast(s => s.addToast)
     const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
     const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
