@@ -62,6 +62,9 @@ export async function PATCH(
         return NextResponse.json({ error: 'Nenhum campo para atualizar' }, { status: 400 })
     }
 
+    // Marcar curadoria como concluída ao salvar manualmente
+    data.editorialCuratedAt = new Date()
+
     await prisma.artist.update({ where: { id }, data })
 
     // Manter ContentTranslation em sincronia com a bio curada

@@ -62,8 +62,9 @@ export function PipelineActions({ id, type, action }: Props) {
         }
       } else if (action === 'enrich') {
         if (type === 'artist') {
-          url  = `/api/admin/enrichment`
-          body = { target: 'artist_bio', entityId: id }
+          // Gera todos os campos editoriais faltantes (bio, editorial, curiosidades)
+          url  = `/api/admin/artists/${id}/generate-editorial`
+          body = { generate: ['bio', 'editorial', 'curiosidades'] }
         } else {
           url  = `/api/admin/enrichment`
           body = { target: 'production_synopsis', entityId: id }

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import {
   ArrowRight, Newspaper, Mic2, Film,
   EyeOff, Languages, CheckCircle2, Clock,
-  Sparkles, ExternalLink,
+  Sparkles, ExternalLink, PenLine, ShieldCheck,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
@@ -265,34 +265,58 @@ export default async function PipelinePage({ searchParams }: Props) {
   // ── TAB: ARTISTAS ──────────────────────────────────────────────────────────
 
   if (tab === 'artists') {
-    const [withoutBio, withoutTranslation, complete, hidden] = await Promise.all([
-      prisma.artist.findMany({
-        where: { bio: null, isHidden: false },
-        orderBy: { createdAt: 'desc' },
-        take: 30,
-        select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true },
-      }),
-      // Artistas com bio mas sem tradução PT-BR
-      prisma.artist.findMany({
-        where: {
-          bio: { not: null },
-          isHidden: false,
-          translationStatus: { in: ['pending', 'failed'] },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 30,
-        select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true },
-      }),
+    // Helper para verificar se todos os 3 campos editoriais estão presentes
+    const hasAllEditorial = {
+      bio:             { not: null as null },
+      analiseEditorial: { not: null as null },
+      curiosidades:    { isEmpty: false },
+    }
+
+    const [noContent, partial, enriched, curated, hidden] = await Promise.all([
+      // Sem nenhum conteúdo editorial
       prisma.artist.findMany({
         where: {
-          bio: { not: null },
-          isHidden: false,
-          translationStatus: 'completed',
+          isHidden: false, flaggedAsNonKorean: false,
+          bio: null, analiseEditorial: null,
+          OR: [{ curiosidades: { isEmpty: true } }, { curiosidades: { equals: null } }],
         },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { trendingScore: 'desc' },
+        take: 30,
+        select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, bio: true, analiseEditorial: true, curiosidades: true },
+      }),
+      // Parcialmente enriquecido (tem algo mas não tudo)
+      prisma.artist.findMany({
+        where: {
+          isHidden: false, flaggedAsNonKorean: false,
+          NOT: hasAllEditorial,
+          OR: [{ bio: { not: null } }, { analiseEditorial: { not: null } }, { curiosidades: { isEmpty: false } }],
+        },
+        orderBy: { editorialGeneratedAt: 'desc' },
+        take: 30,
+        select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, editorialGeneratedAt: true, bio: true, analiseEditorial: true, curiosidades: true },
+      }),
+      // Totalmente enriquecido mas aguardando curadoria humana
+      prisma.artist.findMany({
+        where: {
+          isHidden: false, flaggedAsNonKorean: false,
+          ...hasAllEditorial,
+          editorialCuratedAt: null,
+        },
+        orderBy: { editorialGeneratedAt: 'desc' },
+        take: 30,
+        select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, editorialGeneratedAt: true, bio: true, analiseEditorial: true, curiosidades: true },
+      }),
+      // Curado por humano
+      prisma.artist.findMany({
+        where: {
+          isHidden: false, flaggedAsNonKorean: false,
+          editorialCuratedAt: { not: null },
+        },
+        orderBy: { editorialCuratedAt: 'desc' },
         take: 20,
-        select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true },
+        select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, editorialCuratedAt: true },
       }),
+      // Ocultos
       prisma.artist.findMany({
         where: { isHidden: true },
         orderBy: { createdAt: 'desc' },
@@ -301,20 +325,28 @@ export default async function PipelinePage({ searchParams }: Props) {
       }),
     ])
 
+    const editorialSubtitle = (a: { bio: string | null; analiseEditorial: string | null; curiosidades: string[] }) =>
+      [
+        a.bio ? '✓ bio' : '✗ bio',
+        a.analiseEditorial ? '✓ editorial' : '✗ editorial',
+        a.curiosidades?.length ? '✓ curiosidades' : '✗ curiosidades',
+      ].join(' · ')
+
     return (
-      <AdminLayout title="Pipeline" subtitle="Fluxo de conteúdo — artistas">
+      <AdminLayout title="Pipeline" subtitle="Fluxo editorial — artistas">
         <PipelineLayout tab={tab}>
           <div className="flex gap-3 overflow-x-auto pb-4">
 
-            <PipelineColumn title="Sem bio" count={withoutBio.length} icon={Sparkles} color="zinc" emptyMsg="Todos com bio">
-              {withoutBio.map(a => (
+            <PipelineColumn title="Sem conteúdo" count={noContent.length} icon={Sparkles} color="zinc" emptyMsg="Todos têm conteúdo">
+              {noContent.map(a => (
                 <PipelineCard
                   key={a.id}
                   title={a.nameRomanized}
+                  subtitle={editorialSubtitle(a)}
                   imageUrl={a.primaryImageUrl}
                   time={a.createdAt}
                   href={`/admin/artists/${a.id}`}
-                  tag="sem bio"
+                  tag="vazio"
                   tagColor="draft"
                   actions={<PipelineActions id={a.id} type="artist" action="enrich" />}
                 />
@@ -325,17 +357,18 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Sem tradução PT-BR" count={withoutTranslation.length} icon={Languages} color="yellow" emptyMsg="Tudo traduzido">
-              {withoutTranslation.map(a => (
+            <PipelineColumn title="Incompleto" count={partial.length} icon={Clock} color="zinc" emptyMsg="Nenhum parcial">
+              {partial.map(a => (
                 <PipelineCard
                   key={a.id}
                   title={a.nameRomanized}
+                  subtitle={editorialSubtitle(a)}
                   imageUrl={a.primaryImageUrl}
-                  time={a.createdAt}
+                  time={a.editorialGeneratedAt ?? a.createdAt}
                   href={`/admin/artists/${a.id}`}
-                  tag="sem tradução"
-                  tagColor="pending"
-                  actions={<PipelineActions id={a.id} type="artist" action="translate" />}
+                  tag="parcial"
+                  tagColor="draft"
+                  actions={<PipelineActions id={a.id} type="artist" action="enrich" />}
                 />
               ))}
             </PipelineColumn>
@@ -344,15 +377,34 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Completo" count={complete.length} icon={CheckCircle2} color="emerald" emptyMsg="Nenhum completo ainda">
-              {complete.map(a => (
+            <PipelineColumn title="Aguardando curadoria" count={enriched.length} icon={PenLine} color="yellow" emptyMsg="Nenhum aguardando">
+              {enriched.map(a => (
+                <PipelineCard
+                  key={a.id}
+                  title={a.nameRomanized}
+                  subtitle="bio · editorial · curiosidades ✓"
+                  imageUrl={a.primaryImageUrl}
+                  time={a.editorialGeneratedAt ?? a.createdAt}
+                  href={`/admin/enrichment?q=${encodeURIComponent(a.nameRomanized)}`}
+                  tag="curar"
+                  tagColor="pending"
+                />
+              ))}
+            </PipelineColumn>
+
+            <div className="flex items-start self-start mt-10 flex-shrink-0">
+              <ArrowRight size={16} className="text-zinc-700" />
+            </div>
+
+            <PipelineColumn title="Curado" count={curated.length} icon={ShieldCheck} color="emerald" emptyMsg="Nenhum curado ainda">
+              {curated.map(a => (
                 <PipelineCard
                   key={a.id}
                   title={a.nameRomanized}
                   imageUrl={a.primaryImageUrl}
-                  time={a.createdAt}
+                  time={a.editorialCuratedAt ?? a.createdAt}
                   href={`/admin/artists/${a.id}`}
-                  tag="completo"
+                  tag="curado"
                   tagColor="done"
                 />
               ))}
@@ -522,8 +574,8 @@ function PipelineLayout({ tab, children }: { tab: EntityTab; children: React.Rea
       {/* Legenda */}
       <div className="flex items-center gap-4 text-[10px] text-zinc-700">
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-zinc-500" />Pendente</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />Sem tradução</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Completo</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />Aguardando ação</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Completo / Curado</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />Oculto</span>
         <span className="ml-auto text-zinc-800">Role horizontalmente para ver todas as colunas →</span>
       </div>
