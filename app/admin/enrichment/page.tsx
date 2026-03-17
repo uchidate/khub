@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useToast } from '@/lib/hooks/useToast'
 import Image from 'next/image'
@@ -230,9 +231,17 @@ function ProcessAllButton({
 }
 
 export default function EnrichmentPage() {
+    return <Suspense><EnrichmentPageInner /></Suspense>
+}
+
+function EnrichmentPageInner() {
     const addToast    = useToast(s => s.addToast)
     const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
     const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
+
+    const searchParams    = useSearchParams()
+    const initialQ        = searchParams.get('q') ?? ''
+    const isFirstMount    = useRef(true)
 
     const [activeTab,           setActiveTab]           = useState<Tab>('artists')
     const [queue,               setQueue]               = useState<Record<Tab, QueueData | null>>({ artists: null, productions: null, news: null })
@@ -240,7 +249,7 @@ export default function EnrichmentPage() {
     const [loading,             setLoading]             = useState(false)
     const [batchRunning,        setBatchRunning]        = useState(false)
     const [batchProgress,       setBatchProgress]       = useState<{ step: number; total: number; label: string; stepProcessed: number } | null>(null)
-    const [searchQuery,         setSearchQuery]         = useState('')
+    const [searchQuery,         setSearchQuery]         = useState(initialQ)
     const [searchResults,       setSearchResults]       = useState<QueueData | null>(null)
     const [fieldFilter,         setFieldFilter]         = useState<string>('all')
     const [hideComplete,        setHideComplete]        = useState(true)
@@ -308,9 +317,13 @@ export default function EnrichmentPage() {
         fetchQueue(activeTab, false, 0, f)
         setFieldFilter(f)
         setSelectedBatchFields(new Set(Object.keys(FIELD_LABELS[activeTab])))
+        if (isFirstMount.current) {
+            isFirstMount.current = false
+            if (initialQ) { fetchSearch(initialQ, activeTab); return }
+        }
         setSearchQuery('')
         setSearchResults(null)
-    }, [activeTab, fetchQueue])
+    }, [activeTab, fetchQueue, fetchSearch, initialQ])
 
     useEffect(() => { fetchStats() }, [fetchStats])
 
