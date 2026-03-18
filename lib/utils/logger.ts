@@ -58,8 +58,10 @@ function formatDev(entry: LogEntry): string {
   const contextStr = entry.context && Object.keys(entry.context).length > 0
     ? ` ${JSON.stringify(entry.context)}`
     : ''
+  // Strip newlines to prevent log injection
+  const safeMessage = entry.message.replace(/[\r\n]/g, ' ')
 
-  return `${icon} ${prefix} ${entry.message}${contextStr}`
+  return `${icon} ${prefix} ${safeMessage}${contextStr}`
 }
 
 export class Logger {

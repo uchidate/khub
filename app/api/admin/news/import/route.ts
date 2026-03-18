@@ -80,7 +80,7 @@ function extractArticlesFromListingPage(html: string): DiscoveredArticle[] {
         if (!headingLinkMatch) continue
 
         const url   = headingLinkMatch[1].trim()
-        const title = headingLinkMatch[2].replace(/<[^>]+>/g, '').trim()
+        const title = headingLinkMatch[2].replace(/<[\s\S]*?>/g, '').replace(/</g, '').trim()
 
         if (!url.startsWith('http')) continue
 
@@ -97,7 +97,7 @@ async function discoverViaListing(
     limit: number,
     offset = 0,
 ): Promise<DiscoveredArticle[]> {
-    const pageUrl = LISTING_URLS[source]
+    const pageUrl = Object.prototype.hasOwnProperty.call(LISTING_URLS, source) ? LISTING_URLS[source] : undefined
     if (!pageUrl) throw new Error('Listing URL not configured for source')
 
     // Collect offset + limit articles to support pagination
@@ -148,7 +148,7 @@ async function discoverArticles(
         const articles = await discoverViaWPAPI(source, dateFrom, dateTo, limit, offset)
         return { articles, strategy: 'api' }
     } catch (err) {
-        console.warn(`[import] WP API falhou para ${source}, usando listing scraper:`, err)
+        console.warn(`[import] WP API falhou para ${source.replace(/[\r\n]/g, ' ')}, usando listing scraper:`, err)
     }
 
     const articles = await discoverViaListing(source, dateFrom, dateTo, limit, offset)
@@ -183,7 +183,7 @@ async function countAvailable(
     }
 
     // Fallback: listing scraper (escaneia até o máximo de 5 páginas para estimativa)
-    const pageUrl = LISTING_URLS[source]
+    const pageUrl = Object.prototype.hasOwnProperty.call(LISTING_URLS, source) ? LISTING_URLS[source] : undefined
     if (!pageUrl) return -1
 
     let count = 0
