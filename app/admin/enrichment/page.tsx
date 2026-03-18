@@ -258,6 +258,7 @@ function EnrichmentPageInner() {
         new Set(Object.keys(FIELD_LABELS.artists))
     )
     const [sessionStats, setSessionStats] = useState<{ processed: number; cost: number }>({ processed: 0, cost: 0 })
+    const [batchLimit,   setBatchLimit]   = useState<number>(10)
     const searchDebounce  = useRef<ReturnType<typeof setTimeout> | null>(null)
     const pendingFieldRef = useRef<string>('all')
 
@@ -364,7 +365,7 @@ function EnrichmentPageInner() {
 
         if (targets.length === 0) { showError('Selecione pelo menos um campo'); return }
 
-        const limit = TAB_CONFIG[activeTab].batchLimit
+        const limit = batchLimit
         setBatchRunning(true)
         let totalProcessed = 0
         let batchTotalCost = 0
@@ -422,7 +423,7 @@ function EnrichmentPageInner() {
     // Estimated cost of running the batch
     const batchCostEstimate = (() => {
         if (!currentQueue) return 0
-        const itemsToProcess = currentQueue.items.slice(0, cfg.batchLimit)
+        const itemsToProcess = currentQueue.items.slice(0, batchLimit)
         // Only include cost for selected missing fields (proportional estimate)
         return itemsToProcess.reduce((sum, item) => {
             const selectedMissing = item.missingFields.filter(f => selectedBatchFields.has(f))
@@ -632,9 +633,27 @@ function EnrichmentPageInner() {
                         </button>
                     ))}
 
+                    {/* Batch size selector */}
+                    <div className="flex items-center gap-1 ml-auto">
+                        {[5, 10, 20, 50, 100].map(n => (
+                            <button
+                                key={n}
+                                onClick={() => setBatchLimit(n)}
+                                disabled={batchRunning}
+                                className={`text-[10px] font-semibold px-2 py-1 rounded-md border transition-all disabled:opacity-40 ${
+                                    batchLimit === n
+                                        ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
+                                        : 'bg-transparent border-white/8 text-zinc-600 hover:text-zinc-400 hover:border-white/15'
+                                }`}
+                            >
+                                {n}
+                            </button>
+                        ))}
+                    </div>
+
                     {/* Estimated cost for batch */}
                     {batchCostEstimate > 0 && !batchRunning && (
-                        <span className="text-[10px] text-zinc-600 font-mono ml-1">
+                        <span className="text-[10px] text-zinc-600 font-mono">
                             ~${batchCostEstimate.toFixed(4)}
                         </span>
                     )}
@@ -642,7 +661,7 @@ function EnrichmentPageInner() {
                     <button
                         onClick={runBatch}
                         disabled={batchRunning || loading || totalInQueue === 0 || isSearching || selectedBatchFields.size === 0}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20 ml-auto"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
                     >
                         {batchRunning && batchProgress
                             ? <>
@@ -651,7 +670,7 @@ function EnrichmentPageInner() {
                               </>
                             : batchRunning
                                 ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Gerando...</>
-                                : <><Play className="w-3.5 h-3.5" />Gerar próximos {cfg.batchLimit}</>
+                                : <><Play className="w-3.5 h-3.5" />Gerar próximos {batchLimit}</>
                         }
                     </button>
                 </div>
