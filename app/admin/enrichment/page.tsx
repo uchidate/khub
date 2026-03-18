@@ -954,69 +954,63 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
                     </div>
 
                     {/* Bio */}
-                    {(bio !== '' || original?.bio !== null) && (
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bio</label>
-                            <textarea
-                                value={bio}
-                                onChange={e => setBio(e.target.value)}
-                                rows={5}
-                                className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-sans leading-relaxed"
-                                placeholder="Bio do artista..."
-                            />
-                        </div>
-                    )}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bio</label>
+                        <textarea
+                            value={bio}
+                            onChange={e => setBio(e.target.value)}
+                            rows={5}
+                            className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-sans leading-relaxed"
+                            placeholder="Bio do artista..."
+                        />
+                    </div>
 
                     {/* Análise editorial */}
-                    {(editorial !== '' || original?.analiseEditorial !== null) && (
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Análise Editorial</label>
-                            <textarea
-                                value={editorial}
-                                onChange={e => setEditorial(e.target.value)}
-                                rows={8}
-                                className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-mono leading-relaxed"
-                                placeholder="**Projetos**&#10;...&#10;&#10;**Reconhecimento**&#10;..."
-                            />
-                        </div>
-                    )}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Análise Editorial</label>
+                        <textarea
+                            value={editorial}
+                            onChange={e => setEditorial(e.target.value)}
+                            rows={8}
+                            className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-mono leading-relaxed"
+                            placeholder="**Projetos**&#10;...&#10;&#10;**Reconhecimento**&#10;..."
+                        />
+                    </div>
 
                     {/* Curiosidades */}
-                    {curiosidades.length > 0 && (
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                                Curiosidades ({curiosidades.filter(c => c.trim()).length})
-                            </label>
-                            <div className="space-y-2">
-                                {curiosidades.map((c, i) => (
-                                    <div key={i} className="flex gap-2 items-start">
-                                        <span className="text-[10px] text-zinc-600 font-mono pt-2.5 shrink-0 w-4 text-right">{i + 1}.</span>
-                                        <textarea
-                                            value={c}
-                                            onChange={e => updateCuriosidade(i, e.target.value)}
-                                            rows={2}
-                                            className="flex-1 px-3 py-2 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none font-sans leading-relaxed"
-                                            placeholder={`Curiosidade ${i + 1}...`}
-                                        />
-                                        <button
-                                            onClick={() => removeCuriosidade(i)}
-                                            className="mt-1.5 p-1.5 text-zinc-600 hover:text-red-400 transition-colors rounded-md hover:bg-red-500/10"
-                                            title="Remover"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    onClick={addCuriosidade}
-                                    className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-zinc-800"
-                                >
-                                    <Plus className="w-3 h-3" />
-                                    Adicionar curiosidade
-                                </button>
-                            </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                            Curiosidades ({curiosidades.filter(c => c.trim()).length})
+                        </label>
+                        <div className="space-y-2">
+                            {curiosidades.map((c, i) => (
+                                <div key={i} className="flex gap-2 items-start">
+                                    <span className="text-[10px] text-zinc-600 font-mono pt-2.5 shrink-0 w-4 text-right">{i + 1}.</span>
+                                    <textarea
+                                        value={c}
+                                        onChange={e => updateCuriosidade(i, e.target.value)}
+                                        rows={2}
+                                        className="flex-1 px-3 py-2 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none font-sans leading-relaxed"
+                                        placeholder={`Curiosidade ${i + 1}...`}
+                                    />
+                                    <button
+                                        onClick={() => removeCuriosidade(i)}
+                                        className="mt-1.5 p-1.5 text-zinc-600 hover:text-red-400 transition-colors rounded-md hover:bg-red-500/10"
+                                        title="Remover"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                onClick={addCuriosidade}
+                                className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-zinc-800"
+                            >
+                                <Plus className="w-3 h-3" />
+                                Adicionar curiosidade
+                            </button>
                         </div>
-                    )}
+                    </div>
 
                     {/* Actions */}
                     <div className="flex items-center justify-end gap-2 pt-1 border-t border-white/6">
