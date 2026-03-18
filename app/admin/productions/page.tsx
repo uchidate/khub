@@ -707,8 +707,7 @@ export default function ProductionsPage() {
       if (!resetRes.ok) { showMsg(`❌ Erro ao resetar: ${resetData.error ?? 'falha'}`); return }
       const total = resetData.total as number
       let processed = 0; let totalSynced = 0
-      let keepGoing = true
-      while (keepGoing) {
+      while (true) {
         setSyncMsg(`🔄 Resincronizando... ${processed}/${total} produções`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',
@@ -716,7 +715,7 @@ export default function ProductionsPage() {
           body: JSON.stringify({ pending: true, limit: 20 }),
         })
         const batchData = await batchRes.json()
-        if (!batchRes.ok || batchData.processed === 0) { keepGoing = false; break }
+        if (!batchRes.ok || batchData.processed === 0) break
         processed += batchData.processed as number
         totalSynced += batchData.totalSynced as number
       }
@@ -745,8 +744,8 @@ export default function ProductionsPage() {
       if (!resetRes.ok) { showMsg(`❌ Erro ao resetar: ${resetData.error ?? 'falha'}`); return }
       const total = resetData.resetCount as number
       if (total === 0) { showMsg('✅ Nenhuma produção com tmdbType ausente encontrada.'); return }
-      let processed = 0; let totalSynced = 0; let keepGoing = true
-      while (keepGoing) {
+      let processed = 0; let totalSynced = 0
+      while (true) {
         setSyncMsg(`🔄 Corrigindo sem tmdbType... ${processed}/${total} produções`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',
@@ -754,7 +753,7 @@ export default function ProductionsPage() {
           body: JSON.stringify({ pending: true, limit: 20 }),
         })
         const batchData = await batchRes.json()
-        if (!batchRes.ok || batchData.processed === 0) { keepGoing = false; break }
+        if (!batchRes.ok || batchData.processed === 0) break
         processed += batchData.processed as number
         totalSynced += batchData.totalSynced as number
       }
@@ -781,8 +780,7 @@ export default function ProductionsPage() {
     let grandUpdated = 0; let grandNoChange = 0; let grandErrors = 0
 
     try {
-      let keepRunning = true
-      while (keepRunning) {
+      while (true) {
         const res = await fetch('/api/admin/productions/backfill-pt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -821,7 +819,7 @@ export default function ProductionsPage() {
           }
         }
 
-        if (batchTotal < BATCH) { keepRunning = false; break }
+        if (batchTotal < BATCH) break
         offset += BATCH
       }
 

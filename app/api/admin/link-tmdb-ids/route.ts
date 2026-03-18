@@ -33,7 +33,7 @@ interface TMDBSearchResult {
 function normalizeName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[-_.''']/g, ' ')
+    .replace(/[-_.\u0027\u2018\u2019]/g, ' ')
     .replace(/[^\w\s]/g, '')
     .replace(/\s+/g, '')
     .trim()

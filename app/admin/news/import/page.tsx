@@ -100,7 +100,7 @@ export default function NewsImportPage() {
                 offset: String(offset),
                 stream: '1',
             })
-            if (dateFrom) batchParams.set('dateFrom', dateFrom)
+            batchParams.set('dateFrom', dateFrom)
             if (dateTo) batchParams.set('dateTo', dateTo)
 
             let batchImported = 0, batchExists = 0, batchErrors = 0, batchDone = false
@@ -175,7 +175,7 @@ export default function NewsImportPage() {
             ...prev, phase: 'done',
             current: total, updated: accumImported, exists: accumExists, errors: accumErrors,
         } : null)
-        if (selectedSource) fetchCounts(selectedSource, dateFrom, dateTo)
+        fetchCounts(selectedSource, dateFrom, dateTo)
     }
 
     const clearPeriod = () => { setDateFrom(''); setDateTo('') }

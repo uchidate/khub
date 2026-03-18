@@ -233,12 +233,9 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let done = false
-
-      while (!done) {
+      while (true) {
         const result = await reader.read()
-        done = result.done
-        if (done) break
+        if (result.done) break
         buffer += decoder.decode(result.value, { stream: true })
         const lines = buffer.split('\n')
         buffer = lines.pop() || ''

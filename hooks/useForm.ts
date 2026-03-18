@@ -107,7 +107,7 @@ export const ValidationRules = {
   required: (message = 'Este campo é obrigatório') => ({
     validate: (value: any) => {
       if (typeof value === 'string') return value.trim().length > 0
-      return value != null && value !== ''
+      return value != null
     },
     message,
   }),
