@@ -8,7 +8,7 @@ import Image from 'next/image'
 import {
     Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
     CheckCircle, DollarSign, ChevronRight, Play, Search, X, Zap,
-    EyeOff, Eye, ChevronDown, PenLine, ChevronUp, Plus, Trash2, Save, ExternalLink,
+    EyeOff, Eye, ChevronDown, PenLine, ChevronUp, Plus, Trash2, Save, ExternalLink, FileDown,
 } from 'lucide-react'
 
 type Tab = 'artists' | 'productions' | 'news'
@@ -603,7 +603,18 @@ function EnrichmentPageInner() {
                         {hideComplete ? 'Ocultando completos' : 'Mostrar completos'}
                     </button>
 
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-2">
+                        {activeTab === 'artists' && (
+                            <a
+                                href="/api/admin/export/artists-excel"
+                                download
+                                className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-zinc-800"
+                                title="Exportar todos os artistas para Excel"
+                            >
+                                <FileDown className="w-3.5 h-3.5" />
+                                Excel
+                            </a>
+                        )}
                         <button
                             onClick={() => { fetchQueue(activeTab, false, 0, fieldFilter); fetchStats() }}
                             disabled={loading}
