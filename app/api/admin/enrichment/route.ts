@@ -116,9 +116,9 @@ export async function POST(req: Request) {
     if (!target) {
         return NextResponse.json({ error: 'target obrigatório.' }, { status: 400 })
     }
-    if (!entityId && (limit < 1 || limit > 50)) {
+    if (!entityId && (limit < 1 || limit > 100)) {
         return NextResponse.json(
-            { error: 'Parâmetros inválidos. limit entre 1 e 50.' },
+            { error: 'Parâmetros inválidos. limit entre 1 e 100.' },
             { status: 400 }
         )
     }
