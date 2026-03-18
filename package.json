@@ -33,12 +33,14 @@
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.4.0",
     "@tailwindcss/typography": "^0.5.19",
+    "@types/jsdom": "^28.0.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.3.1",
     "framer-motion": "^12.36.0",
     "googleapis": "^171.0.0",
+    "jsdom": "^29.0.0",
     "lucide-react": "^0.577.0",
     "next": "^16.1.6",
     "next-auth": "^4.24.13",
@@ -58,8 +60,7 @@
     "tsx": "^4.7.0",
     "xml2js": "^0.6.2",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11",
-    "jsdom": "^29.0.0"
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

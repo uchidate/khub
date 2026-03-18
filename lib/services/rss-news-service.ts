@@ -340,7 +340,7 @@ export class RSSNewsService {
     const { document } = dom.window;
 
     // Remover todas as tags <script> e <style>
-    document.querySelectorAll('script, style').forEach(el => el.remove());
+    document.querySelectorAll('script, style').forEach((el: Element) => el.remove());
 
     // Remover comentários HTML
     const walker = document.createTreeWalker(document, dom.window.NodeFilter.SHOW_COMMENT);

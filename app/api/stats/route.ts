@@ -11,13 +11,12 @@ export const revalidate = 300 // Cache por 5 minutos
 export async function GET() {
     try {
         const [artistCount, productionCount, newsCount, totalViews] = await Promise.all([
-            prisma.artist.count(),
-            prisma.production.count(),
-            prisma.news.count(),
+            prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
+            prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
+            prisma.news.count({ where: { isHidden: false, status: 'published' } }),
             prisma.artist.aggregate({
-                _sum: {
-                    viewCount: true
-                }
+                _sum: { viewCount: true },
+                where: { isHidden: false },
             })
         ])
 
