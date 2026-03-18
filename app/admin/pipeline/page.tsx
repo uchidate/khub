@@ -143,35 +143,40 @@ export default async function PipelinePage({ searchParams }: Props) {
   // ── Dados por tab ──────────────────────────────────────────────────────────
 
   if (tab === 'news') {
-    const [drafts, withoutTranslation, published, hidden] = await Promise.all([
-      // Rascunhos / importados ainda não publicados
+    const [
+      drafts,             draftsCount,
+      withoutTranslation, withoutTranslationCount,
+      published,          publishedCount,
+      hidden,             hiddenCount,
+    ] = await Promise.all([
       prisma.news.findMany({
         where: { OR: [{ status: 'draft' }, { status: 'ready' }] },
         orderBy: { createdAt: 'desc' },
         take: 30,
         select: { id: true, title: true, imageUrl: true, source: true, status: true, createdAt: true, isHidden: true },
       }),
-      // Publicados mas sem tradução PT-BR
+      prisma.news.count({ where: { OR: [{ status: 'draft' }, { status: 'ready' }] } }),
       prisma.news.findMany({
         where: { status: 'published', isHidden: false, translationStatus: 'pending' },
         orderBy: { createdAt: 'desc' },
         take: 30,
         select: { id: true, title: true, imageUrl: true, source: true, createdAt: true, translationStatus: true },
       }),
-      // Publicados com tradução
+      prisma.news.count({ where: { status: 'published', isHidden: false, translationStatus: 'pending' } }),
       prisma.news.findMany({
         where: { status: 'published', isHidden: false, translationStatus: 'completed' },
         orderBy: { publishedAt: 'desc' },
         take: 20,
         select: { id: true, title: true, imageUrl: true, source: true, publishedAt: true, createdAt: true },
       }),
-      // Ocultos
+      prisma.news.count({ where: { status: 'published', isHidden: false, translationStatus: 'completed' } }),
       prisma.news.findMany({
         where: { isHidden: true },
         orderBy: { createdAt: 'desc' },
         take: 20,
         select: { id: true, title: true, imageUrl: true, source: true, createdAt: true },
       }),
+      prisma.news.count({ where: { isHidden: true } }),
     ])
 
     return (
@@ -182,7 +187,7 @@ export default async function PipelinePage({ searchParams }: Props) {
         <PipelineLayout tab={tab}>
           <div className="flex gap-3 overflow-x-auto pb-4">
 
-            <PipelineColumn title="Importado / Rascunho" count={drafts.length} icon={Clock} color="zinc" emptyMsg="Nenhum rascunho">
+            <PipelineColumn title="Importado / Rascunho" count={draftsCount} icon={Clock} color="zinc" emptyMsg="Nenhum rascunho">
               {drafts.map(n => (
                 <PipelineCard
                   key={n.id}
@@ -202,7 +207,7 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Sem tradução PT-BR" count={withoutTranslation.length} icon={Languages} color="yellow" emptyMsg="Tudo traduzido">
+            <PipelineColumn title="Sem tradução PT-BR" count={withoutTranslationCount} icon={Languages} color="yellow" emptyMsg="Tudo traduzido">
               {withoutTranslation.map(n => (
                 <PipelineCard
                   key={n.id}
@@ -222,7 +227,7 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Publicado" count={published.length} icon={CheckCircle2} color="emerald" emptyMsg="Nenhum publicado">
+            <PipelineColumn title="Publicado" count={publishedCount} icon={CheckCircle2} color="emerald" emptyMsg="Nenhum publicado">
               {published.map(n => (
                 <PipelineCard
                   key={n.id}
@@ -241,7 +246,7 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Oculto" count={hidden.length} icon={EyeOff} color="red" emptyMsg="Nenhum oculto">
+            <PipelineColumn title="Oculto" count={hiddenCount} icon={EyeOff} color="red" emptyMsg="Nenhum oculto">
               {hidden.map(n => (
                 <PipelineCard
                   key={n.id}
@@ -272,8 +277,13 @@ export default async function PipelinePage({ searchParams }: Props) {
       curiosidades:    { isEmpty: false },
     }
 
-    const [noContent, partial, enriched, curated, hidden] = await Promise.all([
-      // Sem nenhum conteúdo editorial
+    const [
+      noContent,  noContentCount,
+      partial,    partialCount,
+      enriched,   enrichedCount,
+      curated,    curatedCount,
+      hidden,     hiddenArtistCount,
+    ] = await Promise.all([
       prisma.artist.findMany({
         where: {
           isHidden: false, flaggedAsNonKorean: false,
@@ -284,7 +294,13 @@ export default async function PipelinePage({ searchParams }: Props) {
         take: 30,
         select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, bio: true, analiseEditorial: true, curiosidades: true },
       }),
-      // Parcialmente enriquecido (tem algo mas não tudo)
+      prisma.artist.count({
+        where: {
+          isHidden: false, flaggedAsNonKorean: false,
+          bio: null, analiseEditorial: null,
+          OR: [{ curiosidades: { isEmpty: true } }, { curiosidades: { equals: null } }],
+        },
+      }),
       prisma.artist.findMany({
         where: {
           isHidden: false, flaggedAsNonKorean: false,
@@ -295,7 +311,13 @@ export default async function PipelinePage({ searchParams }: Props) {
         take: 30,
         select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, editorialGeneratedAt: true, bio: true, analiseEditorial: true, curiosidades: true },
       }),
-      // Totalmente enriquecido mas aguardando curadoria humana
+      prisma.artist.count({
+        where: {
+          isHidden: false, flaggedAsNonKorean: false,
+          NOT: hasAllEditorial,
+          OR: [{ bio: { not: null } }, { analiseEditorial: { not: null } }, { curiosidades: { isEmpty: false } }],
+        },
+      }),
       prisma.artist.findMany({
         where: {
           isHidden: false, flaggedAsNonKorean: false,
@@ -306,7 +328,13 @@ export default async function PipelinePage({ searchParams }: Props) {
         take: 30,
         select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, editorialGeneratedAt: true, bio: true, analiseEditorial: true, curiosidades: true },
       }),
-      // Curado por humano
+      prisma.artist.count({
+        where: {
+          isHidden: false, flaggedAsNonKorean: false,
+          ...hasAllEditorial,
+          editorialCuratedAt: null,
+        },
+      }),
       prisma.artist.findMany({
         where: {
           isHidden: false, flaggedAsNonKorean: false,
@@ -316,13 +344,16 @@ export default async function PipelinePage({ searchParams }: Props) {
         take: 20,
         select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true, editorialCuratedAt: true },
       }),
-      // Ocultos
+      prisma.artist.count({
+        where: { isHidden: false, flaggedAsNonKorean: false, editorialCuratedAt: { not: null } },
+      }),
       prisma.artist.findMany({
         where: { isHidden: true },
         orderBy: { createdAt: 'desc' },
         take: 20,
         select: { id: true, nameRomanized: true, primaryImageUrl: true, createdAt: true },
       }),
+      prisma.artist.count({ where: { isHidden: true } }),
     ])
 
     const editorialSubtitle = (a: { bio: string | null; analiseEditorial: string | null; curiosidades: string[] }) =>
@@ -337,7 +368,7 @@ export default async function PipelinePage({ searchParams }: Props) {
         <PipelineLayout tab={tab}>
           <div className="flex gap-3 overflow-x-auto pb-4">
 
-            <PipelineColumn title="Sem conteúdo" count={noContent.length} icon={Sparkles} color="zinc" emptyMsg="Todos têm conteúdo">
+            <PipelineColumn title="Sem conteúdo" count={noContentCount} icon={Sparkles} color="zinc" emptyMsg="Todos têm conteúdo">
               {noContent.map(a => (
                 <PipelineCard
                   key={a.id}
@@ -357,7 +388,7 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Incompleto" count={partial.length} icon={Clock} color="zinc" emptyMsg="Nenhum parcial">
+            <PipelineColumn title="Incompleto" count={partialCount} icon={Clock} color="zinc" emptyMsg="Nenhum parcial">
               {partial.map(a => (
                 <PipelineCard
                   key={a.id}
@@ -377,7 +408,7 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Aguardando curadoria" count={enriched.length} icon={PenLine} color="yellow" emptyMsg="Nenhum aguardando">
+            <PipelineColumn title="Aguardando curadoria" count={enrichedCount} icon={PenLine} color="yellow" emptyMsg="Nenhum aguardando">
               {enriched.map(a => (
                 <PipelineCard
                   key={a.id}
@@ -407,7 +438,7 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Curado" count={curated.length} icon={ShieldCheck} color="emerald" emptyMsg="Nenhum curado ainda">
+            <PipelineColumn title="Curado" count={curatedCount} icon={ShieldCheck} color="emerald" emptyMsg="Nenhum curado ainda">
               {curated.map(a => (
                 <PipelineCard
                   key={a.id}
@@ -425,7 +456,7 @@ export default async function PipelinePage({ searchParams }: Props) {
               <ArrowRight size={16} className="text-zinc-700" />
             </div>
 
-            <PipelineColumn title="Oculto" count={hidden.length} icon={EyeOff} color="red" emptyMsg="Nenhum oculto">
+            <PipelineColumn title="Oculto" count={hiddenArtistCount} icon={EyeOff} color="red" emptyMsg="Nenhum oculto">
               {hidden.map(a => (
                 <PipelineCard
                   key={a.id}
@@ -446,31 +477,40 @@ export default async function PipelinePage({ searchParams }: Props) {
 
   // ── TAB: PRODUÇÕES ─────────────────────────────────────────────────────────
 
-  const [withoutSynopsis, withoutTranslation, complete, hidden] = await Promise.all([
+  const [
+    withoutSynopsis,   withoutSynopsisCount,
+    withoutTranslation, withoutTranslationProdCount,
+    complete,          completeCount,
+    hidden,            hiddenProdCount,
+  ] = await Promise.all([
     prisma.production.findMany({
       where: { synopsis: null, isHidden: false },
       orderBy: { createdAt: 'desc' },
       take: 30,
       select: { id: true, titlePt: true, imageUrl: true, createdAt: true },
     }),
+    prisma.production.count({ where: { synopsis: null, isHidden: false } }),
     prisma.production.findMany({
       where: { synopsis: { not: null }, isHidden: false, translationStatus: 'pending' },
       orderBy: { createdAt: 'desc' },
       take: 30,
       select: { id: true, titlePt: true, imageUrl: true, createdAt: true },
     }),
+    prisma.production.count({ where: { synopsis: { not: null }, isHidden: false, translationStatus: 'pending' } }),
     prisma.production.findMany({
       where: { synopsis: { not: null }, isHidden: false, translationStatus: 'completed' },
       orderBy: { updatedAt: 'desc' },
       take: 20,
       select: { id: true, titlePt: true, imageUrl: true, createdAt: true },
     }),
+    prisma.production.count({ where: { synopsis: { not: null }, isHidden: false, translationStatus: 'completed' } }),
     prisma.production.findMany({
       where: { isHidden: true },
       orderBy: { createdAt: 'desc' },
       take: 20,
       select: { id: true, titlePt: true, imageUrl: true, createdAt: true },
     }),
+    prisma.production.count({ where: { isHidden: true } }),
   ])
 
   return (
@@ -478,7 +518,7 @@ export default async function PipelinePage({ searchParams }: Props) {
       <PipelineLayout tab={tab}>
         <div className="flex gap-3 overflow-x-auto pb-4">
 
-          <PipelineColumn title="Sem sinopse" count={withoutSynopsis.length} icon={Sparkles} color="zinc" emptyMsg="Todas com sinopse">
+          <PipelineColumn title="Sem sinopse" count={withoutSynopsisCount} icon={Sparkles} color="zinc" emptyMsg="Todas com sinopse">
             {withoutSynopsis.map(p => (
               <PipelineCard
                 key={p.id}
@@ -497,7 +537,7 @@ export default async function PipelinePage({ searchParams }: Props) {
             <ArrowRight size={16} className="text-zinc-700" />
           </div>
 
-          <PipelineColumn title="Sem tradução PT-BR" count={withoutTranslation.length} icon={Languages} color="yellow" emptyMsg="Tudo traduzido">
+          <PipelineColumn title="Sem tradução PT-BR" count={withoutTranslationProdCount} icon={Languages} color="yellow" emptyMsg="Tudo traduzido">
             {withoutTranslation.map(p => (
               <PipelineCard
                 key={p.id}
@@ -516,7 +556,7 @@ export default async function PipelinePage({ searchParams }: Props) {
             <ArrowRight size={16} className="text-zinc-700" />
           </div>
 
-          <PipelineColumn title="Completo" count={complete.length} icon={CheckCircle2} color="emerald" emptyMsg="Nenhum completo ainda">
+          <PipelineColumn title="Completo" count={completeCount} icon={CheckCircle2} color="emerald" emptyMsg="Nenhum completo ainda">
             {complete.map(p => (
               <PipelineCard
                 key={p.id}
@@ -534,7 +574,7 @@ export default async function PipelinePage({ searchParams }: Props) {
             <ArrowRight size={16} className="text-zinc-700" />
           </div>
 
-          <PipelineColumn title="Oculto" count={hidden.length} icon={EyeOff} color="red" emptyMsg="Nenhum oculto">
+          <PipelineColumn title="Oculto" count={hiddenProdCount} icon={EyeOff} color="red" emptyMsg="Nenhum oculto">
             {hidden.map(p => (
               <PipelineCard
                 key={p.id}
