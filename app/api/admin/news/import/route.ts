@@ -148,7 +148,9 @@ async function discoverArticles(
         const articles = await discoverViaWPAPI(source, dateFrom, dateTo, limit, offset)
         return { articles, strategy: 'api' }
     } catch (err) {
-        console.warn(`[import] WP API falhou para ${source.replace(/[\r\n]/g, ' ')}, usando listing scraper:`, err)
+        const safeSrc = source.replace(/[\r\n]/g, ' ')
+        const safeErr = (err instanceof Error ? err.message : String(err)).replace(/[\r\n]/g, ' ')
+        console.warn(`[import] WP API falhou para ${safeSrc}, usando listing scraper: ${safeErr}`)
     }
 
     const articles = await discoverViaListing(source, dateFrom, dateTo, limit, offset)

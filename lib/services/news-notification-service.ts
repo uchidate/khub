@@ -170,7 +170,9 @@ export class NewsNotificationService {
 
             console.log(`  🔔 IN_APP notifications created for ${users.length} user(s) about: ${news.title}`);
         } catch (error: unknown) {
-            console.error(`❌ Error creating IN_APP notifications for news ${String(newsId).replace(/[\r\n]/g, ' ')}:`, error);
+            const safeId  = String(newsId).replace(/[\r\n]/g, ' ')
+            const safeErr = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]/g, ' ')
+            console.error(`❌ Error creating IN_APP notifications for news ${safeId}: ${safeErr}`);
         }
     }
 
