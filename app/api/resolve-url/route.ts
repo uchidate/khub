@@ -2,14 +2,14 @@ import { NextRequest } from 'next/server'
 
 // Allowlist of domains this resolver is permitted to follow redirects for.
 // Only Twitter/X shortlinks and direct tweet URLs are supported.
-const ALLOWED_HOSTS = new Set([
+const ALLOWED_HOSTS_LIST = [
     't.co',
     'twitter.com',
     'x.com',
     'pic.twitter.com',
     'mobile.twitter.com',
     'mobile.x.com',
-])
+] as const
 
 export async function GET(request: NextRequest) {
     const raw = request.nextUrl.searchParams.get('url')
@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
         return Response.json({ error: 'invalid protocol' }, { status: 400 })
     }
 
-    if (!ALLOWED_HOSTS.has(parsed.hostname)) {
-        return Response.json({ error: 'host not allowed' }, { status: 400 })
-    }
+    // Pick hostname from our server-controlled allowlist — breaks taint chain
+    const allowedHost = ALLOWED_HOSTS_LIST.find(h => h === parsed.hostname)
+    if (!allowedHost) return Response.json({ error: 'host not allowed' }, { status: 400 })
 
-    // URL is restricted to the allowlist above — not an SSRF risk
-    const safeUrl = `${parsed.protocol}//${parsed.hostname}${parsed.pathname}${parsed.search}`
+    // Use the allowlist-sourced hostname, not the user-provided one
+    const safeUrl = `${parsed.protocol}//${allowedHost}${parsed.pathname}${parsed.search}`
     try {
         const response = await fetch(safeUrl, {
             method: 'HEAD',
