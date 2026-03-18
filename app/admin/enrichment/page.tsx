@@ -248,7 +248,15 @@ function EnrichmentPageInner() {
     const [stats,               setStats]               = useState<StatsData | null>(null)
     const [loading,             setLoading]             = useState(false)
     const [batchRunning,        setBatchRunning]        = useState(false)
-    const [batchProgress,       setBatchProgress]       = useState<{ step: number; total: number; label: string; stepProcessed: number } | null>(null)
+    const [batchProgress,       setBatchProgress]       = useState<{
+        itemIndex:    number   // 0-based current item
+        itemTotal:    number   // total items to process
+        itemName:     string   // name of item being processed
+        fieldIndex:   number   // 0-based current field
+        fieldTotal:   number   // total fields selected
+        fieldLabel:   string   // label of field being processed
+        doneCount:    number   // items fully processed so far
+    } | null>(null)
     const [searchQuery,         setSearchQuery]         = useState(initialQ)
     const [searchResults,       setSearchResults]       = useState<QueueData | null>(null)
     const [fieldFilter,         setFieldFilter]         = useState<string>('all')
@@ -365,30 +373,60 @@ function EnrichmentPageInner() {
 
         if (targets.length === 0) { showError('Selecione pelo menos um campo'); return }
 
-        const limit = batchLimit
+        // Snapshot items to process right now (prevents duplicates if queue refreshes mid-run)
+        const itemsToProcess = (isSearching ? searchResults : queue[activeTab])?.items.slice(0, batchLimit) ?? []
+        if (itemsToProcess.length === 0) { showError('Fila vazia'); return }
+
         setBatchRunning(true)
         let totalProcessed = 0
         let batchTotalCost = 0
+
         try {
-            for (let i = 0; i < targets.length; i++) {
-                const { label, target } = targets[i]
-                setBatchProgress({ step: i + 1, total: targets.length, label, stepProcessed: 0 })
-                const res  = await fetch('/api/admin/enrichment', {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ target, limit }),
+            for (let itemIdx = 0; itemIdx < itemsToProcess.length; itemIdx++) {
+                const item = itemsToProcess[itemIdx]
+
+                // Only process fields that are actually missing for this item
+                const relevantTargets = targets.filter(({ target }) => {
+                    // Map target back to field key to check missingFields
+                    const key = Object.entries(FIELD_LABELS[activeTab]).find(([, c]) => c.target === target)?.[0]
+                    return !key || item.missingFields.includes(key)
                 })
-                const data = await res.json()
-                if (!res.ok) { showError(data.error ?? `Erro em ${target}`); continue }
-                if (data.processed > 0) {
-                    totalProcessed += data.processed
-                    batchTotalCost += data.totalCostUsd ?? 0
-                    showSuccess(`${data.processed} ${label} gerados`)
+                if (relevantTargets.length === 0) continue
+
+                for (let fIdx = 0; fIdx < relevantTargets.length; fIdx++) {
+                    const { label, target } = relevantTargets[fIdx]
+                    setBatchProgress({
+                        itemIndex:  itemIdx,
+                        itemTotal:  itemsToProcess.length,
+                        itemName:   item.name,
+                        fieldIndex: fIdx,
+                        fieldTotal: relevantTargets.length,
+                        fieldLabel: label,
+                        doneCount:  totalProcessed,
+                    })
+
+                    const res  = await fetch('/api/admin/enrichment', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify({ target, entityId: item.id }),
+                    })
+                    const data = await res.json()
+                    if (!res.ok) {
+                        showError(data.error ?? `Erro em ${label} para ${item.name}`)
+                        continue
+                    }
+                    if ((data.processed ?? 0) > 0) {
+                        totalProcessed++
+                        batchTotalCost += data.totalCostUsd ?? 0
+                    }
                 }
-                setBatchProgress({ step: i + 1, total: targets.length, label, stepProcessed: data.processed ?? 0 })
             }
+
             if (batchTotalCost > 0) setSessionStats(prev => ({ processed: prev.processed + totalProcessed, cost: prev.cost + batchTotalCost }))
-            if (totalProcessed > 0) await Promise.all([fetchQueue(activeTab, false, 0, fieldFilter), fetchStats()])
+            if (totalProcessed > 0) {
+                showSuccess(`${totalProcessed} campo(s) gerado(s)`)
+                await Promise.all([fetchQueue(activeTab, false, 0, fieldFilter), fetchStats()])
+            }
         } catch {
             showError('Erro no lote')
         } finally {
@@ -675,21 +713,41 @@ function EnrichmentPageInner() {
                         </span>
                     )}
 
-                    <button
-                        onClick={runBatch}
-                        disabled={batchRunning || loading || totalInQueue === 0 || isSearching || selectedBatchFields.size === 0}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
-                    >
-                        {batchRunning && batchProgress
-                            ? <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                {batchProgress.label} ({batchProgress.step}/{batchProgress.total}){batchProgress.stepProcessed > 0 ? ` — ${batchProgress.stepProcessed}` : ''}
-                              </>
-                            : batchRunning
-                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Gerando...</>
-                                : <><Play className="w-3.5 h-3.5" />Gerar próximos {batchLimit}</>
-                        }
-                    </button>
+                    <div className="flex flex-col gap-1.5 min-w-0">
+                        <button
+                            onClick={runBatch}
+                            disabled={batchRunning || loading || totalInQueue === 0 || isSearching || selectedBatchFields.size === 0}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
+                        >
+                            {batchRunning
+                                ? <><Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />Processando...</>
+                                : <><Play className="w-3.5 h-3.5 shrink-0" />Gerar próximos {batchLimit}</>
+                            }
+                        </button>
+
+                        {/* Per-item progress bar */}
+                        {batchRunning && batchProgress && (
+                            <div className="min-w-[200px] max-w-xs space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[10px] text-zinc-400 truncate max-w-[160px]" title={batchProgress.itemName}>
+                                        {batchProgress.fieldLabel} · {batchProgress.itemName}
+                                    </span>
+                                    <span className="text-[10px] text-zinc-500 shrink-0 tabular-nums">
+                                        {batchProgress.itemIndex + 1}/{batchProgress.itemTotal}
+                                    </span>
+                                </div>
+                                <div className="h-1 rounded-full bg-zinc-800 overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        style={{ width: `${Math.round(((batchProgress.itemIndex) / batchProgress.itemTotal) * 100)}%` }}
+                                    />
+                                </div>
+                                {batchProgress.doneCount > 0 && (
+                                    <p className="text-[10px] text-emerald-500/70">{batchProgress.doneCount} gerado(s)</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Queue list */}
