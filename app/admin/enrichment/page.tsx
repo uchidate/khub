@@ -629,20 +629,26 @@ function EnrichmentPageInner() {
                 {/* Batch field selector + cost estimate + run */}
                 <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl bg-zinc-900/30 border border-white/5">
                     <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest shrink-0">Lote:</span>
-                    {Object.entries(fieldMap).map(([key, c]) => (
-                        <button
-                            key={key}
-                            onClick={() => toggleBatchField(key)}
-                            disabled={batchRunning}
-                            className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all disabled:opacity-40 ${
-                                selectedBatchFields.has(key)
-                                    ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
-                                    : 'bg-transparent border-white/8 text-zinc-600 hover:text-zinc-400 hover:border-white/15'
-                            }`}
-                        >
-                            {selectedBatchFields.has(key) ? '✓' : '○'} {c.label}
-                        </button>
-                    ))}
+                    {Object.entries(fieldMap).map(([key, c]) => {
+                        const missing = stats?.counts[statsKeys[key]] ?? 0
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => toggleBatchField(key)}
+                                disabled={batchRunning}
+                                className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all disabled:opacity-40 ${
+                                    selectedBatchFields.has(key)
+                                        ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
+                                        : 'bg-transparent border-white/8 text-zinc-600 hover:text-zinc-400 hover:border-white/15'
+                                }`}
+                            >
+                                {selectedBatchFields.has(key) ? '✓' : '○'} {c.label}
+                                {missing > 0 && (
+                                    <span className="ml-1 opacity-60">({missing})</span>
+                                )}
+                            </button>
+                        )
+                    })}
 
                     {/* Batch size selector */}
                     <div className="flex items-center gap-1 ml-auto">
