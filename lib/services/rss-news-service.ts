@@ -336,9 +336,11 @@ export class RSSNewsService {
   private extractArticleText(html: string, sourceName?: string): string {
     // Pré-processar: remover noise (scripts, styles, comentários)
     const stripped = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, '');
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, '')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '').replace(/<!--/g, '')
+      // Second pass: strip any remaining partial/malformed dangerous tags
+      .replace(/<script/gi, '').replace(/<style/gi, '');
 
     // Seletores específicos por fonte
     // Fontes marcadas com [] como primeiro item usam class-first (antes de <article>)
@@ -399,8 +401,8 @@ export class RSSNewsService {
       // Truncar antes do primeiro sinal de sharing social ou related
       Soompi: (html) => {
         const endMarkers = [
-          /facebook\.com\/sharer\/sharer\.php/i,
-          /twitter\.com\/intent\/tweet/i,
+          /(?:^|\.)facebook\.com\/sharer\/sharer\.php/i,
+          /(?:^|\.)twitter\.com\/intent\/tweet/i,
           /<div[^>]*class="[^"]*\brelated[-_]articles?\b[^"]*"/i,
           /class="[^"]*\bsharedaddy\b[^"]*"/i,
           /class="[^"]*\bshare-buttons?\b[^"]*"/i,
@@ -569,9 +571,12 @@ export class RSSNewsService {
 
     return html
       // Remover noise
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, '')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, '')
+      .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe\b[^>]*>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '').replace(/<!--/g, '')
+      // Second pass: strip any remaining partial/malformed dangerous tags
+      .replace(/<script/gi, '').replace(/<style/gi, '').replace(/<iframe/gi, '')
       // Figure com figcaption → imagem com caption (processar ANTES de <img>)
       .replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, (_, inner) => {
         // WordPress oEmbed — YouTube bare watch URL no inner (sem iframe)
@@ -673,9 +678,8 @@ export class RSSNewsService {
       // Remover tags restantes (completas e truncadas ao final do chunk)
       .replace(/<[^>]+>/g, '')
       .replace(/<[^>]*$/, '') // tag truncada sem '>' no final do chunk
-      // Decodificar entidades HTML
+      // Decodificar entidades HTML (&amp; por último para evitar double-decode)
       .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
       .replace(/&#0*38;/g, '&')   // &#038; = & (numeric entity)
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
@@ -690,6 +694,7 @@ export class RSSNewsService {
       .replace(/&#8230;|&hellip;/g, '...')
       .replace(/&#8212;|&mdash;/g, '—')
       .replace(/&#8211;|&ndash;/g, '–')
+      .replace(/&amp;/g, '&')
       // Limpar markdown vazio: ****, **, []() sem link útil
       .replace(/\*{2,4}\s*\*{2,4}/g, '')
       .replace(/\[([^\]]*)\]\(\s*\)/g, '$1')
@@ -708,7 +713,6 @@ export class RSSNewsService {
     return html
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
@@ -720,6 +724,7 @@ export class RSSNewsService {
       .replace(/&#8220;|&ldquo;/g, '"')
       .replace(/&#8221;|&rdquo;/g, '"')
       .replace(/&#8230;|&hellip;/g, '...')
+      .replace(/&amp;/g, '&')
       .replace(/\s+/g, ' ')
       .trim();
   }
