@@ -18,6 +18,7 @@
  */
 
 import { parseStringPromise } from 'xml2js';
+import { JSDOM } from 'jsdom';
 
 interface RSSFeed {
   name: string;
@@ -334,13 +335,23 @@ export class RSSNewsService {
    * Tenta seletores específicos da fonte antes dos genéricos.
    */
   private extractArticleText(html: string, sourceName?: string): string {
-    // Pré-processar: remover noise (scripts, styles, comentários)
-    const stripped = html
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, '')
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, '').replace(/<!--/g, '')
-      // Second pass: strip any remaining partial/malformed dangerous tags
-      .replace(/<script/gi, '').replace(/<style/gi, '');
+    // Pré-processar: remover noise (scripts, styles, comentários) usando DOM em vez de regex
+    const dom = new JSDOM(html);
+    const { document } = dom.window;
+
+    // Remover todas as tags <script> e <style>
+    document.querySelectorAll('script, style').forEach(el => el.remove());
+
+    // Remover comentários HTML
+    const walker = document.createTreeWalker(document, dom.window.NodeFilter.SHOW_COMMENT);
+    const commentNodes: Comment[] = [];
+    // Coletar primeiro para evitar problemas ao remover durante a iteração
+    while (walker.nextNode()) {
+      commentNodes.push(walker.currentNode as Comment);
+    }
+    commentNodes.forEach(node => node.remove());
+
+    const stripped = dom.serialize();
 
     // Seletores específicos por fonte
     // Fontes marcadas com [] como primeiro item usam class-first (antes de <article>)
@@ -571,12 +582,9 @@ export class RSSNewsService {
 
     return html
       // Remover noise
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, '')
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, '')
-      .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe\b[^>]*>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, '').replace(/<!--/g, '')
-      // Second pass: strip any remaining partial/malformed dangerous tags
-      .replace(/<script/gi, '').replace(/<style/gi, '').replace(/<iframe/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
       // Figure com figcaption → imagem com caption (processar ANTES de <img>)
       .replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, (_, inner) => {
         // WordPress oEmbed — YouTube bare watch URL no inner (sem iframe)
