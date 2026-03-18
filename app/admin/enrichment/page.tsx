@@ -8,7 +8,7 @@ import Image from 'next/image'
 import {
     Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
     CheckCircle, DollarSign, ChevronRight, Play, Search, X, Zap,
-    EyeOff, Eye, ChevronDown, PenLine, ChevronUp, Plus, Trash2, Save,
+    EyeOff, Eye, ChevronDown, PenLine, ChevronUp, Plus, Trash2, Save, ExternalLink,
 } from 'lucide-react'
 
 type Tab = 'artists' | 'productions' | 'news'
@@ -814,6 +814,17 @@ function QueueItemRow({
                             {curating ? <ChevronUp className="w-3 h-3" /> : <PenLine className="w-3 h-3" />}
                             {curating ? 'Fechar' : 'Curar'}
                         </button>
+                    )}
+                    {tab === 'artists' && (
+                        <a
+                            href={`/artists/${item.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Ver perfil público"
+                        >
+                            <ExternalLink className="w-3 h-3" />
+                        </a>
                     )}
                     <a
                         href={
