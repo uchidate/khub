@@ -460,7 +460,7 @@ export class RSSNewsService {
 
     // 1. Para fontes class-first, tentar seletores específicos ANTES de <article>
     if (sourceName && CLASS_FIRST_SOURCES.has(sourceName)) {
-      const preprocess = sourceName ? (SOURCE_HTML_PREPROCESSORS[sourceName] ?? null) : null;
+      const preprocess = SOURCE_HTML_PREPROCESSORS[sourceName] ?? null;
       for (const cls of priorityClasses) {
         const regex = new RegExp(`<div[^>]*class="[^"]*\\b${cls}\\b[^"]*"[^>]*>`, 'i');
         const match = regex.exec(stripped);

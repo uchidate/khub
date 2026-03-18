@@ -100,8 +100,7 @@ export class NewsArtistExtractionService {
      */
     private preprocessText(text: string): string {
         return text
-            .replace(/[''']s\b/gi, '')      // possessivos: BTS's → BTS
-            .replace(/\u2019s\b/gi, '')      // right single quotation mark possessive
+            .replace(/[\u0027\u2018\u2019]s\b/gi, '')  // possessivos: BTS's / BTS's → BTS
             .replace(/\s+/g, ' ')
             .trim();
     }
