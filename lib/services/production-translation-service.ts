@@ -37,9 +37,12 @@ export class ProductionTranslationService {
         })
         const translatedIds = existingCTs.map(t => t.entityId)
 
+        // Textos de placeholder — não são sinopses reais, não devem ser traduzidos
+        const PLACEHOLDER_SYNOPSES = ['Sem sinopse disponível.', 'No synopsis available.']
+
         const pending = await this.prisma.production.findMany({
             where: {
-                synopsis: { not: null },
+                synopsis: { not: null, notIn: PLACEHOLDER_SYNOPSES },
                 synopsisSource: { notIn: ['tmdb_pt', 'manual', 'ai'] }, // já em pt-BR, não precisa traduzir
                 isHidden: isHidden ?? false,
                 id: { notIn: translatedIds },
@@ -195,12 +198,13 @@ export class ProductionTranslationService {
         total: number
         noSynopsis: number
     }> {
+        const PLACEHOLDER_SYNOPSES = ['Sem sinopse disponível.', 'No synopsis available.']
         const [pending, completed, failed, total, noSynopsis] = await Promise.all([
-            this.prisma.production.count({ where: { translationStatus: 'pending', synopsis: { not: null }, isHidden: false } }),
+            this.prisma.production.count({ where: { translationStatus: 'pending', synopsis: { not: null, notIn: PLACEHOLDER_SYNOPSES }, isHidden: false } }),
             this.prisma.production.count({ where: { translationStatus: 'completed', isHidden: false } }),
             this.prisma.production.count({ where: { translationStatus: 'failed', isHidden: false } }),
             this.prisma.production.count({ where: { isHidden: false } }),
-            this.prisma.production.count({ where: { synopsis: null, isHidden: false } }),
+            this.prisma.production.count({ where: { OR: [{ synopsis: null }, { synopsis: { in: PLACEHOLDER_SYNOPSES } }], isHidden: false } }),
         ])
         return { pending, completed, failed, total, noSynopsis }
     }
