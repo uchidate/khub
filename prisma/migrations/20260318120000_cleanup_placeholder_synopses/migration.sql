@@ -3,18 +3,17 @@
 -- e consumindo tokens de IA desnecessariamente.
 --
 -- Textos de placeholder conhecidos:
---   "Sem sinopse disponível."  (1977 produções)
+--   "Sem sinopse disponível."  (~1977 produções)
 --   "No synopsis available."   (1 produção)
 --
--- Além de zerar o synopsis, reseta translationStatus para NULL
--- (não é 'pending' nem 'skipped' — simplesmente não há nada a traduzir).
+-- translationStatus é NOT NULL → usa 'skipped' (não pode ser NULL).
 
 UPDATE "Production"
 SET
-    synopsis          = NULL,
-    "synopsisSource"  = NULL,
-    "translationStatus" = NULL,
-    "translatedAt"    = NULL
+    synopsis            = NULL,
+    "synopsisSource"    = NULL,
+    "translationStatus" = 'skipped',
+    "translatedAt"      = NULL
 WHERE synopsis IN (
     'Sem sinopse disponível.',
     'No synopsis available.'
