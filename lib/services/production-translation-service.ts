@@ -134,14 +134,14 @@ export class ProductionTranslationService {
     }
 
     private async translateSynopsis(title: string, synopsis: string, lang: DetectedLang): Promise<{ text: string; cost: number }> {
-        // Coreano → DeepSeek (melhor suporte); inglês/unknown → Ollama
-        const provider = lang === 'ko' ? 'deepseek' : 'ollama'
         const langLabel = lang === 'ko' ? 'coreano' : 'inglês'
 
+        // Prompt deve mencionar "JSON" explicitamente — exigência do DeepSeek/OpenAI
+        // com response_format: json_object. Sem isso a API retorna 400 e abre o circuit.
         const result = await this.getOrchestrator().generateStructured<{ synopsis: string }>(
-            `Traduza a seguinte sinopse de ${langLabel} para português brasileiro de forma natural. Preserve nomes próprios (artistas, personagens, locais). Máximo 3 frases concisas:\n\nProdução: ${title}\n\n${synopsis}`,
+            `Traduza a seguinte sinopse de ${langLabel} para português brasileiro de forma natural. Preserve nomes próprios (artistas, personagens, locais). Máximo 3 frases concisas.\n\nProdução: ${title}\n\n${synopsis}\n\nRetorne JSON com o campo "synopsis".`,
             '{ "synopsis": "string (sinopse em português brasileiro, máx. 3 frases)" }',
-            { preferredProvider: provider, feature: 'production_translation' }
+            { preferredProvider: 'deepseek', feature: 'production_translation' }
         )
 
         return { text: result.parsed.synopsis, cost: result.cost ?? 0 }

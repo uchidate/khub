@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles, ExternalLink, DollarSign } from 'lucide-react'
+import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles, ExternalLink, DollarSign, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
@@ -307,6 +307,20 @@ function TranslationsPageContent() {
     setSelected(new Set(items.filter(i => i.status === 'draft').map(i => i.id)))
   }
 
+  const [resettingCircuits, setResettingCircuits] = useState(false)
+  const handleResetCircuits = async () => {
+    setResettingCircuits(true)
+    try {
+      const res = await fetch('/api/admin/ai/reset-circuits', { method: 'POST' })
+      if (res.ok) setRunResult('✓ Circuits resetados — tente traduzir novamente.')
+      else setRunResult('Erro ao resetar circuits.')
+    } catch {
+      setRunResult('Erro ao resetar circuits.')
+    } finally {
+      setResettingCircuits(false)
+    }
+  }
+
   const handleRunBatch = () => {
     if (!TRANSLATABLE_TYPES.includes(activeTab)) {
       setRunResult('Tradução automática não disponível para este tipo.')
@@ -586,6 +600,15 @@ function TranslationsPageContent() {
                   >
                     <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
                     {running ? 'Traduzindo...' : 'Traduzir (IA)'}
+                  </button>
+                  <button
+                    onClick={handleResetCircuits}
+                    disabled={running || resettingCircuits}
+                    title="Resetar circuit breakers dos providers de IA (usar se houver falhas em série)"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 border border-white/8 rounded-lg hover:border-white/15 disabled:opacity-40 transition-colors"
+                  >
+                    <RotateCcw className={`w-3.5 h-3.5 ${resettingCircuits ? 'animate-spin' : ''}`} />
+                    Reset circuits
                   </button>
                 </>
               )}
