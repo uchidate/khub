@@ -125,11 +125,12 @@ export async function GET() {
           ],
         },
       }),
-      // production pending: sem CT E synopsisSource não indica PT-BR
+      // production pending: sem CT, synopsisSource não indica PT-BR, e não foi skipped
       prisma.production.count({
         where: {
           isHidden: false, synopsis: { not: null }, NOT: [{ synopsis: '' }],
           synopsisSource: { notIn: ['tmdb_pt', 'manual', 'ai'] },
+          translationStatus: { not: 'skipped' },
           id: { notIn: prodCtIds },
         },
       }),
@@ -144,8 +145,9 @@ export async function GET() {
         },
       }),
       prisma.production.count({ where: { isHidden: false, translationStatus: 'failed' } }),
-      // noSynopsis: synopsis null ou vazia
-      prisma.production.count({ where: { isHidden: false, OR: [{ synopsis: null }, { synopsis: '' }] } }),
+      // noSynopsis: synopsis null/vazia que ainda não foi marcada como skipped/completed
+      // (exclui as que já foram deliberadamente ignoradas)
+      prisma.production.count({ where: { isHidden: false, OR: [{ synopsis: null }, { synopsis: '' }], translationStatus: { notIn: ['skipped', 'completed'] } } }),
       prisma.news.count({ where: { isHidden: false } }),
       prisma.news.count({
         where: {

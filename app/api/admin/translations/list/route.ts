@@ -127,6 +127,7 @@ export async function GET(req: NextRequest) {
         const where = {
           isHidden: isHiddenWhere,
           OR: [{ synopsis: null as null }, { synopsis: '' }],
+          translationStatus: { notIn: ['skipped', 'completed'] as string[] },
           ...(q ? {
             OR: [
               { titlePt: { contains: q, mode: 'insensitive' as const } },
