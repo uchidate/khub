@@ -369,28 +369,41 @@ function EnrichmentPageInner() {
         const fieldMap = FIELD_LABELS[activeTab]
         const targets  = Object.entries(fieldMap)
             .filter(([key]) => selectedBatchFields.has(key))
-            .map(([, c]) => ({ label: c.label, target: c.target }))
+            .map(([key, c]) => ({ key, label: c.label, target: c.target }))
 
         if (targets.length === 0) { showError('Selecione pelo menos um campo'); return }
-
-        // Snapshot items to process right now (prevents duplicates if queue refreshes mid-run)
-        const itemsToProcess = (isSearching ? searchResults : queue[activeTab])?.items.slice(0, batchLimit) ?? []
-        if (itemsToProcess.length === 0) { showError('Fila vazia'); return }
 
         setBatchRunning(true)
         let totalProcessed = 0
         let batchTotalCost = 0
 
         try {
+            // Fetch the right items from the server: limited to batchLimit, filtered by
+            // the first selected field so we don't get items that already have all fields filled.
+            // Using the first target's key as field filter gives priority to items that need it.
+            const primaryFieldKey = targets[0].key
+            const params = new URLSearchParams({
+                tab:    activeTab,
+                limit:  String(batchLimit),
+                offset: '0',
+                field:  primaryFieldKey,
+            })
+            const queueRes  = await fetch(`/api/admin/enrichment/queue?${params}`)
+            if (!queueRes.ok) { showError('Erro ao buscar fila'); return }
+            const queueData = await queueRes.json() as QueueData
+
+            // Pre-filter: only items missing at least one selected field
+            const itemsToProcess = queueData.items.filter(item =>
+                targets.some(({ key }) => item.missingFields.includes(key))
+            )
+
+            if (itemsToProcess.length === 0) { showError('Nenhum item com os campos selecionados faltando'); return }
+
             for (let itemIdx = 0; itemIdx < itemsToProcess.length; itemIdx++) {
                 const item = itemsToProcess[itemIdx]
 
-                // Only process fields that are actually missing for this item
-                const relevantTargets = targets.filter(({ target }) => {
-                    // Map target back to field key to check missingFields
-                    const key = Object.entries(FIELD_LABELS[activeTab]).find(([, c]) => c.target === target)?.[0]
-                    return !key || item.missingFields.includes(key)
-                })
+                // Only the selected targets that this specific item is missing
+                const relevantTargets = targets.filter(({ key }) => item.missingFields.includes(key))
                 if (relevantTargets.length === 0) continue
 
                 for (let fIdx = 0; fIdx < relevantTargets.length; fIdx++) {
@@ -426,6 +439,8 @@ function EnrichmentPageInner() {
             if (totalProcessed > 0) {
                 showSuccess(`${totalProcessed} campo(s) gerado(s)`)
                 await Promise.all([fetchQueue(activeTab, false, 0, fieldFilter), fetchStats()])
+            } else {
+                showError('Nenhum campo foi gerado — verifique os logs')
             }
         } catch {
             showError('Erro no lote')
