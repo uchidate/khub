@@ -705,7 +705,7 @@ function EnrichmentPageInner() {
 
                     {/* Batch size selector */}
                     <div className="flex items-center gap-1 ml-auto">
-                        {[5, 10, 20, 50, 100].map(n => (
+                        {[5, 10, 20, 50, 100, 200, 300, 400, 500].map(n => (
                             <button
                                 key={n}
                                 onClick={() => setBatchLimit(n)}

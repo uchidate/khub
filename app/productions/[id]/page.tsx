@@ -111,6 +111,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
         ? await prisma.production.findMany({
             where: {
                 id: { not: production.id },
+                isHidden: false,
                 flaggedAsNonKorean: false,
                 artists: { some: { artistId: { in: artistIds } } },
             },
@@ -127,6 +128,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
         ? await prisma.production.findMany({
             where: {
                 id: { notIn: [production.id, ...byArtistIds] },
+                isHidden: false,
                 flaggedAsNonKorean: false,
                 tags: { hasSome: tags },
             },
@@ -143,6 +145,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
         ? await prisma.production.findMany({
             where: {
                 id: { notIn: usedIds },
+                isHidden: false,
                 flaggedAsNonKorean: false,
                 type: production.type,
             },

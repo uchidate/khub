@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
     const url    = new URL(req.url)
     const tab    = (url.searchParams.get('tab') ?? 'artists') as QueueTab
-    const limit  = Math.min(parseInt(url.searchParams.get('limit') ?? '30'), 100)
+    const limit  = Math.min(parseInt(url.searchParams.get('limit') ?? '30'), 500)
     const offset = parseInt(url.searchParams.get('offset') ?? '0')
     const q      = url.searchParams.get('q')?.trim() ?? ''
     const field  = url.searchParams.get('field')?.trim() ?? ''
