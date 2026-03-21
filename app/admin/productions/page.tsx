@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
@@ -1013,6 +1014,26 @@ export default function ProductionsPage() {
   return (
     <AdminLayout title="Produções" subtitle="Gerencie dramas, filmes e outras produções da plataforma">
       <div className="space-y-5">
+        <PageGuide
+          storageKey="productions"
+          title="Como funciona a gestão de Produções"
+          description="Catálogo de dramas, filmes, séries e varieties coreanas. Cada produção tem sinopse, elenco, avaliação e streaming links. O ciclo de vida vai da importação TMDB até ser exibida com sinopse traduzida."
+          steps={[
+            { label: 'Importada', description: 'Chegou via sync TMDB/KOBIS', color: 'zinc' },
+            { label: 'Gerar sinopse', description: 'IA gera sinopse se TMDB não tiver', color: 'purple' },
+            { label: 'Traduzir PT', description: 'Traduz sinopse para português via IA', color: 'yellow' },
+            { label: 'Vincular elenco', description: 'Associar artistas aos personagens', color: 'blue' },
+            { label: 'Publicada', description: 'isHidden=false, aparece no catálogo', color: 'green' },
+          ]}
+          tips={[
+            { text: 'Use o Pipeline (/admin/pipeline?tab=productions) para ver quais produções estão sem sinopse ou tradução.' },
+            { text: '"flaggedAsNonKorean" oculta da listagem pública e exclui do enriquecimento automático.' },
+            { text: 'Sync TMDB atualiza poster, avaliação e elenco de uma produção específica.' },
+            { text: 'Produções com classificação indicativa acima do perfil do usuário são filtradas automaticamente no site.' },
+            { text: 'Vincular streaming show conecta o card de "Top nos Streamings" da home a esta produção.' },
+          ]}
+        />
+
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-3">

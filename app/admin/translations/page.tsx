@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { PageGuide } from '@/components/admin/PageGuide'
 import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles, ExternalLink, DollarSign, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 
@@ -371,6 +372,26 @@ function TranslationsPageContent() {
   return (
     <AdminLayout title="Traduções">
       <div className="space-y-6">
+
+        <PageGuide
+          storageKey="translations"
+          title="Como funciona o módulo de Traduções"
+          description="Gerencia a tradução de conteúdo para português (PT-BR). Cada entidade (artista, grupo, produção, notícia) tem campos independentes que passam pelos status: Pendente → Rascunho IA → Revisado."
+          steps={[
+            { label: 'Pendente', description: 'Sem tradução — conteúdo só em inglês/coreano', color: 'zinc' },
+            { label: 'Traduzir IA', description: 'Clique em "Traduzir" para gerar via GPT', color: 'purple' },
+            { label: 'Rascunho', description: 'IA gerou, aguarda revisão humana', color: 'yellow' },
+            { label: 'Revisar', description: 'Editor lê e ajusta o texto gerado', color: 'blue' },
+            { label: 'Aprovado', description: 'Texto revisado e publicado no site', color: 'green' },
+          ]}
+          tips={[
+            { text: 'Filtre por "Sem tradução" para focar no backlog mais urgente.' },
+            { text: 'Clique em "Traduzir todos" na aba para processar toda a fila pendente em sequência.' },
+            { text: 'Produções com "Sem sinopse" não entram na fila — gere a sinopse primeiro em Enriquecimento.' },
+            { text: 'Status "Skipped" significa que a entidade foi marcada para não traduzir (ex: produção não-coreana).' },
+            { text: 'Use o histórico (ícone de relógio) para ver versões anteriores de uma tradução.' },
+          ]}
+        />
 
         {/* Cards de progresso */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

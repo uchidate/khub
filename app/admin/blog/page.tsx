@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { useToast } from '@/lib/hooks/useToast'
 import {
@@ -314,6 +315,26 @@ export default function AdminBlogPage() {
     return (
         <AdminLayout title="Blog Pipeline">
             <div className="space-y-5">
+
+                <PageGuide
+                    storageKey="blog"
+                    title="Como funciona o Blog Pipeline"
+                    description="Gerencia o conteúdo editorial do blog: posts criados manualmente e posts gerados automaticamente a partir de notícias importadas. O blog é o conteúdo de maior valor para SEO."
+                    steps={[
+                        { label: 'Notícia importada', description: 'Bot importou notícia com potencial editorial', color: 'zinc' },
+                        { label: 'Converter com IA', description: 'IA transforma notícia em post editorial completo', color: 'purple' },
+                        { label: 'Rascunho', description: 'Post gerado, aguarda revisão e ajustes', color: 'yellow' },
+                        { label: 'Revisar', description: 'Editor revisa título, SEO, imagem e corpo', color: 'blue' },
+                        { label: 'Publicar', description: 'Status PUBLISHED — aparece no blog e home', color: 'green' },
+                    ]}
+                    tips={[
+                        { text: 'Posts "Destaque" aparecem na home com prioridade — marque apenas os melhores.' },
+                        { text: 'O campo "Tempo de leitura" é calculado automaticamente a partir do conteúdo.' },
+                        { text: 'Categorias e tags ajudam no SEO e na navegação do leitor.' },
+                        { text: 'Posts arquivados ficam no banco mas não aparecem no site — útil para conteúdo sazonal.' },
+                        { text: 'A IA usa o conteúdo original da notícia + contexto do artista para gerar o post — mais contexto = melhor resultado.' },
+                    ]}
+                />
 
                 {/* Header */}
                 <div className="flex items-center justify-between gap-3 flex-wrap">

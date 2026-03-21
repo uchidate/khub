@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
@@ -531,6 +532,25 @@ export default function NewsAdminPage() {
             }
         >
             <div className="space-y-4">
+
+                <PageGuide
+                    storageKey="news"
+                    title="Como funciona a gestão de Notícias"
+                    description="Central de todas as notícias importadas pelo bot. Aqui você revisa, publica, traduz e gerencia o conteúdo antes que chegue ao público. Notícias passam por rascunho → publicação → tradução."
+                    steps={[
+                        { label: 'Importada', description: 'Bot importou, status = draft ou ready', color: 'zinc' },
+                        { label: 'Revisar', description: 'Abrir editor, verificar conteúdo e imagem', color: 'blue' },
+                        { label: 'Publicar', description: 'Alterar status para "published"', color: 'green' },
+                        { label: 'Traduzir', description: 'Gerar versão PT-BR via IA', color: 'purple' },
+                        { label: 'Vincular artistas', description: 'Associar artistas mencionados na notícia', color: 'yellow' },
+                    ]}
+                    tips={[
+                        { text: 'Use o Pipeline (/admin/pipeline) para uma visão Kanban do fluxo completo de notícias.' },
+                        { text: 'Filtre por status para focar em rascunhos ou notícias sem tradução.' },
+                        { text: 'O botão "Reprocessar" (cabeçalho) re-extrai imagem e texto de notícias com falha de importação.' },
+                        { text: 'Vincular artistas à notícia ativa a seção "Para Você" na home para usuários com favoritos.' },
+                    ]}
+                />
 
                 {/* ── Stats ─────────────────────────────────────────────── */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
