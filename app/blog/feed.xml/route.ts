@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export async function GET() {
   const posts = await prisma.blogPost.findMany({

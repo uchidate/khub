@@ -12,14 +12,28 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { Film } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import type { Metadata } from "next"
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h no servidor — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
+
+// Pré-gera as produções com maior nota no build → first-paint rápido, melhor SEO e Core Web Vitals
+export async function generateStaticParams() {
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
+    const productions = await prisma.production.findMany({
+        where: { isHidden: false, flaggedAsNonKorean: false },
+        select: { id: true },
+        orderBy: { voteAverage: 'desc' },
+        take: 200,
+    })
+    return productions.map(p => ({ id: p.id }))
+}
 
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page component)
 const getProduction = cache(async (id: string) => {
@@ -382,6 +396,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                 </div>
                             </div>
                         )}
+
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="my-8" />
 
                         {/* Cast */}
                         {production.artists.length > 0 && (

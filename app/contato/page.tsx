@@ -5,7 +5,8 @@ import { AdBanner } from '@/components/ui/AdBanner'
 import { Mail, Instagram, HelpCircle, FileText, Handshake } from 'lucide-react'
 import Link from 'next/link'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
     title: 'Contato | HallyuHub',

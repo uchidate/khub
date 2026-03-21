@@ -6,10 +6,22 @@ import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { AdBanner } from '@/components/ui/AdBanner'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
+  const posts = await prisma.blogPost.findMany({
+    where: { status: 'PUBLISHED' },
+    select: { slug: true },
+  })
+  return posts.map(p => ({ slug: p.slug }))
+}
 
 async function getPost(slug: string) {
   return prisma.blogPost.findFirst({
@@ -56,6 +68,36 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-6">
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": post.title,
+        "description": post.excerpt ?? undefined,
+        "image": post.coverImageUrl ?? undefined,
+        "url": `${BASE_URL}/blog/${post.slug}`,
+        "datePublished": (post.publishedAt ?? post.createdAt).toISOString(),
+        "dateModified": post.updatedAt.toISOString(),
+        "inLanguage": "pt-BR",
+        "author": post.author ? {
+          "@type": "Person",
+          "name": post.author.name,
+          "image": post.author.image ?? undefined,
+        } : { "@type": "Organization", "name": "HallyuHub" },
+        "publisher": {
+          "@type": "Organization",
+          "name": "HallyuHub",
+          "logo": { "@type": "ImageObject", "url": `${BASE_URL}/og-image.jpg` },
+        },
+        ...(post.tags.length > 0 ? { "keywords": post.tags.join(', ') } : {}),
+      }} />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Blog", "item": `${BASE_URL}/blog` },
+          { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
+        ],
+      }} />
       <div className="max-w-3xl mx-auto">
         <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors mb-8">
           <ArrowLeft size={14} />
@@ -107,6 +149,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <Image src={post.coverImageUrl} alt={post.title} fill className="object-cover" priority />
           </div>
         )}
+
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mb-10" />
 
         {/* Content */}
         <article>

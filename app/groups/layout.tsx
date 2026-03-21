@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import prisma from '@/lib/prisma'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {

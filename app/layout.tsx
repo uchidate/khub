@@ -18,7 +18,8 @@ import { CookieBanner } from "@/components/features/CookieBanner"
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
     metadataBase: new URL(BASE_URL),

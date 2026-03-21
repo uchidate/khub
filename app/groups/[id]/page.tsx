@@ -12,14 +12,28 @@ import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
+
+// Pré-gera todos os grupos no build → first-paint rápido, melhor SEO e Core Web Vitals
+export async function generateStaticParams() {
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
+    const groups = await prisma.musicalGroup.findMany({
+        where: { isHidden: false },
+        select: { id: true },
+        orderBy: { updatedAt: 'desc' },
+        take: 200,
+    })
+    return groups.map(g => ({ id: g.id }))
+}
 
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
 const getGroup = cache(async (id: string) => {
@@ -476,6 +490,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                 <MemberGrid members={activeMembers} accent={accent} />
                             </section>
                         )}
+
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_GROUP!} format="horizontal" className="my-8" />
 
                         {/* Notícias recentes */}
                         {relatedNews.length > 0 && (

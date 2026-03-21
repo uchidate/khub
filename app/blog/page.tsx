@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -8,9 +8,11 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { BookOpen, Clock, Eye } from 'lucide-react'
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import prisma from '@/lib/prisma'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
   title: 'Blog',
@@ -104,6 +106,9 @@ function PostCard({ post, featured = false }: { post: PostWithRelations, feature
 }
 
 export default async function BlogPage() {
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+    return null
+  }
   const { featured, recent, categories } = await getPosts()
 
   return (
