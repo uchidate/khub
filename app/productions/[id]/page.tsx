@@ -46,7 +46,7 @@ const getProduction = cache(async (id: string) => {
                 orderBy: [{ castOrder: 'asc' }, { role: 'asc' }],
             }
         }
-    })
+    }).catch(() => null)
 })
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -132,7 +132,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
             orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
             take: 6,
             select: relatedSelect,
-        })
+        }).catch(() => [])
         : []
 
     // Priority 2: shared tags (fill remaining slots)
@@ -149,7 +149,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
             orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
             take: needByTag,
             select: relatedSelect,
-        })
+        }).catch(() => [])
         : []
 
     // Priority 3: same type (fallback)
@@ -166,13 +166,13 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
             orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
             take: needByType,
             select: relatedSelect,
-        })
+        }).catch(() => [])
         : []
 
     const relatedProductions = [...byArtist, ...byTag, ...byType]
 
     // Busca sinopse traduzida (PT-BR) — fallback para o campo original
-    const synopsisPt = await getTranslation('production', production.id, 'synopsis')
+    const synopsisPt = await getTranslation('production', production.id, 'synopsis').catch(() => null)
     const synopsis = synopsisPt ?? production.synopsis
 
     const galleryUrls = (production.galleryUrls as string[] | null) || []
