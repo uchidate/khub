@@ -289,27 +289,38 @@ async function runCronProcessing(lockId: string) {
                         continue;
                     }
 
+                    // Sinopse já em PT-BR → marcar como traduzida para não entrar na fila desnecessariamente
+                    const hasPtSynopsis = !!production.synopsis && production.synopsisSource === 'tmdb_pt';
+
                     await prisma.production.create({
                         data: {
-                            titlePt: production.titlePt,
-                            titleKr: production.titleKr,
-                            type: production.tmdbType === 'tv' ? 'K-Drama' : 'Filme',
-                            year: production.releaseDate ? production.releaseDate.getFullYear() : null,
-                            synopsis: production.synopsis,
-                            tagline: production.tagline ?? null,
-                            imageUrl: production.imageUrl,
-                            backdropUrl: production.backdropUrl,
-                            galleryUrls: production.galleryUrls,
-                            tmdbId: String(production.tmdbId),
-                            tmdbType: production.tmdbType,
-                            releaseDate: production.releaseDate,
-                            runtime: production.runtime,
-                            voteAverage: production.voteAverage,
-                            trailerUrl: production.trailerUrl,
-                            tags: production.tags,
-                            ageRating: production.ageRating ?? null,
-                            streamingPlatforms: [],
-                            sourceUrls: [],
+                            titlePt:          production.titlePt,
+                            titleKr:          production.titleKr,
+                            type:             production.tmdbType === 'tv' ? 'K-Drama' : 'Filme',
+                            year:             production.releaseDate ? production.releaseDate.getFullYear() : null,
+                            synopsis:         production.synopsis || null,
+                            synopsisSource:   production.synopsis ? production.synopsisSource : null,
+                            tagline:          production.tagline ?? null,
+                            imageUrl:         production.imageUrl,
+                            backdropUrl:      production.backdropUrl,
+                            galleryUrls:      production.galleryUrls,
+                            tmdbId:           String(production.tmdbId),
+                            tmdbType:         production.tmdbType,
+                            releaseDate:      production.releaseDate,
+                            runtime:          production.tmdbType === 'movie' ? production.runtime : null,
+                            episodeRuntime:   production.tmdbType === 'tv' ? (production.episodeRuntime ?? production.runtime) : null,
+                            voteAverage:      production.voteAverage,
+                            trailerUrl:       production.trailerUrl,
+                            tags:             production.tags,
+                            ageRating:        production.ageRating ?? null,
+                            episodeCount:     production.episodeCount,
+                            seasonCount:      production.seasonCount,
+                            network:          production.network,
+                            productionStatus: production.productionStatus,
+                            translationStatus: hasPtSynopsis ? 'completed' : 'pending',
+                            translatedAt:      hasPtSynopsis ? new Date() : null,
+                            needsCuration:    true,
+                            isHidden:         true,
                         }
                     });
 
