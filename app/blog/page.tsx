@@ -8,6 +8,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { BookOpen, Clock, Eye } from 'lucide-react'
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import prisma from '@/lib/prisma'
 
 import { SITE_URL } from '@/lib/constants/site'
@@ -105,6 +106,9 @@ function PostCard({ post, featured = false }: { post: PostWithRelations, feature
 }
 
 export default async function BlogPage() {
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+    return null
+  }
   const { featured, recent, categories } = await getPosts()
 
   return (
