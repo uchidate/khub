@@ -9,7 +9,8 @@ import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
     const total = await prisma.production.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)

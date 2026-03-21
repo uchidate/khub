@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -10,7 +10,8 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { BookOpen, Clock, Eye } from 'lucide-react'
 import prisma from '@/lib/prisma'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
   title: 'Blog',

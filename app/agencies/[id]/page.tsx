@@ -10,7 +10,8 @@ import type { Metadata } from "next"
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 const getAgency = cache(async (id: string) =>
     prisma.agency.findUnique({

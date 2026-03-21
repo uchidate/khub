@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { getBotGroup, BOT_GROUPS } from '@/lib/utils/bot-detector'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

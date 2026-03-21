@@ -7,7 +7,8 @@
 
 import prisma from '@/lib/prisma'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 export const dynamic = 'force-dynamic'
 

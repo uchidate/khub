@@ -16,7 +16,8 @@ import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600

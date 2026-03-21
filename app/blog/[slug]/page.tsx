@@ -7,9 +7,18 @@ import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 
-const BASE_URL = 'https://www.hallyuhub.com.br'
+import { SITE_URL } from '@/lib/constants/site'
+const BASE_URL = SITE_URL
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const posts = await prisma.blogPost.findMany({
+    where: { status: 'PUBLISHED' },
+    select: { slug: true },
+  })
+  return posts.map(p => ({ slug: p.slug }))
+}
 
 async function getPost(slug: string) {
   return prisma.blogPost.findFirst({
