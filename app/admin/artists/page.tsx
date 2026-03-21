@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
@@ -689,6 +690,26 @@ export default function ArtistsAdminPage() {
       }
     >
       <div className="space-y-4">
+        <PageGuide
+          storageKey="artists"
+          title="Como funciona a gestão de Artistas"
+          description="Cadastro completo de artistas coreanos (atores, cantores, dançarinos). Cada artista tem perfil público no site — qualidade do perfil impacta diretamente o SEO e a experiência do usuário."
+          steps={[
+            { label: 'Importado', description: 'Chegou via TMDB ou MusicBrainz import', color: 'zinc' },
+            { label: 'Enriquecer', description: 'Gerar bio, editorial e curiosidades com IA', color: 'purple' },
+            { label: 'Vincular', description: 'Associar a grupos, agência, produções', color: 'blue' },
+            { label: 'Revisar', description: 'Conferir dados, foto e conteúdo gerado', color: 'yellow' },
+            { label: 'Publicado', description: 'isHidden=false, aparece no site', color: 'green' },
+          ]}
+          tips={[
+            { text: 'Artistas "flaggedAsNonKorean" não aparecem no site e ficam excluídos do Pipeline e Enriquecimento.' },
+            { text: 'Use "Traduções" no cabeçalho para ver e revisar bio/curiosidades em PT-BR.' },
+            { text: 'A foto principal vem do TMDB — use o sync de foto para atualizar manualmente.' },
+            { text: 'Artistas sem bio aparecem no topo da fila de enriquecimento por terem score de completude baixo.' },
+            { text: 'Para artistas duplicados, use /admin/artists/duplicates para fazer merge.' },
+          ]}
+        />
+
         <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
 
         <DataTable<Artist>

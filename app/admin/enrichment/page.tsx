@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { PageGuide } from '@/components/admin/PageGuide'
 import { useToast } from '@/lib/hooks/useToast'
 import Image from 'next/image'
 import {
@@ -490,6 +491,26 @@ function EnrichmentPageInner() {
     return (
         <AdminLayout title="Smart Queue — Enriquecimento">
             <div className="space-y-5">
+
+                <PageGuide
+                    storageKey="enrichment"
+                    title="Como funciona o Enriquecimento IA"
+                    description="Fila inteligente que prioriza automaticamente os itens mais incompletos. A IA gera conteúdo editorial (bio, sinopse, curiosidades) para artistas, produções e notícias. Cada geração tem custo estimado em tokens."
+                    steps={[
+                        { label: 'Fila automática', description: 'Itens ordenados por score de completude', color: 'zinc' },
+                        { label: 'Selecionar campos', description: 'Escolha quais campos gerar (bio, editorial...)', color: 'blue' },
+                        { label: 'Gerar com IA', description: 'Clique em "Gerar" — IA processa o item', color: 'purple' },
+                        { label: 'Revisar resultado', description: 'Expanda o card para ver o texto gerado', color: 'yellow' },
+                        { label: 'Aprovado', description: 'Salvo no banco, aparece no site', color: 'green' },
+                    ]}
+                    tips={[
+                        { text: 'Cada aba (Artistas, Produções, Notícias) tem campos diferentes disponíveis para geração.' },
+                        { text: 'O custo estimado em $ é calculado antes de gerar — verifique o orçamento antes de processar lotes.' },
+                        { text: 'Itens com score baixo (muitos campos faltando) aparecem no topo da fila por padrão.' },
+                        { text: 'Use o modo "Lote" para processar múltiplos itens sequencialmente com intervalo entre requisições.' },
+                        { text: 'Após gerar, acesse o Pipeline para ver o item avançar no fluxo de curadoria.' },
+                    ]}
+                />
 
                 {/* Global stats overview — always visible, all tabs */}
                 {stats && (

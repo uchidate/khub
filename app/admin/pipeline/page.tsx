@@ -9,6 +9,7 @@ import {
     RefreshCw, ChevronRight,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { PageGuide } from '@/components/admin/PageGuide'
 import prisma from '@/lib/prisma'
 import { PipelineActions } from './_components/PipelineActions'
 import { PipelineBatchAction } from './_components/PipelineBatchAction'
@@ -242,6 +243,25 @@ export default async function PipelinePage({ searchParams }: Props) {
             <AdminLayout title="Pipeline" subtitle="Fluxo de conteúdo — notícias, artistas e produções">
                 <PipelineLayout tab={tab}>
                     <PipelineHealthBar stats={healthStats} />
+
+                    <PageGuide
+                        storageKey="pipeline-news"
+                        title="Como funciona o Pipeline de Notícias"
+                        description="Visualiza o ciclo de vida de cada notícia importada, do rascunho até ser publicada e traduzida. As colunas representam etapas — mova o item avançando as ações."
+                        steps={[
+                            { label: 'Importado / Rascunho', description: 'Notícia chegou do bot, ainda não publicada', color: 'zinc' },
+                            { label: 'Publicar', description: 'Clique em "Publicar" para tornar visível', color: 'blue' },
+                            { label: 'Sem tradução PT', description: 'Publicada mas sem versão em português', color: 'yellow' },
+                            { label: 'Traduzir IA', description: 'Gera tradução automática via IA', color: 'purple' },
+                            { label: 'Publicada', description: 'Traduzida e visível para o público', color: 'green' },
+                        ]}
+                        tips={[
+                            { text: 'Use "Publicar todos" no cabeçalho da coluna para processar vários rascunhos de uma vez.' },
+                            { text: 'O botão "Ocultar" nas notícias publicadas retira do ar sem apagar o conteúdo.' },
+                            { text: 'Clique no ícone de link externo em qualquer card para abrir o editor completo.' },
+                            { text: 'Aba Artistas: foco em bio/editorial via IA. Aba Produções: foco em sinopse.' },
+                        ]}
+                    />
 
                     <div className="flex gap-3 overflow-x-auto pb-4">
 
@@ -477,6 +497,24 @@ export default async function PipelinePage({ searchParams }: Props) {
                 <PipelineLayout tab={tab}>
                     <PipelineHealthBar stats={healthStats} />
 
+                    <PageGuide
+                        storageKey="pipeline-artists"
+                        title="Como funciona o Pipeline de Artistas"
+                        description="Acompanha o enriquecimento editorial de cada artista: da chegada sem conteúdo até ser curado manualmente com bio, projetos e curiosidades em português."
+                        steps={[
+                            { label: 'Sem conteúdo', description: 'Artista importado sem bio ou editorial', color: 'zinc' },
+                            { label: 'Enriquecer IA', description: 'Gera bio, projetos e curiosidades com IA', color: 'purple' },
+                            { label: 'Aguard. curadoria', description: 'IA gerou, aguarda revisão humana', color: 'yellow' },
+                            { label: 'Curado', description: 'Revisado e aprovado pelo editor', color: 'green' },
+                            { label: 'Oculto', description: 'Artista não-coreano ou flagado', color: 'red' },
+                        ]}
+                        tips={[
+                            { text: 'Use "Enriquecer todos" para processar a fila de sem-conteúdo em lote — cada artista leva ~10s.' },
+                            { text: 'Artistas ocultos ficam no banco mas não aparecem no site — use "Tornar visível" para reativar.' },
+                            { text: 'Após enriquecimento, o artista vai para "Aguard. curadoria" — revise no editor antes de publicar.' },
+                        ]}
+                    />
+
                     <div className="flex gap-3 overflow-x-auto pb-4">
 
                         <PipelineColumn
@@ -705,6 +743,24 @@ export default async function PipelinePage({ searchParams }: Props) {
         <AdminLayout title="Pipeline" subtitle="Fluxo de conteúdo — produções">
             <PipelineLayout tab={tab}>
                 <PipelineHealthBar stats={healthStats} />
+
+                <PageGuide
+                    storageKey="pipeline-productions"
+                    title="Como funciona o Pipeline de Produções"
+                    description="Mostra o estado das produções (dramas, filmes, varieties) em relação a sinopse e tradução. O objetivo é garantir que todas as produções visíveis tenham sinopse em português."
+                    steps={[
+                        { label: 'Sem sinopse', description: 'Produção importada sem descrição', color: 'zinc' },
+                        { label: 'Enriquecer IA', description: 'Gera sinopse automática via IA', color: 'purple' },
+                        { label: 'Sem tradução PT', description: 'Sinopse existe mas só em inglês/coreano', color: 'yellow' },
+                        { label: 'Traduzir IA', description: 'Traduz a sinopse para português', color: 'blue' },
+                        { label: 'Completa', description: 'Sinopse traduzida, pronta para o público', color: 'green' },
+                    ]}
+                    tips={[
+                        { text: 'Produções "sem sinopse" excluem as flagradas como não-coreanas e as com tradução marcada como skipped.' },
+                        { text: 'Use "Enriquecer todos" para disparar geração de sinopse em lote — ideal para acertar o backlog.' },
+                        { text: 'Produções ocultas não aparecem no site — use "Tornar visível" para reativar individualmente.' },
+                    ]}
+                />
 
                 <div className="flex gap-3 overflow-x-auto pb-4">
 
