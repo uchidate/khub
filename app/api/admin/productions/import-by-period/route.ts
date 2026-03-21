@@ -131,31 +131,36 @@ export async function POST(request: NextRequest) {
       // Create production with all available fields
       const year = prod.releaseDate ? prod.releaseDate.getUTCFullYear() : null
 
+      // Sinopse já em PT-BR → marcar como traduzida para não entrar na fila desnecessariamente
+      const hasPtSynopsis = !!prod.synopsis && prod.synopsisSource === 'tmdb_pt'
+
       await prisma.production.create({
         data: {
-          titlePt: prod.titlePt,
-          titleKr: prod.titleKr,
-          type: prod.type,
+          titlePt:          prod.titlePt,
+          titleKr:          prod.titleKr,
+          type:             prod.type,
           year,
-          synopsis: prod.synopsis || null,
-          synopsisSource: prod.synopsis ? prod.synopsisSource : null,
-          tagline: prod.tagline,
-          imageUrl: prod.imageUrl,
-          backdropUrl: prod.backdropUrl,
-          galleryUrls: prod.galleryUrls,
-          releaseDate: prod.releaseDate,
-          runtime: prod.tmdbType === 'movie' ? prod.runtime : null,
-          episodeRuntime: prod.tmdbType === 'tv' ? (prod.episodeRuntime ?? prod.runtime) : null,
-          voteAverage: prod.voteAverage,
-          trailerUrl: prod.trailerUrl,
-          tags: prod.tags,
-          ageRating: prod.ageRating,
-          tmdbId: String(prod.tmdbId),
-          tmdbType: prod.tmdbType,
-          episodeCount: prod.episodeCount,
-          seasonCount: prod.seasonCount,
-          network: prod.network,
+          synopsis:         prod.synopsis || null,
+          synopsisSource:   prod.synopsis ? prod.synopsisSource : null,
+          tagline:          prod.tagline,
+          imageUrl:         prod.imageUrl,
+          backdropUrl:      prod.backdropUrl,
+          galleryUrls:      prod.galleryUrls,
+          releaseDate:      prod.releaseDate,
+          runtime:          prod.tmdbType === 'movie' ? prod.runtime : null,
+          episodeRuntime:   prod.tmdbType === 'tv' ? (prod.episodeRuntime ?? prod.runtime) : null,
+          voteAverage:      prod.voteAverage,
+          trailerUrl:       prod.trailerUrl,
+          tags:             prod.tags,
+          ageRating:        prod.ageRating,
+          tmdbId:           String(prod.tmdbId),
+          tmdbType:         prod.tmdbType,
+          episodeCount:     prod.episodeCount,
+          seasonCount:      prod.seasonCount,
+          network:          prod.network,
           productionStatus: prod.productionStatus,
+          translationStatus: hasPtSynopsis ? 'completed' : 'pending',
+          translatedAt:      hasPtSynopsis ? new Date() : null,
         },
       })
 

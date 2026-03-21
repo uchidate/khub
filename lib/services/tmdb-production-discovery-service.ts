@@ -12,7 +12,8 @@ import { ProductionAgeRatingService } from './production-age-rating-service'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
-const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w342'
+const TMDB_IMAGE_BASE    = 'https://image.tmdb.org/t/p/w500'   // poster
+const TMDB_BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280'  // backdrop/gallery
 
 interface TMDBProduction {
   id: number
@@ -282,7 +283,7 @@ export class TMDBProductionDiscoveryService {
     // Extract images
     const galleryUrls: string[] = []
     if (details.backdrop_path) {
-      galleryUrls.push(`${TMDB_IMAGE_BASE}${details.backdrop_path}`)
+      galleryUrls.push(`${TMDB_BACKDROP_BASE}${details.backdrop_path}`)
     }
 
     return {
@@ -295,7 +296,7 @@ export class TMDBProductionDiscoveryService {
       synopsisSource,
       tagline: details.tagline || null,
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
-      backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
+      backdropUrl: details.backdrop_path ? `${TMDB_BACKDROP_BASE}${details.backdrop_path}` : null,
       galleryUrls,
       releaseDate: details.first_air_date ? new Date(details.first_air_date) : null,
       runtime: details.episode_run_time?.[0] || null,
@@ -328,7 +329,7 @@ export class TMDBProductionDiscoveryService {
 
     return {
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
-      backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
+      backdropUrl: details.backdrop_path ? `${TMDB_BACKDROP_BASE}${details.backdrop_path}` : null,
     };
   }
 
@@ -363,7 +364,7 @@ export class TMDBProductionDiscoveryService {
     // Extract images
     const galleryUrls: string[] = []
     if (details.backdrop_path) {
-      galleryUrls.push(`${TMDB_IMAGE_BASE}${details.backdrop_path}`)
+      galleryUrls.push(`${TMDB_BACKDROP_BASE}${details.backdrop_path}`)
     }
 
     return {
@@ -376,7 +377,7 @@ export class TMDBProductionDiscoveryService {
       synopsisSource,
       tagline: details.tagline || null,
       imageUrl: details.poster_path ? `${TMDB_IMAGE_BASE}${details.poster_path}` : null,
-      backdropUrl: details.backdrop_path ? `${TMDB_IMAGE_BASE}${details.backdrop_path}` : null,
+      backdropUrl: details.backdrop_path ? `${TMDB_BACKDROP_BASE}${details.backdrop_path}` : null,
       galleryUrls,
       releaseDate: details.release_date ? new Date(details.release_date) : null,
       runtime: details.runtime || null,
