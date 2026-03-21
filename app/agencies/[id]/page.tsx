@@ -6,6 +6,8 @@ import { getRoleLabel } from "@/lib/utils/role-labels"
 import { ExternalLink, Users, Music2 } from "lucide-react"
 import { cache } from "react"
 import type { Metadata } from "next"
+import { JsonLd } from "@/components/seo/JsonLd"
+import { AdBanner } from "@/components/ui/AdBanner"
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
@@ -76,6 +78,35 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
 
     return (
         <div className="min-h-screen bg-black">
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": agency.name,
+                "url": agency.website ?? `${BASE_URL}/agencies/${agency.id}`,
+                "sameAs": agency.website ? [agency.website] : undefined,
+                ...(agency.musicalGroups.length > 0 ? {
+                    "subOrganization": agency.musicalGroups.map(g => ({
+                        "@type": "MusicGroup",
+                        "name": g.name,
+                        "url": `${BASE_URL}/groups/${g.id}`,
+                    })),
+                } : {}),
+                ...(agency.artists.length > 0 ? {
+                    "member": agency.artists.slice(0, 20).map(a => ({
+                        "@type": "Person",
+                        "name": a.nameRomanized,
+                        "url": `${BASE_URL}/artists/${a.id}`,
+                    })),
+                } : {}),
+            }} />
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Agências", "item": `${BASE_URL}/agencies` },
+                    { "@type": "ListItem", "position": 2, "name": agency.name, "item": `${BASE_URL}/agencies/${agency.id}` },
+                ],
+            }} />
             <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 max-w-[1600px] mx-auto">
                 {/* Back */}
                 <Link href="/agencies" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit mb-10">
@@ -171,6 +202,8 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                         </div>
                     </section>
                 )}
+
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AGENCY!} format="horizontal" className="mb-16" />
 
                 {/* Artist Roster */}
                 <section>

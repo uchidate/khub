@@ -12,6 +12,7 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { Film } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import type { Metadata } from "next"
@@ -395,6 +396,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                 </div>
                             </div>
                         )}
+
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="my-8" />
 
                         {/* Cast */}
                         {production.artists.length > 0 && (

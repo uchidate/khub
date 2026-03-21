@@ -14,6 +14,7 @@ import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/S
 import { NewsTabs } from "@/components/features/NewsTabs"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { AdBanner } from "@/components/ui/AdBanner"
 
 export const dynamic = 'force-dynamic'
 
@@ -282,6 +283,8 @@ export default async function Home() {
                         <ProductionsTabs latest={latestProductions} topRated={topRatedProductions} />
                     </ScrollReveal>
                 )}
+
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME!} format="horizontal" className="my-2" />
 
                 {/* 5.5 Blog Editorial — conteúdo original */}
                 {featuredBlogPosts.length > 0 && (
