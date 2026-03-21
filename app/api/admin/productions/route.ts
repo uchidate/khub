@@ -43,6 +43,7 @@ const productionSchema = z.object({
   editorialReview: z.string().optional().nullable(),
   editorialRating: z.coerce.number().min(0).max(10).optional().nullable(),
   whyWatch: z.string().optional().nullable(),
+  translationStatus: z.enum(['pending', 'completed', 'skipped']).optional(),
   isHidden: z.boolean().optional(),
   needsCuration: z.boolean().optional(),
   flaggedAsNonKorean: z.boolean().optional(),

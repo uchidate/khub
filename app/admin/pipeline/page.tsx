@@ -712,9 +712,8 @@ export default async function PipelinePage({ searchParams }: Props) {
             where: {
                 synopsis: null,
                 flaggedAsNonKorean: false,
-                isAdultContent: { not: true },
                 needsCuration: false,
-                // excluir produções já marcadas como "sem sinopse disponível"
+                // exclui: adulto 18+ (translationStatus='skipped') e "sem sinopse disponível"
                 translationStatus: { not: 'skipped' },
             },
             orderBy: { voteAverage: 'desc' },
@@ -725,18 +724,17 @@ export default async function PipelinePage({ searchParams }: Props) {
             where: {
                 synopsis: null,
                 flaggedAsNonKorean: false,
-                isAdultContent: { not: true },
                 needsCuration: false,
                 translationStatus: { not: 'skipped' },
             },
         }),
         prisma.production.findMany({
-            where: { synopsis: { not: null }, needsCuration: false, flaggedAsNonKorean: false, isAdultContent: { not: true }, translationStatus: 'pending' },
+            where: { synopsis: { not: null }, needsCuration: false, flaggedAsNonKorean: false, translationStatus: 'pending' },
             orderBy: { createdAt: 'desc' },
             take: TAKE,
             select: { id: true, titlePt: true, imageUrl: true, type: true, year: true, createdAt: true },
         }),
-        prisma.production.count({ where: { synopsis: { not: null }, needsCuration: false, flaggedAsNonKorean: false, isAdultContent: { not: true }, translationStatus: 'pending' } }),
+        prisma.production.count({ where: { synopsis: { not: null }, needsCuration: false, flaggedAsNonKorean: false, translationStatus: 'pending' } }),
         prisma.production.findMany({
             where: { synopsis: { not: null }, isHidden: false, translationStatus: 'completed' },
             orderBy: { updatedAt: 'desc' },
