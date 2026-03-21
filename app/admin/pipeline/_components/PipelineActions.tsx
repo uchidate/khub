@@ -51,8 +51,12 @@ export function PipelineActions({ id, type, action }: Props) {
                 method = 'PATCH'
                 body   = { status: 'published' }
             } else if (action === 'show' || action === 'hide') {
-                const entityPath = type === 'news' ? 'news' : type === 'artist' ? 'artists' : 'productions'
-                url    = `/api/admin/${entityPath}/${id}`
+                if (type === 'production') {
+                    url = `/api/admin/productions?id=${id}`
+                } else {
+                    const entityPath = type === 'news' ? 'news' : 'artists'
+                    url = `/api/admin/${entityPath}/${id}`
+                }
                 method = 'PATCH'
                 body   = { isHidden: action === 'hide' }
             } else if (action === 'translate') {
@@ -65,7 +69,7 @@ export function PipelineActions({ id, type, action }: Props) {
                     body = { generate: ['bio', 'editorial', 'curiosidades'] }
                 } else {
                     url  = '/api/admin/enrichment'
-                    body = { target: 'production_synopsis', entityId: id }
+                    body = { target: 'production_review', entityId: id }
                 }
             } else if (action === 'approve') {
                 url    = `/api/admin/productions?id=${id}`

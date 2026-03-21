@@ -5,7 +5,7 @@ import Image from 'next/image'
 import {
     ArrowRight, Newspaper, Mic2, Film,
     EyeOff, Languages, CheckCircle2, Clock,
-    Sparkles, ExternalLink, PenLine, ShieldCheck,
+    Sparkles, ExternalLink, PenLine, ShieldCheck, Globe,
     RefreshCw, ChevronRight,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -36,16 +36,17 @@ function timeAgo(date: Date | string): string {
 // ─── Card de coluna ──────────────────────────────────────────────────────────
 
 function PipelineCard({
-    title, subtitle, imageUrl, time, href, tag, tagColor, actions,
+    title, subtitle, imageUrl, time, href, publicHref, tag, tagColor, actions,
 }: {
-    title:     string
-    subtitle?: string | null
-    imageUrl?: string | null
-    time:      Date | string
-    href:      string
-    tag?:      string
-    tagColor?: string
-    actions?:  React.ReactNode
+    title:      string
+    subtitle?:  string | null
+    imageUrl?:  string | null
+    time:       Date | string
+    href:       string
+    publicHref?: string
+    tag?:       string
+    tagColor?:  string
+    actions?:   React.ReactNode
 }) {
     const tagCls: Record<string, string> = {
         draft:    'bg-zinc-700/40 text-zinc-400 border-zinc-600/30',
@@ -78,10 +79,20 @@ function PipelineCard({
                     </span>
                 )}
                 <span className="text-[10px] text-zinc-700 ml-auto">{timeAgo(time)}</span>
+                {publicHref && (
+                    <Link
+                        href={publicHref}
+                        target="_blank"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-600 hover:text-blue-400"
+                        title="Ver página pública"
+                    >
+                        <Globe size={11} />
+                    </Link>
+                )}
                 <Link
                     href={href}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-600 hover:text-zinc-300"
-                    title="Abrir"
+                    title="Editar"
                 >
                     <ExternalLink size={11} />
                 </Link>
@@ -791,6 +802,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                 imageUrl={p.imageUrl}
                                 time={p.createdAt}
                                 href={`/admin/productions/${p.id}`}
+                                publicHref={`/productions/${p.id}`}
                                 tag="curadoria"
                                 tagColor="pending"
                                 actions={
@@ -832,6 +844,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                 imageUrl={p.imageUrl}
                                 time={p.createdAt}
                                 href={`/admin/productions/${p.id}`}
+                                publicHref={`/productions/${p.id}`}
                                 tag="sem sinopse"
                                 tagColor="draft"
                                 actions={<PipelineActions id={p.id} type="production" action="enrich" />}
@@ -867,6 +880,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                 imageUrl={p.imageUrl}
                                 time={p.createdAt}
                                 href={`/admin/productions/${p.id}`}
+                                publicHref={`/productions/${p.id}`}
                                 tag="sem tradução"
                                 tagColor="pending"
                                 actions={<PipelineActions id={p.id} type="production" action="translate" />}
@@ -895,6 +909,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                 imageUrl={p.imageUrl}
                                 time={p.createdAt}
                                 href={`/admin/productions/${p.id}`}
+                                publicHref={`/productions/${p.id}`}
                                 tag="completo"
                                 tagColor="done"
                             />
@@ -922,6 +937,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                 imageUrl={p.imageUrl}
                                 time={p.createdAt}
                                 href={`/admin/productions/${p.id}`}
+                                publicHref={`/productions/${p.id}`}
                                 tag="oculto"
                                 tagColor="hidden"
                                 actions={<PipelineActions id={p.id} type="production" action="show" />}
