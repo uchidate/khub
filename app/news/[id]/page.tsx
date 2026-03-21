@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { getRoleLabel } from "@/lib/utils/role-labels"
-import { auth } from "@/lib/auth"
+import { AdminNewsFooter } from "@/components/ui/AdminNewsFooter"
 import { Calendar, ExternalLink, Clock, User } from "lucide-react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -123,9 +123,6 @@ export async function generateMetadata(props: NewsDetailPageProps): Promise<Meta
 
 export default async function NewsDetailPage(props: NewsDetailPageProps) {
     const params = await props.params;
-    const session = await auth()
-    const isAdmin = session?.user?.role?.toLowerCase() === 'admin'
-
     // Deduplica com generateMetadata via React.cache
     const news = await getNews(params.id)
 
@@ -451,31 +448,8 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                     />
                 </div>
 
-                {/* Rodapé da Notícia — visível apenas para admins */}
-                {isAdmin && (() => {
-                    let hostname = news.sourceUrl
-                    try { hostname = new URL(news.sourceUrl).hostname.replace(/^www\./, '') } catch { /* keep raw */ }
-                    return (
-                        <footer className="mt-12">
-                            <a
-                                href={news.sourceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group flex items-center justify-between gap-4 px-6 py-5 rounded-2xl bg-zinc-900/60 border border-white/8 hover:border-purple-500/30 hover:bg-zinc-900 transition-all"
-                            >
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1">Fonte original</p>
-                                    <p className="text-base font-bold text-zinc-200 group-hover:text-purple-300 transition-colors">{news.source || hostname}</p>
-                                    <p className="text-xs text-zinc-600 mt-0.5">{hostname}</p>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0 px-4 py-2 rounded-full border border-white/10 group-hover:border-purple-500/40 transition-all text-xs font-semibold text-zinc-400 group-hover:text-purple-300">
-                                    Ler original
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                </div>
-                            </a>
-                        </footer>
-                    )
-                })()}
+                {/* Rodapé da Notícia — visível apenas para admins (client-side check) */}
+                <AdminNewsFooter sourceUrl={news.sourceUrl} source={news.source} />
 
                 {/* Seção de Comentários */}
                 <CommentsSection newsId={news.id} />
