@@ -290,7 +290,7 @@ async function runCronProcessing(lockId: string) {
                     }
 
                     // Sinopse já em PT-BR → marcar como traduzida para não entrar na fila desnecessariamente
-                    const hasPtSynopsis = !!production.synopsis && production.synopsisSource === 'tmdb_pt'
+                    const hasPtSynopsis = !!production.synopsis && production.synopsisSource === 'tmdb_pt';
 
                     await prisma.production.create({
                         data: {
