@@ -112,7 +112,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
         notFound()
     }
 
-    const tags = ((production.tags || []) as unknown[]).map(String).filter(t => t && t !== '0')
+    const tags = (production.tags || []) as string[]
     const artistIds = production.artists.map(a => a.artist.id)
 
     const relatedSelect = {
@@ -175,7 +175,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
     const synopsisPt = await getTranslation('production', production.id, 'synopsis').catch(() => null)
     const synopsis = synopsisPt ?? production.synopsis
 
-    const galleryUrls = ((production.galleryUrls as unknown[] | null) || []).map(String).filter(u => u && u !== '0' && u.startsWith('http'))
+    const galleryUrls = (production.galleryUrls as string[] | null) || []
 
     const heroImageMobile = production.imageUrl || production.backdropUrl
     const heroImageDesktop = production.backdropUrl || production.imageUrl
@@ -303,8 +303,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                         ★ {production.voteAverage.toFixed(1)}
                                     </span>
                                 )}
-                                {production.streamingPlatforms && (production.streamingPlatforms as unknown[]).filter(p => p && String(p).trim() && String(p) !== '0').map(p => (
-                                    <span key={String(p)} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{String(p)}</span>
+                                {production.streamingPlatforms && production.streamingPlatforms.map(p => (
+                                    <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
                                 ))}
                             </div>
                             <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
@@ -694,19 +694,16 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                     </span>
                                 </div>
                             )}
-                            {(() => {
-                                const platforms = (production.streamingPlatforms as unknown[] | null ?? []).filter(p => p && String(p).trim() && String(p) !== '0').map(String)
-                                return platforms.length > 0 ? (
-                                    <div className="flex justify-between py-3 border-b border-white/5 items-center">
-                                        <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Streaming</span>
-                                        <div className="flex flex-wrap gap-1.5 justify-end">
-                                            {platforms.map(p => (
-                                                <span key={p} className="text-xs font-black text-white bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
-                                            ))}
-                                        </div>
+                            {production.streamingPlatforms && production.streamingPlatforms.length > 0 && (
+                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
+                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Streaming</span>
+                                    <div className="flex flex-wrap gap-1.5 justify-end">
+                                        {production.streamingPlatforms.map(p => (
+                                            <span key={p} className="text-xs font-black text-white bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
+                                        ))}
                                     </div>
-                                ) : null
-                            })()}
+                                </div>
+                            )}
                             <div className="flex justify-between py-3">
                                 <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Elenco</span>
                                 <span className="text-sm font-bold text-zinc-300">{production.artists.length} artistas</span>
