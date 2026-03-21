@@ -32,8 +32,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
 
         const [artists, productions, news, groups, agencies, blogPosts] = await Promise.all([
+            // Excluir thin content (sem bio E sem imagem) — essas páginas têm noindex na metadata
+            // e não devem aparecer no sitemap para não confundir o Google
             prisma.artist.findMany({
-                where: { flaggedAsNonKorean: false, isHidden: false },
+                where: {
+                    flaggedAsNonKorean: false,
+                    isHidden: false,
+                    OR: [
+                        { bio: { not: null } },
+                        { primaryImageUrl: { not: null } },
+                    ],
+                },
                 select: { id: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
             }),
