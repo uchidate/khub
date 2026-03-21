@@ -18,6 +18,7 @@
 import 'dotenv/config'
 import prisma from '../lib/prisma'
 import { getTMDBProductionDiscoveryService } from '../lib/services/tmdb-production-discovery-service'
+import { getProductionCastService } from '../lib/services/production-cast-service'
 
 const START_YEAR = parseInt(process.env.START_YEAR ?? '2020')
 const END_YEAR   = parseInt(process.env.END_YEAR   ?? String(new Date().getFullYear()))
@@ -37,6 +38,7 @@ function pad(n: number) {
 
 async function main() {
   const svc = getTMDBProductionDiscoveryService()
+  const castSvc = getProductionCastService()
 
   console.log(`\n🎬 Import Korean Productions — ${START_YEAR}–${END_YEAR}`)
   console.log(`   Tipos: ${TYPES.join(', ')}`)
@@ -101,7 +103,7 @@ async function main() {
             // Sinopse já em PT-BR → marcar como traduzida para não entrar na fila desnecessariamente
             const hasPtSynopsis = !!prod.synopsis && prod.synopsisSource === 'tmdb_pt'
 
-            await prisma.production.create({
+            const newProduction = await prisma.production.create({
               data: {
                 titlePt:          prod.titlePt,
                 titleKr:          prod.titleKr,
@@ -133,7 +135,13 @@ async function main() {
               },
             })
 
-            console.log(`    ✅ ${prod.titlePt} (${prod.titleKr ?? '—'})`)
+            // Sync cast immediately after creation
+            try {
+              const castResult = await castSvc.syncProductionCast(newProduction.id)
+              console.log(`    ✅ ${prod.titlePt} (${prod.titleKr ?? '—'}) — ${castResult.synced} atores`)
+            } catch {
+              console.log(`    ✅ ${prod.titlePt} (${prod.titleKr ?? '—'}) — elenco falhou (será reprocessado)`)
+            }
             totalCreated++
           } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err)

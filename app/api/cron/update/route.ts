@@ -292,7 +292,7 @@ async function runCronProcessing(lockId: string) {
                     // Sinopse já em PT-BR → marcar como traduzida para não entrar na fila desnecessariamente
                     const hasPtSynopsis = !!production.synopsis && production.synopsisSource === 'tmdb_pt';
 
-                    await prisma.production.create({
+                    const created = await prisma.production.create({
                         data: {
                             titlePt:          production.titlePt,
                             titleKr:          production.titleKr,
@@ -323,6 +323,15 @@ async function runCronProcessing(lockId: string) {
                             isHidden:         true,
                         }
                     });
+
+                    // Sync cast immediately so the dedicated queue doesn't need to process it
+                    try {
+                        const castSvc = getProductionCastService();
+                        const castResult = await castSvc.syncProductionCast(created.id);
+                        log.info(`Cast synced for "${production.titlePt}": ${castResult.synced} actors`);
+                    } catch (castErr) {
+                        log.warn(`Cast sync failed for "${production.titlePt}" (non-blocking)`, { error: getErrorMessage(castErr) });
+                    }
 
                     results.productions.updated++;
                     log.info(`Saved production: ${production.titlePt}`, { tmdbId: production.tmdbId });
@@ -392,13 +401,12 @@ async function runCronProcessing(lockId: string) {
         }
         perf.filmography_ms = filmographyTimer();
 
-        // 2.4b. Sincronizar elenco de produções (2 produções por hora)
-        // Direção: Produção → busca top 5 atores no TMDB → salva como Artist + ArtistProduction
+        // 2.4b. Sincronizar elenco pendente (net de segurança para importações que falharam no cast)
         const castTimer = makeTimer();
         try {
-            log.info('Syncing production cast...');
+            log.info('Syncing pending production cast (safety net)...');
             const castService = getProductionCastService();
-            const castResult = await castService.syncPendingProductionCasts(2);
+            const castResult = await castService.syncPendingProductionCasts(1);
             log.info(`Cast sync: ${castResult.processed} productions, ${castResult.totalSynced} actors synced`);
         } catch (error: unknown) {
             log.error('Production cast sync failed', { error: getErrorMessage(error) });
