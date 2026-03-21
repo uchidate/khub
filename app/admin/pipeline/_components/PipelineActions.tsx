@@ -70,7 +70,7 @@ export function PipelineActions({ id, type, action }: Props) {
             } else if (action === 'approve') {
                 url    = `/api/admin/productions?id=${id}`
                 method = 'PATCH'
-                body   = { needsCuration: false, isHidden: false, isAdultContent: false }
+                body   = { needsCuration: false, isAdultContent: false }
             } else if (action === 'flagAdult') {
                 url    = `/api/admin/productions?id=${id}`
                 method = 'PATCH'

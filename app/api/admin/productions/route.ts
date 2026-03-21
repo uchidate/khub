@@ -194,9 +194,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Produção não encontrada' }, { status: 404 })
     }
 
-    // Derive titlePt from titleKr when submitted empty
+    // Derive titlePt from titleKr only when titlePt/titleKr were explicitly included in the body
     const resolvedTitleKr = validated.titleKr ?? existing.titleKr
-    const resolvedTitlePt = (validated.titlePt?.trim() || resolvedTitleKr || existing.titlePt).trim()
+    const resolvedTitlePt = (validated.titlePt !== undefined || validated.titleKr !== undefined)
+      ? (validated.titlePt?.trim() || resolvedTitleKr || existing.titlePt).trim()
+      : existing.titlePt
 
     // Guard: impedir restauração acidental de produção com takedown ativo
     if (validated.isHidden === false) {
