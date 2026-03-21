@@ -713,8 +713,9 @@ export default async function PipelinePage({ searchParams }: Props) {
                 synopsis: null,
                 flaggedAsNonKorean: false,
                 needsCuration: false,
-                // exclui: adulto 18+ (translationStatus='skipped') e "sem sinopse disponível"
                 translationStatus: { not: 'skipped' },
+                // OR explícito para excluir adulto=true mas incluir null/false (campo nullable)
+                OR: [{ isAdultContent: null }, { isAdultContent: false }],
             },
             orderBy: { voteAverage: 'desc' },
             take: TAKE,
@@ -726,15 +727,30 @@ export default async function PipelinePage({ searchParams }: Props) {
                 flaggedAsNonKorean: false,
                 needsCuration: false,
                 translationStatus: { not: 'skipped' },
+                OR: [{ isAdultContent: null }, { isAdultContent: false }],
             },
         }),
         prisma.production.findMany({
-            where: { synopsis: { not: null }, needsCuration: false, flaggedAsNonKorean: false, translationStatus: 'pending' },
+            where: {
+                synopsis: { not: null },
+                needsCuration: false,
+                flaggedAsNonKorean: false,
+                translationStatus: 'pending',
+                OR: [{ isAdultContent: null }, { isAdultContent: false }],
+            },
             orderBy: { createdAt: 'desc' },
             take: TAKE,
             select: { id: true, titlePt: true, imageUrl: true, type: true, year: true, createdAt: true },
         }),
-        prisma.production.count({ where: { synopsis: { not: null }, needsCuration: false, flaggedAsNonKorean: false, translationStatus: 'pending' } }),
+        prisma.production.count({
+            where: {
+                synopsis: { not: null },
+                needsCuration: false,
+                flaggedAsNonKorean: false,
+                translationStatus: 'pending',
+                OR: [{ isAdultContent: null }, { isAdultContent: false }],
+            },
+        }),
         prisma.production.findMany({
             where: { synopsis: { not: null }, isHidden: false, translationStatus: 'completed' },
             orderBy: { updatedAt: 'desc' },
