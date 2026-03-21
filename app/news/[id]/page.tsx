@@ -60,7 +60,7 @@ const getNews = cache(async (id: string) => {
                 }
             }
         }
-    })
+    }).catch(() => null)
 })
 
 interface NewsDetailPageProps {
@@ -150,9 +150,12 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
     const artistIds = news.artists.map(a => a.artist.id)
 
     // Buscar notícias relacionadas (mesmos artistas ou mesmas tags)
+    // Wrapped em try/catch: é conteúdo secundário, não deve derrubar a página se falhar
     const relatedNews = await prisma.news.findMany({
         where: {
             id: { not: params.id },
+            status: 'published',
+            isHidden: false,
             OR: [
                 // Mesmos artistas
                 artistIds.length > 0 ? {
@@ -179,7 +182,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
             publishedAt: true,
             tags: true
         }
-    })
+    }).catch(() => [])
 
     const mainContent = news.contentMd ?? news.originalContent ?? ''
 
