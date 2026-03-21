@@ -13,6 +13,7 @@ const BASE_URL = SITE_URL
 export const revalidate = 3600
 
 export async function generateStaticParams() {
+  if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
   const posts = await prisma.blogPost.findMany({
     where: { status: 'PUBLISHED' },
     select: { slug: true },
