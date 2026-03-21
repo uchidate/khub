@@ -17,12 +17,16 @@ const TMDB_IMG_W500 = 'https://image.tmdb.org/t/p/w500'
 const TMDB_IMG_ORIG = 'https://image.tmdb.org/t/p/original'
 const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
 
-async function fetchTmdb(path: string): Promise<Record<string, unknown> | null> {
+async function fetchTmdb(path: string): Promise<{ data: Record<string, unknown> | null; status: number }> {
     const sep = path.includes('?') ? '&' : '?'
     const url = `${TMDB_BASE}${path}${sep}api_key=${TMDB_API_KEY}`
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
-    if (!res.ok) return null
-    return res.json()
+    try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+        if (!res.ok) return { data: null, status: res.status }
+        return { data: await res.json(), status: res.status }
+    } catch {
+        return { data: null, status: 0 }
+    }
 }
 
 function mapType(type: string): string {
@@ -48,16 +52,25 @@ export async function GET(req: NextRequest) {
     const endpoint = tmdbType === 'movie' ? 'movie' : 'tv'
     const isMovie = tmdbType === 'movie'
 
-    const [pt, en, videos] = await Promise.all([
+    const [ptRes, enRes, videosRes] = await Promise.all([
         fetchTmdb(`/${endpoint}/${production.tmdbId}?language=pt-BR`),
         fetchTmdb(`/${endpoint}/${production.tmdbId}?language=en-US`),
         fetchTmdb(`/${endpoint}/${production.tmdbId}/videos?language=en-US`),
     ])
 
-    if (!pt && !en) {
-        return NextResponse.json({ error: 'Falha ao buscar dados do TMDB' }, { status: 502 })
+    if (!ptRes.data && !enRes.data) {
+        const is404 = ptRes.status === 404 || enRes.status === 404
+        const msg = is404
+            ? `tmdbId ${production.tmdbId} não encontrado no TMDB (${tmdbType}). Verifique se o ID está correto.`
+            : ptRes.status === 0
+            ? 'Timeout ao conectar ao TMDB. Tente novamente.'
+            : 'Falha ao buscar dados do TMDB.'
+        return NextResponse.json({ error: msg }, { status: is404 ? 404 : 502 })
     }
 
+    const pt = ptRes.data
+    const en = enRes.data
+    const videos = videosRes.data
     const base = pt ?? en ?? {}
 
     // Títulos: pt-BR não-coreano → en não-coreano → pt-BR coreano → en coreano
