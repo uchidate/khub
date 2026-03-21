@@ -29,6 +29,7 @@ const getAgency = cache(async (id: string) =>
         where: { id },
         include: {
             artists: {
+                where: { isHidden: false, flaggedAsNonKorean: false },
                 select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
                 orderBy: { trendingScore: 'desc' },
             },
@@ -37,7 +38,7 @@ const getAgency = cache(async (id: string) =>
                 orderBy: { trendingScore: 'desc' },
             },
         },
-    })
+    }).catch(() => null)
 )
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {

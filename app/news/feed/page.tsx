@@ -6,6 +6,8 @@ import { PageTransition } from '@/components/features/PageTransition'
 import { Heart, Calendar, User, Rss, Newspaper, ArrowLeft, Sparkles } from 'lucide-react'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
     title: 'Feed Personalizado | HallyuHub',
     description: 'Notícias dos seus artistas favoritos em um único lugar.',
@@ -25,7 +27,7 @@ export default async function NewsFeedPage() {
                 artist: { select: { id: true, nameRomanized: true, primaryImageUrl: true } },
             },
             orderBy: { createdAt: 'desc' },
-        })
+        }).catch(() => [])
 
         favoritesCount = favoriteArtists.length
         const artistIds = favoriteArtists.map(f => f.artist!.id).filter(Boolean)
@@ -35,6 +37,8 @@ export default async function NewsFeedPage() {
                 where: {
                     artists: { some: { artistId: { in: artistIds } } },
                     translationStatus: 'completed',
+                    status: 'published',
+                    isHidden: false,
                 },
                 orderBy: { publishedAt: 'desc' },
                 take: 30,
@@ -50,14 +54,14 @@ export default async function NewsFeedPage() {
                         take: 3,
                     },
                 },
-            })
+            }).catch(() => [])
         }
     }
 
     // Fallback: últimas notícias traduzidas
     const fallbackNews = personalizedNews.length === 0
         ? await prisma.news.findMany({
-            where: { translationStatus: 'completed' },
+            where: { translationStatus: 'completed', status: 'published', isHidden: false },
             orderBy: { publishedAt: 'desc' },
             take: 30,
             select: {
@@ -72,7 +76,7 @@ export default async function NewsFeedPage() {
                     take: 3,
                 },
             },
-        })
+        }).catch(() => [])
         : []
 
     const newsToShow = personalizedNews.length > 0 ? personalizedNews : fallbackNews

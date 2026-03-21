@@ -69,7 +69,7 @@ const getArtist = cache(async (id: string) => {
                 orderBy: { rank: 'asc' },
             },
         }
-    })
+    }).catch(() => null)
 })
 
 interface SocialPlatform {
@@ -169,27 +169,28 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
             select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
             orderBy: { publishedAt: 'desc' },
             take: 6,
-        }),
+        }).catch(() => []),
         prisma.instagramPost.findMany({
             where: { artistId: params.id },
             orderBy: { postedAt: 'desc' },
             take: 12,
             select: { id: true, imageUrl: true, caption: true, permalink: true, postedAt: true },
-        }),
-        prisma.news.count({ where: { artists: { some: { artistId: params.id } } } }),
-        getTranslation('artist', params.id, 'bio', 'pt-BR'),
-        getTranslations('production', productionIds, ['synopsis']),
+        }).catch(() => []),
+        prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: params.id } } } }).catch(() => 0),
+        getTranslation('artist', params.id, 'bio', 'pt-BR').catch(() => null),
+        getTranslations('production', productionIds, ['synopsis']).catch(() => new Map<string, Map<string, string>>()),
         activeGroupId
             ? prisma.artist.findMany({
                 where: {
                     id: { not: artist.id },
+                    isHidden: false,
                     flaggedAsNonKorean: false,
                     memberships: { some: { groupId: activeGroupId, isActive: true } },
                 },
                 take: 8,
                 select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
                 orderBy: { trendingScore: 'desc' },
-            })
+            }).catch(() => [])
             : Promise.resolve([]),
     ])
 
