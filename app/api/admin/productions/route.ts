@@ -278,6 +278,12 @@ export async function PATCH(request: NextRequest) {
     // Invalidar ISR da página pública para refletir edições imediatamente
     revalidatePath(`/productions/${productionId}`)
 
+    // Quando visibilidade muda, revalidar todas as páginas de produções
+    // para remover imediatamente do "Você também pode gostar" de outras páginas
+    if (validated.isHidden !== undefined && validated.isHidden !== existing.isHidden) {
+      revalidatePath('/productions', 'layout')
+    }
+
     return NextResponse.json(production)
   } catch (error) {
     if (error instanceof z.ZodError) {
