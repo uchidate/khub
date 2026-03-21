@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import {
-  RefreshCw, Play, CheckCircle2, Activity, Calendar,
+  RefreshCw, CheckCircle2, Activity,
   Clock, Newspaper, Users, Film, Loader2, ChevronRight,
   Zap,
 } from 'lucide-react'
@@ -62,7 +62,7 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
 
   // Map job to UTC hours it runs
   function getRunHours(schedule: string): number[] {
-    const [minPart, hourPart] = schedule.split(' ')
+    const [_minPart, hourPart] = schedule.split(' ')
     if (hourPart.startsWith('*/')) {
       const interval = parseInt(hourPart.slice(2))
       return hours.filter(h => h % interval === 0)
