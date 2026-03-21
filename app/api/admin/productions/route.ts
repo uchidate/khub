@@ -37,6 +37,9 @@ const productionSchema = z.object({
   productionStatus: z.string().optional().nullable(),
   network: z.string().optional().nullable(),
   isHidden: z.boolean().optional(),
+  needsCuration: z.boolean().optional(),
+  flaggedAsNonKorean: z.boolean().optional(),
+  isAdultContent: z.boolean().optional().nullable(),
 })
 
 /**

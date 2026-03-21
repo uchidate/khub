@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Eye, Languages, Sparkles, Globe, EyeOff, AlertCircle, RotateCcw } from 'lucide-react'
+import { Loader2, Eye, Languages, Sparkles, Globe, EyeOff, AlertCircle, RotateCcw, CheckCircle2, ShieldAlert, Flag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type ActionType = 'publish' | 'translate' | 'enrich' | 'show' | 'hide'
+type ActionType = 'publish' | 'translate' | 'enrich' | 'show' | 'hide' | 'approve' | 'flagAdult' | 'flagNonKorean'
 type EntityType = 'news' | 'artist' | 'production'
 
 interface Props {
@@ -22,8 +22,11 @@ const ACTION_CONFIG: Record<ActionType, {
     publish:   { label: 'Publicar',        loadLabel: 'Publicando...',   icon: Globe,     cls: 'text-zinc-400 hover:text-white hover:bg-zinc-700/60' },
     translate: { label: 'Traduzir IA',     loadLabel: 'Traduzindo...',   icon: Languages, cls: 'text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-500/10' },
     enrich:    { label: 'Enriquecer IA',   loadLabel: 'Gerando...',      icon: Sparkles,  cls: 'text-blue-400/80 hover:text-blue-300 hover:bg-blue-500/10' },
-    show:      { label: 'Tornar visível',  loadLabel: 'Salvando...',     icon: Eye,       cls: 'text-zinc-400 hover:text-white hover:bg-zinc-700/60' },
-    hide:      { label: 'Ocultar',         loadLabel: 'Ocultando...',    icon: EyeOff,    cls: 'text-red-400/80 hover:text-red-300 hover:bg-red-500/10' },
+    show:          { label: 'Tornar visível',  loadLabel: 'Salvando...',     icon: Eye,          cls: 'text-zinc-400 hover:text-white hover:bg-zinc-700/60' },
+    hide:          { label: 'Ocultar',         loadLabel: 'Ocultando...',    icon: EyeOff,       cls: 'text-red-400/80 hover:text-red-300 hover:bg-red-500/10' },
+    approve:       { label: 'Aprovar',          loadLabel: 'Aprovando...',    icon: CheckCircle2, cls: 'text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10' },
+    flagAdult:     { label: 'Adulto 18+',       loadLabel: 'Marcando...',     icon: ShieldAlert,  cls: 'text-red-400/80 hover:text-red-300 hover:bg-red-500/10' },
+    flagNonKorean: { label: 'Não coreano',      loadLabel: 'Marcando...',     icon: Flag,         cls: 'text-orange-400/80 hover:text-orange-300 hover:bg-orange-500/10' },
 }
 
 export function PipelineActions({ id, type, action }: Props) {
@@ -64,6 +67,18 @@ export function PipelineActions({ id, type, action }: Props) {
                     url  = '/api/admin/enrichment'
                     body = { target: 'production_synopsis', entityId: id }
                 }
+            } else if (action === 'approve') {
+                url    = `/api/admin/productions?id=${id}`
+                method = 'PATCH'
+                body   = { needsCuration: false, isHidden: false, isAdultContent: false }
+            } else if (action === 'flagAdult') {
+                url    = `/api/admin/productions?id=${id}`
+                method = 'PATCH'
+                body   = { needsCuration: false, isAdultContent: true, isHidden: true, ageRating: '18' }
+            } else if (action === 'flagNonKorean') {
+                url    = `/api/admin/productions?id=${id}`
+                method = 'PATCH'
+                body   = { needsCuration: false, flaggedAsNonKorean: true }
             }
 
             if (!url) return

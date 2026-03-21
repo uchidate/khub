@@ -161,6 +161,8 @@ export async function POST(request: NextRequest) {
           productionStatus: prod.productionStatus,
           translationStatus: hasPtSynopsis ? 'completed' : 'pending',
           translatedAt:      hasPtSynopsis ? new Date() : null,
+          needsCuration:    true,
+          isHidden:         true,
         },
       })
 

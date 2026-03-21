@@ -319,6 +319,8 @@ async function runCronProcessing(lockId: string) {
                             productionStatus: production.productionStatus,
                             translationStatus: hasPtSynopsis ? 'completed' : 'pending',
                             translatedAt:      hasPtSynopsis ? new Date() : null,
+                            needsCuration:    true,
+                            isHidden:         true,
                         }
                     });
 

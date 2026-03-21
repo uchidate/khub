@@ -128,6 +128,8 @@ async function main() {
                 productionStatus: prod.productionStatus,
                 translationStatus: hasPtSynopsis ? 'completed' : 'pending',
                 translatedAt:      hasPtSynopsis ? new Date() : null,
+                needsCuration:    true,
+                isHidden:         true,
               },
             })
 

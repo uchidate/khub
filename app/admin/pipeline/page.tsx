@@ -684,16 +684,25 @@ export default async function PipelinePage({ searchParams }: Props) {
     const TAKE = 30
 
     const [
+        pendingCuration,    pendingCurationCount,
         withoutSynopsis,    withoutSynopsisCount,
         withoutTranslation, withoutTranslationProdCount,
         complete,           completeCount,
         hidden,             hiddenProdCount,
     ] = await Promise.all([
         prisma.production.findMany({
+            where: { needsCuration: true, flaggedAsNonKorean: false },
+            orderBy: { createdAt: 'desc' },
+            take: TAKE,
+            select: { id: true, titlePt: true, imageUrl: true, type: true, year: true, createdAt: true },
+        }),
+        prisma.production.count({ where: { needsCuration: true, flaggedAsNonKorean: false } }),
+        prisma.production.findMany({
             where: {
                 synopsis: null,
                 isHidden: false,
                 flaggedAsNonKorean: false,
+                needsCuration: false,
                 // excluir produções já marcadas como "sem sinopse disponível"
                 translationStatus: { not: 'skipped' },
             },
@@ -706,6 +715,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                 synopsis: null,
                 isHidden: false,
                 flaggedAsNonKorean: false,
+                needsCuration: false,
                 translationStatus: { not: 'skipped' },
             },
         }),
@@ -733,6 +743,7 @@ export default async function PipelinePage({ searchParams }: Props) {
     ])
 
     const healthStats = [
+        { label: 'curadoria',      value: pendingCurationCount,        color: 'text-orange-400',  href: '/admin/pipeline?tab=productions' },
         { label: 'sem sinopse',    value: withoutSynopsisCount,        color: 'text-zinc-300',    href: '/admin/pipeline?tab=productions' },
         { label: 'sem tradução',   value: withoutTranslationProdCount, color: 'text-yellow-400',  href: '/admin/pipeline?tab=productions' },
         { label: 'completas',      value: completeCount,               color: 'text-emerald-400', href: '/admin/pipeline?tab=productions' },
@@ -749,6 +760,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                     title="Como funciona o Pipeline de Produções"
                     description="Mostra o estado das produções (dramas, filmes, varieties) em relação a sinopse e tradução. O objetivo é garantir que todas as produções visíveis tenham sinopse em português."
                     steps={[
+                        { label: 'Aguard. curadoria', description: 'Novo import — revisar antes de publicar', color: 'orange' },
                         { label: 'Sem sinopse', description: 'Produção importada sem descrição', color: 'zinc' },
                         { label: 'Enriquecer IA', description: 'Gera sinopse automática via IA', color: 'purple' },
                         { label: 'Sem tradução PT', description: 'Sinopse existe mas só em inglês/coreano', color: 'yellow' },
@@ -763,6 +775,40 @@ export default async function PipelinePage({ searchParams }: Props) {
                 />
 
                 <div className="flex gap-3 overflow-x-auto pb-4">
+
+                    <PipelineColumn
+                        title="Aguard. curadoria"
+                        count={pendingCurationCount}
+                        displayedCount={pendingCuration.length}
+                        icon={ShieldCheck}
+                        color="yellow"
+                        emptyMsg="Nenhuma aguardando curadoria"
+                        allLink="/admin/productions"
+                    >
+                        {pendingCuration.map(p => (
+                            <PipelineCard
+                                key={p.id}
+                                title={p.titlePt}
+                                subtitle={[p.type, p.year?.toString()].filter(Boolean).join(' · ')}
+                                imageUrl={p.imageUrl}
+                                time={p.createdAt}
+                                href={`/admin/productions/${p.id}`}
+                                tag="curadoria"
+                                tagColor="pending"
+                                actions={
+                                    <div className="flex gap-1 flex-wrap">
+                                        <PipelineActions id={p.id} type="production" action="approve" />
+                                        <PipelineActions id={p.id} type="production" action="flagAdult" />
+                                        <PipelineActions id={p.id} type="production" action="flagNonKorean" />
+                                    </div>
+                                }
+                            />
+                        ))}
+                    </PipelineColumn>
+
+                    <div className="flex items-start self-start mt-10 flex-shrink-0">
+                        <ArrowRight size={16} className="text-zinc-700" />
+                    </div>
 
                     <PipelineColumn
                         title="Sem sinopse"
