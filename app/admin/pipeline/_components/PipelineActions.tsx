@@ -78,7 +78,7 @@ export function PipelineActions({ id, type, action }: Props) {
             } else if (action === 'flagAdult') {
                 url    = `/api/admin/productions?id=${id}`
                 method = 'PATCH'
-                body   = { needsCuration: false, isAdultContent: true, isHidden: true, ageRating: '18' }
+                body   = { needsCuration: false, isAdultContent: true, isHidden: true, ageRating: '18', translationStatus: 'skipped' }
             } else if (action === 'flagNonKorean') {
                 url    = `/api/admin/productions?id=${id}`
                 method = 'PATCH'
