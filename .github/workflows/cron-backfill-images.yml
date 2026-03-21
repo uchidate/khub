@@ -11,8 +11,12 @@ on:
       limit:
         description: 'Number of articles to process'
         required: false
-        default: '50'
+        default: '20'
         type: string
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   backfill-images:
