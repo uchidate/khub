@@ -151,15 +151,6 @@ export async function POST(request: NextRequest) {
     // Derive titlePt from titleKr when not provided
     const titlePt = (validated.titlePt?.trim() || validated.titleKr).trim()
 
-    // Check if titlePt already exists
-    const existing = await prisma.production.findFirst({
-      where: { titlePt },
-    })
-
-    if (existing) {
-      return NextResponse.json({ error: 'Título já cadastrado' }, { status: 400 })
-    }
-
     const production = await prisma.production.create({
       data: { ...validated, titlePt },
     })
@@ -206,16 +197,6 @@ export async function PATCH(request: NextRequest) {
     // Derive titlePt from titleKr when submitted empty
     const resolvedTitleKr = validated.titleKr ?? existing.titleKr
     const resolvedTitlePt = (validated.titlePt?.trim() || resolvedTitleKr || existing.titlePt).trim()
-
-    // If titlePt changed, check for duplicates (excluding current record)
-    if (resolvedTitlePt !== existing.titlePt) {
-      const titleExists = await prisma.production.findFirst({
-        where: { titlePt: resolvedTitlePt, NOT: { id: productionId } },
-      })
-      if (titleExists) {
-        return NextResponse.json({ error: 'Título já cadastrado' }, { status: 400 })
-      }
-    }
 
     // Guard: impedir restauração acidental de produção com takedown ativo
     if (validated.isHidden === false) {
