@@ -33,7 +33,7 @@ const productionSchema = z.object({
   episodeCount: z.number().int().optional().nullable(),
   seasonCount: z.number().int().optional().nullable(),
   episodeRuntime: z.number().int().optional().nullable(),
-  voteAverage: z.number().optional().nullable(),
+  voteAverage: z.coerce.number().optional().nullable(),
   productionStatus: z.string().optional().nullable(),
   network: z.string().optional().nullable(),
   isHidden: z.boolean().optional(),

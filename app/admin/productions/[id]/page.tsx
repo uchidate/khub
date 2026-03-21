@@ -209,10 +209,10 @@ export default function EditProductionPage() {
                     body[key] = null
                 }
             }
-            if (body.voteAverage !== undefined && body.voteAverage !== null && body.voteAverage !== '') {
-                body.voteAverage = parseFloat(String(body.voteAverage))
-            } else if (body.voteAverage === '') {
+            if (body.voteAverage === '' || Number.isNaN(body.voteAverage)) {
                 body.voteAverage = null
+            } else if (body.voteAverage !== undefined && body.voteAverage !== null) {
+                body.voteAverage = Number(body.voteAverage)
             }
             // Strip empty URL strings → null
             for (const key of ['imageUrl', 'backdropUrl', 'trailerUrl'] as const) {
@@ -762,7 +762,7 @@ export default function EditProductionPage() {
                                         min="0"
                                         max="10"
                                         value={form.voteAverage ?? ''}
-                                        onChange={e => set('voteAverage', e.target.value)}
+                                        onChange={e => set('voteAverage', e.target.value === '' ? null : parseFloat(e.target.value))}
                                         placeholder="8.5"
                                         className={inputCls}
                                     />
