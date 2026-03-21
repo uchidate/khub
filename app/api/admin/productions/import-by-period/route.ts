@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { getTMDBProductionDiscoveryService } from '@/lib/services/tmdb-production-discovery-service'
+import { getProductionCastService } from '@/lib/services/production-cast-service'
 import { getErrorMessage } from '@/lib/utils/error'
 import { z } from 'zod'
 
@@ -102,10 +103,11 @@ export async function POST(request: NextRequest) {
   const { items } = parsed.data
 
   const svc = getTMDBProductionDiscoveryService()
+  const castSvc = getProductionCastService()
   let created = 0
   let skipped = 0
   let errors = 0
-  const details: Array<{ tmdbId: number; status: 'created' | 'skipped' | 'error'; title?: string; reason?: string }> = []
+  const details: Array<{ tmdbId: number; status: 'created' | 'skipped' | 'error'; title?: string; reason?: string; castSynced?: number }> = []
 
   for (const item of items) {
     try {
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
       // Sinopse já em PT-BR → marcar como traduzida para não entrar na fila desnecessariamente
       const hasPtSynopsis = !!prod.synopsis && prod.synopsisSource === 'tmdb_pt'
 
-      await prisma.production.create({
+      const newProduction = await prisma.production.create({
         data: {
           titlePt:          prod.titlePt,
           titleKr:          prod.titleKr,
@@ -166,8 +168,15 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // Sync cast immediately
+      let castSynced = 0
+      try {
+        const castResult = await castSvc.syncProductionCast(newProduction.id)
+        castSynced = castResult.synced
+      } catch { /* non-blocking */ }
+
       created++
-      details.push({ tmdbId: item.tmdbId, status: 'created', title: prod.titlePt })
+      details.push({ tmdbId: item.tmdbId, status: 'created', title: prod.titlePt, castSynced })
     } catch (err) {
       const msg = getErrorMessage(err)
       // Unique constraint on titlePt

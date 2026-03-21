@@ -58,7 +58,7 @@ export function PipelineActions({ id, type, action }: Props) {
             } else if (action === 'translate') {
                 const entityType = type === 'artist' ? 'artist' : type === 'production' ? 'production' : 'news'
                 url  = '/api/admin/translations/single'
-                body = { entityType, entityId: id }
+                body = { entityType, id }
             } else if (action === 'enrich') {
                 if (type === 'artist') {
                     url  = `/api/admin/artists/${id}/generate-editorial`
