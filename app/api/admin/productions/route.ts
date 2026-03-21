@@ -14,6 +14,16 @@ const log = createLogger('ADMIN-PRODUCTIONS')
 export const dynamic = 'force-dynamic'
 
 
+// Sanitizes any JSON array: coerces items to string, drops empty/zero/garbage values
+const cleanStringArray = z.array(z.unknown())
+  .transform(arr => arr.map(v => String(v ?? '')).filter(s => s.trim() !== '' && s !== '0' && s !== 'null' && s !== 'undefined'))
+  .optional().default([])
+
+// Like cleanStringArray but also requires http(s) URL prefix
+const cleanUrlArray = z.array(z.unknown())
+  .transform(arr => arr.map(v => String(v ?? '')).filter(s => s.startsWith('http')))
+  .optional().default([])
+
 const productionSchema = z.object({
   titlePt: z.string().optional().nullable(),
   titleKr: z.string().min(1),
@@ -25,10 +35,10 @@ const productionSchema = z.object({
   synopsisSource: z.enum(['tmdb_pt', 'tmdb_en', 'ai', 'manual']).optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
   backdropUrl: z.string().url().optional().nullable(),
-  galleryUrls: z.array(z.string()).optional().default([]),
-  streamingPlatforms: z.array(z.string()).optional().default([]),
-  sourceUrls: z.array(z.string()).optional().default([]),
-  tags: z.array(z.string()).optional().default([]),
+  galleryUrls: cleanUrlArray,
+  streamingPlatforms: cleanStringArray,
+  sourceUrls: cleanUrlArray,
+  tags: cleanStringArray,
   trailerUrl: z.string().url().optional().nullable(),
   ageRating: z.enum(['L', '10', '12', '14', '16', '18']).optional().nullable(),
   runtime: z.number().int().optional().nullable(),
