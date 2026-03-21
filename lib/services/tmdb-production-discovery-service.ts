@@ -15,6 +15,21 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE    = 'https://image.tmdb.org/t/p/w500'   // poster
 const TMDB_BACKDROP_BASE = 'https://image.tmdb.org/t/p/w1280'  // backdrop/gallery
 
+// Matches any Korean Hangul character
+const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
+
+/**
+ * Resolve the best non-Korean text between two candidates.
+ * Priority: ptValue (non-Korean) → enValue (non-Korean) → ptValue → enValue → fallback
+ */
+function resolveBestText(ptValue: string | null | undefined, enValue: string | null | undefined, fallback = ''): string {
+  const pt = ptValue || null
+  const en = enValue || null
+  if (pt && !KOREAN_REGEX.test(pt)) return pt
+  if (en && !KOREAN_REGEX.test(en)) return en
+  return pt || en || fallback
+}
+
 interface TMDBProduction {
   id: number
   title?: string // movies
@@ -456,18 +471,36 @@ export class TMDBProductionDiscoveryService {
    * Sets synopsisSource: 'tmdb_pt' | 'tmdb_en' based on what was found.
    */
   async getFullProductionData(tmdbId: number, type: 'tv' | 'movie'): Promise<DiscoveredProduction | null> {
-    const details = type === 'tv'
-      ? await this.getTVDetails(tmdbId, 'pt-BR')
-      : await this.getMovieDetails(tmdbId, 'pt-BR')
+    // Fetch both languages in parallel — Korean productions rarely have pt-BR translations,
+    // so we need en-US as fallback for title, tagline and synopsis.
+    const [ptDetails, enDetails] = await Promise.all([
+      type === 'tv'
+        ? this.getTVDetails(tmdbId, 'pt-BR')
+        : this.getMovieDetails(tmdbId, 'pt-BR'),
+      type === 'tv'
+        ? this.getTVDetails(tmdbId, 'en-US')
+        : this.getMovieDetails(tmdbId, 'en-US'),
+    ])
 
-    if (!details) return null
+    if (!ptDetails && !enDetails) return null
+    const details = ptDetails ?? enDetails!
 
-    // TMDB does not fall back synopsis to en-US — fetch separately when empty
+    // Resolve title: pt-BR non-Korean → en-US non-Korean → pt-BR → en-US
+    const ptTitle = type === 'tv' ? ptDetails?.name : ptDetails?.title
+    const enTitle = type === 'tv' ? enDetails?.name : enDetails?.title
+    const resolvedTitle = resolveBestText(ptTitle, enTitle, 'Unknown Title')
+    if (type === 'tv') {
+      details.name = resolvedTitle
+    } else {
+      details.title = resolvedTitle
+    }
+
+    // Resolve tagline: pt-BR → en-US (empty string is falsy, so fallback works)
+    details.tagline = details.tagline || enDetails?.tagline || ''
+
+    // Resolve synopsis: pt-BR → en-US
     let synopsisSource: 'tmdb_pt' | 'tmdb_en' = 'tmdb_pt'
     if (!details.overview) {
-      const enDetails = type === 'tv'
-        ? await this.getTVDetails(tmdbId, 'en-US')
-        : await this.getMovieDetails(tmdbId, 'en-US')
       if (enDetails?.overview) {
         details.overview = enDetails.overview
         synopsisSource = 'tmdb_en'
