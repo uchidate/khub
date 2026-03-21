@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return { title: 'Notícias', description: 'Notícias sobre K-Pop, K-Drama e cultura coreana. Fique por dentro de tudo.' }
     }
-    const total = await prisma.news.count().catch(() => 0)
+    const total = await prisma.news.count({ where: { status: 'published', isHidden: false } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}notícias sobre K-Pop, K-Drama e cultura coreana. Fique por dentro de tudo.`
     return {
         title: 'Notícias',

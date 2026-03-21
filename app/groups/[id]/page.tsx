@@ -42,6 +42,7 @@ const getGroup = cache(async (id: string) => {
         include: {
             agency: true,
             members: {
+                where: { artist: { isHidden: false } },
                 include: {
                     artist: {
                         select: {
@@ -56,7 +57,7 @@ const getGroup = cache(async (id: string) => {
                 orderBy: [{ isActive: 'desc' }, { position: 'asc' }, { joinDate: 'asc' }],
             },
         },
-    })
+    }).catch(() => null)
 })
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -120,11 +121,12 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
     // Step 2: queries secundárias todas em paralelo
     const [bioPt, themeColorFetched, relatedGroups, relatedNews, recentAlbums] = await Promise.all([
-        getTranslation('group', params.id, 'bio', 'pt-BR'),
+        getTranslation('group', params.id, 'bio', 'pt-BR').catch(() => null),
         !officialColorRaw && websiteUrl ? fetchGroupThemeColor(websiteUrl) : Promise.resolve(null),
         prisma.musicalGroup.findMany({
             where: {
                 id: { not: group.id },
+                isHidden: false,
                 ...(group.agencyId
                     ? { agencyId: group.agencyId }
                     : debutYear
@@ -135,14 +137,14 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
             take: 6,
             orderBy: { trendingScore: 'desc' },
             select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
-        }),
+        }).catch(() => []),
         memberArtistIds.length > 0
             ? prisma.news.findMany({
                 where: { isHidden: false, status: 'published', artists: { some: { artistId: { in: memberArtistIds } } } },
                 take: 6,
                 orderBy: { publishedAt: 'desc' },
                 select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true, contentMd: true },
-            })
+            }).catch(() => [])
             : Promise.resolve([]),
         memberArtistIds.length > 0
             ? prisma.album.findMany({
@@ -150,7 +152,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                 take: 6,
                 orderBy: { releaseDate: 'desc' },
                 select: { id: true, title: true, type: true, coverUrl: true, releaseDate: true, spotifyUrl: true, artist: { select: { nameRomanized: true } } },
-            })
+            }).catch(() => [])
             : Promise.resolve([]),
     ])
 

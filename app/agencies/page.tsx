@@ -66,6 +66,7 @@ async function AgenciesGrid() {
     const agencies = await prisma.agency.findMany({
         include: {
             artists: {
+                where: { isHidden: false, flaggedAsNonKorean: false },
                 select: { id: true, nameRomanized: true, primaryImageUrl: true },
                 take: 5,
                 orderBy: { trendingScore: 'desc' },
