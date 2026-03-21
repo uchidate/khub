@@ -26,12 +26,16 @@ interface Production {
     titleKr: string | null
     type: string
     year: number | null
+    releaseDate: string | null
     tagline: string | null
     synopsis: string | null
     synopsisSource: 'tmdb_pt' | 'tmdb_en' | 'ai' | 'manual' | null
     imageUrl: string | null
     backdropUrl: string | null
+    galleryUrls: string[]
     trailerUrl: string | null
+    streamingPlatforms: string[]
+    sourceUrls: string[]
     tags: string[]
     ageRating: string | null
     tmdbId: string | null
@@ -43,8 +47,15 @@ interface Production {
     voteAverage: number | null
     productionStatus: string | null
     network: string | null
+    editorialReview: string | null
+    editorialRating: number | null
+    whyWatch: string | null
     isHidden: boolean
     isTakenDown: boolean
+    needsCuration: boolean
+    flaggedAsNonKorean: boolean
+    isAdultContent: boolean | null
+    adultContentType: string | null
 }
 
 interface TmdbPreview {
@@ -214,8 +225,13 @@ export default function EditProductionPage() {
             } else if (body.voteAverage !== undefined && body.voteAverage !== null) {
                 body.voteAverage = Number(body.voteAverage)
             }
+            if (body.editorialRating === '' || Number.isNaN(body.editorialRating)) {
+                body.editorialRating = null
+            } else if (body.editorialRating !== undefined && body.editorialRating !== null) {
+                body.editorialRating = Number(body.editorialRating)
+            }
             // Strip empty URL strings → null
-            for (const key of ['imageUrl', 'backdropUrl', 'trailerUrl'] as const) {
+            for (const key of ['imageUrl', 'backdropUrl', 'trailerUrl', 'releaseDate'] as const) {
                 if (body[key] === '') body[key] = null
             }
             const res = await fetch(`/api/admin/productions?id=${id}`, {
@@ -443,8 +459,8 @@ export default function EditProductionPage() {
                             </div>
                         </div>
 
-                        {/* Tipo + Ano + Faixa etária */}
-                        <div className="grid grid-cols-3 gap-4">
+                        {/* Tipo + Ano + Data de estreia + Faixa etária */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
                                 <label className={labelCls}>Tipo *</label>
                                 <input
@@ -466,6 +482,15 @@ export default function EditProductionPage() {
                                     value={form.year ?? ''}
                                     onChange={e => set('year', e.target.value)}
                                     placeholder="2024"
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Data de Estreia</label>
+                                <input
+                                    type="date"
+                                    value={form.releaseDate ? form.releaseDate.slice(0, 10) : ''}
+                                    onChange={e => set('releaseDate', e.target.value ? new Date(e.target.value).toISOString() : null)}
                                     className={inputCls}
                                 />
                             </div>
@@ -839,12 +864,65 @@ export default function EditProductionPage() {
                             />
                         </div>
 
-                        {/* TMDB ID (readonly info) */}
-                        {production.tmdbId && (
-                            <div className="text-xs text-zinc-600 font-mono">
-                                TMDB ID: {production.tmdbId} · tipo: {production.tmdbType ?? 'não definido'}
+                        {/* TMDB ID + Tipo */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelCls}>TMDB ID</label>
+                                <input
+                                    type="text"
+                                    value={form.tmdbId ?? ''}
+                                    onChange={e => set('tmdbId', e.target.value || null)}
+                                    placeholder="Ex: 12345"
+                                    className={inputCls + ' font-mono'}
+                                />
                             </div>
-                        )}
+                            <div>
+                                <label className={labelCls}>TMDB Tipo</label>
+                                <select
+                                    value={form.tmdbType ?? ''}
+                                    onChange={e => set('tmdbType', e.target.value || null)}
+                                    className={inputCls}
+                                >
+                                    <option value="">Não definido</option>
+                                    <option value="movie">Filme (movie)</option>
+                                    <option value="tv">Série (tv)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Plataformas, fontes e galeria */}
+                        <div className="space-y-3">
+                            <div>
+                                <label className={labelCls}>Plataformas de Streaming (separadas por vírgula)</label>
+                                <input
+                                    type="text"
+                                    value={(form.streamingPlatforms ?? []).join(', ')}
+                                    onChange={e => set('streamingPlatforms', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
+                                    placeholder="Netflix, Disney+, Prime..."
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelCls}>URLs de Fonte (uma por linha)</label>
+                                <textarea
+                                    value={(form.sourceUrls ?? []).join('\n')}
+                                    onChange={e => set('sourceUrls', e.target.value.split('\n').map(t => t.trim()).filter(Boolean))}
+                                    placeholder="https://..."
+                                    rows={3}
+                                    className={inputCls + ' resize-none font-mono text-xs'}
+                                />
+                            </div>
+                            <div>
+                                <label className={labelCls}>URLs da Galeria (uma por linha)</label>
+                                <textarea
+                                    value={(form.galleryUrls ?? []).join('\n')}
+                                    onChange={e => set('galleryUrls', e.target.value.split('\n').map(t => t.trim()).filter(Boolean))}
+                                    placeholder="https://image.tmdb.org/..."
+                                    rows={3}
+                                    className={inputCls + ' resize-none font-mono text-xs'}
+                                />
+                            </div>
+                        </div>
 
                         {/* Visibilidade */}
                         <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/50">
@@ -867,6 +945,65 @@ export default function EditProductionPage() {
                                     </p>
                                 </div>
                             </label>
+                        </div>
+
+                        {/* Flags e Curadoria */}
+                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/30 space-y-3">
+                            <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Flags e Curadoria</p>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div className="relative flex-shrink-0">
+                                    <input type="checkbox" className="sr-only peer"
+                                        checked={form.needsCuration ?? false}
+                                        onChange={e => set('needsCuration' as keyof Production, e.target.checked)} />
+                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-orange-500 rounded-full transition-colors" />
+                                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-zinc-200">Aguardando curadoria</p>
+                                    <p className="text-xs text-zinc-500">Aparece na fila de curadoria do pipeline</p>
+                                </div>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div className="relative flex-shrink-0">
+                                    <input type="checkbox" className="sr-only peer"
+                                        checked={form.flaggedAsNonKorean ?? false}
+                                        onChange={e => set('flaggedAsNonKorean' as keyof Production, e.target.checked)} />
+                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-orange-500 rounded-full transition-colors" />
+                                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-zinc-200">Não coreana</p>
+                                    <p className="text-xs text-zinc-500">Excluída das listas e pipeline de produções coreanas</p>
+                                </div>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div className="relative flex-shrink-0">
+                                    <input type="checkbox" className="sr-only peer"
+                                        checked={form.isAdultContent ?? false}
+                                        onChange={e => set('isAdultContent' as keyof Production, e.target.checked)} />
+                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
+                                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-zinc-200">Conteúdo adulto</p>
+                                    <p className="text-xs text-zinc-500">Marcado como 18+ ou impróprio para menores</p>
+                                </div>
+                            </label>
+                            {form.isAdultContent && (
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Tipo de conteúdo adulto</label>
+                                    <select
+                                        value={form.adultContentType ?? ''}
+                                        onChange={e => set('adultContentType' as keyof Production, e.target.value || null)}
+                                        className={inputCls}
+                                    >
+                                        <option value="">Não especificado</option>
+                                        <option value="sexual">Sexual</option>
+                                        <option value="violent">Violento</option>
+                                        <option value="other">Outro</option>
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
                         {/* Conteúdo Editorial (IA) */}
@@ -899,6 +1036,18 @@ export default function EditProductionPage() {
                                         const data = await res.json()
                                         if (!res.ok) { toast.error(data.error ?? 'Erro ao gerar review'); return }
                                         toast.success(`Review gerada! Custo: $${data.totalCostUsd.toFixed(4)}`)
+                                        // Reload editorial fields from DB
+                                        fetch(`/api/admin/productions/by-id?id=${id}`)
+                                            .then(r => r.json())
+                                            .then(updated => {
+                                                setForm(prev => ({
+                                                    ...prev,
+                                                    editorialReview: updated.editorialReview,
+                                                    editorialRating: updated.editorialRating,
+                                                    whyWatch: updated.whyWatch,
+                                                }))
+                                            })
+                                            .catch(() => {})
                                     } catch {
                                         toast.error('Erro ao gerar review')
                                     } finally {
@@ -912,6 +1061,42 @@ export default function EditProductionPage() {
                                     : <><Sparkles className="w-3.5 h-3.5" /> Gerar Review</>
                                 }
                             </button>
+                            {/* Campos editoriais editáveis */}
+                            <div className="mt-4 space-y-3">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Nossa Nota (0–10)</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        value={form.editorialRating ?? ''}
+                                        onChange={e => set('editorialRating' as keyof Production, e.target.value === '' ? null : parseFloat(e.target.value))}
+                                        placeholder="8.5"
+                                        className={inputCls + ' w-32'}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Por que assistir?</label>
+                                    <textarea
+                                        value={form.whyWatch ?? ''}
+                                        onChange={e => set('whyWatch' as keyof Production, e.target.value || null)}
+                                        placeholder="Parágrafo curto sobre por que vale a pena..."
+                                        rows={3}
+                                        className={inputCls + ' resize-none'}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Review Editorial</label>
+                                    <textarea
+                                        value={form.editorialReview ?? ''}
+                                        onChange={e => set('editorialReview' as keyof Production, e.target.value || null)}
+                                        placeholder="Review completa 350-450 palavras..."
+                                        rows={8}
+                                        className={inputCls + ' resize-y'}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Actions */}
