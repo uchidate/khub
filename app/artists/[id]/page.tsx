@@ -26,6 +26,18 @@ const BASE_URL = SITE_URL
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
 
+// Pré-gera os top artistas no build → first-paint rápido, melhor SEO e Core Web Vitals
+export async function generateStaticParams() {
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
+    const artists = await prisma.artist.findMany({
+        where: { isHidden: false, flaggedAsNonKorean: false },
+        select: { id: true },
+        orderBy: { trendingScore: 'desc' },
+        take: 200,
+    })
+    return artists.map(a => ({ id: a.id }))
+}
+
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
 const getArtist = cache(async (id: string) => {
     return prisma.artist.findUnique({

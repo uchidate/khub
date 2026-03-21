@@ -13,6 +13,15 @@ export const revalidate = 3600
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
+export async function generateStaticParams() {
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
+    const agencies = await prisma.agency.findMany({
+        select: { id: true },
+        orderBy: { name: 'asc' },
+    })
+    return agencies.map(a => ({ id: a.id }))
+}
+
 const getAgency = cache(async (id: string) =>
     prisma.agency.findUnique({
         where: { id },
