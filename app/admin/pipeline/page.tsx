@@ -700,7 +700,6 @@ export default async function PipelinePage({ searchParams }: Props) {
         prisma.production.findMany({
             where: {
                 synopsis: null,
-                isHidden: false,
                 flaggedAsNonKorean: false,
                 needsCuration: false,
                 // excluir produções já marcadas como "sem sinopse disponível"
@@ -713,19 +712,18 @@ export default async function PipelinePage({ searchParams }: Props) {
         prisma.production.count({
             where: {
                 synopsis: null,
-                isHidden: false,
                 flaggedAsNonKorean: false,
                 needsCuration: false,
                 translationStatus: { not: 'skipped' },
             },
         }),
         prisma.production.findMany({
-            where: { synopsis: { not: null }, isHidden: false, translationStatus: 'pending' },
+            where: { synopsis: { not: null }, needsCuration: false, translationStatus: 'pending' },
             orderBy: { createdAt: 'desc' },
             take: TAKE,
             select: { id: true, titlePt: true, imageUrl: true, type: true, year: true, createdAt: true },
         }),
-        prisma.production.count({ where: { synopsis: { not: null }, isHidden: false, translationStatus: 'pending' } }),
+        prisma.production.count({ where: { synopsis: { not: null }, needsCuration: false, translationStatus: 'pending' } }),
         prisma.production.findMany({
             where: { synopsis: { not: null }, isHidden: false, translationStatus: 'completed' },
             orderBy: { updatedAt: 'desc' },
