@@ -1,10 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { RefreshCw, Clock, CheckCircle2, XCircle, Activity, Terminal, Calendar } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import {
+  RefreshCw, Play, CheckCircle2, Activity, Calendar,
+  Clock, Newspaper, Users, Film, Loader2, ChevronRight,
+  Zap,
+} from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
-interface CronStats {
+interface CronJob {
+  id: string
+  name: string
+  emoji: string
+  schedule: string
+  frequencyLabel: string
+  description: string
+  endpoint: string
+  defaultLimit: number | null
+  color: string
+  nextRuns: string[]
+}
+
+interface Stats {
   totalNews: number
   newsLast24h: number
   newsLast7days: number
@@ -13,281 +30,266 @@ interface CronStats {
   totalProductions: number
   productionsLast24h: number
   averageNewsPerDay: string
-  lastNewsCreated: string | null
-}
-
-interface CronConfig {
-  environment: string
-  ollamaModel: string
-  ollamaBaseUrl: string
-  newsPerRun: number
-  expectedFrequency: string
-}
-
-interface CronJob {
-  name: string
-  schedule: string
-  description: string
-  frequency: string
-  script: string
-  nextRun: string
 }
 
 interface RecentNews {
   id: string
   title: string
   createdAt: string
+  source?: string | null
 }
 
 interface CronData {
-  config: CronConfig
-  cronJobs: CronJob[]
-  stats: CronStats
+  jobs: CronJob[]
+  stats: Stats
   recentNews: RecentNews[]
-  logs: string[]
   timestamp: string
-  note: string
+}
+
+type TriggerState = Record<string, 'idle' | 'running' | 'ok' | 'error'>
+
+const COLOR_MAP: Record<string, { badge: string; dot: string; ring: string }> = {
+  blue:   { badge: 'bg-blue-500/15 text-blue-300 border-blue-500/20',   dot: 'bg-blue-400',   ring: 'ring-blue-500/30' },
+  purple: { badge: 'bg-purple-500/15 text-purple-300 border-purple-500/20', dot: 'bg-purple-400', ring: 'ring-purple-500/30' },
+  amber:  { badge: 'bg-amber-500/15 text-amber-300 border-amber-500/20',  dot: 'bg-amber-400',  ring: 'ring-amber-500/30' },
+  green:  { badge: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20', dot: 'bg-emerald-400', ring: 'ring-emerald-500/30' },
+  pink:   { badge: 'bg-pink-500/15 text-pink-300 border-pink-500/20',    dot: 'bg-pink-400',   ring: 'ring-pink-500/30' },
+  orange: { badge: 'bg-orange-500/15 text-orange-300 border-orange-500/20', dot: 'bg-orange-400', ring: 'ring-orange-500/30' },
+}
+
+function TimelineBar({ jobs }: { jobs: CronJob[] }) {
+  const hours = Array.from({ length: 24 }, (_, i) => i)
+
+  // Map job to UTC hours it runs
+  function getRunHours(schedule: string): number[] {
+    const [minPart, hourPart] = schedule.split(' ')
+    if (hourPart.startsWith('*/')) {
+      const interval = parseInt(hourPart.slice(2))
+      return hours.filter(h => h % interval === 0)
+    }
+    if (!isNaN(parseInt(hourPart))) return [parseInt(hourPart)]
+    return []
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Hour labels */}
+      <div className="flex text-[9px] text-zinc-600 font-mono select-none">
+        {hours.map(h => (
+          <div key={h} className="flex-1 text-center">{h.toString().padStart(2,'0')}</div>
+        ))}
+      </div>
+      {/* One row per job */}
+      {jobs.map(job => {
+        const runHours = getRunHours(job.schedule)
+        const colors = COLOR_MAP[job.color] ?? COLOR_MAP.blue
+        return (
+          <div key={job.id} className="flex items-center gap-2">
+            <span className="w-28 text-[10px] text-zinc-400 truncate shrink-0 text-right">{job.emoji} {job.name.split(' ').slice(-1)[0]}</span>
+            <div className="flex flex-1">
+              {hours.map(h => {
+                const active = runHours.includes(h)
+                return (
+                  <div
+                    key={h}
+                    className={`flex-1 h-4 mx-px rounded-sm ${active ? `${colors.dot} opacity-80` : 'bg-zinc-800/50'}`}
+                    title={active ? `${job.name} às ${h.toString().padStart(2,'0')}:00 UTC` : undefined}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 export default function AdminCronPage() {
   const [data, setData] = useState<CronData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [triggerState, setTriggerState] = useState<TriggerState>({})
 
-  const fetchCronData = async () => {
+  const fetch_ = useCallback(async () => {
+    setLoading(true)
     try {
       const res = await fetch('/api/admin/cron')
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
-      }
-      const json = await res.json()
-      setData(json)
-      setError(null)
-    } catch (err: any) {
-      setError(err.message)
+      if (res.ok) setData(await res.json())
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchCronData()
   }, [])
 
-  useEffect(() => {
-    if (!autoRefresh) return
-    const interval = setInterval(fetchCronData, 10000) // 10s
-    return () => clearInterval(interval)
-  }, [autoRefresh])
+  useEffect(() => { fetch_() }, [fetch_])
 
-  if (loading) {
-    return (
-      <AdminLayout title="Cron Jobs">
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-500" />
-            <p className="text-zinc-400">Carregando informações...</p>
-          </div>
-        </div>
-      </AdminLayout>
-    )
+  async function trigger(jobId: string) {
+    setTriggerState(s => ({ ...s, [jobId]: 'running' }))
+    try {
+      const res = await fetch('/api/admin/cron', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId }),
+      })
+      setTriggerState(s => ({ ...s, [jobId]: res.ok ? 'ok' : 'error' }))
+      setTimeout(() => setTriggerState(s => ({ ...s, [jobId]: 'idle' })), 3000)
+    } catch {
+      setTriggerState(s => ({ ...s, [jobId]: 'error' }))
+      setTimeout(() => setTriggerState(s => ({ ...s, [jobId]: 'idle' })), 3000)
+    }
   }
 
-  if (error) {
-    return (
-      <AdminLayout title="Cron Jobs">
-        <div className="bg-red-950/50 border border-red-800/50 rounded-xl p-6 text-center">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-400 font-medium mb-2">Erro ao carregar dados</p>
-          <p className="text-red-300 text-sm">{error}</p>
-          <button
-            onClick={fetchCronData}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Tentar Novamente
-          </button>
-        </div>
-      </AdminLayout>
-    )
-  }
-
-  const stats = data!.stats
-  const config = data!.config
+  const jobs = data?.jobs ?? []
+  const stats = data?.stats
 
   return (
     <AdminLayout title="Cron Jobs">
-      <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
-        <label className="flex items-center gap-2 text-sm text-zinc-400 bg-zinc-800/50 px-3 py-2 rounded-lg backdrop-blur-sm">
-          <input
-            type="checkbox"
-            checked={autoRefresh}
-            onChange={(e) => setAutoRefresh(e.target.checked)}
-            className="rounded border-zinc-600 bg-zinc-700 text-indigo-600 focus:ring-indigo-500"
-          />
-          Auto-refresh (10s)
-        </label>
-        <button
-          onClick={fetchCronData}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all hover:scale-105"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Atualizar
-        </button>
-      </div>
+      <div className="space-y-6">
 
-        {/* Environment Badge */}
-        <div className="mb-8 flex flex-wrap items-center gap-3">
-          <span className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold backdrop-blur-sm ${
-            config.environment === 'production'
-              ? 'bg-green-950/50 text-green-400 border border-green-800/50'
-              : 'bg-yellow-950/50 text-yellow-400 border border-yellow-800/50'
-          }`}>
-            {config.environment === 'production' ? '🏭 Production' : '🧪 Staging'}
-          </span>
-          <div className="flex items-center gap-4 text-sm text-zinc-400 bg-zinc-800/30 px-4 py-2 rounded-lg backdrop-blur-sm border border-zinc-700/50">
-            <span>Modelo: <strong className="text-white">{config.ollamaModel}</strong></span>
-            <span className="text-zinc-600">|</span>
-            <span>Frequência: <strong className="text-white">{config.expectedFrequency}</strong></span>
-            <span className="text-zinc-600">|</span>
-            <span>Notícias/run: <strong className="text-white">{config.newsPerRun}</strong></span>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-white">Agendamentos</h1>
+            {data && (
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Atualizado {new Date(data.timestamp).toLocaleString('pt-BR')} · {jobs.length} jobs via GitHub Actions
+              </p>
+            )}
           </div>
+          <button
+            onClick={fetch_}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </button>
         </div>
 
-        {/* Cron Jobs Schedule */}
-        <div className="bg-zinc-900/50 rounded-xl shadow-2xl p-6 border border-zinc-800/50 mb-8 backdrop-blur-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <Calendar className="w-6 h-6 text-indigo-500" />
-            <h2 className="text-xl font-semibold text-white">Cron Jobs Agendados</h2>
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Notícias', icon: Newspaper, total: stats?.totalNews, delta: stats?.newsLast24h, sub: `~${stats?.averageNewsPerDay}/dia`, color: 'text-purple-400' },
+            { label: 'Artistas', icon: Users,     total: stats?.totalArtists,     delta: stats?.artistsLast24h,     sub: 'visíveis',    color: 'text-emerald-400' },
+            { label: 'Produções', icon: Film,     total: stats?.totalProductions,  delta: stats?.productionsLast24h, sub: 'visíveis',    color: 'text-blue-400' },
+            { label: 'Notícias 7d', icon: Activity, total: stats?.newsLast7days,  delta: stats?.newsLast24h,        sub: 'últimos 7 dias', color: 'text-amber-400' },
+          ].map(({ label, icon: Icon, total, delta, sub, color }) => (
+            <div key={label} className="bg-zinc-900/60 border border-white/6 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">{label}</span>
+                <Icon className={`w-3.5 h-3.5 ${color}`} />
+              </div>
+              <p className="text-2xl font-black text-white tabular-nums">{total ?? '—'}</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">
+                {delta != null && delta > 0 && <span className="text-emerald-400">+{delta} hoje · </span>}
+                {sub}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Timeline */}
+        {jobs.length > 0 && (
+          <div className="bg-zinc-900/60 border border-white/6 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-4 h-4 text-zinc-400" />
+              <h2 className="text-sm font-bold text-zinc-300">Timeline 24h (UTC)</h2>
+            </div>
+            <TimelineBar jobs={jobs} />
+            <p className="text-[10px] text-zinc-600 mt-3">Cada bloco colorido = execução agendada naquela hora UTC</p>
           </div>
-          <div className="space-y-4">
-            {data!.cronJobs.map((job, idx) => (
-              <div key={idx} className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-4 hover:border-indigo-500/50 transition-all hover:shadow-lg hover:shadow-indigo-500/10">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-white text-lg">{job.name}</h3>
-                    <p className="text-sm text-zinc-400 mt-1">{job.description}</p>
+        )}
+
+        {/* Jobs grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {jobs.map(job => {
+            const colors = COLOR_MAP[job.color] ?? COLOR_MAP.blue
+            const state = triggerState[job.id] ?? 'idle'
+            const nextRun = job.nextRuns?.[0]
+            const nextRunDelta = nextRun
+              ? Math.round((new Date(nextRun).getTime() - Date.now()) / 60000)
+              : null
+
+            return (
+              <div key={job.id} className={`bg-zinc-900/50 border border-white/6 rounded-xl p-4 transition-all hover:border-white/10 ring-0 ${state === 'ok' ? `ring-1 ${colors.ring}` : ''}`}>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-lg">{job.emoji}</span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-white leading-tight">{job.name}</h3>
+                      <p className="text-[10px] text-zinc-500 mt-0.5 leading-tight">{job.description}</p>
+                    </div>
                   </div>
-                  <span className="ml-4 px-3 py-1 bg-indigo-950/50 text-indigo-300 text-xs font-mono rounded border border-indigo-800/50">
+                  <button
+                    onClick={() => trigger(job.id)}
+                    disabled={state === 'running'}
+                    className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                      state === 'running' ? 'bg-zinc-700 text-zinc-400 cursor-wait' :
+                      state === 'ok'      ? `${colors.badge} border` :
+                      state === 'error'   ? 'bg-red-500/15 text-red-300 border border-red-500/20' :
+                      'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-transparent'
+                    }`}
+                    title="Disparar agora"
+                  >
+                    {state === 'running' ? <Loader2 className="w-3 h-3 animate-spin" /> :
+                     state === 'ok'      ? <CheckCircle2 className="w-3 h-3" /> :
+                     state === 'error'   ? '✗' :
+                     <><Zap className="w-3 h-3" />Disparar</>}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono border ${colors.badge}`}>
                     {job.schedule}
                   </span>
+                  <span className="text-[10px] text-zinc-500">{job.frequencyLabel}</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-zinc-700/50">
-                  <div>
-                    <p className="text-xs text-zinc-500 mb-1">Periodicidade</p>
-                    <p className="text-sm font-medium text-white">{job.frequency}</p>
+
+                {nextRunDelta != null && (
+                  <div className="flex items-center gap-1 mt-2.5 text-[10px] text-zinc-600">
+                    <ChevronRight className="w-3 h-3" />
+                    Próxima em{' '}
+                    <span className="text-zinc-400 font-mono">
+                      {nextRunDelta < 60
+                        ? `${nextRunDelta}min`
+                        : `${Math.floor(nextRunDelta / 60)}h${nextRunDelta % 60 > 0 ? `${nextRunDelta % 60}m` : ''}`}
+                    </span>
+                    <span className="text-zinc-700">·</span>
+                    <span>{new Date(nextRun!).toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC</span>
                   </div>
-                  <div>
-                    <p className="text-xs text-zinc-500 mb-1">Próxima Execução</p>
-                    <p className="text-sm font-medium text-white">{job.nextRun}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-zinc-500 mb-1">Script</p>
-                    <p className="text-sm font-mono text-zinc-300 truncate">{job.script}</p>
-                  </div>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
+            )
+          })}
         </div>
 
-        {/* Stats Grid - Database Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-purple-950/50 to-purple-900/30 rounded-xl shadow-lg p-6 border border-purple-800/50 backdrop-blur-sm hover:border-purple-600/50 transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm text-purple-300 font-medium">Total de Notícias</p>
-              <Activity className="w-6 h-6 text-purple-400" />
+        {/* Recent news */}
+        {data?.recentNews && data.recentNews.length > 0 && (
+          <div className="bg-zinc-900/50 border border-white/6 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Newspaper className="w-4 h-4 text-zinc-400" />
+              <h2 className="text-sm font-bold text-zinc-300">Últimas Notícias Criadas</h2>
             </div>
-            <p className="text-4xl font-bold text-white mb-2">{stats.totalNews}</p>
-            <p className="text-xs text-purple-300">
-              +{stats.newsLast24h} nas últimas 24h
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-950/50 to-green-900/30 rounded-xl shadow-lg p-6 border border-green-800/50 backdrop-blur-sm hover:border-green-600/50 transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm text-green-300 font-medium">Total de Artistas</p>
-              <CheckCircle2 className="w-6 h-6 text-green-400" />
-            </div>
-            <p className="text-4xl font-bold text-white mb-2">{stats.totalArtists}</p>
-            <p className="text-xs text-green-300">
-              +{stats.artistsLast24h} nas últimas 24h
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-950/50 to-blue-900/30 rounded-xl shadow-lg p-6 border border-blue-800/50 backdrop-blur-sm hover:border-blue-600/50 transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm text-blue-300 font-medium">Total de Produções</p>
-              <Clock className="w-6 h-6 text-blue-400" />
-            </div>
-            <p className="text-4xl font-bold text-white mb-2">{stats.totalProductions}</p>
-            <p className="text-xs text-blue-300">
-              +{stats.productionsLast24h} nas últimas 24h
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-orange-950/50 to-orange-900/30 rounded-xl shadow-lg p-6 border border-orange-800/50 backdrop-blur-sm hover:border-orange-600/50 transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm text-orange-300 font-medium">Média Diária (7d)</p>
-              <Activity className="w-6 h-6 text-orange-400" />
-            </div>
-            <p className="text-4xl font-bold text-white mb-2">{stats.averageNewsPerDay}</p>
-            <p className="text-xs text-orange-300">notícias por dia</p>
-          </div>
-        </div>
-
-        {/* Recent News */}
-        {data!.recentNews.length > 0 && (
-          <div className="bg-zinc-900/50 rounded-xl shadow-2xl p-6 border border-zinc-800/50 mb-8 backdrop-blur-sm">
-            <h2 className="text-xl font-semibold text-white mb-5 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-purple-500" />
-              Últimas Notícias Criadas
-            </h2>
-            <div className="space-y-3">
-              {data!.recentNews.map((news, idx) => (
-                <div key={news.id} className="flex items-start gap-3 p-4 bg-zinc-800/50 rounded-lg border border-zinc-700/50 hover:border-purple-500/50 transition-all">
-                  <span className="flex-shrink-0 w-7 h-7 bg-purple-950/50 text-purple-400 border border-purple-800/50 rounded-full flex items-center justify-center text-xs font-bold">
-                    {idx + 1}
+            <div className="space-y-1.5">
+              {data.recentNews.map((news, i) => (
+                <div key={news.id} className="flex items-center gap-3 py-1.5 border-b border-white/4 last:border-0">
+                  <span className="text-[10px] text-zinc-600 tabular-nums w-4 shrink-0">{i + 1}</span>
+                  <p className="text-xs text-zinc-300 truncate flex-1">{news.title}</p>
+                  <span className="text-[10px] text-zinc-600 shrink-0">
+                    {new Date(news.createdAt).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{news.title}</p>
-                    <p className="text-xs text-zinc-400 mt-1">
-                      {new Date(news.createdAt).toLocaleString('pt-BR')}
-                    </p>
-                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Logs */}
-        <div className="bg-zinc-900/50 rounded-xl shadow-2xl border border-zinc-800/50 overflow-hidden backdrop-blur-sm mb-8">
-          <div className="p-6 border-b border-zinc-800/50">
-            <div className="flex items-center gap-3">
-              <Terminal className="w-6 h-6 text-green-500" />
-              <h2 className="text-xl font-semibold text-white">Logs Recentes</h2>
-            </div>
-          </div>
-          <div className="p-6 bg-black/50 max-h-[600px] overflow-y-auto">
-            <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap leading-relaxed">
-              {data!.logs.length > 0 ? data!.logs.join('\n') : 'Nenhum log disponível'}
-            </pre>
-          </div>
-        </div>
-
-        {/* Note */}
-        {data!.note && (
-          <div className="bg-blue-950/50 border border-blue-800/50 rounded-lg p-4 mb-6 backdrop-blur-sm">
-            <p className="text-sm text-blue-300">
-              <strong className="text-blue-200">ℹ️ Nota:</strong> {data!.note}
-            </p>
+        {loading && !data && (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-zinc-600" />
           </div>
         )}
 
-        <p className="text-center text-sm text-zinc-500 mt-8 pb-8">
-          Última atualização: <span className="text-zinc-400">{new Date(data!.timestamp).toLocaleString('pt-BR')}</span>
-        </p>
+      </div>
     </AdminLayout>
   )
 }

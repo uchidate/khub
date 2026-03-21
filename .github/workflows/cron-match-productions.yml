@@ -14,6 +14,10 @@ on:
         default: '10'
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   match-productions:
     name: Match Productions to TMDB

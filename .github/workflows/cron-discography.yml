@@ -2,9 +2,9 @@ name: 🎵 Cron Job - Sync Artist Discography
 
 on:
   schedule:
-    # Runs daily at 02:00 UTC — MusicBrainz first, AI fallback
+    # Runs daily at 01:00 UTC — MusicBrainz first, AI fallback
     # Format: minute hour day month day-of-week
-    - cron: '0 2 * * *'
+    - cron: '0 1 * * *'
 
   # Allow manual trigger with optional limit parameter
   workflow_dispatch:
@@ -14,6 +14,10 @@ on:
         required: false
         default: '5'
         type: string
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   sync-discography:
