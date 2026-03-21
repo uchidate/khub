@@ -222,18 +222,32 @@ export async function PATCH(request: NextRequest) {
       data: { ...validated, titlePt: resolvedTitlePt, synopsisSource: resolvedSynopsisSource },
     })
 
-    // Auto-tradução: se sinopse foi salva em português, criar/atualizar ContentTranslation automaticamente
-    if (validated.synopsis) {
-      const isPt = resolvedSynopsisSource === 'tmdb_pt' || detectLanguage(validated.synopsis) === 'pt'
-      if (isPt) {
-        await prisma.contentTranslation.upsert({
-          where: { entityType_entityId_field_locale: { entityType: 'production', entityId: productionId, field: 'synopsis', locale: 'pt-BR' } },
-          create: { entityType: 'production', entityId: productionId, field: 'synopsis', locale: 'pt-BR', value: validated.synopsis, status: 'approved', sourceLang: 'pt' },
-          update: { value: validated.synopsis, status: 'approved', sourceLang: 'pt' },
-        }).catch(() => {})
+    // Auto-tradução: atualizar translationStatus sempre que a sinopse mudar
+    if (validated.synopsis !== undefined) {
+      if (validated.synopsis) {
+        const isPt = resolvedSynopsisSource === 'tmdb_pt' || detectLanguage(validated.synopsis) === 'pt'
+        if (isPt) {
+          await prisma.contentTranslation.upsert({
+            where: { entityType_entityId_field_locale: { entityType: 'production', entityId: productionId, field: 'synopsis', locale: 'pt-BR' } },
+            create: { entityType: 'production', entityId: productionId, field: 'synopsis', locale: 'pt-BR', value: validated.synopsis, status: 'approved', sourceLang: 'pt' },
+            update: { value: validated.synopsis, status: 'approved', sourceLang: 'pt' },
+          }).catch(() => {})
+          await prisma.production.update({
+            where: { id: productionId },
+            data: { translationStatus: 'completed', translatedAt: new Date() },
+          }).catch(() => {})
+        } else {
+          // Sinopse em inglês ou outra língua → volta para fila de tradução
+          await prisma.production.update({
+            where: { id: productionId },
+            data: { translationStatus: 'pending', translatedAt: null },
+          }).catch(() => {})
+        }
+      } else {
+        // Sinopse removida → volta para fila de tradução
         await prisma.production.update({
           where: { id: productionId },
-          data: { translationStatus: 'completed', translatedAt: new Date() },
+          data: { translationStatus: 'pending', translatedAt: null },
         }).catch(() => {})
       }
     }
