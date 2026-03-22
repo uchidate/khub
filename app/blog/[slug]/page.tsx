@@ -4,6 +4,8 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
+import { BlogBlockRenderer } from '@/components/ui/BlogBlockRenderer'
+import type { BlogBlock } from '@/lib/types/blocks'
 import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -152,9 +154,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mb-10" />
 
-        {/* Content */}
+        {/* Content — blocks take precedence over markdown */}
         <article>
-          <MarkdownRenderer content={post.contentMd} />
+          {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
+            ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} />
+            : <MarkdownRenderer content={post.contentMd} />
+          }
         </article>
 
         {/* Tags */}

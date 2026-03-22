@@ -25,8 +25,8 @@ jobs:
           echo "🚀 Calling cron endpoint..."
 
           # O endpoint retorna 202 Accepted imediatamente e processa em background
-          # Timeout aumentado para 60s para evitar falhas em caso de latência
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
+          # Timeout aumentado para 90s para evitar falhas em caso de latência
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 90 -X POST \
             "https://www.hallyuhub.com.br/api/cron/update" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")

@@ -7,6 +7,7 @@ import type { Components } from 'react-markdown'
 import { cleanContentBySource } from '@/lib/utils/content-cleaner'
 import { InstagramEmbed } from '@/components/ui/InstagramEmbed'
 import { TwitterEmbed } from '@/components/ui/TwitterEmbed'
+import { TikTokEmbed } from '@/components/ui/TikTokEmbed'
 
 interface MarkdownRendererProps {
     content: string
@@ -41,6 +42,10 @@ function isTwitterPostUrl(url: string): boolean {
     const u = url.trim()
     return /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[^/\s]+\/status\/\d+/i.test(u)
         || /^https?:\/\/t\.co\/[A-Za-z0-9]+/i.test(u)
+}
+
+function isTikTokPostUrl(url: string): boolean {
+    return /^https?:\/\/(www\.|vm\.)?tiktok\.com\/.+/i.test(url.trim())
 }
 
 function preprocessMarkdown(content: string, coverImageUrl?: string, source?: string | null): string {
@@ -95,6 +100,7 @@ function buildComponents(source?: string | null): Components {
                 const text = (childArray[0] as string).trim()
                 if (isInstagramPostUrl(text)) return <InstagramEmbed url={text} />
                 if (isTwitterPostUrl(text)) return <TwitterEmbed url={text} />
+                if (isTikTokPostUrl(text)) return <TikTokEmbed url={text} />
             }
             return (
                 <p className="mb-5 leading-relaxed text-zinc-300 text-lg">
@@ -157,6 +163,8 @@ function buildComponents(source?: string | null): Components {
             if (href && isInstagramPostUrl(href)) return <InstagramEmbed url={href} />
             // Twitter/X post link → embed
             if (href && isTwitterPostUrl(href)) return <TwitterEmbed url={href} />
+            // TikTok video link → embed
+            if (href && isTikTokPostUrl(href)) return <TikTokEmbed url={href} />
             const external = href ? isExternalUrl(href) : false
             return (
                 <a
