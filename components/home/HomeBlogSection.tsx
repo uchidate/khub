@@ -141,7 +141,7 @@ export function HomeBlogSection({ posts }: HomeBlogSectionProps) {
                                     className="text-[1.5rem] sm:text-[1.875rem] lg:text-[2.2rem] font-extrabold tracking-[-0.05em] leading-[1.1] mb-2.5"
                                     style={{ color: 'var(--color-featured-fg)' }}
                                 >
-                                    Junte-se à maior comunidade<br />de <span className="text-accent">cultura coreana</span> do Brasil.
+                                    Junte-se ao site<br />de <span className="text-accent">cultura coreana</span> no Brasil
                                 </h2>
                                 <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--color-featured-muted)' }}>
                                     Favorite artistas, acompanhe K-dramas e conecte-se com fãs de todo o Brasil.
