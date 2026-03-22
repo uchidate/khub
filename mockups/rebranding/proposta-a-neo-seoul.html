@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposta A — Neo Seoul</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07080f;
+  --bg2: #0d0f1a;
+  --surface: #111420;
+  --border: #1e2235;
+  --cyan: #00d4ff;
+  --magenta: #ff006e;
+  --text: #e8eaf6;
+  --muted: #5c6080;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+/* NAV */
+nav { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 2.5rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(7,8,15,0.85); backdrop-filter:blur(12px); z-index:100; }
+.logo { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; letter-spacing:-0.02em; }
+.logo span:first-child { color:var(--cyan); }
+.logo span:last-child { color:#fff; }
+.nav-links { display:flex; gap:2rem; }
+.nav-links a { color:var(--muted); text-decoration:none; font-size:0.85rem; font-weight:500; transition:color .2s; }
+.nav-links a:hover { color:var(--cyan); }
+.nav-right { display:flex; gap:0.75rem; align-items:center; }
+.btn-outline { padding:0.5rem 1.25rem; border:1px solid var(--cyan); color:var(--cyan); border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; background:transparent; font-family:'Space Grotesk',sans-serif; transition:.2s; }
+.btn-outline:hover { background:var(--cyan)15; }
+.btn-solid { padding:0.5rem 1.25rem; background:linear-gradient(135deg,var(--cyan),#0084ff); color:#000; border-radius:6px; font-size:0.8rem; font-weight:700; cursor:pointer; border:none; font-family:'Space Grotesk',sans-serif; }
+
+/* HERO */
+.hero { position:relative; padding:6rem 2.5rem 5rem; overflow:hidden; }
+.hero-bg { position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 60% 0%, rgba(0,212,255,0.08) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,0,110,0.06) 0%, transparent 60%); }
+.hero-grid { position:absolute; inset:0; background-image:linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size:60px 60px; opacity:0.4; }
+.hero-content { position:relative; max-width:700px; }
+.hero-tag { display:inline-flex; align-items:center; gap:0.5rem; padding:0.35rem 0.9rem; border:1px solid var(--cyan)40; background:var(--cyan)08; border-radius:999px; font-size:0.72rem; font-weight:600; color:var(--cyan); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1.5rem; }
+.hero-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+h1 { font-family:'Syne',sans-serif; font-size:clamp(2.5rem,5vw,4.5rem); font-weight:800; line-height:1.05; letter-spacing:-0.03em; margin-bottom:1.25rem; }
+h1 .accent-cyan { color:var(--cyan); text-shadow:0 0 40px var(--cyan)60; }
+h1 .accent-mag { color:var(--magenta); text-shadow:0 0 40px var(--magenta)60; }
+.hero-sub { color:var(--muted); font-size:1.05rem; line-height:1.7; max-width:520px; margin-bottom:2.5rem; }
+.hero-actions { display:flex; gap:1rem; flex-wrap:wrap; }
+.btn-primary { padding:0.875rem 2rem; background:linear-gradient(135deg,var(--cyan),#0090ff); color:#000; border-radius:8px; font-size:0.9rem; font-weight:700; cursor:pointer; border:none; font-family:'Space Grotesk',sans-serif; box-shadow:0 0 30px var(--cyan)30; }
+.btn-secondary { padding:0.875rem 2rem; background:transparent; border:1px solid var(--border); color:var(--text); border-radius:8px; font-size:0.9rem; font-weight:600; cursor:pointer; font-family:'Space Grotesk',sans-serif; }
+.stats-row { display:flex; gap:3rem; margin-top:3.5rem; padding-top:2rem; border-top:1px solid var(--border); flex-wrap:wrap; }
+.stat-item { }
+.stat-num { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--cyan); }
+.stat-label { font-size:0.8rem; color:var(--muted); margin-top:0.1rem; }
+
+/* SECTION */
+.section { padding:4rem 2.5rem; max-width:1200px; margin:0 auto; }
+.section-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2rem; }
+.section-title { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; letter-spacing:-0.02em; }
+.section-title .line { width:40px; height:3px; background:linear-gradient(90deg,var(--cyan),var(--magenta)); border-radius:2px; margin-top:0.5rem; }
+.see-all { font-size:0.8rem; color:var(--cyan); text-decoration:none; font-weight:600; }
+
+/* CARDS */
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:.2s; }
+.card:hover { border-color:var(--cyan)50; box-shadow:0 0 20px var(--cyan)10; transform:translateY(-2px); }
+.card-img { aspect-ratio:3/4; background:linear-gradient(160deg,#1a1f35,#0d1020); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--border); position:relative; overflow:hidden; }
+.card-img::after { content:''; position:absolute; bottom:0; left:0; right:0; height:60%; background:linear-gradient(transparent,var(--surface)); }
+.card-info { padding:0.875rem; }
+.card-name { font-weight:700; font-size:0.9rem; color:var(--text); }
+.card-sub { font-size:0.75rem; color:var(--muted); margin-top:0.2rem; }
+.card-badge { display:inline-block; margin-top:0.5rem; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.65rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+.badge-cyan { background:var(--cyan)15; color:var(--cyan); border:1px solid var(--cyan)30; }
+.badge-mag { background:var(--magenta)15; color:var(--magenta); border:1px solid var(--magenta)30; }
+
+/* NEWS */
+.news-grid { display:grid; grid-template-columns:2fr 1fr; gap:1.25rem; }
+.news-featured { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:.2s; }
+.news-featured:hover { border-color:var(--cyan)40; }
+.news-img { height:240px; background:linear-gradient(135deg,#0d1020,#1a0d2e); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:3rem; color:var(--border); position:relative; }
+.news-img-tag { position:absolute; top:1rem; left:1rem; padding:0.25rem 0.7rem; background:var(--magenta); color:#fff; border-radius:4px; font-size:0.7rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+.news-body { padding:1.25rem; }
+.news-title { font-family:'Syne',sans-serif; font-size:1.15rem; font-weight:700; line-height:1.4; margin-bottom:0.5rem; }
+.news-meta { font-size:0.75rem; color:var(--muted); }
+.news-list { display:flex; flex-direction:column; gap:0.75rem; }
+.news-item { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1rem; cursor:pointer; transition:.2s; }
+.news-item:hover { border-color:var(--cyan)30; }
+.news-item-tag { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--cyan); margin-bottom:0.4rem; }
+.news-item-title { font-size:0.85rem; font-weight:600; line-height:1.4; }
+.news-item-meta { font-size:0.72rem; color:var(--muted); margin-top:0.4rem; }
+
+/* FOOTER */
+footer { margin-top:4rem; border-top:1px solid var(--border); padding:2.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+.footer-logo { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; }
+.footer-logo span:first-child { color:var(--cyan); }
+.footer-copy { font-size:0.8rem; color:var(--muted); }
+
+/* BACK */
+.back-btn { position:fixed; top:5rem; left:1.5rem; background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:0.5rem 1rem; border-radius:8px; font-size:0.78rem; text-decoration:none; font-family:'Space Grotesk',sans-serif; transition:.2s; z-index:200; }
+.back-btn:hover { color:var(--text); border-color:var(--cyan)50; }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-btn">← Propostas</a>
+
+<nav>
+  <div class="logo"><span>Hallyu</span><span>Hub</span></div>
+  <div class="nav-links">
+    <a href="#">Artistas</a>
+    <a href="#">Grupos</a>
+    <a href="#">Doramas</a>
+    <a href="#">Notícias</a>
+    <a href="#">Blog</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-outline">Entrar</button>
+    <button class="btn-solid">Cadastrar</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">🇰🇷 A onda coreana em português</div>
+    <h1>O universo do<br><span class="accent-cyan">K-pop</span> e<br><span class="accent-mag">K-drama</span><br>em um só lugar.</h1>
+    <p class="hero-sub">Perfis completos de artistas, grupos, doramas, filmes e as últimas notícias — tudo traduzido e contextualizado para os fãs brasileiros do Hallyu.</p>
+    <div class="hero-actions">
+      <button class="btn-primary">Explorar agora</button>
+      <button class="btn-secondary">Ver artistas →</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-num">12k+</div><div class="stat-label">Artistas cadastrados</div></div>
+      <div class="stat-item"><div class="stat-num">8k+</div><div class="stat-label">Produções</div></div>
+      <div class="stat-item"><div class="stat-num">50k+</div><div class="stat-label">Notícias traduzidas</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Artistas em Alta<div class="line"></div></div>
+    <a href="#" class="see-all">Ver todos →</a>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-img">아</div><div class="card-info"><div class="card-name">Jisoo</div><div class="card-sub">BLACKPINK · Solo</div><div class="card-badge badge-mag">K-pop</div></div></div>
+    <div class="card"><div class="card-img">나</div><div class="card-info"><div class="card-name">RM</div><div class="card-sub">BTS · Solo</div><div class="card-badge badge-cyan">K-pop</div></div></div>
+    <div class="card"><div class="card-img">다</div><div class="card-info"><div class="card-name">Hyun Bin</div><div class="card-sub">Ator</div><div class="card-badge badge-cyan">K-drama</div></div></div>
+    <div class="card"><div class="card-img">라</div><div class="card-info"><div class="card-name">IU</div><div class="card-sub">EDAM · Solo</div><div class="card-badge badge-mag">K-pop</div></div></div>
+    <div class="card"><div class="card-img">마</div><div class="card-info"><div class="card-name">V (Taehyung)</div><div class="card-sub">BTS · Solo</div><div class="card-badge badge-cyan">K-pop</div></div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Últimas Notícias<div class="line"></div></div>
+    <a href="#" class="see-all">Ver todas →</a>
+  </div>
+  <div class="news-grid">
+    <div class="news-featured">
+      <div class="news-img">📰<span class="news-img-tag">Destaque</span></div>
+      <div class="news-body">
+        <div class="news-title">BTS anuncia comebacks para 2025 após conclusão do serviço militar</div>
+        <div class="news-meta">HYBE · Há 2 horas · 4 min de leitura</div>
+      </div>
+    </div>
+    <div class="news-list">
+      <div class="news-item"><div class="news-item-tag">K-drama</div><div class="news-item-title">Queen of Tears bate recorde de audiência na tvN</div><div class="news-item-meta">Há 5 horas</div></div>
+      <div class="news-item"><div class="news-item-tag">K-pop</div><div class="news-item-title">BLACKPINK confirma novo álbum para o segundo semestre</div><div class="news-item-meta">Há 8 horas</div></div>
+      <div class="news-item"><div class="news-item-tag">Premiação</div><div class="news-item-title">Resultados completos do MAMA Awards 2024</div><div class="news-item-meta">Há 1 dia</div></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo"><span>Hallyu</span><span style="color:#fff">Hub</span></div>
+  <div class="footer-copy">© 2025 HallyuHub · Todos os direitos reservados</div>
+</footer>
+
+</body>
+</html>

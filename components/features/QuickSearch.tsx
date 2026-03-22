@@ -66,51 +66,51 @@ export function QuickSearch() {
 
                     {/* Palette */}
                     <div
-                        className="relative w-full max-w-2xl bg-zinc-900/95 border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/60 animate-scale-in"
+                        className="relative w-full max-w-2xl bg-background border border-border rounded-2xl overflow-hidden shadow-2xl shadow-black/10 animate-scale-in"
                     >
                         {/* Input */}
-                        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5">
-                            <Search className="text-zinc-500 flex-shrink-0" size={18} />
+                        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
+                            <Search className="text-muted flex-shrink-0" size={18} />
                             <input
                                 ref={inputRef}
                                 type="text"
                                 placeholder="Buscar artistas, grupos, produções ou notícias..."
-                                className="flex-1 bg-transparent text-white placeholder-zinc-500 focus:outline-none text-base"
+                                className="flex-1 bg-transparent text-foreground placeholder-[#6b6b6b] focus:outline-none text-base"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                             />
-                            {isLoading && <Loader2 className="text-zinc-500 animate-spin flex-shrink-0" size={16} />}
+                            {isLoading && <Loader2 className="text-muted animate-spin flex-shrink-0" size={16} />}
                             {query && !isLoading && (
-                                <button onClick={() => setQuery('')} className="text-zinc-500 hover:text-white transition-colors flex-shrink-0">
+                                <button onClick={() => setQuery('')} className="text-muted hover:text-foreground transition-colors flex-shrink-0">
                                     <X size={16} />
                                 </button>
                             )}
-                            <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded text-[10px] font-bold text-zinc-500 border border-white/5 flex-shrink-0">
+                            <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-surface rounded text-[10px] font-bold text-muted border border-border flex-shrink-0">
                                 <Command size={10} /> K
                             </div>
-                            <button onClick={closeModal} className="text-zinc-500 hover:text-white transition-colors flex-shrink-0 ml-1">
+                            <button onClick={closeModal} className="text-muted hover:text-foreground transition-colors flex-shrink-0 ml-1">
                                 <X size={18} />
                             </button>
                         </div>
 
                         {/* Resultados */}
-                        <div className="max-h-[65vh] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#3f3f46 transparent' }}>
+                        <div className="max-h-[65vh] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#e8e8e8 transparent' }}>
 
                             {/* Estado inicial */}
                             {!isLoading && !hasResults && query.trim().length < 2 && (
                                 <div className="py-12 text-center">
-                                    <Search className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-                                    <p className="text-zinc-500 text-sm font-medium">Digite para buscar no HallyuHub</p>
-                                    <p className="text-zinc-700 text-xs mt-1">Artistas · Grupos · Produções · Notícias</p>
+                                    <Search className="w-10 h-10 text-[#e8e8e8] mx-auto mb-3" />
+                                    <p className="text-muted text-sm font-medium">Digite para buscar no HallyuHub</p>
+                                    <p className="text-muted text-xs mt-1 opacity-60">Artistas · Grupos · Produções · Notícias</p>
                                 </div>
                             )}
 
                             {/* Sem resultados */}
                             {!isLoading && !hasResults && query.trim().length >= 2 && (
                                 <div className="py-12 text-center">
-                                    <Search className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-                                    <p className="text-zinc-400 text-sm">Nenhum resultado para &quot;{query}&quot;</p>
-                                    <p className="text-zinc-600 text-xs mt-1">Tente buscar por artistas, notícias ou produções</p>
+                                    <Search className="w-10 h-10 text-[#e8e8e8] mx-auto mb-3" />
+                                    <p className="text-muted text-sm">Nenhum resultado para &quot;{query}&quot;</p>
+                                    <p className="text-muted text-xs mt-1 opacity-60">Tente buscar por artistas, notícias ou produções</p>
                                 </div>
                             )}
 
@@ -120,8 +120,8 @@ export function QuickSearch() {
 
                                     {/* Artistas */}
                                     {results.artists.length > 0 && (
-                                        <div className="p-3 border-b border-white/5">
-                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-purple-400 mb-1">
+                                        <div className="p-3 border-b border-border">
+                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff2d78] mb-1">
                                                 <User className="w-3.5 h-3.5" />
                                                 Artistas ({results.artists.length})
                                             </div>
@@ -130,23 +130,23 @@ export function QuickSearch() {
                                                     <button
                                                         key={artist.id}
                                                         onClick={() => handleNavigate(`/artists/${artist.id}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
                                                     >
-                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
                                                             {artist.primaryImageUrl ? (
                                                                 <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover" sizes="40px" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-zinc-500">
+                                                                <div className="w-full h-full flex items-center justify-center text-muted">
                                                                     <User size={18} />
                                                                 </div>
                                                             )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-white text-sm group-hover:text-purple-400 transition-colors truncate">
+                                                            <p className="font-bold text-foreground text-sm group-hover:text-[#ff2d78] transition-colors truncate">
                                                                 {artist.nameRomanized}
                                                             </p>
                                                             {artist.roles.length > 0 && (
-                                                                <p className="text-xs text-zinc-500 truncate">
+                                                                <p className="text-xs text-muted truncate">
                                                                     {getRoleLabel(artist.roles[0], artist.gender)}
                                                                 </p>
                                                             )}
@@ -162,8 +162,8 @@ export function QuickSearch() {
 
                                     {/* Grupos */}
                                     {results.groups.length > 0 && (
-                                        <div className="p-3 border-b border-white/5">
-                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-violet-400 mb-1">
+                                        <div className="p-3 border-b border-border">
+                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff2d78] mb-1">
                                                 <Users className="w-3.5 h-3.5" />
                                                 Grupos ({results.groups.length})
                                             </div>
@@ -172,23 +172,23 @@ export function QuickSearch() {
                                                     <button
                                                         key={group.id}
                                                         onClick={() => handleNavigate(`/groups/${group.id}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
                                                     >
-                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
                                                             {group.profileImageUrl ? (
                                                                 <Image src={group.profileImageUrl} alt={group.name} fill className="object-cover" sizes="40px" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-zinc-500">
+                                                                <div className="w-full h-full flex items-center justify-center text-muted">
                                                                     <Users size={18} />
                                                                 </div>
                                                             )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-white text-sm group-hover:text-violet-400 transition-colors truncate">
+                                                            <p className="font-bold text-foreground text-sm group-hover:text-[#ff2d78] transition-colors truncate">
                                                                 {group.name}
                                                             </p>
                                                             {group.nameHangul && (
-                                                                <p className="text-xs text-zinc-500 truncate">{group.nameHangul}</p>
+                                                                <p className="text-xs text-muted truncate">{group.nameHangul}</p>
                                                             )}
                                                         </div>
                                                     </button>
@@ -199,8 +199,8 @@ export function QuickSearch() {
 
                                     {/* Produções */}
                                     {results.productions.length > 0 && (
-                                        <div className="p-3 border-b border-white/5">
-                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-cyan-400 mb-1">
+                                        <div className="p-3 border-b border-border">
+                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff2d78] mb-1">
                                                 <Film className="w-3.5 h-3.5" />
                                                 Produções ({results.productions.length})
                                             </div>
@@ -209,22 +209,22 @@ export function QuickSearch() {
                                                     <button
                                                         key={production.id}
                                                         onClick={() => handleNavigate(`/productions/${production.id}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
                                                     >
-                                                        <div className="relative w-9 h-[52px] rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                        <div className="relative w-9 h-[52px] rounded-lg overflow-hidden bg-surface flex-shrink-0">
                                                             {production.imageUrl ? (
                                                                 <Image src={production.imageUrl} alt={production.titlePt} fill className="object-cover" sizes="36px" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-zinc-500">
+                                                                <div className="w-full h-full flex items-center justify-center text-muted">
                                                                     <Film size={16} />
                                                                 </div>
                                                             )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-white text-sm group-hover:text-cyan-400 transition-colors truncate">
+                                                            <p className="font-bold text-foreground text-sm group-hover:text-[#ff2d78] transition-colors truncate">
                                                                 {production.titlePt}
                                                             </p>
-                                                            <p className="text-xs text-zinc-500 truncate">
+                                                            <p className="text-xs text-muted truncate">
                                                                 {production.type}{production.year ? ` · ${production.year}` : ''}
                                                             </p>
                                                         </div>
@@ -237,7 +237,7 @@ export function QuickSearch() {
                                     {/* Notícias */}
                                     {results.news.length > 0 && (
                                         <div className="p-3">
-                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-pink-400 mb-1">
+                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff2d78] mb-1">
                                                 <Newspaper className="w-3.5 h-3.5" />
                                                 Notícias ({results.news.length})
                                             </div>
@@ -246,22 +246,22 @@ export function QuickSearch() {
                                                     <button
                                                         key={item.id}
                                                         onClick={() => handleNavigate(`/news/${item.id}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
                                                     >
-                                                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface flex-shrink-0">
                                                             {item.imageUrl ? (
                                                                 <Image src={item.imageUrl} alt={item.title} fill className="object-cover" sizes="40px" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-zinc-500">
+                                                                <div className="w-full h-full flex items-center justify-center text-muted">
                                                                     <Newspaper size={16} />
                                                                 </div>
                                                             )}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-white text-sm group-hover:text-pink-400 transition-colors line-clamp-2 leading-snug">
+                                                            <p className="font-bold text-foreground text-sm group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-snug">
                                                                 {item.title}
                                                             </p>
-                                                            <p className="text-xs text-zinc-500 mt-0.5">
+                                                            <p className="text-xs text-muted mt-0.5">
                                                                 {new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                                                             </p>
                                                         </div>
@@ -272,11 +272,11 @@ export function QuickSearch() {
                                     )}
 
                                     {/* Ver todos */}
-                                    <div className="px-5 py-3 border-t border-white/5">
+                                    <div className="px-5 py-3 border-t border-border">
                                         <Link
                                             href={`/search?q=${encodeURIComponent(query)}`}
                                             onClick={closeModal}
-                                            className="flex items-center justify-center gap-2 py-2 text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors"
+                                            className="flex items-center justify-center gap-2 py-2 text-sm font-bold text-[#ff2d78] hover:opacity-80 transition-opacity"
                                         >
                                             Ver todos os {results.total} resultados →
                                         </Link>
@@ -286,10 +286,10 @@ export function QuickSearch() {
                         </div>
 
                         {/* Footer hints */}
-                        <div className="px-5 py-2 border-t border-white/5 flex items-center gap-4 text-[10px] text-zinc-600">
-                            <span><kbd className="font-mono bg-zinc-800 px-1 py-0.5 rounded text-zinc-500">↵</kbd> selecionar</span>
-                            <span><kbd className="font-mono bg-zinc-800 px-1 py-0.5 rounded text-zinc-500">Esc</kbd> fechar</span>
-                            <span className="ml-auto"><kbd className="font-mono bg-zinc-800 px-1 py-0.5 rounded text-zinc-500">⌘K</kbd> alternar</span>
+                        <div className="px-5 py-2 border-t border-border flex items-center gap-4 text-[10px] text-muted">
+                            <span><kbd className="font-mono bg-surface px-1 py-0.5 rounded text-muted border border-border">↵</kbd> selecionar</span>
+                            <span><kbd className="font-mono bg-surface px-1 py-0.5 rounded text-muted border border-border">Esc</kbd> fechar</span>
+                            <span className="ml-auto"><kbd className="font-mono bg-surface px-1 py-0.5 rounded text-muted border border-border">⌘K</kbd> alternar</span>
                         </div>
                     </div>
                 </div>

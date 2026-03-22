@@ -35,7 +35,7 @@ export function TikTokEmbed({ url }: { url: string }) {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-purple-400 underline underline-offset-4"
+                    className="text-[#ff2d78] underline underline-offset-4"
                 >
                     Ver no TikTok
                 </a>

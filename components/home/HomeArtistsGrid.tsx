@@ -36,37 +36,37 @@ export function HomeArtistsGrid({ artists }: HomeArtistsGridProps) {
     if (!artists || artists.length === 0) return null
 
     return (
-        <section className="border-b border-[#e8e8e8] bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10">
+        <section className="border-b border-border bg-background">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-8 lg:py-12">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-[18px] font-extrabold tracking-[-0.04em] text-[#080808]">
-                        Artistas em <span className="text-[#ff2d78]">destaque</span>
+                    <h2 className="text-[18px] font-extrabold tracking-[-0.04em] text-foreground">
+                        Artistas em <span className="text-accent">destaque</span>
                     </h2>
                     <Link
                         href="/artists"
-                        className="text-[11px] font-bold text-[#6b6b6b] hover:text-[#ff2d78] transition-colors"
+                        className="text-[11px] font-bold text-muted hover:text-accent transition-colors"
                     >
                         Ver todos →
                     </Link>
                 </div>
 
-                {/* Grid with border dividers */}
+                {/* Grid with border dividers — usa CSS variable para funcionar em light e dark */}
                 <div
                     className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 rounded-[14px] overflow-hidden"
-                    style={{ gap: "1.5px", backgroundColor: "#e8e8e8", border: "1.5px solid #e8e8e8" }}
+                    style={{ gap: "1.5px", backgroundColor: "var(--color-border)", border: "1.5px solid var(--color-border)" }}
                 >
                     {artists.map((artist, idx) => (
                         <Link
                             key={artist.id}
                             href={`/artists/${artist.id}`}
-                            className="group bg-white p-4 flex flex-col items-center gap-2 hover:bg-[#fff0f5] transition-colors min-h-[44px]"
+                            className="group bg-background p-4 flex flex-col items-center gap-2 hover:bg-accent-soft transition-colors min-h-[44px]"
                         >
                             <div className="flex items-center gap-1.5 self-start w-full mb-1.5">
-                                <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b6b6b]">
+                                <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted">
                                     {String(idx + 1).padStart(2, "0")}
                                 </span>
-                                <div className="flex-1 h-px bg-[#e8e8e8]" />
+                                <div className="flex-1 h-px bg-border" />
                             </div>
                             {/* Avatar */}
                             <div
@@ -88,19 +88,19 @@ export function HomeArtistsGrid({ artists }: HomeArtistsGridProps) {
                             </div>
                             {/* Name */}
                             <div className="text-center">
-                                <p className="text-sm font-bold text-[#080808] group-hover:text-[#ff2d78] transition-colors truncate max-w-full leading-tight">
+                                <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors truncate max-w-full leading-tight">
                                     {artist.nameRomanized}
                                 </p>
                                 {artist.nameHangul && (
-                                    <p className="text-[10px] text-[#6b6b6b] truncate">{artist.nameHangul}</p>
+                                    <p className="text-[10px] text-muted truncate">{artist.nameHangul}</p>
                                 )}
                                 {artist.roles && artist.roles[0] && (
-                                    <p className="text-[10px] text-[#ff6fa3] font-semibold mt-0.5 truncate">
+                                    <p className="text-[10px] text-accent font-semibold mt-0.5 truncate opacity-70">
                                         {artist.roles[0]}
                                     </p>
                                 )}
                                 {artist.agency?.name && (
-                                    <p className="text-[9px] text-[#6b6b6b] truncate mt-0.5">{artist.agency.name}</p>
+                                    <p className="text-[9px] text-muted truncate mt-0.5">{artist.agency.name}</p>
                                 )}
                             </div>
                         </Link>

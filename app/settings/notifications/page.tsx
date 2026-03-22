@@ -16,7 +16,7 @@ export const metadata = {
 function LoadingSkeleton() {
     return (
         <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-[#ff2d78] animate-spin" />
         </div>
     )
 }

@@ -25,10 +25,10 @@ const TYPE_HREF_PREFIX: Record<FavoriteType, string> = {
 }
 
 const TYPE_BADGE_COLOR: Record<FavoriteType, string> = {
-    artist: 'bg-purple-600',
-    production: 'bg-pink-600',
-    news: 'bg-cyan-700',
-    group: 'bg-blue-600',
+    artist: 'bg-[#ff2d78]',
+    production: 'bg-[#ff2d78]',
+    news: 'bg-[#6b6b6b]',
+    group: 'bg-[#080808]',
 }
 
 const TYPE_BADGE_LABEL: Record<FavoriteType, string> = {
@@ -126,7 +126,7 @@ function FavoriteCard({ item, onRemove }: { item: FavoriteItem; onRemove: () => 
     return (
         <div className="group relative">
             <Link href={href} className="block">
-                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900">
+                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface">
                     {/* Image */}
                     {image ? (
                         <Image
@@ -137,8 +137,8 @@ function FavoriteCard({ item, onRemove }: { item: FavoriteItem; onRemove: () => 
                             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 17vw"
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-pink-900/60 flex items-center justify-center">
-                            <span className="text-white text-3xl font-black">{name[0]}</span>
+                        <div className="w-full h-full bg-gradient-to-br from-[#ff2d78]/20 to-[#f5f5f7] flex items-center justify-center">
+                            <span className="text-foreground text-3xl font-black">{name[0]}</span>
                         </div>
                     )}
 
@@ -165,13 +165,13 @@ function FavoriteCard({ item, onRemove }: { item: FavoriteItem; onRemove: () => 
                             {name}
                         </p>
                         {secondaryLine && (
-                            <p className="text-zinc-400 text-[9px] mt-0.5 line-clamp-1">{secondaryLine}</p>
+                            <p className="text-white/70 text-[9px] mt-0.5 line-clamp-1">{secondaryLine}</p>
                         )}
                         {tertiaryLine && (
-                            <p className="text-zinc-500 text-[9px] mt-0.5 line-clamp-1 italic">{tertiaryLine}</p>
+                            <p className="text-white/50 text-[9px] mt-0.5 line-clamp-1 italic">{tertiaryLine}</p>
                         )}
                         {item.favoritedAt && (
-                            <p className="text-zinc-600 text-[8px] mt-1">{formatRelativeDate(item.favoritedAt)}</p>
+                            <p className="text-white/40 text-[8px] mt-1">{formatRelativeDate(item.favoritedAt)}</p>
                         )}
                     </div>
                 </div>
@@ -193,19 +193,19 @@ function FavoriteCard({ item, onRemove }: { item: FavoriteItem; onRemove: () => 
 
 function StatsBar({ counts }: { counts: Record<TabKey, number> }) {
     const stats = [
-        { key: 'artist',     label: 'Artistas',  icon: Users,       color: 'text-purple-400' },
-        { key: 'production', label: 'Produções',  icon: Clapperboard, color: 'text-pink-400' },
-        { key: 'group',      label: 'Grupos',     icon: Music2,      color: 'text-blue-400' },
-        { key: 'news',       label: 'Notícias',   icon: Newspaper,   color: 'text-cyan-400' },
+        { key: 'artist',     label: 'Artistas',  icon: Users,       color: 'text-[#ff2d78]' },
+        { key: 'production', label: 'Produções',  icon: Clapperboard, color: 'text-[#ff2d78]' },
+        { key: 'group',      label: 'Grupos',     icon: Music2,      color: 'text-foreground' },
+        { key: 'news',       label: 'Notícias',   icon: Newspaper,   color: 'text-muted' },
     ] as const
 
     return (
         <div className="grid grid-cols-4 gap-3 mb-8">
             {stats.map(({ key, label, icon: Icon, color }) => (
-                <div key={key} className="dark:bg-zinc-900/60 bg-zinc-100 rounded-xl p-3 text-center border dark:border-white/5 border-zinc-200">
+                <div key={key} className="bg-surface rounded-xl p-3 text-center border border-border">
                     <Icon className={`w-4 h-4 mx-auto mb-1 ${color}`} />
-                    <p className="text-xl font-black dark:text-white text-zinc-900">{counts[key]}</p>
-                    <p className="text-[10px] dark:text-zinc-500 text-zinc-500 font-medium">{label}</p>
+                    <p className="text-xl font-black text-foreground">{counts[key]}</p>
+                    <p className="text-[10px] text-muted font-medium">{label}</p>
                 </div>
             ))}
         </div>
@@ -254,17 +254,17 @@ export default function FavoritesPage() {
 
     if (isLoading) {
         return (
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen flex items-center justify-center">
+            <div className="py-8 md:py-12 pb-20 px-4 sm:px-12 md:px-20 min-h-screen flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="dark:text-zinc-500 text-zinc-600 font-medium">Carregando seus favoritos...</p>
+                    <div className="w-12 h-12 border-4 border-[#ff2d78] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-muted font-medium">Carregando seus favoritos...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen">
+        <div className="py-8 md:py-12 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-background">
 
             {/* Header */}
             <header className="mb-8">
@@ -274,7 +274,7 @@ export default function FavoritesPage() {
                         Meus Favoritos
                     </h1>
                 </div>
-                <p className="dark:text-zinc-500 text-zinc-600 text-sm font-medium">
+                <p className="text-muted text-sm font-medium">
                     {status === 'authenticated'
                         ? `${counts.all} ${counts.all === 1 ? 'item favoritado' : 'itens favoritados'}`
                         : 'Faça login para sincronizar seus favoritos entre dispositivos'}
@@ -283,26 +283,26 @@ export default function FavoritesPage() {
 
             {/* Unauthenticated */}
             {status === 'unauthenticated' && (
-                <div className="dark:bg-zinc-900/50 bg-zinc-50 rounded-2xl dark:border-white/5 border border-zinc-200 p-12 text-center">
+                <div className="bg-surface rounded-2xl border border-border p-12 text-center">
                     <div className="flex flex-col items-center gap-5">
-                        <div className="w-20 h-20 rounded-full dark:bg-zinc-800 bg-zinc-200 flex items-center justify-center">
-                            <LogIn className="w-10 h-10 dark:text-zinc-500 text-zinc-400" />
+                        <div className="w-20 h-20 rounded-full bg-[#e8e8e8] flex items-center justify-center">
+                            <LogIn className="w-10 h-10 text-muted" />
                         </div>
                         <div>
-                            <p className="dark:text-white text-zinc-900 font-black text-xl mb-2">
+                            <p className="text-foreground font-black text-xl mb-2">
                                 {localIds.length > 0
                                     ? `Você tem ${localIds.length} ${localIds.length === 1 ? 'favorito' : 'favoritos'} salvos localmente`
                                     : 'Nenhum favorito ainda'}
                             </p>
-                            <p className="dark:text-zinc-500 text-zinc-600 text-sm font-medium mb-6 max-w-md mx-auto">
+                            <p className="text-muted text-sm font-medium mb-6 max-w-md mx-auto">
                                 Faça login para ver seus favoritos com imagens e sincronizar entre dispositivos.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-3 justify-center">
-                            <Link href="/auth/login" className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-2">
+                            <Link href="/auth/login" className="px-8 py-3 bg-[#ff2d78] hover:opacity-90 text-white rounded-xl font-bold text-sm transition-opacity flex items-center gap-2">
                                 <LogIn className="w-4 h-4" /> Fazer Login
                             </Link>
-                            <Link href="/artists" className="px-6 py-3 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-white bg-zinc-200 hover:bg-zinc-300 text-zinc-800 rounded-xl font-bold text-sm transition-colors">
+                            <Link href="/artists" className="px-6 py-3 bg-[#e8e8e8] hover:bg-[#d0d0d0] text-foreground rounded-xl font-bold text-sm transition-colors">
                                 Explorar Artistas
                             </Link>
                         </div>
@@ -315,21 +315,21 @@ export default function FavoritesPage() {
                 <>
                     {/* Empty */}
                     {counts.all === 0 && (
-                        <div className="dark:bg-zinc-900/50 bg-zinc-50 rounded-2xl dark:border-white/5 border border-zinc-200 p-12 text-center">
+                        <div className="bg-surface rounded-2xl border border-border p-12 text-center">
                             <div className="flex flex-col items-center gap-4">
-                                <div className="w-16 h-16 rounded-full dark:bg-zinc-800 bg-zinc-200 flex items-center justify-center">
-                                    <Star className="w-8 h-8 dark:text-zinc-600 text-zinc-400" />
+                                <div className="w-16 h-16 rounded-full bg-[#e8e8e8] flex items-center justify-center">
+                                    <Star className="w-8 h-8 text-muted" />
                                 </div>
                                 <div>
-                                    <p className="dark:text-zinc-300 text-zinc-700 font-bold mb-1">Nenhum favorito ainda</p>
-                                    <p className="dark:text-zinc-600 text-zinc-500 text-sm font-medium mb-6">
+                                    <p className="text-foreground font-bold mb-1">Nenhum favorito ainda</p>
+                                    <p className="text-muted text-sm font-medium mb-6">
                                         Explore o HallyuHub e adicione seus favoritos clicando no ícone de coração
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap gap-3 justify-center">
-                                    <Link href="/artists" className="px-5 py-2.5 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 transition-colors">Ver Artistas</Link>
-                                    <Link href="/productions" className="px-5 py-2.5 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 rounded-lg font-bold text-sm transition-colors">Ver Produções</Link>
-                                    <Link href="/news" className="px-5 py-2.5 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 rounded-lg font-bold text-sm transition-colors">Ver Notícias</Link>
+                                    <Link href="/artists" className="px-5 py-2.5 bg-[#ff2d78] text-white rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Ver Artistas</Link>
+                                    <Link href="/productions" className="px-5 py-2.5 bg-[#e8e8e8] text-foreground hover:bg-[#d0d0d0] rounded-lg font-bold text-sm transition-colors">Ver Produções</Link>
+                                    <Link href="/news" className="px-5 py-2.5 bg-[#e8e8e8] text-foreground hover:bg-[#d0d0d0] rounded-lg font-bold text-sm transition-colors">Ver Notícias</Link>
                                 </div>
                             </div>
                         </div>
@@ -353,14 +353,14 @@ export default function FavoritesPage() {
                                             onClick={() => setActiveTab(tab.key)}
                                             className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all ${
                                                 isActive
-                                                    ? 'bg-purple-600 text-white'
-                                                    : 'dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-white bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900'
+                                                    ? 'bg-[#ff2d78] text-white'
+                                                    : 'bg-surface text-muted hover:bg-[#e8e8e8] hover:text-foreground border border-border'
                                             }`}
                                         >
                                             <Icon className="w-3.5 h-3.5" />
                                             {tab.label}
                                             <span className={`px-1.5 py-0.5 rounded-full text-xs font-black ${
-                                                isActive ? 'bg-white/20 text-white' : 'dark:bg-zinc-700 dark:text-zinc-400 bg-zinc-200 text-zinc-500'
+                                                isActive ? 'bg-white/20 text-white' : 'bg-[#e8e8e8] text-muted'
                                             }`}>{count}</span>
                                         </button>
                                     )
@@ -380,7 +380,7 @@ export default function FavoritesPage() {
                                 </div>
                             ) : (
                                 <div className="text-center py-16">
-                                    <p className="dark:text-zinc-500 text-zinc-500 font-medium">Nenhum favorito nessa categoria</p>
+                                    <p className="text-muted font-medium">Nenhum favorito nessa categoria</p>
                                 </div>
                             )}
                         </>

@@ -68,7 +68,7 @@ export function BottomNav() {
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 h-[62px] bg-white border-t border-[#e8e8e8] flex items-center z-[200] sm:hidden"
+            className="fixed bottom-0 left-0 right-0 h-[62px] bg-background border-t border-border flex items-center z-[200] sm:hidden"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
             {NAV_ITEMS.map((item) => {
@@ -78,7 +78,7 @@ export function BottomNav() {
                         key={item.href}
                         href={item.href}
                         className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${
-                            isActive ? 'text-[#ff2d78]' : 'text-[#6b6b6b]'
+                            isActive ? 'text-[#ff2d78]' : 'text-muted'
                         }`}
                     >
                         {item.icon}

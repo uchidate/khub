@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposta L — Painel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #ffffff;
+  --bg2:    #f5f5f7;
+  --black:  #080808;
+  --pink:   #ff2d78;
+  --pink2:  #ff6fa3;
+  --pink3:  #fff0f5;
+  --text:   #1a1a1a;
+  --muted:  #6b6b6b;
+  --border: #e8e8e8;
+  --surf:   #fafafa;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Sora',sans-serif; background:var(--bg); color:var(--text); }
+
+/* ─── TICKER ─── */
+.ticker { background:var(--black); display:flex; align-items:center; height:32px; overflow:hidden; }
+.ticker-lbl { padding:0 1rem; font-size:.56rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; background:var(--pink); color:#fff; white-space:nowrap; height:100%; display:flex; align-items:center; flex-shrink:0; }
+.ticker-scroll { overflow:hidden; flex:1; }
+.ticker-track { display:flex; animation:ticker 36s linear infinite; width:max-content; }
+.t-item { padding:0 2.5rem; font-size:.66rem; font-weight:500; color:#888; letter-spacing:.03em; white-space:nowrap; border-right:1px solid #1e1e1e; height:32px; display:flex; align-items:center; gap:.7rem; }
+.t-item b { color:var(--pink2); font-weight:600; }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* ─── NAV ─── */
+nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 3rem; height:60px; background:#fff; border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:100;
+}
+.logo { display:flex; align-items:center; gap:.875rem; cursor:pointer; }
+.orbit-mark svg { width:32px; height:32px; }
+.logo-text { font-size:.95rem; font-weight:700; letter-spacing:-.02em; color:var(--black); }
+.logo-text span { color:var(--pink); }
+.nav-links { display:flex; gap:.1rem; }
+.nav-links a { font-size:.73rem; font-weight:500; color:var(--muted); text-decoration:none; padding:.38rem .8rem; border-radius:999px; transition:.15s; }
+.nav-links a:hover { color:var(--text); background:var(--bg2); }
+.nav-right { display:flex; align-items:center; gap:.65rem; }
+.nav-search { display:flex; align-items:center; gap:.5rem; background:var(--bg2); border:1px solid var(--border); border-radius:999px; padding:.35rem .8rem; font-size:.72rem; color:var(--muted); cursor:text; }
+.nav-search svg { width:12px; height:12px; opacity:.5; }
+.nav-sign { font-size:.73rem; font-weight:600; color:var(--muted); text-decoration:none; }
+.nav-cta { background:var(--black); color:#fff; border:none; border-radius:999px; padding:.45rem 1.2rem; font-size:.73rem; font-weight:600; cursor:pointer; font-family:'Sora',sans-serif; transition:.2s; }
+.nav-cta:hover { background:var(--pink); }
+
+/* ─── CATEGORIES ─── */
+.cat-bar { border-bottom:1px solid var(--border); overflow:hidden; }
+.cat-track { display:flex; padding:.75rem 0; animation:marquee 25s linear infinite; width:max-content; }
+.cat-pill { display:flex; align-items:center; gap:.45rem; padding:.35rem 1.1rem; border-right:1px solid var(--border); font-size:.7rem; font-weight:600; color:var(--muted); white-space:nowrap; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; transition:.15s; }
+.cat-pill:hover { color:var(--pink); }
+.cpd { width:5px; height:5px; border-radius:50%; background:var(--pink); opacity:0; transition:.15s; }
+.cat-pill:hover .cpd { opacity:1; }
+@keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* ══════════════════════════════
+   THREE-COLUMN DASHBOARD
+   Opens the page — no hero copy
+══════════════════════════════ */
+.dashboard {
+  display:grid; grid-template-columns:1.2fr 1.4fr 1fr;
+  min-height:calc(100vh - 92px);
+  border-bottom:1px solid var(--border);
+}
+
+/* ── COL 1: Artistas ── */
+.col-artists {
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+}
+.col-head {
+  padding:1.1rem 1.5rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.col-title { font-size:.62rem; font-weight:700; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:.5rem; }
+.live-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; animation:live-pulse 1.5s ease-in-out infinite; }
+@keyframes live-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)} 50%{box-shadow:0 0 0 4px rgba(34,197,94,0)} }
+.col-link { font-size:.62rem; font-weight:600; color:var(--muted); text-decoration:none; transition:.15s; }
+.col-link:hover { color:var(--pink); }
+
+/* Artist cards: stacked vertically */
+.artist-stack { flex:1; overflow-y:auto; }
+.art-item {
+  display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem;
+  border-bottom:1px solid var(--border); cursor:pointer; transition:.15s;
+}
+.art-item:hover { background:var(--pink3); }
+.art-item:hover .art-name { color:var(--pink); }
+.art-rank { font-size:.58rem; font-weight:700; color:var(--muted); width:16px; flex-shrink:0; }
+.art-av {
+  width:42px; height:42px; border-radius:999px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.6rem; font-weight:700; color:#fff; letter-spacing:.04em; position:relative;
+}
+.av1{background:linear-gradient(135deg,var(--pink),var(--pink2))}
+.av2{background:linear-gradient(135deg,#6d28d9,#a855f7)}
+.av3{background:linear-gradient(135deg,#0ea5e9,#38bdf8)}
+.av4{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.av5{background:linear-gradient(135deg,#10b981,#0ea5e9)}
+.av6{background:linear-gradient(135deg,#ec4899,#f59e0b)}
+.av7{background:linear-gradient(135deg,var(--pink2),#a855f7)}
+.art-info { flex:1; }
+.art-name { font-size:.88rem; font-weight:700; color:var(--text); letter-spacing:-.01em; transition:.15s; }
+.art-sub { font-size:.62rem; color:var(--muted); margin-top:.1rem; }
+.art-right { text-align:right; }
+.art-fans { font-size:.8rem; font-weight:800; color:var(--black); letter-spacing:-.03em; }
+.art-fans span { color:var(--pink); font-size:.6rem; }
+.art-badge { font-size:.54rem; font-weight:700; padding:.15rem .4rem; border-radius:4px; margin-top:.2rem; display:inline-block; }
+.ab-hot { background:#ffe4ee; color:var(--pink); }
+.ab-up { background:#f0fdf4; color:#16a34a; }
+.ab-new { background:var(--pink3); color:var(--pink); }
+
+/* Col 1 bottom: spotlight card */
+.spotlight-mini {
+  padding:1.25rem 1.5rem; background:linear-gradient(160deg,var(--pink3),var(--bg));
+  border-top:1px solid var(--border);
+}
+.sm-label { font-size:.56rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:.75rem; }
+.sm-name { font-size:1.5rem; font-weight:800; letter-spacing:-.05em; color:var(--black); line-height:1; }
+.sm-name span { color:var(--pink); }
+.sm-sub { font-size:.7rem; color:var(--muted); margin-top:.3rem; margin-bottom:.875rem; line-height:1.5; }
+.sm-btn { background:var(--black); color:#fff; border:none; border-radius:999px; padding:.55rem 1.25rem; font-size:.72rem; font-weight:600; cursor:pointer; font-family:'Sora',sans-serif; transition:.2s; }
+.sm-btn:hover { background:var(--pink); }
+
+/* ── COL 2: Notícias ── */
+.col-news {
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+}
+/* Featured news at top */
+.news-feature {
+  flex:0 0 auto; border-bottom:1px solid var(--border); cursor:pointer;
+  background:linear-gradient(160deg, var(--pink3) 0%, var(--bg) 60%);
+  padding:1.75rem 2rem; position:relative; overflow:hidden; transition:.15s;
+}
+.news-feature:hover .nf-title { color:var(--pink); }
+.nf-decor {
+  position:absolute; top:-1rem; right:1rem;
+  font-size:6rem; font-weight:800; color:rgba(255,45,120,.06);
+  line-height:1; letter-spacing:-.05em; user-select:none;
+}
+.nf-cat { font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--pink); margin-bottom:.75rem; }
+.nf-title { font-size:1.35rem; font-weight:800; letter-spacing:-.03em; line-height:1.2; color:var(--black); transition:.15s; margin-bottom:.75rem; }
+.nf-meta { font-size:.6rem; color:var(--muted); display:flex; gap:.5rem; align-items:center; }
+.nf-dot { width:3px; height:3px; border-radius:50%; background:var(--muted); }
+.nf-excerpt { font-size:.8rem; color:var(--muted); line-height:1.6; margin-top:.5rem; }
+
+/* News tabs -->
+.news-tabs-bar { display:flex; padding:.75rem 2rem; border-bottom:1px solid var(--border); gap:.25rem; }
+.ntab { font-size:.68rem; font-weight:600; padding:.32rem .75rem; border-radius:999px; cursor:pointer; border:none; font-family:'Sora',sans-serif; background:none; color:var(--muted); transition:.15s; }
+.ntab.on { background:var(--pink); color:#fff; }
+.ntab:hover:not(.on) { background:var(--bg2); }
+
+/* News list */
+.news-list { flex:1; }
+.ni {
+  display:flex; align-items:flex-start; gap:1rem; padding:1.1rem 2rem;
+  border-bottom:1px solid var(--border); cursor:pointer; transition:.15s;
+}
+.ni:hover { background:var(--surf); }
+.ni:hover .ni-title { color:var(--pink); }
+.ni-n { font-size:.56rem; font-weight:700; color:var(--muted); width:16px; flex-shrink:0; padding-top:.25rem; }
+.ni-body { flex:1; }
+.ni-cat { font-size:.54rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.35rem; }
+.c-kp{color:var(--pink)} .c-kd{color:#7c3aed} .c-cu{color:#0ea5e9} .c-kb{color:#f59e0b}
+.ni-title { font-size:.85rem; font-weight:600; color:var(--text); line-height:1.4; letter-spacing:-.01em; transition:.15s; }
+.ni-meta { font-size:.58rem; color:var(--muted); margin-top:.4rem; display:flex; gap:.4rem; }
+.ni-img { width:60px; height:46px; border-radius:8px; flex-shrink:0; background:var(--bg2); display:flex; align-items:center; justify-content:center; font-size:.6rem; font-weight:700; color:var(--muted); }
+
+/* ── COL 3: Right ── */
+.col-right { display:flex; flex-direction:column; }
+
+/* Stats */
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); }
+.sg-cell { padding:1.1rem 1.25rem; border-right:1px solid var(--border); border-bottom:1px solid var(--border); }
+.sg-cell:nth-child(2) { border-right:none; }
+.sg-cell:nth-child(3) { border-bottom:none; }
+.sg-cell:nth-child(4) { border-right:none; border-bottom:none; }
+.sg-val { font-size:1.4rem; font-weight:800; letter-spacing:-.05em; color:var(--black); line-height:1; }
+.sg-val span { color:var(--pink); font-size:.9rem; }
+.sg-lbl { font-size:.56rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:.2rem; }
+
+/* Productions mini */
+.prods-col { border-bottom:1px solid var(--border); }
+.wgt-h { padding:1rem 1.25rem; border-bottom:1px solid var(--border); font-size:.6rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.prod-mini {
+  display:flex; align-items:center; gap:.75rem; padding:.875rem 1.25rem;
+  border-bottom:1px solid var(--border); cursor:pointer; transition:.15s;
+}
+.prod-mini:last-child { border-bottom:none; }
+.prod-mini:hover { background:var(--surf); }
+.prod-mini:hover .pm-title { color:var(--pink); }
+.pm-img { width:36px; height:36px; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.5rem; font-weight:700; letter-spacing:.03em; }
+.pmi-a{background:var(--pink3);color:var(--pink)}
+.pmi-b{background:#f3e8ff;color:#7c3aed}
+.pmi-c{background:#fef3c7;color:#d97706}
+.pmi-d{background:#dcfce7;color:#16a34a}
+.pmi-e{background:#e0f2fe;color:#0ea5e9}
+.pm-info { flex:1; }
+.pm-title { font-size:.8rem; font-weight:700; color:var(--text); line-height:1.3; transition:.15s; }
+.pm-sub { font-size:.6rem; color:var(--muted); margin-top:.1rem; }
+.pm-stars { font-size:.68rem; font-weight:700; color:#f59e0b; flex-shrink:0; }
+
+/* Upcoming */
+.upcoming { flex:1; }
+.up-item { display:flex; align-items:flex-start; gap:.75rem; padding:.875rem 1.25rem; border-bottom:1px solid var(--border); cursor:pointer; transition:.15s; }
+.up-item:hover { background:var(--surf); }
+.up-date { text-align:center; flex-shrink:0; width:34px; }
+.up-day { font-size:1.1rem; font-weight:800; letter-spacing:-.04em; color:var(--black); line-height:1; }
+.up-mon { font-size:.56rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--pink); }
+.up-info { flex:1; }
+.up-title { font-size:.8rem; font-weight:600; color:var(--text); line-height:1.35; }
+.up-sub { font-size:.6rem; color:var(--muted); margin-top:.15rem; }
+
+/* ─── HORIZONTAL PRODUCTIONS ─── */
+.prods-section { padding:2.5rem 3rem; border-bottom:1px solid var(--border); }
+.sh { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem; }
+.st { font-size:1.5rem; font-weight:800; letter-spacing:-.04em; color:var(--black); }
+.st span { color:var(--pink); }
+.sl { font-size:.75rem; font-weight:700; color:var(--muted); text-decoration:none; transition:.15s; }
+.sl:hover { color:var(--pink); }
+.prod-scroll { display:flex; gap:1rem; overflow-x:auto; margin:0 -3rem; padding:0 3rem; scrollbar-width:none; }
+.prod-scroll::-webkit-scrollbar { display:none; }
+.pc { flex-shrink:0; width:220px; border:1.5px solid var(--border); border-radius:14px; overflow:hidden; cursor:pointer; transition:.2s; background:#fff; }
+.pc:hover { border-color:var(--pink); box-shadow:0 4px 20px rgba(255,45,120,.1); transform:translateY(-2px); }
+.pc-img { height:110px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; letter-spacing:-.05em; opacity:.2; }
+.pi-a{background:var(--pink3);color:var(--pink)} .pi-b{background:#f3e8ff;color:#7c3aed}
+.pi-c{background:#fef3c7;color:#d97706} .pi-d{background:#dcfce7;color:#16a34a} .pi-e{background:#e0f2fe;color:#0ea5e9}
+.pc-body { padding:.875rem 1rem; }
+.pc-type { font-size:.54rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:.3rem; }
+.pc-title { font-size:.82rem; font-weight:700; color:var(--text); line-height:1.3; }
+.pc-foot { padding:.7rem 1rem; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.pc-stars { font-size:.68rem; font-weight:700; color:#f59e0b; }
+.pc-tag { font-size:.54rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:.16rem .5rem; border-radius:999px; background:rgba(255,45,120,.1); color:var(--pink); }
+.pc-tag.drama{background:rgba(124,58,237,.1);color:#7c3aed} .pc-tag.film{background:rgba(14,165,233,.1);color:#0ea5e9}
+
+/* CTA */
+.cta-wrap { padding:2.5rem 3rem; }
+.cta-banner { border-radius:20px; overflow:hidden; background:var(--black); padding:3rem; display:grid; grid-template-columns:1fr auto; align-items:center; gap:3rem; position:relative; }
+.cta-banner::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 70% 50%, rgba(255,45,120,.28) 0%, transparent 60%); }
+.cta-banner::after { content:'한'; position:absolute; right:140px; top:50%; transform:translateY(-50%); font-size:8rem; font-weight:800; color:rgba(255,111,163,.05); line-height:1; pointer-events:none; }
+.cta-c { position:relative; }
+.cta-ov { font-size:.58rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--pink2); margin-bottom:.7rem; }
+.cta-t { font-size:2rem; font-weight:800; letter-spacing:-.05em; color:#fff; line-height:1.05; margin-bottom:.7rem; }
+.cta-t em { font-style:normal; color:var(--pink2); }
+.cta-s { font-size:.82rem; color:#666; line-height:1.6; max-width:420px; }
+.cta-acts { position:relative; display:flex; flex-direction:column; gap:.6rem; align-items:flex-end; }
+.cta-w { background:#fff; color:var(--black); border:none; border-radius:999px; padding:.75rem 1.6rem; font-size:.82rem; font-weight:700; cursor:pointer; font-family:'Sora',sans-serif; transition:.2s; white-space:nowrap; }
+.cta-w:hover { background:var(--pink); color:#fff; }
+.cta-g { background:rgba(255,255,255,.08); color:#fff; border:1.5px solid rgba(255,255,255,.15); border-radius:999px; padding:.75rem 1.6rem; font-size:.82rem; font-weight:600; cursor:pointer; font-family:'Sora',sans-serif; transition:.2s; white-space:nowrap; }
+.cta-g:hover { background:rgba(255,255,255,.15); }
+
+/* FOOTER */
+.footer-strip { background:var(--black); color:#fff; display:flex; align-items:center; justify-content:space-between; padding:1.25rem 3rem; border-top:1px solid #1a1a1a; }
+.footer-logo { font-size:.9rem; font-weight:800; letter-spacing:-.04em; }
+.footer-logo span { color:var(--pink); }
+.footer-links { display:flex; gap:1.75rem; }
+.footer-links a { font-size:.66rem; color:#555; text-decoration:none; font-weight:500; transition:.15s; }
+.footer-links a:hover { color:var(--pink); }
+.footer-legal { font-size:.58rem; color:#444; }
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-lbl">Ao vivo</div>
+  <div class="ticker-scroll">
+    <div class="ticker-track">
+      <div class="t-item"><b>BTS</b> confirma retorno em 2025</div>
+      <div class="t-item"><b>BLACKPINK</b> lança álbum surpresa</div>
+      <div class="t-item"><b>Squid Game 3</b> estreia em dezembro</div>
+      <div class="t-item"><b>Parasita</b> — 5 anos do Oscar</div>
+      <div class="t-item"><b>NewJeans</b> é a mais seguida do mês</div>
+      <div class="t-item"><b>K-beauty</b> cresce 48% no Brasil</div>
+      <div class="t-item"><b>BTS</b> confirma retorno em 2025</div>
+      <div class="t-item"><b>BLACKPINK</b> lança álbum surpresa</div>
+      <div class="t-item"><b>Squid Game 3</b> estreia em dezembro</div>
+      <div class="t-item"><b>Parasita</b> — 5 anos do Oscar</div>
+      <div class="t-item"><b>NewJeans</b> é a mais seguida do mês</div>
+      <div class="t-item"><b>K-beauty</b> cresce 48% no Brasil</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="orbit-mark">
+      <svg viewBox="0 0 38 38" fill="none">
+        <rect x="5" y="8" width="6" height="22" rx="3" fill="#080808"/>
+        <rect x="27" y="8" width="6" height="22" rx="3" fill="#080808"/>
+        <path d="M11 19 Q19 13 27 19" stroke="#ff2d78" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="19" cy="13.5" r="2.5" fill="#ff2d78"/>
+      </svg>
+    </div>
+    <div class="logo-text">Hallyu<span>Hub</span></div>
+  </div>
+  <nav class="nav-links">
+    <a href="#">Artistas</a>
+    <a href="#">Produções</a>
+    <a href="#">Notícias</a>
+    <a href="#">Blog</a>
+    <a href="#">Comunidade</a>
+  </nav>
+  <div class="nav-right">
+    <div class="nav-search">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Buscar…
+    </div>
+    <a class="nav-sign" href="#">Entrar</a>
+    <button class="nav-cta">Criar conta</button>
+  </div>
+</nav>
+
+<!-- CATEGORIES -->
+<div class="cat-bar">
+  <div class="cat-track">
+    <div class="cat-pill"><div class="cpd"></div>K-pop</div>
+    <div class="cat-pill"><div class="cpd"></div>K-drama</div>
+    <div class="cat-pill"><div class="cpd"></div>K-film</div>
+    <div class="cat-pill"><div class="cpd"></div>K-beauty</div>
+    <div class="cat-pill"><div class="cpd"></div>Artistas solo</div>
+    <div class="cat-pill"><div class="cpd"></div>Grupos</div>
+    <div class="cat-pill"><div class="cpd"></div>Reality shows</div>
+    <div class="cat-pill"><div class="cpd"></div>Webtoons</div>
+    <div class="cat-pill"><div class="cpd"></div>Fandom</div>
+    <div class="cat-pill"><div class="cpd"></div>Awards</div>
+    <div class="cat-pill"><div class="cpd"></div>K-pop</div>
+    <div class="cat-pill"><div class="cpd"></div>K-drama</div>
+    <div class="cat-pill"><div class="cpd"></div>K-film</div>
+    <div class="cat-pill"><div class="cpd"></div>K-beauty</div>
+    <div class="cat-pill"><div class="cpd"></div>Artistas solo</div>
+    <div class="cat-pill"><div class="cpd"></div>Grupos</div>
+    <div class="cat-pill"><div class="cpd"></div>Reality shows</div>
+    <div class="cat-pill"><div class="cpd"></div>Webtoons</div>
+    <div class="cat-pill"><div class="cpd"></div>Fandom</div>
+    <div class="cat-pill"><div class="cpd"></div>Awards</div>
+  </div>
+</div>
+
+<!-- ══ THREE-COLUMN DASHBOARD ══ -->
+<div class="dashboard">
+
+  <!-- COL 1: ARTISTAS EM ALTA -->
+  <div class="col-artists">
+    <div class="col-head">
+      <div class="col-title"><div class="live-dot"></div>Artistas em alta</div>
+      <a class="col-link" href="#">Ver todos →</a>
+    </div>
+    <div class="artist-stack">
+      <div class="art-item">
+        <div class="art-rank">01</div>
+        <div class="art-av av1">BTS</div>
+        <div class="art-info"><div class="art-name">BTS</div><div class="art-sub">Boy Group · BigHit Music</div></div>
+        <div class="art-right"><div class="art-fans">89<span>K</span></div><div class="art-badge ab-hot">HOT</div></div>
+      </div>
+      <div class="art-item">
+        <div class="art-rank">02</div>
+        <div class="art-av av2">BP</div>
+        <div class="art-info"><div class="art-name">BLACKPINK</div><div class="art-sub">Girl Group · YG Ent.</div></div>
+        <div class="art-right"><div class="art-fans">72<span>K</span></div><div class="art-badge ab-up">↑2</div></div>
+      </div>
+      <div class="art-item">
+        <div class="art-rank">03</div>
+        <div class="art-av av3">NJ</div>
+        <div class="art-info"><div class="art-name">NewJeans</div><div class="art-sub">Girl Group · ADOR</div></div>
+        <div class="art-right"><div class="art-fans">54<span>K</span></div><div class="art-badge ab-new">NEW</div></div>
+      </div>
+      <div class="art-item">
+        <div class="art-rank">04</div>
+        <div class="art-av av4">TWC</div>
+        <div class="art-info"><div class="art-name">TWICE</div><div class="art-sub">Girl Group · JYP Ent.</div></div>
+        <div class="art-right"><div class="art-fans">64<span>K</span></div><div class="art-badge ab-up">↑1</div></div>
+      </div>
+      <div class="art-item">
+        <div class="art-rank">05</div>
+        <div class="art-av av5">IVE</div>
+        <div class="art-info"><div class="art-name">IVE</div><div class="art-sub">Girl Group · Starship</div></div>
+        <div class="art-right"><div class="art-fans">41<span>K</span></div><div class="art-badge ab-new">NEW</div></div>
+      </div>
+      <div class="art-item">
+        <div class="art-rank">06</div>
+        <div class="art-av av6">EXO</div>
+        <div class="art-info"><div class="art-name">EXO</div><div class="art-sub">Boy Group · SM Ent.</div></div>
+        <div class="art-right"><div class="art-fans">51<span>K</span></div><div class="art-badge ab-up">↑3</div></div>
+      </div>
+      <div class="art-item">
+        <div class="art-rank">07</div>
+        <div class="art-av av7">SHN</div>
+        <div class="art-info"><div class="art-name">SHINee</div><div class="art-sub">Boy Group · SM Ent.</div></div>
+        <div class="art-right"><div class="art-fans">38<span>K</span></div><div class="art-badge ab-up">↑2</div></div>
+      </div>
+    </div>
+    <!-- Spotlight at bottom -->
+    <div class="spotlight-mini">
+      <div class="sm-label">Artista em destaque · Esta semana</div>
+      <div class="sm-name">BTS<span>.</span></div>
+      <div class="sm-sub">7 integrantes. 89K seguidores. O maior grupo K-pop de todos os tempos.</div>
+      <button class="sm-btn">Ver perfil →</button>
+    </div>
+  </div>
+
+  <!-- COL 2: NOTÍCIAS -->
+  <div class="col-news">
+    <!-- Featured at top -->
+    <div class="news-feature">
+      <div class="nf-decor">한류</div>
+      <div class="nf-cat">K-pop · Destaque</div>
+      <div class="nf-title">BTS confirma retorno completo do grupo para segundo semestre de 2025</div>
+      <div class="nf-meta">
+        <span>12 mar 2025</span>
+        <span class="nf-dot"></span>
+        <span>8 min de leitura</span>
+      </div>
+      <div class="nf-excerpt">Os sete integrantes anunciaram oficialmente seu retorno após os períodos de serviço militar obrigatório.</div>
+    </div>
+
+    <div class="news-tabs-bar">
+      <button class="ntab on">Todos</button>
+      <button class="ntab">K-pop</button>
+      <button class="ntab">K-drama</button>
+      <button class="ntab">Cultura</button>
+      <button class="ntab">K-beauty</button>
+    </div>
+
+    <div class="news-list">
+      <div class="ni"><div class="ni-n">02</div><div class="ni-body"><div class="ni-cat c-kd">K-drama</div><div class="ni-title">Squid Game 3 tem data confirmada e revela novos personagens</div><div class="ni-meta"><span>10 mar 2025</span><span>·</span><span>5 min</span></div></div><div class="ni-img">SQ</div></div>
+      <div class="ni"><div class="ni-n">03</div><div class="ni-body"><div class="ni-cat c-cu">Cultura</div><div class="ni-title">Hallyu Wave: o fenômeno cultural que transforma o Brasil em 2025</div><div class="ni-meta"><span>9 mar 2025</span><span>·</span><span>10 min</span></div></div><div class="ni-img">HW</div></div>
+      <div class="ni"><div class="ni-n">04</div><div class="ni-body"><div class="ni-cat c-kb">K-beauty</div><div class="ni-title">Skincare coreano cresce 48% no Brasil em 2024</div><div class="ni-meta"><span>7 mar 2025</span><span>·</span><span>6 min</span></div></div><div class="ni-img">KB</div></div>
+      <div class="ni"><div class="ni-n">05</div><div class="ni-body"><div class="ni-cat c-kp">K-pop</div><div class="ni-title">NewJeans vs IVE: a nova geração que domina o K-pop em 2025</div><div class="ni-meta"><span>5 mar 2025</span><span>·</span><span>7 min</span></div></div><div class="ni-img">NJ</div></div>
+      <div class="ni"><div class="ni-n">06</div><div class="ni-body"><div class="ni-cat c-kd">K-drama</div><div class="ni-title">Crash Landing on You — por que o drama continua favorito dos brasileiros</div><div class="ni-meta"><span>4 mar 2025</span><span>·</span><span>7 min</span></div></div><div class="ni-img">CL</div></div>
+    </div>
+  </div>
+
+  <!-- COL 3: STATS + PRODUÇÕES + AGENDA -->
+  <div class="col-right">
+    <!-- Stats 2x2 -->
+    <div class="stats-grid">
+      <div class="sg-cell"><div class="sg-val">840<span>+</span></div><div class="sg-lbl">Artistas</div></div>
+      <div class="sg-cell"><div class="sg-val">3.6<span>K</span></div><div class="sg-lbl">Produções</div></div>
+      <div class="sg-cell"><div class="sg-val">1.2<span>M</span></div><div class="sg-lbl">Fãs</div></div>
+      <div class="sg-cell"><div class="sg-val">12<span>K</span></div><div class="sg-lbl">Posts</div></div>
+    </div>
+
+    <!-- Top K-dramas -->
+    <div class="prods-col">
+      <div class="wgt-h">Top K-dramas</div>
+      <div class="prod-mini"><div class="pm-img pmi-a">CLOY</div><div class="pm-info"><div class="pm-title">Crash Landing on You</div><div class="pm-sub">Romance · Netflix</div></div><div class="pm-stars">★ 9.8</div></div>
+      <div class="prod-mini"><div class="pm-img pmi-b">SQ</div><div class="pm-info"><div class="pm-title">Squid Game</div><div class="pm-sub">Thriller · Netflix</div></div><div class="pm-stars">★ 9.6</div></div>
+      <div class="prod-mini"><div class="pm-img pmi-c">AOS</div><div class="pm-info"><div class="pm-title">Alchemy of Souls</div><div class="pm-sub">Fantasia · tvN</div></div><div class="pm-stars">★ 9.4</div></div>
+      <div class="prod-mini"><div class="pm-img pmi-d">KIT</div><div class="pm-info"><div class="pm-title">Kingdom</div><div class="pm-sub">Histórico · Netflix</div></div><div class="pm-stars">★ 9.2</div></div>
+    </div>
+
+    <!-- Upcoming / Novidades -->
+    <div class="upcoming">
+      <div class="wgt-h">Próximos lançamentos</div>
+      <div class="up-item">
+        <div class="up-date"><div class="up-day">28</div><div class="up-mon">Mar</div></div>
+        <div class="up-info"><div class="up-title">NewJeans — "How Sweet" MV</div><div class="up-sub">Single · ADOR</div></div>
+      </div>
+      <div class="up-item">
+        <div class="up-date"><div class="up-day">05</div><div class="up-mon">Abr</div></div>
+        <div class="up-info"><div class="up-title">Squid Game 3 — Netflix</div><div class="up-sub">Série · Lee Jung-jae</div></div>
+      </div>
+      <div class="up-item">
+        <div class="up-date"><div class="up-day">12</div><div class="up-mon">Abr</div></div>
+        <div class="up-info"><div class="up-title">IVE — novo álbum</div><div class="up-sub">Álbum · Starship</div></div>
+      </div>
+      <div class="up-item">
+        <div class="up-date"><div class="up-day">20</div><div class="up-mon">Abr</div></div>
+        <div class="up-info"><div class="up-title">TWICE — JAPAN TOUR final</div><div class="up-sub">Show · JYP Ent.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTIONS CAROUSEL -->
+<div class="prods-section">
+  <div class="sh">
+    <div class="st">Produções em <span>destaque</span></div>
+    <a class="sl" href="#">Ver catálogo →</a>
+  </div>
+  <div class="prod-scroll">
+    <div class="pc"><div class="pc-img pi-a">CLOY</div><div class="pc-body"><div class="pc-type">K-Drama · 2019</div><div class="pc-title">Crash Landing on You</div></div><div class="pc-foot"><div class="pc-stars">★ 9.8</div><div class="pc-tag drama">Drama</div></div></div>
+    <div class="pc"><div class="pc-img pi-b">SQ</div><div class="pc-body"><div class="pc-type">K-Series · 2021</div><div class="pc-title">Squid Game</div></div><div class="pc-foot"><div class="pc-stars">★ 9.6</div><div class="pc-tag">Série</div></div></div>
+    <div class="pc"><div class="pc-img pi-c">PAR</div><div class="pc-body"><div class="pc-type">K-Film · 2019</div><div class="pc-title">Parasita</div></div><div class="pc-foot"><div class="pc-stars">★ 9.5</div><div class="pc-tag film">Filme</div></div></div>
+    <div class="pc"><div class="pc-img pi-d">AOS</div><div class="pc-body"><div class="pc-type">K-Drama · 2022</div><div class="pc-title">Alchemy of Souls</div></div><div class="pc-foot"><div class="pc-stars">★ 9.4</div><div class="pc-tag drama">Drama</div></div></div>
+    <div class="pc"><div class="pc-img pi-e">KIT</div><div class="pc-body"><div class="pc-type">K-Drama · 2019</div><div class="pc-title">Kingdom</div></div><div class="pc-foot"><div class="pc-stars">★ 9.2</div><div class="pc-tag drama">Drama</div></div></div>
+    <div class="pc"><div class="pc-img pi-a">MW</div><div class="pc-body"><div class="pc-type">K-Drama · 2023</div><div class="pc-title">My Demon</div></div><div class="pc-foot"><div class="pc-stars">★ 9.0</div><div class="pc-tag drama">Drama</div></div></div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-wrap">
+  <div class="cta-banner">
+    <div class="cta-c">
+      <div class="cta-ov">Comunidade HallyuHub</div>
+      <div class="cta-t">Junte-se a mais de<br><em>1,2 milhões</em> de fãs.</div>
+      <div class="cta-s">Crie seu perfil, favorite artistas, acompanhe produções e conecte-se com outros fãs no Brasil.</div>
+    </div>
+    <div class="cta-acts">
+      <button class="cta-w">Criar conta grátis</button>
+      <button class="cta-g">Saiba mais</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer-strip">
+  <div class="footer-logo">Hallyu<span>Hub</span></div>
+  <div class="footer-links">
+    <a href="#">Sobre</a><a href="#">Blog</a><a href="#">Comunidade</a><a href="#">Contato</a>
+  </div>
+  <div class="footer-legal">© 2025 HallyuHub. Todos os direitos reservados.</div>
+</div>
+
+</body>
+</html>

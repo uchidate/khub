@@ -56,7 +56,7 @@ async function fetchEntityData(type: string, id: string): Promise<EntityData | n
 
 const typeIcon = { ARTIST: User, GROUP: Users, PRODUCTION: Film }
 const typeLabel = { ARTIST: 'Artista', GROUP: 'Grupo', PRODUCTION: 'Produção' }
-const typeColor = { ARTIST: 'text-purple-400', GROUP: 'text-pink-400', PRODUCTION: 'text-cyan-400' }
+const typeColor = { ARTIST: 'text-[#ff2d78]', GROUP: 'text-pink-400', PRODUCTION: 'text-cyan-400' }
 
 export default function ListDetailPage() {
     const params = useParams()
@@ -116,8 +116,8 @@ export default function ListDetailPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-zinc-600 animate-spin" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-muted animate-spin" />
             </div>
         )
     }
@@ -125,39 +125,39 @@ export default function ListDetailPage() {
     if (!list) return null
 
     return (
-        <div className="min-h-screen bg-black pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+        <div className="min-h-screen bg-background py-8 md:py-12 pb-20 px-4 sm:px-12 md:px-20">
             <div className="max-w-4xl mx-auto">
-                <Link href="/lists" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6">
+                <Link href="/lists" className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-6">
                     <ArrowLeft className="w-4 h-4" />
                     Minhas Listas
                 </Link>
 
                 {/* Header */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 mb-6">
+                <div className="bg-background rounded-2xl border border-border p-6 mb-6">
                     {editing ? (
                         <div className="space-y-4">
                             <input
                                 type="text"
                                 value={editName}
                                 onChange={e => setEditName(e.target.value)}
-                                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white text-lg font-bold focus:outline-none focus:border-purple-500"
+                                className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-lg font-bold focus:outline-none focus:border-accent"
                             />
                             <textarea
                                 value={editDesc}
                                 onChange={e => setEditDesc(e.target.value.slice(0, 500))}
                                 rows={2}
-                                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 resize-none"
+                                className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-accent resize-none"
                                 placeholder="Descrição..."
                             />
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" checked={editPublic} onChange={e => setEditPublic(e.target.checked)} className="w-4 h-4 accent-purple-600" />
-                                <span className="text-sm text-zinc-300">Lista pública</span>
+                                <span className="text-sm text-foreground">Lista pública</span>
                             </label>
                             <div className="flex gap-3">
-                                <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white text-sm font-bold transition-colors">
+                                <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg bg-surface text-muted hover:text-foreground hover:bg-[#e8e8e8] text-sm font-bold transition-colors">
                                     <X className="w-4 h-4" />
                                 </button>
-                                <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition-colors flex items-center gap-2">
+                                <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[#ff2d78] hover:bg-[#ff2d78] text-white text-sm font-bold transition-colors flex items-center gap-2">
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                     Salvar
                                 </button>
@@ -166,9 +166,9 @@ export default function ListDetailPage() {
                     ) : (
                         <div className="flex items-start gap-4">
                             <div className="flex-1">
-                                <h1 className="text-2xl font-black text-white mb-1">{list.name}</h1>
-                                {list.description && <p className="text-zinc-400 text-sm">{list.description}</p>}
-                                <div className="flex items-center gap-3 text-xs text-zinc-500 mt-2">
+                                <h1 className="text-2xl font-black text-foreground mb-1">{list.name}</h1>
+                                {list.description && <p className="text-muted text-sm">{list.description}</p>}
+                                <div className="flex items-center gap-3 text-xs text-muted mt-2">
                                     <span>{list.items.length} item{list.items.length !== 1 ? 's' : ''}</span>
                                     <span className="flex items-center gap-1">
                                         {list.isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
@@ -176,7 +176,7 @@ export default function ListDetailPage() {
                                     </span>
                                 </div>
                             </div>
-                            <button onClick={() => setEditing(true)} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors">
+                            <button onClick={() => setEditing(true)} className="p-2 rounded-lg bg-surface hover:bg-[#e8e8e8] text-muted hover:text-foreground transition-colors">
                                 <Pencil className="w-4 h-4" />
                             </button>
                         </div>
@@ -185,7 +185,7 @@ export default function ListDetailPage() {
 
                 {/* Items */}
                 {list.items.length === 0 ? (
-                    <div className="text-center py-16 text-zinc-600">
+                    <div className="text-center py-16 text-muted">
                         <p>Nenhum item nesta lista.</p>
                         <p className="text-sm mt-1">Adicione artistas, grupos ou produções nos cards do site.</p>
                     </div>
@@ -198,8 +198,8 @@ export default function ListDetailPage() {
                             const color = typeColor[item.entityType]
 
                             return (
-                                <div key={item.id} className="group bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-all overflow-hidden">
-                                    <div className="relative aspect-[3/2] bg-zinc-800">
+                                <div key={item.id} className="group bg-background rounded-xl border border-border hover:border-[#080808]/20 transition-all overflow-hidden">
+                                    <div className="relative aspect-[3/2] bg-surface">
                                         {entity?.imageUrl ? (
                                             <Image src={entity.imageUrl} alt={entity.label} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw" />
                                         ) : (
@@ -208,28 +208,28 @@ export default function ListDetailPage() {
                                             </div>
                                         )}
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                        <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 ${color}`}>
+                                        <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 text-white ${color}`}>
                                             {typeLabel[item.entityType]}
                                         </span>
                                         <button
                                             onClick={() => handleRemoveItem(item)}
-                                            className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-zinc-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                            className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                                         >
                                             <X className="w-3 h-3" />
                                         </button>
                                     </div>
                                     <div className="p-3">
                                         {entity ? (
-                                            <Link href={entity.href} className="font-bold text-white hover:text-purple-400 transition-colors line-clamp-1 text-sm">
+                                            <Link href={entity.href} className="font-bold text-foreground hover:text-[#ff2d78] transition-colors line-clamp-1 text-sm">
                                                 {entity.label}
                                             </Link>
                                         ) : (
-                                            <div className="h-4 w-24 bg-zinc-800 rounded animate-pulse" />
+                                            <div className="h-4 w-24 bg-surface rounded animate-pulse" />
                                         )}
                                         {entity?.sublabel && (
-                                            <p className="text-xs text-zinc-500 truncate mt-0.5">{entity.sublabel}</p>
+                                            <p className="text-xs text-muted truncate mt-0.5">{entity.sublabel}</p>
                                         )}
-                                        {item.note && <p className="text-xs text-zinc-600 mt-1 italic line-clamp-2">{item.note}</p>}
+                                        {item.note && <p className="text-xs text-muted mt-1 italic line-clamp-2">{item.note}</p>}
                                     </div>
                                 </div>
                             )

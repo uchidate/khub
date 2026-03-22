@@ -8,25 +8,27 @@ const CATEGORIES = [
     "Artistas solo",
     "Grupos",
     "Reality shows",
+    "Webtoons",
     "Idol culture",
     "Fandom",
-    "Webtoons",
 ]
 
 export function HomeCategoriesBar() {
     const items = [...CATEGORIES, ...CATEGORIES]
 
     return (
-        <div className="w-full border-b border-[#e8e8e8] bg-white overflow-hidden h-10 flex items-center">
-            <div className="overflow-hidden flex-1">
-                <div className="flex items-center animate-home-marquee whitespace-nowrap">
+        <div className="w-full border-b border-border bg-background overflow-hidden">
+            <div className="overflow-hidden">
+                <div className="flex animate-home-marquee" style={{ width: 'max-content' }}>
                     {items.map((cat, idx) => (
                         <div
                             key={`cat-${idx}`}
-                            className="inline-flex items-center gap-2 px-6 flex-shrink-0 min-h-[44px]"
+                            className="group flex items-center gap-1.5 py-2.5 px-4 border-r border-border cursor-pointer whitespace-nowrap hover:text-accent transition-colors"
                         >
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#ff2d78] flex-shrink-0" />
-                            <span className="text-xs font-semibold uppercase tracking-wider text-[#6b6b6b] whitespace-nowrap">
+                            <span
+                                className="w-1 h-1 rounded-full bg-accent flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            />
+                            <span className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-muted group-hover:text-accent transition-colors">
                                 {cat}
                             </span>
                         </div>

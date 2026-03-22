@@ -27,7 +27,7 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
         <li className="flex-shrink-0">
           <Link
             href=""
-            className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
+            className="flex items-center gap-1 text-[#999] hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
           >
             <Home size={16} />
             <span className="sr-only sm:not-sr-only">{homeLabel}</span>
@@ -40,7 +40,7 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
 
           return (
             <li key={index} className={`flex items-center gap-2 ${isLast ? 'min-w-0' : 'flex-shrink-0'}`}>
-              <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" aria-hidden="true" />
+              <ChevronRight size={16} className="text-[#444] flex-shrink-0" aria-hidden="true" />
 
               {isLast || !crumb.href ? (
                 <span className="text-white font-medium truncate" aria-current="page">
@@ -49,7 +49,7 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
               ) : (
                 <Link
                   href={crumb.href}
-                  className="text-zinc-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
+                  className="text-[#999] hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
                 >
                   {crumb.label}
                 </Link>

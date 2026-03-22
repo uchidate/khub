@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { HomeTicker } from "@/components/home/HomeTicker"
 import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeNewsFeed } from "@/components/home/HomeNewsFeed"
@@ -37,7 +36,7 @@ const getHomePublicData = unstable_cache(
             trendingArtists, topNewsRaw, featuredBlogPostsRaw,
         ] = await Promise.all([
             prisma.artist.findMany({
-                where: { flaggedAsNonKorean: false, isHidden: false },
+                where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
                 take: 10,
                 orderBy: { trendingScore: 'desc' },
                 select: {
@@ -84,7 +83,7 @@ const getHomePublicData = unstable_cache(
             })),
         }
     },
-    ['home-page-public-data-v2'],
+    ['home-page-public-data-v3'],
     { revalidate: 120 },
 )
 
@@ -124,8 +123,7 @@ export default async function Home() {
     }))
 
     return (
-        <div className="min-h-screen bg-white font-sora overflow-x-hidden pt-[72px] md:pt-20">
-            <HomeTicker news={topNews.slice(0, 6)} />
+        <div className="min-h-screen bg-background font-sora overflow-x-hidden">
             <HomeCategoriesBar />
             <HomeFrontPage
                 featuredStory={topNews[0]}

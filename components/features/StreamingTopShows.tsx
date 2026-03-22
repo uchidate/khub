@@ -65,9 +65,9 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                         <Tv2 className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-black dark:text-white text-zinc-900 tracking-tight uppercase">
+                        <h2 className="text-xl font-black dark:text-white text-foreground tracking-tight uppercase">
                             Top 10 nos{' '}
-                            <span className={`${activeTab === 'netflix_br' ? 'text-red-500' : activeTab === 'disney_br' ? 'text-blue-400' : activeTab === 'prime_br' ? 'text-sky-400' : activeTab === 'apple_br' ? 'text-zinc-300' : 'text-purple-400'}`}>
+                            <span className={`${activeTab === 'netflix_br' ? 'text-red-500' : activeTab === 'disney_br' ? 'text-blue-400' : activeTab === 'prime_br' ? 'text-sky-400' : activeTab === 'apple_br' ? 'text-[#e8e8e8]' : 'text-[#ff2d78]'}`}>
                                 Streamings
                             </span>
                         </h2>
@@ -75,7 +75,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                 </div>
                 <Link
                     href="/productions"
-                    className="hidden md:flex items-center gap-1 text-sm font-bold dark:text-zinc-400 text-zinc-500 dark:hover:text-white hover:text-zinc-900 transition-colors"
+                    className="hidden md:flex items-center gap-1 text-sm font-bold dark:text-[#999] text-muted dark:hover:text-white hover:text-foreground transition-colors"
                 >
                     Ver produções <ChevronRight className="w-4 h-4" />
                 </Link>
@@ -93,8 +93,8 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                             className={`
                                 flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all
                                 ${isActive
-                                    ? 'bg-white text-black shadow-md'
-                                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                                    ? 'bg-background text-black shadow-md'
+                                    : 'bg-[#1a1a1a] text-[#e8e8e8] hover:bg-[#2a2a2a] hover:text-white'
                                 }
                             `}
                         >
@@ -111,8 +111,8 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                     const cfg = getStreamingConfig(show.source)
                     const card = (
                         <div className={`
-                            group relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900
-                            border border-zinc-800 ${cfg.hoverBorderColor} transition-all duration-300
+                            group relative aspect-[2/3] rounded-xl overflow-hidden bg-[#080808]
+                            border border-[#1a1a1a] ${cfg.hoverBorderColor} transition-all duration-300
                         `}>
                             {/* Poster TMDB */}
                             {show.posterUrl ? (
@@ -125,7 +125,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-                                    <span className="text-zinc-500 text-xl font-black">
+                                    <span className="text-muted text-xl font-black">
                                         {show.showTitle[0]}
                                     </span>
                                 </div>
@@ -163,21 +163,21 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                             {show.productionId ? (
                                 <Link href={`/productions/${show.productionId}`} className="block">
                                     {card}
-                                    <p className="mt-1.5 text-[10px] md:text-xs text-white font-semibold line-clamp-2 leading-tight group-hover:text-purple-400 transition-colors">
+                                    <p className="mt-1.5 text-[10px] md:text-xs text-white font-semibold line-clamp-2 leading-tight group-hover:text-[#ff2d78] transition-colors">
                                         {show.productionTitle ?? show.showTitle}
                                     </p>
                                     {show.year && (
-                                        <p className="text-[10px] text-zinc-400 leading-none mt-0.5">{show.year}</p>
+                                        <p className="text-[10px] text-[#999] leading-none mt-0.5">{show.year}</p>
                                     )}
                                 </Link>
                             ) : (
                                 <>
                                     {card}
-                                    <p className="mt-1.5 text-[10px] md:text-xs text-zinc-400 font-semibold line-clamp-2 leading-tight">
+                                    <p className="mt-1.5 text-[10px] md:text-xs text-[#999] font-semibold line-clamp-2 leading-tight">
                                         {show.showTitle}
                                     </p>
                                     {show.year && (
-                                        <p className="text-[10px] text-zinc-400 leading-none mt-0.5">{show.year}</p>
+                                        <p className="text-[10px] text-[#999] leading-none mt-0.5">{show.year}</p>
                                     )}
                                 </>
                             )}

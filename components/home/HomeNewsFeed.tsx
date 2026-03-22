@@ -43,6 +43,20 @@ const TABS = [
     { label: "Cultura", value: "cultura" },
 ]
 
+const TAG_COLORS: Record<string, string> = {
+    "k-pop": "text-[#ff2d78]",
+    "k-drama": "text-[#7c3aed]",
+    "cultura": "text-[#0ea5e9]",
+    "k-beauty": "text-[#f59e0b]",
+    "plataforma": "text-muted",
+}
+
+function getTagColor(tag: string | undefined): string {
+    if (!tag) return "text-muted"
+    const key = tag.toLowerCase().replace(/\s/g, "-")
+    return TAG_COLORS[key] ?? (key.includes("k-") ? "text-[#ff2d78]" : key.includes("drama") ? "text-[#7c3aed]" : "text-muted")
+}
+
 function formatDate(iso: string) {
     try {
         return new Date(iso).toLocaleDateString("pt-BR", {
@@ -85,13 +99,13 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
               )
 
     return (
-        <section className="border-b border-[#e8e8e8]">
+        <section className="border-b border-border">
             <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
                 {/* LEFT — feed */}
-                <div className="border-b md:border-b-0 md:border-r border-[#e8e8e8]">
+                <div className="border-b md:border-b-0 md:border-r border-border">
                     {/* Header row */}
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8e8e8]">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-[#080808]">
+                    <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 sm:py-5 lg:py-6 border-b border-border">
+                        <h2 className="text-[13.5px] font-bold text-foreground">
                             Mais notícias
                         </h2>
                         <div className="flex items-center gap-1">
@@ -99,10 +113,10 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                                 <button
                                     key={tab.value}
                                     onClick={() => setActiveTab(tab.value)}
-                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors min-h-[32px] ${
+                                    className={`text-[12.5px] font-semibold px-3.5 py-[5px] rounded-full transition-colors min-h-[32px] ${
                                         activeTab === tab.value
-                                            ? "bg-[#ff2d78] text-white"
-                                            : "text-[#6b6b6b] hover:text-[#080808] hover:bg-[#f5f5f7]"
+                                            ? "bg-accent text-white"
+                                            : "text-foreground/70 hover:text-foreground hover:bg-surface border border-transparent hover:border-border"
                                     }`}
                                 >
                                     {tab.label}
@@ -114,43 +128,47 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                     {/* News rows */}
                     <div>
                         {filteredNews.length === 0 && (
-                            <p className="text-sm text-[#6b6b6b] p-5">Nenhuma notícia encontrada.</p>
+                            <p className="text-sm text-muted p-5">Nenhuma notícia encontrada.</p>
                         )}
                         {filteredNews.map((item, idx) => (
                             <Link
                                 key={item.id}
                                 href={`/news/${item.id}`}
-                                className="flex items-start gap-4 px-5 py-4 border-b border-[#e8e8e8] hover:bg-[#f5f5f7] transition-colors group min-h-[44px]"
+                                className="flex items-start gap-3.5 px-4 sm:px-6 lg:px-12 py-4 sm:py-5 lg:py-[1.4rem] border-b border-border hover:bg-surface transition-colors group min-h-[68px]"
                             >
-                                <span className="text-2xl font-black text-[#e8e8e8] w-8 flex-shrink-0 leading-none mt-0.5 group-hover:text-[#ff2d78] transition-colors">
+                                <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 pt-0.5">
                                     {String(idx + 1).padStart(2, "0")}
                                 </span>
                                 <div className="flex-1 min-w-0">
                                     {item.tags?.[0] && (
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-1 block">
+                                        <span className={`text-[8.3px] font-bold uppercase tracking-[0.12em] mb-1 block ${getTagColor(item.tags[0])}`}>
                                             {item.tags[0]}
                                         </span>
                                     )}
-                                    <h3 className="text-sm font-bold text-[#080808] leading-snug group-hover:text-[#ff2d78] transition-colors line-clamp-2 mb-1">
+                                    <h3 className="text-[13.5px] font-semibold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-2">
                                         {item.title}
                                     </h3>
-                                    <span className="text-[10px] text-[#6b6b6b]">
-                                        {formatDate(item.publishedAt)}
-                                    </span>
+                                    <div className="text-[9px] text-muted mt-1.5 flex items-center gap-[6px] flex-wrap">
+                                        {item.tags?.slice(1, 3).length > 0 ? (
+                                            <span>{item.tags.slice(1, 3).join(' · ')}</span>
+                                        ) : (
+                                            <span>HallyuHub</span>
+                                        )}
+                                        <span>·</span>
+                                        <span>{formatDate(item.publishedAt)}</span>
+                                        <span>·</span>
+                                        <span>3 min</span>
+                                    </div>
                                 </div>
-                                {/* Thumbnail placeholder */}
-                                <div className="w-14 h-14 rounded-lg bg-[#f5f5f7] flex-shrink-0 overflow-hidden">
+                                {/* Thumbnail */}
+                                <div className="w-[58px] h-11 rounded-lg bg-surface flex-shrink-0 overflow-hidden flex items-center justify-center border border-border">
                                     {item.imageUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
-                                        <img
-                                            src={item.imageUrl}
-                                            alt={item.title}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <span className="text-[10px] font-black text-[#e8e8e8]">HH</span>
-                                        </div>
+                                        <span className="text-[9px] font-bold text-muted">
+                                            {item.tags?.[0]?.slice(0, 2).toUpperCase() ?? 'HH'}
+                                        </span>
                                     )}
                                 </div>
                             </Link>
@@ -159,90 +177,79 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                 </div>
 
                 {/* RIGHT SIDEBAR */}
-                <div className="flex flex-col divide-y divide-[#e8e8e8]">
+                <div className="flex flex-col divide-y divide-border">
                     {/* Widget 1: Productions */}
-                    <div className="p-5">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-black uppercase tracking-wider text-[#080808]">
-                                Produções em destaque
-                            </h3>
-                            <Link
-                                href="/productions"
-                                className="text-[11px] text-[#6b6b6b] hover:text-[#ff2d78] transition-colors font-semibold"
-                            >
-                                Ver mais →
-                            </Link>
+                    <div>
+                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-3.5 border-b border-border">
+                            Produções em destaque
                         </div>
-                        <div className="space-y-3">
-                            {productions.slice(0, 5).map((prod, idx) => (
-                                <Link
-                                    key={prod.id}
-                                    href={`/productions/${prod.id}`}
-                                    className="flex items-center gap-3 group min-h-[44px]"
-                                >
-                                    <div
-                                        className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center text-white text-[10px] font-black"
-                                        style={{
-                                            background: `hsl(${(idx * 60) % 360}, 70%, 55%)`,
-                                        }}
+                        <div>
+                            {productions.slice(0, 5).map((prod, idx) => {
+                                const GRAD_STYLES = [
+                                    'linear-gradient(135deg,#c084fc,#818cf8)',
+                                    'linear-gradient(135deg,#6d28d9,#a855f7)',
+                                    'linear-gradient(135deg,#ff2d78,#ff6fa3)',
+                                    'linear-gradient(135deg,#0ea5e9,#38bdf8)',
+                                    'linear-gradient(135deg,#f59e0b,#fbbf24)',
+                                ]
+                                return (
+                                    <Link
+                                        key={prod.id}
+                                        href={`/productions/${prod.id}`}
+                                        className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors group min-h-[52px]"
                                     >
-                                        {getInitialsFromTitle(prod.titlePt)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-[#080808] group-hover:text-[#ff2d78] transition-colors truncate leading-tight">
-                                            {prod.titlePt}
-                                        </p>
-                                        <p className="text-[10px] text-[#6b6b6b] truncate">
-                                            {getTypeLabel(prod.type)}
-                                            {prod.year ? ` · ${prod.year}` : ""}
-                                        </p>
-                                    </div>
-                                    {prod.voteAverage != null && prod.voteAverage > 0 && (
-                                        <span className="text-[11px] font-bold text-[#10b981] flex-shrink-0">
-                                            {prod.voteAverage.toFixed(1)}
-                                        </span>
-                                    )}
-                                </Link>
-                            ))}
+                                        <div
+                                            className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold"
+                                            style={{ background: GRAD_STYLES[idx % GRAD_STYLES.length] }}
+                                        >
+                                            {getInitialsFromTitle(prod.titlePt)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
+                                                {prod.titlePt}
+                                            </p>
+                                            <p className="text-[9px] text-muted truncate mt-0.5">
+                                                {getTypeLabel(prod.type)}{prod.year ? ` · ${prod.year}` : ''}
+                                            </p>
+                                        </div>
+                                        {prod.voteAverage != null && prod.voteAverage > 0 && (
+                                            <span className="text-[11px] font-bold text-accent flex-shrink-0">
+                                                {prod.year ?? '—'}
+                                            </span>
+                                        )}
+                                    </Link>
+                                )
+                            })}
                         </div>
                     </div>
 
                     {/* Widget 2: Blog */}
-                    <div className="p-5">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-black uppercase tracking-wider text-[#080808]">
-                                Do blog
-                            </h3>
-                            <Link
-                                href="/blog"
-                                className="text-[11px] text-[#6b6b6b] hover:text-[#ff2d78] transition-colors font-semibold"
-                            >
-                                Ver todos →
-                            </Link>
+                    <div>
+                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-3.5 border-b border-border">
+                            Do blog
                         </div>
-                        <div className="space-y-4">
+                        <div>
                             {blogPosts.slice(0, 4).map((post) => (
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="block group min-h-[44px]"
+                                    className="block px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors group min-h-[52px]"
                                 >
-                                    <div className="flex items-start gap-2 mb-1">
-                                        {post.category && (
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d78] bg-[#fff0f5] px-1.5 py-0.5 rounded flex-shrink-0">
-                                                {post.category.name}
-                                            </span>
-                                        )}
-                                        <span className="text-[9px] font-semibold text-white bg-[#6b6b6b] px-1.5 py-0.5 rounded flex-shrink-0">
-                                            Prévia
-                                        </span>
-                                    </div>
-                                    <p className="text-sm font-bold text-[#080808] group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2">
+                                    {post.category && (
+                                        <p className="text-[8px] font-bold uppercase tracking-[0.11em] text-accent mb-1">
+                                            {post.category.name}
+                                        </p>
+                                    )}
+                                    <p className="text-[13px] font-bold text-foreground group-hover:text-accent transition-colors leading-[1.35] line-clamp-2">
                                         {post.title}
                                     </p>
-                                    <p className="text-[10px] text-[#6b6b6b] mt-1">
-                                        {post.readingTimeMin} min de leitura
-                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <span className="text-[8.5px] text-muted">{post.readingTimeMin} min de leitura</span>
+                                        <span className="text-[8px] text-muted">·</span>
+                                        <span className="inline-flex items-center gap-0.5 bg-surface rounded-full px-1.5 py-0.5 text-[8px] font-semibold text-muted border border-border">
+                                            🔒 Prévia
+                                        </span>
+                                    </div>
                                 </Link>
                             ))}
                         </div>

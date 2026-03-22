@@ -19,9 +19,7 @@ export default function ForgotPasswordPage() {
     try {
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
 
@@ -34,10 +32,7 @@ export default function ForgotPasswordPage() {
       }
 
       setSuccess(true)
-      // In development, show the reset URL
-      if (data.resetUrl) {
-        setResetUrl(data.resetUrl)
-      }
+      if (data.resetUrl) setResetUrl(data.resetUrl)
     } catch {
       setError('Erro ao enviar email. Tente novamente.')
     } finally {
@@ -47,24 +42,24 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black px-4">
-        <div className="max-w-md w-full animate-scale-in">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl text-center">
-            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="text-green-500" size={32} />
+      <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
+        <div className="w-full max-w-sm">
+          <div className="border border-[#e8e8e8] rounded-2xl p-8 text-center">
+            <div className="w-14 h-14 bg-green-50 border border-green-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="text-green-500" size={28} />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Email Enviado!</h2>
-            <p className="text-zinc-400 mb-6">
+            <h2 className="text-2xl font-black text-[#080808] mb-2">Email Enviado!</h2>
+            <p className="text-[#6b6b6b] text-sm mb-6">
               Se o email existir em nosso sistema, você receberá um link para redefinir sua senha.
             </p>
 
             {resetUrl && (
-              <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <p className="text-xs text-yellow-500 mb-2 font-bold">🔧 MODO DESENVOLVIMENTO</p>
-                <p className="text-xs text-zinc-400 mb-2">Use este link para resetar sua senha:</p>
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                <p className="text-xs text-yellow-700 mb-2 font-bold">🔧 MODO DESENVOLVIMENTO</p>
+                <p className="text-xs text-[#6b6b6b] mb-2">Use este link para resetar sua senha:</p>
                 <a
                   href={resetUrl}
-                  className="text-xs text-purple-500 hover:text-purple-400 break-all"
+                  className="text-xs text-[#ff2d78] break-all"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -76,16 +71,13 @@ export default function ForgotPasswordPage() {
             <div className="space-y-3">
               <Link
                 href="/auth/login"
-                className="block w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-500 transition-colors"
+                className="block w-full py-3 bg-[#080808] text-white text-sm font-semibold rounded-full hover:bg-[#ff2d78] transition-colors"
               >
                 Voltar para Login
               </Link>
               <button
-                onClick={() => {
-                  setSuccess(false)
-                  setEmail('')
-                }}
-                className="block w-full py-3 bg-zinc-800 text-white font-bold rounded-lg hover:bg-zinc-700 transition-colors"
+                onClick={() => { setSuccess(false); setEmail('') }}
+                className="block w-full py-3 border border-[#e8e8e8] text-[#080808] text-sm font-semibold rounded-full hover:bg-[#f5f5f7] transition-colors"
               >
                 Enviar Novamente
               </button>
@@ -97,72 +89,72 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black px-4">
-      <div className="max-w-md w-full space-y-8 animate-fade-in">
-        {/* Header */}
-        <div className="text-center">
-          <Link href="" className="inline-block mb-6">
-            <h1 className="text-4xl font-black tracking-tighter uppercase">
-              <span className="text-purple-500">HALLYU</span>
-              <span className="text-pink-500">HUB</span>
-            </h1>
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link href="/">
+            <span className="text-4xl font-black tracking-[-0.04em] uppercase select-none">
+              <span className="text-[#080808]">HALLYU</span>
+              <span className="text-[#ff2d78]">HUB</span>
+            </span>
           </Link>
-          <h2 className="text-3xl font-bold text-white mb-2">Esqueceu sua senha?</h2>
-          <p className="text-zinc-400">
-            Digite seu email e enviaremos um link para redefinir sua senha
-          </p>
         </div>
 
-        {/* Form */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl">
+        {/* Card */}
+        <div className="border border-[#e8e8e8] rounded-2xl p-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-black text-[#080808]">Esqueceu sua senha?</h2>
+            <p className="text-[#6b6b6b] mt-1 text-sm">
+              Digite seu email e enviaremos um link para redefinir sua senha
+            </p>
+          </div>
+
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-500 animate-slide-down">
-              <AlertCircle size={20} />
+            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-600">
+              <AlertCircle size={16} className="shrink-0" />
               <p className="text-sm">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
+              <label htmlFor="email" className="block text-[13px] font-semibold text-[#080808] mb-1.5">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none z-10" size={20} />
+                <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6b6b6b] pointer-events-none z-10" size={16} />
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-11 pr-4 py-3 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                  className="w-full pl-4 pr-10 py-3 text-[14px] border border-[#e8e8e8] rounded-xl text-[#080808] placeholder:text-[#6b6b6b]/60 focus:border-[#ff2d78] outline-none transition-colors"
                   placeholder="seu@email.com"
                 />
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#080808] text-white text-sm font-semibold rounded-full hover:bg-[#ff2d78] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <Mail size={20} />
+                  <Mail size={16} />
                   Enviar Link de Recuperação
                 </>
               )}
             </button>
           </form>
 
-          {/* Back to Login */}
           <Link
             href="/auth/login"
-            className="mt-6 flex items-center justify-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
+            className="mt-6 flex items-center justify-center gap-2 text-sm text-[#6b6b6b] hover:text-[#080808] transition-colors"
           >
             <ArrowLeft size={16} />
             Voltar para login

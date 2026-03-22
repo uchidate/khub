@@ -78,7 +78,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
     const disbandedGroups = agency.musicalGroups.filter(g => !!g.disbandDate)
 
     return (
-        <div className="min-h-screen bg-black">
+        <div className="min-h-screen bg-background">
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "Organization",
@@ -108,19 +108,19 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                     { "@type": "ListItem", "position": 2, "name": agency.name, "item": `${BASE_URL}/agencies/${agency.id}` },
                 ],
             }} />
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 max-w-[1600px] mx-auto">
+            <div className="py-8 md:py-12 pb-20 px-4 sm:px-12 md:px-20 max-w-[1600px] mx-auto">
                 {/* Back */}
-                <Link href="/agencies" className="text-zinc-500 hover:text-white transition-colors text-sm font-bold flex items-center gap-1.5 w-fit mb-10">
+                <Link href="/agencies" className="text-muted hover:text-foreground transition-colors text-sm font-bold flex items-center gap-1.5 w-fit mb-10">
                     ← Agências
                 </Link>
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 pb-12 border-b border-white/5">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 pb-12 border-b border-border">
                     <div>
                         <h1 className="text-5xl md:text-7xl font-black hallyu-gradient-text uppercase tracking-tighter italic">{agency.name}</h1>
                         {agency.website && (
                             <a href={agency.website} target="_blank" rel="noopener noreferrer"
-                                className="text-purple-500 hover:text-purple-400 transition-colors text-sm font-bold mt-2 inline-flex items-center gap-1.5">
+                                className="text-[#ff2d78] hover:opacity-80 transition-opacity text-sm font-bold mt-2 inline-flex items-center gap-1.5">
                                 {agency.website.replace('https://', '').replace('http://', '')}
                                 <ExternalLink className="w-3.5 h-3.5" />
                             </a>
@@ -128,23 +128,23 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                     </div>
 
                     <div className="flex items-end gap-4">
-                        <div className="bg-zinc-900/50 border border-white/5 rounded-2xl px-6 py-4 text-center">
-                            <Users className="w-4 h-4 text-zinc-500 mx-auto mb-1" />
-                            <p className="text-3xl font-black text-white">{agency.artists.length}</p>
-                            <p className="text-xs font-black text-zinc-600 uppercase tracking-widest mt-1">Artistas</p>
+                        <div className="bg-surface border border-border rounded-2xl px-6 py-4 text-center">
+                            <Users className="w-4 h-4 text-muted mx-auto mb-1" />
+                            <p className="text-3xl font-black text-foreground">{agency.artists.length}</p>
+                            <p className="text-xs font-black text-muted uppercase tracking-widest mt-1">Artistas</p>
                         </div>
                         {agency.musicalGroups.length > 0 && (
-                            <div className="bg-zinc-900/50 border border-white/5 rounded-2xl px-6 py-4 text-center">
-                                <Music2 className="w-4 h-4 text-purple-500 mx-auto mb-1" />
-                                <p className="text-3xl font-black text-purple-400">{agency.musicalGroups.length}</p>
-                                <p className="text-xs font-black text-zinc-600 uppercase tracking-widest mt-1">Grupos</p>
+                            <div className="bg-[#ff2d78]/10 border border-[#ff2d78]/20 rounded-2xl px-6 py-4 text-center">
+                                <Music2 className="w-4 h-4 text-[#ff2d78] mx-auto mb-1" />
+                                <p className="text-3xl font-black text-[#ff2d78]">{agency.musicalGroups.length}</p>
+                                <p className="text-xs font-black text-muted uppercase tracking-widest mt-1">Grupos</p>
                             </div>
                         )}
                         {Object.keys(socials).length > 0 && (
                             <div className="flex gap-2">
                                 {Object.entries(socials).map(([name, url]) => (
                                     <a key={name} href={url} target="_blank" rel="noopener noreferrer"
-                                        className="text-xs font-bold text-white bg-zinc-800 px-3 py-1.5 rounded-sm border border-white/5 hover:border-purple-500 transition-colors">
+                                        className="text-xs font-bold text-foreground bg-surface px-3 py-1.5 rounded-sm border border-border hover:border-[#ff2d78] transition-colors">
                                         {name}
                                     </a>
                                 ))}
@@ -156,7 +156,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                 {/* Grupos */}
                 {agency.musicalGroups.length > 0 && (
                     <section className="mb-16">
-                        <h2 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
                             <Music2 className="w-4 h-4" />
                             Grupos Musicais
                         </h2>
@@ -164,35 +164,35 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                             {[...activeGroups, ...disbandedGroups].map((group) => (
                                 <Link key={group.id} href={`/groups/${group.id}`}
                                     className={`group block ${group.disbandDate ? 'opacity-50 hover:opacity-80 transition-opacity' : ''}`}>
-                                    <div className="aspect-square relative rounded-2xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-all mb-2">
+                                    <div className="aspect-square relative rounded-2xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all mb-2">
                                         {group.profileImageUrl ? (
                                             <Image src={group.profileImageUrl} alt={group.name} fill
                                                 sizes="(max-width: 640px) 50vw, 20vw"
                                                 className="object-cover group-hover:scale-105 transition-transform duration-500" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <span className="text-2xl font-black text-zinc-600 group-hover:text-purple-500 transition-colors">
+                                                <span className="text-2xl font-black text-muted group-hover:text-[#ff2d78] transition-colors">
                                                     {group.name[0]}
                                                 </span>
                                             </div>
                                         )}
                                         {group.disbandDate && (
-                                            <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[9px] font-black text-zinc-400 uppercase">
+                                            <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#080808]/70 backdrop-blur-sm rounded text-[9px] font-black text-white uppercase">
                                                 Disbandado
                                             </div>
                                         )}
                                         {group._count.members > 0 && (
-                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[9px] font-bold text-zinc-300">
+                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-[#080808]/60 backdrop-blur-sm rounded text-[9px] font-bold text-white">
                                                 <Users className="w-2.5 h-2.5" />
                                                 {group._count.members}
                                             </div>
                                         )}
                                     </div>
                                     <div>
-                                        <p className="font-black text-white text-sm group-hover:text-purple-300 transition-colors">{group.name}</p>
-                                        {group.nameHangul && <p className="text-xs text-zinc-600 mt-0.5">{group.nameHangul}</p>}
+                                        <p className="font-black text-foreground text-sm group-hover:text-[#ff2d78] transition-colors">{group.name}</p>
+                                        {group.nameHangul && <p className="text-xs text-muted mt-0.5">{group.nameHangul}</p>}
                                         {group.debutDate && (
-                                            <p className="text-[10px] text-zinc-700 font-bold mt-0.5">
+                                            <p className="text-[10px] text-muted font-bold mt-0.5">
                                                 {new Date(group.debutDate).getUTCFullYear()}
                                                 {group.disbandDate ? ` – ${new Date(group.disbandDate).getUTCFullYear()}` : ''}
                                             </p>
@@ -208,7 +208,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
 
                 {/* Artist Roster */}
                 <section>
-                    <h2 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
                         <Users className="w-4 h-4" />
                         Elenco
                     </h2>
@@ -216,35 +216,35 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8">
                             {agency.artists.map((artist) => (
                                 <Link key={artist.id} href={`/artists/${artist.id}`} className="group cursor-pointer block">
-                                    <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-all shadow-lg mb-3">
+                                    <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all shadow-sm mb-3">
                                         {artist.primaryImageUrl ? (
                                             <Image
                                                 src={artist.primaryImageUrl}
                                                 alt={artist.nameRomanized}
                                                 fill
                                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                                                className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-90 group-hover:brightness-100"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
-                                            <div className="flex items-center justify-center h-full text-zinc-700 italic font-black uppercase tracking-tighter text-xl">
+                                            <div className="flex items-center justify-center h-full text-muted italic font-black uppercase tracking-tighter text-xl">
                                                 {artist.nameRomanized[0]}
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm text-white group-hover:text-purple-300 transition-colors">{artist.nameRomanized}</h4>
-                                        {artist.nameHangul && <p className="text-xs text-zinc-600 mt-0.5">{artist.nameHangul}</p>}
+                                        <h4 className="font-bold text-sm text-foreground group-hover:text-[#ff2d78] transition-colors">{artist.nameRomanized}</h4>
+                                        {artist.nameHangul && <p className="text-xs text-muted mt-0.5">{artist.nameHangul}</p>}
                                         {artist.roles && artist.roles.length > 0 && (
-                                            <p className="text-[10px] text-zinc-600 font-bold mt-0.5">{artist.roles.slice(0, 2).map(r => getRoleLabel(r, artist.gender)).join(' · ')}</p>
+                                            <p className="text-[10px] text-muted font-bold mt-0.5">{artist.roles.slice(0, 2).map(r => getRoleLabel(r, artist.gender)).join(' · ')}</p>
                                         )}
                                     </div>
                                 </Link>
                             ))}
                         </div>
                     ) : (
-                        <div className="bg-zinc-900/50 rounded-2xl border border-white/5 p-12 text-center">
-                            <p className="text-zinc-600 font-medium">Nenhum artista registrado nesta agência.</p>
+                        <div className="bg-surface rounded-2xl border border-border p-12 text-center">
+                            <p className="text-muted font-medium">Nenhum artista registrado nesta agência.</p>
                         </div>
                     )}
                 </section>

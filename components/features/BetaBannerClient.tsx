@@ -30,7 +30,7 @@ export function BetaBannerClient() {
             }}
         >
             <div className="overflow-hidden">
-                <div className="bg-zinc-950/95 backdrop-blur-sm border-b border-amber-500/30 px-4 h-10 flex items-center justify-center text-center">
+                <div className="bg-surface/95 backdrop-blur-sm border-b border-amber-500/30 px-4 h-10 flex items-center justify-center text-center">
                     <div className="flex items-center justify-center gap-2 text-xs text-amber-400 font-medium">
                         <Construction size={12} className="flex-shrink-0" />
                         <span className="hidden sm:inline">

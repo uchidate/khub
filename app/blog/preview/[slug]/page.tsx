@@ -37,18 +37,18 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
   if (!post) notFound()
 
   return (
-    <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-6">
+    <PageTransition className="py-8 md:py-12 px-4 sm:px-6">
       {/* Preview banner */}
       <div className="max-w-3xl mx-auto mb-6">
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
-          <div className="flex items-center gap-2 text-sm text-purple-300">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[#ff2d78]/10 border border-[#ff2d78]/20">
+          <div className="flex items-center gap-2 text-sm text-[#ff2d78]">
             <Lock size={14} />
             <span className="font-semibold">Prévia privada</span>
-            <span className="text-purple-400/60">— este post não está visível no blog público</span>
+            <span className="text-[#ff2d78]/60">— este post não está visível no blog público</span>
           </div>
           <Link
             href={`/write?edit=${post.id}`}
-            className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-xs text-[#ff2d78] hover:text-white transition-colors"
           >
             <Pencil size={12} />
             Editar
@@ -57,7 +57,7 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
       </div>
 
       <div className="max-w-3xl mx-auto">
-        <Link href="/admin/blog" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors mb-8">
+        <Link href="/admin/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-white transition-colors mb-8">
           <ArrowLeft size={14} />
           Voltar ao painel
         </Link>
@@ -66,7 +66,7 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
         <header className="mb-8 space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             {post.category && (
-              <span className="px-2.5 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-semibold uppercase tracking-wider">
+              <span className="px-2.5 py-1 bg-[#ff2d78]/20 text-[#ff2d78] rounded text-xs font-semibold uppercase tracking-wider">
                 {post.category.name}
               </span>
             )}
@@ -75,7 +75,7 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
                 Destaque
               </span>
             )}
-            <span className="px-2.5 py-1 bg-purple-900/40 text-purple-300 rounded text-xs font-semibold border border-purple-500/20">
+            <span className="px-2.5 py-1 bg-[#ff2d78]/40 text-[#ff2d78] rounded text-xs font-semibold border border-[#ff2d78]/20">
               🔒 Privado
             </span>
           </div>
@@ -83,19 +83,19 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
           <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">{post.title}</h1>
 
           {post.excerpt && (
-            <p className="text-xl text-zinc-400 leading-relaxed">{post.excerpt}</p>
+            <p className="text-xl text-[#999] leading-relaxed">{post.excerpt}</p>
           )}
 
-          <div className="flex items-center gap-4 flex-wrap text-sm text-zinc-500 pt-2 border-t border-white/5">
+          <div className="flex items-center gap-4 flex-wrap text-sm text-muted pt-2 border-t border-white/5">
             <div className="flex items-center gap-2">
               {post.author?.image ? (
                 <Image src={post.author.image} alt={post.author.name ?? ''} width={28} height={28} className="rounded-full object-cover" />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-300">
+                <div className="w-7 h-7 rounded-full bg-[#ff2d78]/30 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
                   {post.author?.name?.[0] ?? '?'}
                 </div>
               )}
-              <span className="font-medium text-zinc-300">{post.author?.name}</span>
+              <span className="font-medium text-[#e8e8e8]">{post.author?.name}</span>
             </div>
             <span className="flex items-center gap-1.5"><Calendar size={13} />{formatDate(post.publishedAt ?? post.createdAt)}</span>
             <span className="flex items-center gap-1.5"><Clock size={13} />{post.readingTimeMin} min de leitura</span>
@@ -118,9 +118,9 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
 
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-white/5">
-            <Tag size={14} className="text-zinc-600 mt-0.5 shrink-0" />
+            <Tag size={14} className="text-[#444] mt-0.5 shrink-0" />
             {post.tags.map(tag => (
-              <span key={tag} className="px-2.5 py-1 rounded-full border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-xs">
+              <span key={tag} className="px-2.5 py-1 rounded-full border border-[#2a2a2a] bg-[#1a1a1a]/50 text-[#999] text-xs">
                 {tag}
               </span>
             ))}
@@ -128,17 +128,17 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
         )}
 
         {post.author?.bio && (
-          <div className="mt-10 p-5 rounded-2xl border border-white/5 bg-zinc-900/50 flex gap-4">
+          <div className="mt-10 p-5 rounded-2xl border border-white/5 bg-[#080808]/50 flex gap-4">
             {post.author.image ? (
               <Image src={post.author.image} alt={post.author.name ?? ''} width={48} height={48} className="rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-purple-500/30 flex items-center justify-center text-sm font-bold text-purple-300 shrink-0">
+              <div className="w-12 h-12 rounded-full bg-[#ff2d78]/30 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
                 {post.author.name?.[0] ?? '?'}
               </div>
             )}
             <div>
               <p className="font-semibold text-white text-sm">{post.author.name}</p>
-              <p className="text-zinc-400 text-sm mt-1">{post.author.bio}</p>
+              <p className="text-[#999] text-sm mt-1">{post.author.bio}</p>
             </div>
           </div>
         )}

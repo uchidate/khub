@@ -89,27 +89,27 @@ export function NotificationBell() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setOpen(o => !o)}
-                className="relative p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                className="relative p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
                 aria-label="Notificações"
             >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-purple-600 text-white text-[10px] font-black rounded-full flex items-center justify-center">
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#ff2d78] text-white text-[10px] font-black rounded-full flex items-center justify-center">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-96 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-96 bg-background border border-border rounded-xl shadow-lg shadow-black/5 z-50 overflow-hidden">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-                        <span className="text-sm font-bold text-white">Notificações</span>
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                        <span className="text-sm font-bold text-foreground">Notificações</span>
                         <div className="flex items-center gap-2">
                             {unreadCount > 0 && (
                                 <button
                                     onClick={markAllRead}
-                                    className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                                    className="text-xs text-[#ff2d78] hover:opacity-80 flex items-center gap-1"
                                 >
                                     <Check className="w-3 h-3" />
                                     Marcar todas
@@ -118,7 +118,7 @@ export function NotificationBell() {
                             <Link
                                 href="/settings/notifications"
                                 onClick={() => setOpen(false)}
-                                className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                className="p-1 text-muted hover:text-foreground transition-colors"
                                 aria-label="Configurar notificações"
                             >
                                 <Settings className="w-4 h-4" />
@@ -126,7 +126,7 @@ export function NotificationBell() {
                             <button
                                 onClick={() => setOpen(false)}
                                 aria-label="Fechar notificações"
-                                className="p-1 text-zinc-500 hover:text-white"
+                                className="p-1 text-muted hover:text-foreground"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -137,12 +137,12 @@ export function NotificationBell() {
                     <div className="max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
                             <div className="py-10 text-center">
-                                <Bell className="w-8 h-8 mx-auto mb-3 text-zinc-700" />
-                                <p className="text-sm text-zinc-500 mb-3">Nenhuma notificação ainda</p>
+                                <Bell className="w-8 h-8 mx-auto mb-3 text-[#e8e8e8]" />
+                                <p className="text-sm text-muted mb-3">Nenhuma notificação ainda</p>
                                 <Link
                                     href="/settings/notifications"
                                     onClick={() => setOpen(false)}
-                                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                                    className="text-xs text-[#ff2d78] hover:opacity-80 transition-opacity"
                                 >
                                     Configurar notificações →
                                 </Link>
@@ -151,11 +151,11 @@ export function NotificationBell() {
                             notifications.map(n => (
                                 <div
                                     key={n.id}
-                                    className={`flex items-start gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors border-b border-zinc-800/50 last:border-0 ${!n.readAt ? 'bg-purple-600/5' : ''}`}
+                                    className={`flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors border-b border-border last:border-0 ${!n.readAt ? 'bg-[#ff2d78]/5' : ''}`}
                                 >
                                     {/* Thumbnail */}
                                     {n.news.imageUrl ? (
-                                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                                             <Image
                                                 src={n.news.imageUrl}
                                                 alt=""
@@ -165,8 +165,8 @@ export function NotificationBell() {
                                             />
                                         </div>
                                     ) : (
-                                        <div className="w-12 h-12 rounded-lg flex-shrink-0 bg-zinc-800 flex items-center justify-center">
-                                            <Bell className="w-5 h-5 text-zinc-600" />
+                                        <div className="w-12 h-12 rounded-lg flex-shrink-0 bg-surface flex items-center justify-center">
+                                            <Bell className="w-5 h-5 text-muted" />
                                         </div>
                                     )}
 
@@ -175,18 +175,18 @@ export function NotificationBell() {
                                         <Link
                                             href={`/news/${n.news.id}`}
                                             onClick={() => { setOpen(false); if (!n.readAt) markRead(n.id) }}
-                                            className="text-xs text-zinc-300 hover:text-white line-clamp-2 leading-relaxed"
+                                            className="text-xs text-muted hover:text-foreground line-clamp-2 leading-relaxed"
                                         >
                                             {n.news.title}
                                         </Link>
-                                        <p className="text-[10px] text-zinc-400 mt-1">
+                                        <p className="text-[10px] text-muted mt-1">
                                             {relativeTime(n.createdAt)}
                                         </p>
                                     </div>
 
                                     {/* Unread dot */}
                                     {!n.readAt && (
-                                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-1.5 flex-shrink-0" />
+                                        <div className="w-1.5 h-1.5 bg-[#ff2d78] rounded-full mt-1.5 flex-shrink-0" />
                                     )}
                                 </div>
                             ))

@@ -18,10 +18,10 @@ export function CommentsSection({ newsId }: CommentsSectionProps) {
     }
 
     return (
-        <section className="mt-12 pt-12 border-t border-white/10">
+        <section className="mt-12 pt-12 border-t border-border">
             <div className="mb-6 flex items-center gap-3">
-                <MessageSquare className="w-6 h-6 text-purple-400" />
-                <h2 className="text-2xl md:text-3xl font-black text-white">
+                <MessageSquare className="w-6 h-6 text-[#ff2d78]" />
+                <h2 className="text-2xl md:text-3xl font-black text-foreground">
                     Comentários
                 </h2>
             </div>

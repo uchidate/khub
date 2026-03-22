@@ -47,12 +47,12 @@ export function ContactForm() {
                     <CheckCircle className="w-7 h-7 text-emerald-400" />
                 </div>
                 <h3 className="text-lg font-bold text-white">Mensagem enviada!</h3>
-                <p className="text-sm text-zinc-400 max-w-sm">
+                <p className="text-sm text-[#999] max-w-sm">
                     Recebemos seu contato e responderemos em até 48h úteis no e-mail informado.
                 </p>
                 <button
                     onClick={() => setStatus('idle')}
-                    className="text-xs text-purple-400 hover:text-purple-300 underline underline-offset-4 transition-colors"
+                    className="text-xs text-[#ff2d78] hover:text-[#ff2d78] underline underline-offset-4 transition-colors"
                 >
                     Enviar outra mensagem
                 </button>
@@ -64,7 +64,7 @@ export function ContactForm() {
         <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">
                         Nome *
                     </label>
                     <input
@@ -73,11 +73,11 @@ export function ContactForm() {
                         value={form.name}
                         onChange={e => set('name', e.target.value)}
                         placeholder="Seu nome"
-                        className="w-full bg-zinc-900 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent/50 transition-colors"
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">
                         E-mail *
                     </label>
                     <input
@@ -86,20 +86,20 @@ export function ContactForm() {
                         value={form.email}
                         onChange={e => set('email', e.target.value)}
                         placeholder="seu@email.com"
-                        className="w-full bg-zinc-900 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+                        className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent/50 transition-colors"
                     />
                 </div>
             </div>
 
             <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">
                     Assunto *
                 </label>
                 <select
                     required
                     value={form.subject}
                     onChange={e => set('subject', e.target.value)}
-                    className="w-full bg-zinc-900 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-colors appearance-none cursor-pointer"
+                    className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
                 >
                     {SUBJECTS.map(s => (
                         <option key={s} value={s}>{s}</option>
@@ -108,7 +108,7 @@ export function ContactForm() {
             </div>
 
             <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">
                     Mensagem *
                 </label>
                 <textarea
@@ -118,7 +118,7 @@ export function ContactForm() {
                     onChange={e => set('message', e.target.value)}
                     placeholder="Escreva sua mensagem aqui..."
                     minLength={20}
-                    className="w-full bg-zinc-900 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 transition-colors resize-y"
+                    className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent/50 transition-colors resize-y"
                 />
             </div>
 
@@ -132,7 +132,7 @@ export function ContactForm() {
             <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-sm transition-colors"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-[#ff2d78] hover:bg-[#ff2d78] disabled:opacity-50 text-white font-bold text-sm transition-colors"
             >
                 {status === 'sending'
                     ? <><Loader2 size={16} className="animate-spin" /> Enviando...</>

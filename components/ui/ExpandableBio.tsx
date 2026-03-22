@@ -12,12 +12,12 @@ export function ExpandableBio({ bio }: ExpandableBioProps) {
 
     return (
         <div className="max-w-xl">
-            <p className={`text-zinc-300 text-sm leading-relaxed drop-shadow ${expanded ? '' : 'line-clamp-3'}`}>
+            <p className={`text-[#e8e8e8] text-sm leading-relaxed drop-shadow ${expanded ? '' : 'line-clamp-3'}`}>
                 {bio}
             </p>
             <button
                 onClick={() => setExpanded(v => !v)}
-                className="mt-1 flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors text-xs font-medium"
+                className="mt-1 flex items-center gap-1 text-muted hover:text-[#e8e8e8] transition-colors text-xs font-medium"
                 aria-label={expanded ? 'Recolher biografia' : 'Expandir biografia'}
             >
                 {expanded ? (

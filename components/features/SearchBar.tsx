@@ -89,7 +89,7 @@ export function SearchBar() {
       {/* Search Input */}
       <div className="relative">
         <Search
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400"
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted"
         />
 
         <input
@@ -104,11 +104,11 @@ export function SearchBar() {
           placeholder="Buscar"
           className="
             w-full pl-12 pr-10 py-3
-            bg-zinc-900 text-white
-            border border-zinc-800
+            bg-background text-foreground
+            border border-border
             rounded-lg
-            focus:outline-none focus:ring-2 focus:ring-purple-500
-            placeholder:text-zinc-500
+            focus:outline-none focus:ring-2 focus:ring-[#ff2d78]/30 focus:border-accent
+            placeholder:text-muted
           "
           aria-label="Buscar conteúdo"
           aria-autocomplete="list"
@@ -119,7 +119,7 @@ export function SearchBar() {
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
           >
             <X size={20} />
           </button>
@@ -127,7 +127,7 @@ export function SearchBar() {
 
         {isLoading && (
           <Loader2
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-500 animate-spin"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#ff2d78] animate-spin"
             size={20}
           />
         )}
@@ -140,8 +140,8 @@ export function SearchBar() {
           role="listbox"
           className="
             absolute top-full mt-2 w-full
-            bg-zinc-900 border border-zinc-800
-            rounded-lg shadow-2xl
+            bg-background border border-border
+            rounded-lg shadow-lg shadow-black/5
             max-h-96 overflow-y-auto
             z-50
           "
@@ -155,9 +155,9 @@ export function SearchBar() {
               aria-selected={selectedIndex === index}
               className={`
                 flex items-center gap-3 p-3
-                border-b border-zinc-800 last:border-b-0
+                border-b border-border last:border-b-0
                 transition-colors
-                ${selectedIndex === index ? 'bg-purple-500/20 ring-2 ring-purple-500' : 'hover:bg-zinc-800'}
+                ${selectedIndex === index ? 'bg-[#ff2d78]/5 ring-2 ring-[#ff2d78]/30' : 'hover:bg-surface'}
               `}
             >
               {result.imageUrl && (
@@ -169,17 +169,17 @@ export function SearchBar() {
               )}
 
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-white truncate">
+                <div className="font-medium text-foreground truncate">
                   {result.name}
                 </div>
                 {result.subtitle && (
-                  <div className="text-sm text-zinc-400 truncate">
+                  <div className="text-sm text-muted truncate">
                     {result.subtitle}
                   </div>
                 )}
               </div>
 
-              <div className="text-xs text-zinc-500 uppercase">
+              <div className="text-xs text-muted uppercase">
                 {getTypeLabel(result.type)}
               </div>
             </Link>
@@ -191,12 +191,12 @@ export function SearchBar() {
       {isOpen && query.length >= 2 && results.length === 0 && !isLoading && !error && (
         <div className="
           absolute top-full mt-2 w-full
-          bg-zinc-900 border border-zinc-800
-          rounded-lg shadow-2xl
-          p-6 text-center text-zinc-400
+          bg-background border border-border
+          rounded-lg shadow-lg shadow-black/5
+          p-6 text-center text-muted
           z-50
         ">
-          Nenhum resultado encontrado para "{query}"
+          Nenhum resultado encontrado para &quot;{query}&quot;
         </div>
       )}
 
@@ -204,9 +204,9 @@ export function SearchBar() {
       {error && isOpen && (
         <div className="
           absolute top-full mt-2 w-full
-          bg-red-900/20 border border-red-700
-          rounded-lg shadow-2xl
-          p-6 text-center text-red-400
+          bg-red-50 border border-red-200
+          rounded-lg shadow-lg shadow-black/5
+          p-6 text-center text-red-500
           z-50
         ">
           {error}

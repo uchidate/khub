@@ -60,7 +60,7 @@ export function EditProfileForm({ name, bio }: EditProfileFormProps) {
             {/* Trigger button */}
             <button
                 onClick={() => setOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl transition-colors border border-white/10 uppercase tracking-widest"
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#f5f5f7] hover:bg-[#e8e8e8] text-[#080808] text-xs font-bold rounded-xl transition-colors border border-[#e8e8e8] uppercase tracking-widest"
             >
                 <Pencil size={14} />
                 <span className="hidden sm:inline">Editar</span>
@@ -68,13 +68,13 @@ export function EditProfileForm({ name, bio }: EditProfileFormProps) {
 
             {/* Modal */}
             {open && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-                            <h2 className="text-lg font-black text-white">Editar Perfil</h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-md bg-white rounded-2xl border border-[#e8e8e8] shadow-2xl">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8e8e8]">
+                            <h2 className="text-lg font-black text-[#080808]">Editar Perfil</h2>
                             <button
                                 onClick={() => setOpen(false)}
-                                className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                                className="p-1.5 rounded-lg text-[#6b6b6b] hover:text-[#080808] hover:bg-[#f5f5f7] transition-colors"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -82,7 +82,7 @@ export function EditProfileForm({ name, bio }: EditProfileFormProps) {
 
                         <div className="p-6 space-y-5">
                             <div>
-                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                                <label className="block text-xs font-bold text-[#6b6b6b] uppercase tracking-wider mb-2">
                                     Nome
                                 </label>
                                 <input
@@ -90,20 +90,20 @@ export function EditProfileForm({ name, bio }: EditProfileFormProps) {
                                     value={formName}
                                     onChange={e => setFormName(e.target.value)}
                                     maxLength={100}
-                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors text-sm"
+                                    className="w-full bg-[#f5f5f7] border border-[#e8e8e8] rounded-xl px-4 py-3 text-[#080808] placeholder-[#6b6b6b] focus:outline-none focus:border-[#ff2d78] transition-colors text-sm"
                                     placeholder="Seu nome"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">
-                                    Bio <span className="text-zinc-600 normal-case tracking-normal font-normal">{formBio.length}/300</span>
+                                <label className="block text-xs font-bold text-[#6b6b6b] uppercase tracking-wider mb-2">
+                                    Bio <span className="text-[#6b6b6b]/60 normal-case tracking-normal font-normal">{formBio.length}/300</span>
                                 </label>
                                 <textarea
                                     value={formBio}
                                     onChange={e => setFormBio(e.target.value.slice(0, 300))}
                                     rows={4}
-                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors text-sm resize-none"
+                                    className="w-full bg-[#f5f5f7] border border-[#e8e8e8] rounded-xl px-4 py-3 text-[#080808] placeholder-[#6b6b6b] focus:outline-none focus:border-[#ff2d78] transition-colors text-sm resize-none"
                                     placeholder="Conte um pouco sobre você..."
                                 />
                             </div>
@@ -112,14 +112,14 @@ export function EditProfileForm({ name, bio }: EditProfileFormProps) {
                         <div className="flex gap-3 px-6 pb-6">
                             <button
                                 onClick={() => setOpen(false)}
-                                className="flex-1 py-3 rounded-xl bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 font-bold text-sm transition-colors"
+                                className="flex-1 py-3 rounded-xl bg-[#f5f5f7] text-[#6b6b6b] hover:text-[#080808] hover:bg-[#e8e8e8] font-bold text-sm transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="flex-1 py-3 rounded-xl bg-[#ff2d78] hover:bg-[#ff2d78]/90 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                 Salvar

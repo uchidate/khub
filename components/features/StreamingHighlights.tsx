@@ -39,14 +39,14 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-zinc-800 rounded-xl">
+                    <div className="p-2 bg-[#1a1a1a] rounded-xl">
                         <Tv2 className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-xl md:text-2xl font-black dark:text-white text-zinc-900 tracking-tight">
+                        <h2 className="text-xl md:text-2xl font-black dark:text-white text-foreground tracking-tight">
                             Top 10 nos Streamings
                         </h2>
-                        <p className="text-zinc-500 text-xs">Produções em destaque por plataforma</p>
+                        <p className="text-muted text-xs">Produções em destaque por plataforma</p>
                     </div>
                 </div>
             </div>
@@ -64,7 +64,7 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                                 px-4 py-1.5 rounded-full text-xs font-bold transition-all border
                                 ${isActive
                                     ? `${c.bgColor} text-white border-transparent shadow-lg scale-105`
-                                    : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-white'
+                                    : 'bg-[#080808] text-[#999] border-[#2a2a2a] hover:border-[#6b6b6b] hover:text-white'
                                 }
                             `}
                         >
@@ -87,11 +87,11 @@ export function StreamingHighlights({ showsByPlatform }: StreamingHighlightsProp
                                 sizes="100vw"
                                 aria-hidden
                             />
-                            <div className="absolute inset-0 bg-zinc-950/70" />
+                            <div className="absolute inset-0 bg-surface/70" />
                         </div>
                     )}
                     {!featured?.posterUrl && (
-                        <div className="absolute inset-0 z-0 bg-zinc-900" />
+                        <div className="absolute inset-0 z-0 bg-[#080808]" />
                     )}
 
                     {/* Cards row — padding vertical extra para acomodar o zoom */}
@@ -143,7 +143,7 @@ function ShowCard({
                 relative aspect-[2/3] rounded-lg overflow-hidden
                 ${isFeatured
                     ? `border-2 ${cfg.borderColor} shadow-2xl ring-1 ring-white/10`
-                    : 'border border-zinc-700/50'
+                    : 'border border-[#2a2a2a]/50'
                 }
             `}>
                 {show.posterUrl ? (
@@ -156,7 +156,7 @@ function ShowCard({
                         priority={isFeatured}
                     />
                 ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white font-black text-center p-1 text-xs">
+                    <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-white font-black text-center p-1 text-xs">
                         {show.showTitle[0]}
                     </div>
                 )}

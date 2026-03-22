@@ -31,9 +31,9 @@ const TYPE_LABEL: Record<string, string> = {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-    ALBUM: 'text-purple-400 bg-purple-400/10',
-    EP: 'text-blue-400 bg-blue-400/10',
-    SINGLE: 'text-pink-400 bg-pink-400/10',
+    ALBUM: 'text-[#ff2d78] bg-[#ff2d78]/10',
+    EP: 'text-blue-500 bg-blue-500/10',
+    SINGLE: 'text-[#ff2d78] bg-[#ff2d78]/10',
 }
 
 export function DiscographySection({ albums }: DiscographySectionProps) {
@@ -57,10 +57,10 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
     return (
         <section>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                <h3 className="text-xs font-black text-muted uppercase tracking-widest flex items-center gap-2">
                     <Music className="w-4 h-4" />
                     Discografia
-                    <span className="text-zinc-700 font-bold normal-case tracking-normal">
+                    <span className="text-muted opacity-60 font-bold normal-case tracking-normal">
                         {albums.length} lançamento{albums.length !== 1 ? 's' : ''}
                     </span>
                 </h3>
@@ -73,8 +73,8 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                                 onClick={() => setFilter(key)}
                                 className={`text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full transition-all ${
                                     filter === key
-                                        ? 'bg-purple-500 text-white'
-                                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                        ? 'bg-[#ff2d78] text-white'
+                                        : 'bg-[#1a1a1a] text-[#999] hover:bg-[#2a2a2a]'
                                 }`}
                             >
                                 {label}
@@ -91,9 +91,9 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                 {filtered.map((album) => (
                     <div
                         key={album.id}
-                        className="group relative bg-zinc-900 rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/40 transition-all hover:-translate-y-1"
+                        className="group relative bg-[#080808] rounded-xl border border-white/5 overflow-hidden hover:border-[#ff2d78]/40 transition-all hover:-translate-y-1"
                     >
-                        <div className="aspect-square relative bg-zinc-800">
+                        <div className="aspect-square relative bg-[#1a1a1a]">
                             {album.coverUrl ? (
                                 <Image
                                     src={album.coverUrl}
@@ -104,9 +104,9 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                                     unoptimized
                                 />
                             ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-zinc-700">
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[#2a2a2a]">
                                     <Music className="w-8 h-8 opacity-20" />
-                                    <span className={`text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-sm ${TYPE_COLOR[album.type] ?? 'text-zinc-500 bg-zinc-800'}`}>
+                                    <span className={`text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-sm ${TYPE_COLOR[album.type] ?? 'text-muted bg-[#1a1a1a]'}`}>
                                         {TYPE_LABEL[album.type] ?? album.type}
                                     </span>
                                 </div>
@@ -117,11 +117,11 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                         <div className="p-3">
                             <h4 className="font-bold text-white text-sm line-clamp-1">{album.title}</h4>
                             <div className="flex justify-between items-center mt-1">
-                                <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded-sm ${TYPE_COLOR[album.type] ?? 'text-zinc-500 bg-zinc-800'}`}>
+                                <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded-sm ${TYPE_COLOR[album.type] ?? 'text-muted bg-[#1a1a1a]'}`}>
                                     {TYPE_LABEL[album.type] ?? album.type}
                                 </span>
                                 {album.releaseDate && (
-                                    <span className="text-[10px] font-bold text-zinc-500">
+                                    <span className="text-[10px] font-bold text-muted">
                                         {new Date(album.releaseDate).getUTCFullYear()}
                                     </span>
                                 )}

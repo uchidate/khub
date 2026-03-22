@@ -25,13 +25,13 @@ export function LatestNews({ news }: LatestNewsProps) {
                     <div className="p-1.5 bg-neon-pink/15 rounded-lg">
                         <Newspaper className="w-4 h-4 text-neon-pink" />
                     </div>
-                    <h2 className="text-xl font-black dark:text-white text-zinc-900 uppercase tracking-tight">
+                    <h2 className="text-xl font-black dark:text-white text-foreground uppercase tracking-tight">
                         Últimas do Hallyu
                     </h2>
                 </div>
                 <Link
                     href="/news"
-                    className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors hidden sm:block"
+                    className="text-xs font-black text-muted hover:text-white uppercase tracking-widest transition-colors hidden sm:block"
                 >
                     Ver todas →
                 </Link>
@@ -43,10 +43,10 @@ export function LatestNews({ news }: LatestNewsProps) {
                     <Link
                         key={item.id}
                         href={`/news/${item.id}`}
-                        className="group flex flex-col rounded-2xl overflow-hidden dark:bg-zinc-900/60 bg-zinc-50 dark:border-white/5 border border-zinc-200 dark:hover:border-white/15 hover:border-zinc-300 transition-all hover:-translate-y-0.5"
+                        className="group flex flex-col rounded-2xl overflow-hidden dark:bg-[#080808]/60 bg-[#fafafa] dark:border-white/5 border border-border dark:hover:border-white/15 hover:border-border transition-all hover:-translate-y-0.5"
                     >
                         {/* Imagem */}
-                        <div className="relative aspect-video overflow-hidden dark:bg-zinc-800 bg-zinc-200">
+                        <div className="relative aspect-video overflow-hidden dark:bg-[#1a1a1a] bg-[#f0f0f0]">
                             {item.imageUrl ? (
                                 <Image
                                     src={item.imageUrl}
@@ -62,14 +62,14 @@ export function LatestNews({ news }: LatestNewsProps) {
 
                         {/* Texto */}
                         <div className="p-4 flex flex-col gap-1.5">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-cyber-purple">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78]">
                                 {new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
-                            <h3 className="text-sm font-bold dark:text-white text-zinc-900 group-hover:text-neon-pink transition-colors leading-snug line-clamp-2">
+                            <h3 className="text-sm font-bold dark:text-white text-foreground group-hover:text-neon-pink transition-colors leading-snug line-clamp-2">
                                 {item.title}
                             </h3>
                             {item.excerpt && (
-                                <p className="text-[11px] dark:text-zinc-500 text-zinc-600 line-clamp-2 leading-relaxed">
+                                <p className="text-[11px] dark:text-muted text-[#444] line-clamp-2 leading-relaxed">
                                     {item.excerpt}
                                 </p>
                             )}
@@ -82,7 +82,7 @@ export function LatestNews({ news }: LatestNewsProps) {
             <div className="mt-4 sm:hidden text-center">
                 <Link
                     href="/news"
-                    className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors"
+                    className="text-xs font-black text-muted hover:text-white uppercase tracking-widest transition-colors"
                 >
                     Ver todas as notícias →
                 </Link>

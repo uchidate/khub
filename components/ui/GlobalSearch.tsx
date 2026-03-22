@@ -23,7 +23,6 @@ export function GlobalSearch() {
         clearSearch
     } = useGlobalSearch()
 
-    // ESC para fechar o dropdown (Cmd+K é tratado pelo QuickSearch modal)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -31,23 +30,19 @@ export function GlobalSearch() {
                 inputRef.current?.blur()
             }
         }
-
         document.addEventListener('keydown', handleKeyDown)
         return () => document.removeEventListener('keydown', handleKeyDown)
     }, [setIsOpen])
 
-    // Click outside para fechar
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
                 setIsOpen(false)
             }
         }
-
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside)
         }
-
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [isOpen, setIsOpen])
 
@@ -75,8 +70,8 @@ export function GlobalSearch() {
                             setIsOpen(true)
                         }}
                         onFocus={() => setIsOpen(true)}
-                        placeholder="Buscar"
-                        className="w-full pl-5 pr-32 py-3 bg-zinc-900/50 border border-white/10 rounded-full text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all hover:border-purple-500/30"
+                        placeholder="Buscar artistas, dramas…"
+                        className="w-full pl-5 pr-32 py-3 bg-surface border border-border rounded-full text-foreground placeholder-[#6b6b6b] focus:outline-none focus:border-accent transition-all text-[13px]"
                     />
 
                     {/* Right side icons */}
@@ -85,29 +80,28 @@ export function GlobalSearch() {
                             <button
                                 type="button"
                                 onClick={clearSearch}
-                                className="p-1 hover:bg-zinc-800 rounded-full transition-colors"
+                                className="p-1 hover:bg-[#e8e8e8] rounded-full transition-colors"
                                 aria-label="Limpar busca"
                             >
-                                <X className="w-4 h-4 text-zinc-400" />
+                                <X className="w-4 h-4 text-muted" />
                             </button>
                         )}
 
-                        {/* Kbd shortcut hint */}
-                        <div className="hidden md:flex items-center gap-1 px-2 py-1 bg-zinc-800/50 rounded text-xs text-zinc-500 font-mono">
+                        <div className="hidden md:flex items-center gap-1 px-2 py-1 bg-background border border-border rounded text-xs text-muted font-mono shadow-sm">
                             <span>⌘K</span>
                         </div>
 
-                        <Search className="w-5 h-5 text-zinc-400" />
+                        <Search className="w-4 h-4 text-muted" />
                     </div>
                 </div>
             </form>
 
             {/* Results Dropdown */}
             {isOpen && query.trim().length >= 2 && (
-                <div className="absolute top-full mt-2 w-[660px] max-w-[90vw] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50">
+                <div className="absolute top-full mt-2 w-[660px] max-w-[90vw] bg-background border border-border rounded-2xl shadow-xl overflow-hidden z-50">
                     {/* Loading State */}
                     {isLoading && (
-                        <div className="flex items-center justify-center gap-2 py-8 text-zinc-400">
+                        <div className="flex items-center justify-center gap-2 py-8 text-muted">
                             <Loader2 className="w-5 h-5 animate-spin" />
                             <span className="text-sm">Buscando...</span>
                         </div>
@@ -118,46 +112,46 @@ export function GlobalSearch() {
                         <div className="max-h-[500px] overflow-y-auto">
                             {/* Artists */}
                             {results.artists.length > 0 && (
-                                <div className="p-3 border-b border-white/5">
-                                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-purple-400">
-                                        <User className="w-4 h-4" />
+                                <div className="p-3 border-b border-border">
+                                    <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#ff2d78]">
+                                        <User className="w-3.5 h-3.5" />
                                         Artistas ({results.artists.length})
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-0.5">
                                         {results.artists.map((artist) => (
                                             <Link
                                                 key={artist.id}
                                                 href={`/artists/${artist.id}`}
                                                 onClick={() => setIsOpen(false)}
-                                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >
-                                                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                <div className="relative w-9 h-9 rounded-full overflow-hidden bg-surface flex-shrink-0">
                                                     {artist.primaryImageUrl ? (
                                                         <Image
                                                             src={artist.primaryImageUrl}
                                                             alt={artist.nameRomanized}
                                                             fill
                                                             className="object-cover"
-                                                            sizes="40px"
+                                                            sizes="36px"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-white font-bold">
+                                                        <div className="w-full h-full flex items-center justify-center text-muted font-bold text-sm">
                                                             {artist.nameRomanized[0]}
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-white group-hover:text-purple-400 transition-colors truncate">
+                                                    <p className="font-semibold text-foreground text-[13px] group-hover:text-[#ff2d78] transition-colors truncate">
                                                         {artist.nameRomanized}
                                                     </p>
                                                     {artist.roles.length > 0 && (
-                                                        <p className="text-xs text-zinc-500 truncate">
+                                                        <p className="text-xs text-muted truncate">
                                                             {getRoleLabel(artist.roles[0], artist.gender)}
                                                         </p>
                                                     )}
                                                 </div>
                                                 {artist.trendingScore > 0 && (
-                                                    <TrendingUp className="w-4 h-4 text-orange-400" />
+                                                    <TrendingUp className="w-3.5 h-3.5 text-[#ff2d78]" />
                                                 )}
                                             </Link>
                                         ))}
@@ -167,40 +161,40 @@ export function GlobalSearch() {
 
                             {/* Groups */}
                             {results.groups.length > 0 && (
-                                <div className="p-3 border-b border-white/5">
-                                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-violet-400">
-                                        <Users className="w-4 h-4" />
+                                <div className="p-3 border-b border-border">
+                                    <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#7c3aed]">
+                                        <Users className="w-3.5 h-3.5" />
                                         Grupos ({results.groups.length})
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-0.5">
                                         {results.groups.map((group) => (
                                             <Link
                                                 key={group.id}
                                                 href={`/groups/${group.id}`}
                                                 onClick={() => setIsOpen(false)}
-                                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >
-                                                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+                                                <div className="relative w-9 h-9 rounded-full overflow-hidden bg-surface flex-shrink-0">
                                                     {group.profileImageUrl ? (
                                                         <Image
                                                             src={group.profileImageUrl}
                                                             alt={group.name}
                                                             fill
                                                             className="object-cover"
-                                                            sizes="40px"
+                                                            sizes="36px"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-white font-bold">
+                                                        <div className="w-full h-full flex items-center justify-center text-muted font-bold text-sm">
                                                             {group.name[0]}
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-white group-hover:text-violet-400 transition-colors truncate">
+                                                    <p className="font-semibold text-foreground text-[13px] group-hover:text-[#7c3aed] transition-colors truncate">
                                                         {group.name}
                                                     </p>
                                                     {group.nameHangul && (
-                                                        <p className="text-xs text-zinc-500 truncate">{group.nameHangul}</p>
+                                                        <p className="text-xs text-muted truncate">{group.nameHangul}</p>
                                                     )}
                                                 </div>
                                             </Link>
@@ -211,24 +205,24 @@ export function GlobalSearch() {
 
                             {/* Productions */}
                             {results.productions.length > 0 && (
-                                <div className="p-3 border-b border-white/5">
-                                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-cyan-400">
-                                        <Film className="w-4 h-4" />
+                                <div className="p-3 border-b border-border">
+                                    <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#0ea5e9]">
+                                        <Film className="w-3.5 h-3.5" />
                                         Produções ({results.productions.length})
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-0.5">
                                         {results.productions.map((production) => (
                                             <Link
                                                 key={production.id}
                                                 href={`/productions/${production.id}`}
                                                 onClick={() => setIsOpen(false)}
-                                                className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                                                className="flex items-start gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-white group-hover:text-cyan-400 transition-colors truncate">
+                                                    <p className="font-semibold text-foreground text-[13px] group-hover:text-[#0ea5e9] transition-colors truncate">
                                                         {production.titlePt}
                                                     </p>
-                                                    <p className="text-xs text-zinc-500 truncate">
+                                                    <p className="text-xs text-muted truncate">
                                                         {production.type} {production.year && `• ${production.year}`}
                                                     </p>
                                                 </div>
@@ -241,23 +235,23 @@ export function GlobalSearch() {
                             {/* News */}
                             {results.news.length > 0 && (
                                 <div className="p-3">
-                                    <div className="flex items-center gap-2 px-3 py-2 text-xs font-black uppercase tracking-wider text-pink-400">
-                                        <Newspaper className="w-4 h-4" />
+                                    <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#ff2d78]">
+                                        <Newspaper className="w-3.5 h-3.5" />
                                         Notícias ({results.news.length})
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-0.5">
                                         {results.news.map((newsItem) => (
                                             <Link
                                                 key={newsItem.id}
                                                 href={`/news/${newsItem.id}`}
                                                 onClick={() => setIsOpen(false)}
-                                                className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                                                className="flex items-start gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-white group-hover:text-pink-400 transition-colors line-clamp-2 leading-tight">
+                                                    <p className="font-semibold text-foreground text-[13px] group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-tight">
                                                         {newsItem.title}
                                                     </p>
-                                                    <p className="text-xs text-zinc-500 mt-1">
+                                                    <p className="text-xs text-muted mt-1">
                                                         {new Date(newsItem.publishedAt).toLocaleDateString('pt-BR', {
                                                             day: '2-digit',
                                                             month: 'short'
@@ -270,12 +264,12 @@ export function GlobalSearch() {
                                 </div>
                             )}
 
-                            {/* Ver todos os resultados */}
-                            <div className="p-3 border-t border-white/5">
+                            {/* Ver todos */}
+                            <div className="p-3 border-t border-border">
                                 <Link
                                     href={`/search?q=${encodeURIComponent(query)}`}
                                     onClick={() => setIsOpen(false)}
-                                    className="block w-full py-2 text-center text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors"
+                                    className="block w-full py-2 text-center text-[13px] font-semibold text-[#ff2d78] hover:underline transition-colors"
                                 >
                                     Ver todos os {results.total} resultados →
                                 </Link>
@@ -286,11 +280,11 @@ export function GlobalSearch() {
                     {/* Empty State */}
                     {!isLoading && !hasResults && (
                         <div className="py-12 text-center">
-                            <Search className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-                            <p className="text-zinc-400 text-sm">
+                            <Search className="w-10 h-10 text-[#e8e8e8] mx-auto mb-3" />
+                            <p className="text-muted text-sm">
                                 Nenhum resultado para &quot;{query}&quot;
                             </p>
-                            <p className="text-zinc-600 text-xs mt-1">
+                            <p className="text-[#999] text-xs mt-1">
                                 Tente buscar por artistas, notícias ou produções
                             </p>
                         </div>

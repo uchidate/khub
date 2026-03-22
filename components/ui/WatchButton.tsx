@@ -120,13 +120,13 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
 
     const buttonLabel = entry ? WATCH_STATUS_LABELS[entry.status] : 'Adicionar à lista'
     const buttonIcon = entry ? WATCH_STATUS_ICONS[entry.status] : null
-    const buttonBg = entry ? STATUS_COLORS[entry.status] : 'bg-zinc-700 hover:bg-zinc-600'
+    const buttonBg = entry ? STATUS_COLORS[entry.status] : 'bg-surface hover:bg-[#e8e8e8] text-foreground border border-border'
 
     const dropdown = (
         <div
             ref={dropdownRef}
             style={dropdownStyle}
-            className="w-72 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl"
+            className="w-72 rounded-xl border border-border bg-background shadow-xl"
         >
             {/* Status options */}
             <div className="p-2">
@@ -134,7 +134,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                     <button
                         key={s}
                         onClick={() => handleSelectStatus(s)}
-                        className={`w-full px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${entry?.status === s ? 'bg-zinc-700 text-white' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${entry?.status === s ? 'bg-[#fff0f5] text-[#ff2d78]' : 'text-foreground hover:bg-surface'}`}
                     >
                         {WATCH_STATUS_LABELS[s]}
                     </button>
@@ -143,14 +143,14 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
 
             {/* Rating + notes (only if entry exists) */}
             {entry && (
-                <div className="border-t border-zinc-700 p-3 space-y-3">
+                <div className="border-t border-border p-3 space-y-3">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-zinc-400 w-16">Nota:</span>
+                        <span className="text-xs text-muted w-16">Nota:</span>
                         <StarRating value={localRating} onChange={setLocalRating} />
                         {localRating && (
                             <button
                                 onClick={() => setLocalRating(null)}
-                                className="text-zinc-500 hover:text-zinc-300 ml-1"
+                                className="text-muted hover:text-[#e8e8e8] ml-1"
                                 title="Limpar avaliação"
                             >
                                 <X size={12} />
@@ -163,13 +163,13 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                             onChange={e => setLocalNotes(e.target.value)}
                             placeholder="Nota privada (opcional)..."
                             rows={2}
-                            className="w-full bg-zinc-800 text-zinc-200 text-xs rounded-lg px-3 py-2 border border-zinc-700 focus:outline-none focus:border-zinc-500 resize-none placeholder:text-zinc-500"
+                            className="w-full bg-background text-foreground text-xs rounded-lg px-3 py-2 border border-border focus:outline-none focus:border-accent resize-none placeholder:text-muted"
                         />
                     </div>
                     <div className="flex items-center justify-between">
                         <button
                             onClick={handleSaveDetails}
-                            className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded-lg transition-colors"
+                            className="px-3 py-1.5 bg-[#080808] hover:bg-[#ff2d78] text-white text-xs rounded-lg transition-colors"
                         >
                             Salvar
                         </button>

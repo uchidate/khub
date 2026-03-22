@@ -134,15 +134,15 @@ function SearchContent() {
                             onClick={() => setFilter(tab.key)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
                                 activeFilter === tab.key
-                                    ? 'bg-purple-600 text-white'
-                                    : 'bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                                    ? 'bg-[#ff2d78] text-white'
+                                    : 'bg-surface text-muted hover:text-foreground hover:bg-[#e8e8e8] border border-border'
                             }`}
                         >
                             {tab.icon}
                             {tab.label}
                             {tab.count > 0 && (
                                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                    activeFilter === tab.key ? 'bg-white/20 text-white' : 'bg-zinc-700 text-zinc-400'
+                                    activeFilter === tab.key ? 'bg-white/20 text-white' : 'bg-surface text-muted'
                                 }`}>
                                     {tab.count}
                                 </span>
@@ -155,8 +155,8 @@ function SearchContent() {
             {/* Empty query */}
             {!query || query.trim().length < 2 ? (
                 <div className="text-center py-20">
-                    <Search className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-                    <p className="text-zinc-400 text-lg">Digite pelo menos 2 caracteres para buscar</p>
+                    <Search className="w-16 h-16 text-[#e8e8e8] mx-auto mb-4" />
+                    <p className="text-[#999] text-lg">Digite pelo menos 2 caracteres para buscar</p>
                 </div>
             ) : loading && !deferredData ? (
                 <div className="space-y-8">
@@ -171,18 +171,18 @@ function SearchContent() {
                 </div>
             ) : deferredData && total === 0 ? (
                 <div className="text-center py-20">
-                    <Search className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-                    <p className="text-zinc-400 text-lg mb-2">
+                    <Search className="w-16 h-16 text-[#e8e8e8] mx-auto mb-4" />
+                    <p className="text-[#999] text-lg mb-2">
                         Nenhum resultado encontrado para &quot;{query}&quot;
                     </p>
-                    <p className="text-zinc-600">Tente buscar por artistas, grupos, notícias ou produções</p>
+                    <p className="text-muted">Tente buscar por artistas, grupos, notícias ou produções</p>
                 </div>
             ) : deferredData ? (
                 <div className={`space-y-12 transition-opacity duration-200 ${isStale ? 'opacity-50' : 'opacity-100'}`}>
                     {/* Summary */}
                     <div>
-                        <p className="text-zinc-400">
-                            <span className="text-2xl font-bold text-white">{total}</span> resultado{total > 1 ? 's' : ''} para &quot;<span className="text-purple-400">{query}</span>&quot;
+                        <p className="text-[#999]">
+                            <span className="text-2xl font-bold text-foreground">{total}</span> resultado{total > 1 ? 's' : ''} para &quot;<span className="text-[#ff2d78]">{query}</span>&quot;
                         </p>
                     </div>
 
@@ -190,18 +190,18 @@ function SearchContent() {
                     {showArtists && artists.length > 0 && (
                         <section>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-purple-600/20 rounded-lg">
-                                    <User className="w-5 h-5 text-purple-400" />
+                                <div className="p-2 bg-[#fff0f5] rounded-lg">
+                                    <User className="w-5 h-5 text-[#ff2d78]" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-white">Artistas</h2>
-                                    <p className="text-sm text-zinc-500">{artists.length} encontrado{artists.length > 1 ? 's' : ''}</p>
+                                    <h2 className="text-2xl font-black text-foreground">Artistas</h2>
+                                    <p className="text-sm text-muted">{artists.length} encontrado{artists.length > 1 ? 's' : ''}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {artists.map((artist) => (
                                     <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
-                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-zinc-900 mb-2">
+                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-surface mb-2">
                                             {artist.primaryImageUrl ? (
                                                 <Image
                                                     src={artist.primaryImageUrl}
@@ -211,16 +211,16 @@ function SearchContent() {
                                                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600 text-white text-2xl font-bold">
+                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#ff2d78] to-pink-600 text-white text-2xl font-bold">
                                                     {artist.nameRomanized[0]}
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-white group-hover:text-purple-400 transition-colors truncate">
+                                        <h3 className="font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
                                             {artist.nameRomanized}
                                         </h3>
                                         {artist.roles.length > 0 && (
-                                            <p className="text-xs text-zinc-500 truncate">{getRoleLabel(artist.roles[0], artist.gender)}</p>
+                                            <p className="text-xs text-muted truncate">{getRoleLabel(artist.roles[0], artist.gender)}</p>
                                         )}
                                     </Link>
                                 ))}
@@ -232,18 +232,18 @@ function SearchContent() {
                     {showGroups && groups.length > 0 && (
                         <section>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-pink-600/20 rounded-lg">
-                                    <Users className="w-5 h-5 text-pink-400" />
+                                <div className="p-2 bg-[#fff0f5] rounded-lg">
+                                    <Users className="w-5 h-5 text-[#ff2d78]" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-white">Grupos</h2>
-                                    <p className="text-sm text-zinc-500">{groups.length} encontrado{groups.length > 1 ? 's' : ''}</p>
+                                    <h2 className="text-2xl font-black text-foreground">Grupos</h2>
+                                    <p className="text-sm text-muted">{groups.length} encontrado{groups.length > 1 ? 's' : ''}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {groups.map((group) => (
                                     <Link key={group.id} href={`/groups/${group.id}`} className="group">
-                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-zinc-900 mb-2">
+                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-surface mb-2">
                                             {group.profileImageUrl ? (
                                                 <Image
                                                     src={group.profileImageUrl}
@@ -253,16 +253,16 @@ function SearchContent() {
                                                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-600 to-purple-600 text-white text-2xl font-bold">
+                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-600 to-[#ff6fa3] text-white text-2xl font-bold">
                                                     {group.name[0]}
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-white group-hover:text-pink-400 transition-colors truncate">
+                                        <h3 className="font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
                                             {group.name}
                                         </h3>
                                         {group.nameHangul && (
-                                            <p className="text-xs text-zinc-500 truncate">{group.nameHangul}</p>
+                                            <p className="text-xs text-muted truncate">{group.nameHangul}</p>
                                         )}
                                     </Link>
                                 ))}
@@ -274,18 +274,18 @@ function SearchContent() {
                     {showProductions && productions.length > 0 && (
                         <section>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-cyan-600/20 rounded-lg">
-                                    <Film className="w-5 h-5 text-cyan-400" />
+                                <div className="p-2 bg-[#e0f2fe] rounded-lg">
+                                    <Film className="w-5 h-5 text-[#0ea5e9]" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-white">Produções</h2>
-                                    <p className="text-sm text-zinc-500">{productions.length} encontrada{productions.length > 1 ? 's' : ''}</p>
+                                    <h2 className="text-2xl font-black text-foreground">Produções</h2>
+                                    <p className="text-sm text-muted">{productions.length} encontrada{productions.length > 1 ? 's' : ''}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {productions.map((production) => (
                                     <Link key={production.id} href={`/productions/${production.id}`} className="group">
-                                        <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 mb-2">
+                                        <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface mb-2">
                                             {production.imageUrl ? (
                                                 <Image
                                                     src={production.imageUrl}
@@ -295,15 +295,15 @@ function SearchContent() {
                                                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-zinc-800 p-4">
-                                                    <p className="text-white text-center text-xs font-bold line-clamp-3">{production.titlePt}</p>
+                                                <div className="w-full h-full flex items-center justify-center bg-surface p-4">
+                                                    <p className="text-muted text-center text-xs font-bold line-clamp-3">{production.titlePt}</p>
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-white group-hover:text-cyan-400 transition-colors line-clamp-2 text-sm">
+                                        <h3 className="font-semibold text-foreground group-hover:text-[#0ea5e9] transition-colors line-clamp-2 text-sm">
                                             {production.titlePt}
                                         </h3>
-                                        <p className="text-xs text-zinc-500">
+                                        <p className="text-xs text-muted">
                                             {production.type}{production.year && ` • ${production.year}`}
                                         </p>
                                     </Link>
@@ -316,12 +316,12 @@ function SearchContent() {
                     {showNews && news.length > 0 && (
                         <section>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-pink-600/20 rounded-lg">
-                                    <Newspaper className="w-5 h-5 text-pink-400" />
+                                <div className="p-2 bg-[#fff0f5] rounded-lg">
+                                    <Newspaper className="w-5 h-5 text-[#ff2d78]" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-white">Notícias</h2>
-                                    <p className="text-sm text-zinc-500">{news.length} encontrada{news.length > 1 ? 's' : ''}</p>
+                                    <h2 className="text-2xl font-black text-foreground">Notícias</h2>
+                                    <p className="text-sm text-muted">{news.length} encontrada{news.length > 1 ? 's' : ''}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -329,10 +329,10 @@ function SearchContent() {
                                     <Link
                                         key={newsItem.id}
                                         href={`/news/${newsItem.id}`}
-                                        className="group bg-zinc-900/50 rounded-xl overflow-hidden border border-white/5 hover:border-pink-500/30 transition-all"
+                                        className="group rounded-xl overflow-hidden border border-border hover:border-[#ff2d78]/30 transition-all"
                                     >
                                         {newsItem.imageUrl && (
-                                            <div className="relative aspect-video overflow-hidden bg-zinc-900">
+                                            <div className="relative aspect-video overflow-hidden bg-[#080808]">
                                                 <Image
                                                     src={newsItem.imageUrl}
                                                     alt={newsItem.title}
@@ -346,17 +346,17 @@ function SearchContent() {
                                             {newsItem.tags.length > 0 && (
                                                 <div className="flex gap-2 mb-2">
                                                     {newsItem.tags.slice(0, 2).map(tag => (
-                                                        <span key={tag} className="px-2 py-0.5 bg-pink-600/20 text-pink-400 text-xs font-bold rounded-full">
+                                                        <span key={tag} className="px-2 py-0.5 bg-[#fff0f5] text-[#ff2d78] text-xs font-bold rounded-full">
                                                             {tag}
                                                         </span>
                                                     ))}
                                                 </div>
                                             )}
-                                            <h3 className="font-bold text-white group-hover:text-pink-400 transition-colors line-clamp-2 mb-2">
+                                            <h3 className="font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 mb-2">
                                                 {newsItem.title}
                                             </h3>
-                                            <p className="text-sm text-zinc-500 line-clamp-2">{stripMarkdown(newsItem.contentMd).slice(0, 180)}</p>
-                                            <p className="text-xs text-zinc-600 mt-2">
+                                            <p className="text-sm text-muted line-clamp-2">{stripMarkdown(newsItem.contentMd).slice(0, 180)}</p>
+                                            <p className="text-xs text-[#444] mt-2">
                                                 {new Date(newsItem.publishedAt).toLocaleDateString('pt-BR')}
                                             </p>
                                         </div>
@@ -373,22 +373,22 @@ function SearchContent() {
 
 export default function SearchPage() {
     return (
-        <div className="min-h-screen bg-black pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+        <div className="min-h-screen bg-background py-8 md:py-12 px-4 sm:px-12 md:px-20">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
                         href="/"
-                        className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6"
+                        className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-6"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Voltar
                     </Link>
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl">
-                            <Search className="w-6 h-6 text-white" />
+                        <div className="p-3 bg-gradient-to-br from-[#ff2d78] to-pink-600 rounded-xl">
+                            <Search className="w-6 h-6 text-foreground" />
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-white">Resultados da Busca</h1>
+                        <h1 className="text-3xl md:text-4xl font-black text-foreground">Resultados da Busca</h1>
                     </div>
                 </div>
 

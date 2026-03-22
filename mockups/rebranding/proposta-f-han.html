@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposta F — Han</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #f7f2e9;
+  --white:  #fffdf8;
+  --navy:   #0a1628;
+  --coral:  #e8522a;
+  --sand:   #c9b99a;
+  --text:   #0a1628;
+  --muted:  #7a7060;
+  --border: #e0d8cc;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); }
+
+/* NAV */
+nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 3rem; height:72px;
+  background:var(--white); border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:100;
+}
+.logo { display:flex; align-items:center; gap:0.875rem; }
+/* Logo: angular H mark inspired by Korean brush cuts */
+.logo-svg { width:38px; height:38px; }
+.logo-name { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; letter-spacing:0.02em; color:var(--navy); }
+.logo-name em { font-style:normal; color:var(--coral); }
+.nav-center { display:flex; gap:0.25rem; }
+.nav-center a { font-size:0.82rem; font-weight:500; color:var(--muted); text-decoration:none; padding:0.4rem 0.875rem; border-radius:6px; transition:.15s; }
+.nav-center a:hover { color:var(--navy); background:var(--bg); }
+.nav-right { display:flex; gap:0.75rem; }
+.btn-ghost { padding:0.5rem 1.5rem; border:1px solid var(--border); background:transparent; color:var(--text); border-radius:4px; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; }
+.btn-coral { padding:0.5rem 1.5rem; background:var(--coral); color:#fff; border-radius:4px; font-size:0.8rem; font-weight:600; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; }
+
+/* HERO — split layout with Hangul decorative */
+.hero { display:grid; grid-template-columns:55fr 45fr; min-height:88vh; border-bottom:1px solid var(--border); }
+.hero-left {
+  padding:5rem 3.5rem 4rem;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  border-right:1px solid var(--border);
+  position:relative; overflow:hidden;
+}
+/* Large decorative Hangul */
+.hangul-bg {
+  position:absolute; right:-1rem; top:50%; transform:translateY(-50%);
+  font-family:'Cormorant Garamond',serif;
+  font-size:20rem; font-weight:700; color:var(--border);
+  line-height:1; user-select:none; pointer-events:none;
+  letter-spacing:-0.05em;
+}
+.hero-left-inner { position:relative; max-width:520px; }
+.eyebrow {
+  display:inline-flex; align-items:center; gap:0.6rem;
+  font-size:0.72rem; font-weight:500; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--coral); margin-bottom:2.5rem;
+}
+.eyebrow-line { width:32px; height:1.5px; background:var(--coral); }
+h1 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(3.5rem,5.5vw,6rem);
+  font-weight:600; line-height:1.05;
+  letter-spacing:-0.01em; margin-bottom:1.75rem;
+}
+h1 em { font-style:italic; color:var(--coral); }
+.hero-desc {
+  font-size:1rem; color:var(--muted); line-height:1.8;
+  max-width:460px; margin-bottom:3rem; font-weight:300;
+}
+.hero-ctas { display:flex; gap:0.875rem; align-items:center; }
+.cta-primary {
+  padding:0.9rem 2.25rem; background:var(--navy); color:#fff;
+  font-size:0.82rem; font-weight:600; letter-spacing:0.04em;
+  border-radius:3px; cursor:pointer; border:none; font-family:'DM Sans',sans-serif;
+  transition:.2s;
+}
+.cta-primary:hover { background:#152038; }
+.cta-link {
+  font-size:0.82rem; color:var(--muted); font-weight:500;
+  display:flex; align-items:center; gap:0.4rem; cursor:pointer;
+  transition:color .2s;
+}
+.cta-link:hover { color:var(--coral); }
+/* Right side editorial */
+.hero-right { display:grid; grid-template-rows:1fr auto; }
+.hero-editorial {
+  background:var(--navy); padding:3.5rem;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  position:relative; overflow:hidden;
+}
+/* Decorative Hangul in dark panel */
+.hero-editorial::before {
+  content:'한류'; position:absolute;
+  right:-1.5rem; top:1rem;
+  font-family:'Cormorant Garamond',serif;
+  font-size:14rem; font-weight:700;
+  color:rgba(255,255,255,0.04); line-height:1;
+}
+.ed-label {
+  font-size:0.65rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--coral); font-weight:600; margin-bottom:0.875rem;
+  display:flex; align-items:center; gap:0.5rem;
+}
+.ed-label::before { content:''; width:20px; height:1.5px; background:var(--coral); }
+.ed-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:2.25rem; font-weight:600; line-height:1.15;
+  color:#fff; letter-spacing:-0.01em; margin-bottom:0.875rem;
+}
+.ed-meta { font-size:0.78rem; color:rgba(255,255,255,0.35); }
+/* Stats strip */
+.hero-stats { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--border); }
+.stat { padding:1.75rem; border-right:1px solid var(--border); }
+.stat:last-child { border-right:none; }
+.stat-n { font-family:'Cormorant Garamond',serif; font-size:2.5rem; font-weight:600; color:var(--navy); line-height:1; }
+.stat-n span { color:var(--coral); }
+.stat-l { font-size:0.72rem; color:var(--muted); margin-top:0.25rem; font-weight:300; }
+
+/* SECTION */
+.section { padding:4rem 3rem; }
+.sec-head { display:flex; align-items:baseline; gap:1.5rem; margin-bottom:2.5rem; }
+.sec-title { font-family:'Cormorant Garamond',serif; font-size:2.25rem; font-weight:600; letter-spacing:-0.01em; }
+.sec-title em { font-style:italic; color:var(--coral); }
+.sec-rule { flex:1; height:1px; background:var(--border); }
+.sec-link { font-size:0.78rem; color:var(--coral); font-weight:600; text-decoration:none; letter-spacing:0.04em; text-transform:uppercase; }
+
+/* ARTISTS — magazine grid */
+.artist-mag { display:grid; grid-template-columns:2fr 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); }
+.art-main { background:var(--white); padding:2.5rem; cursor:pointer; transition:background .15s; }
+.art-main:hover { background:var(--bg); }
+.art-initial-lg {
+  font-family:'Cormorant Garamond',serif;
+  font-size:7rem; font-weight:600; color:var(--border);
+  line-height:1; margin-bottom:1.5rem;
+}
+.art-name { font-family:'Cormorant Garamond',serif; font-size:1.75rem; font-weight:600; }
+.art-group { font-size:0.82rem; color:var(--muted); margin-top:0.25rem; font-weight:300; }
+.art-tag { margin-top:0.875rem; font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--coral); }
+.art-small { background:var(--white); padding:1.5rem; border-left:1px solid var(--border); cursor:pointer; transition:background .15s; }
+.art-small:hover { background:var(--bg); }
+.art-small:first-of-type { border-top:none; }
+.art-col { display:flex; flex-direction:column; gap:1px; background:var(--border); }
+.art-initial-sm { font-family:'Cormorant Garamond',serif; font-size:3.5rem; font-weight:600; color:var(--border); margin-bottom:0.875rem; }
+.art-name-sm { font-size:0.9rem; font-weight:600; }
+.art-group-sm { font-size:0.73rem; color:var(--muted); margin-top:0.15rem; font-weight:300; }
+
+/* NEWS */
+.news-editorial { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); }
+.news-row-item {
+  display:grid; grid-template-columns:80px 1fr;
+  border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s;
+}
+.news-row-item:last-child { border-bottom:none; }
+.news-row-item:hover { background:var(--white); }
+.news-num {
+  padding:1.5rem; display:flex; align-items:flex-start; justify-content:center;
+  font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600;
+  color:var(--border); border-right:1px solid var(--border); padding-top:1.75rem;
+}
+.news-content { padding:1.5rem; }
+.news-cat { font-size:0.62rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--coral); margin-bottom:0.5rem; }
+.news-title { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:600; line-height:1.3; }
+.news-meta { font-size:0.72rem; color:var(--muted); margin-top:0.4rem; font-weight:300; }
+
+footer {
+  margin-top:4rem; border-top:1px solid var(--border);
+  padding:2.5rem 3rem; background:var(--white);
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;
+}
+.f-logo { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:600; }
+.f-logo em { font-style:normal; color:var(--coral); }
+.f-copy { font-size:0.75rem; color:var(--muted); font-weight:300; }
+
+.back-btn {
+  position:fixed; top:1.5rem; left:1.5rem;
+  background:var(--white); border:1px solid var(--border);
+  color:var(--muted); padding:0.5rem 1rem;
+  border-radius:4px; font-size:0.78rem; text-decoration:none;
+  font-family:'DM Sans',sans-serif; z-index:200;
+}
+.back-btn:hover { color:var(--coral); border-color:var(--coral); }
+</style>
+</head>
+<body>
+<a href="index.html" class="back-btn">← Propostas</a>
+
+<nav>
+  <div class="logo">
+    <svg class="logo-svg" viewBox="0 0 38 38" fill="none">
+      <!-- Angular H-mark with Korean brush cut angles -->
+      <rect x="3" y="3" width="10" height="32" rx="1" fill="#0a1628"/>
+      <rect x="25" y="3" width="10" height="32" rx="1" fill="#0a1628"/>
+      <rect x="3" y="16" width="32" height="6" rx="1" fill="#e8522a"/>
+      <!-- Angular cut corners referencing Korean calligraphy angles -->
+      <polygon points="3,3 13,3 3,11" fill="#f7f2e9"/>
+      <polygon points="25,3 35,3 35,11" fill="#f7f2e9"/>
+    </svg>
+    <div class="logo-name">Hallyu<em>Hub</em></div>
+  </div>
+  <div class="nav-center">
+    <a href="#">Artistas</a><a href="#">Grupos</a>
+    <a href="#">Produções</a><a href="#">Notícias</a><a href="#">Blog</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost">Entrar</button>
+    <button class="btn-coral">Cadastrar</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hangul-bg">한</div>
+    <div class="hero-left-inner">
+      <div class="eyebrow"><span class="eyebrow-line"></span>A onda coreana em português</div>
+      <h1>O portal<br>editorial do<br><em>Hallyu</em><br>no Brasil.</h1>
+      <p class="hero-desc">Perfis completos de artistas, grupos, doramas e filmes — curados com rigor e paixão para os fãs brasileiros que levam a cultura coreana a sério.</p>
+      <div class="hero-ctas">
+        <button class="cta-primary">Explorar →</button>
+        <span class="cta-link">Ver artistas ↗</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-editorial">
+      <div class="ed-label">Em destaque</div>
+      <div class="ed-title">BTS anuncia<br>comeback após<br>serviço militar</div>
+      <div class="ed-meta">HYBE · Há 2 horas · 4 min</div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-n">12k<span>+</span></div><div class="stat-l">Artistas</div></div>
+      <div class="stat"><div class="stat-n">8k<span>+</span></div><div class="stat-l">Produções</div></div>
+      <div class="stat"><div class="stat-n">50k<span>+</span></div><div class="stat-l">Notícias</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="section">
+  <div class="sec-head">
+    <div class="sec-title">Artistas <em>em alta</em></div>
+    <div class="sec-rule"></div>
+    <a href="#" class="sec-link">Ver todos</a>
+  </div>
+  <div class="artist-mag">
+    <div class="art-main">
+      <div class="art-initial-lg">Ji</div>
+      <div class="art-name">Jisoo</div>
+      <div class="art-group">BLACKPINK · YG Entertainment</div>
+      <div class="art-tag">K-pop</div>
+    </div>
+    <div class="art-col">
+      <div class="art-small"><div class="art-initial-sm">RM</div><div class="art-name-sm">RM</div><div class="art-group-sm">BTS · HYBE</div></div>
+      <div class="art-small"><div class="art-initial-sm">HB</div><div class="art-name-sm">Hyun Bin</div><div class="art-group-sm">Ator</div></div>
+    </div>
+    <div class="art-col">
+      <div class="art-small"><div class="art-initial-sm">IU</div><div class="art-name-sm">IU (이지은)</div><div class="art-group-sm">EDAM Entertainment</div></div>
+      <div class="art-small"><div class="art-initial-sm">V</div><div class="art-name-sm">V (태형)</div><div class="art-group-sm">BTS · HYBE</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="padding-top:0">
+  <div class="sec-head">
+    <div class="sec-title">Últimas <em>notícias</em></div>
+    <div class="sec-rule"></div>
+    <a href="#" class="sec-link">Ver todas</a>
+  </div>
+  <div class="news-editorial">
+    <div class="news-row-item"><div class="news-num">01</div><div class="news-content"><div class="news-cat">K-pop</div><div class="news-title">BTS anuncia datas de comeback para 2025 após retorno do serviço militar</div><div class="news-meta">HYBE · 2 horas atrás</div></div></div>
+    <div class="news-row-item"><div class="news-num">02</div><div class="news-content"><div class="news-cat">K-drama</div><div class="news-title">Queen of Tears se torna o segundo drama mais assistido na história da tvN</div><div class="news-meta">tvN · 5 horas atrás</div></div></div>
+    <div class="news-row-item"><div class="news-num">03</div><div class="news-content"><div class="news-cat">K-pop</div><div class="news-title">BLACKPINK confirma retorno com novo álbum para o segundo semestre de 2025</div><div class="news-meta">YG Entertainment · 8 horas atrás</div></div></div>
+    <div class="news-row-item"><div class="news-num">04</div><div class="news-content"><div class="news-cat">Premiação</div><div class="news-title">Confira todos os vencedores do MAMA Awards 2024</div><div class="news-meta">Mnet · 1 dia atrás</div></div></div>
+  </div>
+</div>
+
+<footer>
+  <div class="f-logo">Hallyu<em>Hub</em></div>
+  <div class="f-copy">© 2025 HallyuHub · Todos os direitos reservados</div>
+</footer>
+</body>
+</html>

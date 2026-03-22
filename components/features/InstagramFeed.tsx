@@ -33,8 +33,8 @@ export function InstagramFeed({ posts, instagramUrl }: InstagramFeedProps) {
                         <Instagram className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-black text-white">Posts do Instagram</h2>
-                        <p className="text-zinc-500 text-xs mt-0.5">Publicações mais recentes</p>
+                        <h2 className="text-lg font-black text-foreground">Posts do Instagram</h2>
+                        <p className="text-muted text-xs mt-0.5">Publicações mais recentes</p>
                     </div>
                 </div>
                 {instagramUrl && (
@@ -56,7 +56,7 @@ export function InstagramFeed({ posts, instagramUrl }: InstagramFeedProps) {
                         href={post.permalink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group relative aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-pink-500/40 transition-all"
+                        className="group relative aspect-square rounded-xl overflow-hidden bg-surface border border-border hover:border-pink-500/40 transition-all"
                     >
                         {post.imageUrl ? (
                             <Image
@@ -67,7 +67,7 @@ export function InstagramFeed({ posts, instagramUrl }: InstagramFeedProps) {
                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-900/40 to-orange-900/40">
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500/10 to-orange-400/10">
                                 <Instagram className="w-6 h-6 text-pink-500/50" />
                             </div>
                         )}
@@ -80,7 +80,7 @@ export function InstagramFeed({ posts, instagramUrl }: InstagramFeedProps) {
                                         {post.caption}
                                     </p>
                                 )}
-                                <span className="text-zinc-400 text-[9px] font-bold">
+                                <span className="text-[#999] text-[9px] font-bold">
                                     {timeAgo(post.postedAt)} atrás
                                 </span>
                             </div>

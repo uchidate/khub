@@ -17,7 +17,7 @@ export function ErrorMessage({ title, message, retry, showSupport }: ErrorMessag
         <AlertCircle className="w-12 h-12 mx-auto" />
       </div>
       <h3 className="text-xl font-bold mb-2">{title}</h3>
-      <p className="text-zinc-400 mb-4">{message}</p>
+      <p className="text-[#999] mb-4">{message}</p>
       <div className="flex gap-3 justify-center flex-wrap">
         {retry && (
           <Button onClick={retry} variant="primary">

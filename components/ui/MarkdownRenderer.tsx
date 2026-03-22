@@ -103,14 +103,14 @@ function buildComponents(source?: string | null): Components {
                 if (isTikTokPostUrl(text)) return <TikTokEmbed url={text} />
             }
             return (
-                <p className="mb-5 leading-relaxed text-zinc-300 text-lg">
+                <p className="mb-5 leading-relaxed text-foreground text-lg">
                     {children}
                 </p>
             )
         },
 
         h1: ({ children }) => (
-            <h1 className="text-3xl font-black text-white mt-10 mb-5 leading-tight tracking-tight">
+            <h1 className="text-3xl font-black text-foreground mt-10 mb-5 leading-tight tracking-tight">
                 {children}
             </h1>
         ),
@@ -129,7 +129,7 @@ function buildComponents(source?: string | null): Components {
             }
             return (
                 <h2
-                    className="text-2xl font-bold text-white mt-8 mb-4 pb-2 leading-tight"
+                    className="text-2xl font-bold text-foreground mt-8 mb-4 pb-2 leading-tight"
                     style={{ borderBottom: `1px solid ${accent}22` }}
                 >
                     {children}
@@ -142,18 +142,18 @@ function buildComponents(source?: string | null): Components {
             </h3>
         ),
         h4: ({ children }) => (
-            <h4 className="text-lg font-semibold text-zinc-200 mt-6 mb-2">
+            <h4 className="text-lg font-semibold text-foreground mt-6 mb-2">
                 {children}
             </h4>
         ),
 
         strong: ({ children }) => (
-            <strong className="font-bold text-white">
+            <strong className="font-bold text-foreground">
                 {children}
             </strong>
         ),
         em: ({ children }) => (
-            <em className="italic text-zinc-400">
+            <em className="italic text-muted">
                 {children}
             </em>
         ),
@@ -185,10 +185,10 @@ function buildComponents(source?: string | null): Components {
                     src={src}
                     alt={alt || ''}
                     referrerPolicy="no-referrer"
-                    className="rounded-2xl w-full md:w-auto max-w-full border border-white/10 shadow-xl"
+                    className="rounded-2xl w-full md:w-auto max-w-full border border-border"
                 />
                 {alt && (
-                    <span className="block text-center text-xs text-zinc-500 mt-2 italic">
+                    <span className="block text-center text-xs text-muted mt-2 italic">
                         {alt}
                     </span>
                 )}
@@ -201,7 +201,7 @@ function buildComponents(source?: string | null): Components {
                 style={{
                     borderLeft: `4px solid ${accent}`,
                     backgroundColor: `${accent}0d`,
-                    color: isAsianJunkie ? '#d1d5db' : '#a1a1aa',
+                    color: isAsianJunkie ? '#080808' : '#6b6b6b',
                 }}
             >
                 {children}
@@ -213,13 +213,13 @@ function buildComponents(source?: string | null): Components {
         ),
 
         ul: ({ children }) => (
-            <ul className="list-disc list-outside ml-6 space-y-2 mb-6 text-zinc-300">
+            <ul className="list-disc list-outside ml-6 space-y-2 mb-6 text-foreground">
                 {children}
             </ul>
         ),
         ol: ({ children }) => (
             <ol
-                className={`list-outside ml-6 mb-6 text-zinc-300 ${isKoreaboo ? 'space-y-4 list-none ml-0' : 'list-decimal space-y-2'}`}
+                className={`list-outside ml-6 mb-6 text-foreground ${isKoreaboo ? 'space-y-4 list-none ml-0' : 'list-decimal space-y-2'}`}
             >
                 {children}
             </ol>
@@ -228,7 +228,7 @@ function buildComponents(source?: string | null): Components {
             if (isKoreaboo) {
                 return (
                     <li
-                        className="pb-4 mb-1 border-b border-white/5 last:border-0 leading-relaxed text-zinc-200"
+                        className="pb-4 mb-1 border-b border-border last:border-0 leading-relaxed text-foreground"
                         style={{ borderBottomColor: `${accent}18` }}
                     >
                         {children}
@@ -248,36 +248,36 @@ function buildComponents(source?: string | null): Components {
                 )
             }
             return (
-                <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono" style={{ color: accent }}>
+                <code className="bg-surface px-1.5 py-0.5 rounded text-sm font-mono" style={{ color: accent }}>
                     {children}
                 </code>
             )
         },
         pre: ({ children }) => (
-            <pre className="bg-zinc-900 rounded-xl p-5 overflow-x-auto my-7 border border-white/10 text-sm">
+            <pre className="bg-surface rounded-xl p-5 overflow-x-auto my-7 border border-border text-sm">
                 {children}
             </pre>
         ),
 
         table: ({ children }) => (
-            <div className="overflow-x-auto my-7 rounded-xl border border-white/10">
+            <div className="overflow-x-auto my-7 rounded-xl border border-border">
                 <table className="w-full text-sm">
                     {children}
                 </table>
             </div>
         ),
         thead: ({ children }) => (
-            <thead className="bg-zinc-800/60 text-zinc-200 font-semibold">
+            <thead className="bg-surface text-foreground font-semibold">
                 {children}
             </thead>
         ),
         tbody: ({ children }) => (
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-[#e8e8e8]">
                 {children}
             </tbody>
         ),
         tr: ({ children }) => (
-            <tr className="hover:bg-zinc-800/30 transition-colors">
+            <tr className="hover:bg-surface transition-colors">
                 {children}
             </tr>
         ),
@@ -287,7 +287,7 @@ function buildComponents(source?: string | null): Components {
             </th>
         ),
         td: ({ children }) => (
-            <td className="px-4 py-3 text-zinc-400">
+            <td className="px-4 py-3 text-muted">
                 {children}
             </td>
         ),

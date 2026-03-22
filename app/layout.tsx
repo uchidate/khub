@@ -2,11 +2,14 @@ import type { Metadata } from "next"
 import { Outfit, Inter, Sora } from "next/font/google"
 import Script from "next/script"
 import "../styles/globals.css"
+import { unstable_cache } from "next/cache"
+import prisma from "@/lib/prisma"
 import { PublicAnalytics } from "@/components/features/PublicAnalytics"
 import { SessionProvider } from "@/components/features/SessionProvider"
 import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
 import NavBar from "@/components/NavBar"
+import { HomeTicker } from "@/components/home/HomeTicker"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
@@ -15,6 +18,25 @@ import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
 import { BottomNav } from "@/components/ui/BottomNav"
+
+const getTickerNews = unstable_cache(
+    async () => {
+        const news = await prisma.news.findMany({
+            where: { isHidden: false, status: 'published' },
+            take: 6,
+            orderBy: { publishedAt: 'desc' },
+            select: { id: true, title: true, tags: true, publishedAt: true },
+        })
+        return news.map(n => ({
+            id: n.id,
+            title: n.title,
+            tags: n.tags,
+            publishedAt: n.publishedAt.toISOString(),
+        }))
+    },
+    ['layout-ticker-news-v1'],
+    { revalidate: 120 }
+)
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -81,16 +103,18 @@ export default async function RootLayout({
 }: {
     children: React.ReactNode
 }) {
+    const tickerNews = await getTickerNews().catch(() => [])
+
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable} ${sora.variable}`} suppressHydrationWarning>
             <head>
                 {/* Anti-FOUC: aplica tema dark/light ANTES do primeiro paint para evitar flash branco */}
-                <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})()` }} />
+                <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
                 <link rel="preconnect" href="https://images.unsplash.com" />
                 <link rel="dns-prefetch" href="https://images.unsplash.com" />
             </head>
-            <body className="font-sora text-[#1a1a1a] bg-white antialiased selection:bg-[#ff2d78] selection:text-white">
+            <body className="font-sora text-[#1a1a1a] bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
                 <Script id="ga-consent-defaults" strategy="beforeInteractive">{`
                     window.dataLayer = window.dataLayer || [];
@@ -144,9 +168,8 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    {/* Decorative top accent bar */}
-                    <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#ff2d78] via-[#ff6fa3] to-[#ff2d78] z-[9999]" />
                     <div className="min-h-screen flex flex-col">
+                        <HomeTicker news={tickerNews} />
                         <NavBar />
                         <ErrorBoundary>
                             <main className="flex-grow pb-[62px] sm:pb-0">{children}</main>

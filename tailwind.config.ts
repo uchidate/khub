@@ -15,6 +15,22 @@ const config: Config = {
                 sora: ['var(--font-sora)', 'sans-serif'],
             },
             colors: {
+                // ── Semantic tokens (CSS variables — respond to light/dark) ──
+                background:       'var(--color-bg)',
+                surface:          'var(--color-surface)',
+                'surface-hover':  'var(--color-surface-hover)',
+                border:           'var(--color-border)',
+                'border-strong':  'var(--color-border-strong)',
+                foreground:       'var(--color-fg)',
+                'foreground-subtle': 'var(--color-fg-subtle)',
+                muted:            'var(--color-muted)',
+                accent:           'var(--color-accent)',
+                'accent-soft':    'var(--color-accent-soft)',
+                'featured':       'var(--color-featured-bg)',
+                'featured-fg':    'var(--color-featured-fg)',
+                'featured-muted': 'var(--color-featured-muted)',
+                'featured-border':'var(--color-featured-border)',
+                // ── K-real fixed palette ──
                 hallyu: {
                     pink:   '#ff2d78',
                     'pink-2': '#ff6fa3',
