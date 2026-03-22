@@ -672,11 +672,11 @@ export default function AdminBlogPage() {
                                 <PublishButton post={post} onDone={refetchTable} />
                                 {post.status === 'PUBLISHED' && (
                                     <Link
-                                        href={`/blog/${post.slug}`}
+                                        href={(post as unknown as { isPrivate?: boolean }).isPrivate ? `/blog/preview/${post.slug}` : `/blog/${post.slug}`}
                                         target="_blank"
                                         onClick={(e) => e.stopPropagation()}
                                         className="p-1.5 rounded text-zinc-400 hover:text-green-300 hover:bg-green-400/10 transition-colors"
-                                        title="Ver publicado"
+                                        title={(post as unknown as { isPrivate?: boolean }).isPrivate ? 'Ver prévia privada' : 'Ver publicado'}
                                     >
                                         <Eye size={14} />
                                     </Link>
