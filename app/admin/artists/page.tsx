@@ -7,7 +7,8 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus, EyeOff, Languages } from 'lucide-react'
+import { SocialBadges } from '@/components/admin/SocialBadges'
+import { Plus, RefreshCw, Type, ImagePlus, EyeOff, Languages, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -72,48 +73,6 @@ type FilterType =
   | 'auto_hidden'
   | 'flagged'
   | 'korean_no_tmdb'
-
-// ─── Social Badges ────────────────────────────────────────────────────────────
-
-const SOCIAL_ICONS: Record<string, React.ReactNode> = {
-  instagram: <Instagram size={12} />,
-  twitter: <Twitter size={12} />,
-  youtube: <Youtube size={12} />,
-  tiktok: <Music2 size={12} />,
-}
-
-const SOCIAL_COLORS: Record<string, string> = {
-  instagram: 'text-pink-400 bg-pink-500/10 hover:bg-pink-500/20',
-  twitter: 'text-sky-400 bg-sky-500/10 hover:bg-sky-500/20',
-  youtube: 'text-red-400 bg-red-500/10 hover:bg-red-500/20',
-  tiktok: 'text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20',
-}
-
-function SocialBadges({ links }: { links: Record<string, string> | null }) {
-  if (!links || Object.keys(links).length === 0) {
-    return <span className="text-zinc-600 text-xs">—</span>
-  }
-  return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {Object.entries(links).map(([platform, url]) => (
-        <a
-          key={platform}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          title={platform}
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
-            SOCIAL_COLORS[platform] ?? 'text-zinc-400 bg-zinc-800 hover:bg-zinc-700'
-          }`}
-        >
-          {SOCIAL_ICONS[platform] ?? <ExternalLink size={12} />}
-          <span className="capitalize">{platform}</span>
-        </a>
-      ))}
-    </div>
-  )
-}
 
 // ─── Action Buttons ───────────────────────────────────────────────────────────
 

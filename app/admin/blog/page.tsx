@@ -5,6 +5,8 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { useToast } from '@/lib/hooks/useToast'
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
@@ -507,8 +509,8 @@ export default function AdminBlogPage() {
             key: 'status',
             label: 'Status',
             render: (post) => {
-                const s = STATUS_LABELS[post.status]
-                return <span className={`px-2 py-0.5 rounded text-xs font-bold ${s.color}`}>{s.label}</span>
+                const s = STATUS_LABELS[post.status] ?? { label: post.status, color: 'bg-zinc-700 text-zinc-400' }
+                return <AdminStatusBadge label={s.label} color={s.color} />
             },
         },
         {
@@ -577,48 +579,16 @@ export default function AdminBlogPage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center gap-1 bg-zinc-900/60 border border-white/6 rounded-xl p-1 w-fit">
-                    <button
-                        onClick={() => setActiveTab('suggestions')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            activeTab === 'suggestions'
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                        }`}
-                    >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Sugestões IA
-                        {visibleSuggestions.length > 0 && (
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                                activeTab === 'suggestions' ? 'bg-white/20' : 'bg-zinc-800 text-zinc-400'
-                            }`}>
-                                {visibleSuggestions.length}
-                            </span>
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('posts')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            activeTab === 'posts'
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                        }`}
-                    >
-                        <FileText className="w-3.5 h-3.5" />
-                        Posts
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('calendar')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            activeTab === 'calendar'
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                        }`}
-                    >
-                        <CalendarDays className="w-3.5 h-3.5" />
-                        Calendário
-                    </button>
-                </div>
+                <AdminTabGroup
+                    tabs={[
+                        { key: 'suggestions', label: 'Sugestões IA', icon: <Sparkles className="w-3.5 h-3.5" />, badge: visibleSuggestions.length },
+                        { key: 'posts',       label: 'Posts',        icon: <FileText className="w-3.5 h-3.5" /> },
+                        { key: 'calendar',    label: 'Calendário',   icon: <CalendarDays className="w-3.5 h-3.5" /> },
+                    ]}
+                    active={activeTab}
+                    onChange={v => setActiveTab(v as Tab)}
+                    activeClass="bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                />
 
                 {/* Suggestions tab */}
                 {activeTab === 'suggestions' && (

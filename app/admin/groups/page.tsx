@@ -7,7 +7,9 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Plus, Users, Music2, EyeOff, Instagram, Twitter, Youtube, ExternalLink, Globe, Pencil, Trash2, Languages } from 'lucide-react'
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { SocialBadges } from '@/components/admin/SocialBadges'
+import { Plus, Users, Music2, EyeOff, Pencil, Trash2, Languages } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -45,57 +47,12 @@ type StatusFilter = '' | 'active' | 'disbanded' | 'hidden'
 const SOCIAL_PLATFORMS = ['website', 'instagram', 'youtube', 'twitter', 'tiktok', 'spotify', 'weverse', 'vlive'] as const
 const MAX_MVS = 6
 
-// ─── Social Badges ────────────────────────────────────────────────────────────
+// ─── Status Badge helper ───────────────────────────────────────────────────────
 
-const SOCIAL_ICONS: Record<string, React.ReactNode> = {
-  instagram: <Instagram size={11} />,
-  twitter:   <Twitter size={11} />,
-  youtube:   <Youtube size={11} />,
-  website:   <Globe size={11} />,
-}
-const SOCIAL_COLORS: Record<string, string> = {
-  instagram: 'text-pink-400 bg-pink-500/10 hover:bg-pink-500/20',
-  twitter:   'text-sky-400 bg-sky-500/10 hover:bg-sky-500/20',
-  youtube:   'text-red-400 bg-red-500/10 hover:bg-red-500/20',
-  website:   'text-zinc-400 bg-zinc-700 hover:bg-zinc-600',
-}
-
-function SocialBadges({ links }: { links: Record<string, string> | null }) {
-  if (!links || Object.keys(links).length === 0) return null
-  const entries = Object.entries(links).slice(0, 4)
-  return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {entries.map(([platform, url]) => (
-        <a key={platform} href={url} target="_blank" rel="noopener noreferrer"
-          onClick={e => e.stopPropagation()}
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors ${
-            SOCIAL_COLORS[platform] ?? 'text-zinc-400 bg-zinc-800 hover:bg-zinc-700'
-          }`}>
-          {SOCIAL_ICONS[platform] ?? <ExternalLink size={11} />}
-        </a>
-      ))}
-    </div>
-  )
-}
-
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ group }: { group: MusicalGroup }) {
-  if (group.isHidden) return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-zinc-800 text-zinc-500">
-      <EyeOff size={10} /> Oculto
-    </span>
-  )
-  if (group.disbandDate) return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-900/40 text-red-400 border border-red-800/30">
-      Disbandado
-    </span>
-  )
-  return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-900/40 text-green-400 border border-green-800/30">
-      Ativo
-    </span>
-  )
+function GroupStatusBadge({ group }: { group: MusicalGroup }) {
+  if (group.isHidden)    return <AdminStatusBadge label="Oculto"     color="bg-zinc-800 text-zinc-500"                       icon={<EyeOff size={10} />} />
+  if (group.disbandDate) return <AdminStatusBadge label="Disbandado" color="bg-red-900/40 text-red-400 border-red-800/30" />
+  return                        <AdminStatusBadge label="Ativo"      color="bg-green-900/40 text-green-400 border-green-800/30" />
 }
 
 // ─── Form fields ──────────────────────────────────────────────────────────────
@@ -192,7 +149,7 @@ export default function GroupsPage() {
     },
     {
       key: 'disbandDate', label: 'Status',
-      render: (group) => <StatusBadge group={group} />,
+      render: (group) => <GroupStatusBadge group={group} />,
     },
     {
       key: 'membersCount', label: 'Membros', sortable: true,
@@ -210,7 +167,7 @@ export default function GroupsPage() {
     {
       key: 'socialLinks', label: 'Redes',
       className: 'hidden xl:table-cell',
-      render: (group) => <SocialBadges links={group.socialLinks} />,
+      render: (group) => <SocialBadges links={group.socialLinks} showLabels={false} maxItems={4} />,
     },
     {
       key: 'debutDate', label: 'Debut', sortable: true,
@@ -399,7 +356,7 @@ export default function GroupsPage() {
                     </div>
                     {group.nameHangul && <div className="text-xs text-zinc-500">{group.nameHangul}</div>}
                   </div>
-                  <StatusBadge group={group} />
+                  <GroupStatusBadge group={group} />
                 </div>
 
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500 flex-wrap">
