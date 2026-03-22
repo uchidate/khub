@@ -75,7 +75,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                     className="object-cover opacity-25"
                     sizes="100vw"
                 />
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyber-purple/20 blur-[120px] rounded-full z-20" />
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#ff2d78]/20 blur-[120px] rounded-full z-20" />
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-neon-pink/10 blur-[120px] rounded-full z-20" />
             </div>
 
@@ -91,14 +91,14 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
 
                         <h1 className="text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
                             A ONDA{' '}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-neon-cyan animate-gradient bg-[length:200%_auto]">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff2d78] via-neon-pink to-neon-cyan animate-gradient bg-[length:200%_auto]">
                                 HALLYU
                             </span>
                             <br />
                             NO SEU RITMO.
                         </h1>
 
-                        <p className="text-sm text-zinc-400 mb-3 max-w-lg leading-relaxed">
+                        <p className="text-sm text-[#999] mb-3 max-w-lg leading-relaxed">
                             Artistas, Produções e Notícias da cultura coreana.
                         </p>
 
@@ -109,10 +109,10 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 { icon: Film,       href: '/productions', label: 'Produções', value: stats.productions },
                                 { icon: Newspaper,  href: '/news',        label: 'Notícias',  value: stats.news },
                             ].map(({ icon: Icon, href, label, value }) => (
-                                <a key={label} href={href} className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors group">
+                                <a key={label} href={href} className="flex items-center gap-1 text-muted hover:text-[#e8e8e8] transition-colors group">
                                     <Icon className="w-3 h-3 group-hover:text-neon-pink transition-colors" />
                                     <span className="text-xs font-black text-white tabular-nums">{value.toLocaleString('pt-BR')}</span>
-                                    <span className="text-[11px] text-zinc-600">{label}</span>
+                                    <span className="text-[11px] text-[#444]">{label}</span>
                                 </a>
                             ))}
                         </div>
@@ -141,7 +141,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                     className="flex items-center justify-center w-8 h-8"
                                 >
                                     <span className={`rounded-full transition-all duration-300 ${
-                                        i === ctaIndex ? 'bg-neon-pink w-4 h-1.5' : 'bg-zinc-600 hover:bg-zinc-400 w-1.5 h-1.5'
+                                        i === ctaIndex ? 'bg-neon-pink w-4 h-1.5' : 'bg-[#444] hover:bg-[#999] w-1.5 h-1.5'
                                     }`} />
                                 </button>
                             ))}
@@ -167,7 +167,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                     </div>
                                     <Link
                                         href="/artists?sortBy=trending"
-                                        className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-widest transition-colors"
+                                        className="text-[10px] text-muted hover:text-white uppercase tracking-widest transition-colors"
                                     >
                                         Ver todos →
                                     </Link>
@@ -189,7 +189,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                                         sizes="60px"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white font-black text-sm">
+                                                    <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-white font-black text-sm">
                                                         {artist.nameRomanized[0]}
                                                     </div>
                                                 )}
@@ -199,7 +199,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="text-[9px] text-zinc-400 group-hover:text-white text-center truncate w-full transition-colors font-semibold leading-tight">
+                                            <p className="text-[9px] text-[#999] group-hover:text-white text-center truncate w-full transition-colors font-semibold leading-tight">
                                                 {artist.nameRomanized.split(' ')[0]}
                                             </p>
                                         </Link>
@@ -212,7 +212,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                         {latestNews.length > 0 && currentNews && (
                             <div className="glass-card rounded-2xl border border-white/8 bg-black/40 backdrop-blur-md overflow-hidden">
                                 <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#999]">
                                         Últimas Notícias
                                     </p>
                                     {latestNews.length > 1 && (
@@ -227,7 +227,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                                     <span className={`rounded-full transition-all duration-300 ${
                                                         i === newsIndex
                                                             ? 'bg-neon-cyan w-3 h-1'
-                                                            : 'bg-zinc-700 hover:bg-zinc-500 w-1 h-1'
+                                                            : 'bg-[#2a2a2a] hover:bg-[#6b6b6b] w-1 h-1'
                                                     }`} />
                                                 </button>
                                             ))}
@@ -237,7 +237,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                 <div key={currentNews.id} className="animate-fade-in">
                                         <Link href={`/news/${currentNews.id}`} className="flex gap-3 items-center px-4 pb-4 group">
                                             {currentNews.imageUrl && (
-                                                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-zinc-800">
+                                                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-[#1a1a1a]">
                                                     <Image
                                                         src={currentNews.imageUrl}
                                                         alt={currentNews.title}
@@ -251,7 +251,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                                 <p className="text-xs font-bold text-white group-hover:text-neon-cyan transition-colors line-clamp-3 leading-snug">
                                                     {currentNews.title}
                                                 </p>
-                                                <p className="text-[10px] text-zinc-600 mt-1.5">
+                                                <p className="text-[10px] text-[#444] mt-1.5">
                                                     {new Date(currentNews.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                                                 </p>
                                             </div>
@@ -286,12 +286,12 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                         {artist.primaryImageUrl ? (
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover" sizes="28px" />
                                         ) : (
-                                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white text-[9px] font-black">
+                                            <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-white text-[9px] font-black">
                                                 {artist.nameRomanized[0]}
                                             </div>
                                         )}
                                     </div>
-                                    <span className="text-[11px] font-semibold text-zinc-400 group-hover:text-white transition-colors hidden sm:block">
+                                    <span className="text-[11px] font-semibold text-[#999] group-hover:text-white transition-colors hidden sm:block">
                                         {artist.nameRomanized}
                                     </span>
                                 </Link>

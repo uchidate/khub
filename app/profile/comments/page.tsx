@@ -19,7 +19,7 @@ export default async function ProfileCommentsPage() {
     if (!comments) return null
 
     return (
-        <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 max-w-3xl mx-auto">
+        <PageTransition className="py-8 md:py-12 px-4 sm:px-12 md:px-20 max-w-3xl mx-auto">
             <SectionHeader
                 title="Comentários"
                 backHref="/profile"
@@ -28,8 +28,8 @@ export default async function ProfileCommentsPage() {
 
             {comments.length === 0 ? (
                 <div className="glass-card p-12 text-center">
-                    <MessageSquare className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                    <p className="text-zinc-500 text-sm">Você ainda não fez nenhum comentário.</p>
+                    <MessageSquare className="w-12 h-12 text-muted mx-auto mb-4" />
+                    <p className="text-muted text-sm">Você ainda não fez nenhum comentário.</p>
                     <Link href="/news" className="btn-primary mt-6 inline-block text-xs uppercase tracking-widest">
                         Ver Notícias
                     </Link>
@@ -40,10 +40,10 @@ export default async function ProfileCommentsPage() {
                         <Link
                             key={comment.id}
                             href={`/news/${comment.news.id}`}
-                            className="glass-card flex gap-4 p-4 hover:border-white/15 transition-all group"
+                            className="glass-card flex gap-4 p-4 hover:border-[#d0d0d0] transition-all group"
                         >
                             {comment.news.imageUrl && (
-                                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                                     <Image
                                         src={comment.news.imageUrl}
                                         alt={comment.news.title}
@@ -55,20 +55,20 @@ export default async function ProfileCommentsPage() {
                             )}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-start gap-2 mb-1.5">
-                                    <Newspaper className="w-3 h-3 text-zinc-600 flex-shrink-0 mt-0.5" />
-                                    <p className="text-xs text-zinc-500 truncate group-hover:text-zinc-400 transition-colors leading-tight">
+                                    <Newspaper className="w-3 h-3 text-muted flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-muted truncate group-hover:text-foreground transition-colors leading-tight">
                                         {comment.news.title}
                                     </p>
                                 </div>
-                                <p className="text-sm text-zinc-300 group-hover:text-white transition-colors line-clamp-2">
+                                <p className="text-sm text-foreground group-hover:text-foreground transition-colors line-clamp-2">
                                     &ldquo;{comment.content}&rdquo;
                                 </p>
-                                <span className="inline-flex items-center gap-1 text-[10px] text-zinc-600 mt-2">
+                                <span className="inline-flex items-center gap-1 text-[10px] text-muted mt-2">
                                     <Clock size={10} />
                                     {new Date(comment.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                                 </span>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400 transition-colors flex-shrink-0 self-center" />
+                            <ChevronRight className="w-4 h-4 text-muted group-hover:text-foreground transition-colors flex-shrink-0 self-center" />
                         </Link>
                     ))}
                 </div>

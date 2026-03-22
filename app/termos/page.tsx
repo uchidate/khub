@@ -12,11 +12,11 @@ const LAST_UPDATED = '24 de fevereiro de 2026'
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-32">
-      <h2 className="text-lg font-black text-white uppercase tracking-tighter mb-4 flex items-center gap-3">
-        <span className="text-purple-400 font-mono text-sm">§</span>
+      <h2 className="text-lg font-black text-foreground uppercase tracking-tighter mb-4 flex items-center gap-3">
+        <span className="text-[#ff2d78] font-mono text-sm">§</span>
         {title}
       </h2>
-      <div className="text-sm text-zinc-400 leading-relaxed space-y-3">
+      <div className="text-sm text-muted leading-relaxed space-y-3">
         {children}
       </div>
     </section>
@@ -38,18 +38,18 @@ const TOC = [
 
 export default function TermosPage() {
   return (
-    <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-8 md:px-12">
+    <PageTransition className="py-8 md:py-12 px-4 sm:px-8 md:px-12">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
         <div className="mb-12">
-          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3 block">
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted mb-3 block">
             Atualizado em {LAST_UPDATED}
           </span>
-          <h1 className="text-4xl md:text-6xl font-display font-black text-white uppercase italic tracking-tight leading-none mb-4">
+          <h1 className="text-4xl md:text-6xl font-display font-black text-foreground uppercase italic tracking-tight leading-none mb-4">
             Termos de Uso
           </h1>
-          <p className="text-zinc-400 text-sm max-w-2xl">
+          <p className="text-muted text-sm max-w-2xl">
             Ao acessar ou usar o HallyuHub, você concorda com os termos abaixo. Leia com atenção antes de criar uma conta ou usar a plataforma.
           </p>
         </div>
@@ -58,14 +58,14 @@ export default function TermosPage() {
 
           {/* Sumário */}
           <aside className="lg:w-56 shrink-0">
-            <div className="lg:sticky lg:top-32 glass-card border-white/5 rounded-2xl p-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Sumário</p>
+            <div className="lg:sticky lg:top-32 bg-surface border border-border rounded-2xl p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-3">Sumário</p>
               <nav className="space-y-1">
                 {TOC.map(item => (
                   <a
                     key={item.id}
                     href={`#${item.id}`}
-                    className="block text-xs text-zinc-500 hover:text-white transition-colors py-1 px-2 rounded hover:bg-white/5"
+                    className="block text-xs text-muted hover:text-foreground transition-colors py-1 px-2 rounded hover:bg-[#e8e8e8]"
                   >
                     {item.label}
                   </a>
@@ -79,7 +79,7 @@ export default function TermosPage() {
 
             <Section id="aceite" title="Aceite dos Termos">
               <p>
-                Estes Termos de Uso (&quot;Termos&quot;) regem o acesso e uso do site HallyuHub, disponível em <strong className="text-zinc-300">hallyuhub.com.br</strong>, e de todos os serviços associados (coletivamente, &quot;Plataforma&quot;), operados por HallyuHub (&quot;nós&quot;, &quot;nosso&quot;).
+                Estes Termos de Uso (&quot;Termos&quot;) regem o acesso e uso do site HallyuHub, disponível em <strong className="text-[#e8e8e8]">hallyuhub.com.br</strong>, e de todos os serviços associados (coletivamente, &quot;Plataforma&quot;), operados por HallyuHub (&quot;nós&quot;, &quot;nosso&quot;).
               </p>
               <p>
                 Ao acessar ou utilizar a Plataforma, você (&quot;Usuário&quot;) declara ter lido, compreendido e concordado com estes Termos. Se você não concordar com qualquer parte destes Termos, não utilize a Plataforma.
@@ -141,19 +141,19 @@ export default function TermosPage() {
 
             <Section id="conteudo" title="Conteúdo e Propriedade Intelectual">
               <p>
-                <strong className="text-zinc-300">Conteúdo da Plataforma:</strong> Todo o conteúdo original do HallyuHub — incluindo design, textos, código, logotipos e a coleção curada de dados — é de nossa propriedade ou licenciado por terceiros e protegido por leis de propriedade intelectual. É proibida a reprodução, distribuição ou criação de obras derivadas sem autorização prévia.
+                <strong className="text-[#e8e8e8]">Conteúdo da Plataforma:</strong> Todo o conteúdo original do HallyuHub — incluindo design, textos, código, logotipos e a coleção curada de dados — é de nossa propriedade ou licenciado por terceiros e protegido por leis de propriedade intelectual. É proibida a reprodução, distribuição ou criação de obras derivadas sem autorização prévia.
               </p>
               <p>
-                <strong className="text-zinc-300">Conteúdo de terceiros:</strong> Notícias e imagens de artistas podem ser provenientes de fontes externas (agências, portais especializados). Respeitamos os direitos autorais e removemos conteúdo mediante solicitação fundamentada para: <a href="mailto:contato@hallyuhub.com.br" className="text-purple-400 hover:underline">contato@hallyuhub.com.br</a>.
+                <strong className="text-[#e8e8e8]">Conteúdo de terceiros:</strong> Notícias e imagens de artistas podem ser provenientes de fontes externas (agências, portais especializados). Respeitamos os direitos autorais e removemos conteúdo mediante solicitação fundamentada para: <a href="mailto:contato@hallyuhub.com.br" className="text-[#ff2d78] hover:underline">contato@hallyuhub.com.br</a>.
               </p>
               <p>
-                <strong className="text-zinc-300">Conteúdo do Usuário:</strong> Ao publicar comentários ou qualquer conteúdo na Plataforma, você nos concede uma licença não exclusiva, gratuita e mundial para exibir e distribuir esse conteúdo no contexto dos nossos serviços. Você declara ter os direitos necessários sobre o conteúdo publicado.
+                <strong className="text-[#e8e8e8]">Conteúdo do Usuário:</strong> Ao publicar comentários ou qualquer conteúdo na Plataforma, você nos concede uma licença não exclusiva, gratuita e mundial para exibir e distribuir esse conteúdo no contexto dos nossos serviços. Você declara ter os direitos necessários sobre o conteúdo publicado.
               </p>
             </Section>
 
             <Section id="privacidade" title="Privacidade e Dados">
               <p>
-                O tratamento de dados pessoais é regulado pela nossa <Link href="/privacidade" className="text-purple-400 hover:underline">Política de Privacidade</Link>, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).
+                O tratamento de dados pessoais é regulado pela nossa <Link href="/privacidade" className="text-[#ff2d78] hover:underline">Política de Privacidade</Link>, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).
               </p>
               <p>
                 Em resumo: coletamos apenas os dados necessários para o funcionamento da Plataforma, não vendemos seus dados a terceiros e você pode solicitar a exclusão dos seus dados a qualquer momento.
@@ -197,21 +197,21 @@ export default function TermosPage() {
                 Para dúvidas, solicitações relacionadas a estes Termos ou questões de propriedade intelectual, entre em contato:
               </p>
               <ul className="list-none space-y-1">
-                <li><strong className="text-zinc-300">Contato geral:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-purple-400 hover:underline">contato@hallyuhub.com.br</a></li>
-                <li><strong className="text-zinc-300">Parcerias:</strong> <a href="mailto:parceiros@hallyuhub.com.br" className="text-purple-400 hover:underline">parceiros@hallyuhub.com.br</a></li>
-                <li><strong className="text-zinc-300">Privacidade / LGPD:</strong> <a href="mailto:privacidade@hallyuhub.com.br" className="text-purple-400 hover:underline">privacidade@hallyuhub.com.br</a></li>
+                <li><strong className="text-[#e8e8e8]">Contato geral:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-[#ff2d78] hover:underline">contato@hallyuhub.com.br</a></li>
+                <li><strong className="text-[#e8e8e8]">Parcerias:</strong> <a href="mailto:parceiros@hallyuhub.com.br" className="text-[#ff2d78] hover:underline">parceiros@hallyuhub.com.br</a></li>
+                <li><strong className="text-[#e8e8e8]">Privacidade / LGPD:</strong> <a href="mailto:privacidade@hallyuhub.com.br" className="text-[#ff2d78] hover:underline">privacidade@hallyuhub.com.br</a></li>
               </ul>
               <p>
                 Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da Comarca de São Paulo/SP para dirimir eventuais conflitos, com renúncia a qualquer outro, por mais privilegiado que seja.
               </p>
             </Section>
 
-            <div className="pt-6 border-t border-white/5 flex flex-wrap gap-4 text-xs text-zinc-600">
-              <Link href="/privacidade" className="hover:text-zinc-400 transition-colors">Política de Privacidade</Link>
+            <div className="pt-6 border-t border-border flex flex-wrap gap-4 text-xs text-muted">
+              <Link href="/privacidade" className="hover:text-foreground transition-colors">Política de Privacidade</Link>
               <span>·</span>
-              <Link href="/faq" className="hover:text-zinc-400 transition-colors">FAQ</Link>
+              <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
               <span>·</span>
-              <Link href="/about" className="hover:text-zinc-400 transition-colors">Sobre nós</Link>
+              <Link href="/about" className="hover:text-foreground transition-colors">Sobre nós</Link>
             </div>
 
           </article>

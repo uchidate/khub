@@ -77,7 +77,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
     const getRoleBadgeColor = (role: string | null) => {
         if (role === 'admin') return 'bg-red-500/20 text-red-400 border-red-500/30'
         if (role === 'moderator') return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-        return 'bg-zinc-700/30 text-zinc-400 border-zinc-600/30'
+        return 'bg-[#2a2a2a]/30 text-[#999] border-[#444]/30'
     }
 
     const getRoleLabel = (role: string | null) => {
@@ -90,13 +90,13 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
         return (
             <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="bg-zinc-900/50 rounded-lg p-4 border border-white/5 animate-pulse">
+                    <div key={i} className="bg-[#080808]/50 rounded-lg p-4 border border-white/5 animate-pulse">
                         <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-full bg-zinc-800" />
+                            <div className="w-10 h-10 rounded-full bg-[#1a1a1a]" />
                             <div className="flex-1 space-y-2">
-                                <div className="h-4 bg-zinc-800 rounded w-32" />
-                                <div className="h-3 bg-zinc-800 rounded w-full" />
-                                <div className="h-3 bg-zinc-800 rounded w-3/4" />
+                                <div className="h-4 bg-[#1a1a1a] rounded w-32" />
+                                <div className="h-3 bg-[#1a1a1a] rounded w-full" />
+                                <div className="h-3 bg-[#1a1a1a] rounded w-3/4" />
                             </div>
                         </div>
                     </div>
@@ -108,7 +108,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
     if (comments.length === 0) {
         return (
             <div className="text-center py-12">
-                <p className="text-zinc-400">Nenhum comentário ainda. Seja o primeiro a comentar!</p>
+                <p className="text-[#999]">Nenhum comentário ainda. Seja o primeiro a comentar!</p>
             </div>
         )
     }
@@ -118,7 +118,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
             {comments.map(comment => (
                 <div
                     key={comment.id}
-                    className="bg-zinc-900/50 rounded-lg p-4 border border-white/5 hover:border-white/10 transition-colors"
+                    className="bg-[#080808]/50 rounded-lg p-4 border border-white/5 hover:border-white/10 transition-colors"
                 >
                     <div className="flex items-start gap-3">
                         {/* Avatar */}
@@ -130,7 +130,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
                                     className="w-10 h-10 rounded-full object-cover"
                                 />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-medium">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff2d78] to-pink-500 flex items-center justify-center text-white font-medium">
                                     {(comment.user.name || 'U')[0].toUpperCase()}
                                 </div>
                             )}
@@ -146,7 +146,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
                                 <span className={`px-2 py-0.5 text-xs rounded-full border ${getRoleBadgeColor(comment.user.role)}`}>
                                     {getRoleLabel(comment.user.role)}
                                 </span>
-                                <span className="text-xs text-zinc-500">
+                                <span className="text-xs text-muted">
                                     {formatDistanceToNow(new Date(comment.createdAt), {
                                         addSuffix: true,
                                         locale: ptBR
@@ -155,7 +155,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
                             </div>
 
                             {/* Comment text */}
-                            <p className="text-zinc-300 whitespace-pre-wrap break-words">
+                            <p className="text-[#e8e8e8] whitespace-pre-wrap break-words">
                                 {comment.content}
                             </p>
                         </div>
@@ -165,7 +165,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
                             <button
                                 onClick={() => handleDelete(comment.id)}
                                 disabled={deleting === comment.id}
-                                className="flex-shrink-0 p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                className="flex-shrink-0 p-2 text-[#999] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                                 title="Deletar comentário"
                             >
                                 <Trash2 className="w-4 h-4" />

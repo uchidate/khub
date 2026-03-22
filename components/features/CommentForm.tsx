@@ -73,7 +73,7 @@ export function CommentForm({ newsId, onCommentAdded }: CommentFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-zinc-900/50 rounded-lg p-4 border border-white/5">
+        <form onSubmit={handleSubmit} className="bg-surface rounded-xl p-4 border border-border">
             <div className="flex items-start gap-3">
                 {/* User Avatar */}
                 <div className="flex-shrink-0 pt-1">
@@ -84,7 +84,7 @@ export function CommentForm({ newsId, onCommentAdded }: CommentFormProps) {
                             className="w-10 h-10 rounded-full object-cover"
                         />
                     ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-white/10 flex items-center justify-center text-zinc-500 font-medium text-sm">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff2d78]/10 to-[#ff6fa3]/10 border border-[#ff2d78]/20 flex items-center justify-center text-muted font-medium text-sm">
                             {session?.user?.name?.[0]?.toUpperCase() ?? '?'}
                         </div>
                     )}
@@ -97,7 +97,7 @@ export function CommentForm({ newsId, onCommentAdded }: CommentFormProps) {
                         onChange={(e) => setContent(e.target.value)}
                         onClick={handleGate}
                         placeholder={session ? 'Escreva seu comentário...' : 'Entre ou crie uma conta para comentar...'}
-                        className="w-full bg-zinc-800/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors resize-none"
+                        className="w-full bg-background border border-border rounded-lg px-4 py-3 text-foreground placeholder-[#6b6b6b]/60 focus:outline-none focus:border-accent transition-colors resize-none"
                         rows={3}
                         maxLength={maxLength}
                         disabled={submitting}
@@ -108,7 +108,7 @@ export function CommentForm({ newsId, onCommentAdded }: CommentFormProps) {
                     <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-4">
                             {session && (
-                                <span className={`text-sm ${remaining < 50 ? 'text-red-400' : 'text-zinc-500'}`}>
+                                <span className={`text-sm ${remaining < 50 ? 'text-red-400' : 'text-muted'}`}>
                                     {remaining} caracteres restantes
                                 </span>
                             )}
@@ -121,7 +121,7 @@ export function CommentForm({ newsId, onCommentAdded }: CommentFormProps) {
                             type={session ? 'submit' : 'button'}
                             onClick={!session ? handleGate : undefined}
                             disabled={session ? (submitting || !content.trim() || content.length > maxLength) : false}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="px-4 py-2 bg-[#ff2d78] text-white rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {submitting ? (
                                 <>

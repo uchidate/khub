@@ -43,21 +43,21 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                     </div>
                     <div>
                         <div className="flex items-baseline gap-2">
-                            <h2 className="text-xl font-black dark:text-white text-zinc-900 tracking-tight uppercase">
+                            <h2 className="text-xl font-black dark:text-white text-foreground tracking-tight uppercase">
                                 Trending
                             </h2>
                             <span className="text-xl font-black text-orange-500 tracking-tight italic uppercase">
                                 Now
                             </span>
                         </div>
-                        <p className="dark:text-zinc-500 text-zinc-600 text-xs mt-0.5">
+                        <p className="dark:text-muted text-[#444] text-xs mt-0.5">
                             Artistas mais populares do momento
                         </p>
                     </div>
                 </div>
                 <Link
                     href="/artists?sortBy=trending"
-                    className="hidden md:flex items-center gap-1 text-sm font-bold dark:text-zinc-400 text-zinc-500 dark:hover:text-white hover:text-zinc-900 transition-colors"
+                    className="hidden md:flex items-center gap-1 text-sm font-bold dark:text-[#999] text-muted dark:hover:text-white hover:text-foreground transition-colors"
                 >
                     Ver todos →
                 </Link>
@@ -69,7 +69,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                     const signal = artist.streamingSignals?.[0]
                     const hasSignal = signal && signal.source !== 'internal_production'
                     const role = artist.roles?.[0] ? getRoleLabel(artist.roles[0], artist.gender) : null
-                    const badgeClass = TOP3_BADGE[index] ?? 'bg-black/70 text-zinc-300'
+                    const badgeClass = TOP3_BADGE[index] ?? 'bg-black/70 text-[#e8e8e8]'
                     // Borda "temperatura" para #4+
                     const temperatureBorders = [
                         'border border-orange-500/50',
@@ -80,11 +80,11 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                         'border border-teal-500/25',
                         'border border-blue-500/20',
                         'border border-indigo-500/20',
-                        'border border-purple-500/20',
+                        'border border-[#ff2d78]/20',
                     ]
                     const borderClass = index < 3
                         ? 'border border-white/10'
-                        : (temperatureBorders[index - 3] ?? 'border border-purple-500/15')
+                        : (temperatureBorders[index - 3] ?? 'border border-[#ff2d78]/15')
 
                     return (
                         <Link
@@ -92,10 +92,10 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                             href={`/artists/${artist.id}`}
                             className="group block"
                         >
-                            <div className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 mb-1.5 ${borderClass}`}>
+                            <div className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-[#080808] mb-1.5 ${borderClass}`}>
                                 {/* Rank badge */}
                                 <div className={`absolute top-1.5 left-1.5 z-10 w-5 h-5 rounded-full flex items-center justify-center shadow-md ${index < 3 ? `w-6 h-6 text-[10px] ${badgeClass}` : 'bg-black/70 backdrop-blur-sm'}`}>
-                                    <span className={index < 3 ? 'text-[10px] font-black' : 'text-[9px] font-black text-zinc-300'}>
+                                    <span className={index < 3 ? 'text-[10px] font-black' : 'text-[9px] font-black text-[#e8e8e8]'}>
                                         {index + 1}
                                     </span>
                                 </div>
@@ -110,7 +110,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                                         sizes="(max-width: 640px) 25vw, (max-width: 768px) 20vw, 11vw"
                                     />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-purple-800 to-pink-800 flex items-center justify-center">
+                                    <div className="w-full h-full bg-gradient-to-br from-[#ff2d78] to-pink-800 flex items-center justify-center">
                                         <span className="text-white text-lg font-black">{artist.nameRomanized[0]}</span>
                                     </div>
                                 )}
@@ -131,20 +131,20 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
 
                             {/* Text below card — altura fixa para uniformidade */}
                             <div className="h-8">
-                                <p className="dark:text-white text-zinc-900 font-semibold text-[10px] md:text-xs group-hover:text-orange-400 transition-colors line-clamp-1">
+                                <p className="dark:text-white text-foreground font-semibold text-[10px] md:text-xs group-hover:text-orange-400 transition-colors line-clamp-1">
                                     {artist.nameRomanized}
                                 </p>
                                 {artist.nameHangul ? (
-                                    <p className="text-zinc-600 text-[9px] line-clamp-1 mt-0.5">{artist.nameHangul}</p>
+                                    <p className="text-[#444] text-[9px] line-clamp-1 mt-0.5">{artist.nameHangul}</p>
                                 ) : role ? (
-                                    <p className="text-zinc-600 text-[9px] line-clamp-1 mt-0.5">{role}</p>
+                                    <p className="text-[#444] text-[9px] line-clamp-1 mt-0.5">{role}</p>
                                 ) : (
                                     <div className="h-[14px]" /> // placeholder para manter altura
                                 )}
                             </div>
 
                             {/* View count — só no hover, mobile hidden */}
-                            <div className="hidden md:flex items-center gap-1 text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="hidden md:flex items-center gap-1 text-[#444] opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Eye className="w-2.5 h-2.5" />
                                 <span className="text-[9px] tabular-nums">{artist.viewCount.toLocaleString('pt-BR')}</span>
                             </div>

@@ -42,14 +42,14 @@ const STATUS_ICON: Record<WatchStatus, React.ReactNode> = {
 const STATUS_COLOR: Record<WatchStatus, string> = {
     WANT_TO_WATCH: 'text-teal-400 bg-teal-400/10 border-teal-400/20',
     WATCHING:      'text-green-400 bg-green-400/10 border-green-400/20',
-    WATCHED:       'text-purple-400 bg-purple-400/10 border-purple-400/20',
+    WATCHED:       'text-[#ff2d78] bg-[#ff2d78]/10 border-[#ff2d78]/20',
     DROPPED:       'text-red-400 bg-red-400/10 border-red-400/20',
 }
 
 const STATUS_ACTIVE: Record<WatchStatus, string> = {
     WANT_TO_WATCH: 'bg-teal-500 text-white border-teal-500',
     WATCHING:      'bg-green-500 text-white border-green-500',
-    WATCHED:       'bg-purple-600 text-white border-purple-600',
+    WATCHED:       'bg-[#ff2d78] text-white border-[#ff2d78]',
     DROPPED:       'bg-red-600 text-white border-red-600',
 }
 
@@ -87,8 +87,8 @@ export default function WatchlistPage() {
         return (
             <div className="min-h-screen flex items-center justify-center pt-24">
                 <div className="text-center space-y-4">
-                    <BookmarkPlus size={48} className="mx-auto text-zinc-500" />
-                    <p className="text-zinc-400">Faça login para ver sua lista</p>
+                    <BookmarkPlus size={48} className="mx-auto text-muted" />
+                    <p className="text-muted">Faça login para ver sua lista</p>
                     <Link
                         href="/auth/login?callbackUrl=/watchlist"
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-neon-pink text-black font-semibold rounded-lg hover:opacity-90 transition-opacity"
@@ -106,15 +106,15 @@ export default function WatchlistPage() {
     for (const e of entries) counts[e.status] = (counts[e.status] ?? 0) + 1
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 pb-16">
 
             {/* Header */}
             <div className="mb-8">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1 flex items-center gap-1.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-1 flex items-center gap-1.5">
                     <LayoutList size={10} />
                     Minha Lista
                 </p>
-                <h1 className="text-3xl md:text-4xl font-display font-black text-white tracking-tight leading-none">
+                <h1 className="text-3xl md:text-4xl font-display font-black text-foreground tracking-tight leading-none">
                     {loading ? 'Carregando...' : entries.length === 0
                         ? 'Nenhuma produção ainda'
                         : `${entries.length} produção${entries.length !== 1 ? 'ões' : ''}`}
@@ -128,15 +128,15 @@ export default function WatchlistPage() {
                         <button
                             key={s}
                             onClick={() => setActiveTab(s)}
-                            className={`glass-card p-4 text-left transition-all border ${activeTab === s ? STATUS_ACTIVE[s] : 'border-white/5 hover:border-white/15'}`}
+                            className={`bg-background p-4 text-left transition-all border rounded-xl ${activeTab === s ? STATUS_ACTIVE[s] : 'border-border hover:border-[#080808]/20'}`}
                         >
                             <div className={`mb-2 ${activeTab === s ? 'text-white' : STATUS_COLOR[s].split(' ')[0]}`}>
                                 {STATUS_ICON[s]}
                             </div>
-                            <div className={`text-2xl font-black leading-none ${activeTab === s ? 'text-white' : 'text-white'}`}>
+                            <div className={`text-2xl font-black leading-none ${activeTab === s ? 'text-white' : 'text-foreground'}`}>
                                 {counts[s] ?? 0}
                             </div>
-                            <div className={`text-xs mt-1 font-bold uppercase tracking-wider ${activeTab === s ? 'text-white/70' : 'text-zinc-500'}`}>
+                            <div className={`text-xs mt-1 font-bold uppercase tracking-wider ${activeTab === s ? 'text-white/70' : 'text-muted'}`}>
                                 {WATCH_STATUS_LABELS[s]}
                             </div>
                         </button>
@@ -149,7 +149,7 @@ export default function WatchlistPage() {
                 {STATUS_TABS.map(tab => {
                     const count = tab.key === 'ALL' ? entries.length : (counts[tab.key] ?? 0)
                     const isActive = activeTab === tab.key
-                    const activeStyle = tab.key !== 'ALL' ? STATUS_ACTIVE[tab.key as WatchStatus] : 'bg-white text-black border-white'
+                    const activeStyle = tab.key !== 'ALL' ? STATUS_ACTIVE[tab.key as WatchStatus] : 'bg-[#080808] text-white border-[#080808]'
                     return (
                         <button
                             key={tab.key}
@@ -157,7 +157,7 @@ export default function WatchlistPage() {
                             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors border ${
                                 isActive
                                     ? activeStyle
-                                    : 'bg-zinc-800/50 text-zinc-300 border-white/5 hover:border-white/20 hover:text-white'
+                                    : 'bg-surface text-foreground border-border hover:border-[#080808]/20 hover:bg-[#e8e8e8]'
                             }`}
                         >
                             {tab.key !== 'ALL' && (
@@ -166,7 +166,7 @@ export default function WatchlistPage() {
                                 </span>
                             )}
                             <span>{tab.label}</span>
-                            <span className={`text-xs ${isActive ? 'opacity-70' : 'text-zinc-500'}`}>{count}</span>
+                            <span className={`text-xs ${isActive ? 'opacity-70' : 'text-muted'}`}>{count}</span>
                         </button>
                     )
                 })}
@@ -176,11 +176,11 @@ export default function WatchlistPage() {
             {loading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {Array.from({ length: 10 }).map((_, i) => (
-                        <div key={i} className="aspect-[2/3] bg-zinc-800 rounded-xl animate-pulse" />
+                        <div key={i} className="aspect-[2/3] bg-surface rounded-xl animate-pulse" />
                     ))}
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="text-center py-20 text-zinc-500">
+                <div className="text-center py-20 text-muted">
                     <Film size={40} className="mx-auto mb-3 opacity-40" />
                     <p>Nenhuma produção nesta categoria</p>
                 </div>
@@ -202,7 +202,7 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
     return (
         <div className="group relative flex flex-col">
             <Link href={`/productions/${p.id}`} className="block">
-                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 mb-2">
+                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface mb-2">
                     {p.imageUrl ? (
                         <Image
                             src={p.imageUrl}
@@ -212,7 +212,7 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
                             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
                         />
                     ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-zinc-600">
+                        <div className="absolute inset-0 flex items-center justify-center text-muted">
                             <Film size={32} />
                         </div>
                     )}
@@ -224,7 +224,7 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
                     </div>
                     {/* Type badge */}
                     <div className="absolute bottom-2 right-2">
-                        <span className="text-xs bg-black/70 text-zinc-300 px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-black/70 text-white px-2 py-0.5 rounded-full">
                             {TYPE_LABEL[p.type] ?? p.type}
                         </span>
                     </div>
@@ -232,11 +232,11 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
             </Link>
             <div className="flex-1 space-y-1">
                 <Link href={`/productions/${p.id}`}>
-                    <h3 className="text-sm font-semibold text-white line-clamp-2 hover:text-neon-pink transition-colors leading-tight">
+                    <h3 className="text-sm font-semibold text-foreground line-clamp-2 hover:text-neon-pink transition-colors leading-tight">
                         {p.titlePt}
                     </h3>
                 </Link>
-                {p.year && <p className="text-xs text-zinc-500">{p.year}</p>}
+                {p.year && <p className="text-xs text-muted">{p.year}</p>}
                 {entry.rating && (
                     <div className="flex items-center gap-1">
                         <Star size={11} className="text-yellow-400 fill-yellow-400" />

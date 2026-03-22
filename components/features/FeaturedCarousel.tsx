@@ -86,7 +86,7 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
                                     draggable={false}
                                 />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
+                                <div className="w-full h-full bg-gradient-to-br from-[#ff2d78] to-pink-900" />
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                         </div>
@@ -98,7 +98,7 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
                                     {currentNews.tags.slice(0, 3).map((tag) => (
                                         <span
                                             key={tag}
-                                            className="px-3 py-1 bg-purple-600/80 backdrop-blur-sm text-white text-xs font-black uppercase tracking-widest rounded-full"
+                                            className="px-3 py-1 bg-[#ff2d78]/80 backdrop-blur-sm text-white text-xs font-black uppercase tracking-widest rounded-full"
                                         >
                                             {tag}
                                         </span>
@@ -110,7 +110,7 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
                                 {currentNews.title}
                             </h2>
 
-                            <div className="flex items-center gap-2 text-zinc-300">
+                            <div className="flex items-center gap-2 text-[#e8e8e8]">
                                 <Calendar className="w-4 h-4" />
                                 <span className="text-sm font-medium">
                                     {new Date(currentNews.publishedAt).toLocaleDateString('pt-BR', {
@@ -153,7 +153,7 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
                             key={index}
                             onClick={() => goToSlide(index)}
                             className={`h-2 rounded-full transition-all ${
-                                index === currentIndex ? 'bg-white w-8' : 'bg-white/50 w-2 hover:bg-white/75'
+                                index === currentIndex ? 'bg-background w-8' : 'bg-white/50 w-2 hover:bg-white/75'
                             }`}
                             aria-label={`Ir para slide ${index + 1}`}
                         />
@@ -167,9 +167,9 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
                     className="flex items-center gap-1 px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full"
                     style={{ animation: 'fadeIn 0.5s ease-out, fadeOut 1s ease-in 2.5s forwards' }}
                 >
-                    <ChevronLeft className="w-3 h-3 text-zinc-400" />
-                    <span className="text-[10px] text-zinc-400 font-medium">deslize</span>
-                    <ChevronRight className="w-3 h-3 text-zinc-400" />
+                    <ChevronLeft className="w-3 h-3 text-[#999]" />
+                    <span className="text-[10px] text-[#999] font-medium">deslize</span>
+                    <ChevronRight className="w-3 h-3 text-[#999]" />
                 </div>
             </div>
         </div>

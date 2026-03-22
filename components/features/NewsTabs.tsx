@@ -41,25 +41,25 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
             {/* Header compacto */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 mb-5">
                 <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-neon-pink/15 rounded-lg">
-                        <Newspaper className="w-4 h-4 text-neon-pink" />
+                    <div className="p-1.5 bg-[#ff2d78]/15 rounded-lg">
+                        <Newspaper className="w-4 h-4 text-[#ff2d78]" />
                     </div>
-                    <h2 className="text-xl font-black dark:text-white text-zinc-900 uppercase tracking-tight">
+                    <h2 className="text-xl font-black text-foreground uppercase tracking-tight">
                         Notícias
                     </h2>
                 </div>
 
                 {/* Tabs — só aparece se houver recomendadas */}
                 {hasRecommended && (
-                    <div className="flex items-center gap-1 bg-zinc-900/60 border border-white/5 rounded-xl p-1">
+                    <div className="flex items-center gap-1 bg-surface border border-border rounded-xl p-1">
                         {TABS.map(({ key, label, shortLabel, icon: Icon }) => (
                             <button
                                 key={key}
                                 onClick={() => setActive(key)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
                                     active === key
-                                        ? 'bg-neon-pink text-white shadow-sm'
-                                        : 'text-zinc-500 hover:text-zinc-300'
+                                        ? 'bg-[#ff2d78] text-white shadow-sm'
+                                        : 'text-muted hover:text-foreground'
                                 }`}
                             >
                                 <Icon className="w-3 h-3" />
@@ -72,7 +72,7 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
 
                 <Link
                     href={viewAllHref}
-                    className="ml-auto text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors hidden sm:block"
+                    className="ml-auto text-xs font-black text-muted hover:text-foreground uppercase tracking-widest transition-colors hidden sm:block"
                 >
                     Ver todas →
                 </Link>
@@ -84,12 +84,12 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
                     <Link
                         key={item.id}
                         href={`/news/${item.id}`}
-                        className="group flex flex-col rounded-2xl overflow-hidden dark:bg-zinc-900/60 bg-zinc-50 dark:border-white/5 border border-zinc-200 dark:hover:border-white/15 hover:border-zinc-300 transition-all hover:-translate-y-0.5"
+                        className="group flex flex-col rounded-2xl overflow-hidden bg-background border border-border hover:border-border transition-all hover:-translate-y-0.5"
                     >
                         {/* Imagem */}
-                        <div className="relative aspect-video overflow-hidden dark:bg-zinc-800 bg-zinc-200">
+                        <div className="relative aspect-video overflow-hidden bg-surface">
                             {item.isRecommended && (
-                                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full">
+                                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 bg-[#ff2d78] rounded-full">
                                     <Heart className="w-2.5 h-2.5 text-white fill-white" />
                                     <span className="text-white text-[9px] font-black uppercase">Para Você</span>
                                 </div>
@@ -103,20 +103,20 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
                                     sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                                 />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                                <div className="w-full h-full bg-surface" />
                             )}
                         </div>
 
                         {/* Texto */}
                         <div className="p-4 flex flex-col gap-1.5">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-cyber-purple">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78]">
                                 {new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
-                            <h3 className="text-sm font-bold dark:text-white text-zinc-900 group-hover:text-neon-pink transition-colors leading-snug line-clamp-2">
+                            <h3 className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2">
                                 {item.title}
                             </h3>
                             {item.excerpt && (
-                                <p className="text-[11px] dark:text-zinc-500 text-zinc-600 line-clamp-2 leading-relaxed">
+                                <p className="text-[11px] text-muted line-clamp-2 leading-relaxed">
                                     {item.excerpt}
                                 </p>
                             )}
@@ -129,7 +129,7 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
             <div className="mt-4 sm:hidden text-center">
                 <Link
                     href={viewAllHref}
-                    className="text-xs font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors"
+                    className="text-xs font-black text-muted hover:text-foreground uppercase tracking-widest transition-colors"
                 >
                     Ver todas as notícias →
                 </Link>

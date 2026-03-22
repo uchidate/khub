@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Users, Search, X } from 'lucide-react'
+import { Users, X } from 'lucide-react'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 
 type Group = {
@@ -93,7 +94,7 @@ export function GroupsList() {
     return (
         <div>
             {/* Contadores */}
-            <p className="text-zinc-500 font-medium mb-8 -mt-6">
+            <p className="text-muted font-medium mb-8 -mt-6">
                 {totalActive} ativo{totalActive !== 1 ? 's' : ''}
                 {totalDisbanded > 0 && ` · ${totalDisbanded} disbandado${totalDisbanded !== 1 ? 's' : ''}`}
             </p>
@@ -102,26 +103,19 @@ export function GroupsList() {
             <div className="mb-8 space-y-3">
                 {/* Busca + Status */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1 relative">
-                        <input
-                            type="text"
-                            placeholder="Buscar grupo ou agência"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full px-4 pr-10 py-3.5 dark:bg-zinc-900/50 bg-zinc-100 dark:border-white/10 border border-zinc-200 rounded-xl dark:text-white text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-base md:text-sm"
-                        />
-                        {search
-                            ? <button onClick={() => setSearch('')} aria-label="Limpar busca" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white"><X className="w-4 h-4" /></button>
-                            : <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
-                        }
-                    </div>
+                    <SearchInput
+                        value={search}
+                        onChange={setSearch}
+                        placeholder="Buscar grupo ou agência"
+                        className="flex-1"
+                    />
 
-                    <div className="flex gap-1 p-1 dark:bg-zinc-900/50 bg-zinc-100 dark:border-white/10 border border-zinc-200 rounded-xl">
+                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl">
                         {(['all', 'active', 'disbanded'] as const).map(s => (
                             <button
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${statusFilter === s ? 'bg-purple-600 text-white' : 'dark:text-zinc-400 text-zinc-600 hover:text-purple-600 dark:hover:text-white'}`}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${statusFilter === s ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
                             >
                                 {s === 'all' ? 'Todos' : s === 'active' ? 'Ativos' : 'Disbandados'}
                             </button>
@@ -131,10 +125,10 @@ export function GroupsList() {
 
                 {/* Geração + Ordenação */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex gap-1 p-1 dark:bg-zinc-900/50 bg-zinc-100 dark:border-white/10 border border-zinc-200 rounded-xl overflow-x-auto">
+                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl overflow-x-auto">
                         <button
                             onClick={() => setGenerationFilter('all')}
-                            className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === 'all' ? 'bg-purple-600 text-white' : 'dark:text-zinc-400 text-zinc-600 hover:text-purple-600 dark:hover:text-white'}`}
+                            className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === 'all' ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
                         >
                             Toda Geração
                         </button>
@@ -142,14 +136,14 @@ export function GroupsList() {
                             <button
                                 key={g.label}
                                 onClick={() => setGenerationFilter(g.label)}
-                                className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === g.label ? 'bg-purple-600 text-white' : 'dark:text-zinc-400 text-zinc-600 hover:text-purple-600 dark:hover:text-white'}`}
+                                className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === g.label ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
                             >
                                 {g.label}
                             </button>
                         ))}
                     </div>
 
-                    <div className="flex gap-1 p-1 dark:bg-zinc-900/50 bg-zinc-100 dark:border-white/10 border border-zinc-200 rounded-xl ml-auto">
+                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl ml-auto">
                         {([
                             ['popular', 'Populares'],
                             ['name', 'A-Z'],
@@ -159,7 +153,7 @@ export function GroupsList() {
                             <button
                                 key={val}
                                 onClick={() => setSortBy(val)}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${sortBy === val ? 'bg-purple-600 text-white' : 'dark:text-zinc-400 text-zinc-600 hover:text-purple-600 dark:hover:text-white'}`}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${sortBy === val ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
                             >
                                 {label}
                             </button>
@@ -169,12 +163,12 @@ export function GroupsList() {
 
                 {hasActiveFilters && (
                     <div className="flex items-center gap-3">
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-muted">
                             {filtered.length} grupo{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
                         </p>
                         <button
                             onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }}
-                            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                            className="text-xs text-[#ff2d78] hover:text-[#ff2d78] transition-colors"
                         >
                             Limpar filtros
                         </button>
@@ -185,12 +179,12 @@ export function GroupsList() {
             {/* Grid */}
             {groups.length === 0 ? (
                 <div className="flex items-center justify-center py-32">
-                    <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-[#ff2d78] border-t-transparent rounded-full animate-spin" />
                 </div>
             ) : filtered.length === 0 ? (
                 <div className="text-center py-20">
-                    <p className="text-zinc-500 font-bold">Nenhum grupo encontrado</p>
-                    <button onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }} className="mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors">
+                    <p className="text-muted font-bold">Nenhum grupo encontrado</p>
+                    <button onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }} className="mt-3 text-xs text-[#ff2d78] hover:text-[#ff2d78] transition-colors">
                         Limpar filtros
                     </button>
                 </div>
@@ -202,7 +196,7 @@ export function GroupsList() {
                         return (
                             <div key={group.id} className={`group/card relative ${faded ? 'opacity-60 hover:opacity-100 transition-opacity duration-300' : ''}`}>
                                 <Link href={`/groups/${group.id}`} className="group block">
-                                    <div className="aspect-square relative rounded-xl overflow-hidden dark:bg-zinc-900 bg-zinc-100 dark:border-white/5 border border-zinc-200 card-hover mb-3">
+                                    <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border card-hover mb-3">
                                         {group.profileImageUrl ? (
                                             <Image
                                                 src={group.profileImageUrl}
@@ -213,38 +207,38 @@ export function GroupsList() {
                                                 priority={index < 4}
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center dark:bg-gradient-to-br dark:from-zinc-800 dark:to-zinc-900 bg-zinc-200">
-                                                <span className="text-3xl font-black dark:text-zinc-600 text-zinc-400 group-hover:text-purple-500 transition-colors">
+                                            <div className="w-full h-full flex items-center justify-center bg-[#f0f0f0]">
+                                                <span className="text-3xl font-black text-[#999] group-hover:text-[#ff2d78] transition-colors">
                                                     {group.name[0]}
                                                 </span>
                                             </div>
                                         )}
                                         {group.disbandDate && (
-                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-zinc-400 uppercase tracking-wider">
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-[#999] uppercase tracking-wider">
                                                 Disbandado
                                             </div>
                                         )}
                                         {group._count.members > 0 && (
-                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[10px] font-bold text-zinc-300">
+                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[10px] font-bold text-[#e8e8e8]">
                                                 <Users className="w-3 h-3" />
                                                 {group._count.members}
                                             </div>
                                         )}
                                     </div>
                                     <div>
-                                        <h3 className="font-black dark:text-white text-zinc-900 text-sm leading-tight group-hover:text-purple-400 transition-colors">{group.name}</h3>
+                                        <h3 className="font-black text-foreground text-sm leading-tight group-hover:text-[#ff2d78] transition-colors">{group.name}</h3>
                                         {group.nameHangul && (
-                                            <p className="text-xs text-zinc-500 font-medium mt-0.5">{group.nameHangul}</p>
+                                            <p className="text-xs text-muted font-medium mt-0.5">{group.nameHangul}</p>
                                         )}
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5">
                                             {group.debutDate && (
-                                                <span className="text-[10px] font-bold text-zinc-600">{new Date(group.debutDate).getUTCFullYear()}</span>
+                                                <span className="text-[10px] font-bold text-[#444]">{new Date(group.debutDate).getUTCFullYear()}</span>
                                             )}
                                             {gen && (
-                                                <span className="text-[10px] font-bold text-zinc-700">{gen}</span>
+                                                <span className="text-[10px] font-bold text-[#2a2a2a]">{gen}</span>
                                             )}
                                             {group.agency && (
-                                                <span className="text-[10px] font-bold text-purple-500/80 truncate max-w-[100px]">{group.agency.name}</span>
+                                                <span className="text-[10px] font-bold text-[#ff2d78]/80 truncate max-w-[100px]">{group.agency.name}</span>
                                             )}
                                         </div>
                                     </div>

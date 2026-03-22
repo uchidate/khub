@@ -46,14 +46,14 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
             {/* Search panel */}
             <div
                 ref={containerRef}
-                className="relative z-10 w-full bg-zinc-900 border-b border-white/10 px-4 py-4 flex items-center gap-3"
+                className="relative z-10 w-full bg-background border-b border-border px-4 py-4 flex items-center gap-3"
             >
                 <div className="flex-1">
                     <GlobalSearch />
                 </div>
                 <button
                     onClick={onClose}
-                    className="flex-shrink-0 p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                    className="flex-shrink-0 p-2 rounded-full text-muted hover:text-foreground hover:bg-surface transition-colors"
                     aria-label="Fechar busca"
                 >
                     <X className="w-5 h-5" />

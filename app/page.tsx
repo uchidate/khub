@@ -4,17 +4,13 @@ import { unstable_cache } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
-import Link from "next/link"
-import Image from "next/image"
-import { HeroSection } from "@/components/features/HeroSection"
-import { TrendingArtists } from "@/components/features/TrendingArtists"
-import { TrendingGroups } from "@/components/features/TrendingGroups"
-import { ProductionsTabs } from "@/components/features/ProductionsTabs"
-import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
-import { NewsTabs } from "@/components/features/NewsTabs"
-import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { AdBanner } from "@/components/ui/AdBanner"
+import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
+import { HomeFrontPage } from "@/components/home/HomeFrontPage"
+import { HomeNewsFeed } from "@/components/home/HomeNewsFeed"
+import { HomeArtistsGrid } from "@/components/home/HomeArtistsGrid"
+import { HomeProductionsCarousel } from "@/components/home/HomeProductionsCarousel"
+import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 
 export const dynamic = 'force-dynamic'
 
@@ -37,64 +33,27 @@ function stripMarkdown(text: string | null | undefined): string {
 const getHomePublicData = unstable_cache(
     async () => {
         const [
-            artistCount, productionCount, newsCount, totalViews,
-            featuredNewsRaw, trendingArtists, topNewsRaw, streamingShowsRaw, trendingGroupsRaw, featuredBlogPostsRaw,
+            trendingArtists, topNewsRaw, featuredBlogPostsRaw,
         ] = await Promise.all([
-            prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
-            prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
-            prisma.news.count({ where: { isHidden: false, status: 'published' } }),
-            prisma.artist.aggregate({ _sum: { viewCount: true }, where: { isHidden: false } }),
-            prisma.news.findMany({
-                where: { imageUrl: { not: null }, isHidden: false, status: 'published' },
-                take: 5,
-                orderBy: { publishedAt: 'desc' },
-                select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
-            }),
             prisma.artist.findMany({
-                where: { flaggedAsNonKorean: false, isHidden: false },
+                where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
                 take: 10,
                 orderBy: { trendingScore: 'desc' },
                 select: {
                     id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
                     roles: true, gender: true, trendingScore: true, viewCount: true,
-                    streamingSignals: {
-                        where: { expiresAt: { gt: new Date() } },
-                        select: { showTitle: true, rank: true, source: true },
-                        orderBy: { rank: 'asc' },
-                        take: 1,
-                    },
+                    agency: { select: { name: true } },
                 },
             }),
             prisma.news.findMany({
                 where: { isHidden: false, status: 'published' },
-                take: 3,
+                take: 8,
                 orderBy: { publishedAt: 'desc' },
-                // Busca apenas os campos necessários — excerpt processado server-side
                 select: {
                     id: true, title: true, imageUrl: true, publishedAt: true,
-                    contentMd: true, originalContent: true,
+                    contentMd: true, originalContent: true, tags: true,
                 },
             }),
-            prisma.streamingShow.findMany({
-                where: { expiresAt: { gt: new Date() } },
-                take: 100,
-                select: {
-                    source: true, rank: true, showTitle: true, tmdbId: true,
-                    posterUrl: true, year: true, voteAverage: true, isKorean: true, productionId: true,
-                    production: { select: { titlePt: true } },
-                },
-                orderBy: [{ source: 'asc' }, { rank: 'asc' }],
-            }).catch(() => [] as { source: string; rank: number; showTitle: string; tmdbId: number | null; posterUrl: string | null; year: number | null; voteAverage: number | null; isKorean: boolean; productionId: string | null; production: { titlePt: string | null } | null }[]),
-            prisma.musicalGroup.findMany({
-                take: 8,
-                where: { disbandDate: null, isHidden: false },
-                orderBy: [{ trendingScore: 'desc' }, { favoriteCount: 'desc' }, { viewCount: 'desc' }],
-                select: {
-                    id: true, name: true, nameHangul: true, profileImageUrl: true,
-                    debutDate: true, disbandDate: true,
-                    _count: { select: { members: true } },
-                },
-            }).catch(() => [] as { id: string; name: string; nameHangul: string | null; profileImageUrl: string | null; debutDate: Date | null; disbandDate: Date | null; _count: { members: number } }[]),
             prisma.blogPost.findMany({
                 where: { status: 'PUBLISHED' },
                 take: 4,
@@ -109,31 +68,22 @@ const getHomePublicData = unstable_cache(
         ])
 
         return {
-            siteStats: {
-                artists: artistCount,
-                productions: productionCount,
-                news: newsCount,
-                views: totalViews._sum.viewCount ?? 0,
-            },
-            featuredNews: featuredNewsRaw.map(n => ({ ...n, publishedAt: n.publishedAt.toISOString() })),
             trendingArtists,
-            // Excerpt processado server-side: não enviamos contentMd completo ao cliente
             topNews: topNewsRaw.map(n => ({
                 id: n.id,
                 title: n.title,
                 imageUrl: n.imageUrl,
                 publishedAt: n.publishedAt.toISOString(),
+                tags: n.tags,
                 excerpt: stripMarkdown(n.contentMd || n.originalContent),
             })),
-            streamingShowsRaw,
-            trendingGroups: trendingGroupsRaw,
             featuredBlogPosts: featuredBlogPostsRaw.map(p => ({
                 ...p,
                 publishedAt: p.publishedAt?.toISOString() ?? null,
             })),
         }
     },
-    ['home-page-public-data'],
+    ['home-page-public-data-v3'],
     { revalidate: 120 },
 )
 
@@ -143,217 +93,51 @@ export const metadata: Metadata = {
 }
 
 export default async function Home() {
-    // Chamada única de getServerSession — reutilizada em applyAgeRatingFilter para evitar dupla verificação JWT
     const session = await getServerSession(authOptions)
 
-    // Paraleliza dados públicos + filtro etário (independentes entre si)
     const [publicData, ageRatingFilter] = await Promise.all([
         getHomePublicData(),
         applyAgeRatingFilter(),
     ])
 
-    const { siteStats, featuredNews, trendingArtists, topNews, streamingShowsRaw, trendingGroups, featuredBlogPosts } = publicData
+    const { trendingArtists, topNews, featuredBlogPosts } = publicData
 
-    // Paraleliza as 3 queries que dependem do ageRatingFilter e da sessão
-    const [latestProductionsRaw, topRatedProductions, userWithFavorites] = await Promise.all([
-        prisma.production.findMany({
-            where: {
-                isHidden: false,
-                flaggedAsNonKorean: false,
-                ...ageRatingFilter,
-            },
-            take: 8,
-            orderBy: { createdAt: 'desc' },
-            select: {
-                id: true, titlePt: true, type: true, year: true,
-                imageUrl: true, voteAverage: true, createdAt: true,
-            },
-        }),
-        prisma.production.findMany({
-            where: {
-                isHidden: false,
-                flaggedAsNonKorean: false,
-                voteAverage: { gte: 7.5 },
-                ...ageRatingFilter,
-            },
-            take: 8,
-            orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
-            select: {
-                id: true, titlePt: true, type: true, year: true,
-                imageUrl: true, voteAverage: true,
-            },
-        }),
-        session?.user?.email
-            ? prisma.user.findUnique({
-                where: { email: session.user.email },
-                select: {
-                    favorites: {
-                        where: { artistId: { not: null } },
-                        select: { artistId: true },
-                    },
-                },
-            })
-            : Promise.resolve(null),
-    ])
+    const latestProductionsRaw = await prisma.production.findMany({
+        where: {
+            isHidden: false,
+            flaggedAsNonKorean: false,
+            ...ageRatingFilter,
+        },
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        select: {
+            id: true, titlePt: true, type: true, year: true,
+            imageUrl: true, voteAverage: true, createdAt: true,
+            streamingPlatforms: true,
+        },
+    })
 
-    const latestProductions = latestProductionsRaw.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
-
-    const favoriteArtistIds = (userWithFavorites?.favorites ?? [])
-        .map(f => f.artistId)
-        .filter((id): id is string => !!id)
-    const favoritesCount = favoriteArtistIds.length
-
-    // Busca recommended news apenas se houver favoritos
-    const recommendedNewsRaw = favoritesCount > 0
-        ? await prisma.news.findMany({
-            where: {
-                isHidden: false,
-                status: 'published',
-                artists: { some: { artistId: { in: favoriteArtistIds } } },
-            },
-            take: 3,
-            orderBy: { publishedAt: 'desc' },
-            select: {
-                id: true, title: true, imageUrl: true, publishedAt: true,
-                tags: true, artists: { select: { artistId: true } },
-            },
-        })
-        : []
-
-    const recommendedNews = recommendedNewsRaw.map(n => ({
-        ...n,
-        publishedAt: n.publishedAt.toISOString(),
-        artistsCount: n.artists?.length ?? 0,
+    const latestProductions = latestProductionsRaw.map(p => ({
+        ...p,
+        createdAt: p.createdAt.toISOString(),
     }))
 
-    // Agrupa streaming shows por plataforma
-    const showsByPlatform: ShowsByPlatform = {}
-    for (const show of streamingShowsRaw) {
-        if (!showsByPlatform[show.source]) showsByPlatform[show.source] = []
-        showsByPlatform[show.source].push({
-            rank: show.rank,
-            showTitle: show.showTitle,
-            productionTitle: show.production?.titlePt ?? undefined,
-            tmdbId: show.tmdbId?.toString() ?? '',
-            source: show.source,
-            posterUrl: show.posterUrl,
-            year: show.year,
-            voteAverage: show.voteAverage,
-            isKorean: show.isKorean,
-            productionId: show.productionId ?? undefined,
-        })
-    }
-
-    const hasStreaming = Object.keys(showsByPlatform).length > 0
-
     return (
-        <div className="dark:bg-black min-h-screen pb-20 overflow-x-hidden">
-            <HeroSection
-                trendingArtists={trendingArtists}
-                latestNews={featuredNews}
-                stats={siteStats}
+        <div className="min-h-screen bg-background font-sora overflow-x-hidden">
+            <HomeCategoriesBar />
+            <HomeFrontPage
+                featuredStory={topNews[0]}
+                secondaryStories={topNews.slice(1, 5)}
+                trendingArtists={trendingArtists.slice(0, 5)}
             />
-
-            <div className="relative z-20 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 space-y-6 md:space-y-8">
-
-                {/* 1. Top 10 nos Streamings — o que está quente agora */}
-                {hasStreaming && (
-                    <ScrollReveal delay={0.05}>
-                        <StreamingTopShows showsByPlatform={showsByPlatform} />
-                    </ScrollReveal>
-                )}
-
-                {/* 2. Trending Artists */}
-                {trendingArtists.length > 0 && (
-                    <ScrollReveal delay={0.1}>
-                        <TrendingArtists artists={trendingArtists} />
-                    </ScrollReveal>
-                )}
-
-                {/* 3. Trending Groups */}
-                {trendingGroups.length > 0 && (
-                    <ScrollReveal delay={0.15}>
-                        <TrendingGroups groups={trendingGroups as any} />
-                    </ScrollReveal>
-                )}
-
-                {/* 4 + 5. Produções — tabs (Recentes | Mais Bem Avaliados) */}
-                {(latestProductions.length > 0 || topRatedProductions.length > 0) && (
-                    <ScrollReveal delay={0.2}>
-                        <ProductionsTabs latest={latestProductions} topRated={topRatedProductions} />
-                    </ScrollReveal>
-                )}
-
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME!} format="horizontal" className="my-2" />
-
-                {/* 5.5 Blog Editorial — conteúdo original */}
-                {featuredBlogPosts.length > 0 && (
-                    <ScrollReveal delay={0.22}>
-                        <section>
-                            <div className="flex items-center justify-between mb-5">
-                                <div className="flex items-center gap-3">
-                                    <h2 className="text-sm font-black text-white uppercase tracking-widest">Do Blog</h2>
-                                    <span className="text-xs text-zinc-600">Análises e opiniões exclusivas</span>
-                                </div>
-                                <Link href="/blog" className="text-xs text-zinc-500 hover:text-purple-400 transition-colors font-semibold">
-                                    Ver todos →
-                                </Link>
-                            </div>
-                            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {featuredBlogPosts.map(post => (
-                                    <Link
-                                        key={post.id}
-                                        href={`/blog/${post.slug}`}
-                                        className="group flex flex-col bg-zinc-900/60 rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/30 transition-all"
-                                    >
-                                        {post.coverImageUrl ? (
-                                            <div className="relative aspect-video overflow-hidden">
-                                                <Image
-                                                    src={post.coverImageUrl}
-                                                    alt={post.title}
-                                                    fill
-                                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="aspect-video bg-gradient-to-br from-purple-900/40 to-zinc-900 flex items-center justify-center">
-                                                <span className="text-2xl font-black text-purple-800">HH</span>
-                                            </div>
-                                        )}
-                                        <div className="p-4 flex-1 flex flex-col">
-                                            {post.category && (
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1.5">
-                                                    {post.category.name}
-                                                </span>
-                                            )}
-                                            <h3 className="text-sm font-bold text-white leading-snug group-hover:text-purple-300 transition-colors line-clamp-2 mb-2">
-                                                {post.title}
-                                            </h3>
-                                            {post.excerpt && (
-                                                <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2 flex-1">{post.excerpt}</p>
-                                            )}
-                                            <div className="mt-3 text-[10px] text-zinc-600 font-medium">
-                                                {post.readingTimeMin} min de leitura
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </section>
-                    </ScrollReveal>
-                )}
-
-                {/* 6. Notícias — tabs (Últimas | Para Você) */}
-                <ScrollReveal delay={0.25}>
-                    <NewsTabs
-                        latest={topNews}
-                        recommended={session ? recommendedNews.map(n => ({ ...n, isRecommended: true })) : []}
-                        favoritesCount={favoritesCount}
-                    />
-                </ScrollReveal>
-            </div>
-
+            <HomeNewsFeed
+                news={topNews.slice(1)}
+                productions={latestProductions.slice(0, 5)}
+                blogPosts={featuredBlogPosts}
+            />
+            <HomeArtistsGrid artists={trendingArtists.slice(0, 6)} />
+            <HomeProductionsCarousel productions={latestProductions} />
+            <HomeBlogSection posts={featuredBlogPosts} />
             <ScrollToTop />
         </div>
     )

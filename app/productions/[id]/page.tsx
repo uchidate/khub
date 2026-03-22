@@ -197,7 +197,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
     }))
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-background">
             <ViewTracker productionId={production.id} />
             <JsonLd data={{
                 "@context": "https://schema.org",
@@ -222,7 +222,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 ],
             }} />
             {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
-            <div className="relative min-h-[88vh] md:min-h-[65vh] bg-black flex flex-col overflow-hidden">
+            <div className="relative min-h-[88vh] md:min-h-[65vh] bg-[#080808] flex flex-col overflow-hidden">
                 {/* Background image (contained, never clips content) */}
                 <div className="absolute inset-0">
                     {/* Mobile: poster (imageUrl) */}
@@ -234,8 +234,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                         <Image src={heroImageDesktop} alt={production.titlePt} fill priority sizes="100vw" className="object-cover hidden md:block" />
                     ) : !heroImageMobile && (
                         <>
-                            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-                            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-pink-600/10 rounded-full blur-3xl" />
+                            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ff2d78]/5 rounded-full blur-3xl" />
+                            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#ff2d78]/5 rounded-full blur-3xl" />
                         </>
                     )}
                     <div className="absolute inset-0 hero-gradient" />
@@ -243,7 +243,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 </div>
 
                 {/* Breadcrumbs */}
-                <div className="relative z-10 pt-24 md:pt-28 px-4 sm:px-12 md:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                <div className="relative z-10 pt-6 px-4 sm:px-12 md:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs items={[
                         { label: 'Produções', href: '/productions' },
                         { label: production.titlePt }
@@ -270,17 +270,17 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                         {/* Main info — fills remaining space */}
                         <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-4">
-                                {production.year && <span className="text-purple-500 font-bold text-sm">{production.year}</span>}
-                                <span className="w-1 h-1 bg-zinc-700 rounded-full" />
-                                <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-zinc-700 rounded-sm text-zinc-400">{production.type}</span>
+                                {production.year && <span className="text-[#ff2d78] font-bold text-sm">{production.year}</span>}
+                                <span className="w-1 h-1 bg-white/40 rounded-full" />
+                                <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-white/20 rounded-sm text-white/70">{production.type}</span>
                                 {production.episodeCount && (
-                                    <span className="text-xs font-bold text-zinc-400">{production.episodeCount} ep.</span>
+                                    <span className="text-xs font-bold text-white/70">{production.episodeCount} ep.</span>
                                 )}
                                 {production.episodeRuntime && (
-                                    <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.episodeRuntime)}/ep</span>
+                                    <span className="text-xs font-bold text-white/70">{formatRuntime(production.episodeRuntime)}/ep</span>
                                 )}
                                 {!production.episodeCount && production.runtime && (
-                                    <span className="text-xs font-bold text-zinc-400">{formatRuntime(production.runtime)}</span>
+                                    <span className="text-xs font-bold text-white/70">{formatRuntime(production.runtime)}</span>
                                 )}
                                 {production.ageRating && (
                                     <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
@@ -304,12 +304,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                     </span>
                                 )}
                                 {production.streamingPlatforms && production.streamingPlatforms.map(p => (
-                                    <span key={p} className="text-xs font-bold text-white bg-zinc-800 px-3 py-0.5 rounded-sm border border-white/5">{p}</span>
+                                    <span key={p} className="text-xs font-bold text-white bg-white/10 px-3 py-0.5 rounded-sm border border-white/10">{p}</span>
                                 ))}
                             </div>
                             <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-none tracking-tighter">{production.titlePt}</h1>
-                            {production.titleKr && <p className="text-xl text-purple-500 font-bold mt-1">{production.titleKr}</p>}
-                            {production.tagline && <p className="text-base text-zinc-400 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
+                            {production.titleKr && <p className="text-xl text-[#ff2d78] font-bold mt-1">{production.titleKr}</p>}
+                            {production.tagline && <p className="text-base text-white/60 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
                             {!production.tagline && <div className="mb-6" />}
 
                             <div className="mt-6 flex items-center gap-2">
@@ -346,37 +346,37 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                     <div className="md:col-span-2 space-y-10">
                         {synopsis && (
                             <div>
-                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Sinopse</h3>
-                                <p className="text-zinc-400 leading-relaxed font-medium text-lg">{synopsis}</p>
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Sinopse</h3>
+                                <p className="text-muted leading-relaxed font-medium text-lg">{synopsis}</p>
                             </div>
                         )}
 
                         {/* Nossa Análise Editorial */}
                         {(production.whyWatch || production.editorialReview) && (
-                            <div className="space-y-6 border-t border-white/5 pt-8">
+                            <div className="space-y-6 border-t border-border pt-8">
                                 {production.whyWatch && (
-                                    <div className="flex items-start gap-4 p-4 rounded-xl bg-purple-900/10 border border-purple-500/20">
-                                        <div className="shrink-0 mt-0.5 w-7 h-7 rounded-full bg-purple-600/20 flex items-center justify-center">
-                                            <span className="text-purple-400 text-xs font-black">▶</span>
+                                    <div className="flex items-start gap-4 p-4 rounded-xl bg-[#ff2d78]/5 border border-[#ff2d78]/20">
+                                        <div className="shrink-0 mt-0.5 w-7 h-7 rounded-full bg-[#ff2d78]/10 flex items-center justify-center">
+                                            <span className="text-[#ff2d78] text-xs font-black">▶</span>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">Por que assistir</p>
-                                            <p className="text-sm text-zinc-300 leading-relaxed">{production.whyWatch}</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-1">Por que assistir</p>
+                                            <p className="text-sm text-muted leading-relaxed">{production.whyWatch}</p>
                                         </div>
                                     </div>
                                 )}
                                 {production.editorialReview && (
                                     <div>
                                         <div className="flex items-center gap-3 mb-4">
-                                            <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nossa Análise</h3>
+                                            <h3 className="text-xs font-black text-muted uppercase tracking-widest">Nossa Análise</h3>
                                             {production.editorialRating != null && (
-                                                <span className="px-2 py-0.5 rounded bg-purple-600/20 text-purple-300 text-xs font-black border border-purple-500/30">
+                                                <span className="px-2 py-0.5 rounded bg-[#ff2d78]/10 text-[#ff2d78] text-xs font-black border border-[#ff2d78]/30">
                                                     {production.editorialRating.toFixed(1)}/10
                                                 </span>
                                             )}
-                                            <div className="flex-1 h-px bg-white/5" />
+                                            <div className="flex-1 h-px bg-[#e8e8e8]" />
                                         </div>
-                                        <div className="space-y-3 text-zinc-400 leading-relaxed text-sm">
+                                        <div className="space-y-3 text-muted leading-relaxed text-sm">
                                             {production.editorialReview.split('\n\n').map((p, i) => (
                                                 <p key={i}>{p}</p>
                                             ))}
@@ -388,10 +388,10 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
 
                         {tags.length > 0 && (
                             <div>
-                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-3">Tags</h3>
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Tags</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {tags.map(tag => (
-                                        <span key={tag} className="text-xs font-bold text-zinc-400 bg-zinc-900 px-3 py-1.5 rounded-sm border border-white/5">{tag}</span>
+                                        <span key={tag} className="text-xs font-bold text-muted bg-surface px-3 py-1.5 rounded-sm border border-border">{tag}</span>
                                     ))}
                                 </div>
                             </div>
@@ -402,7 +402,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                         {/* Cast */}
                         {production.artists.length > 0 && (
                             <div>
-                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Elenco</h3>
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-6">Elenco</h3>
                                 {(() => {
                                     const hasOrder = production.artists.some(a => a.castOrder !== null)
 
@@ -466,16 +466,16 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
 
                                     const CastCard = ({ artist, role }: { artist: typeof leads[0]['artist'], role: string | null }) => (
                                         <Link href={`/artists/${artist.id}`} className="group">
-                                            <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-colors">
+                                            <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
                                                 {artist.primaryImageUrl ? (
                                                     <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
                                                 ) : (
-                                                    <div className="flex items-center justify-center h-full text-zinc-700 font-black text-sm">{artist.nameRomanized}</div>
+                                                    <div className="flex items-center justify-center h-full text-muted font-black text-sm">{artist.nameRomanized}</div>
                                                 )}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                 <div className="absolute bottom-0 left-0 right-0 p-3">
                                                     <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
-                                                    {role && <p className="text-xs font-bold truncate text-purple-500">{role}</p>}
+                                                    {role && <p className="text-xs font-bold truncate text-[#ff2d78]">{role}</p>}
                                                 </div>
                                             </div>
                                         </Link>
@@ -486,7 +486,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                             {/* Protagonistas */}
                                             {leads.length > 0 && (
                                                 <div className="mb-8">
-                                                    <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3">Protagonistas</p>
+                                                    <p className="text-[10px] font-black text-[#ff2d78] uppercase tracking-widest mb-3">Protagonistas</p>
                                                     <div className="grid grid-cols-2 gap-4">
                                                         {leads.map(({ artist, role }) => (
                                                             <CastCard key={artist.id} artist={artist} role={role} />
@@ -497,7 +497,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                             {/* Secundários */}
                                             {secondary.length > 0 && (
                                                 <div className="mb-8">
-                                                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Elenco Secundário</p>
+                                                    <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-3">Elenco Secundário</p>
                                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                                         {secondary.map(({ artist, role }) => (
                                                             <CastCard key={artist.id} artist={artist} role={role} />
@@ -509,7 +509,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                             {supporting.length > 0 && (
                                                 <div>
                                                     {(leads.length > 0 || secondary.length > 0) && (
-                                                        <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-3">Coadjuvantes</p>
+                                                        <p className="text-[10px] font-black text-muted/60 uppercase tracking-widest mb-3">Coadjuvantes</p>
                                                     )}
                                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                                         {supporting.map(({ artist, role }) => (
@@ -527,10 +527,10 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                         {/* Gallery */}
                         {galleryUrls.length > 0 && (
                             <div>
-                                <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest mb-6">Galeria</h3>
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-6">Galeria</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {galleryUrls.map((url, i) => (
-                                        <div key={i} className="aspect-video relative rounded-lg overflow-hidden border border-white/5">
+                                        <div key={i} className="aspect-video relative rounded-lg overflow-hidden border border-border">
                                             <Image
                                                 src={url}
                                                 alt={`${production.titlePt} - imagem ${i + 1}`}
@@ -548,18 +548,18 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                         {relatedProductions.length > 0 && (
                             <div>
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xs font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+                                    <h3 className="text-xs font-black text-muted uppercase tracking-widest flex items-center gap-2">
                                         <Film className="w-4 h-4" />
                                         Você também pode gostar
                                     </h3>
-                                    <Link href="/productions" className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors">
+                                    <Link href="/productions" className="text-xs font-bold text-[#ff2d78] hover:underline transition-colors">
                                         Ver tudo →
                                     </Link>
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {relatedProductions.map((rel) => (
                                         <Link key={rel.id} href={`/productions/${rel.id}`} className="group block">
-                                            <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 hover:border-purple-500/30 transition-all mb-2">
+                                            <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all mb-2">
                                                 {rel.imageUrl || rel.backdropUrl ? (
                                                     <Image
                                                         src={rel.imageUrl || rel.backdropUrl!}
@@ -570,7 +570,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center">
-                                                        <Film className="w-8 h-8 text-zinc-700" />
+                                                        <Film className="w-8 h-8 text-muted/40" />
                                                     </div>
                                                 )}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
@@ -580,14 +580,14 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                                     </div>
                                                 )}
                                                 <div className="absolute bottom-2 left-2">
-                                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded text-zinc-400">
+                                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded text-white/70">
                                                         {rel.type}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">{rel.titlePt}</p>
-                                                <p className="text-[10px] text-zinc-600 font-bold mt-0.5">
+                                                <p className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-[#ff2d78] transition-colors">{rel.titlePt}</p>
+                                                <p className="text-[10px] text-muted font-bold mt-0.5">
                                                     {rel.titleKr || rel.year}
                                                 </p>
                                             </div>
@@ -600,76 +600,76 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
 
                     {/* Sidebar */}
                     <div>
-                        <div className="bg-zinc-900 rounded-lg border border-white/5 p-6 sticky top-24">
+                        <div className="bg-background rounded-2xl border border-border p-6 sticky top-24">
                             {production.voteAverage && production.voteAverage > 0 && (
-                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Nota TMDB</span>
+                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Nota TMDB</span>
                                     <span className={`text-sm font-black ${
-                                        production.voteAverage >= 7 ? 'text-green-400' :
-                                        production.voteAverage >= 5 ? 'text-yellow-400' :
-                                        'text-red-400'
-                                    }`}>★ {production.voteAverage.toFixed(1)}<span className="text-zinc-600 font-normal text-xs">/10</span></span>
+                                        production.voteAverage >= 7 ? 'text-green-600' :
+                                        production.voteAverage >= 5 ? 'text-amber-500' :
+                                        'text-red-500'
+                                    }`}>★ {production.voteAverage.toFixed(1)}<span className="text-muted font-normal text-xs">/10</span></span>
                                 </div>
                             )}
                             {production.releaseDate && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Estreia</span>
-                                    <span className="text-sm font-bold text-zinc-300">
+                                <div className="flex justify-between py-3 border-b border-border">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Estreia</span>
+                                    <span className="text-sm font-bold text-foreground">
                                         {new Date(production.releaseDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
                                     </span>
                                 </div>
                             )}
                             {!production.releaseDate && production.year && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Ano</span>
-                                    <span className="text-sm font-bold text-zinc-300">{production.year}</span>
+                                <div className="flex justify-between py-3 border-b border-border">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Ano</span>
+                                    <span className="text-sm font-bold text-foreground">{production.year}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between py-3 border-b border-white/5">
-                                <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Tipo</span>
-                                <span className="text-sm font-bold text-zinc-300 uppercase">{production.type}</span>
+                            <div className="flex justify-between py-3 border-b border-border">
+                                <span className="text-xs font-black text-muted uppercase tracking-widest">Tipo</span>
+                                <span className="text-sm font-bold text-foreground uppercase">{production.type}</span>
                             </div>
                             {production.runtime && production.runtime > 0 && !production.episodeCount && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Duração</span>
-                                    <span className="text-sm font-bold text-zinc-300">{formatRuntime(production.runtime)}</span>
+                                <div className="flex justify-between py-3 border-b border-border">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Duração</span>
+                                    <span className="text-sm font-bold text-foreground">{formatRuntime(production.runtime)}</span>
                                 </div>
                             )}
                             {production.episodeCount && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Episódios</span>
-                                    <span className="text-sm font-bold text-zinc-300">{production.episodeCount} ep.</span>
+                                <div className="flex justify-between py-3 border-b border-border">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Episódios</span>
+                                    <span className="text-sm font-bold text-foreground">{production.episodeCount} ep.</span>
                                 </div>
                             )}
                             {production.seasonCount && production.seasonCount > 1 && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Temporadas</span>
-                                    <span className="text-sm font-bold text-zinc-300">{production.seasonCount}</span>
+                                <div className="flex justify-between py-3 border-b border-border">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Temporadas</span>
+                                    <span className="text-sm font-bold text-foreground">{production.seasonCount}</span>
                                 </div>
                             )}
                             {production.episodeRuntime && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Ep. Duração</span>
-                                    <span className="text-sm font-bold text-zinc-300">{formatRuntime(production.episodeRuntime)}</span>
+                                <div className="flex justify-between py-3 border-b border-border">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Ep. Duração</span>
+                                    <span className="text-sm font-bold text-foreground">{formatRuntime(production.episodeRuntime)}</span>
                                 </div>
                             )}
                             {production.network && (
-                                <div className="flex justify-between py-3 border-b border-white/5">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Canal</span>
-                                    <span className="text-sm font-bold text-zinc-300">{production.network}</span>
+                                <div className="flex justify-between py-3 border-b border-border">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Canal</span>
+                                    <span className="text-sm font-bold text-foreground">{production.network}</span>
                                 </div>
                             )}
                             {production.productionStatus && (
-                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Status</span>
+                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Status</span>
                                     <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
                                         production.productionStatus === 'Returning Series'
-                                            ? 'bg-green-900/50 text-green-400 border border-green-700/40'
+                                            ? 'bg-green-100 text-green-700 border border-green-200'
                                             : production.productionStatus === 'Ended'
-                                            ? 'bg-zinc-800 text-zinc-400 border border-zinc-700/40'
+                                            ? 'bg-surface text-muted border border-border'
                                             : production.productionStatus === 'In Production'
-                                            ? 'bg-blue-900/50 text-blue-400 border border-blue-700/40'
-                                            : 'bg-zinc-800 text-zinc-500 border border-zinc-700/40'
+                                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                            : 'bg-surface text-muted border border-border'
                                     }`}>
                                         {production.productionStatus === 'Returning Series' ? 'Em exibição' :
                                          production.productionStatus === 'Ended' ? 'Encerrada' :
@@ -680,8 +680,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                 </div>
                             )}
                             {production.ageRating && (
-                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Classificação</span>
+                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Classificação</span>
                                     <span className={`text-xs font-black px-2.5 py-1 rounded ${
                                         production.ageRating === 'L'  ? 'bg-green-600 text-white' :
                                         production.ageRating === '10' ? 'bg-blue-600 text-white' :
@@ -695,18 +695,18 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                 </div>
                             )}
                             {production.streamingPlatforms && production.streamingPlatforms.length > 0 && (
-                                <div className="flex justify-between py-3 border-b border-white/5 items-center">
-                                    <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Streaming</span>
+                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Streaming</span>
                                     <div className="flex flex-wrap gap-1.5 justify-end">
                                         {production.streamingPlatforms.map(p => (
-                                            <span key={p} className="text-xs font-black text-white bg-zinc-800 px-2 py-0.5 rounded-sm border border-white/5">{p}</span>
+                                            <span key={p} className="text-xs font-black text-foreground bg-surface px-2 py-0.5 rounded-sm border border-border">{p}</span>
                                         ))}
                                     </div>
                                 </div>
                             )}
                             <div className="flex justify-between py-3">
-                                <span className="text-xs font-black text-zinc-600 uppercase tracking-widest">Elenco</span>
-                                <span className="text-sm font-bold text-zinc-300">{production.artists.length} artistas</span>
+                                <span className="text-xs font-black text-muted uppercase tracking-widest">Elenco</span>
+                                <span className="text-sm font-bold text-foreground">{production.artists.length} artistas</span>
                             </div>
                         </div>
                     </div>

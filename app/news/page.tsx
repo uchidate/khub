@@ -35,11 +35,11 @@ function LoadingSkeleton() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-xl overflow-hidden bg-zinc-800/60">
+                <div key={i} className="animate-pulse rounded-xl overflow-hidden bg-[#1a1a1a]/60">
                     <div className="aspect-video" />
                     <div className="p-4 space-y-3">
-                        <div className="h-4 bg-zinc-700/60 rounded w-3/4" />
-                        <div className="h-3 bg-zinc-700/40 rounded w-1/2" />
+                        <div className="h-4 bg-[#2a2a2a]/60 rounded w-3/4" />
+                        <div className="h-3 bg-[#2a2a2a]/40 rounded w-1/2" />
                     </div>
                 </div>
             ))}
@@ -86,7 +86,8 @@ export default async function NewsPage() {
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
-        <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+        <PageTransition className="py-8 md:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
             <SectionHeader
                 title="Notícias"
                 backHref="/"
@@ -97,6 +98,7 @@ export default async function NewsPage() {
                 <NewsContent />
             </Suspense>
             <ScrollToTop />
+            </div>
         </PageTransition>
         </>
     )

@@ -98,11 +98,11 @@ export default async function NewsFeedPage() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className={`p-2 rounded-xl ${isPersonalized ? 'bg-gradient-to-br from-pink-500 to-rose-500' : 'bg-zinc-800'}`}>
+                            <div className={`p-2 rounded-xl ${isPersonalized ? 'bg-gradient-to-br from-pink-500 to-rose-500' : 'bg-[#1a1a1a]'}`}>
                                 {isPersonalized ? (
                                     <Heart className="w-5 h-5 text-white fill-white" />
                                 ) : (
-                                    <Newspaper className="w-5 h-5 text-zinc-400" />
+                                    <Newspaper className="w-5 h-5 text-[#999]" />
                                 )}
                             </div>
                             <h1 className="text-3xl md:text-4xl font-display font-black text-white uppercase italic tracking-tight">
@@ -115,7 +115,7 @@ export default async function NewsFeedPage() {
                                 </span>
                             )}
                         </div>
-                        <p className="text-zinc-500 text-sm">
+                        <p className="text-muted text-sm">
                             {isPersonalized
                                 ? `Baseado nos seus ${favoritesCount} artista${favoritesCount !== 1 ? 's' : ''} favorito${favoritesCount !== 1 ? 's' : ''} — ${newsToShow.length} notícias`
                                 : `${newsToShow.length} notícias mais recentes`
@@ -126,7 +126,7 @@ export default async function NewsFeedPage() {
                     <div className="flex items-center gap-3">
                         {!isAuthenticated && (
                             <Link href="/auth/login?callbackUrl=/news/feed"
-                                className="text-xs font-black uppercase tracking-widest px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-500 transition-colors">
+                                className="text-xs font-black uppercase tracking-widest px-4 py-2 bg-[#ff2d78] text-white rounded-full hover:bg-[#ff2d78] transition-colors">
                                 Entrar para personalizar
                             </Link>
                         )}
@@ -137,7 +137,7 @@ export default async function NewsFeedPage() {
                             </Link>
                         )}
                         <Link href="/news/rss"
-                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-orange-400 transition-colors"
+                            className="flex items-center gap-1.5 text-xs text-muted hover:text-orange-400 transition-colors"
                             title="Feed RSS">
                             <Rss size={14} />
                             RSS
@@ -147,11 +147,11 @@ export default async function NewsFeedPage() {
 
                 {/* Aviso para não logados */}
                 {!isAuthenticated && (
-                    <div className="glass-card p-6 border-purple-500/20 bg-purple-500/5 mb-8 flex items-start gap-4">
+                    <div className="glass-card p-6 border-[#ff2d78]/20 bg-[#ff2d78]/5 mb-8 flex items-start gap-4">
                         <Heart className="w-5 h-5 text-pink-400 shrink-0 mt-0.5" />
                         <div>
                             <p className="text-sm text-white font-bold mb-1">Ative o feed personalizado</p>
-                            <p className="text-xs text-zinc-400 leading-relaxed">
+                            <p className="text-xs text-[#999] leading-relaxed">
                                 Faça login e favorite seus artistas para ver apenas as notícias que te interessam.
                             </p>
                         </div>
@@ -160,10 +160,10 @@ export default async function NewsFeedPage() {
 
                 {/* Grid de Notícias */}
                 {newsToShow.length === 0 ? (
-                    <div className="text-center py-20 text-zinc-600">
+                    <div className="text-center py-20 text-[#444]">
                         <Newspaper size={40} className="mx-auto mb-4 opacity-40" />
                         <p className="font-bold">Nenhuma notícia encontrada</p>
-                        <Link href="/news" className="text-xs text-purple-400 mt-2 inline-block">
+                        <Link href="/news" className="text-xs text-[#ff2d78] mt-2 inline-block">
                             Ver todas as notícias →
                         </Link>
                     </div>
@@ -179,7 +179,7 @@ export default async function NewsFeedPage() {
                                 >
                                     {/* Thumbnail */}
                                     {item.imageUrl ? (
-                                        <div className="relative w-28 h-20 md:w-40 md:h-28 shrink-0 rounded-xl overflow-hidden bg-zinc-900">
+                                        <div className="relative w-28 h-20 md:w-40 md:h-28 shrink-0 rounded-xl overflow-hidden bg-[#080808]">
                                             <Image
                                                 src={item.imageUrl}
                                                 alt={item.title}
@@ -189,8 +189,8 @@ export default async function NewsFeedPage() {
                                             />
                                         </div>
                                     ) : (
-                                        <div className="w-28 h-20 md:w-40 md:h-28 shrink-0 rounded-xl bg-zinc-900 flex items-center justify-center">
-                                            <Newspaper size={20} className="text-zinc-700" />
+                                        <div className="w-28 h-20 md:w-40 md:h-28 shrink-0 rounded-xl bg-[#080808] flex items-center justify-center">
+                                            <Newspaper size={20} className="text-[#2a2a2a]" />
                                         </div>
                                     )}
 
@@ -200,7 +200,7 @@ export default async function NewsFeedPage() {
                                             {/* Tags */}
                                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                                                 {item.tags?.slice(0, 2).map((tag: string) => (
-                                                    <span key={tag} className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 text-zinc-500">
+                                                    <span key={tag} className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 text-muted">
                                                         {tag}
                                                     </span>
                                                 ))}
@@ -218,7 +218,7 @@ export default async function NewsFeedPage() {
                                         </div>
 
                                         {/* Meta */}
-                                        <div className="flex items-center gap-3 mt-2 text-xs text-zinc-600">
+                                        <div className="flex items-center gap-3 mt-2 text-xs text-[#444]">
                                             <span className="flex items-center gap-1">
                                                 <Calendar size={11} />
                                                 {new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
@@ -240,11 +240,11 @@ export default async function NewsFeedPage() {
 
                 {/* Footer links */}
                 <div className="flex items-center justify-between mt-12 pt-6 border-t border-white/5">
-                    <Link href="/news" className="flex items-center gap-2 text-xs text-zinc-500 hover:text-white transition-colors font-black uppercase tracking-widest">
+                    <Link href="/news" className="flex items-center gap-2 text-xs text-muted hover:text-white transition-colors font-black uppercase tracking-widest">
                         <ArrowLeft size={14} />
                         Todas as notícias
                     </Link>
-                    <Link href="/news/rss" className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-orange-400 transition-colors">
+                    <Link href="/news/rss" className="flex items-center gap-1.5 text-xs text-[#444] hover:text-orange-400 transition-colors">
                         <Rss size={12} />
                         Assinar RSS
                     </Link>

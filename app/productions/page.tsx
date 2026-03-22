@@ -39,7 +39,8 @@ export default async function ProductionsPage() {
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
-        <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+        <PageTransition className="py-8 md:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
             <SectionHeader
                 title="Produções"
                 backHref="/"
@@ -50,6 +51,7 @@ export default async function ProductionsPage() {
                 <ProductionsList />
             </Suspense>
             <ScrollToTop />
+            </div>
         </PageTransition>
         </>
     )

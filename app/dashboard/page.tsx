@@ -51,8 +51,8 @@ interface NewsItem {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ACTIVITY_LABELS: Record<string, { label: string; color: string }> = {
-  LIKE:   { label: '♡ Favoritou',  color: 'text-pink-400' },
-  UNLIKE: { label: '✕ Removeu',   color: 'text-zinc-500' },
+  LIKE:   { label: '♡ Favoritou',  color: 'text-[#ff2d78]' },
+  UNLIKE: { label: '✕ Removeu',   color: 'text-muted' },
   VIEW:   { label: '◎ Visualizou', color: 'text-neon-cyan' },
   LOGIN:  { label: '→ Entrou',     color: 'text-green-400' },
 }
@@ -76,14 +76,14 @@ function SectionTitle({ icon, title, subtitle, href, linkLabel }: {
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2.5">
-        <div className="p-1.5 bg-white/5 rounded-lg">{icon}</div>
+        <div className="p-1.5 bg-surface rounded-lg">{icon}</div>
         <div>
-          <h2 className="text-base font-black text-white uppercase tracking-wider leading-none">{title}</h2>
-          {subtitle && <p className="text-[11px] text-zinc-500 mt-0.5">{subtitle}</p>}
+          <h2 className="text-base font-black text-foreground uppercase tracking-wider leading-none">{title}</h2>
+          {subtitle && <p className="text-[11px] text-muted mt-0.5">{subtitle}</p>}
         </div>
       </div>
       {href && (
-        <Link href={href} className="text-[11px] font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1">
+        <Link href={href} className="text-[11px] font-black text-muted hover:text-foreground uppercase tracking-widest transition-colors flex items-center gap-1">
           {linkLabel ?? 'Ver tudo'} <ChevronRight size={12} />
         </Link>
       )}
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
   const isNewUser = activities.length === 0 && watchingEntries.length === 0 && stats.favoritesCount === 0
 
   const quickLinks = [
-    { title: 'Configurações', description: 'Privacidade e conta', href: '/settings', icon: Settings, accent: 'hover:border-l-zinc-500' },
+    { title: 'Configurações', description: 'Privacidade e conta', href: '/settings', icon: Settings, accent: 'hover:border-l-[#6b6b6b]' },
     ...(session.user.role?.toLowerCase() === 'admin' ? [{ title: 'Admin', description: 'Painel admin', href: '/admin', icon: Shield, accent: 'hover:border-l-red-500' }] : []),
   ]
 
@@ -121,12 +121,12 @@ export default async function DashboardPage() {
     { label: 'Favoritos', value: stats.favoritesCount, icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-400/10', href: '/favorites' },
     { label: 'Minha Lista', value: stats.watchlistCount, icon: BookmarkCheck, color: 'text-teal-400', bg: 'bg-teal-400/10', href: '/watchlist' },
     { label: 'Comentários', value: stats.commentsCount, icon: MessageCircle, color: 'text-neon-pink', bg: 'bg-pink-400/10', href: '/profile/comments' },
-    ...(daysSinceJoin !== null ? [{ label: 'Dias', value: daysSinceJoin, icon: CalendarDays, color: 'text-purple-400', bg: 'bg-purple-400/10', href: '/profile' }] : []),
+    ...(daysSinceJoin !== null ? [{ label: 'Dias', value: daysSinceJoin, icon: CalendarDays, color: 'text-[#ff2d78]', bg: 'bg-[#ff2d78]/10', href: '/profile' }] : []),
   ]
 
   return (
     <PageTransition>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 space-y-6 md:space-y-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-6 md:space-y-8">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <header className="flex items-center justify-between gap-4">
@@ -137,13 +137,13 @@ export default async function DashboardPage() {
               </div>
             )}
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-zinc-500 mb-0.5 font-black tracking-widest uppercase text-[9px]">
+              <p className="flex items-center gap-1.5 text-muted mb-0.5 font-black tracking-widest uppercase text-[9px]">
                 <LayoutDashboard size={10} />
                 Dashboard
               </p>
-              <h1 className="text-2xl md:text-3xl font-display font-black text-white tracking-tight leading-none truncate">
+              <h1 className="text-2xl md:text-3xl font-display font-black text-foreground tracking-tight leading-none truncate">
                 Olá,{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-neon-cyan">
+                <span className="text-[#ff2d78]">
                   {session.user.name?.split(' ')[0]}
                 </span>
               </h1>
@@ -153,8 +153,8 @@ export default async function DashboardPage() {
             <Link href="/" className="btn-secondary text-xs uppercase tracking-widest hidden sm:flex">
               Explorar
             </Link>
-            <Link href="/premium" className="bg-white text-black px-4 py-2 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-              <span className="flex items-center gap-1.5"><Crown size={12} className="text-cyber-purple" /> Upgrade</span>
+            <Link href="/premium" className="bg-[#080808] text-white px-4 py-2 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest">
+              <span className="flex items-center gap-1.5"><Crown size={12} className="text-[#ff2d78]" /> Upgrade</span>
             </Link>
           </div>
         </header>
@@ -167,8 +167,8 @@ export default async function DashboardPage() {
                 <Icon size={14} />
               </div>
               <div>
-                <p className="text-lg md:text-xl font-black text-white leading-none">{value}</p>
-                <p className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5 hidden sm:block">{label}</p>
+                <p className="text-lg md:text-xl font-black text-foreground leading-none">{value}</p>
+                <p className="text-[9px] md:text-[10px] text-muted uppercase tracking-wider mt-0.5 hidden sm:block">{label}</p>
               </div>
             </Link>
           ))}
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
                   href={`/productions/${entry.production.id}`}
                   className="group flex-shrink-0 flex flex-col gap-2 w-24 md:w-28"
                 >
-                  <div className="relative w-24 h-36 md:w-28 md:h-40 rounded-xl overflow-hidden border border-white/10 group-hover:border-teal-500/60 transition-all duration-300 shadow-lg bg-zinc-800">
+                  <div className="relative w-24 h-36 md:w-28 md:h-40 rounded-xl overflow-hidden border border-border group-hover:border-teal-500/60 transition-all duration-300 shadow-lg bg-surface">
                     {entry.production.imageUrl ? (
                       <Image
                         src={entry.production.imageUrl}
@@ -201,18 +201,18 @@ export default async function DashboardPage() {
                         sizes="112px"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                      <div className="w-full h-full flex items-center justify-center text-muted">
                         <Film size={24} />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     <div className="absolute bottom-2 left-2">
                       <div className="w-5 h-5 rounded-full bg-teal-500/90 flex items-center justify-center">
                         <Play size={8} className="text-white fill-white ml-0.5" />
                       </div>
                     </div>
                   </div>
-                  <p className="text-[10px] text-zinc-400 group-hover:text-white font-bold text-center leading-tight line-clamp-2 transition-colors">
+                  <p className="text-[10px] text-muted group-hover:text-foreground font-bold text-center leading-tight line-clamp-2 transition-colors">
                     {entry.production.titlePt}
                   </p>
                 </Link>
@@ -248,7 +248,7 @@ export default async function DashboardPage() {
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                           sizes="(max-width: 640px) 80px, (max-width: 1024px) 50vw, 25vw"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         {item.tags?.[0] && (
                           <div className="absolute bottom-2 left-2 hidden sm:block">
                             <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-neon-pink/80 text-white">
@@ -259,14 +259,14 @@ export default async function DashboardPage() {
                       </div>
                     )}
                     <div className="p-3 flex-1 min-w-0">
-                      <span className="text-[10px] text-zinc-500 block mb-1">
+                      <span className="text-[10px] text-muted block mb-1">
                         {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
                       </span>
-                      <h4 className="text-sm font-bold text-white line-clamp-2 group-hover:text-neon-cyan transition-colors leading-snug">
+                      <h4 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-[#ff2d78] transition-colors leading-snug">
                         {item.title}
                       </h4>
                       {mentionedArtists.length > 0 && (
-                        <p className="text-[10px] text-neon-pink/70 mt-1.5 truncate">{mentionedArtists.join(' · ')}</p>
+                        <p className="text-[10px] text-[#ff2d78]/80 mt-1.5 truncate">{mentionedArtists.join(' · ')}</p>
                       )}
                     </div>
                   </Link>
@@ -303,12 +303,12 @@ export default async function DashboardPage() {
                         sizes="64px"
                       />
                     ) : (
-                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white font-black text-lg">
+                      <div className="w-full h-full bg-surface flex items-center justify-center text-foreground font-black text-lg">
                         {artist.nameRomanized[0]}
                       </div>
                     )}
                   </div>
-                  <p className="text-[10px] text-zinc-400 group-hover:text-white font-bold text-center leading-tight line-clamp-2 transition-colors">
+                  <p className="text-[10px] text-muted group-hover:text-foreground font-bold text-center leading-tight line-clamp-2 transition-colors">
                     {artist.nameRomanized}
                   </p>
                 </Link>
@@ -324,13 +324,13 @@ export default async function DashboardPage() {
             {/* Timeline de Atividade */}
             <div className="glass-card p-5 md:col-span-2 flex flex-col relative overflow-hidden">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-black text-sm text-white flex items-center gap-2 uppercase tracking-wider">
-                  <History size={16} className="text-neon-cyan" />
+                <h3 className="font-black text-sm text-foreground flex items-center gap-2 uppercase tracking-wider">
+                  <History size={16} className="text-[#ff2d78]" />
                   Atividade Recente
                 </h3>
                 {stats.commentsCount > 0 && (
-                  <Link href="/profile/comments" className="flex items-center gap-1 text-xs text-zinc-500 hover:text-white transition-colors">
-                    <MessageCircle size={11} className="text-neon-cyan" />
+                  <Link href="/profile/comments" className="flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors">
+                    <MessageCircle size={11} className="text-[#ff2d78]" />
                     {stats.commentsCount} comentário{stats.commentsCount !== 1 ? 's' : ''}
                   </Link>
                 )}
@@ -338,32 +338,32 @@ export default async function DashboardPage() {
 
               <div className="flex-grow space-y-1.5 overflow-y-auto max-h-[320px] pr-1 custom-scrollbar">
                 {activities.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-60 py-8">
+                  <div className="h-full flex flex-col items-center justify-center text-muted opacity-60 py-8">
                     <Clock size={28} className="mb-2" />
                     <p className="text-xs font-mono">Sem atividade recente</p>
                   </div>
                 ) : (
                   (activities as Activity[]).map((activity) => {
-                    const config = ACTIVITY_LABELS[activity.type] ?? { label: activity.type, color: 'text-zinc-500' }
+                    const config = ACTIVITY_LABELS[activity.type] ?? { label: activity.type, color: 'text-muted' }
                     const href = activity.entityId && activity.entityType
                       ? ENTITY_HREF[activity.entityType]?.(activity.entityId)
                       : null
 
                     const content = (
-                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
+                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-surface border border-border hover:border-[#080808]/15 transition-colors">
                         <span className={`text-[10px] font-black whitespace-nowrap ${config.color}`}>
                           {config.label}
                         </span>
                         <div className="flex-grow min-w-0">
                           {activity.entityName ? (
-                            <p className="text-xs text-white font-bold truncate">{activity.entityName}</p>
+                            <p className="text-xs text-foreground font-bold truncate">{activity.entityName}</p>
                           ) : (
-                            <p className="text-xs text-zinc-600 truncate italic">
+                            <p className="text-xs text-muted truncate italic">
                               {activity.entityType?.toLowerCase() ?? 'sistema'}
                             </p>
                           )}
                         </div>
-                        <span className="text-[10px] text-zinc-600 whitespace-nowrap flex-shrink-0">
+                        <span className="text-[10px] text-muted whitespace-nowrap flex-shrink-0">
                           {new Date(activity.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                         </span>
                       </div>
@@ -379,7 +379,7 @@ export default async function DashboardPage() {
               </div>
 
               {stats.joinDate && (
-                <p className="text-[10px] text-zinc-700 mt-3 pt-3 border-t border-white/5">
+                <p className="text-[10px] text-muted mt-3 pt-3 border-t border-border">
                   Membro desde {new Date(stats.joinDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                 </p>
               )}
@@ -388,57 +388,57 @@ export default async function DashboardPage() {
             {/* Quick Actions */}
             <div className="space-y-2">
               {quickLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`glass-card p-3.5 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent ${link.accent}`}>
+                <Link key={link.href} href={link.href} className={`glass-card p-3.5 flex items-center justify-between hover:bg-surface transition-all group border-l-4 border-l-transparent ${link.accent}`}>
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-white transition-colors">
+                    <div className="p-1.5 bg-surface rounded-lg text-muted group-hover:text-foreground transition-colors">
                       <link.icon size={16} />
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-white">{link.title}</p>
-                      <p className="text-[10px] text-zinc-500">{link.description}</p>
+                      <p className="font-bold text-sm text-foreground">{link.title}</p>
+                      <p className="text-[10px] text-muted">{link.description}</p>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-zinc-600 group-hover:text-white transition-colors" />
+                  <ChevronRight size={14} className="text-muted group-hover:text-foreground transition-colors" />
                 </Link>
               ))}
 
-              <Link href="/favorites" className="glass-card p-3.5 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-pink-500">
+              <Link href="/favorites" className="glass-card p-3.5 flex items-center justify-between hover:bg-surface transition-all group border-l-4 border-l-transparent hover:border-l-[#ff2d78]">
                 <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-pink-400 transition-colors">
+                  <div className="p-1.5 bg-surface rounded-lg text-muted group-hover:text-[#ff2d78] transition-colors">
                     <Heart size={16} />
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-white">Favoritos</p>
-                    <p className="text-[10px] text-zinc-500">{stats.favoritesCount} item{stats.favoritesCount !== 1 ? 's' : ''}</p>
+                    <p className="font-bold text-sm text-foreground">Favoritos</p>
+                    <p className="text-[10px] text-muted">{stats.favoritesCount} item{stats.favoritesCount !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
-                <ChevronRight size={14} className="text-zinc-600 group-hover:text-white transition-colors" />
+                <ChevronRight size={14} className="text-muted group-hover:text-foreground transition-colors" />
               </Link>
 
-              <Link href="/watchlist" className="glass-card p-3.5 flex items-center justify-between hover:bg-white/5 transition-all group border-l-4 border-l-transparent hover:border-l-teal-500">
+              <Link href="/watchlist" className="glass-card p-3.5 flex items-center justify-between hover:bg-surface transition-all group border-l-4 border-l-transparent hover:border-l-teal-500">
                 <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-zinc-900 rounded-lg text-zinc-400 group-hover:text-teal-400 transition-colors">
+                  <div className="p-1.5 bg-surface rounded-lg text-muted group-hover:text-teal-400 transition-colors">
                     <BookmarkCheck size={16} />
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-white">Minha Lista</p>
-                    <p className="text-[10px] text-zinc-500">{stats.watchlistCount} produção{stats.watchlistCount !== 1 ? 'ões' : ''}</p>
+                    <p className="font-bold text-sm text-foreground">Minha Lista</p>
+                    <p className="text-[10px] text-muted">{stats.watchlistCount} produção{stats.watchlistCount !== 1 ? 'ões' : ''}</p>
                   </div>
                 </div>
-                <ChevronRight size={14} className="text-zinc-600 group-hover:text-white transition-colors" />
+                <ChevronRight size={14} className="text-muted group-hover:text-foreground transition-colors" />
               </Link>
 
               {/* Explorar por categoria */}
               <div className="glass-card p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Explorar</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-3">Explorar</p>
                 <div className="grid grid-cols-2 gap-1">
                   {[
-                    { href: '/artists', label: 'Artistas', icon: User, color: 'text-purple-400' },
+                    { href: '/artists', label: 'Artistas', icon: User, color: 'text-[#ff2d78]' },
                     { href: '/groups', label: 'Grupos', icon: Music, color: 'text-pink-400' },
                     { href: '/productions', label: 'Produções', icon: Film, color: 'text-cyan-400' },
                     { href: '/news', label: 'Notícias', icon: Newspaper, color: 'text-yellow-400' },
                   ].map(({ href, label, icon: Icon, color }) => (
-                    <Link key={href} href={href} className="flex items-center gap-2 px-2 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors group">
+                    <Link key={href} href={href} className="flex items-center gap-2 px-2 py-2 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors group">
                       <Icon size={13} className={color} />
                       <span className="text-xs font-bold">{label}</span>
                     </Link>
@@ -446,13 +446,13 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              <div className="glass-card p-4 bg-gradient-to-br from-cyber-purple/20 to-transparent border-cyber-purple/30 relative overflow-hidden group">
+              <div className="glass-card p-4 bg-[#ff2d78]/5 border-[#ff2d78]/20 relative overflow-hidden group">
                 <div className="flex items-center gap-2 mb-1.5 relative z-10">
-                  <Zap size={16} className="text-cyber-purple" />
-                  <span className="text-xs font-black uppercase text-cyber-purple tracking-widest">Power User</span>
+                  <Zap size={16} className="text-[#ff2d78]" />
+                  <span className="text-xs font-black uppercase text-[#ff2d78] tracking-widest">Power User</span>
                 </div>
-                <p className="text-[10px] text-zinc-400 leading-tight relative z-10">Desbloqueie recursos avançados.</p>
-                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-cyber-purple/20 blur-xl rounded-full group-hover:scale-150 transition-transform duration-700" />
+                <p className="text-[10px] text-muted leading-tight relative z-10">Desbloqueie recursos avançados.</p>
+                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-[#ff2d78]/10 blur-xl rounded-full group-hover:scale-150 transition-transform duration-700" />
               </div>
             </div>
           </div>
@@ -461,15 +461,15 @@ export default async function DashboardPage() {
         {/* ── Onboarding — usuário novo ────────────────────────────────────── */}
         {isNewUser && (
           <div className="glass-card p-8 md:p-14 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyber-purple/10 via-transparent to-neon-pink/10 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#ff2d78]/5 via-transparent to-[#ff2d78]/5 pointer-events-none" />
             <div className="relative z-10">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyber-purple to-neon-pink flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-900/50">
+              <div className="w-14 h-14 rounded-2xl bg-[#ff2d78] flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#ff2d78]/20">
                 <Compass size={28} className="text-white" />
               </div>
-              <h2 className="text-2xl md:text-3xl font-display font-black text-white italic tracking-tight mb-2">
+              <h2 className="text-2xl md:text-3xl font-display font-black text-foreground italic tracking-tight mb-2">
                 Comece sua jornada Hallyu
               </h2>
-              <p className="text-zinc-400 text-sm leading-relaxed mb-6 max-w-md mx-auto">
+              <p className="text-muted text-sm leading-relaxed mb-6 max-w-md mx-auto">
                 Favorite artistas, salve produções na sua lista e explore o universo do K-Pop e K-Drama.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">

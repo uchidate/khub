@@ -22,8 +22,8 @@ export function StatsSection({ stats }: StatsSectionProps) {
             href: '/artists',
             value: stats.artists,
             icon: <Users className="w-5 h-5 md:w-8 md:h-8" />,
-            color: 'text-purple-400',
-            gradient: 'from-purple-600/20 to-purple-900/20'
+            color: 'text-[#ff2d78]',
+            gradient: 'from-[#ff2d78]/20 to-[#ff6fa3]/20'
         },
         {
             label: 'Produções',
@@ -54,15 +54,15 @@ export function StatsSection({ stats }: StatsSectionProps) {
     return (
         <section className="relative py-10 md:py-12">
             {/* Background Effect */}
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-900/5 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#ff2d78]/5 via-transparent to-transparent pointer-events-none" />
 
             <div className="relative max-w-[1400px] mx-auto">
                 <div className="text-center mb-8">
                     <div className="animate-slide-up">
-                        <span className="text-xs font-black uppercase tracking-[0.3em] text-purple-400 mb-4 block">
+                        <span className="text-xs font-black uppercase tracking-[0.3em] text-[#ff2d78] mb-4 block">
                             Números em Tempo Real
                         </span>
-                        <h2 className="text-3xl md:text-5xl font-display font-black dark:text-white text-zinc-900 italic tracking-tighter uppercase">
+                        <h2 className="text-3xl md:text-5xl font-display font-black dark:text-white text-foreground italic tracking-tighter uppercase">
                             O Universo Hallyu
                         </h2>
                     </div>
@@ -76,7 +76,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                             style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
                         >
                             <Link href={stat.href} className="block">
-                                <div className={`relative p-4 md:p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} dark:border-white/10 dark:hover:border-white/20 border border-zinc-200 hover:border-zinc-300 transition-all hover:scale-105 backdrop-blur-sm overflow-hidden`}>
+                                <div className={`relative p-4 md:p-6 rounded-2xl bg-gradient-to-br ${stat.gradient} dark:border-white/10 dark:hover:border-white/20 border border-border hover:border-border transition-all hover:scale-105 backdrop-blur-sm overflow-hidden`}>
                                     {/* Glow Effect */}
                                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -90,7 +90,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
                                                 value={stat.value}
                                                 className={`text-2xl md:text-4xl lg:text-5xl font-black ${stat.color} tracking-tighter`}
                                             />
-                                            <p className="text-xs md:text-sm font-bold dark:text-zinc-400 text-zinc-600 uppercase tracking-wider">
+                                            <p className="text-xs md:text-sm font-bold dark:text-[#999] text-[#444] uppercase tracking-wider">
                                                 {stat.label}
                                             </p>
                                         </div>

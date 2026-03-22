@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HallyuHub — Propostas de Rebranding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #09090b; color: #fff; min-height: 100vh; }
+  .header { padding: 3rem 2rem 2rem; text-align: center; border-bottom: 1px solid #27272a; }
+  .header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  .header p { color: #71717a; margin-top: 0.5rem; font-size: 0.9rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; padding: 2.5rem 2rem; max-width: 1200px; margin: 0 auto; }
+  .card { border-radius: 1.25rem; overflow: hidden; border: 1px solid #27272a; background: #18181b; transition: transform 0.2s, border-color 0.2s; cursor: pointer; text-decoration: none; display: block; }
+  .card:hover { transform: translateY(-4px); border-color: #52525b; }
+  .card-preview { height: 200px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; letter-spacing: -0.05em; }
+  .card-body { padding: 1.25rem; }
+  .card-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.4rem; }
+  .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+  .card-desc { font-size: 0.8rem; color: #71717a; line-height: 1.5; }
+  .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+  .tag { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid; }
+  /* A */
+  .a-preview { background: linear-gradient(135deg, #0a0a0f 0%, #0d1117 100%); color: #00d4ff; text-shadow: 0 0 30px #00d4ff99; }
+  .a-label { color: #00d4ff; }
+  .a-tag { background: #00d4ff15; border-color: #00d4ff30; color: #00d4ff; }
+  /* B */
+  .b-preview { background: linear-gradient(135deg, #0f0c1a 0%, #1a1228 100%); color: #c9a84c; text-shadow: 0 0 30px #c9a84c88; }
+  .b-label { color: #c9a84c; }
+  .b-tag { background: #c9a84c15; border-color: #c9a84c30; color: #c9a84c; }
+  /* C */
+  .c-preview { background: linear-gradient(135deg, #f8f0ff 0%, #fdf4ff 100%); color: #7c3aed; }
+  .c-label { color: #7c3aed; }
+  .c-tag { background: #7c3aed15; border-color: #7c3aed30; color: #7c3aed; }
+  /* D */
+  .d-preview { background: #0d0d0d; color: #fff; border-bottom: 3px solid #ff3b30; }
+  .d-label { color: #ff3b30; }
+  .d-tag { background: #ff3b3015; border-color: #ff3b3030; color: #ff3b30; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>HallyuHub — Propostas de Rebranding</h1>
+  <p>13 direções visuais distintas · Clique para explorar cada proposta</p>
+</div>
+<div class="grid">
+  <a href="proposta-a-neo-seoul.html" class="card">
+    <div class="card-preview a-preview">HH</div>
+    <div class="card-body">
+      <div class="card-label a-label">Proposta A</div>
+      <div class="card-title">Neo Seoul</div>
+      <div class="card-desc">Ciberpunk, néons elétricos, energia de estádio. Para um público jovem e digital.</div>
+      <div class="tags">
+        <span class="tag a-tag">Cyan + Magenta</span>
+        <span class="tag a-tag">Space Grotesk</span>
+        <span class="tag a-tag">Futurista</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-b-hanok.html" class="card">
+    <div class="card-preview b-preview">HH</div>
+    <div class="card-body">
+      <div class="card-label b-label">Proposta B</div>
+      <div class="card-title">Hanok</div>
+      <div class="card-desc">Editorial luxuoso, dourado e creme. Inspirado na cultura e estética coreana tradicional modernizada.</div>
+      <div class="tags">
+        <span class="tag b-tag">Dourado + Roxo profundo</span>
+        <span class="tag b-tag">Playfair Display</span>
+        <span class="tag b-tag">Premium</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-c-idol.html" class="card">
+    <div class="card-preview c-preview">HH</div>
+    <div class="card-body">
+      <div class="card-label c-label">Proposta C</div>
+      <div class="card-title">Idol</div>
+      <div class="card-desc">Light mode limpo e vibrante, estética de app coreano moderno. Acessível e amigável.</div>
+      <div class="tags">
+        <span class="tag c-tag">Roxo + Rosa</span>
+        <span class="tag c-tag">Plus Jakarta Sans</span>
+        <span class="tag c-tag">K-app</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-d-stage.html" class="card">
+    <div class="card-preview d-preview">HH</div>
+    <div class="card-body">
+      <div class="card-label d-label">Proposta D</div>
+      <div class="card-title">Stage</div>
+      <div class="card-desc">Preto puro, branco e vermelho intenso. Energia de show ao vivo, contraste máximo.</div>
+      <div class="tags">
+        <span class="tag d-tag">Preto + Vermelho</span>
+        <span class="tag d-tag">Bebas Neue</span>
+        <span class="tag d-tag">Alta energia</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-e-move.html" class="card">
+    <div class="card-preview" style="background:#f5f4f2;color:#5b4fff;font-family:sans-serif;font-size:1.5rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;width:44px">
+        <div style="background:#5b4fff;border-radius:4px;height:18px"></div>
+        <div style="background:#111;border-radius:4px;height:18px"></div>
+        <div style="background:#111;border-radius:4px;height:18px"></div>
+        <div style="background:#ff5b4f;border-radius:4px;height:18px"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#5b4fff">Proposta E</div>
+      <div class="card-title">Move</div>
+      <div class="card-desc">FutureBrand-inspired: símbolo dinâmico modular, layout em grid, tipografia geométrica. Light mode clean.</div>
+      <div class="tags">
+        <span class="tag" style="background:#5b4fff15;border-color:#5b4fff30;color:#5b4fff">Índigo + Coral</span>
+        <span class="tag" style="background:#5b4fff15;border-color:#5b4fff30;color:#5b4fff">Outfit</span>
+        <span class="tag" style="background:#5b4fff15;border-color:#5b4fff30;color:#5b4fff">Modular</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-f-han.html" class="card">
+    <div class="card-preview" style="background:#f7f2e9;display:flex;align-items:center;justify-content:center;gap:12px">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <polygon points="20,4 36,14 36,26 20,36 4,26 4,14" fill="none" stroke="#e8522a" stroke-width="2"/>
+        <text x="20" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#0a1628" font-family="serif">HH</text>
+      </svg>
+      <span style="font-family:Georgia,serif;font-size:1.1rem;font-weight:700;color:#0a1628;letter-spacing:.05em">한류</span>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#e8522a">Proposta F</div>
+      <div class="card-title">Han</div>
+      <div class="card-desc">Editorial magazine, creme e navy com coral. Hangul decorativo, tipografia serifada, referências à revista coreana moderna.</div>
+      <div class="tags">
+        <span class="tag" style="background:#e8522a15;border-color:#e8522a30;color:#e8522a">Creme + Navy + Coral</span>
+        <span class="tag" style="background:#e8522a15;border-color:#e8522a30;color:#e8522a">Cormorant Garamond</span>
+        <span class="tag" style="background:#e8522a15;border-color:#e8522a30;color:#e8522a">Editorial</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-g-orbit.html" class="card">
+    <div class="card-preview" style="background:#fff;display:flex;align-items:center;justify-content:center">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <circle cx="28" cy="28" r="18" stroke="#ff2d7830" stroke-width="1"/>
+        <circle cx="28" cy="28" r="11" stroke="#ff2d7855" stroke-width="1"/>
+        <rect x="10" y="25" width="9" height="30" rx="4" fill="#080808" transform="rotate(-90 28 28) translate(-14)"/>
+        <rect x="10" y="25" width="9" height="30" rx="4" fill="#080808" transform="rotate(90 28 28) translate(-14)"/>
+        <path d="M19 28 Q28 22 37 28" stroke="#ff2d78" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="28" cy="22" r="3" fill="#ff2d78"/>
+        <circle cx="28" cy="28" r="7" fill="#080808"/>
+        <text x="28" y="31.5" text-anchor="middle" font-size="7" font-weight="800" fill="#fff" font-family="sans-serif">HH</text>
+      </svg>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#ff2d78">Proposta G</div>
+      <div class="card-title">Orbit</div>
+      <div class="card-desc">Branco puro, preto e pink elétrico. Logo orbital animado, grid sistemático, estética de agência premium. Single typeface clean.</div>
+      <div class="tags">
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Branco + Pink</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Sora</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Premium Agency</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-i-signal.html" class="card">
+    <div class="card-preview" style="background:#fff;display:flex;align-items:center;justify-content:center">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <rect x="5" y="10" width="8" height="30" rx="3" fill="#080808"/>
+        <rect x="39" y="10" width="8" height="30" rx="3" fill="#080808"/>
+        <rect x="13" y="23" width="26" height="4" rx="2" fill="#080808"/>
+        <path d="M39 10 Q48 16 48 26 Q48 36 39 42" stroke="#0057ff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".4"/>
+        <path d="M39 10 Q54 18 54 26 Q54 34 39 42" stroke="#0057ff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".2" transform="translate(-2)"/>
+        <circle cx="46" cy="26" r="2.5" fill="#0057ff"/>
+      </svg>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#0057ff">Proposta I</div>
+      <div class="card-title">Signal</div>
+      <div class="card-desc">Visual da G (branco, Sora, grid premium) + features da H (ticker, trending, feed, sidebar). Azul elétrico como cor de sinal. A fusão ideal.</div>
+      <div class="tags">
+        <span class="tag" style="background:#0057ff15;border-color:#0057ff30;color:#0057ff">Branco + Azul elétrico</span>
+        <span class="tag" style="background:#0057ff15;border-color:#0057ff30;color:#0057ff">Sora</span>
+        <span class="tag" style="background:#0057ff15;border-color:#0057ff30;color:#0057ff">G×H Fusion</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-j-jade.html" class="card">
+    <div class="card-preview" style="background:#f2faf6;display:flex;align-items:center;justify-content:center">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <rect x="5" y="10" width="8" height="30" rx="3" fill="#050f0a"/>
+        <rect x="39" y="10" width="8" height="30" rx="3" fill="#050f0a"/>
+        <rect x="13" y="23" width="26" height="4" rx="2" fill="#050f0a"/>
+        <path d="M39 10 Q45 7 45 13 Q42 10 39 10Z" fill="#00b37a"/>
+        <path d="M45 13 Q48 9 45 7 Q44 10 45 13Z" fill="#00d492" opacity=".7"/>
+      </svg>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#00b37a">Proposta J</div>
+      <div class="card-title">Jade</div>
+      <div class="card-desc">Visual da G + features da H, paleta jade (verde esmeralda) + rose como contraste. Fresco, diferente, orgânico — sem perder o premium.</div>
+      <div class="tags">
+        <span class="tag" style="background:#00b37a15;border-color:#00b37a30;color:#00b37a">Jade + Rose</span>
+        <span class="tag" style="background:#00b37a15;border-color:#00b37a30;color:#00b37a">Sora</span>
+        <span class="tag" style="background:#00b37a15;border-color:#00b37a30;color:#00b37a">G×H Fusion</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-h-pulse.html" class="card">
+    <div class="card-preview" style="background:#0c0c0f;display:flex;align-items:center;justify-content:center;gap:3px">
+      <div style="background:#7c3aed;border-radius:2px;width:7px;height:16px"></div>
+      <div style="background:#a855f7;border-radius:2px;width:7px;height:28px"></div>
+      <div style="background:#7c3aed;border-radius:2px;width:7px;height:20px"></div>
+      <div style="background:#f59e0b;border-radius:2px;width:7px;height:32px"></div>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#a855f7">Proposta H</div>
+      <div class="card-title">Pulse</div>
+      <div class="card-desc">Dark mode roxo e âmbar, logo EQ animado, ticker de notícias, dashboard de trending. Energia de plataforma digital viva.</div>
+      <div class="tags">
+        <span class="tag" style="background:#7c3aed15;border-color:#7c3aed30;color:#a855f7">Roxo + Âmbar</span>
+        <span class="tag" style="background:#7c3aed15;border-color:#7c3aed30;color:#a855f7">Space Grotesk</span>
+        <span class="tag" style="background:#7c3aed15;border-color:#7c3aed30;color:#a855f7">Dashboard</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-k-destaque.html" class="card">
+    <div class="card-preview" style="background:#fff;display:grid;grid-template-columns:1.6fr 1fr;height:200px;overflow:hidden;border-bottom:1px solid #e8e8e8">
+      <div style="background:linear-gradient(160deg,#fff0f5,#fff);padding:1rem;border-right:1px solid #e8e8e8;display:flex;flex-direction:column;justify-content:flex-end">
+        <div style="font-size:.45rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#ff2d78;margin-bottom:.3rem">K-pop · Destaque</div>
+        <div style="font-size:.65rem;font-weight:800;color:#080808;line-height:1.2;letter-spacing:-.02em">BTS confirma retorno para 2025</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:.5rem">
+          <div style="background:#f5f5f7;border-radius:3px;padding:.3rem .4rem;font-size:.4rem;font-weight:700;color:#6b6b6b">K-drama · 5 min</div>
+          <div style="background:#f5f5f7;border-radius:3px;padding:.3rem .4rem;font-size:.4rem;font-weight:700;color:#6b6b6b">Cultura · 10 min</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e8e8e8">
+          <div style="padding:.5rem;border-right:1px solid #e8e8e8;text-align:center"><div style="font-size:.8rem;font-weight:800;color:#080808">840<span style="color:#ff2d78;font-size:.55rem">+</span></div><div style="font-size:.38rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:.08em">Artistas</div></div>
+          <div style="padding:.5rem;text-align:center"><div style="font-size:.8rem;font-weight:800;color:#080808">1.2<span style="color:#ff2d78;font-size:.55rem">M</span></div><div style="font-size:.38rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:.08em">Fãs</div></div>
+        </div>
+        <div style="flex:1;padding:.6rem;background:linear-gradient(160deg,#fff0f5,#fff)">
+          <div style="font-size:.4rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6b6b;margin-bottom:.5rem">Em alta agora</div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;align-items:center;gap:.3rem"><div style="width:16px;height:16px;border-radius:4px;background:linear-gradient(135deg,#ff2d78,#ff6fa3);display:flex;align-items:center;justify-content:center;font-size:.35rem;font-weight:700;color:#fff">BTS</div><div style="font-size:.45rem;font-weight:600;color:#1a1a1a">BTS</div></div>
+            <div style="display:flex;align-items:center;gap:.3rem"><div style="width:16px;height:16px;border-radius:4px;background:linear-gradient(135deg,#6d28d9,#a855f7);display:flex;align-items:center;justify-content:center;font-size:.35rem;font-weight:700;color:#fff">BP</div><div style="font-size:.45rem;font-weight:600;color:#1a1a1a">BLACKPINK</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#ff2d78">Proposta K</div>
+      <div class="card-title">Destaque</div>
+      <div class="card-desc">Conteúdo é o hero. Notícia principal + stories secundários à esquerda; trending + spotlight à direita. Zero copy de marketing acima da dobra.</div>
+      <div class="tags">
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Editorial front-page</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">2 colunas</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Conteúdo-first</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-l-painel.html" class="card">
+    <div class="card-preview" style="background:#fff;display:grid;grid-template-columns:1fr 1.2fr 1fr;height:200px;overflow:hidden;border-bottom:1px solid #e8e8e8">
+      <div style="border-right:1px solid #e8e8e8;padding:.6rem;display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:.4rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6b6b;margin-bottom:.3rem">Artistas em alta</div>
+        <div style="display:flex;align-items:center;gap:.3rem;padding:.3rem 0;border-bottom:1px solid #f0f0f0"><div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#ff2d78,#ff6fa3);display:flex;align-items:center;justify-content:center;font-size:.32rem;font-weight:700;color:#fff">BTS</div><div style="flex:1"><div style="font-size:.45rem;font-weight:700;color:#080808">BTS</div></div><div style="font-size:.38rem;font-weight:700;color:#ff2d78;background:#fff0f5;padding:.15rem .3rem;border-radius:2px">HOT</div></div>
+        <div style="display:flex;align-items:center;gap:.3rem;padding:.3rem 0;border-bottom:1px solid #f0f0f0"><div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#a855f7);display:flex;align-items:center;justify-content:center;font-size:.32rem;font-weight:700;color:#fff">BP</div><div style="flex:1"><div style="font-size:.45rem;font-weight:700;color:#080808">BLACKPINK</div></div><div style="font-size:.38rem;font-weight:700;color:#16a34a;background:#f0fdf4;padding:.15rem .3rem;border-radius:2px">↑2</div></div>
+        <div style="display:flex;align-items:center;gap:.3rem;padding:.3rem 0"><div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:.32rem;font-weight:700;color:#fff">NJ</div><div style="flex:1"><div style="font-size:.45rem;font-weight:700;color:#080808">NewJeans</div></div><div style="font-size:.38rem;font-weight:700;color:#ff2d78;background:#fff0f5;padding:.15rem .3rem;border-radius:2px">NEW</div></div>
+      </div>
+      <div style="border-right:1px solid #e8e8e8;display:flex;flex-direction:column">
+        <div style="background:linear-gradient(160deg,#fff0f5,#fff);padding:.75rem;flex:1">
+          <div style="font-size:.42rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#ff2d78;margin-bottom:.4rem">K-pop · Destaque</div>
+          <div style="font-size:.58rem;font-weight:800;color:#080808;line-height:1.2;letter-spacing:-.02em">BTS confirma retorno para segundo semestre de 2025</div>
+        </div>
+        <div style="padding:.5rem .75rem;border-top:1px solid #e8e8e8;display:flex;flex-direction:column;gap:3px">
+          <div style="font-size:.42rem;color:#6b6b6b;border-bottom:1px solid #f0f0f0;padding-bottom:3px"><span style="color:#7c3aed;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.38rem">K-DRAMA</span> Squid Game 3 confirma data</div>
+          <div style="font-size:.42rem;color:#6b6b6b"><span style="color:#0ea5e9;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.38rem">CULTURA</span> Hallyu transforma o Brasil</div>
+        </div>
+      </div>
+      <div style="padding:.6rem;display:flex;flex-direction:column;gap:3px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:.4rem">
+          <div style="background:#f5f5f7;border-radius:3px;padding:.4rem;text-align:center"><div style="font-size:.7rem;font-weight:800;color:#080808">840<span style="color:#ff2d78;font-size:.45rem">+</span></div><div style="font-size:.35rem;color:#6b6b6b;text-transform:uppercase">Artistas</div></div>
+          <div style="background:#f5f5f7;border-radius:3px;padding:.4rem;text-align:center"><div style="font-size:.7rem;font-weight:800;color:#080808">1.2<span style="color:#ff2d78;font-size:.45rem">M</span></div><div style="font-size:.35rem;color:#6b6b6b;text-transform:uppercase">Fãs</div></div>
+        </div>
+        <div style="font-size:.4rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6b6b;margin-bottom:.3rem">Próximos lançamentos</div>
+        <div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-bottom:1px solid #f0f0f0"><div style="text-align:center;width:20px"><div style="font-size:.55rem;font-weight:800;color:#080808">28</div><div style="font-size:.35rem;color:#ff2d78;text-transform:uppercase;font-weight:700">Mar</div></div><div style="font-size:.42rem;font-weight:600;color:#1a1a1a">NewJeans — "How Sweet"</div></div>
+        <div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0"><div style="text-align:center;width:20px"><div style="font-size:.55rem;font-weight:800;color:#080808">05</div><div style="font-size:.35rem;color:#ff2d78;text-transform:uppercase;font-weight:700">Abr</div></div><div style="font-size:.42rem;font-weight:600;color:#1a1a1a">Squid Game 3 — Netflix</div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#ff2d78">Proposta L</div>
+      <div class="card-title">Painel</div>
+      <div class="card-desc">Dashboard 3 colunas desde o primeiro pixel: artistas em alta (esq), notícia destaque + feed (centro), stats + agenda + produções (dir).</div>
+      <div class="tags">
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">3 colunas</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Dashboard-first</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Conteúdo-first</span>
+      </div>
+    </div>
+  </a>
+  <a href="proposta-k-real.html" class="card">
+    <div class="card-preview" style="background:#fff;display:grid;grid-template-columns:1.6fr 1fr;height:200px;overflow:hidden;border-bottom:1px solid #e8e8e8">
+      <div style="background:linear-gradient(160deg,#fff0f5,#fff);padding:1rem;border-right:1px solid #e8e8e8;display:flex;flex-direction:column;justify-content:flex-end">
+        <div style="font-size:.45rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#ff2d78;margin-bottom:.3rem">K-pop · Destaque</div>
+        <div style="font-size:.65rem;font-weight:800;color:#080808;line-height:1.2;letter-spacing:-.02em">BLACKPINK renova contrato com a YG Entertainment</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:.5rem">
+          <div style="background:#f5f5f7;border-radius:3px;padding:.3rem .4rem;font-size:.4rem;font-weight:700;color:#6b6b6b">Stray Kids tour 2026</div>
+          <div style="background:#f5f5f7;border-radius:3px;padding:.3rem .4rem;font-size:.4rem;font-weight:700;color:#6b6b6b">My Demon bate recorde</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e8e8e8">
+          <div style="padding:.5rem;border-right:1px solid #e8e8e8;text-align:center"><div style="font-size:.8rem;font-weight:800;color:#080808">840<span style="color:#ff2d78;font-size:.55rem">+</span></div><div style="font-size:.38rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:.08em">Artistas</div></div>
+          <div style="padding:.5rem;text-align:center"><div style="font-size:.8rem;font-weight:800;color:#080808">1.2<span style="color:#ff2d78;font-size:.55rem">M</span></div><div style="font-size:.38rem;color:#6b6b6b;text-transform:uppercase;letter-spacing:.08em">Fãs</div></div>
+        </div>
+        <div style="flex:1;padding:.6rem;background:linear-gradient(160deg,#fff0f5,#fff)">
+          <div style="font-size:.4rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6b6b;margin-bottom:.5rem">Em alta agora</div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;align-items:center;gap:.3rem"><div style="width:16px;height:16px;border-radius:4px;background:linear-gradient(135deg,#ff2d78,#ff6fa3);display:flex;align-items:center;justify-content:center;font-size:.32rem;font-weight:700;color:#fff">IU</div><div style="font-size:.45rem;font-weight:600;color:#1a1a1a">IU (아이유)</div></div>
+            <div style="display:flex;align-items:center;gap:.3rem"><div style="width:16px;height:16px;border-radius:4px;background:linear-gradient(135deg,#6d28d9,#a855f7);display:flex;align-items:center;justify-content:center;font-size:.32rem;font-weight:700;color:#fff">V</div><div style="font-size:.45rem;font-weight:600;color:#1a1a1a">V (김태형)</div></div>
+            <div style="display:flex;align-items:center;gap:.3rem"><div style="width:16px;height:16px;border-radius:4px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:.32rem;font-weight:700;color:#fff">J</div><div style="font-size:.45rem;font-weight:600;color:#1a1a1a">Jennie (제니)</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-label" style="color:#ff2d78">Proposta K — Dados Reais</div>
+      <div class="card-title">Destaque (Real)</div>
+      <div class="card-desc">Mesma estrutura Destaque com dados reais do seed: BLACKPINK, IU, V, Jennie, Squid Game, Hotel Del Luna, blog posts e notícias reais.</div>
+      <div class="tags">
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Dados reais</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Editorial front-page</span>
+        <span class="tag" style="background:#ff2d7815;border-color:#ff2d7830;color:#ff2d78">Conteúdo-first</span>
+      </div>
+    </div>
+  </a>
+</div>
+</body>
+</html>

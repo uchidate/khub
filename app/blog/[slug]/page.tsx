@@ -69,7 +69,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   void prisma.blogPost.update({ where: { id: post.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
 
   return (
-    <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-6">
+    <PageTransition className="pb-20 px-4 sm:px-6">
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "BlogPosting",
@@ -101,7 +101,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         ],
       }} />
       <div className="max-w-3xl mx-auto">
-        <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors mb-8">
+        <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors mb-8">
           <ArrowLeft size={14} />
           Voltar ao Blog
         </Link>
@@ -110,7 +110,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <header className="mb-8 space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             {post.category && (
-              <Link href={`/blog?category=${post.category.slug}`} className="px-2.5 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-semibold uppercase tracking-wider hover:bg-purple-500/30 transition-colors">
+              <Link href={`/blog?category=${post.category.slug}`} className="px-2.5 py-1 bg-[#ff2d78]/10 text-[#ff2d78] rounded text-xs font-semibold uppercase tracking-wider hover:bg-[#ff2d78]/20 transition-colors">
                 {post.category.name}
               </Link>
             )}
@@ -121,23 +121,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             )}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">{post.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-black text-foreground leading-tight">{post.title}</h1>
 
           {post.excerpt && (
-            <p className="text-xl text-zinc-400 leading-relaxed">{post.excerpt}</p>
+            <p className="text-xl text-muted leading-relaxed">{post.excerpt}</p>
           )}
 
-          <div className="flex items-center gap-4 flex-wrap text-sm text-zinc-500 pt-2 border-t border-white/5">
+          <div className="flex items-center gap-4 flex-wrap text-sm text-muted pt-2 border-t border-border">
             {/* Author */}
             <div className="flex items-center gap-2">
               {post.author?.image ? (
                 <Image src={post.author.image} alt={post.author.name ?? ''} width={28} height={28} className="rounded-full object-cover" />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-300">
+                <div className="w-7 h-7 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
                   {post.author?.name?.[0] ?? '?'}
                 </div>
               )}
-              <span className="font-medium text-zinc-300">{post.author?.name}</span>
+              <span className="font-medium text-foreground">{post.author?.name}</span>
             </div>
             <span className="flex items-center gap-1.5"><Calendar size={13} />{formatDate(post.publishedAt ?? post.createdAt)}</span>
             <span className="flex items-center gap-1.5"><Clock size={13} />{post.readingTimeMin} min de leitura</span>
@@ -147,7 +147,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Cover image */}
         {post.coverImageUrl && (
-          <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-white/5">
+          <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border">
             <Image src={post.coverImageUrl} alt={post.title} fill className="object-cover" priority />
           </div>
         )}
@@ -164,10 +164,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Tags */}
         {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-white/5">
-            <Tag size={14} className="text-zinc-600 mt-0.5 shrink-0" />
+          <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-border">
+            <Tag size={14} className="text-muted mt-0.5 shrink-0" />
             {post.tags.map(tag => (
-              <Link key={tag} href={`/blog?tag=${encodeURIComponent(tag)}`} className="px-2.5 py-1 rounded-full border border-zinc-700 bg-zinc-800/50 text-zinc-400 hover:text-white hover:border-zinc-600 text-xs transition-colors">
+              <Link key={tag} href={`/blog?tag=${encodeURIComponent(tag)}`} className="px-2.5 py-1 rounded-full border border-border bg-surface text-muted hover:text-foreground hover:border-[#080808]/20 text-xs transition-colors">
                 {tag}
               </Link>
             ))}
@@ -176,23 +176,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Author bio */}
         {post.author?.bio && (
-          <div className="mt-10 p-5 rounded-2xl border border-white/5 bg-zinc-900/50 flex gap-4">
+          <div className="mt-10 p-5 rounded-2xl border border-border bg-surface flex gap-4">
             {post.author.image ? (
               <Image src={post.author.image} alt={post.author.name ?? ''} width={48} height={48} className="rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-purple-500/30 flex items-center justify-center text-sm font-bold text-purple-300 shrink-0">
+              <div className="w-12 h-12 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
                 {post.author.name?.[0] ?? '?'}
               </div>
             )}
             <div>
-              <p className="font-semibold text-white text-sm">{post.author.name}</p>
-              <p className="text-zinc-400 text-sm mt-1">{post.author.bio}</p>
+              <p className="font-semibold text-foreground text-sm">{post.author.name}</p>
+              <p className="text-muted text-sm mt-1">{post.author.bio}</p>
             </div>
           </div>
         )}
 
         <div className="mt-10">
-          <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-white transition-colors">
+          <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
             Voltar ao Blog
           </Link>

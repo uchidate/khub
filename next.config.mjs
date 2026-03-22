@@ -154,6 +154,15 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '*.cdninstagram.com',
             },
+            // Facebook CDN — Instagram também serve imagens via fbcdn.net
+            {
+                protocol: 'https',
+                hostname: '*.fbcdn.net',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.instagram.com',
+            },
             // Cloudflare R2 — CDN próprio (uploads de artistas e grupos)
             {
                 protocol: 'https',

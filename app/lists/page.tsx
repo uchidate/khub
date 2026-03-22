@@ -41,34 +41,34 @@ function CreateListModal({ onClose, onCreate }: { onClose: () => void; onCreate:
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-                    <h2 className="text-lg font-black text-white">Nova Lista</h2>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors">
+            <div className="w-full max-w-md bg-background rounded-2xl border border-border shadow-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                    <h2 className="text-lg font-black text-foreground">Nova Lista</h2>
+                    <button onClick={onClose} className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
                 <div className="p-6 space-y-4">
                     {error && <p className="text-sm text-red-400">{error}</p>}
                     <div>
-                        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Nome *</label>
+                        <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">Nome *</label>
                         <input
                             type="text"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             maxLength={100}
-                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                            className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-accent transition-colors"
                             placeholder="Ex: K-Dramas favoritos"
                             autoFocus
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Descrição</label>
+                        <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">Descrição</label>
                         <textarea
                             value={description}
                             onChange={e => setDescription(e.target.value.slice(0, 500))}
                             rows={3}
-                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                            className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:outline-none focus:border-accent transition-colors resize-none"
                             placeholder="Descrição opcional..."
                         />
                     </div>
@@ -79,17 +79,17 @@ function CreateListModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                             onChange={e => setIsPublic(e.target.checked)}
                             className="w-4 h-4 accent-purple-600"
                         />
-                        <span className="text-sm text-zinc-300">Lista pública</span>
+                        <span className="text-sm text-foreground">Lista pública</span>
                     </label>
                 </div>
                 <div className="flex gap-3 px-6 pb-6">
-                    <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-zinc-800 text-zinc-400 hover:text-white font-bold text-sm transition-colors">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-surface text-muted hover:text-foreground hover:bg-[#e8e8e8] font-bold text-sm transition-colors">
                         Cancelar
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={saving}
-                        className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-3 rounded-xl bg-[#ff2d78] hover:bg-[#ff2d78] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                         Criar Lista
@@ -123,16 +123,16 @@ export default function ListsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-black pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+        <div className="min-h-screen bg-background py-8 md:py-12 pb-20 px-4 sm:px-12 md:px-20">
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-black text-white">Minhas Listas</h1>
-                        <p className="text-zinc-400 mt-1">Organize artistas, grupos e produções em listas personalizadas</p>
+                        <h1 className="text-3xl md:text-4xl font-black text-foreground">Minhas Listas</h1>
+                        <p className="text-muted mt-1">Organize artistas, grupos e produções em listas personalizadas</p>
                     </div>
                     <button
                         onClick={() => setCreating(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-pink-500 transition-all"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#ff2d78] to-pink-600 text-white font-bold rounded-xl hover:from-[#ff2d78] hover:to-pink-500 transition-all"
                     >
                         <Plus className="w-4 h-4" />
                         Nova Lista
@@ -141,16 +141,16 @@ export default function ListsPage() {
 
                 {loading ? (
                     <div className="flex justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-zinc-600 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-muted animate-spin" />
                     </div>
                 ) : lists.length === 0 ? (
                     <div className="text-center py-20">
-                        <List className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-                        <p className="text-zinc-400 text-lg mb-2">Nenhuma lista criada</p>
-                        <p className="text-zinc-600 text-sm mb-6">Crie listas para organizar seus favoritos</p>
+                        <List className="w-16 h-16 text-[#e8e8e8] mx-auto mb-4" />
+                        <p className="text-muted text-lg mb-2">Nenhuma lista criada</p>
+                        <p className="text-muted text-sm mb-6">Crie listas para organizar seus favoritos</p>
                         <button
                             onClick={() => setCreating(true)}
-                            className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors"
+                            className="px-6 py-3 bg-[#ff2d78] hover:bg-[#ff2d78] text-white font-bold rounded-xl transition-colors"
                         >
                             Criar primeira lista
                         </button>
@@ -158,21 +158,21 @@ export default function ListsPage() {
                 ) : (
                     <div className="grid sm:grid-cols-2 gap-4">
                         {lists.map(list => (
-                            <div key={list.id} className="group bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 transition-all overflow-hidden">
+                            <div key={list.id} className="group bg-background rounded-2xl border border-border hover:border-[#080808]/20 transition-all overflow-hidden">
                                 <Link href={`/lists/${list.id}`} className="block p-5">
                                     <div className="flex items-start gap-3 mb-3">
-                                        <div className="p-2 bg-purple-600/20 rounded-lg flex-shrink-0">
-                                            <List className="w-4 h-4 text-purple-400" />
+                                        <div className="p-2 bg-[#ff2d78]/20 rounded-lg flex-shrink-0">
+                                            <List className="w-4 h-4 text-[#ff2d78]" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h2 className="font-black text-white group-hover:text-purple-400 transition-colors truncate">{list.name}</h2>
+                                            <h2 className="font-black text-foreground group-hover:text-[#ff2d78] transition-colors truncate">{list.name}</h2>
                                             {list.description && (
-                                                <p className="text-sm text-zinc-500 line-clamp-2 mt-0.5">{list.description}</p>
+                                                <p className="text-sm text-muted line-clamp-2 mt-0.5">{list.description}</p>
                                             )}
                                         </div>
-                                        <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-purple-400 transition-colors flex-shrink-0 mt-1" />
+                                        <ChevronRight className="w-4 h-4 text-muted group-hover:text-[#ff2d78] transition-colors flex-shrink-0 mt-1" />
                                     </div>
-                                    <div className="flex items-center gap-3 text-xs text-zinc-500">
+                                    <div className="flex items-center gap-3 text-xs text-muted">
                                         <span>{list.itemCount} item{list.itemCount !== 1 ? 's' : ''}</span>
                                         <span className="flex items-center gap-1">
                                             {list.isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
@@ -180,10 +180,10 @@ export default function ListsPage() {
                                         </span>
                                     </div>
                                 </Link>
-                                <div className="border-t border-zinc-800 px-5 py-2 flex justify-end">
+                                <div className="border-t border-border px-5 py-2 flex justify-end">
                                     <button
                                         onClick={() => handleDelete(list.id)}
-                                        className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-red-400 transition-colors"
+                                        className="flex items-center gap-1.5 text-xs text-muted hover:text-red-400 transition-colors"
                                     >
                                         <Trash2 className="w-3 h-3" />
                                         Deletar

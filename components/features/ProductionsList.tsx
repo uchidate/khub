@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { MediaCard } from '@/components/ui/MediaCard'
-import { ChevronLeft, ChevronRight, Search, X, Film } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { ChevronLeft, ChevronRight, Film } from 'lucide-react'
+import { SearchInput } from '@/components/ui/SearchInput'
 
 interface Production {
     id: string
@@ -61,11 +63,61 @@ const AGE_BADGE_STYLE: Record<string, string> = {
     '18': 'bg-red-900 text-red-100',
 }
 
+function ProductionCard({ prod, priority }: { prod: Production; priority?: boolean }) {
+    const subtitleParts = [prod.year?.toString(), prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null].filter(Boolean)
+    const imageUrl = prod.backdropUrl || prod.imageUrl
+
+    return (
+        <Link href={`/productions/${prod.id}`} className="group block">
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-surface border border-border group-hover:border-[#ff2d78]/30 transition-colors mb-3">
+                {imageUrl ? (
+                    <Image
+                        src={imageUrl}
+                        alt={prod.titlePt}
+                        fill
+                        className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                        priority={priority}
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <Film className="w-10 h-10 text-[#e8e8e8]" />
+                    </div>
+                )}
+                {prod.ageRating && (
+                    <div className="absolute top-2 left-2">
+                        <AgeRatingBadge rating={prod.ageRating} />
+                    </div>
+                )}
+                {(prod.streamingPlatforms as string[] || []).length > 0 && (
+                    <div className="absolute bottom-2 right-2 flex gap-1 flex-wrap justify-end">
+                        {(prod.streamingPlatforms as string[]).slice(0, 2).map(p => (
+                            <span key={p} className="px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[10px] font-bold text-white">{p}</span>
+                        ))}
+                    </div>
+                )}
+            </div>
+            <div>
+                <h3 className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-snug">{prod.titlePt}</h3>
+                {subtitleParts.length > 0 && (
+                    <p className="text-xs text-muted mt-0.5">{subtitleParts.join(' · ')}</p>
+                )}
+                {prod.titleKr && (
+                    <p className="text-[11px] text-muted mt-0.5 truncate">{prod.titleKr}</p>
+                )}
+            </div>
+        </Link>
+    )
+}
+
 function ProductionsSkeleton() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-xl bg-zinc-800/60 aspect-video" />
+                <div key={i} className="animate-pulse">
+                    <div className="rounded-xl bg-[#f0f0f0] aspect-video mb-3" />
+                    <div className="h-4 bg-[#f0f0f0] rounded w-3/4 mb-1.5" />
+                    <div className="h-3 bg-[#f0f0f0] rounded w-1/3" />
+                </div>
             ))}
         </div>
     )
@@ -73,7 +125,7 @@ function ProductionsSkeleton() {
 
 function AgeRatingBadge({ rating }: { rating: string }) {
     return (
-        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-black ${AGE_BADGE_STYLE[rating] ?? 'bg-zinc-700 text-zinc-300'}`}>
+        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-black ${AGE_BADGE_STYLE[rating] ?? 'bg-surface text-muted'}`}>
             {rating === 'L' ? 'L' : `${rating}+`}
         </span>
     )
@@ -174,37 +226,25 @@ export function ProductionsList() {
             {/* Filters */}
             <div className="mb-8 space-y-3">
                 {/* Search */}
-                <div className="relative">
-                    <input
-                        type="text"
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(searchInput) }}
-                        onBlur={() => handleSearch(searchInput)}
-                        placeholder="Buscar filme, série ou drama"
-                        className="w-full px-4 pr-10 py-3.5 bg-zinc-900/50 border border-white/10 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all text-base md:text-sm"
-                    />
-                    {searchInput ? (
-                        <button onClick={() => handleSearch('')} aria-label="Limpar busca" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white z-10">
-                            <X className="w-4 h-4" />
-                        </button>
-                    ) : (
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
-                    )}
-                </div>
+                <SearchInput
+                    value={searchInput}
+                    onChange={setSearchInput}
+                    onCommit={handleSearch}
+                    placeholder="Buscar filme, série ou drama"
+                />
 
                 {/* Type + Sort row */}
                 <div className="flex flex-col sm:flex-row gap-3 min-w-0">
                     {/* Type filter */}
-                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto flex-1 min-w-0">
+                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl overflow-x-auto flex-1 min-w-0">
                         {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => handleType(opt.value)}
                                 className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
                                     filters.type === opt.value
-                                        ? 'bg-purple-600 text-white'
-                                        : 'text-zinc-400 hover:text-white'
+                                        ? 'bg-[#ff2d78] text-white'
+                                        : 'text-muted hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
@@ -218,15 +258,15 @@ export function ProductionsList() {
                     </div>
 
                     {/* Sort */}
-                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl overflow-x-auto sm:ml-auto flex-shrink-0">
+                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl overflow-x-auto sm:ml-auto flex-shrink-0">
                         {SORT_OPTIONS.map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => handleSort(opt.value)}
                                 className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
                                     filters.sortBy === opt.value
-                                        ? 'bg-purple-600 text-white'
-                                        : 'text-zinc-400 hover:text-white'
+                                        ? 'bg-[#ff2d78] text-white'
+                                        : 'text-muted hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
@@ -237,7 +277,7 @@ export function ProductionsList() {
 
                 {/* Age Rating filter */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mr-1">Classificação:</span>
+                    <span className="text-xs font-bold text-muted uppercase tracking-wider mr-1">Classificação:</span>
                     {AGE_RATING_OPTIONS.map(opt => (
                         <button
                             key={opt.value}
@@ -246,15 +286,15 @@ export function ProductionsList() {
                                 filters.ageRating === opt.value
                                     ? opt.color
                                         ? `${opt.color} text-white ring-2 ring-white/20`
-                                        : 'bg-purple-600 text-white'
-                                    : 'bg-zinc-900/50 border border-white/10 text-zinc-400 hover:text-white'
+                                        : 'bg-[#ff2d78] text-white'
+                                    : 'bg-background border border-border text-muted hover:text-foreground'
                             }`}
                         >
                             {opt.label}
                         </button>
                     ))}
                     {!filters.ageRating && (
-                        <span className="text-[10px] text-zinc-600 italic ml-1">18+ e sem classificação ocultos</span>
+                        <span className="text-[10px] text-muted italic ml-1">18+ e sem classificação ocultos</span>
                     )}
                 </div>
 
@@ -262,11 +302,11 @@ export function ProductionsList() {
                 {hasActiveFilters && (
                     <div className="flex items-center gap-3">
                         {!isLoading && (
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-muted">
                                 {pagination.total} {pagination.total !== 1 ? 'produções' : 'produção'} encontrada{pagination.total !== 1 ? 's' : ''}
                             </p>
                         )}
-                        <button onClick={clearAll} className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+                        <button onClick={clearAll} className="text-xs text-[#ff2d78] hover:text-[#ff2d78]/70 transition-colors">
                             Limpar filtros
                         </button>
                     </div>
@@ -279,10 +319,10 @@ export function ProductionsList() {
             {/* Empty */}
             {!isLoading && productions.length === 0 && (
                 <div className="text-center py-20">
-                    <Film className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                    <p className="text-zinc-400 font-bold text-lg mb-2">Nenhuma produção encontrada</p>
-                    <p className="text-zinc-500 text-sm mb-4">Tente ajustar os filtros de busca</p>
-                    <button onClick={clearAll} className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+                    <Film className="w-12 h-12 text-[#e8e8e8] mx-auto mb-4" />
+                    <p className="text-muted font-bold text-lg mb-2">Nenhuma produção encontrada</p>
+                    <p className="text-muted text-sm mb-4">Tente ajustar os filtros de busca</p>
+                    <button onClick={clearAll} className="text-xs text-[#ff2d78] hover:text-[#ff2d78]/70 transition-colors">
                         Limpar filtros
                     </button>
                 </div>
@@ -291,30 +331,10 @@ export function ProductionsList() {
             {/* Grid */}
             {!isLoading && productions.length > 0 && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 perspective-1000">
-                        {productions.map((prod, index) => {
-                            const subtitleParts = [prod.year, prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null].filter(Boolean)
-                            return (
-                                <div key={prod.id} className="relative">
-                                    <MediaCard
-                                        id={prod.id}
-                                        title={prod.titlePt}
-                                        subtitle={subtitleParts.join(' • ')}
-                                        imageUrl={prod.backdropUrl || prod.imageUrl}
-                                        type="production"
-                                        href={`/productions/${prod.id}`}
-                                        badges={prod.streamingPlatforms as string[] || []}
-                                        aspectRatio="video"
-                                        priority={index < 3}
-                                    />
-                                    {prod.ageRating && (
-                                        <div className="absolute top-2 left-2 z-10">
-                                            <AgeRatingBadge rating={prod.ageRating} />
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {productions.map((prod, index) => (
+                            <ProductionCard key={prod.id} prod={prod} priority={index < 3} />
+                        ))}
                     </div>
 
                     {/* Pagination */}
@@ -322,17 +342,17 @@ export function ProductionsList() {
                         <div className="mt-10 flex flex-col items-center gap-3">
                             {/* Per-page selector */}
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-zinc-600">Por página:</span>
+                                <span className="text-xs text-muted">Por página:</span>
                                 {[50, 100, 150].map(n => (
                                     <button
                                         key={n}
                                         onClick={() => handlePerPage(n)}
-                                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${getPerPage() === n ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
+                                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${getPerPage() === n ? 'bg-[#ff2d78] text-white' : 'bg-surface text-muted hover:text-foreground'}`}
                                     >
                                         {n}
                                     </button>
                                 ))}
-                                <span className="text-xs text-zinc-600 ml-1">({pagination.total.toLocaleString('pt-BR')} total)</span>
+                                <span className="text-xs text-muted ml-1">({pagination.total.toLocaleString('pt-BR')} total)</span>
                             </div>
                             {/* Nav */}
                             {pagination.pages > 1 && (
@@ -340,7 +360,7 @@ export function ProductionsList() {
                                     <button
                                         onClick={() => handlePage(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
                                         <ChevronLeft className="w-4 h-4" />
                                         <span className="hidden md:inline">Anterior</span>
@@ -364,23 +384,23 @@ export function ProductionsList() {
                                                     if (e.key === 'Escape') { setIsEditingPage(false); setPageJumpInput('') }
                                                 }}
                                                 onBlur={() => { setIsEditingPage(false); setPageJumpInput('') }}
-                                                className="w-12 text-center px-2 py-1 bg-zinc-800 border border-purple-500/50 rounded text-sm text-white focus:outline-none"
+                                                className="w-12 text-center px-2 py-1 bg-background border border-[#ff2d78] rounded text-sm text-foreground focus:outline-none"
                                             />
                                         ) : (
                                             <button
                                                 onClick={() => { setIsEditingPage(true); setPageJumpInput(String(currentPage)) }}
-                                                className="px-2 py-1 rounded text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 hover:text-purple-400 transition-colors min-w-[2rem] text-center"
+                                                className="px-2 py-1 rounded text-sm font-bold text-foreground bg-surface hover:bg-[#e8e8e8] hover:text-[#ff2d78] transition-colors min-w-[2rem] text-center"
                                                 title="Clique para ir a uma página específica"
                                             >
                                                 {currentPage}
                                             </button>
                                         )}
-                                        <span className="text-sm text-zinc-500">/ {pagination.pages}</span>
+                                        <span className="text-sm text-muted">/ {pagination.pages}</span>
                                     </div>
                                     <button
                                         onClick={() => handlePage(currentPage + 1)}
                                         disabled={currentPage === pagination.pages}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
                                         <span className="hidden md:inline">Próxima</span>
                                         <ChevronRight className="w-4 h-4" />

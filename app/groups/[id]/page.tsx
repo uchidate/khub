@@ -95,7 +95,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
     if (!group || group.isHidden) {
         return (
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
+            <div className="py-8 md:py-12 px-4 sm:px-12 md:px-20">
                 <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: 'Não Encontrado' }]} />
                 <ErrorMessage
                     title="Grupo não encontrado"
@@ -167,7 +167,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
     }))
 
     return (
-        <div className="min-h-screen bg-black" style={themeVars}>
+        <div className="min-h-screen bg-background" style={themeVars}>
             <ViewTracker groupId={group.id} />
             {/* Estilos dinâmicos baseados na cor do grupo */}
             <style dangerouslySetInnerHTML={{ __html: `
@@ -249,7 +249,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                         {/* Status badges */}
                         <div className="flex items-center gap-2 flex-wrap">
                             {disbandYear ? (
-                                <span className="text-xs font-black uppercase px-3 py-1 bg-zinc-700/80 backdrop-blur-sm text-zinc-300 rounded-full border border-zinc-600/50">
+                                <span className="text-xs font-black uppercase px-3 py-1 bg-[#2a2a2a]/80 backdrop-blur-sm text-[#e8e8e8] rounded-full border border-[#444]/50">
                                     Disbandado em {disbandYear}
                                 </span>
                             ) : (
@@ -266,12 +266,12 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                 </span>
                             )}
                             {debutYear && (
-                                <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-zinc-400 rounded-full border border-white/10">
+                                <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-[#999] rounded-full border border-white/10">
                                     Desde {debutYear}
                                 </span>
                             )}
                             {group.agency && (
-                                <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-zinc-400 rounded-full border border-white/10">
+                                <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-[#999] rounded-full border border-white/10">
                                     {group.agency.name}
                                 </span>
                             )}
@@ -351,19 +351,19 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                     <div className="space-y-8 lg:col-span-1">
                         {/* Bio */}
                         {(bioPt ?? group.bio) && (
-                            <div className="p-6 rounded-2xl bg-zinc-900/50 relative overflow-hidden"
+                            <div className="p-6 rounded-2xl bg-background relative overflow-hidden"
                                 style={{ border: `1px solid ${toRgba(accent, 0.2)}`, borderLeft: `3px solid ${accent}` }}>
                                 {/* Decorative quote mark */}
                                 <div className="absolute top-1 right-4 text-8xl font-black leading-none pointer-events-none select-none"
                                     style={{ color: toRgba(accent, 0.1), fontFamily: 'Georgia, serif' }}>❝</div>
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Sobre</h3>
-                                <p className="text-zinc-300 leading-relaxed text-sm relative z-10">{bioPt ?? group.bio}</p>
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Sobre</h3>
+                                <p className="text-foreground leading-relaxed text-sm relative z-10">{bioPt ?? group.bio}</p>
                             </div>
                         )}
 
                         {/* Info */}
-                        <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
-                            <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4">Informações</h3>
+                        <div className="p-6 rounded-2xl bg-background border border-border">
+                            <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Informações</h3>
                             <div className="space-y-0">
                                 {debutYear && (
                                     <InfoRow
@@ -387,8 +387,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                     />
                                 )}
                                 {group.agency && (
-                                    <div className="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
-                                        <div className="flex items-center gap-2 text-zinc-500">
+                                    <div className="flex justify-between items-center py-3 border-b border-border last:border-0">
+                                        <div className="flex items-center gap-2 text-muted">
                                             <Building2 className="w-3.5 h-3.5" />
                                             <span className="text-xs font-black uppercase tracking-widest">Agência</span>
                                         </div>
@@ -411,18 +411,18 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                     />
                                 )}
                                 {officialColorRaw && (
-                                    <div className="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
-                                        <div className="flex items-center gap-2 text-zinc-500">
-                                            <div className="w-3.5 h-3.5 rounded-full border border-white/20 flex-shrink-0"
+                                    <div className="flex justify-between items-center py-3 border-b border-border last:border-0">
+                                        <div className="flex items-center gap-2 text-muted">
+                                            <div className="w-3.5 h-3.5 rounded-full border border-border flex-shrink-0"
                                                 style={{ background: officialColorRaw }} />
                                             <span className="text-xs font-black uppercase tracking-widest">Cor Oficial</span>
                                         </div>
-                                        <span className="text-xs font-bold text-zinc-400 font-mono">{officialColorRaw}</span>
+                                        <span className="text-xs font-bold text-muted font-mono">{officialColorRaw}</span>
                                     </div>
                                 )}
                                 {fanClubName && (
                                     <div className="flex justify-between items-center py-3 last:border-0">
-                                        <div className="flex items-center gap-2 text-zinc-500">
+                                        <div className="flex items-center gap-2 text-muted">
                                             <Heart className="w-3.5 h-3.5" />
                                             <span className="text-xs font-black uppercase tracking-widest">Fandom</span>
                                         </div>
@@ -441,19 +441,19 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                     borderColor: toRgba(accent, 0.3),
                                 }}>
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Site Oficial</span>
-                                    <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover/site:text-white transition-colors" />
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Site Oficial</span>
+                                    <ExternalLink className="w-3.5 h-3.5 text-muted group-hover/site:text-foreground transition-colors" />
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {/* Swatch da cor extraída */}
-                                    <div className="w-8 h-8 rounded-lg flex-shrink-0 border border-white/10"
+                                    <div className="w-8 h-8 rounded-lg flex-shrink-0 border border-border"
                                         style={{ background: accent }} />
                                     <div className="min-w-0">
-                                        <p className="text-sm font-bold text-white truncate">
+                                        <p className="text-sm font-bold text-foreground truncate">
                                             {new URL(websiteUrl).hostname.replace(/^www\./, '')}
                                         </p>
                                         {themeColor && (
-                                            <p className="text-[10px] text-zinc-500 mt-0.5 font-mono">{themeColor} · cor extraída</p>
+                                            <p className="text-[10px] text-muted mt-0.5 font-mono">{themeColor} · cor extraída</p>
                                         )}
                                     </div>
                                 </div>
@@ -462,8 +462,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Redes Sociais (sem website — já mostrado acima) */}
                         {Object.keys(socialLinks).filter(k => !['website', 'Website', 'official'].includes(k)).length > 0 && (
-                            <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
-                                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4">Redes Sociais</h3>
+                            <div className="p-6 rounded-2xl bg-background border border-border">
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Redes Sociais</h3>
                                 <div className="flex flex-col gap-2">
                                     {Object.entries(socialLinks)
                                         .filter(([k]) => !['website', 'Website', 'official'].includes(k))
@@ -502,24 +502,24 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     {relatedNews.map(news => (
                                         <Link key={news.id} href={`/news/${news.id}`}
-                                            className="news-card group flex gap-4 p-4 rounded-2xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900 transition-all">
-                                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-zinc-800 flex-shrink-0">
+                                            className="news-card group flex gap-4 p-4 rounded-2xl bg-background border border-border hover:bg-surface transition-all">
+                                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-surface flex-shrink-0">
                                                 {news.imageUrl ? (
                                                     <Image src={news.imageUrl} alt={news.title} fill sizes="80px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center">
-                                                        <Newspaper className="w-6 h-6 text-zinc-600" />
+                                                        <Newspaper className="w-6 h-6 text-[#444]" />
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] text-purple-400 font-black uppercase tracking-widest mb-1">
+                                                <p className="text-[10px] text-[#ff2d78] font-black uppercase tracking-widest mb-1">
                                                     {new Date(news.publishedAt).toLocaleDateString('pt-BR')}
                                                 </p>
-                                                <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug">
+                                                <h3 className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-snug">
                                                     {news.title}
                                                 </h3>
-                                                <p className="text-xs text-zinc-500 mt-1 line-clamp-1">
+                                                <p className="text-xs text-muted mt-1 line-clamp-1">
                                                     {news.contentMd
                                                         .replace(/#{1,6}\s+/g, '')
                                                         .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -548,20 +548,20 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {relatedGroups.map(rg => (
                                         <Link key={rg.id} href={`/groups/${rg.id}`}
-                                            className="related-group-link flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/10 hover:bg-zinc-900 transition-all group/rg">
-                                            <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                                            className="related-group-link flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-[#d0d0d0] hover:bg-surface transition-all group/rg">
+                                            <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                                                 {rg.profileImageUrl ? (
                                                     <Image src={rg.profileImageUrl} alt={rg.name} fill sizes="40px" className="object-cover group-hover/rg:scale-105 transition-transform" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center">
-                                                        <span className="text-sm font-black text-zinc-600">{rg.name[0]}</span>
+                                                        <span className="text-sm font-black text-muted">{rg.name[0]}</span>
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="related-group-name text-sm font-bold text-white truncate transition-colors">{rg.name}</p>
+                                                <p className="related-group-name text-sm font-bold text-foreground truncate transition-colors">{rg.name}</p>
                                                 {rg.disbandDate && (
-                                                    <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Disbandado</p>
+                                                    <p className="text-[10px] text-muted font-bold uppercase tracking-wider">Disbandado</p>
                                                 )}
                                             </div>
                                         </Link>
@@ -577,13 +577,13 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {recentAlbums.map(album => (
                                         <div key={album.id} className="group">
-                                            <div className="album-card relative aspect-square rounded-xl overflow-hidden bg-zinc-800 mb-3 border border-white/5 transition-colors">
+                                            <div className="album-card relative aspect-square rounded-xl overflow-hidden bg-surface mb-3 border border-border transition-colors">
                                                 {album.coverUrl ? (
                                                     <Image src={album.coverUrl} alt={album.title} fill sizes="(max-width: 640px) 50vw, 33vw"
                                                         className="object-cover group-hover:scale-105 transition-transform duration-500" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-zinc-900">
-                                                        <Music className="w-8 h-8 text-zinc-600" />
+                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#ff2d78]/20 to-[#f5f5f7]">
+                                                        <Music className="w-8 h-8 text-muted" />
                                                     </div>
                                                 )}
                                                 {/* Type badge */}
@@ -603,10 +603,10 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                                     </a>
                                                 )}
                                             </div>
-                                            <h3 className="album-title text-sm font-bold text-white line-clamp-1 transition-colors">{album.title}</h3>
-                                            <p className="text-xs text-zinc-500 mt-0.5">{album.artist.nameRomanized}</p>
+                                            <h3 className="album-title text-sm font-bold text-foreground line-clamp-1 transition-colors">{album.title}</h3>
+                                            <p className="text-xs text-muted mt-0.5">{album.artist.nameRomanized}</p>
                                             {album.releaseDate && (
-                                                <p className="text-[10px] text-zinc-600 mt-0.5">
+                                                <p className="text-[10px] text-muted mt-0.5">
                                                     {new Date(album.releaseDate).getUTCFullYear()}
                                                 </p>
                                             )}
@@ -626,8 +626,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                         if (!videoId) return null
                                         return (
                                             <a key={i} href={mv.url} target="_blank" rel="noopener noreferrer"
-                                                className="mv-card group block rounded-xl overflow-hidden border border-white/5 transition-all">
-                                                <div className="relative aspect-video bg-zinc-900">
+                                                className="mv-card group block rounded-xl overflow-hidden border border-border transition-all">
+                                                <div className="relative aspect-video bg-surface">
                                                     <Image
                                                         src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
                                                         alt={mv.title}
@@ -642,9 +642,9 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="p-3" style={{ background: toRgba(accent, 0.05) }}>
-                                                    <p className="text-sm font-bold text-white group-hover:opacity-80 transition-opacity line-clamp-1">{mv.title}</p>
-                                                    <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider font-bold">YouTube</p>
+                                                <div className="p-3 bg-background" style={{ borderTop: `1px solid ${toRgba(accent, 0.1)}` }}>
+                                                    <p className="text-sm font-bold text-foreground group-hover:opacity-80 transition-opacity line-clamp-1">{mv.title}</p>
+                                                    <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wider font-bold">YouTube</p>
                                                 </div>
                                             </a>
                                         )
@@ -663,10 +663,10 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Estado vazio */}
                         {group.members.length === 0 && (
-                            <div className="bg-zinc-900/50 rounded-2xl border border-white/5 p-12 text-center">
-                                <Users className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                                <p className="text-zinc-500 font-bold">Nenhum membro vinculado</p>
-                                <p className="text-zinc-700 text-sm mt-1">Sincronize via Admin → Grupos Musicais</p>
+                            <div className="bg-surface rounded-2xl border border-border p-12 text-center">
+                                <Users className="w-12 h-12 text-muted mx-auto mb-4" />
+                                <p className="text-muted font-bold">Nenhum membro vinculado</p>
+                                <p className="text-muted text-sm mt-1">Sincronize via Admin → Grupos Musicais</p>
                             </div>
                         )}
                     </div>
@@ -709,15 +709,15 @@ function SectionHeader({ icon, title, count, muted = false, accent = '#9333ea' }
         <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-xl border"
                 style={muted
-                    ? { background: 'rgb(39 39 42)', borderColor: 'transparent' }
+                    ? { background: '#f5f5f7', borderColor: '#e8e8e8' }
                     : { background: toRgba(accent, 0.15), borderColor: toRgba(accent, 0.25) }
                 }>
-                <span style={{ color: muted ? '#52525b' : accent }}>{icon}</span>
+                <span style={{ color: muted ? '#6b6b6b' : accent }}>{icon}</span>
             </div>
             <div>
-                <h2 className={`text-xl font-black ${muted ? 'text-zinc-500' : 'text-white'}`}>{title}</h2>
+                <h2 className={`text-xl font-black ${muted ? 'text-muted' : 'text-foreground'}`}>{title}</h2>
                 {count !== undefined && (
-                    <p className="text-zinc-600 text-xs mt-0.5">{count} {count === 1 ? 'pessoa' : 'pessoas'}</p>
+                    <p className="text-muted text-xs mt-0.5">{count} {count === 1 ? 'pessoa' : 'pessoas'}</p>
                 )}
             </div>
         </div>
@@ -726,22 +726,22 @@ function SectionHeader({ icon, title, count, muted = false, accent = '#9333ea' }
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
-            <div className="flex items-center gap-2 text-zinc-500">
+        <div className="flex justify-between items-center py-3 border-b border-border last:border-0">
+            <div className="flex items-center gap-2 text-muted">
                 {icon}
                 <span className="text-xs font-black uppercase tracking-widest">{label}</span>
             </div>
-            <span className="text-sm font-bold text-zinc-300">{value}</span>
+            <span className="text-sm font-bold text-foreground">{value}</span>
         </div>
     )
 }
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
     return (
-        <div className="p-4 rounded-xl bg-zinc-900/50 border border-white/5 text-center">
+        <div className="p-4 rounded-xl bg-surface border border-border text-center">
             <div className={`${color} mx-auto mb-1 flex justify-center`}>{icon}</div>
             <div className={`text-2xl font-black ${color}`}>{value}</div>
-            <p className="text-xs text-zinc-600 font-bold uppercase tracking-wider mt-0.5">{label}</p>
+            <p className="text-xs text-muted font-bold uppercase tracking-wider mt-0.5">{label}</p>
         </div>
     )
 }
@@ -755,16 +755,16 @@ function SocialLink({ platform, url }: { platform: string; url: string }) {
         website: <Globe className="w-4 h-4" />,
     }
     const colors: Record<string, string> = {
-        instagram: 'text-pink-400 hover:text-pink-300',
-        twitter: 'text-sky-400 hover:text-sky-300',
-        x: 'text-sky-400 hover:text-sky-300',
-        youtube: 'text-red-400 hover:text-red-300',
-        website: 'text-zinc-400 hover:text-white',
+        instagram: 'text-pink-500 hover:text-pink-400',
+        twitter: 'text-sky-500 hover:text-sky-400',
+        x: 'text-sky-500 hover:text-sky-400',
+        youtube: 'text-red-500 hover:text-red-400',
+        website: 'text-muted hover:text-foreground',
     }
     const key = platform.toLowerCase()
     return (
         <a href={url} target="_blank" rel="noopener noreferrer"
-            className={`flex items-center justify-between px-4 py-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 border border-white/5 hover:border-white/10 transition-all ${colors[key] || 'text-zinc-400 hover:text-white'}`}>
+            className={`flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-[#e8e8e8] border border-border hover:border-[#d0d0d0] transition-all ${colors[key] || 'text-muted hover:text-foreground'}`}>
             <div className="flex items-center gap-2.5">
                 {icons[key] ?? <ExternalLink className="w-4 h-4" />}
                 <span className="text-sm font-bold capitalize">{platform}</span>
@@ -803,25 +803,25 @@ function MemberGrid({
                     href={`/artists/${member.artist.id}`}
                     className={`group block ${faded ? 'opacity-50 hover:opacity-90 transition-opacity' : ''}`}
                 >
-                    <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-zinc-900 border border-white/5 member-card-border transition-all duration-300 mb-3 shadow-lg">
+                    <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-surface border border-border member-card-border transition-all duration-300 mb-3 shadow-sm">
                         {member.artist.primaryImageUrl ? (
                             <Image
                                 src={member.artist.primaryImageUrl}
                                 alt={member.artist.nameRomanized}
                                 fill
                                 sizes="(max-width: 640px) 50vw, 25vw"
-                                className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-90 group-hover:brightness-100"
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center"
-                                style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.2)}, #18181b)` }}>
-                                <span className="text-3xl font-black text-zinc-600 group-hover:text-white transition-colors">
+                                style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.15)}, #f5f5f7)` }}>
+                                <span className="text-3xl font-black text-muted group-hover:text-foreground transition-colors">
                                     {member.artist.nameRomanized[0]}
                                 </span>
                             </div>
                         )}
                         {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         {/* Role badge */}
                         {member.role && (
                             <div className="absolute bottom-2 left-2 right-2">
@@ -832,14 +832,14 @@ function MemberGrid({
                         )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-white text-sm leading-tight group-hover:opacity-80 transition-opacity">
+                        <h3 className="font-bold text-foreground text-sm leading-tight group-hover:opacity-80 transition-opacity">
                             {member.artist.nameRomanized}
                         </h3>
                         {member.artist.nameHangul && (
-                            <p className="text-[11px] text-zinc-500 mt-0.5">{member.artist.nameHangul}</p>
+                            <p className="text-[11px] text-muted mt-0.5">{member.artist.nameHangul}</p>
                         )}
                         {(member.joinDate || member.leaveDate) && (
-                            <p className="text-[10px] text-zinc-600 mt-1">
+                            <p className="text-[10px] text-muted mt-1">
                                 {member.joinDate ? new Date(member.joinDate).getUTCFullYear() : '?'}
                                 {member.leaveDate ? ` – ${new Date(member.leaveDate).getUTCFullYear()}` : ''}
                             </p>

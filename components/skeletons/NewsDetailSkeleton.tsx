@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 
 export function NewsDetailSkeleton() {
     return (
-        <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
+        <div className="py-8 md:py-12 px-4 sm:px-12 md:px-20 min-h-screen bg-white">
             <div className="max-w-4xl mx-auto">
                 {/* Breadcrumbs Skeleton */}
                 <div className="mb-8 flex items-center gap-2">
@@ -24,7 +24,7 @@ export function NewsDetailSkeleton() {
                 </div>
 
                 {/* Meta Info Skeleton */}
-                <div className="flex items-center gap-6 border-b border-white/5 pb-8 mb-12">
+                <div className="flex items-center gap-6 border-b border-[#e8e8e8] pb-8 mb-12">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-4 w-28" />
                 </div>

@@ -11,11 +11,11 @@ function NewsSkeleton() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-xl overflow-hidden bg-zinc-800/60">
+                <div key={i} className="animate-pulse rounded-xl overflow-hidden bg-surface">
                     <div className="aspect-video" />
                     <div className="p-4 space-y-3">
-                        <div className="h-4 bg-zinc-700/60 rounded w-3/4" />
-                        <div className="h-3 bg-zinc-700/40 rounded w-1/2" />
+                        <div className="h-4 bg-[#e8e8e8] rounded w-3/4" />
+                        <div className="h-3 bg-[#e8e8e8] rounded w-1/2" />
                     </div>
                 </div>
             ))}
@@ -176,13 +176,13 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         <div>
             {/* Tabs: Para você / Todas — visível apenas quando usuário tem artistas seguidos */}
             {showTabs && (
-                <div className="flex border-b border-white/10 mb-6">
+                <div className="flex border-b border-border mb-6">
                     <button
                         onClick={() => handleFeedMode('personalized')}
                         className={`px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
                             feedMode === 'personalized'
-                                ? 'border-purple-500 text-white'
-                                : 'border-transparent text-zinc-400 hover:text-white'
+                                ? 'border-[#ff2d78] text-foreground'
+                                : 'border-transparent text-muted hover:text-foreground'
                         }`}
                     >
                         Para você
@@ -191,8 +191,8 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                         onClick={() => handleFeedMode('all')}
                         className={`px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
                             feedMode === 'all'
-                                ? 'border-purple-500 text-white'
-                                : 'border-transparent text-zinc-400 hover:text-white'
+                                ? 'border-[#ff2d78] text-foreground'
+                                : 'border-transparent text-muted hover:text-foreground'
                         }`}
                     >
                         Todas
@@ -221,21 +221,21 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
             {/* Empty State */}
             {!isLoading && news.length === 0 && (
                 <div className="text-center py-20">
-                    <p className="text-zinc-400 text-lg mb-2">
+                    <p className="text-muted text-lg mb-2">
                         Nenhuma notícia encontrada
                     </p>
                     {feedMode === 'personalized' && showTabs ? (
-                        <p className="text-zinc-500 text-sm">
+                        <p className="text-muted text-sm">
                             Nenhuma notícia dos seus artistas seguidos.{' '}
                             <button
                                 onClick={() => handleFeedMode('all')}
-                                className="text-purple-400 hover:text-purple-300 underline"
+                                className="text-[#ff2d78] hover:underline"
                             >
                                 Ver todas as notícias
                             </button>
                         </p>
                     ) : (
-                        <p className="text-zinc-500 text-sm">
+                        <p className="text-muted text-sm">
                             Tente ajustar os filtros ou fazer uma nova busca
                         </p>
                     )}
@@ -269,24 +269,24 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                     {pagination.pages > 0 && (
                         <div className="mt-10 flex flex-col items-center gap-3">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-zinc-600">Por página:</span>
+                                <span className="text-xs text-muted">Por página:</span>
                                 {[50, 100, 150].map(n => (
                                     <button
                                         key={n}
                                         onClick={() => handlePerPage(n)}
-                                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${getPerPage() === n ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
+                                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${getPerPage() === n ? 'bg-[#ff2d78] text-white' : 'bg-surface text-muted hover:text-foreground'}`}
                                     >
                                         {n}
                                     </button>
                                 ))}
-                                <span className="text-xs text-zinc-600 ml-1">({pagination.total.toLocaleString('pt-BR')} total)</span>
+                                <span className="text-xs text-muted ml-1">({pagination.total.toLocaleString('pt-BR')} total)</span>
                             </div>
                             {pagination.pages > 1 && (
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => handlePageChange(pagination.page - 1)}
                                         disabled={pagination.page === 1}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
                                         <ChevronLeft className="w-4 h-4" />
                                         <span className="hidden md:inline">Anterior</span>
@@ -310,23 +310,23 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                                                     if (e.key === 'Escape') { setIsEditingPage(false); setPageJumpInput('') }
                                                 }}
                                                 onBlur={() => { setIsEditingPage(false); setPageJumpInput('') }}
-                                                className="w-12 text-center px-2 py-1 bg-zinc-800 border border-purple-500/50 rounded text-sm text-white focus:outline-none"
+                                                className="w-12 text-center px-2 py-1 bg-background border border-[#ff2d78] rounded text-sm text-foreground focus:outline-none"
                                             />
                                         ) : (
                                             <button
                                                 onClick={() => { setIsEditingPage(true); setPageJumpInput(String(pagination.page)) }}
-                                                className="px-2 py-1 rounded text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 hover:text-purple-400 transition-colors min-w-[2rem] text-center"
+                                                className="px-2 py-1 rounded text-sm font-bold text-foreground bg-surface hover:bg-[#e8e8e8] hover:text-[#ff2d78] transition-colors min-w-[2rem] text-center"
                                                 title="Clique para ir a uma página específica"
                                             >
                                                 {pagination.page}
                                             </button>
                                         )}
-                                        <span className="text-sm text-zinc-500">/ {pagination.pages}</span>
+                                        <span className="text-sm text-muted">/ {pagination.pages}</span>
                                     </div>
                                     <button
                                         onClick={() => handlePageChange(pagination.page + 1)}
                                         disabled={pagination.page === pagination.pages}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
                                         <span className="hidden md:inline">Próxima</span>
                                         <ChevronRight className="w-4 h-4" />

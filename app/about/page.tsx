@@ -32,29 +32,26 @@ const pillars = [
 
 export default function AboutPage() {
     return (
-        <div className="pt-24 md:pt-40 pb-32 px-4 sm:px-12 md:px-20 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-600/10 blur-[160px] -z-10" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-pink-600/10 blur-[160px] -z-10" />
-
+        <div className="py-8 md:py-12 pb-32 px-4 sm:px-12 md:px-20 overflow-hidden relative bg-background">
             <div className="max-w-4xl mx-auto">
 
                 {/* Header */}
                 <header className="mb-24">
-                    <span className="text-purple-500 font-black text-xs tracking-[0.3em] uppercase mb-5 block">Sobre</span>
+                    <span className="text-[#ff2d78] font-black text-xs tracking-[0.3em] uppercase mb-5 block">Sobre</span>
                     <h1 className="text-6xl md:text-8xl font-black mb-8 hallyu-gradient-text tracking-tighter uppercase leading-none">
                         CULTURA COREANA<br />
                         EM PORTUGUÊS
                     </h1>
-                    <p className="text-xl md:text-2xl text-zinc-400 leading-relaxed max-w-2xl">
+                    <p className="text-xl md:text-2xl text-muted leading-relaxed max-w-2xl">
                         O HallyuHub é o portal de referência da Hallyu Wave para o público brasileiro — artistas, produções e notícias reunidos em uma plataforma moderna e acessível.
                     </p>
                 </header>
 
                 {/* Missão */}
                 <section className="mb-20">
-                    <div className="border-l-2 border-purple-500 pl-8">
-                        <h2 className="text-xs font-black tracking-[0.3em] uppercase text-purple-500 mb-4">Missão</h2>
-                        <p className="text-2xl md:text-3xl font-bold text-white leading-snug">
+                    <div className="border-l-2 border-[#ff2d78] pl-8">
+                        <h2 className="text-xs font-black tracking-[0.3em] uppercase text-[#ff2d78] mb-4">Missão</h2>
+                        <p className="text-2xl md:text-3xl font-bold text-foreground leading-snug">
                             Eliminar as barreiras linguísticas entre o Brasil e a Coreia do Sul, entregando informações precisas e conteúdo de qualidade para os fãs que movem essa cultura.
                         </p>
                     </div>
@@ -62,24 +59,24 @@ export default function AboutPage() {
 
                 {/* Pilares */}
                 <section className="mb-24">
-                    <h2 className="text-xs font-black tracking-[0.3em] uppercase text-zinc-500 mb-10">O que oferecemos</h2>
+                    <h2 className="text-xs font-black tracking-[0.3em] uppercase text-muted mb-10">O que oferecemos</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {pillars.map(({ label, heading, body }) => (
-                            <div key={label} className="p-8 rounded-3xl bg-white/[0.03] border border-white/[0.06] space-y-3">
-                                <span className="text-purple-400 text-xs font-black tracking-widest uppercase">{label}</span>
-                                <h3 className="text-xl font-black text-white">{heading}</h3>
-                                <p className="text-zinc-500 text-sm leading-relaxed">{body}</p>
+                            <div key={label} className="p-8 rounded-3xl bg-surface border border-border space-y-3">
+                                <span className="text-[#ff2d78] text-xs font-black tracking-widest uppercase">{label}</span>
+                                <h3 className="text-xl font-black text-foreground">{heading}</h3>
+                                <p className="text-muted text-sm leading-relaxed">{body}</p>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 {/* CTA */}
-                <div className="p-10 md:p-14 bg-white text-black rounded-[40px] text-center mb-10">
+                <div className="p-10 md:p-14 bg-[#080808] text-white rounded-[40px] text-center mb-10">
                     <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter uppercase italic leading-none">
                         O Brasil também é Hallyu.
                     </h2>
-                    <p className="text-zinc-600 font-semibold mb-0 max-w-md mx-auto leading-snug text-lg">
+                    <p className="text-muted font-semibold mb-0 max-w-md mx-auto leading-snug text-lg">
                         Feito por fãs, para fãs. Com carinho e tecnologia.
                     </p>
                 </div>
@@ -90,13 +87,13 @@ export default function AboutPage() {
                         href="https://www.instagram.com/hallyuhub_br/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold hover:opacity-90 transition-opacity"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#ff2d78] text-white text-sm font-bold hover:opacity-90 transition-opacity"
                     >
                         Instagram · @hallyuhub_br
                     </a>
                     <Link
                         href="/contato"
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/15 text-zinc-400 text-sm font-bold hover:text-white hover:border-white/30 transition-colors"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border text-muted text-sm font-bold hover:text-foreground hover:border-[#080808] transition-colors"
                     >
                         Fale conosco
                     </Link>

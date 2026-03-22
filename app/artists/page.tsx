@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
+import Link from "next/link"
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
-import { SectionHeader } from "@/components/ui/SectionHeader"
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
@@ -32,6 +32,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ArtistsPage() {
+    const total = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+        ? null
+        : await prisma.artist.count({ where: { flaggedAsNonKorean: false } }).catch(() => null)
+
     return (
         <>
         <JsonLd data={{
@@ -43,17 +47,31 @@ export default async function ArtistsPage() {
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
-        <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-            <SectionHeader
-                title="Artistas"
-                backHref="/"
-            />
+        <PageTransition className="py-8 md:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="text-[1.75rem] md:text-[2rem] font-black text-foreground tracking-[-0.04em] leading-none">
+                            Artistas
+                        </h1>
+                        {total !== null && (
+                            <span className="text-[11px] font-bold text-muted px-2.5 py-1 bg-surface border border-border rounded-full">
+                                {total.toLocaleString('pt-BR')} perfis
+                            </span>
+                        )}
+                    </div>
+                    <Link href="/" className="text-[11px] font-semibold text-muted hover:text-[#ff2d78] transition-colors">
+                        ← Início
+                    </Link>
+                </div>
 
-            <Suspense>
-                <ArtistsList />
-            </Suspense>
-            <ScrollToTop />
+                <Suspense>
+                    <ArtistsList />
+                </Suspense>
+                <ScrollToTop />
+            </div>
         </PageTransition>
         </>
     )

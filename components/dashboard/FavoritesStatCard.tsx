@@ -12,7 +12,7 @@ export function FavoritesStatCard({ artistCount, productionCount, newsCount, gro
   const total = artistCount + productionCount + newsCount + groupCount
 
   const breakdown = [
-    { icon: User,      label: 'Artistas',  count: artistCount,    color: 'text-purple-400' },
+    { icon: User,      label: 'Artistas',  count: artistCount,    color: 'text-[#ff2d78]' },
     { icon: Music,     label: 'Grupos',    count: groupCount,     color: 'text-pink-400' },
     { icon: Film,      label: 'Produções', count: productionCount, color: 'text-cyan-400' },
     { icon: Newspaper, label: 'Notícias',  count: newsCount,      color: 'text-yellow-400' },
@@ -26,10 +26,10 @@ export function FavoritesStatCard({ artistCount, productionCount, newsCount, gro
           <div className="p-2 bg-yellow-500/20 rounded-xl text-yellow-500">
             <Star size={20} fill="currentColor" className="opacity-80" />
           </div>
-          <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Coleção</p>
+          <p className="text-xs text-[#6b6b6b] font-bold uppercase tracking-widest">Coleção</p>
         </div>
         <p className="text-3xl font-display font-black text-white mb-1">{total}</p>
-        <p className="text-zinc-500 text-xs mb-5">itens favoritos</p>
+        <p className="text-[#6b6b6b] text-xs mb-5">itens favoritos</p>
 
         {/* Breakdown por tipo */}
         <div className="space-y-2">
@@ -37,7 +37,7 @@ export function FavoritesStatCard({ artistCount, productionCount, newsCount, gro
             <div key={label} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Icon size={12} className={color} />
-                <span className="text-xs text-zinc-500">{label}</span>
+                <span className="text-xs text-[#6b6b6b]">{label}</span>
               </div>
               <span className={`text-xs font-black ${color}`}>{count}</span>
             </div>

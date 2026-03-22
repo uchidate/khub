@@ -12,9 +12,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export function Button({ variant = 'primary', loading, children, disabled, className = '', ...props }: ButtonProps) {
   const baseClass = 'px-6 py-3 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden group hover:scale-[1.02] active:scale-[0.98]'
   const variantClass = {
-    primary: 'bg-white text-black hover:bg-zinc-200 shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]',
-    secondary: 'bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 hover:border-zinc-700',
-    outline: 'border-2 border-purple-500 text-purple-400 hover:bg-purple-500/10'
+    primary: 'bg-background text-black hover:bg-[#f0f0f0] shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]',
+    secondary: 'bg-[#080808] border border-[#1a1a1a] text-white hover:bg-[#1a1a1a] hover:border-[#2a2a2a]',
+    outline: 'border-2 border-[#ff2d78] text-[#ff2d78] hover:bg-[#ff2d78]/10'
   }[variant]
 
   return (

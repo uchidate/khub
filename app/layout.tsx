@@ -1,12 +1,15 @@
 import type { Metadata } from "next"
-import { Outfit, Inter } from "next/font/google"
+import { Outfit, Inter, Sora } from "next/font/google"
 import Script from "next/script"
 import "../styles/globals.css"
+import { unstable_cache } from "next/cache"
+import prisma from "@/lib/prisma"
 import { PublicAnalytics } from "@/components/features/PublicAnalytics"
 import { SessionProvider } from "@/components/features/SessionProvider"
 import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
 import NavBar from "@/components/NavBar"
+import { HomeTicker } from "@/components/home/HomeTicker"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
@@ -14,9 +17,30 @@ import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
+import { BottomNav } from "@/components/ui/BottomNav"
+
+const getTickerNews = unstable_cache(
+    async () => {
+        const news = await prisma.news.findMany({
+            where: { isHidden: false, status: 'published' },
+            take: 6,
+            orderBy: { publishedAt: 'desc' },
+            select: { id: true, title: true, tags: true, publishedAt: true },
+        })
+        return news.map(n => ({
+            id: n.id,
+            title: n.title,
+            tags: n.tags,
+            publishedAt: n.publishedAt.toISOString(),
+        }))
+    },
+    ['layout-ticker-news-v1'],
+    { revalidate: 120 }
+)
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" })
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
@@ -79,16 +103,18 @@ export default async function RootLayout({
 }: {
     children: React.ReactNode
 }) {
+    const tickerNews = await getTickerNews().catch(() => [])
+
     return (
-        <html lang="pt-BR" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
+        <html lang="pt-BR" className={`${outfit.variable} ${inter.variable} ${sora.variable}`} suppressHydrationWarning>
             <head>
                 {/* Anti-FOUC: aplica tema dark/light ANTES do primeiro paint para evitar flash branco */}
-                <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})()` }} />
+                <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
                 <link rel="preconnect" href="https://images.unsplash.com" />
                 <link rel="dns-prefetch" href="https://images.unsplash.com" />
             </head>
-            <body className="font-sans text-zinc-900 dark:text-white bg-white dark:bg-black antialiased selection:bg-neon-pink selection:text-white transition-colors duration-300">
+            <body className="font-sora text-[#1a1a1a] bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
                 <Script id="ga-consent-defaults" strategy="beforeInteractive">{`
                     window.dataLayer = window.dataLayer || [];
@@ -142,34 +168,38 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    {/* Decorative top accent bar */}
-                    <div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 z-[9999]" />
                     <div className="min-h-screen flex flex-col">
+                        <HomeTicker news={tickerNews} />
                         <NavBar />
                         <ErrorBoundary>
-                            <main className="flex-grow">{children}</main>
+                            <main className="flex-grow pb-[62px] sm:pb-0">{children}</main>
                         </ErrorBoundary>
                         <QuickSearch />
                         <ToastContainer />
                         <AuthGateModal />
                         <PWAInstaller />
                         <CookieBanner />
-                        <footer className="bg-black border-t border-zinc-800 py-12">
-                            <div className="max-w-7xl mx-auto px-4">
-                                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                                    <span className="text-2xl font-black tracking-tighter uppercase"><span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span></span>
-                                    <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-500">
-                                        <a href="/about" className="hover:text-white underline-offset-4 hover:underline">Sobre nós</a>
-                                        <a href="/faq" className="hover:text-white underline-offset-4 hover:underline">FAQ</a>
-                                        <a href="/contato" className="hover:text-white underline-offset-4 hover:underline">Contato</a>
-                                        <a href="/privacidade" className="hover:text-white underline-offset-4 hover:underline">Privacidade</a>
-                                        <a href="/termos" className="hover:text-white underline-offset-4 hover:underline">Termos de Uso</a>
-                                        <a href="https://www.instagram.com/hallyuhub_br/" target="_blank" rel="noopener noreferrer" className="hover:text-pink-400 underline-offset-4 hover:underline transition-colors">@hallyuhub_br</a>
-                                    </div>
-                                    <p className="text-zinc-600 text-xs text-center md:text-right pr-20">
-                                        &copy; {new Date().getFullYear()} HallyuHub. O portal brasileiro da cultura coreana.
-                                    </p>
+                        <BottomNav />
+                        <footer className="bg-[#080808] py-5 px-4 sm:px-8 lg:px-12 font-sora">
+                            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <span className="text-[14px] font-extrabold tracking-[-0.04em] text-white">
+                                    Hallyu<span className="text-[#ff2d78]">Hub</span>
+                                </span>
+                                <div className="flex flex-wrap gap-x-5 gap-y-1">
+                                    {[
+                                        { label: "Sobre", href: "/about" },
+                                        { label: "Blog", href: "/blog" },
+                                        { label: "Artistas", href: "/artists" },
+                                        { label: "Produções", href: "/productions" },
+                                        { label: "Contato", href: "/contato" },
+                                        { label: "Privacidade", href: "/privacidade" },
+                                    ].map(({ label, href }) => (
+                                        <a key={href} href={href} className="text-[11px] text-[#555] hover:text-[#aaa] font-medium transition-colors">{label}</a>
+                                    ))}
                                 </div>
+                                <p className="text-[10px] text-[#444]">
+                                    &copy; {new Date().getFullYear()} HallyuHub. Todos os direitos reservados.
+                                </p>
                             </div>
                         </footer>
                     </div>

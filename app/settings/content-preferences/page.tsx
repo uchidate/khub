@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Shield, ArrowLeft, CheckCircle, RefreshCw, AlertTriangle, Info } from 'lucide-react'
-import NavBar from '@/components/NavBar'
 
 type Rating = {
   value: string
@@ -20,7 +19,7 @@ const RATINGS: Rating[] = [
   { value: '14', label: '14+', description: 'Não recomendado para menores de 14 anos', color: 'bg-orange-500' },
   { value: '16', label: '16+', description: 'Não recomendado para menores de 16 anos', color: 'bg-red-600' },
   { value: '18', label: '18+', description: 'Conteúdo adulto', color: 'bg-red-900' },
-  { value: 'null', label: 'Sem classificação', description: 'Produções sem classificação etária', color: 'bg-zinc-700' },
+  { value: 'null', label: 'Sem classificação', description: 'Produções sem classificação etária', color: 'bg-[#2a2a2a]' },
 ]
 
 type SystemSettings = {
@@ -113,10 +112,10 @@ export default function ContentPreferencesPage() {
   if (loading) {
     return (
       <>
-        <NavBar />
-        <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black pt-24 px-4">
+        
+        <div className="min-h-screen bg-background py-8 px-4">
           <div className="max-w-4xl mx-auto flex items-center justify-center py-20">
-            <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
+            <RefreshCw className="w-8 h-8 text-[#ff2d78] animate-spin" />
           </div>
         </div>
       </>
@@ -124,26 +123,25 @@ export default function ContentPreferencesPage() {
   }
 
   return (
-    <>
-      <NavBar />
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black pt-24 px-4">
+      
+      <div className="min-h-screen bg-background py-8 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-12 animate-fade-in">
             <Link
               href="/settings"
-              className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors mb-6"
+              className="inline-flex items-center gap-2 text-[#ff2d78] hover:text-[#ff2d78] transition-colors mb-6"
             >
               <ArrowLeft size={20} />
               Voltar às Configurações
             </Link>
             <div className="flex items-center gap-3 mb-4">
-              <Shield className="text-purple-500" size={40} />
-              <h1 className="text-4xl md:text-5xl font-black text-white">
+              <Shield className="text-[#ff2d78]" size={40} />
+              <h1 className="text-4xl md:text-5xl font-black text-foreground">
                 Preferências de Conteúdo
               </h1>
             </div>
-            <p className="text-xl text-zinc-400">
+            <p className="text-xl text-muted">
               Escolha quais classificações etárias você deseja ver
             </p>
           </div>
@@ -163,8 +161,8 @@ export default function ContentPreferencesPage() {
           </div>
 
           {/* Ratings selection */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 mb-6">
-            <h2 className="text-xl font-bold text-white mb-6">Classificações Permitidas</h2>
+          <div className="bg-background border border-border rounded-2xl p-8 mb-6">
+            <h2 className="text-xl font-bold text-foreground mb-6">Classificações Permitidas</h2>
             <div className="space-y-4">
               {RATINGS.map((rating) => {
                 const disabled = isDisabled(rating.value)
@@ -175,10 +173,10 @@ export default function ContentPreferencesPage() {
                     key={rating.value}
                     className={`flex items-start gap-4 p-4 rounded-lg border transition-all ${
                       disabled
-                        ? 'bg-zinc-800/30 border-zinc-700/30 opacity-50 cursor-not-allowed'
+                        ? 'bg-surface/50 border-border/50 opacity-50 cursor-not-allowed'
                         : checked
-                        ? 'bg-purple-500/10 border-purple-500/30'
-                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                        ? 'bg-[#ff2d78]/10 border-[#ff2d78]/30'
+                        : 'bg-surface border-border hover:border-[#6b6b6b]'
                     }`}
                   >
                     <input
@@ -186,21 +184,21 @@ export default function ContentPreferencesPage() {
                       checked={checked}
                       onChange={() => toggleRating(rating.value)}
                       disabled={disabled}
-                      className="w-5 h-5 rounded border-zinc-600 bg-zinc-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed mt-0.5"
+                      className="w-5 h-5 rounded border-border bg-background text-[#ff2d78] focus:ring-[#ff2d78] focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <span className={`inline-block px-2 py-1 rounded text-xs font-black text-white ${rating.color}`}>
                           {rating.label}
                         </span>
-                        <span className="text-white font-bold">{rating.label === 'Sem classificação' ? rating.label : `Classificação ${rating.label}`}</span>
+                        <span className="text-foreground font-bold">{rating.label === 'Sem classificação' ? rating.label : `Classificação ${rating.label}`}</span>
                         {disabled && (
                           <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
                             Bloqueado pelo administrador
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-zinc-400">{rating.description}</p>
+                      <p className="text-sm text-muted">{rating.description}</p>
                     </div>
                   </div>
                 )
@@ -212,7 +210,7 @@ export default function ContentPreferencesPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold transition-colors"
+                className="flex items-center gap-2 px-6 py-3 bg-[#ff2d78] hover:bg-[#ff2d78] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold transition-colors"
               >
                 {saving ? (
                   <>
@@ -226,7 +224,7 @@ export default function ContentPreferencesPage() {
                   </>
                 )}
               </button>
-              <span className="text-sm text-zinc-500">
+              <span className="text-sm text-muted">
                 {allowedRatings.length} classificação{allowedRatings.length !== 1 ? 'ões' : ''} selecionada{allowedRatings.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -269,6 +267,5 @@ export default function ContentPreferencesPage() {
           </div>
         </div>
       </div>
-    </>
   )
 }

@@ -5,12 +5,23 @@ import { usePathname } from "next/navigation"
 import { useState, useEffect, useCallback } from "react"
 import { Search } from "lucide-react"
 import { GlobalSearch } from "@/components/ui/GlobalSearch"
-import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
 import { MobileSearchOverlay } from "@/components/features/MobileSearchOverlay"
 import { NotificationBell } from "@/components/features/NotificationBell"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useSession } from "next-auth/react"
+
+function OrbitalMark({ size = 28 }: { size?: number }) {
+    return (
+        <svg viewBox="0 0 38 38" fill="none" width={size} height={size}>
+            <rect x="5"  y="8" width="6" height="22" rx="3" fill="currentColor"/>
+            <rect x="27" y="8" width="6" height="22" rx="3" fill="currentColor"/>
+            <path d="M11 19 Q19 13 27 19" stroke="#ff2d78" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+            <circle cx="19" cy="13.5" r="2.5" fill="#ff2d78"/>
+        </svg>
+    )
+}
 
 const NavBar = () => {
     const pathname = usePathname()
@@ -19,101 +30,118 @@ const NavBar = () => {
     const [searchOpen, setSearchOpen] = useState(false)
 
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 0)
-        }
+        const handleScroll = () => setIsScrolled(window.scrollY > 0)
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
 
     const closeSearch = useCallback(() => setSearchOpen(false), [])
 
-    // Hide NavBar on auth, admin, and write pages - AFTER all hooks
     if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
 
     const navLinks = [
-        { label: "Início", href: "/" },
         { label: "Artistas", href: "/artists" },
         { label: "Grupos", href: "/groups" },
         { label: "Produções", href: "/productions" },
         { label: "Notícias", href: "/news" },
-        { label: "Blog", href: "/blog", secondary: true },  // oculto em lg, visível em xl+
+        { label: "Blog", href: "/blog" },
     ]
+
+    const navBg = isScrolled
+        ? 'bg-background/95 backdrop-blur-xl border-b border-border shadow-sm'
+        : 'bg-background border-b border-border'
 
     return (
         <>
-            <nav className={`w-full z-[100] fixed top-0 py-3 transition-[background-color,backdrop-filter,border-color] duration-300 ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/5' : 'bg-black/70 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:bg-gradient-to-b md:from-black/80 md:dark:from-black/80 md:to-transparent'}`}>
+            <nav className={`w-full z-[100] sticky top-0 transition-[background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between gap-4 md:gap-6 h-12 md:h-14">
-                        {/* Mobile hamburger (left) + Logo */}
+                    <div className="flex items-center justify-between gap-3 h-[52px] sm:h-[60px] lg:h-[64px]">
+
+                        {/* Left: hamburger (mobile) + logo */}
                         <div className="flex items-center gap-2 flex-shrink-0">
-                            <div className="flex md:hidden">
+                            <div className="flex lg:hidden">
                                 <MobileMenu links={navLinks} />
                             </div>
-                            <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase hover:opacity-80 transition-opacity">
-                                <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
+                            <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
+                                <OrbitalMark size={28} />
+                                <span className="text-[14px] font-bold tracking-[-0.02em] text-foreground">
+                                    Hallyu<span className="text-[#ff2d78]">Hub</span>
+                                </span>
                             </Link>
                         </div>
 
-                        {/* Desktop Navigation Links */}
-                        <div className="hidden lg:flex items-center space-x-6">
+                        {/* Center: desktop nav links */}
+                        <div className="hidden lg:flex items-center gap-0.5">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`text-sm font-medium transition-colors whitespace-nowrap ${link.secondary ? 'hidden xl:block' : ''} ${pathname === link.href
-                                        ? "text-purple-600 dark:text-white font-semibold"
-                                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300"
-                                        }`}
+                                    className={`text-[13px] font-medium px-3 py-1.5 rounded-full transition-colors whitespace-nowrap ${
+                                        pathname === link.href
+                                            ? 'text-[#ff2d78] font-semibold'
+                                            : 'text-muted hover:text-foreground hover:bg-surface'
+                                    }`}
                                 >
                                     {link.label}
                                 </Link>
                             ))}
                         </div>
 
-                        {/* Global Search - Centered, hidden on mobile */}
-                        <div className="hidden md:flex flex-1 max-w-xl mx-4">
-                            <GlobalSearch />
-                        </div>
-
-                        {/* Right side actions - Grouped */}
+                        {/* Right: search + theme toggle + auth */}
                         <div className="flex items-center gap-2 flex-shrink-0">
-                            {/* Desktop actions grouped */}
-                            <div className="hidden md:flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-zinc-700/50">
-                                <ThemeToggle />
+                            {/* Search bar (tablet+) */}
+                            <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[150px] lg:min-w-[200px]"
+                                onClick={() => setSearchOpen(true)}
+                            >
+                                <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 opacity-50">
+                                    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+                                    <path d="M10 10l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
+                                Buscar artistas, dramas…
                             </div>
 
-                            {/* Notification bell - logged-in users only */}
-                            {session && (
-                                <div className="hidden md:block">
-                                    <NotificationBell />
-                                </div>
+                            {/* Mobile search icon */}
+                            <button
+                                onClick={() => setSearchOpen(true)}
+                                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-full text-muted hover:bg-surface transition-colors"
+                                aria-label="Buscar"
+                            >
+                                <Search className="w-[18px] h-[18px]" />
+                            </button>
+
+                            {/* Theme toggle */}
+                            <ThemeToggle />
+
+                            {/* Logged out: Entrar + Criar conta */}
+                            {!session && (
+                                <>
+                                    <Link
+                                        href="/auth/login"
+                                        className="hidden sm:block text-[11.5px] font-semibold text-muted hover:text-foreground transition-colors whitespace-nowrap"
+                                    >
+                                        Entrar
+                                    </Link>
+                                    <Link
+                                        href="/auth/register"
+                                        className="hidden sm:block bg-accent text-white text-[11.5px] font-semibold rounded-full px-4 py-[7px] hover:brightness-110 transition-all whitespace-nowrap"
+                                    >
+                                        Criar conta
+                                    </Link>
+                                </>
                             )}
 
-                            {/* User menu - Always visible */}
-                            <div className="hidden md:block">
-                                <UserMenu />
-                            </div>
-
-                            {/* Mobile actions grouped */}
-                            <div className="flex md:hidden items-center gap-2">
-                                {/* Mobile search button */}
-                                <button
-                                    onClick={() => setSearchOpen(true)}
-                                    className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                                    aria-label="Buscar"
-                                >
-                                    <Search className="w-5 h-5" />
-                                </button>
-                                <ThemeToggle />
-                                <UserMenu />
-                            </div>
+                            {/* Logged in: notifications + user menu */}
+                            {session && (
+                                <div className="hidden sm:flex items-center gap-1.5">
+                                    <NotificationBell />
+                                    <UserMenu />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </nav>
 
-            {/* Mobile search overlay */}
             <MobileSearchOverlay isOpen={searchOpen} onClose={closeSearch} />
         </>
     )

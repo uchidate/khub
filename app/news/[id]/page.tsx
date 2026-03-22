@@ -235,7 +235,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
             }} />
             <ReadingProgressBar />
             <ViewTracker newsId={news.id} />
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-black">
+            <div className="pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-background">
                 <div className="max-w-4xl mx-auto">
                 {/* Breadcrumbs */}
                 <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
@@ -250,7 +250,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                             id={news.id}
                             itemName={news.title}
                             itemType="notícia"
-                            className="bg-zinc-900/50 backdrop-blur-sm hover:bg-zinc-900/70"
+                            className="bg-surface border border-border hover:bg-[#e8e8e8]"
                         />
                     </div>
                 </div>
@@ -262,17 +262,17 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                             <Link
                                 key={tag}
                                 href={`/news?search=${encodeURIComponent(tag)}`}
-                                className="px-3 py-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/20 hover:border-purple-500/40 text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-105 active:scale-95"
+                                className="px-3 py-1 bg-[#ff2d78]/10 hover:bg-[#ff2d78]/20 text-[#ff2d78] border border-[#ff2d78]/20 hover:border-[#ff2d78]/40 text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-105 active:scale-95"
                             >
                                 #{tag}
                             </Link>
                         ))}
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tighter text-white">
+                    <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tighter text-foreground">
                         {news.title}
                     </h1>
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-8">
-                        <div className="flex flex-wrap items-center gap-6 text-zinc-500">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-8">
+                        <div className="flex flex-wrap items-center gap-6 text-muted">
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4" />
                                 <span className="text-sm font-medium">
@@ -302,7 +302,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                     href={news.sourceUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-purple-400 transition-colors"
+                                    className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-[#ff2d78] transition-colors"
                                 >
                                     <ExternalLink className="w-3.5 h-3.5" />
                                     Via {news.source}
@@ -318,7 +318,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
 
                 {/* Imagem de Capa */}
                 {news.imageUrl && (
-                    <div className="aspect-video relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl mb-12">
+                    <div className="aspect-video relative rounded-3xl overflow-hidden border border-border shadow-sm mb-12">
                         <Image
                             src={news.imageUrl}
                             alt={news.title}
@@ -340,14 +340,14 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                 <article className="max-w-none">
                     {isDiscussionPost ? (
                         <div className="py-10 flex flex-col items-center text-center gap-4">
-                            <p className="text-zinc-400 text-lg leading-relaxed max-w-md">
+                            <p className="text-muted text-lg leading-relaxed max-w-md">
                                 Este é um post de discussão do Dramabeans. O conteúdo principal são os comentários dos fãs, disponíveis no site original.
                             </p>
                             <a
                                 href={news.sourceUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#080808] hover:bg-[#ff2d78] text-white text-sm font-semibold transition-colors"
                             >
                                 Participar da discussão no Dramabeans
                                 <ExternalLink className="w-4 h-4" />
@@ -362,9 +362,9 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
 
                 {/* Nota editorial da equipe HallyuHub */}
                 {(news as unknown as { editorialNote?: string }).editorialNote && (
-                    <aside className="mt-8 p-5 rounded-xl border-l-4 border-purple-500 bg-purple-900/10 border border-purple-500/20">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-2">Perspectiva HallyuHub</p>
-                        <p className="text-sm text-zinc-300 leading-relaxed italic">
+                    <aside className="mt-8 p-5 rounded-xl border-l-4 border-[#ff2d78] bg-[#ff2d78]/5 border border-[#ff2d78]/20">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-2">Perspectiva HallyuHub</p>
+                        <p className="text-sm text-muted leading-relaxed italic">
                             {(news as unknown as { editorialNote?: string }).editorialNote}
                         </p>
                     </aside>
@@ -372,8 +372,8 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
 
                 {/* Artistas — após o conteúdo */}
                 {news.artists.length > 0 && (
-                    <section className="mt-12 pt-10 border-t border-white/5">
-                        <h2 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
+                    <section className="mt-12 pt-10 border-t border-border">
+                        <h2 className="text-xs font-black uppercase tracking-widest text-muted mb-5 flex items-center gap-2">
                             <User className="w-3.5 h-3.5" />
                             {protagonistArtists.length > 0 ? 'Artistas nesta notícia' : 'Artistas mencionados'}
                         </h2>
@@ -385,9 +385,9 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                     <Link
                                         key={artist.id}
                                         href={`/artists/${artist.id}`}
-                                        className="group flex items-center gap-3 px-4 py-2.5 rounded-full bg-zinc-900/70 hover:bg-zinc-800 border border-white/8 hover:border-purple-500/40 transition-all"
+                                        className="group flex items-center gap-3 px-4 py-2.5 rounded-full bg-surface hover:bg-[#e8e8e8] border border-border hover:border-[#ff2d78]/40 transition-all"
                                     >
-                                        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-800 ring-1 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all shrink-0">
+                                        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#e8e8e8] ring-1 ring-[#ff2d78]/20 group-hover:ring-[#ff2d78]/50 transition-all shrink-0">
                                             {artist.primaryImageUrl ? (
                                                 <Image
                                                     src={artist.primaryImageUrl}
@@ -396,21 +396,21 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                                     className="object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-xs">
+                                                <div className="w-full h-full bg-gradient-to-br from-[#ff2d78] to-[#ff6b9d] flex items-center justify-center text-white font-bold text-xs">
                                                     {artist.nameRomanized[0]}
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors leading-none">
+                                            <p className="text-sm font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors leading-none">
                                                 {artist.nameRomanized}
                                             </p>
                                             {artist.memberships[0]?.group?.name ? (
-                                                <p className="text-[11px] text-purple-400/70 mt-0.5 leading-none">
+                                                <p className="text-[11px] text-[#ff2d78]/70 mt-0.5 leading-none">
                                                     {artist.memberships[0].group.name}
                                                 </p>
                                             ) : artist.roles && artist.roles.length > 0 && (
-                                                <p className="text-[11px] text-zinc-500 mt-0.5">
+                                                <p className="text-[11px] text-muted mt-0.5">
                                                     {getRoleLabel(artist.roles[0], artist.gender)}
                                                 </p>
                                             )}
@@ -422,9 +422,9 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
 
                         {/* Secundários — apenas mencionados no corpo */}
                         {secondaryArtists.length > 0 && (
-                            <div className={protagonistArtists.length > 0 ? 'pt-3 border-t border-white/5' : ''}>
+                            <div className={protagonistArtists.length > 0 ? 'pt-3 border-t border-border' : ''}>
                                 {protagonistArtists.length > 0 && (
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-3 mt-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-3 mt-3">
                                         Também mencionados
                                     </p>
                                 )}
@@ -433,9 +433,9 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                         <Link
                                             key={artist.id}
                                             href={`/artists/${artist.id}`}
-                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 border border-white/5 hover:border-zinc-600 hover:bg-zinc-800 transition-all group text-xs text-zinc-400 hover:text-zinc-200"
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface border border-border hover:border-[#6b6b6b] hover:bg-[#e8e8e8] transition-all group text-xs text-muted hover:text-foreground"
                                         >
-                                            <div className="relative w-4 h-4 rounded-full overflow-hidden bg-zinc-800 shrink-0">
+                                            <div className="relative w-4 h-4 rounded-full overflow-hidden bg-[#1a1a1a] shrink-0">
                                                 {artist.primaryImageUrl ? (
                                                     <Image
                                                         src={artist.primaryImageUrl}
@@ -444,21 +444,21 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                                         className="object-cover"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-zinc-700 to-zinc-600 flex items-center justify-center text-white font-bold text-[7px]">
+                                                    <div className="w-full h-full bg-gradient-to-br from-[#6b6b6b] to-[#080808] flex items-center justify-center text-white font-bold text-[7px]">
                                                         {artist.nameRomanized[0]}
                                                     </div>
                                                 )}
                                             </div>
                                             <span>{artist.nameRomanized}</span>
                                             {artist.memberships[0]?.group?.name && (
-                                                <span className="text-zinc-600 group-hover:text-zinc-500">· {artist.memberships[0].group.name}</span>
+                                                <span className="text-muted/60 group-hover:text-muted">· {artist.memberships[0].group.name}</span>
                                             )}
                                         </Link>
                                     ))}
                                     {secondaryArtists.length > 12 && (
                                         <Link
                                             href={`/news?search=${encodeURIComponent(secondaryArtists[0].artist.nameRomanized)}`}
-                                            className="flex items-center px-2.5 py-1 rounded-full bg-zinc-900 border border-white/5 hover:border-purple-500/30 text-xs text-zinc-500 hover:text-purple-400 transition-all"
+                                            className="flex items-center px-2.5 py-1 rounded-full bg-surface border border-border hover:border-[#ff2d78]/30 text-xs text-muted hover:text-[#ff2d78] transition-all"
                                         >
                                             +{secondaryArtists.length - 12} mais →
                                         </Link>

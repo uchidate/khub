@@ -69,7 +69,7 @@ export function ListSkeleton({ count = 3 }: { count?: number }) {
     return (
         <div className="space-y-4">
             {Array.from({ length: count }, (_, i) => (
-                <div key={i} className="flex gap-4 p-4 bg-zinc-900/50 rounded-xl">
+                <div key={i} className="flex gap-4 p-4 bg-surface rounded-xl">
                     <SkeletonLoader type="rectangle" width="80px" height="80px" />
                     <div className="flex-1 space-y-3">
                         <SkeletonLoader type="text" width="70%" />

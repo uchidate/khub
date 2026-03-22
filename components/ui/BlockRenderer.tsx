@@ -24,28 +24,21 @@ function BlockItem({ block }: { block: NewsBlock }) {
     switch (block.type) {
         case 'heading':
             return (
-                <h2 className="text-2xl font-bold text-white mt-8 mb-4 pb-2 leading-tight" style={{ borderBottom: '1px solid rgba(168,85,247,0.13)' }}>
+                <h2 className="text-2xl font-bold text-foreground mt-8 mb-4 pb-2 leading-tight border-b border-border">
                     {block.translated || block.original}
                 </h2>
             )
 
         case 'paragraph':
             return (
-                <p className="mb-5 leading-relaxed text-zinc-300 text-lg">
+                <p className="mb-5 leading-relaxed text-foreground text-lg">
                     {block.translated || block.original}
                 </p>
             )
 
         case 'quote':
             return (
-                <blockquote
-                    className="pl-5 my-7 italic py-3 pr-4 rounded-r-xl"
-                    style={{
-                        borderLeft: '4px solid #a855f7',
-                        backgroundColor: 'rgba(168,85,247,0.05)',
-                        color: '#a1a1aa',
-                    }}
-                >
+                <blockquote className="pl-5 my-7 italic py-3 pr-4 rounded-r-xl border-l-4 border-[#ff2d78] bg-[#ff2d78]/4 text-muted">
                     <p>{block.translated || block.original}</p>
                 </blockquote>
             )
@@ -58,10 +51,10 @@ function BlockItem({ block }: { block: NewsBlock }) {
                         src={block.url}
                         alt={block.caption || ''}
                         referrerPolicy="no-referrer"
-                        className="rounded-2xl w-full md:w-auto max-w-full border border-white/10 shadow-xl"
+                        className="rounded-2xl w-full md:w-auto max-w-full border border-border"
                     />
                     {block.caption && (
-                        <span className="block text-center text-xs text-zinc-500 mt-2 italic">
+                        <span className="block text-center text-xs text-muted mt-2 italic">
                             {block.caption}
                         </span>
                     )}
@@ -81,7 +74,7 @@ function BlockItem({ block }: { block: NewsBlock }) {
             const ytMatch = block.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/)
             if (ytMatch) {
                 return (
-                    <div className="my-8 aspect-video rounded-2xl overflow-hidden border border-white/10">
+                    <div className="my-8 aspect-video rounded-2xl overflow-hidden border border-border">
                         <iframe
                             src={`https://www.youtube.com/embed/${ytMatch[1]}`}
                             className="w-full h-full"
@@ -98,7 +91,7 @@ function BlockItem({ block }: { block: NewsBlock }) {
                         href={block.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-purple-400 underline underline-offset-4"
+                        className="text-[#ff2d78] underline underline-offset-4"
                     >
                         {block.caption || block.url}
                     </a>

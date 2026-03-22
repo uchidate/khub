@@ -9,8 +9,8 @@ const SECTIONS = [
   {
     icon: HelpCircle,
     label: 'Plataforma',
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/10',
+    color: 'text-[#ff2d78]',
+    bg: 'bg-[#ff2d78]/10',
     items: [
       {
         q: 'O que é o HallyuHub?',
@@ -147,21 +147,21 @@ const SECTIONS = [
 function AccordionItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className={`border-b border-white/5 last:border-0 transition-colors ${open ? 'bg-white/[0.02]' : ''}`}>
+    <div className={`border-b border-border last:border-0 transition-colors ${open ? 'bg-surface' : ''}`}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-start justify-between gap-4 py-5 px-6 text-left group"
       >
-        <span className={`font-bold text-sm leading-snug transition-colors ${open ? 'text-white' : 'text-zinc-300 group-hover:text-white'}`}>
+        <span className={`font-bold text-sm leading-snug transition-colors ${open ? 'text-foreground' : 'text-foreground group-hover:text-foreground'}`}>
           {q}
         </span>
         <ChevronDown
           size={16}
-          className={`shrink-0 mt-0.5 text-zinc-500 transition-transform duration-200 ${open ? 'rotate-180 text-purple-400' : ''}`}
+          className={`shrink-0 mt-0.5 text-muted transition-transform duration-200 ${open ? 'rotate-180 text-[#ff2d78]' : ''}`}
         />
       </button>
       {open && (
-        <p className="px-6 pb-5 text-sm text-zinc-400 leading-relaxed">
+        <p className="px-6 pb-5 text-sm text-muted leading-relaxed">
           {a}
         </p>
       )}
@@ -177,21 +177,21 @@ export default function FAQPage() {
     : SECTIONS
 
   return (
-    <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-8 md:px-12">
+    <PageTransition className="py-8 md:py-12 px-4 sm:px-8 md:px-12">
       <div className="max-w-3xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-12">
-          <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-purple-400 bg-purple-500/10 border border-purple-500/20 px-4 py-1.5 rounded-full mb-6">
+          <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#ff2d78] bg-[#ff2d78]/10 border border-[#ff2d78]/20 px-4 py-1.5 rounded-full mb-6">
             <HelpCircle size={10} /> Perguntas frequentes
           </span>
-          <h1 className="text-4xl md:text-6xl font-display font-black text-white uppercase italic tracking-tight leading-none mb-4">
+          <h1 className="text-4xl md:text-6xl font-display font-black text-foreground uppercase italic tracking-tight leading-none mb-4">
             Tire suas<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff2d78] to-pink-400">
               dúvidas
             </span>
           </h1>
-          <p className="text-zinc-400 text-base max-w-lg mx-auto">
+          <p className="text-muted text-base max-w-lg mx-auto">
             Tudo que você precisa saber sobre o HallyuHub em um só lugar.
           </p>
         </div>
@@ -201,7 +201,7 @@ export default function FAQPage() {
           <button
             onClick={() => setActiveSection(null)}
             className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-colors ${
-              !activeSection ? 'bg-purple-600 text-white' : 'bg-zinc-900 text-zinc-400 border border-white/5 hover:text-white'
+              !activeSection ? 'bg-[#ff2d78] text-white' : 'bg-surface text-muted border border-border hover:text-foreground'
             }`}
           >
             Todos
@@ -211,7 +211,7 @@ export default function FAQPage() {
               key={s.label}
               onClick={() => setActiveSection(activeSection === s.label ? null : s.label)}
               className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-colors ${
-                activeSection === s.label ? 'bg-purple-600 text-white' : 'bg-zinc-900 text-zinc-400 border border-white/5 hover:text-white'
+                activeSection === s.label ? 'bg-[#ff2d78] text-white' : 'bg-surface text-muted border border-border hover:text-foreground'
               }`}
             >
               <s.icon size={10} />
@@ -228,9 +228,9 @@ export default function FAQPage() {
                 <div className={`p-1.5 rounded-lg ${section.bg}`}>
                   <section.icon size={14} className={section.color} />
                 </div>
-                <h2 className="text-xs font-black uppercase tracking-widest text-zinc-500">{section.label}</h2>
+                <h2 className="text-xs font-black uppercase tracking-widest text-muted">{section.label}</h2>
               </div>
-              <div className="glass-card border-white/5 rounded-2xl overflow-hidden">
+              <div className="bg-background border border-border rounded-2xl overflow-hidden">
                 {section.items.map(item => (
                   <AccordionItem key={item.q} q={item.q} a={item.a} />
                 ))}
@@ -240,25 +240,25 @@ export default function FAQPage() {
         </div>
 
         {/* CTA de contato */}
-        <div className="mt-12 p-8 glass-card border-white/5 rounded-2xl text-center">
-          <p className="text-zinc-400 text-sm mb-4">
+        <div className="mt-12 p-8 bg-surface border border-border rounded-2xl text-center">
+          <p className="text-muted text-sm mb-4">
             Não encontrou o que procurava?
           </p>
           <a
             href="mailto:contato@hallyuhub.com.br"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest px-6 py-3 bg-purple-600 text-white rounded-full hover:bg-purple-500 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest px-6 py-3 bg-[#ff2d78] text-white rounded-full hover:bg-[#ff2d78] transition-colors"
           >
             Entrar em contato
           </a>
         </div>
 
         {/* Links relacionados */}
-        <div className="mt-8 flex items-center justify-center gap-6 text-xs text-zinc-600">
-          <Link href="/termos" className="hover:text-zinc-400 transition-colors">Termos de Uso</Link>
+        <div className="mt-8 flex items-center justify-center gap-6 text-xs text-muted">
+          <Link href="/termos" className="hover:text-foreground transition-colors">Termos de Uso</Link>
           <span>·</span>
-          <Link href="/privacidade" className="hover:text-zinc-400 transition-colors">Privacidade</Link>
+          <Link href="/privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
           <span>·</span>
-          <Link href="/about" className="hover:text-zinc-400 transition-colors">Sobre nós</Link>
+          <Link href="/about" className="hover:text-foreground transition-colors">Sobre nós</Link>
         </div>
 
       </div>
