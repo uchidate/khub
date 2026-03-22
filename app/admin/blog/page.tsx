@@ -8,6 +8,7 @@ import { useToast } from '@/lib/hooks/useToast'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
+    CalendarDays, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -46,7 +47,192 @@ interface NewsSuggestion {
     estimatedCost: number
 }
 
-type Tab = 'suggestions' | 'posts'
+type Tab = 'suggestions' | 'posts' | 'calendar'
+
+// ─── Calendar types ────────────────────────────────────────────────────────────
+
+interface CalendarPost {
+    id: string
+    slug: string
+    title: string
+    status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'ARCHIVED'
+    publishedAt: string | null
+    createdAt: string
+    author: { name: string | null }
+    category: { name: string } | null
+}
+
+const CALENDAR_STATUS_COLORS: Record<string, string> = {
+    DRAFT:          'bg-zinc-700/80 text-zinc-300 border-zinc-600/50',
+    PENDING_REVIEW: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+    PUBLISHED:      'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    ARCHIVED:       'bg-red-500/15 text-red-400 border-red-500/20',
+}
+
+const MONTH_NAMES = [
+    'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
+]
+
+const WEEKDAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+
+// ─── Calendar Component ────────────────────────────────────────────────────────
+
+function CalendarView() {
+    const today = new Date()
+    const [year,  setYear]  = useState(today.getFullYear())
+    const [month, setMonth] = useState(today.getMonth() + 1) // 1-based
+    const [posts, setPosts] = useState<CalendarPost[]>([])
+    const [loading, setLoading] = useState(false)
+
+    const fetchCalendar = useCallback(async (y: number, m: number) => {
+        setLoading(true)
+        try {
+            const res = await fetch(`/api/admin/blog/calendar?year=${y}&month=${m}`)
+            const data = await res.json()
+            setPosts(Array.isArray(data) ? data : [])
+        } catch {
+            setPosts([])
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { fetchCalendar(year, month) }, [year, month, fetchCalendar])
+
+    function prevMonth() {
+        if (month === 1) { setYear(y => y - 1); setMonth(12) }
+        else setMonth(m => m - 1)
+    }
+    function nextMonth() {
+        if (month === 12) { setYear(y => y + 1); setMonth(1) }
+        else setMonth(m => m + 1)
+    }
+    function goToday() { setYear(today.getFullYear()); setMonth(today.getMonth() + 1) }
+
+    // Build calendar grid
+    const firstDay = new Date(year, month - 1, 1).getDay() // 0=Sun
+    const daysInMonth = new Date(year, month, 0).getDate()
+
+    // Group posts by day
+    const byDay = new Map<number, CalendarPost[]>()
+    for (const post of posts) {
+        const date = post.status === 'PUBLISHED' && post.publishedAt
+            ? new Date(post.publishedAt)
+            : new Date(post.createdAt)
+        if (date.getFullYear() === year && date.getMonth() + 1 === month) {
+            const d = date.getDate()
+            if (!byDay.has(d)) byDay.set(d, [])
+            byDay.get(d)!.push(post)
+        }
+    }
+
+    // Build grid cells: blanks + days
+    const cells: (number | null)[] = [
+        ...Array(firstDay).fill(null),
+        ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ]
+    // Pad to full weeks
+    while (cells.length % 7 !== 0) cells.push(null)
+
+    const isToday = (d: number) =>
+        d === today.getDate() && month === today.getMonth() + 1 && year === today.getFullYear()
+
+    const publishedCount = posts.filter(p => p.status === 'PUBLISHED').length
+    const draftCount     = posts.filter(p => p.status === 'DRAFT' || p.status === 'PENDING_REVIEW').length
+
+    return (
+        <div className="space-y-4">
+            {/* Header row */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                    <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <h2 className="text-base font-bold text-white min-w-[160px] text-center">
+                        {MONTH_NAMES[month - 1]} {year}
+                    </h2>
+                    <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <button onClick={goToday} className="text-xs text-zinc-500 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-zinc-800">
+                        Hoje
+                    </button>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-zinc-500">
+                    <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400/60 inline-block" />
+                        {publishedCount} publicado{publishedCount !== 1 ? 's' : ''}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-yellow-400/60 inline-block" />
+                        {draftCount} rascunho{draftCount !== 1 ? 's' : ''}
+                    </span>
+                    {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                </div>
+            </div>
+
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1">
+                {WEEKDAYS.map(d => (
+                    <div key={d} className="text-center text-[11px] font-bold uppercase tracking-widest text-zinc-600 py-1">
+                        {d}
+                    </div>
+                ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-1">
+                {cells.map((day, i) => (
+                    <div
+                        key={i}
+                        className={`min-h-[80px] rounded-xl p-1.5 border transition-colors ${
+                            day === null
+                                ? 'border-transparent bg-transparent'
+                                : isToday(day)
+                                    ? 'border-purple-500/40 bg-purple-900/10'
+                                    : 'border-white/5 bg-zinc-900/30 hover:border-white/10'
+                        }`}
+                    >
+                        {day !== null && (
+                            <>
+                                <p className={`text-[11px] font-bold mb-1 ${isToday(day) ? 'text-purple-400' : 'text-zinc-500'}`}>
+                                    {day}
+                                </p>
+                                <div className="space-y-0.5">
+                                    {(byDay.get(day) ?? []).slice(0, 3).map(post => (
+                                        <a
+                                            key={post.id}
+                                            href={`/write?edit=${post.id}`}
+                                            className={`block truncate text-[10px] font-medium px-1 py-0.5 rounded border ${CALENDAR_STATUS_COLORS[post.status]} hover:opacity-80 transition-opacity`}
+                                            title={`${post.title} · ${post.author.name ?? ''}`}
+                                        >
+                                            {post.title}
+                                        </a>
+                                    ))}
+                                    {(byDay.get(day)?.length ?? 0) > 3 && (
+                                        <p className="text-[10px] text-zinc-600 pl-1">
+                                            +{(byDay.get(day)?.length ?? 0) - 3} mais
+                                        </p>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 pt-2 border-t border-white/5 flex-wrap">
+                {Object.entries({ PUBLISHED: 'Publicado', PENDING_REVIEW: 'Em revisão', DRAFT: 'Rascunho', ARCHIVED: 'Arquivado' }).map(([k, label]) => (
+                    <span key={k} className={`inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded border ${CALENDAR_STATUS_COLORS[k]}`}>
+                        {label}
+                    </span>
+                ))}
+            </div>
+        </div>
+    )
+}
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -381,6 +567,17 @@ export default function AdminBlogPage() {
                         <FileText className="w-3.5 h-3.5" />
                         Posts
                     </button>
+                    <button
+                        onClick={() => setActiveTab('calendar')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            activeTab === 'calendar'
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                        }`}
+                    >
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        Calendário
+                    </button>
                 </div>
 
                 {/* Suggestions tab */}
@@ -452,6 +649,9 @@ export default function AdminBlogPage() {
                         )}
                     </div>
                 )}
+
+                {/* Calendar tab */}
+                {activeTab === 'calendar' && <CalendarView />}
 
                 {/* Posts tab */}
                 {activeTab === 'posts' && (
