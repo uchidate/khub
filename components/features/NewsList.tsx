@@ -5,7 +5,8 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { NewsListCard } from './NewsListCard'
 import { NewsFilters, type FilterValues } from './NewsFilters'
 import { AdBanner } from '@/components/ui/AdBanner'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { PaginationControls } from '@/components/ui/PaginationControls'
+import { TabBar } from '@/components/ui/TabBar'
 
 function NewsSkeleton() {
     return (
@@ -69,8 +70,6 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         () => (searchParams.get('feed') === 'all' ? 'all' : 'personalized')
     )
     const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
-    const [pageJumpInput, setPageJumpInput] = useState('')
-    const [isEditingPage, setIsEditingPage] = useState(false)
 
     // Ref para leitura do feedMode atual sem adicionar dependência nos useCallbacks
     const feedModeRef = useRef<FeedMode>(feedMode)
@@ -176,28 +175,15 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         <div>
             {/* Tabs: Para você / Todas — visível apenas quando usuário tem artistas seguidos */}
             {showTabs && (
-                <div className="flex border-b border-border mb-6">
-                    <button
-                        onClick={() => handleFeedMode('personalized')}
-                        className={`px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
-                            feedMode === 'personalized'
-                                ? 'border-[#ff2d78] text-foreground'
-                                : 'border-transparent text-muted hover:text-foreground'
-                        }`}
-                    >
-                        Para você
-                    </button>
-                    <button
-                        onClick={() => handleFeedMode('all')}
-                        className={`px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
-                            feedMode === 'all'
-                                ? 'border-[#ff2d78] text-foreground'
-                                : 'border-transparent text-muted hover:text-foreground'
-                        }`}
-                    >
-                        Todas
-                    </button>
-                </div>
+                <TabBar
+                    tabs={[
+                        { value: 'personalized', label: 'Para você' },
+                        { value: 'all', label: 'Todas' },
+                    ]}
+                    value={feedMode}
+                    onChange={v => handleFeedMode(v as FeedMode)}
+                    className="mb-6"
+                />
             )}
 
             {/* Filtros */}
@@ -229,7 +215,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                             Nenhuma notícia dos seus artistas seguidos.{' '}
                             <button
                                 onClick={() => handleFeedMode('all')}
-                                className="text-[#ff2d78] hover:underline"
+                                className="text-accent hover:underline"
                             >
                                 Ver todas as notícias
                             </button>
@@ -266,75 +252,14 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                     </div>
 
                     {/* Paginação */}
-                    {pagination.pages > 0 && (
-                        <div className="mt-10 flex flex-col items-center gap-3">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-muted">Por página:</span>
-                                {[50, 100, 150].map(n => (
-                                    <button
-                                        key={n}
-                                        onClick={() => handlePerPage(n)}
-                                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${getPerPage() === n ? 'bg-[#ff2d78] text-white' : 'bg-surface text-muted hover:text-foreground'}`}
-                                    >
-                                        {n}
-                                    </button>
-                                ))}
-                                <span className="text-xs text-muted ml-1">({pagination.total.toLocaleString('pt-BR')} total)</span>
-                            </div>
-                            {pagination.pages > 1 && (
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handlePageChange(pagination.page - 1)}
-                                        disabled={pagination.page === 1}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" />
-                                        <span className="hidden md:inline">Anterior</span>
-                                    </button>
-                                    <div className="flex items-center gap-1.5">
-                                        {isEditingPage ? (
-                                            <input
-                                                autoFocus
-                                                type="number"
-                                                min={1}
-                                                max={pagination.pages}
-                                                value={pageJumpInput}
-                                                onChange={e => setPageJumpInput(e.target.value)}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter') {
-                                                        const p = Math.min(pagination.pages, Math.max(1, parseInt(pageJumpInput) || pagination.page))
-                                                        handlePageChange(p)
-                                                        setIsEditingPage(false)
-                                                        setPageJumpInput('')
-                                                    }
-                                                    if (e.key === 'Escape') { setIsEditingPage(false); setPageJumpInput('') }
-                                                }}
-                                                onBlur={() => { setIsEditingPage(false); setPageJumpInput('') }}
-                                                className="w-12 text-center px-2 py-1 bg-background border border-[#ff2d78] rounded text-sm text-foreground focus:outline-none"
-                                            />
-                                        ) : (
-                                            <button
-                                                onClick={() => { setIsEditingPage(true); setPageJumpInput(String(pagination.page)) }}
-                                                className="px-2 py-1 rounded text-sm font-bold text-foreground bg-surface hover:bg-[#e8e8e8] hover:text-[#ff2d78] transition-colors min-w-[2rem] text-center"
-                                                title="Clique para ir a uma página específica"
-                                            >
-                                                {pagination.page}
-                                            </button>
-                                        )}
-                                        <span className="text-sm text-muted">/ {pagination.pages}</span>
-                                    </div>
-                                    <button
-                                        onClick={() => handlePageChange(pagination.page + 1)}
-                                        disabled={pagination.page === pagination.pages}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        <span className="hidden md:inline">Próxima</span>
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <PaginationControls
+                        currentPage={pagination.page}
+                        totalPages={pagination.pages}
+                        perPage={getPerPage()}
+                        total={pagination.total}
+                        onPageChange={handlePageChange}
+                        onPerPageChange={handlePerPage}
+                    />
                 </>
             )}
         </div>

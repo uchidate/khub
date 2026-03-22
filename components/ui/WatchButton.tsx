@@ -120,7 +120,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
 
     const buttonLabel = entry ? WATCH_STATUS_LABELS[entry.status] : 'Adicionar à lista'
     const buttonIcon = entry ? WATCH_STATUS_ICONS[entry.status] : null
-    const buttonBg = entry ? STATUS_COLORS[entry.status] : 'bg-surface hover:bg-[#e8e8e8] text-foreground border border-border'
+    const buttonBg = entry ? STATUS_COLORS[entry.status] : 'bg-surface hover:bg-surface-hover text-foreground border border-border'
 
     const dropdown = (
         <div
@@ -169,7 +169,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                     <div className="flex items-center justify-between">
                         <button
                             onClick={handleSaveDetails}
-                            className="px-3 py-1.5 bg-[#080808] hover:bg-[#ff2d78] text-white text-xs rounded-lg transition-colors"
+                            className="px-3 py-1.5 bg-foreground text-background hover:bg-accent hover:text-white text-xs rounded-lg transition-colors"
                         >
                             Salvar
                         </button>

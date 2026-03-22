@@ -24,7 +24,7 @@ export function NewsDetailSkeleton() {
                 </div>
 
                 {/* Meta Info Skeleton */}
-                <div className="flex items-center gap-6 border-b border-[#e8e8e8] pb-8 mb-12">
+                <div className="flex items-center gap-6 border-b border-border pb-8 mb-12">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-4 w-28" />
                 </div>

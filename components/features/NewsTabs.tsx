@@ -41,8 +41,8 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
             {/* Header compacto */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 mb-5">
                 <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-[#ff2d78]/15 rounded-lg">
-                        <Newspaper className="w-4 h-4 text-[#ff2d78]" />
+                    <div className="p-1.5 bg-accent/15 rounded-lg">
+                        <Newspaper className="w-4 h-4 text-accent" />
                     </div>
                     <h2 className="text-xl font-black text-foreground uppercase tracking-tight">
                         Notícias
@@ -58,7 +58,7 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
                                 onClick={() => setActive(key)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
                                     active === key
-                                        ? 'bg-[#ff2d78] text-white shadow-sm'
+                                        ? 'bg-accent text-white shadow-sm'
                                         : 'text-muted hover:text-foreground'
                                 }`}
                             >
@@ -89,7 +89,7 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
                         {/* Imagem */}
                         <div className="relative aspect-video overflow-hidden bg-surface">
                             {item.isRecommended && (
-                                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 bg-[#ff2d78] rounded-full">
+                                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 bg-accent rounded-full">
                                     <Heart className="w-2.5 h-2.5 text-white fill-white" />
                                     <span className="text-white text-[9px] font-black uppercase">Para Você</span>
                                 </div>
@@ -109,10 +109,10 @@ export function NewsTabs({ latest, recommended, favoritesCount }: NewsTabsProps)
 
                         {/* Texto */}
                         <div className="p-4 flex flex-col gap-1.5">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78]">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-accent">
                                 {new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
-                            <h3 className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2">
+                            <h3 className="text-sm font-bold text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2">
                                 {item.title}
                             </h3>
                             {item.excerpt && (

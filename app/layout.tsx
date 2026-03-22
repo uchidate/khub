@@ -9,7 +9,7 @@ import { SessionProvider } from "@/components/features/SessionProvider"
 import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
 import NavBar from "@/components/NavBar"
-import { HomeTicker } from "@/components/home/HomeTicker"
+import { TickerWrapper } from "@/components/home/TickerWrapper"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
@@ -114,7 +114,7 @@ export default async function RootLayout({
                 <link rel="preconnect" href="https://images.unsplash.com" />
                 <link rel="dns-prefetch" href="https://images.unsplash.com" />
             </head>
-            <body className="font-sora text-[#1a1a1a] bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
+            <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
                 <Script id="ga-consent-defaults" strategy="beforeInteractive">{`
                     window.dataLayer = window.dataLayer || [];
@@ -169,7 +169,7 @@ export default async function RootLayout({
                     <AnalyticsProvider>
                     <WebVitalsReporter />
                     <div className="min-h-screen flex flex-col">
-                        <HomeTicker news={tickerNews} />
+                        <TickerWrapper news={tickerNews} />
                         <NavBar />
                         <ErrorBoundary>
                             <main className="flex-grow pb-[62px] sm:pb-0">{children}</main>
@@ -180,7 +180,7 @@ export default async function RootLayout({
                         <PWAInstaller />
                         <CookieBanner />
                         <BottomNav />
-                        <footer className="bg-[#080808] py-5 px-4 sm:px-8 lg:px-12 font-sora">
+                        <footer className="bg-featured py-5 px-4 sm:px-8 lg:px-12 font-sora">
                             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <span className="text-[14px] font-extrabold tracking-[-0.04em] text-white">
                                     Hallyu<span className="text-[#ff2d78]">Hub</span>

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 interface ArtistItem {
     id: string
@@ -39,17 +40,10 @@ export function HomeArtistsGrid({ artists }: HomeArtistsGridProps) {
         <section className="border-b border-border bg-background">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-8 lg:py-12">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-[18px] font-extrabold tracking-[-0.04em] text-foreground">
-                        Artistas em <span className="text-accent">destaque</span>
-                    </h2>
-                    <Link
-                        href="/artists"
-                        className="text-[11px] font-bold text-muted hover:text-accent transition-colors"
-                    >
-                        Ver todos →
-                    </Link>
-                </div>
+                <SectionTitleBar
+                    title={<>Artistas em <span className="text-accent">destaque</span></>}
+                    href="/artists"
+                />
 
                 {/* Grid with border dividers — usa CSS variable para funcionar em light e dark */}
                 <div

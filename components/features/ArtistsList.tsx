@@ -5,8 +5,9 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArtistFilters, type ArtistFilterValues } from './ArtistFilters'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { getRoleLabels } from '@/lib/utils/role-labels'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PaginationControls } from '@/components/ui/PaginationControls'
 
 const PER_PAGE_OPTIONS = [50, 100, 150]
 const DEFAULT_PER_PAGE = 50
@@ -16,10 +17,10 @@ function ArtistsSkeleton() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
             {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="animate-pulse">
-                    <div className="aspect-[3/4] rounded-xl bg-[#f0f0f0] mb-2.5" />
-                    <div className="h-3.5 bg-[#f0f0f0] rounded w-3/4 mb-1.5" />
-                    <div className="h-3 bg-[#f0f0f0] rounded w-1/2 mb-1" />
-                    <div className="h-2.5 bg-[#f0f0f0] rounded w-2/3" />
+                    <div className="aspect-[3/4] rounded-xl bg-skeleton mb-2.5" />
+                    <div className="h-3.5 bg-skeleton rounded w-3/4 mb-1.5" />
+                    <div className="h-3 bg-skeleton rounded w-1/2 mb-1" />
+                    <div className="h-2.5 bg-skeleton rounded w-2/3" />
                 </div>
             ))}
         </div>
@@ -175,10 +176,11 @@ export function ArtistsList() {
             {isLoading && <ArtistsSkeleton />}
 
             {!isLoading && artists.length === 0 && (
-                <div className="text-center py-20 border border-border rounded-2xl">
-                    <p className="text-foreground font-bold mb-1">Nenhum artista encontrado</p>
-                    <p className="text-sm text-muted">Tente ajustar os filtros</p>
-                </div>
+                <EmptyState
+                    title="Nenhum artista encontrado"
+                    description="Tente ajustar os filtros"
+                    bordered
+                />
             )}
 
             {!isLoading && artists.length > 0 && (
@@ -197,52 +199,16 @@ export function ArtistsList() {
                     </div>
 
                     {/* Pagination */}
-                    {totalPages > 0 && (
-                        <div className="mt-12 flex items-center justify-center gap-3 flex-wrap">
-                            {/* Per page selector */}
-                            <div className="flex items-center gap-1 p-1 bg-surface border border-border rounded-xl">
-                                {PER_PAGE_OPTIONS.map(n => (
-                                    <button
-                                        key={n}
-                                        onClick={() => handlePerPage(n)}
-                                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                                            perPage === n
-                                                ? 'bg-[#080808] text-white'
-                                                : 'text-muted hover:text-foreground'
-                                        }`}
-                                    >
-                                        {n}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {totalPages > 1 && (
-                                <>
-                                    <button
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                        className="flex items-center gap-1 px-3 py-2 bg-background border border-border rounded-xl text-sm font-medium text-foreground hover:border-[#ff2d78]/40 hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        <ChevronLeft className="w-3.5 h-3.5" />
-                                        Anterior
-                                    </button>
-
-                                    <span className="text-sm text-muted">
-                                        Pág. <strong className="text-foreground">{currentPage}</strong> de <strong className="text-foreground">{totalPages}</strong>
-                                    </span>
-
-                                    <button
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                        className="flex items-center gap-1 px-3 py-2 bg-background border border-border rounded-xl text-sm font-medium text-foreground hover:border-[#ff2d78]/40 hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        Próxima
-                                        <ChevronRight className="w-3.5 h-3.5" />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
+                    <PaginationControls
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        perPage={perPage}
+                        perPageOptions={PER_PAGE_OPTIONS}
+                        total={pagination.total}
+                        onPageChange={handlePageChange}
+                        onPerPageChange={handlePerPage}
+                        className="mt-12"
+                    />
                 </>
             )}
         </div>

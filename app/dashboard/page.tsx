@@ -153,7 +153,7 @@ export default async function DashboardPage() {
             <Link href="/" className="btn-secondary text-xs uppercase tracking-widest hidden sm:flex">
               Explorar
             </Link>
-            <Link href="/premium" className="bg-[#080808] text-white px-4 py-2 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest">
+            <Link href="/premium" className="bg-foreground text-background px-4 py-2 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest">
               <span className="flex items-center gap-1.5"><Crown size={12} className="text-[#ff2d78]" /> Upgrade</span>
             </Link>
           </div>
@@ -350,7 +350,7 @@ export default async function DashboardPage() {
                       : null
 
                     const content = (
-                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-surface border border-border hover:border-[#080808]/15 transition-colors">
+                      <div className="flex items-center gap-3 p-2.5 rounded-lg bg-surface border border-border hover:border-foreground/15 transition-colors">
                         <span className={`text-[10px] font-black whitespace-nowrap ${config.color}`}>
                           {config.label}
                         </span>

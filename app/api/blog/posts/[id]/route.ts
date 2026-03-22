@@ -16,6 +16,7 @@ const updateSchema = z.object({
   blocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
   template: z.string().optional().nullable(),
   isPrivate: z.boolean().optional(),
+  featured: z.boolean().optional(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -62,6 +63,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (validated.contentMd) data.readingTimeMin = calcReadingTime(validated.contentMd)
   // Reset to DRAFT when contributor edits a pending post
   if (post.status === 'PENDING_REVIEW' && !isAdmin) data.status = 'DRAFT'
+  // Only admins/editors can set featured
+  if (!isAdmin) delete data.featured
 
   const updated = await prisma.blogPost.update({ where: { id }, data })
   return NextResponse.json(updated)

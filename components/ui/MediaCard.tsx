@@ -86,7 +86,7 @@ export function MediaCard({
                         transform: "translateZ(75px)",
                         transformStyle: "preserve-3d",
                     }}
-                    className={`${aspectClass} relative rounded-xl overflow-hidden bg-[#080808] border border-white/5 shadow-xl transition-all duration-500 group-hover:shadow-[0_0_30px_-5px_var(--neon-pink)] group-hover:border-white/20`}
+                    className={`${aspectClass} relative rounded-xl overflow-hidden bg-featured border border-white/5 shadow-xl transition-all duration-500 group-hover:shadow-[0_0_30px_-5px_var(--neon-pink)] group-hover:border-white/20`}
                 >
                     {/* Image Layer */}
                     <div className="absolute inset-0 z-0">
@@ -184,7 +184,7 @@ export function MediaCard({
                     id={id}
                     itemName={title}
                     itemType={getFavoriteType()}
-                    className="bg-[#080808]/60 backdrop-blur-sm hover:bg-[#080808]/80 transition-colors"
+                    className="bg-featured/60 backdrop-blur-sm hover:bg-featured/80 transition-colors"
                 />
             </div>
             {adminHref && (

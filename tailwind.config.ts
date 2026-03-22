@@ -30,6 +30,8 @@ const config: Config = {
                 'featured-fg':    'var(--color-featured-fg)',
                 'featured-muted': 'var(--color-featured-muted)',
                 'featured-border':'var(--color-featured-border)',
+                skeleton:         'var(--color-skeleton)',
+                overlay:          'var(--color-overlay)',
                 // ── K-real fixed palette ──
                 hallyu: {
                     pink:   '#ff2d78',

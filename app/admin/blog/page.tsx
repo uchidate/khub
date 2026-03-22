@@ -8,7 +8,7 @@ import { useToast } from '@/lib/hooks/useToast'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
-    CalendarDays, ChevronLeft, ChevronRight,
+    CalendarDays, ChevronLeft, ChevronRight, Star,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -385,6 +385,39 @@ function PublishButton({ post, onDone }: { post: BlogPost; onDone: () => void })
     )
 }
 
+// ─── Featured Button ──────────────────────────────────────────────────────────
+
+function FeaturedButton({ post, onDone }: { post: BlogPost; onDone: () => void }) {
+    const [loading, setLoading] = useState(false)
+
+    const toggle = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setLoading(true)
+        await fetch(`/api/blog/posts/${post.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ featured: !post.featured }),
+        })
+        setLoading(false)
+        onDone()
+    }
+
+    return (
+        <button
+            onClick={toggle}
+            disabled={loading}
+            title={post.featured ? 'Remover destaque' : 'Marcar como destaque'}
+            className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
+                post.featured
+                    ? 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10'
+                    : 'text-zinc-600 hover:text-yellow-400 hover:bg-yellow-400/10'
+            }`}
+        >
+            <Star size={14} className={post.featured ? 'fill-yellow-400' : ''} />
+        </button>
+    )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AdminBlogPage() {
@@ -477,6 +510,13 @@ export default function AdminBlogPage() {
                 const s = STATUS_LABELS[post.status]
                 return <span className={`px-2 py-0.5 rounded text-xs font-bold ${s.color}`}>{s.label}</span>
             },
+        },
+        {
+            key: 'featured',
+            label: 'Destaque',
+            render: (post) => post.featured
+                ? <span className="flex items-center gap-1 text-xs font-bold text-yellow-400"><Star size={11} className="fill-yellow-400" /> Sim</span>
+                : <span className="text-xs text-zinc-700">—</span>,
         },
         {
             key: 'viewCount',
@@ -669,6 +709,7 @@ export default function AdminBlogPage() {
                                 >
                                     <BookOpen size={14} />
                                 </Link>
+                                <FeaturedButton post={post} onDone={refetchTable} />
                                 <PublishButton post={post} onDone={refetchTable} />
                                 {post.status === 'PUBLISHED' && (
                                     <Link

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 interface ProductionItem {
     id: string
@@ -79,17 +80,12 @@ export function HomeProductionsCarousel({ productions }: HomeProductionsCarousel
         <section className="border-b border-border bg-background">
             <div className="max-w-7xl mx-auto py-6 md:py-10 lg:py-12">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-5 px-4 sm:px-6 lg:px-12">
-                    <h2 className="text-[18px] font-extrabold tracking-[-0.04em] text-foreground">
-                        Produções em <span className="text-accent">destaque</span>
-                    </h2>
-                    <Link
-                        href="/productions"
-                        className="text-[11px] font-bold text-muted hover:text-accent transition-colors"
-                    >
-                        Ver catálogo →
-                    </Link>
-                </div>
+                <SectionTitleBar
+                    title={<>Produções em <span className="text-accent">destaque</span></>}
+                    href="/productions"
+                    linkText="Ver catálogo →"
+                    className="px-4 sm:px-6 lg:px-12"
+                />
 
                 {/* Horizontal scroll */}
                 <div

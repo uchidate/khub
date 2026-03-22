@@ -35,7 +35,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
 
     return (
         <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-bold text-[#999] uppercase tracking-wider flex items-center gap-2">
+            <span className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-2">
                 <Share2 className="w-4 h-4" />
                 Compartilhar
             </span>
@@ -63,7 +63,7 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all hover:scale-105 active:scale-95 ${
                     copied
                         ? 'bg-green-500/20 border border-green-500/30 text-green-400'
-                        : 'bg-surface hover:bg-[#e8e8e8] border border-border text-foreground'
+                        : 'bg-surface hover:bg-surface-hover border border-border text-foreground'
                 }`}
                 aria-label="Copiar link"
             >
