@@ -15,6 +15,7 @@ const updateSchema = z.object({
   tags: z.array(z.string()).max(10).optional(),
   blocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
   template: z.string().optional().nullable(),
+  isPrivate: z.boolean().optional(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

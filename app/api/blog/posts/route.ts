@@ -16,6 +16,7 @@ const createSchema = z.object({
   tags: z.array(z.string()).max(10).optional(),
   blocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
   template: z.string().optional(),
+  isPrivate: z.boolean().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
       status: 'DRAFT',
       blocks: (validated.blocks ?? undefined) as Prisma.InputJsonValue | undefined,
       template: validated.template || null,
+      isPrivate: validated.isPrivate ?? false,
     },
   })
 

@@ -25,23 +25,25 @@ export const metadata: Metadata = {
   },
 }
 
+const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
+
 async function getPosts() {
   const [featured, recent, categories] = await Promise.all([
     prisma.blogPost.findMany({
-      where: { status: 'PUBLISHED', featured: true },
+      where: { ...PUBLIC_WHERE, featured: true },
       orderBy: { publishedAt: 'desc' },
       take: 3,
       include: { author: { select: { name: true, image: true } }, category: true },
     }),
     prisma.blogPost.findMany({
-      where: { status: 'PUBLISHED' },
+      where: PUBLIC_WHERE,
       orderBy: { publishedAt: 'desc' },
       take: 12,
       include: { author: { select: { name: true, image: true } }, category: true },
     }),
     prisma.blogCategory.findMany({
       orderBy: { name: 'asc' },
-      include: { _count: { select: { posts: { where: { status: 'PUBLISHED' } } } } },
+      include: { _count: { select: { posts: { where: PUBLIC_WHERE } } } },
     }),
   ])
   return { featured, recent, categories }

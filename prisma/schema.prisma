@@ -1002,6 +1002,7 @@ model BlogPost {
   template       String?        // 'idol_bio' | 'review' | 'ranking' | 'free'
   coverImageUrl  String?
   status         BlogPostStatus @default(DRAFT)
+  isPrivate      Boolean        @default(false) // Publicado mas visível apenas para admins
   featured       Boolean        @default(false)
   viewCount      Int            @default(0)
   readingTimeMin Int            @default(1)

@@ -76,6 +76,7 @@ function WritePageContent() {
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'error'>('idle')
   const [postId, setPostId] = useState<string | null>(editId)
   const [postStatus, setPostStatus] = useState<string>('DRAFT')
+  const [isPrivate, setIsPrivate] = useState(false)
 
   const role = session?.user?.role?.toLowerCase()
   const canPublish = role === 'admin' || role === 'editor'
@@ -107,6 +108,7 @@ function WritePageContent() {
         setCoverImageUrl(post.coverImageUrl || '')
         setTags(post.tags || [])
         setPostStatus(post.status)
+        setIsPrivate(post.isPrivate ?? false)
         if (post.template) setTemplate(post.template)
         if (Array.isArray(post.blocks) && post.blocks.length > 0) {
           setBlocks(post.blocks)
@@ -146,6 +148,7 @@ function WritePageContent() {
         excerpt: excerpt || undefined,
         coverImageUrl: coverImageUrl || undefined,
         tags,
+        isPrivate,
       }
       if (editorMode === 'blocks') {
         body.blocks = blocks
@@ -372,6 +375,22 @@ function WritePageContent() {
               </div>
             )}
           </div>
+
+          {/* Visibility */}
+          {canPublish && (
+            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
+              <div>
+                <p className="text-xs font-semibold text-zinc-400">Visibilidade privada</p>
+                <p className="text-[11px] text-zinc-600 mt-0.5">Publicado mas invisível no blog público</p>
+              </div>
+              <button
+                onClick={() => setIsPrivate(v => !v)}
+                className={`relative w-9 h-5 rounded-full transition-colors ${isPrivate ? 'bg-purple-600' : 'bg-zinc-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${isPrivate ? 'translate-x-4' : ''}`} />
+              </button>
+            </div>
+          )}
 
           {/* Markdown cheat sheet (only in markdown mode) */}
           {editorMode === 'markdown' && (
