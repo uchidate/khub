@@ -54,7 +54,14 @@ const getNews = cache(async (id: string) => {
                             nameHangul: true,
                             stageNames: true,
                             primaryImageUrl: true,
-                            roles: true, gender: true
+                            roles: true,
+                            gender: true,
+                            memberships: {
+                                where: { isActive: true },
+                                include: { group: { select: { name: true } } },
+                                take: 1,
+                                orderBy: { position: 'asc' },
+                            },
                         }
                     }
                 }
@@ -188,9 +195,11 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
         news.source === 'Dramabeans' &&
         /drama-hangout|open-thread/i.test(news.sourceUrl)
 
-    // Calcular tempo de leitura (média de 200 palavras por minuto)
-    const wordCount = mainContent.split(/\s+/).length
-    const readingTime = Math.ceil(wordCount / 200)
+    // Calcular tempo de leitura: 200 wpm + 12s por imagem/embed em blocks
+    const wordCount = mainContent.split(/\s+/).filter(w => w.length > 0).length
+    const blocks = (news as unknown as { blocks?: NewsBlock[] }).blocks || []
+    const imageBlockCount = blocks.filter(b => ['image', 'gallery', 'embed'].includes((b as { type: string }).type)).length
+    const readingTime = Math.max(1, Math.ceil(wordCount / 200) + Math.ceil(imageBlockCount * 12 / 60))
 
     const articleDescription = mainContent
         ? mainContent.replace(/#{1,6}\s+/g, '').replace(/\*\*?([^*]+)\*\*?/g, '$1').replace(/\n+/g, ' ').trim().slice(0, 300)
@@ -255,38 +264,55 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                 href={`/news?search=${encodeURIComponent(tag)}`}
                                 className="px-3 py-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/20 hover:border-purple-500/40 text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-105 active:scale-95"
                             >
-                                {tag}
+                                #{tag}
                             </Link>
                         ))}
                     </div>
                     <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tighter text-white">
                         {news.title}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-6 text-zinc-500 border-b border-white/5 pb-8">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            <span className="text-sm font-medium">
-                                {new Date(news.publishedAt).toLocaleDateString('pt-BR', {
-                                    day: '2-digit',
-                                    month: 'long',
-                                    year: 'numeric'
-                                })}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span className="text-sm font-medium">
-                                {readingTime} min de leitura
-                            </span>
-                        </div>
-                        {news.artists.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-8">
+                        <div className="flex flex-wrap items-center gap-6 text-zinc-500">
                             <div className="flex items-center gap-2">
-                                <User className="w-4 h-4" />
+                                <Calendar className="w-4 h-4" />
                                 <span className="text-sm font-medium">
-                                    {news.artists.length} artista{news.artists.length > 1 ? 's' : ''} mencionado{news.artists.length > 1 ? 's' : ''}
+                                    {new Date(news.publishedAt).toLocaleDateString('pt-BR', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric'
+                                    })}
                                 </span>
                             </div>
-                        )}
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                <span className="text-sm font-medium">
+                                    {readingTime} min de leitura
+                                </span>
+                            </div>
+                            {news.artists.length > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4" />
+                                    <span className="text-sm font-medium">
+                                        {news.artists.length} artista{news.artists.length > 1 ? 's' : ''} mencionado{news.artists.length > 1 ? 's' : ''}
+                                    </span>
+                                </div>
+                            )}
+                            {news.source && news.source !== 'HallyuHub' && news.sourceUrl && (
+                                <a
+                                    href={news.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-purple-400 transition-colors"
+                                >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                    Via {news.source}
+                                </a>
+                            )}
+                        </div>
+                        <ShareButtons
+                            title={news.title}
+                            url={`${BASE_URL}/news/${news.id}`}
+                        />
                     </div>
                 </header>
 
@@ -379,7 +405,11 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                             <p className="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors leading-none">
                                                 {artist.nameRomanized}
                                             </p>
-                                            {artist.roles && artist.roles.length > 0 && (
+                                            {artist.memberships[0]?.group?.name ? (
+                                                <p className="text-[11px] text-purple-400/70 mt-0.5 leading-none">
+                                                    {artist.memberships[0].group.name}
+                                                </p>
+                                            ) : artist.roles && artist.roles.length > 0 && (
                                                 <p className="text-[11px] text-zinc-500 mt-0.5">
                                                     {getRoleLabel(artist.roles[0], artist.gender)}
                                                 </p>
@@ -419,13 +449,19 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                                                     </div>
                                                 )}
                                             </div>
-                                            {artist.nameRomanized}
+                                            <span>{artist.nameRomanized}</span>
+                                            {artist.memberships[0]?.group?.name && (
+                                                <span className="text-zinc-600 group-hover:text-zinc-500">· {artist.memberships[0].group.name}</span>
+                                            )}
                                         </Link>
                                     ))}
                                     {secondaryArtists.length > 12 && (
-                                        <span className="flex items-center px-2.5 py-1 rounded-full bg-zinc-900 border border-white/5 text-xs text-zinc-600">
-                                            +{secondaryArtists.length - 12} mais
-                                        </span>
+                                        <Link
+                                            href={`/news?search=${encodeURIComponent(secondaryArtists[0].artist.nameRomanized)}`}
+                                            className="flex items-center px-2.5 py-1 rounded-full bg-zinc-900 border border-white/5 hover:border-purple-500/30 text-xs text-zinc-500 hover:text-purple-400 transition-all"
+                                        >
+                                            +{secondaryArtists.length - 12} mais →
+                                        </Link>
                                     )}
                                 </div>
                             </div>
@@ -439,14 +475,6 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                     format="rectangle"
                     className="mt-10"
                 />
-
-                {/* Compartilhamento */}
-                <div className="mt-12 p-6 rounded-2xl bg-zinc-900/50 border border-white/10">
-                    <ShareButtons
-                        title={news.title}
-                        url={`${BASE_URL}/news/${news.id}`}
-                    />
-                </div>
 
                 {/* Rodapé da Notícia — visível apenas para admins (client-side check) */}
                 <AdminNewsFooter sourceUrl={news.sourceUrl} source={news.source} />
