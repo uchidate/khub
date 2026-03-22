@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { Save, Send, Eye, EyeOff, ArrowLeft, Loader2, CheckCircle, XCircle, Tag, X, Blocks, FileText, Layout } from 'lucide-react'
+import { Save, Send, Eye, ArrowLeft, Loader2, CheckCircle, XCircle, Tag, X, Blocks, FileText, Layout } from 'lucide-react'
 import { BlogBlockEditor } from '@/components/admin/BlogBlockEditor'
 import { SeoChecklist } from '@/components/admin/SeoChecklist'
 import type { BlogBlock, BlogTemplate } from '@/lib/types/blocks'
@@ -13,22 +13,6 @@ import { BLOG_TEMPLATE_BLOCKS, BLOG_TEMPLATE_LABELS } from '@/lib/types/blocks'
 const AUTOSAVE_KEY = 'blog_draft_autosave'
 
 type EditorMode = 'markdown' | 'blocks'
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#039;')
-}
-
-function MarkdownPreview({ content }: { content: string }) {
-  if (!content) return <p className="text-zinc-600 italic">Nada para visualizar ainda...</p>
-  return (
-    <div
-      className="prose prose-invert prose-zinc max-w-none prose-headings:font-bold prose-a:text-purple-400"
-      dangerouslySetInnerHTML={{ __html: escapeHtml(content).replace(/\n/g, '<br/>') }}
-    />
-  )
-}
 
 // ─── Template picker ──────────────────────────────────────────────────────────
 
