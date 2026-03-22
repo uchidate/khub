@@ -998,6 +998,8 @@ model BlogPost {
   title          String
   excerpt        String?        @db.VarChar(600)
   contentMd      String         @db.Text
+  blocks         Json?          // Conteúdo em blocos (quando não-nulo, tem precedência sobre contentMd)
+  template       String?        // 'idol_bio' | 'review' | 'ranking' | 'free'
   coverImageUrl  String?
   status         BlogPostStatus @default(DRAFT)
   featured       Boolean        @default(false)
