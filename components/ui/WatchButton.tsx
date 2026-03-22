@@ -10,10 +10,10 @@ import { useToast } from '@/lib/hooks/useToast'
 import { StarRating } from '@/components/ui/StarRating'
 
 const STATUS_COLORS: Record<WatchStatus, string> = {
-    WANT_TO_WATCH: 'bg-blue-600 hover:bg-blue-500',
-    WATCHING: 'bg-yellow-600 hover:bg-yellow-500',
-    WATCHED: 'bg-green-600 hover:bg-green-500',
-    DROPPED: 'bg-gray-600 hover:bg-gray-500',
+    WANT_TO_WATCH: 'bg-blue-600 hover:bg-blue-500 text-white',
+    WATCHING: 'bg-yellow-600 hover:bg-yellow-500 text-white',
+    WATCHED: 'bg-green-600 hover:bg-green-500 text-white',
+    DROPPED: 'bg-gray-600 hover:bg-gray-500 text-white',
 }
 
 interface WatchButtonProps {
@@ -150,7 +150,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                         {localRating && (
                             <button
                                 onClick={() => setLocalRating(null)}
-                                className="text-muted hover:text-[#e8e8e8] ml-1"
+                                className="text-muted hover:text-foreground ml-1"
                                 title="Limpar avaliação"
                             >
                                 <X size={12} />
@@ -191,7 +191,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                 ref={buttonRef}
                 onClick={handleOpen}
                 disabled={!isLoaded}
-                className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-xs md:text-sm font-semibold text-white transition-colors ${buttonBg} ${!isLoaded ? 'opacity-50 cursor-wait' : ''}`}
+                className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-xs md:text-sm font-semibold transition-colors ${buttonBg} ${!isLoaded ? 'opacity-50 cursor-wait' : ''}`}
                 aria-label={buttonLabel}
             >
                 {buttonIcon ? (
