@@ -12,8 +12,18 @@ const config: Config = {
             fontFamily: {
                 sans: ['var(--font-inter)', 'sans-serif'],
                 display: ['var(--font-outfit)', 'sans-serif'],
+                sora: ['var(--font-sora)', 'sans-serif'],
             },
             colors: {
+                hallyu: {
+                    pink:   '#ff2d78',
+                    'pink-2': '#ff6fa3',
+                    'pink-3': '#fff0f5',
+                    dark:   '#080808',
+                    muted:  '#6b6b6b',
+                    border: '#e8e8e8',
+                    bg:     '#f5f5f7',
+                },
                 // Legacy support (careful refactoring later)
                 purple: {
                     400: '#c084fc',
@@ -53,6 +63,8 @@ const config: Config = {
                 'glow': 'glow 2s ease-in-out infinite alternate',
                 'shimmer': 'shimmer 2s infinite linear',
                 'gradient': 'gradient 8s linear infinite',
+                'home-ticker':  'home-ticker 42s linear infinite',
+                'home-marquee': 'home-marquee 24s linear infinite',
             },
             keyframes: {
                 float: {
@@ -70,7 +82,15 @@ const config: Config = {
                 gradient: {
                     '0%, 100%': { backgroundPosition: '0% 50%' },
                     '50%': { backgroundPosition: '100% 50%' },
-                }
+                },
+                'home-ticker': {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' },
+                },
+                'home-marquee': {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' },
+                },
             }
         },
     },
