@@ -27,8 +27,8 @@ const TYPE_HREF_PREFIX: Record<FavoriteType, string> = {
 const TYPE_BADGE_COLOR: Record<FavoriteType, string> = {
     artist: 'bg-[#ff2d78]',
     production: 'bg-[#ff2d78]',
-    news: 'bg-[#6b6b6b]',
-    group: 'bg-[#080808]',
+    news: 'bg-muted',
+    group: 'bg-foreground',
 }
 
 const TYPE_BADGE_LABEL: Record<FavoriteType, string> = {
@@ -285,7 +285,7 @@ export default function FavoritesPage() {
             {status === 'unauthenticated' && (
                 <div className="bg-surface rounded-2xl border border-border p-12 text-center">
                     <div className="flex flex-col items-center gap-5">
-                        <div className="w-20 h-20 rounded-full bg-[#e8e8e8] flex items-center justify-center">
+                        <div className="w-20 h-20 rounded-full bg-surface border border-border flex items-center justify-center">
                             <LogIn className="w-10 h-10 text-muted" />
                         </div>
                         <div>
@@ -302,7 +302,7 @@ export default function FavoritesPage() {
                             <Link href="/auth/login" className="px-8 py-3 bg-[#ff2d78] hover:opacity-90 text-white rounded-xl font-bold text-sm transition-opacity flex items-center gap-2">
                                 <LogIn className="w-4 h-4" /> Fazer Login
                             </Link>
-                            <Link href="/artists" className="px-6 py-3 bg-[#e8e8e8] hover:bg-[#d0d0d0] text-foreground rounded-xl font-bold text-sm transition-colors">
+                            <Link href="/artists" className="px-6 py-3 bg-surface hover:bg-surface-hover border border-border text-foreground rounded-xl font-bold text-sm transition-colors">
                                 Explorar Artistas
                             </Link>
                         </div>
@@ -317,7 +317,7 @@ export default function FavoritesPage() {
                     {counts.all === 0 && (
                         <div className="bg-surface rounded-2xl border border-border p-12 text-center">
                             <div className="flex flex-col items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-[#e8e8e8] flex items-center justify-center">
+                                <div className="w-16 h-16 rounded-full bg-surface border border-border flex items-center justify-center">
                                     <Star className="w-8 h-8 text-muted" />
                                 </div>
                                 <div>
@@ -328,8 +328,8 @@ export default function FavoritesPage() {
                                 </div>
                                 <div className="flex flex-wrap gap-3 justify-center">
                                     <Link href="/artists" className="px-5 py-2.5 bg-[#ff2d78] text-white rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Ver Artistas</Link>
-                                    <Link href="/productions" className="px-5 py-2.5 bg-[#e8e8e8] text-foreground hover:bg-[#d0d0d0] rounded-lg font-bold text-sm transition-colors">Ver Produções</Link>
-                                    <Link href="/news" className="px-5 py-2.5 bg-[#e8e8e8] text-foreground hover:bg-[#d0d0d0] rounded-lg font-bold text-sm transition-colors">Ver Notícias</Link>
+                                    <Link href="/productions" className="px-5 py-2.5 bg-surface hover:bg-surface-hover border border-border text-foreground rounded-lg font-bold text-sm transition-colors">Ver Produções</Link>
+                                    <Link href="/news" className="px-5 py-2.5 bg-surface hover:bg-surface-hover border border-border text-foreground rounded-lg font-bold text-sm transition-colors">Ver Notícias</Link>
                                 </div>
                             </div>
                         </div>
@@ -354,13 +354,13 @@ export default function FavoritesPage() {
                                             className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all ${
                                                 isActive
                                                     ? 'bg-[#ff2d78] text-white'
-                                                    : 'bg-surface text-muted hover:bg-[#e8e8e8] hover:text-foreground border border-border'
+                                                    : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground border border-border'
                                             }`}
                                         >
                                             <Icon className="w-3.5 h-3.5" />
                                             {tab.label}
                                             <span className={`px-1.5 py-0.5 rounded-full text-xs font-black ${
-                                                isActive ? 'bg-white/20 text-white' : 'bg-[#e8e8e8] text-muted'
+                                                isActive ? 'bg-white/20 text-white' : 'bg-surface-hover text-muted'
                                             }`}>{count}</span>
                                         </button>
                                     )

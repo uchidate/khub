@@ -67,9 +67,9 @@ export function NotificationSettings({
         <form onSubmit={handleSubmit} className="space-y-8">
             {/* Info sobre artistas favoritos */}
             {favoriteArtistsCount > 0 ? (
-                <div className="p-6 rounded-xl bg-[#ff2d78]/5 border border-[#ff2d78]/20">
+                <div className="p-6 rounded-xl bg-accent/5 border border-accent/20">
                     <div className="flex items-start gap-4">
-                        <Users className="w-6 h-6 text-[#ff2d78] flex-shrink-0 mt-1" />
+                        <Users className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
                         <div>
                             <h3 className="font-bold text-foreground mb-2">
                                 Você segue {favoriteArtistsCount} artista{favoriteArtistsCount > 1 ? 's' : ''}
@@ -97,7 +97,7 @@ export function NotificationSettings({
                             </p>
                             <a
                                 href="/artists"
-                                className="inline-flex items-center gap-2 text-sm text-[#ff2d78] hover:opacity-80 transition-opacity"
+                                className="inline-flex items-center gap-2 text-sm text-accent hover:opacity-80 transition-opacity"
                             >
                                 Explorar Artistas →
                             </a>
@@ -109,7 +109,7 @@ export function NotificationSettings({
             {/* Notificações Instantâneas */}
             <div className="p-6 rounded-xl bg-surface border border-border">
                 <div className="flex items-start gap-4 mb-4">
-                    <Bell className="w-6 h-6 text-[#ff2d78] flex-shrink-0 mt-1" />
+                    <Bell className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
                     <div className="flex-1">
                         <h3 className="font-bold text-foreground mb-2">Notificações Instantâneas</h3>
                         <p className="text-sm text-muted mb-4">
@@ -123,7 +123,7 @@ export function NotificationSettings({
                                 onChange={(e) =>
                                     setFormData({ ...formData, emailOnNewNews: e.target.checked })
                                 }
-                                className="w-5 h-5 rounded border-border bg-background text-[#ff2d78] focus:ring-2 focus:ring-[#ff2d78]/30"
+                                className="w-5 h-5 rounded border-border bg-background text-accent focus:ring-2 focus:ring-[#ff2d78]/30"
                             />
                             <span className="text-sm text-foreground">
                                 Ativar notificações por email
@@ -136,7 +136,7 @@ export function NotificationSettings({
             {/* Email Digest */}
             <div className="p-6 rounded-xl bg-surface border border-border">
                 <div className="flex items-start gap-4 mb-4">
-                    <Mail className="w-6 h-6 text-[#ff2d78] flex-shrink-0 mt-1" />
+                    <Mail className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
                     <div className="flex-1">
                         <h3 className="font-bold text-foreground mb-2">Resumo de Notícias</h3>
                         <p className="text-sm text-muted mb-6">
@@ -155,7 +155,7 @@ export function NotificationSettings({
                                             emailDigestEnabled: e.target.checked,
                                         })
                                     }
-                                    className="w-5 h-5 rounded border-border bg-background text-[#ff2d78] focus:ring-2 focus:ring-[#ff2d78]/30"
+                                    className="w-5 h-5 rounded border-border bg-background text-accent focus:ring-2 focus:ring-[#ff2d78]/30"
                                 />
                                 <span className="text-sm text-foreground">
                                     Ativar resumo de notícias
@@ -225,7 +225,7 @@ export function NotificationSettings({
             {/* Filtros */}
             <div className="p-6 rounded-xl bg-surface border border-border">
                 <div className="flex items-start gap-4 mb-4">
-                    <Users className="w-6 h-6 text-[#ff2d78] flex-shrink-0 mt-1" />
+                    <Users className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
                     <div className="flex-1">
                         <h3 className="font-bold text-foreground mb-2">Filtros de Notificação</h3>
                         <p className="text-sm text-muted mb-4">
@@ -239,7 +239,7 @@ export function NotificationSettings({
                                 onChange={(e) =>
                                     setFormData({ ...formData, onlyFavoriteArtists: e.target.checked })
                                 }
-                                className="w-5 h-5 rounded border-border bg-background text-[#ff2d78] focus:ring-2 focus:ring-[#ff2d78]/30"
+                                className="w-5 h-5 rounded border-border bg-background text-accent focus:ring-2 focus:ring-[#ff2d78]/30"
                             />
                             <span className="text-sm text-foreground">
                                 Notificar apenas sobre artistas que sigo
@@ -267,7 +267,7 @@ export function NotificationSettings({
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#ff2d78] text-white font-bold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-6 py-3 bg-accent text-white font-bold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isLoading ? (
                         <>

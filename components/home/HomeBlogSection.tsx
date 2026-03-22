@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 interface BlogPost {
     id: string
@@ -49,17 +50,10 @@ export function HomeBlogSection({ posts }: HomeBlogSectionProps) {
             <section className="border-b border-border bg-background">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-5">
-                        <h2 className="text-[18px] font-extrabold tracking-[-0.04em] text-foreground">
-                            Do nosso <span className="text-accent">blog</span>
-                        </h2>
-                        <Link
-                            href="/blog"
-                            className="text-[11px] font-bold text-muted hover:text-accent transition-colors"
-                        >
-                            Ver todos →
-                        </Link>
-                    </div>
+                    <SectionTitleBar
+                        title={<>Do nosso <span className="text-accent">blog</span></>}
+                        href="/blog"
+                    />
 
                     {safePosts.length > 0 ? (
                         <div

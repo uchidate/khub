@@ -58,7 +58,7 @@ export function CookieBanner() {
                         <div className="flex gap-2">
                             <button
                                 onClick={acceptNecessary}
-                                className="flex-1 py-2.5 text-sm font-semibold text-foreground bg-surface hover:bg-[#e8e8e8] rounded-xl transition-colors border border-border"
+                                className="flex-1 py-2.5 text-sm font-semibold text-foreground bg-surface hover:bg-surface-hover rounded-xl transition-colors border border-border"
                             >
                                 Apenas essenciais
                             </button>
@@ -125,7 +125,7 @@ export function CookieBanner() {
                             <div className="flex gap-2.5">
                                 <button
                                     onClick={acceptNecessary}
-                                    className="flex-1 py-2.5 text-xs font-semibold text-foreground bg-surface hover:bg-[#e8e8e8] rounded-xl transition-all border border-border"
+                                    className="flex-1 py-2.5 text-xs font-semibold text-foreground bg-surface hover:bg-surface-hover rounded-xl transition-all border border-border"
                                 >
                                     Apenas essenciais
                                 </button>

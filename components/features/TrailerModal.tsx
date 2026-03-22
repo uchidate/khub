@@ -42,7 +42,7 @@ export function TrailerModal({ trailerUrl, title }: TrailerModalProps) {
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 md:px-6 md:py-3 bg-background text-black font-black text-xs md:text-sm uppercase tracking-tighter rounded-full hover:bg-[#f0f0f0] transition-all hover:scale-105"
+                className="flex items-center gap-1.5 px-3 py-2 md:px-6 md:py-3 bg-background text-black font-black text-xs md:text-sm uppercase tracking-tighter rounded-full hover:bg-surface-hover transition-all hover:scale-105"
             >
                 <Play className="w-3 h-3 md:w-4 md:h-4 fill-current" />
                 Assistir Trailer
@@ -59,7 +59,7 @@ export function TrailerModal({ trailerUrl, title }: TrailerModalProps) {
                             />
 
                             {/* Modal Content */}
-                            <div className="relative w-full max-w-5xl aspect-video bg-[#080808] rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-scale-in">
+                            <div className="relative w-full max-w-5xl aspect-video bg-featured rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-scale-in">
                                 <button
                                     onClick={() => setIsOpen(false)}
                                     aria-label="Fechar trailer"

@@ -4,8 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Film } from 'lucide-react'
+import { Film } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PaginationControls } from '@/components/ui/PaginationControls'
+import { FilterPills } from '@/components/ui/FilterPills'
 
 interface Production {
     id: string
@@ -69,7 +72,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
 
     return (
         <Link href={`/productions/${prod.id}`} className="group block">
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-surface border border-border group-hover:border-[#ff2d78]/30 transition-colors mb-3">
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-surface border border-border group-hover:border-accent/30 transition-colors mb-3">
                 {imageUrl ? (
                     <Image
                         src={imageUrl}
@@ -80,7 +83,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                        <Film className="w-10 h-10 text-[#e8e8e8]" />
+                        <Film className="w-10 h-10 text-border" />
                     </div>
                 )}
                 {prod.ageRating && (
@@ -97,7 +100,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
                 )}
             </div>
             <div>
-                <h3 className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-snug">{prod.titlePt}</h3>
+                <h3 className="text-sm font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prod.titlePt}</h3>
                 {subtitleParts.length > 0 && (
                     <p className="text-xs text-muted mt-0.5">{subtitleParts.join(' · ')}</p>
                 )}
@@ -114,9 +117,9 @@ function ProductionsSkeleton() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 9 }).map((_, i) => (
                 <div key={i} className="animate-pulse">
-                    <div className="rounded-xl bg-[#f0f0f0] aspect-video mb-3" />
-                    <div className="h-4 bg-[#f0f0f0] rounded w-3/4 mb-1.5" />
-                    <div className="h-3 bg-[#f0f0f0] rounded w-1/3" />
+                    <div className="rounded-xl bg-skeleton aspect-video mb-3" />
+                    <div className="h-4 bg-skeleton rounded w-3/4 mb-1.5" />
+                    <div className="h-3 bg-skeleton rounded w-1/3" />
                 </div>
             ))}
         </div>
@@ -140,8 +143,6 @@ export function ProductionsList() {
     const [isLoading, setIsLoading] = useState(true)
     const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
     const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
-    const [pageJumpInput, setPageJumpInput] = useState('')
-    const [isEditingPage, setIsEditingPage] = useState(false)
     const [typeCounts, setTypeCounts] = useState<Record<string, number> | null>(null)
 
     useEffect(() => {
@@ -243,7 +244,7 @@ export function ProductionsList() {
                                 onClick={() => handleType(opt.value)}
                                 className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
                                     filters.type === opt.value
-                                        ? 'bg-[#ff2d78] text-white'
+                                        ? 'bg-accent text-white'
                                         : 'text-muted hover:text-foreground'
                                 }`}
                             >
@@ -258,21 +259,12 @@ export function ProductionsList() {
                     </div>
 
                     {/* Sort */}
-                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl overflow-x-auto sm:ml-auto flex-shrink-0">
-                        {SORT_OPTIONS.map(opt => (
-                            <button
-                                key={opt.value}
-                                onClick={() => handleSort(opt.value)}
-                                className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
-                                    filters.sortBy === opt.value
-                                        ? 'bg-[#ff2d78] text-white'
-                                        : 'text-muted hover:text-foreground'
-                                }`}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>
+                    <FilterPills
+                        options={SORT_OPTIONS}
+                        value={filters.sortBy}
+                        onChange={handleSort}
+                        className="sm:ml-auto flex-shrink-0"
+                    />
                 </div>
 
                 {/* Age Rating filter */}
@@ -286,7 +278,7 @@ export function ProductionsList() {
                                 filters.ageRating === opt.value
                                     ? opt.color
                                         ? `${opt.color} text-white ring-2 ring-white/20`
-                                        : 'bg-[#ff2d78] text-white'
+                                        : 'bg-accent text-white'
                                     : 'bg-background border border-border text-muted hover:text-foreground'
                             }`}
                         >
@@ -306,7 +298,7 @@ export function ProductionsList() {
                                 {pagination.total} {pagination.total !== 1 ? 'produções' : 'produção'} encontrada{pagination.total !== 1 ? 's' : ''}
                             </p>
                         )}
-                        <button onClick={clearAll} className="text-xs text-[#ff2d78] hover:text-[#ff2d78]/70 transition-colors">
+                        <button onClick={clearAll} className="text-xs text-accent hover:text-accent/70 transition-colors">
                             Limpar filtros
                         </button>
                     </div>
@@ -318,14 +310,12 @@ export function ProductionsList() {
 
             {/* Empty */}
             {!isLoading && productions.length === 0 && (
-                <div className="text-center py-20">
-                    <Film className="w-12 h-12 text-[#e8e8e8] mx-auto mb-4" />
-                    <p className="text-muted font-bold text-lg mb-2">Nenhuma produção encontrada</p>
-                    <p className="text-muted text-sm mb-4">Tente ajustar os filtros de busca</p>
-                    <button onClick={clearAll} className="text-xs text-[#ff2d78] hover:text-[#ff2d78]/70 transition-colors">
-                        Limpar filtros
-                    </button>
-                </div>
+                <EmptyState
+                    icon={<Film className="w-12 h-12" />}
+                    title="Nenhuma produção encontrada"
+                    description="Tente ajustar os filtros de busca"
+                    action={{ label: 'Limpar filtros', onClick: clearAll }}
+                />
             )}
 
             {/* Grid */}
@@ -337,78 +327,14 @@ export function ProductionsList() {
                         ))}
                     </div>
 
-                    {/* Pagination */}
-                    {pagination.pages > 0 && (
-                        <div className="mt-10 flex flex-col items-center gap-3">
-                            {/* Per-page selector */}
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-muted">Por página:</span>
-                                {[50, 100, 150].map(n => (
-                                    <button
-                                        key={n}
-                                        onClick={() => handlePerPage(n)}
-                                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${getPerPage() === n ? 'bg-[#ff2d78] text-white' : 'bg-surface text-muted hover:text-foreground'}`}
-                                    >
-                                        {n}
-                                    </button>
-                                ))}
-                                <span className="text-xs text-muted ml-1">({pagination.total.toLocaleString('pt-BR')} total)</span>
-                            </div>
-                            {/* Nav */}
-                            {pagination.pages > 1 && (
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handlePage(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" />
-                                        <span className="hidden md:inline">Anterior</span>
-                                    </button>
-                                    <div className="flex items-center gap-1.5">
-                                        {isEditingPage ? (
-                                            <input
-                                                autoFocus
-                                                type="number"
-                                                min={1}
-                                                max={pagination.pages}
-                                                value={pageJumpInput}
-                                                onChange={e => setPageJumpInput(e.target.value)}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter') {
-                                                        const p = Math.min(pagination.pages, Math.max(1, parseInt(pageJumpInput) || currentPage))
-                                                        handlePage(p)
-                                                        setIsEditingPage(false)
-                                                        setPageJumpInput('')
-                                                    }
-                                                    if (e.key === 'Escape') { setIsEditingPage(false); setPageJumpInput('') }
-                                                }}
-                                                onBlur={() => { setIsEditingPage(false); setPageJumpInput('') }}
-                                                className="w-12 text-center px-2 py-1 bg-background border border-[#ff2d78] rounded text-sm text-foreground focus:outline-none"
-                                            />
-                                        ) : (
-                                            <button
-                                                onClick={() => { setIsEditingPage(true); setPageJumpInput(String(currentPage)) }}
-                                                className="px-2 py-1 rounded text-sm font-bold text-foreground bg-surface hover:bg-[#e8e8e8] hover:text-[#ff2d78] transition-colors min-w-[2rem] text-center"
-                                                title="Clique para ir a uma página específica"
-                                            >
-                                                {currentPage}
-                                            </button>
-                                        )}
-                                        <span className="text-sm text-muted">/ {pagination.pages}</span>
-                                    </div>
-                                    <button
-                                        onClick={() => handlePage(currentPage + 1)}
-                                        disabled={currentPage === pagination.pages}
-                                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-[#ff2d78] hover:text-[#ff2d78] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        <span className="hidden md:inline">Próxima</span>
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <PaginationControls
+                        currentPage={currentPage}
+                        totalPages={pagination.pages}
+                        perPage={getPerPage()}
+                        total={pagination.total}
+                        onPageChange={handlePage}
+                        onPerPageChange={handlePerPage}
+                    />
                 </>
             )}
         </div>

@@ -80,7 +80,7 @@ export function GlobalSearch() {
                             <button
                                 type="button"
                                 onClick={clearSearch}
-                                className="p-1 hover:bg-[#e8e8e8] rounded-full transition-colors"
+                                className="p-1 hover:bg-surface-hover rounded-full transition-colors"
                                 aria-label="Limpar busca"
                             >
                                 <X className="w-4 h-4 text-muted" />
@@ -280,11 +280,11 @@ export function GlobalSearch() {
                     {/* Empty State */}
                     {!isLoading && !hasResults && (
                         <div className="py-12 text-center">
-                            <Search className="w-10 h-10 text-[#e8e8e8] mx-auto mb-3" />
+                            <Search className="w-10 h-10 text-border mx-auto mb-3" />
                             <p className="text-muted text-sm">
                                 Nenhum resultado para &quot;{query}&quot;
                             </p>
-                            <p className="text-[#999] text-xs mt-1">
+                            <p className="text-muted text-xs mt-1">
                                 Tente buscar por artistas, notícias ou produções
                             </p>
                         </div>

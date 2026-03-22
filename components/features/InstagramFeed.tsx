@@ -80,7 +80,7 @@ export function InstagramFeed({ posts, instagramUrl }: InstagramFeedProps) {
                                         {post.caption}
                                     </p>
                                 )}
-                                <span className="text-[#999] text-[9px] font-bold">
+                                <span className="text-muted text-[9px] font-bold">
                                     {timeAgo(post.postedAt)} atrás
                                 </span>
                             </div>

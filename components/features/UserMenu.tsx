@@ -71,7 +71,7 @@ export function UserMenu() {
               </Link>
               {isAdmin && (
                 <Link href="/admin" onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#ff2d78] hover:bg-[#fff0f5] transition-colors">
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#ff2d78] hover:bg-accent-soft transition-colors">
                   <Settings size={14} />
                   Painel Admin
                 </Link>

@@ -156,14 +156,14 @@ export default async function SettingsPage() {
             <div className="space-y-4">
               <Link
                 href="/auth/forgot-password"
-                className="block w-full px-6 py-3 bg-surface text-foreground font-medium rounded-lg hover:bg-[#e8e8e8] transition-colors text-center"
+                className="block w-full px-6 py-3 bg-surface text-foreground font-medium rounded-lg hover:bg-surface-hover transition-colors text-center"
               >
                 Alterar Senha
               </Link>
-              <button className="w-full px-6 py-3 bg-surface text-foreground font-medium rounded-lg hover:bg-[#e8e8e8] transition-colors">
+              <button className="w-full px-6 py-3 bg-surface text-foreground font-medium rounded-lg hover:bg-surface-hover transition-colors">
                 Autenticação de Dois Fatores
               </button>
-              <button className="w-full px-6 py-3 bg-surface text-foreground font-medium rounded-lg hover:bg-[#e8e8e8] transition-colors">
+              <button className="w-full px-6 py-3 bg-surface text-foreground font-medium rounded-lg hover:bg-surface-hover transition-colors">
                 Sessões Ativas
               </button>
             </div>

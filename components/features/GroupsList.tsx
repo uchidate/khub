@@ -7,6 +7,8 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { Users, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { FilterPills } from '@/components/ui/FilterPills'
 
 type Group = {
     id: string
@@ -110,55 +112,38 @@ export function GroupsList() {
                         className="flex-1"
                     />
 
-                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl">
-                        {(['all', 'active', 'disbanded'] as const).map(s => (
-                            <button
-                                key={s}
-                                onClick={() => setStatusFilter(s)}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${statusFilter === s ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
-                            >
-                                {s === 'all' ? 'Todos' : s === 'active' ? 'Ativos' : 'Disbandados'}
-                            </button>
-                        ))}
-                    </div>
+                    <FilterPills
+                        options={[
+                            { value: 'all', label: 'Todos' },
+                            { value: 'active', label: 'Ativos' },
+                            { value: 'disbanded', label: 'Disbandados' },
+                        ]}
+                        value={statusFilter}
+                        onChange={v => setStatusFilter(v as 'all' | 'active' | 'disbanded')}
+                    />
                 </div>
 
                 {/* Geração + Ordenação */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl overflow-x-auto">
-                        <button
-                            onClick={() => setGenerationFilter('all')}
-                            className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === 'all' ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
-                        >
-                            Toda Geração
-                        </button>
-                        {GENERATIONS.map(g => (
-                            <button
-                                key={g.label}
-                                onClick={() => setGenerationFilter(g.label)}
-                                className={`px-3 py-2 rounded-lg text-xs font-black whitespace-nowrap transition-all flex-shrink-0 ${generationFilter === g.label ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
-                            >
-                                {g.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl ml-auto">
-                        {([
-                            ['popular', 'Populares'],
-                            ['name', 'A-Z'],
-                            ['debut', 'Estreia'],
-                            ['members', 'Membros'],
-                        ] as const).map(([val, label]) => (
-                            <button
-                                key={val}
-                                onClick={() => setSortBy(val)}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${sortBy === val ? 'bg-[#ff2d78] text-white' : 'text-muted hover:text-foreground'}`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
+                    <FilterPills
+                        options={[
+                            { value: 'all', label: 'Toda Geração' },
+                            ...GENERATIONS.map(g => ({ value: g.label, label: g.label })),
+                        ]}
+                        value={generationFilter}
+                        onChange={setGenerationFilter}
+                    />
+                    <FilterPills
+                        options={[
+                            { value: 'popular', label: 'Populares' },
+                            { value: 'name', label: 'A-Z' },
+                            { value: 'debut', label: 'Estreia' },
+                            { value: 'members', label: 'Membros' },
+                        ]}
+                        value={sortBy}
+                        onChange={v => setSortBy(v as typeof sortBy)}
+                        className="ml-auto"
+                    />
                 </div>
 
                 {hasActiveFilters && (
@@ -168,7 +153,7 @@ export function GroupsList() {
                         </p>
                         <button
                             onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }}
-                            className="text-xs text-[#ff2d78] hover:text-[#ff2d78] transition-colors"
+                            className="text-xs text-accent hover:text-accent transition-colors"
                         >
                             Limpar filtros
                         </button>
@@ -179,15 +164,13 @@ export function GroupsList() {
             {/* Grid */}
             {groups.length === 0 ? (
                 <div className="flex items-center justify-center py-32">
-                    <div className="w-8 h-8 border-2 border-[#ff2d78] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="text-center py-20">
-                    <p className="text-muted font-bold">Nenhum grupo encontrado</p>
-                    <button onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }} className="mt-3 text-xs text-[#ff2d78] hover:text-[#ff2d78] transition-colors">
-                        Limpar filtros
-                    </button>
-                </div>
+                <EmptyState
+                    title="Nenhum grupo encontrado"
+                    action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') } }}
+                />
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                     {filtered.map((group, index) => {
@@ -208,13 +191,13 @@ export function GroupsList() {
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center bg-[#f0f0f0]">
-                                                <span className="text-3xl font-black text-[#999] group-hover:text-[#ff2d78] transition-colors">
+                                                <span className="text-3xl font-black text-muted group-hover:text-accent transition-colors">
                                                     {group.name[0]}
                                                 </span>
                                             </div>
                                         )}
                                         {group.disbandDate && (
-                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-[#999] uppercase tracking-wider">
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-muted uppercase tracking-wider">
                                                 Disbandado
                                             </div>
                                         )}
@@ -226,7 +209,7 @@ export function GroupsList() {
                                         )}
                                     </div>
                                     <div>
-                                        <h3 className="font-black text-foreground text-sm leading-tight group-hover:text-[#ff2d78] transition-colors">{group.name}</h3>
+                                        <h3 className="font-black text-foreground text-sm leading-tight group-hover:text-accent transition-colors">{group.name}</h3>
                                         {group.nameHangul && (
                                             <p className="text-xs text-muted font-medium mt-0.5">{group.nameHangul}</p>
                                         )}
@@ -238,7 +221,7 @@ export function GroupsList() {
                                                 <span className="text-[10px] font-bold text-[#2a2a2a]">{gen}</span>
                                             )}
                                             {group.agency && (
-                                                <span className="text-[10px] font-bold text-[#ff2d78]/80 truncate max-w-[100px]">{group.agency.name}</span>
+                                                <span className="text-[10px] font-bold text-accent/80 truncate max-w-[100px]">{group.agency.name}</span>
                                             )}
                                         </div>
                                     </div>

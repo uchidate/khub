@@ -12,8 +12,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export function Button({ variant = 'primary', loading, children, disabled, className = '', ...props }: ButtonProps) {
   const baseClass = 'px-6 py-3 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden group hover:scale-[1.02] active:scale-[0.98]'
   const variantClass = {
-    primary: 'bg-background text-black hover:bg-[#f0f0f0] shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]',
-    secondary: 'bg-[#080808] border border-[#1a1a1a] text-white hover:bg-[#1a1a1a] hover:border-[#2a2a2a]',
+    primary: 'bg-background text-foreground hover:bg-surface-hover shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]',
+    secondary: 'bg-featured border border-border text-white hover:bg-featured/80',
     outline: 'border-2 border-[#ff2d78] text-[#ff2d78] hover:bg-[#ff2d78]/10'
   }[variant]
 
