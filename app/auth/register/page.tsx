@@ -6,6 +6,16 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 
+function OrbitalMark() {
+  return (
+    <svg viewBox="0 0 38 38" fill="none" width={30} height={30}>
+      <rect x="5"  y="8" width="6" height="22" rx="3" fill="currentColor"/>
+      <rect x="27" y="8" width="6" height="22" rx="3" fill="currentColor"/>
+      <path d="M11 19 Q19 13 27 19" stroke="#ff2d78" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <circle cx="19" cy="13.5" r="2.5" fill="#ff2d78"/>
+    </svg>
+  )
+}
 
 function GoogleIcon() {
   return (
@@ -41,11 +51,11 @@ function FieldInput({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[13px] font-semibold text-[#080808] mb-1.5">
+      <label htmlFor={id} className="block text-[13px] font-semibold text-foreground mb-1.5">
         {label}
       </label>
       <div className="relative">
-        <Icon className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6b6b6b] pointer-events-none z-10" size={16} />
+        <Icon className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" size={16} />
         <input
           id={id}
           name={name}
@@ -54,7 +64,7 @@ function FieldInput({
           onChange={onChange}
           required
           disabled={disabled}
-          className="w-full pl-4 pr-10 py-3 text-[14px] border border-[#e8e8e8] rounded-xl text-[#080808] placeholder:text-[#6b6b6b]/60 focus:border-[#ff2d78] outline-none transition-colors disabled:opacity-50"
+          className="w-full pl-4 pr-10 py-3 text-[14px] border border-border rounded-xl text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
           placeholder={placeholder}
         />
       </div>
@@ -125,17 +135,17 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="max-w-sm w-full text-center px-6">
-          <div className="border border-[#e8e8e8] rounded-2xl p-10">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5 ring-1 ring-green-200">
-              <CheckCircle className="text-green-600" size={32} />
+          <div className="border border-border rounded-2xl p-10 bg-background">
+            <div className="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
+              <CheckCircle className="text-green-500" size={32} />
             </div>
-            <h2 className="text-2xl font-black text-[#080808] mb-2">Conta criada!</h2>
-            <p className="text-[#6b6b6b] text-sm mb-6">Entrando automaticamente...</p>
+            <h2 className="text-2xl font-black text-foreground mb-2">Conta criada!</h2>
+            <p className="text-muted text-sm mb-6">Entrando automaticamente...</p>
             <div className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-[#ff2d78]/30 border-t-[#ff2d78] rounded-full animate-spin" />
-              <span className="text-sm text-[#6b6b6b]">Redirecionando</span>
+              <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+              <span className="text-sm text-muted">Redirecionando</span>
             </div>
           </div>
         </div>
@@ -144,27 +154,27 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/">
-            <span className="text-4xl font-black tracking-tighter uppercase italic select-none">
-              <span className="text-[#080808]">HALLYU</span>
-              <span className="text-[#ff2d78]">HUB</span>
+        <div className="flex items-center justify-center gap-2.5 mb-8">
+          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
+            <OrbitalMark />
+            <span className="text-xl font-black tracking-[-0.02em] text-foreground">
+              Hallyu<span className="text-[#ff2d78]">Hub</span>
             </span>
           </Link>
         </div>
 
         {/* Card */}
-        <div className="border border-[#e8e8e8] rounded-2xl p-8">
+        <div className="border border-border rounded-2xl p-8 bg-background">
           <div className="mb-6">
-            <h2 className="text-2xl font-black text-[#080808]">Criar conta</h2>
-            <p className="text-[#6b6b6b] mt-1 text-sm">É grátis e leva menos de 1 minuto</p>
+            <h2 className="text-2xl font-black text-foreground">Criar conta</h2>
+            <p className="text-muted mt-1 text-sm">É grátis e leva menos de 1 minuto</p>
           </div>
 
           {error && (
-            <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-600">
+            <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400">
               <AlertCircle size={16} className="shrink-0" />
               <p className="text-sm">{error}</p>
             </div>
@@ -173,7 +183,7 @@ export default function RegisterPage() {
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full mb-5 py-3 bg-white border border-[#e8e8e8] text-[#080808] text-sm font-semibold rounded-xl hover:bg-[#f5f5f7] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2.5"
+            className="w-full mb-5 py-3 bg-background border border-border text-foreground text-sm font-semibold rounded-xl hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2.5"
           >
             <GoogleIcon />
             Continuar com Google
@@ -181,10 +191,10 @@ export default function RegisterPage() {
 
           <div className="relative mb-5">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#e8e8e8]" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center">
-              <span className="px-3 bg-white text-[#6b6b6b] text-xs">ou cadastre com email</span>
+              <span className="px-3 bg-background text-muted text-xs">ou cadastre com email</span>
             </div>
           </div>
 
@@ -213,17 +223,17 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-[#080808] text-white text-sm font-semibold rounded-full hover:bg-[#ff2d78] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
+              className="w-full py-3 bg-foreground text-background text-sm font-semibold rounded-full hover:bg-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
             >
               {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
               ) : (
                 'Criar conta'
               )}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-[#6b6b6b]">
+          <p className="mt-6 text-center text-sm text-muted">
             Já tem uma conta?{' '}
             <Link href="/auth/login" className="text-[#ff2d78] hover:underline font-medium transition-colors">
               Entrar
