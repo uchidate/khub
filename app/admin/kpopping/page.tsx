@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { AdminButton } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
@@ -435,6 +436,7 @@ function IdolCard({
 }: {
   idol: IdolItem
 }) {
+  const toast = useAdminToast()
   const [pending, setPending] = useState(false)
   const [showTMDB, setShowTMDB] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
@@ -513,7 +515,7 @@ function IdolCard({
       if (!res.ok) throw new Error(data.error || 'Erro ao criar cantor')
       await doAction('confirm', data.id)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao criar cantor')
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar cantor')
       setPending(false)
     }
   }
@@ -703,6 +705,7 @@ function IdolCard({
 // ─── Group Card ────────────────────────────────────────────────────────────────
 
 function GroupCard({ group }: { group: GroupItem }) {
+  const toast = useAdminToast()
   const [pending, setPending] = useState(false)
   const [localGroup, setLocalGroup] = useState(group.musicalGroup)
   const [localGroupId, setLocalGroupId] = useState(group.musicalGroupId)
@@ -765,7 +768,7 @@ function GroupCard({ group }: { group: GroupItem }) {
       // Auto-confirm the match with the newly created group
       await doAction('confirm', data.id)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao criar grupo')
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar grupo')
       setPending(false)
     }
   }

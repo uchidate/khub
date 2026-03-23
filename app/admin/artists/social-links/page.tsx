@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState, AdminModalOverlay } from '@/components/admin'
+import { AdminEmptyState, AdminModalOverlay, StatCard } from '@/components/admin'
 import { Instagram, Twitter, Youtube, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
@@ -732,18 +732,9 @@ export default function SocialLinksAdminPage() {
                     {/* Stats acumuladas */}
                     {syncStats && (
                         <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-black/30 border border-green-500/20 rounded-lg p-2 text-center">
-                                <p className="text-xl font-black text-green-400">{syncStats.found}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Encontrados</p>
-                            </div>
-                            <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-2 text-center">
-                                <p className="text-xl font-black text-yellow-400">{syncStats.notFound}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Não encontrados</p>
-                            </div>
-                            <div className="bg-black/30 border border-red-500/20 rounded-lg p-2 text-center">
-                                <p className="text-xl font-black text-red-400">{syncStats.errors}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
-                            </div>
+                            <StatCard label="Encontrados" value={syncStats.found} color="text-green-400" />
+                            <StatCard label="Não encontrados" value={syncStats.notFound} color="text-yellow-400" />
+                            <StatCard label="Erros" value={syncStats.errors} color="text-red-400" />
                         </div>
                     )}
 
@@ -762,7 +753,7 @@ export default function SocialLinksAdminPage() {
 
                     {/* Log */}
                     {log.length > 0 && (
-                        <div className="bg-black/40 rounded-xl p-4 max-h-64 overflow-y-auto font-mono text-xs space-y-1 border border-border">
+                        <div className="bg-background rounded-xl p-4 max-h-64 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                             {log.map((line, i) => (
                                 <div key={i} className={lineColor(line.type)}>{line.text}</div>
                             ))}

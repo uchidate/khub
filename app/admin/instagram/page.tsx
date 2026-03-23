@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
@@ -25,6 +26,7 @@ function timeAgo(date: string): string {
 const LIMIT = 50
 
 export default function InstagramAdminPage() {
+    const toast = useAdminToast()
     const [artists, setArtists] = useState<Artist[]>([])
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState<'all' | 'configured' | 'missing'>('all')
@@ -94,7 +96,7 @@ export default function InstagramAdminPage() {
             setSaved(artistId)
             setTimeout(() => setSaved(null), 2000)
         } catch {
-            alert('Erro ao salvar feed URL')
+            toast.error('Erro ao salvar feed URL')
         } finally {
             setSaving(null)
         }

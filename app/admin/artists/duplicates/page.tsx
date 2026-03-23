@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban, Zap, UserPlus } from 'lucide-react'
 import { AdminEmptyState, AdminButton, AdminLinkButton } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import Image from 'next/image'
 
 interface ArtistCard {
@@ -178,6 +179,7 @@ function EnrichmentBadge({ a, b }: { a: ArtistCard; b: ArtistCard }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DuplicatesPage() {
+    const toast = useAdminToast()
     const [pairs, setPairs] = useState<DuplicatePair[]>([])
     const [loading, setLoading] = useState(true)
     const [total, setTotal] = useState(0)
@@ -260,7 +262,7 @@ export default function DuplicatesPage() {
             })
             if (!res.ok) {
                 const err = await res.json()
-                alert(err.error || 'Erro ao mesclar')
+                toast.error(err.error || 'Erro ao mesclar')
                 return
             }
             const affected = pairs.filter(p =>

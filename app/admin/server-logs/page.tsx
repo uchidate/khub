@@ -356,7 +356,7 @@ export default function ServerLogsPage() {
                 {/* Count */}
                 <p className="text-xs text-muted">
                     {total.toLocaleString('pt-BR')} registro{total !== 1 ? 's' : ''}
-                    {search && <span className="ml-1 text-purple-400">com &ldquo;{search}&rdquo;</span>}
+                    {search && <span className="ml-1 text-accent">com &ldquo;{search}&rdquo;</span>}
                     {pages > 1 && <span> · página {page} de {pages}</span>}
                 </p>
 
@@ -433,7 +433,7 @@ export default function ServerLogsPage() {
 
                                 {/* Expanded */}
                                 {expanded === log.id && (
-                                    <div className="border-t border-border px-4 py-4 bg-black/20 space-y-3">
+                                    <div className="border-t border-border px-4 py-4 bg-background space-y-3">
                                         {/* Error message */}
                                         {log.error && (
                                             <div>
@@ -608,7 +608,7 @@ export default function ServerLogsPage() {
                                     </span>
                                 </button>
                                 {gwExpanded === idx && (
-                                    <div className="border-t border-border px-4 py-4 bg-black/20">
+                                    <div className="border-t border-border px-4 py-4 bg-background">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
                                             <div className="flex items-center gap-2">
                                                 <Globe size={11} className="text-muted flex-shrink-0" />

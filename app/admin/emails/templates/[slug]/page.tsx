@@ -70,7 +70,7 @@ export default function AdminTemplateEditorPage() {
         <AdminLayout title="Email">
             <div className="p-6">
                 <p className="text-muted">Template não encontrado.</p>
-                <Link href="/admin/emails/templates" className="text-purple-400 text-sm mt-2 inline-block">← Voltar</Link>
+                <Link href="/admin/emails/templates" className="text-accent text-sm mt-2 inline-block">← Voltar</Link>
             </div>
         </AdminLayout>
     )
@@ -119,7 +119,7 @@ export default function AdminTemplateEditorPage() {
                                 type="text"
                                 value={subject}
                                 onChange={e => setSubject(e.target.value)}
-                                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-purple-500"
+                                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-accent"
                             />
                         </div>
 
@@ -138,7 +138,7 @@ export default function AdminTemplateEditorPage() {
                                 <textarea
                                     value={htmlContent}
                                     onChange={e => setHtmlContent(e.target.value)}
-                                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground text-xs font-mono focus:outline-none focus:border-purple-500 resize-none"
+                                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground text-xs font-mono focus:outline-none focus:border-accent resize-none"
                                     rows={30}
                                     spellCheck={false}
                                 />
@@ -153,7 +153,7 @@ export default function AdminTemplateEditorPage() {
                             {template.variables.map(v => (
                                 <div key={v} className="flex items-center gap-2">
                                     <code
-                                        className="text-xs text-purple-300 bg-purple-500/10 border border-purple-500/20 rounded px-2 py-1 font-mono cursor-pointer hover:bg-purple-500/20 transition-colors select-all"
+                                        className="text-xs text-accent bg-accent/10 border border-accent/20 rounded px-2 py-1 font-mono cursor-pointer hover:bg-accent/20 transition-colors select-all"
                                         title="Clique para copiar"
                                         onClick={() => navigator.clipboard.writeText(`{{${v}}}`)}
                                     >
