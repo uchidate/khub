@@ -10,7 +10,7 @@ import {
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ConfirmDialog, AdminEmptyState, AdminModalOverlay, AdminIconButton, AdminButton } from '@/components/admin'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
-import { StatCard } from '@/components/admin/StatCard'
+import { StatCard } from '@/components/admin'
 
 interface Comment {
     id: string

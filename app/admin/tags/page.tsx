@@ -8,7 +8,7 @@ import { AdminModalOverlay } from '@/components/admin/AdminModalOverlay'
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState'
 import { AdminTableRow } from '@/components/admin/AdminTableRow'
 import { AdminIconButton } from '@/components/admin/AdminIconButton'
-import { StatCard } from '@/components/admin/StatCard'
+import { StatCard } from '@/components/admin'
 import {
     Tag, RefreshCw, Pencil, Trash2, Check, X, Search,
     Newspaper, Film, GitMerge, AlertTriangle, ArrowUpDown, SortAsc,
@@ -331,7 +331,7 @@ export default function TagsAdminPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <StatCard label="Tags únicas"  value={tags.length}          color="text-foreground" />
-                    <StatCard label="Usos totais"  value={totalUsage}           color="text-purple-400" />
+                    <StatCard label="Usos totais"  value={totalUsage}           color="text-accent" />
                     <StatCard label="Partilhadas"  value={shared}               color="text-blue-400" />
                     <StatCard label="Exclusivas"   value={newsOnly + prodsOnly} color="text-amber-400" />
                 </div>

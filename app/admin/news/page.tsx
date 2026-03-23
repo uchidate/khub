@@ -8,6 +8,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { StatCard } from '@/components/admin'
 import { AdminBadge } from '@/components/admin/AdminBadge'
 import { AdminIconButton, AdminIconLink } from '@/components/admin/AdminIconButton'
 import {
@@ -537,29 +538,16 @@ export default function NewsAdminPage() {
 
                 {/* ── Stats ─────────────────────────────────────────────── */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {STAT_CARDS.map(({ label, value, color, filterValue, activeColor, hint }) => {
-                        const isActive = filterStatus === filterValue && filterValue !== ''
-                        return (
-                            <button
-                                key={label}
-                                onClick={() => setFilterStatus(prev => prev === filterValue ? '' : filterValue)}
-                                className={`rounded-xl border bg-surface px-4 py-3 text-center transition-colors hover:border-border ${
-                                    isActive ? activeColor : 'border-border'
-                                }`}
-                            >
-                                <p className={`text-2xl font-black tabular-nums ${color}`}>
-                                    {value === undefined
-                                        ? <Loader2 size={18} className="animate-spin mx-auto text-muted" />
-                                        : value.toLocaleString('pt-BR')
-                                    }
-                                </p>
-                                <p className="text-[11px] text-muted mt-0.5">
-                                    {label}
-                                    {hint && <span className="text-muted ml-1">· {hint}</span>}
-                                </p>
-                            </button>
-                        )
-                    })}
+                    {STAT_CARDS.map(({ label, value, color, filterValue, hint }) => (
+                        <StatCard
+                            key={label}
+                            label={hint ? `${label} · ${hint}` : label}
+                            value={value}
+                            color={color}
+                            onClick={() => setFilterStatus(prev => prev === filterValue ? '' : filterValue)}
+                            active={filterStatus === filterValue && filterValue !== ''}
+                        />
+                    ))}
                 </div>
 
                 {/* ── Filters ───────────────────────────────────────────── */}

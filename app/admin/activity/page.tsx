@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, StatCard } from '@/components/admin'
 import prisma from '@/lib/prisma'
 import {
     Activity, Shield, Server, User,
@@ -86,16 +86,6 @@ function Avatar({ name, size = 'sm' }: { name?: string | null; size?: 'sm' | 'md
     return (
         <div className={`${sz} rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center font-black text-white flex-shrink-0`}>
             {initials(name)}
-        </div>
-    )
-}
-
-function StatCard({ label, value, sub, color = 'text-foreground' }: { label: string; value: number | string; sub?: string; color?: string }) {
-    return (
-        <div className="bg-surface border border-border rounded-xl p-4">
-            <p className="text-xs text-muted font-medium mb-1">{label}</p>
-            <p className={`text-2xl font-black ${color}`}>{typeof value === 'number' ? value.toLocaleString('pt-BR') : value}</p>
-            {sub && <p className="text-[11px] text-muted mt-0.5">{sub}</p>}
         </div>
     )
 }

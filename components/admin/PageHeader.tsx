@@ -84,14 +84,14 @@ PageHeader.Badge = function Badge({
   variant = 'default',
 }: {
   label: string
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'purple'
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'accent'
 }) {
   const styles = {
     default: 'bg-surface text-muted border-border',
     success: 'bg-green-900/40 text-green-400 border-green-700/30',
     warning: 'bg-yellow-900/40 text-yellow-400 border-yellow-700/30',
     danger: 'bg-red-900/40 text-red-400 border-red-700/30',
-    purple: 'bg-purple-900/40 text-purple-400 border-purple-700/30',
+    accent: 'bg-accent/10 text-accent border-accent/30',
   }
   return (
     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${styles[variant]}`}>

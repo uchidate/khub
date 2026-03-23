@@ -16,6 +16,9 @@ export type { FilterPill } from './FilterPills'
 export { AdminTabGroup } from './AdminTabGroup'
 export { AdminSearchInput } from './AdminSearchInput'
 
+// ─── Métricas ────────────────────────────────────────────────────────────────
+export { StatCard } from './StatCard'
+
 // ─── Feedback / Estado ───────────────────────────────────────────────────────
 export { AdminBadge, AdminBadgeCount } from './AdminBadge'
 export type { AdminBadgeVariant } from './AdminBadge'

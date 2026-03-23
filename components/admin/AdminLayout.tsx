@@ -49,7 +49,7 @@ const navSections: NavSection[] = [
     items: [
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
       {
-        href: '/admin/pipeline', label: 'Pipeline', icon: Workflow, isNew: true,
+        href: '/admin/pipeline', label: 'Pipeline', icon: Workflow,
       },
       {
         href: '/admin/news', label: 'Notícias', icon: Newspaper,
@@ -83,7 +83,7 @@ const navSections: NavSection[] = [
           { href: '/admin/productions/takedowns',          label: 'Takedowns',    icon: ShieldAlert },
         ],
       },
-      { href: '/admin/blog', label: 'Blog', icon: FileText, isNew: true },
+      { href: '/admin/blog', label: 'Blog', icon: FileText },
     ],
   },
 

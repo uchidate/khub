@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, StatCard } from '@/components/admin'
 import { AdminButton } from '@/components/admin'
 import {
-    RefreshCw, Trash2, AlertTriangle, CheckCircle2, ServerCrash,
-    ChevronDown, ChevronRight, Search, X, Globe, Clock, Layers, Info,
+    RefreshCw, Trash2, CheckCircle2,
+    ChevronDown, ChevronRight, Search, X, Globe, Clock, Info,
     ShieldAlert,
 } from 'lucide-react'
 
@@ -234,38 +234,10 @@ export default function ServerLogsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Total</p>
-                            <Layers size={14} className="text-muted" />
-                        </div>
-                        <p className="text-2xl font-black text-foreground">{counts.all.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">registros no banco</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Todos erros</p>
-                            <AlertTriangle size={14} className="text-orange-500" />
-                        </div>
-                        <p className="text-2xl font-black text-orange-400">{counts.errors.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">4xx + 5xx</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Server errors</p>
-                            <ServerCrash size={14} className="text-red-500" />
-                        </div>
-                        <p className="text-2xl font-black text-red-400">{counts.fivexx.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">status 5xx</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Bad requests</p>
-                            <AlertTriangle size={14} className="text-yellow-500" />
-                        </div>
-                        <p className="text-2xl font-black text-yellow-400">{counts.fourxx.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">status 4xx</p>
-                    </div>
+                    <StatCard label="Total" value={counts.all} color="text-foreground" sub="registros no banco" />
+                    <StatCard label="Todos erros" value={counts.errors} color="text-orange-400" sub="4xx + 5xx" />
+                    <StatCard label="Server errors" value={counts.fivexx} color="text-red-400" sub="status 5xx" />
+                    <StatCard label="Bad requests" value={counts.fourxx} color="text-yellow-400" sub="status 4xx" />
                 </div>
 
                 {/* Toolbar */}
@@ -531,30 +503,9 @@ export default function ServerLogsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Total</p>
-                            <Layers size={14} className="text-muted" />
-                        </div>
-                        <p className="text-2xl font-black text-foreground">{gwCounts.total.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">últimas {gwCounts.total > 0 ? gwCounts.total : '—'} entradas</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">502 Bad Gateway</p>
-                            <ServerCrash size={14} className="text-red-500" />
-                        </div>
-                        <p className="text-2xl font-black text-red-400">{gwCounts.s502.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">app inacessível</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">504 Timeout</p>
-                            <Clock size={14} className="text-orange-500" />
-                        </div>
-                        <p className="text-2xl font-black text-orange-400">{gwCounts.s504.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">resposta lenta</p>
-                    </div>
+                    <StatCard label="Total" value={gwCounts.total} color="text-foreground" sub={`últimas ${gwCounts.total > 0 ? gwCounts.total : '—'} entradas`} />
+                    <StatCard label="502 Bad Gateway" value={gwCounts.s502} color="text-red-400" sub="app inacessível" />
+                    <StatCard label="504 Timeout" value={gwCounts.s504} color="text-orange-400" sub="resposta lenta" />
                 </div>
 
                 {/* Toolbar */}
