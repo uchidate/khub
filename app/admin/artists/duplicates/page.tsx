@@ -5,7 +5,6 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban, Zap, UserPlus } from 'lucide-react'
 import { AdminEmptyState, AdminButton, AdminLinkButton } from '@/components/admin'
 import Image from 'next/image'
-import Link from 'next/link'
 
 interface ArtistCard {
     id: string

@@ -12,7 +12,7 @@ import {
     CheckCircle, DollarSign, ChevronRight, Play, Search, X, Zap,
     EyeOff, Eye, ChevronDown, PenLine, ChevronUp, Plus, Trash2, Save, ExternalLink, FileDown,
 } from 'lucide-react'
-import { AdminButton } from '@/components/admin'
+
 
 type Tab = 'artists' | 'productions' | 'news'
 
