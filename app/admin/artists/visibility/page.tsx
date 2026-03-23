@@ -215,7 +215,7 @@ export default function ArtistVisibilityPage() {
                             {REASON_FILTERS.map(([val, label]) => (
                                 <button key={val} onClick={() => setReasonFilter(val)}
                                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                                        reasonFilter === val ? 'bg-purple-600 text-foreground' : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
+                                        reasonFilter === val ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                                     }`}
                                 >
                                     {label}

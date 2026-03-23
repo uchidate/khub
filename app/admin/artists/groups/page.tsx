@@ -159,14 +159,14 @@ function StatsBar({ stats, filter, onFilter }: {
             <button key={tab.value} onClick={() => onFilter(tab.value)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                 isActive
-                  ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
+                  ? 'bg-accent border-transparent text-white'
                   : 'bg-surface border-border text-muted hover:border-border hover:text-foreground'
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
               {tab.label}
               {tab.count != null && (
-                <span className={`font-mono tabular-nums ${isActive ? 'text-purple-300' : 'text-muted'}`}>
+                <span className={`font-mono tabular-nums ${isActive ? 'text-white/80' : 'text-muted'}`}>
                   {tab.count}
                 </span>
               )}

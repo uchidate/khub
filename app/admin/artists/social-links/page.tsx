@@ -616,7 +616,7 @@ export default function SocialLinksAdminPage() {
     const pct = totalGlobal > 0 ? Math.round((processed / totalGlobal) * 100) : 0
 
     const filterTabs: { value: FilterType; label: string; count: number; color: string; activeColor: string }[] = [
-        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-border text-muted hover:border-border',                         activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
+        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-border text-muted hover:border-border',                         activeColor: 'border-accent/40 bg-accent/20 text-accent' },
         { value: 'pending',  label: 'Pendentes',   count: globalStats.pending,  color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
         { value: 'attempted',label: 'Já tentados', count: globalStats.attempted,color: 'border-border bg-surface text-muted hover:bg-surface',           activeColor: 'border-border bg-surface text-foreground' },
         { value: 'complete', label: 'Com links',   count: globalStats.complete, color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',     activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },

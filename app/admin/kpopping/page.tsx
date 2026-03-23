@@ -1251,7 +1251,7 @@ function IdolsTab() {
             onClick={() => setFilter(f.key)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
-                ? 'bg-purple-600 border-purple-500 text-foreground'
+                ? 'bg-accent border-transparent text-white'
                 : 'border-border text-gray-400 hover:text-foreground'
             }`}
           >
@@ -1342,7 +1342,7 @@ function GroupsTab() {
             onClick={() => setFilter(f.key)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
-                ? 'bg-purple-600 border-purple-500 text-foreground'
+                ? 'bg-accent border-transparent text-white'
                 : 'border-border text-gray-400 hover:text-foreground'
             }`}
           >

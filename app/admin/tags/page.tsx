@@ -89,7 +89,7 @@ function MergeModal({
                         <button key={t.tag} onClick={() => setSelected(t.tag)}
                             className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
                                 selected === t.tag
-                                    ? 'bg-purple-600/20 text-purple-300'
+                                    ? 'bg-accent/20 text-accent'
                                     : 'text-foreground hover:bg-surface'
                             }`}>
                             <span className="font-mono truncate">{t.tag}</span>

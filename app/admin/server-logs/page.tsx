@@ -219,7 +219,7 @@ export default function ServerLogsPage() {
                             onClick={() => setActiveTab(tab.value as 'app' | 'gateway')}
                             className={`px-4 py-2 text-xs font-bold transition-colors flex items-center gap-1.5 ${
                                 activeTab === tab.value
-                                    ? 'bg-purple-600 text-foreground'
+                                    ? 'bg-accent text-white'
                                     : 'text-muted hover:text-foreground hover:bg-surface'
                             }`}
                         >
@@ -278,7 +278,7 @@ export default function ServerLogsPage() {
                                 onClick={() => { setFilter(opt.value); setPage(1) }}
                                 className={`px-3 py-2 text-xs font-bold transition-colors ${
                                     filter === opt.value
-                                        ? 'bg-purple-600 text-foreground'
+                                        ? 'bg-accent text-white'
                                         : 'text-muted hover:text-foreground hover:bg-surface'
                                 }`}
                             >

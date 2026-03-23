@@ -317,7 +317,7 @@ export default function AdminCommentsPage() {
                                 onClick={() => handleStatus(opt.value)}
                                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
                                     status === opt.value
-                                        ? 'bg-purple-600 text-foreground'
+                                        ? 'bg-accent text-white'
                                         : `${opt.color} hover:bg-surface`
                                 }`}>
                                 {opt.label}
@@ -331,7 +331,7 @@ export default function AdminCommentsPage() {
                             <button key={v}
                                 onClick={() => { setSortBy(v); setPage(1) }}
                                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-                                    sortBy === v ? 'bg-purple-600 text-foreground' : 'text-muted hover:text-foreground'
+                                    sortBy === v ? 'bg-accent text-white' : 'text-muted hover:text-foreground'
                                 }`}>
                                 {l}
                             </button>

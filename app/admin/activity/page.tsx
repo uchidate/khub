@@ -131,7 +131,7 @@ function Pagination({ page, pages, buildUrl }: { page: number; pages: number; bu
                             key={p}
                             href={buildUrl({ page: String(p) })}
                             className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-colors ${
-                                p === page ? 'bg-purple-600 text-foreground' : 'bg-surface text-muted hover:text-foreground'
+                                p === page ? 'bg-accent text-white' : 'bg-surface text-muted hover:text-foreground'
                             }`}
                         >
                             {p}

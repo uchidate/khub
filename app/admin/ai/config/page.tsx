@@ -143,7 +143,7 @@ export default function AiConfigPage() {
                                     <button
                                         onClick={() => updateForm(feat, 'enabled', !form.enabled)}
                                         className={`mt-0.5 w-8 h-4.5 rounded-full transition-colors relative shrink-0 ${
-                                            form.enabled ? 'bg-purple-600' : 'bg-surface'
+                                            form.enabled ? 'bg-accent' : 'bg-surface'
                                         }`}
                                         title={form.enabled ? 'Desabilitar' : 'Habilitar'}
                                     >

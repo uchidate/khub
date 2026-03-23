@@ -253,12 +253,12 @@ export default function GroupsPage() {
         <button key={val} onClick={() => setStatusFilter(val)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
             statusFilter === val
-              ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
+              ? 'bg-accent border-transparent text-white'
               : 'bg-surface border-border text-muted hover:border-border hover:text-foreground'
           }`}>
           {label}
           {count != null && (
-            <span className={`font-mono tabular-nums ${statusFilter === val ? 'text-purple-300' : 'text-muted'}`}>
+            <span className={`font-mono tabular-nums ${statusFilter === val ? 'text-white/80' : 'text-muted'}`}>
               {count}
             </span>
           )}
