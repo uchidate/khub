@@ -106,7 +106,7 @@ export function HomeFrontPage({
     if (!featuredStory) return null
 
     const safeSecondary = secondaryStories.slice(0, 4)
-    const safeArtists = trendingArtists.slice(0, 5)
+    const safeArtists = trendingArtists.slice(0, 8)
     const spotlightArtist = safeArtists[0]
 
     return (
@@ -233,7 +233,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className="flex items-center gap-3 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[52px]"
+                                    className={`items-center gap-3 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[52px] ${idx >= 5 ? 'hidden lg:flex' : 'flex'}`}
                                 >
                                     <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 text-center">
                                         {String(idx + 1).padStart(2, '0')}
@@ -262,11 +262,13 @@ export function HomeFrontPage({
                                     <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
                                         idx === 0
                                             ? 'bg-accent-soft text-accent'
-                                            : idx % 2 === 1
+                                            : idx <= 2
                                             ? 'bg-green-500/10 text-green-500'
+                                            : idx <= 4
+                                            ? 'bg-surface border border-border text-muted'
                                             : 'bg-accent-soft text-accent'
                                     }`}>
-                                        {idx === 0 ? 'HOT' : idx % 2 === 1 ? `↑${idx + 1}` : 'NOVO'}
+                                        {idx === 0 ? 'HOT' : idx <= 2 ? 'SUBINDO' : idx <= 4 ? `↑${idx + 1}` : 'NOVO'}
                                     </span>
                                 </Link>
                             ))}
