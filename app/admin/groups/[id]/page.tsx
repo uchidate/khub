@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ExternalLink, Save, RefreshCw, Users, Trash2 } from 'lucide-react'
+import { AdminEmptyState } from '@/components/admin'
 
 interface MusicalGroup {
     id: string
@@ -270,7 +271,7 @@ export default function EditGroupPage() {
                 )}
 
                 {!loading && !group && (
-                    <div className="text-center py-20 text-muted">Grupo não encontrado.</div>
+                    <AdminEmptyState title="Grupo não encontrado." size="lg" />
                 )}
 
                 {group && form && (

@@ -8,6 +8,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles, ShieldAlert, RotateCcw } from 'lucide-react'
+import { AdminEmptyState } from '@/components/admin'
 import { TakedownModal } from '@/components/admin/TakedownModal'
 import { RestoreModal } from '@/components/admin/RestoreModal'
 
@@ -286,7 +287,7 @@ export default function EditProductionPage() {
                 )}
 
                 {!loading && !production && (
-                    <div className="text-center py-20 text-muted">Produção não encontrada.</div>
+                    <AdminEmptyState title="Produção não encontrada." size="lg" />
                 )}
 
                 {production && (

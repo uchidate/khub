@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminEmptyState } from '@/components/admin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1248,7 +1249,7 @@ function IdolsTab() {
             ))}
           </div>
           {data.items.length === 0 && (
-            <p className="text-center text-gray-600 py-8">Nenhum idol encontrado com este filtro.</p>
+            <AdminEmptyState title="Nenhum idol encontrado com este filtro." size="sm" />
           )}
           <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
         </>
@@ -1339,7 +1340,7 @@ function GroupsTab() {
             ))}
           </div>
           {data.items.length === 0 && (
-            <p className="text-center text-gray-600 py-8">Nenhum grupo encontrado com este filtro.</p>
+            <AdminEmptyState title="Nenhum grupo encontrado com este filtro." size="sm" />
           )}
           <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
         </>
@@ -1409,11 +1410,12 @@ function MembershipsTab() {
             ))}
           </div>
           {data.items.length === 0 && (
-            <div className="text-center py-12">
-              <Link2 size={32} className="mx-auto text-gray-700 mb-3" />
-              <p className="text-gray-600 text-sm">Nenhum vínculo pronto.</p>
-              <p className="text-gray-700 text-xs mt-1">Confirme idols na aba Idols e grupos na aba Grupos primeiro.</p>
-            </div>
+            <AdminEmptyState
+              icon={<Link2 className="w-8 h-8" />}
+              title="Nenhum vínculo pronto."
+              description="Confirme idols na aba Idols e grupos na aba Grupos primeiro."
+              size="sm"
+            />
           )}
           <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
         </>

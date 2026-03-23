@@ -8,7 +8,7 @@ import {
     RefreshCw, Filter,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { ConfirmDialog, AdminEmptyState, AdminModalOverlay, AdminIconButton, AdminButton } from '@/components/admin'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { StatCard } from '@/components/admin/StatCard'
 
@@ -98,31 +98,26 @@ function CommentCard({
                     </Link>
                     <div className="flex items-center gap-1">
                         {comment.status !== 'ACTIVE' && (
-                            <button onClick={() => onPatch(comment.id, { status: 'ACTIVE' })} title="Ativar"
-                                className="p-1.5 rounded-lg text-green-500 hover:bg-green-500/10 transition-colors">
+                            <AdminIconButton onClick={() => onPatch(comment.id, { status: 'ACTIVE' })} title="Ativar" variant="success">
                                 <CheckCircle className="w-4 h-4" />
-                            </button>
+                            </AdminIconButton>
                         )}
                         {comment.status !== 'FLAGGED' && (
-                            <button onClick={() => onPatch(comment.id, { status: 'FLAGGED' })} title="Sinalizar"
-                                className="p-1.5 rounded-lg text-yellow-500 hover:bg-yellow-500/10 transition-colors">
+                            <AdminIconButton onClick={() => onPatch(comment.id, { status: 'FLAGGED' })} title="Sinalizar" variant="warning">
                                 <Flag className="w-4 h-4" />
-                            </button>
+                            </AdminIconButton>
                         )}
                         {comment.status !== 'REMOVED' && (
-                            <button onClick={() => onPatch(comment.id, { status: 'REMOVED' })} title="Remover"
-                                className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-500/10 transition-colors">
+                            <AdminIconButton onClick={() => onPatch(comment.id, { status: 'REMOVED' })} title="Remover" variant="warning">
                                 <AlertTriangle className="w-4 h-4" />
-                            </button>
+                            </AdminIconButton>
                         )}
-                        <button onClick={() => onNote(comment.id, comment.moderationNote)} title="Nota de moderação"
-                            className="p-1.5 rounded-xl text-muted hover:bg-surface hover:text-foreground transition-colors text-[11px] font-black">
-                            📝
-                        </button>
-                        <button onClick={() => onDelete(comment.id)} title="Excluir permanentemente"
-                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors">
+                        <AdminIconButton onClick={() => onNote(comment.id, comment.moderationNote)} title="Nota de moderação" variant="default">
+                            <span className="text-[11px] font-black">📝</span>
+                        </AdminIconButton>
+                        <AdminIconButton onClick={() => onDelete(comment.id)} title="Excluir permanentemente" variant="danger">
                             <Trash2 className="w-4 h-4" />
-                        </button>
+                        </AdminIconButton>
                     </div>
                 </div>
             </div>
@@ -280,10 +275,9 @@ export default function AdminCommentsPage() {
             {/* Header row: description + refresh */}
             <div className="flex items-center justify-between flex-wrap gap-3 -mt-6">
                 <p className="text-sm text-muted">Gerencie e modere os comentários dos usuários</p>
-                <button onClick={fetchComments}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface hover:bg-surface text-muted hover:text-foreground transition-all text-sm">
+                <AdminButton onClick={fetchComments} variant="secondary" size="sm">
                     <RefreshCw className="w-3.5 h-3.5" /> Atualizar
-                </button>
+                </AdminButton>
             </div>
 
             {/* Stats */}
@@ -358,22 +352,18 @@ export default function AdminCommentsPage() {
                 <div className="flex items-center gap-3 flex-wrap p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
                     <span className="text-sm font-bold text-purple-300">{selected.size} selecionado(s)</span>
                     <div className="flex gap-2 ml-auto flex-wrap">
-                        <button onClick={() => bulkAction('activate')} disabled={bulkWorking}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-all disabled:opacity-50">
+                        <AdminButton onClick={() => bulkAction('activate')} disabled={bulkWorking} variant="secondary" size="sm">
                             <CheckCircle className="w-3.5 h-3.5" /> Ativar
-                        </button>
-                        <button onClick={() => bulkAction('flag')} disabled={bulkWorking}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 transition-all disabled:opacity-50">
+                        </AdminButton>
+                        <AdminButton onClick={() => bulkAction('flag')} disabled={bulkWorking} variant="warning" size="sm">
                             <Flag className="w-3.5 h-3.5" /> Sinalizar
-                        </button>
-                        <button onClick={() => bulkAction('remove')} disabled={bulkWorking}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 transition-all disabled:opacity-50">
+                        </AdminButton>
+                        <AdminButton onClick={() => bulkAction('remove')} disabled={bulkWorking} variant="warning" size="sm">
                             <AlertTriangle className="w-3.5 h-3.5" /> Remover
-                        </button>
-                        <button onClick={() => bulkAction('delete')} disabled={bulkWorking}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all disabled:opacity-50">
+                        </AdminButton>
+                        <AdminButton onClick={() => bulkAction('delete')} disabled={bulkWorking} variant="danger" size="sm">
                             <Trash2 className="w-3.5 h-3.5" /> Excluir
-                        </button>
+                        </AdminButton>
                     </div>
                 </div>
             )}
@@ -386,10 +376,13 @@ export default function AdminCommentsPage() {
                     ))}
                 </div>
             ) : comments.length === 0 ? (
-                <div className="text-center py-20 bg-surface rounded-2xl border border-border">
-                    <MessageSquare className="w-12 h-12 text-muted mx-auto mb-4" />
-                    <p className="text-muted font-bold">Nenhum comentário encontrado</p>
-                    <p className="text-muted text-sm mt-1">Tente ajustar os filtros</p>
+                <div className="bg-surface rounded-2xl border border-border">
+                    <AdminEmptyState
+                        icon={<MessageSquare className="w-12 h-12" />}
+                        title="Nenhum comentário encontrado"
+                        description="Tente ajustar os filtros"
+                        size="lg"
+                    />
                 </div>
             ) : (
                 <>
@@ -505,36 +498,26 @@ export default function AdminCommentsPage() {
                             {/* Actions */}
                             <div className="flex items-center gap-1 flex-wrap">
                                 {comment.status !== 'ACTIVE' && (
-                                    <button onClick={() => patch(comment.id, { status: 'ACTIVE' })}
-                                        title="Ativar"
-                                        className="p-1.5 rounded-lg text-green-500 hover:bg-green-500/10 transition-colors">
+                                    <AdminIconButton onClick={() => patch(comment.id, { status: 'ACTIVE' })} title="Ativar" variant="success">
                                         <CheckCircle className="w-4 h-4" />
-                                    </button>
+                                    </AdminIconButton>
                                 )}
                                 {comment.status !== 'FLAGGED' && (
-                                    <button onClick={() => patch(comment.id, { status: 'FLAGGED' })}
-                                        title="Sinalizar"
-                                        className="p-1.5 rounded-lg text-yellow-500 hover:bg-yellow-500/10 transition-colors">
+                                    <AdminIconButton onClick={() => patch(comment.id, { status: 'FLAGGED' })} title="Sinalizar" variant="warning">
                                         <Flag className="w-4 h-4" />
-                                    </button>
+                                    </AdminIconButton>
                                 )}
                                 {comment.status !== 'REMOVED' && (
-                                    <button onClick={() => patch(comment.id, { status: 'REMOVED' })}
-                                        title="Remover"
-                                        className="p-1.5 rounded-lg text-orange-500 hover:bg-orange-500/10 transition-colors">
+                                    <AdminIconButton onClick={() => patch(comment.id, { status: 'REMOVED' })} title="Remover" variant="warning">
                                         <AlertTriangle className="w-4 h-4" />
-                                    </button>
+                                    </AdminIconButton>
                                 )}
-                                <button onClick={() => openNote(comment.id, comment.moderationNote)}
-                                    title="Nota de moderação"
-                                    className="p-1.5 rounded-xl text-muted hover:bg-surface hover:text-foreground transition-colors text-[11px] font-black">
-                                    📝
-                                </button>
-                                <button onClick={() => deleteSingle(comment.id)}
-                                    title="Excluir permanentemente"
-                                    className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors">
+                                <AdminIconButton onClick={() => openNote(comment.id, comment.moderationNote)} title="Nota de moderação" variant="default">
+                                    <span className="text-[11px] font-black">📝</span>
+                                </AdminIconButton>
+                                <AdminIconButton onClick={() => deleteSingle(comment.id)} title="Excluir permanentemente" variant="danger">
                                     <Trash2 className="w-4 h-4" />
-                                </button>
+                                </AdminIconButton>
                             </div>
                         </div>
                     ))}
@@ -585,30 +568,28 @@ export default function AdminCommentsPage() {
             )}
 
             {/* Moderation note modal */}
-            {noteModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                        <h3 className="text-foreground font-black text-lg mb-4">Nota de Moderação</h3>
-                        <textarea
-                            value={noteInput}
-                            onChange={e => setNoteInput(e.target.value)}
-                            placeholder="Descreva o motivo da ação de moderação..."
-                            rows={4}
-                            className="w-full bg-background border border-border rounded-xl p-3 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 resize-none"
-                        />
-                        <div className="flex justify-end gap-3 mt-4">
-                            <button onClick={() => setNoteModal(null)}
-                                className="px-4 py-2 text-sm text-muted hover:text-foreground transition-colors">
-                                Cancelar
-                            </button>
-                            <button onClick={saveNote}
-                                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors">
-                                Salvar Nota
-                            </button>
-                        </div>
-                    </div>
+            <AdminModalOverlay
+                open={!!noteModal}
+                onClose={() => setNoteModal(null)}
+                title="Nota de Moderação"
+                maxWidth="md"
+            >
+                <textarea
+                    value={noteInput}
+                    onChange={e => setNoteInput(e.target.value)}
+                    placeholder="Descreva o motivo da ação de moderação..."
+                    rows={4}
+                    className="w-full bg-background border border-border rounded-xl p-3 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 resize-none"
+                />
+                <div className="flex justify-end gap-3 mt-4">
+                    <AdminButton onClick={() => setNoteModal(null)} variant="ghost">
+                        Cancelar
+                    </AdminButton>
+                    <AdminButton onClick={saveNote} variant="primary">
+                        Salvar Nota
+                    </AdminButton>
                 </div>
-            )}
+            </AdminModalOverlay>
         </div>
         </AdminLayout>
     )

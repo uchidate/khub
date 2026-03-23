@@ -9,6 +9,7 @@ import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminIconLink } from '@/components/admin/AdminIconButton'
+import { AdminEmptyState } from '@/components/admin'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
@@ -641,11 +642,12 @@ export default function AdminBlogPage() {
                                 <Loader2 className="w-6 h-6 text-muted animate-spin" />
                             </div>
                         ) : visibleSuggestions.length === 0 ? (
-                            <div className="text-center py-14 border border-dashed border-border rounded-xl">
-                                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-foreground">Nenhuma sugestão pendente</p>
-                                <p className="text-xs text-muted mt-1">Todas as notícias publicadas já têm blog posts.</p>
-                            </div>
+                            <AdminEmptyState
+                                icon={<CheckCircle className="w-8 h-8 text-emerald-500" />}
+                                title="Nenhuma sugestão pendente"
+                                description="Todas as notícias publicadas já têm blog posts."
+                                bordered
+                            />
                         ) : (
                             <div className="space-y-2">
                                 {visibleSuggestions.map(item => (

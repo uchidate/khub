@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
 import { Mail, CheckCircle, XCircle, Clock, FileText } from 'lucide-react'
+import { AdminEmptyState } from '@/components/admin'
 
 const TYPE_LABELS: Record<string, string> = {
     WELCOME: 'Boas-vindas',
@@ -129,7 +130,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 {/* Mobile cards */}
                 <div className="md:hidden glass-card rounded-xl border border-border overflow-hidden divide-y divide-white/5">
                     {logs.length === 0 && (
-                        <p className="text-center py-12 text-muted">Nenhum email encontrado</p>
+                        <AdminEmptyState title="Nenhum email encontrado" icon={<Mail className="w-8 h-8" />} size="sm" />
                     )}
                     {logs.map(log => {
                         const cfg = STATUS_CONFIG[log.status] ?? STATUS_CONFIG.PENDING

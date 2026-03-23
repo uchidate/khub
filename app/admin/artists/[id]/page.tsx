@@ -8,6 +8,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink, Sparkles, Plus, Trash2, AlertTriangle } from 'lucide-react'
+import { AdminEmptyState } from '@/components/admin'
 
 type FieldSource = { source: 'manual' | 'tmdb' | 'wikidata' | 'system'; at: string; by?: string }
 type FieldSources = Record<string, FieldSource>
@@ -304,7 +305,7 @@ export default function EditArtistPage() {
                 )}
 
                 {!loading && !artist && (
-                    <div className="text-center py-20 text-muted">Artista não encontrado.</div>
+                    <AdminEmptyState title="Artista não encontrado." size="lg" />
                 )}
 
                 {artist && (
