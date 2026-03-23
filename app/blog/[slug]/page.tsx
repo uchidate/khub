@@ -12,6 +12,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { AdBanner } from '@/components/ui/AdBanner'
 
 import { SITE_URL } from '@/lib/constants/site'
+import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 const BASE_URL = SITE_URL
 
 export const revalidate = 3600
@@ -51,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : [],
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
-      authors: [post.author?.name ?? 'HallyuHub'],
+      authors: [BLOG_AUTHOR_DISPLAY_NAME],
     },
   }
 }
@@ -80,11 +81,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         "datePublished": (post.publishedAt ?? post.createdAt).toISOString(),
         "dateModified": post.updatedAt.toISOString(),
         "inLanguage": "pt-BR",
-        "author": post.author ? {
-          "@type": "Person",
-          "name": post.author.name,
-          "image": post.author.image ?? undefined,
-        } : { "@type": "Organization", "name": "HallyuHub" },
+        "author": { "@type": "Organization", "name": BLOG_AUTHOR_DISPLAY_NAME },
         "publisher": {
           "@type": "Organization",
           "name": "HallyuHub",
@@ -130,14 +127,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <div className="flex items-center gap-4 flex-wrap text-sm text-muted pt-2 border-t border-border">
             {/* Author */}
             <div className="flex items-center gap-2">
-              {post.author?.image ? (
-                <Image src={post.author.image} alt={post.author.name ?? ''} width={28} height={28} className="rounded-full object-cover" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
-                  {post.author?.name?.[0] ?? '?'}
-                </div>
-              )}
-              <span className="font-medium text-foreground">{post.author?.name}</span>
+              <div className="w-7 h-7 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
+                {BLOG_AUTHOR_AVATAR_INITIAL}
+              </div>
+              <span className="font-medium text-foreground">{BLOG_AUTHOR_DISPLAY_NAME}</span>
             </div>
             <span className="flex items-center gap-1.5"><Calendar size={13} />{formatDate(post.publishedAt ?? post.createdAt)}</span>
             <span className="flex items-center gap-1.5"><Clock size={13} />{post.readingTimeMin} min de leitura</span>
@@ -177,15 +170,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Author bio */}
         {post.author?.bio && (
           <div className="mt-10 p-5 rounded-2xl border border-border bg-surface flex gap-4">
-            {post.author.image ? (
-              <Image src={post.author.image} alt={post.author.name ?? ''} width={48} height={48} className="rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
-                {post.author.name?.[0] ?? '?'}
-              </div>
-            )}
+            <div className="w-12 h-12 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
+              {BLOG_AUTHOR_AVATAR_INITIAL}
+            </div>
             <div>
-              <p className="font-semibold text-foreground text-sm">{post.author.name}</p>
+              <p className="font-semibold text-foreground text-sm">{BLOG_AUTHOR_DISPLAY_NAME}</p>
               <p className="text-muted text-sm mt-1">{post.author.bio}</p>
             </div>
           </div>
