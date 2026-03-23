@@ -37,11 +37,13 @@ const getHomePublicData = unstable_cache(
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
-                take: 10,
+                take: 12,
                 orderBy: { trendingScore: 'desc' },
                 select: {
                     id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
                     roles: true, gender: true, trendingScore: true, viewCount: true,
+                    trendingRank: true, trendingRankPrev: true, trendingBadgeOverride: true,
+                    createdAt: true,
                     agency: { select: { name: true } },
                 },
             }),

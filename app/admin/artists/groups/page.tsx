@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { Users, RefreshCw, Music2 } from 'lucide-react'
 import Image from 'next/image'
-import { AdminButton } from '@/components/admin'
+import { AdminButton, StatCard } from '@/components/admin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,7 +126,7 @@ function StatsBar({ stats, filter, onFilter }: {
 
   const mainTabs = [
     { label: 'Todos',     value: '' as FilterType,          count: null,                    dot: 'bg-border' },
-    { label: 'Com grupo', value: 'with_group' as FilterType, count: stats?.withGroup ?? null, dot: 'bg-purple-400' },
+    { label: 'Com grupo', value: 'with_group' as FilterType, count: stats?.withGroup ?? null, dot: 'bg-accent' },
     { label: 'Sem grupo', value: 'no_group' as FilterType,   count: stats?.noGroup ?? null,   dot: 'bg-amber-400' },
   ]
 
@@ -267,16 +267,16 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
     if (type === 'success')  return 'text-green-400'
     if (type === 'error')    return 'text-red-400'
     if (type === 'warning')  return 'text-yellow-400'
-    if (type === 'done')     return 'text-purple-400 font-bold'
+    if (type === 'done')     return 'text-accent font-bold'
     if (type === 'progress') return 'text-muted'
     return 'text-foreground'
   }
 
   return (
-    <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
+    <div className="bg-surface border border-accent/20 rounded-xl p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-3 flex-1">
-          <Music2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
+          <Music2 className="w-5 h-5 text-accent flex-shrink-0" />
           <div>
             <p className="text-sm font-bold text-foreground">Sync em lote via MusicBrainz</p>
             <p className="text-xs text-muted mt-0.5">Busca relação "member of band" para múltiplos artistas</p>
@@ -285,13 +285,13 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
         <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
           <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
             <input type="checkbox" checked={onlyMissing} onChange={e => setOnlyMissing(e.target.checked)}
-              disabled={running} className="accent-purple-500" />
+              disabled={running} className="accent-accent" />
             Apenas não sincronizados
           </label>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted font-medium">Limite:</span>
             <select value={syncLimit} onChange={e => setSyncLimit(Number(e.target.value))} disabled={running}
-              className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-purple-500/50 disabled:opacity-50">
+              className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-accent/50 disabled:opacity-50">
               {[20, 50, 100, 200].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
@@ -306,24 +306,15 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
 
       {resultStats && (
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-black/30 rounded-lg p-3 text-center">
-            <p className="text-lg font-black text-green-400">{resultStats.found}</p>
-            <p className="text-xs text-muted">Com grupo</p>
-          </div>
-          <div className="bg-black/30 rounded-lg p-3 text-center">
-            <p className="text-lg font-black text-yellow-400">{resultStats.solo}</p>
-            <p className="text-xs text-muted">Solo / não encontrado</p>
-          </div>
-          <div className="bg-black/30 rounded-lg p-3 text-center">
-            <p className="text-lg font-black text-red-400">{resultStats.errors}</p>
-            <p className="text-xs text-muted">Erros</p>
-          </div>
+          <StatCard label="Com grupo" value={resultStats.found} color="text-green-400" />
+          <StatCard label="Solo / não encontrado" value={resultStats.solo} color="text-yellow-400" />
+          <StatCard label="Erros" value={resultStats.errors} color="text-red-400" />
         </div>
       )}
 
       {open && log.length > 0 && (
         <div ref={logRef}
-          className="bg-black/40 rounded-lg p-4 max-h-52 overflow-y-auto font-mono text-xs space-y-0.5 border border-border">
+          className="bg-background rounded-lg p-4 max-h-52 overflow-y-auto font-mono text-xs space-y-0.5 border border-border">
           {log.map((line, i) => (
             <div key={i} className={lineColor(line.type)}>{line.text}</div>
           ))}

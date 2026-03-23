@@ -18,7 +18,7 @@ export default async function AdminEmailTemplatesPage() {
         <AdminLayout title="Templates de Email">
             <div className="p-6 max-w-4xl mx-auto">
                 <div className="flex items-center gap-3 mb-6">
-                    <FileText size={20} className="text-purple-400" />
+                    <FileText size={20} className="text-accent" />
                     <h1 className="text-2xl font-black text-foreground">Templates de Email</h1>
                 </div>
 

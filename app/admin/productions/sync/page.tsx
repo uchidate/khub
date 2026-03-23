@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { RefreshCw, Film, Wand2, Square } from 'lucide-react'
-import { AdminButton } from '@/components/admin'
+import { AdminButton, StatCard } from '@/components/admin'
 
 const SYNC_BATCH_SIZE = 100  // 100 × ~300ms + 3 TMDB calls ≈ 1-2min por lote
 const STORAGE_KEY = 'khub-sync-productions-progress'
@@ -74,7 +74,7 @@ const lineColor = (type: LogLine['type']) => {
     if (type === 'success') return 'text-green-400'
     if (type === 'error') return 'text-red-400'
     if (type === 'warning') return 'text-yellow-400'
-    if (type === 'done') return 'text-purple-400 font-bold'
+    if (type === 'done') return 'text-accent font-bold'
     if (type === 'progress') return 'text-muted'
     return 'text-foreground'
 }
@@ -241,7 +241,7 @@ export default function SyncProductionsTmdbPage() {
                 {/* Header */}
                 <div className="flex items-center gap-4">
                     <div className="p-2 bg-surface rounded-xl">
-                        <Film className="w-5 h-5 text-purple-400" />
+                        <Film className="w-5 h-5 text-accent" />
                     </div>
                     <div>
                         <h1 className="text-xl font-black text-foreground">Sincronizar dados do TMDB — Produções</h1>
@@ -323,7 +323,7 @@ export default function SyncProductionsTmdbPage() {
                         </div>
                         <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                                className="h-full bg-accent rounded-full transition-all duration-500"
                                 style={{ width: `${pct}%` }}
                             />
                         </div>
@@ -333,18 +333,9 @@ export default function SyncProductionsTmdbPage() {
                 {/* Estatísticas */}
                 {stats && (
                     <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-green-400">{stats.enriched}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Enriquecidas</p>
-                        </div>
-                        <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-yellow-400">{stats.noData}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem dados TMDB</p>
-                        </div>
-                        <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-red-400">{stats.errors}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
-                        </div>
+                        <StatCard label="Enriquecidas" value={stats.enriched} color="text-green-400" />
+                        <StatCard label="Sem dados TMDB" value={stats.noData} color="text-yellow-400" />
+                        <StatCard label="Erros" value={stats.errors} color="text-red-400" />
                     </div>
                 )}
 
@@ -364,7 +355,7 @@ export default function SyncProductionsTmdbPage() {
 
                 {/* Log */}
                 {log.length > 0 && (
-                    <div className="bg-black/40 rounded-xl p-4 max-h-96 overflow-y-auto font-mono text-xs space-y-1 border border-border">
+                    <div className="bg-background rounded-xl p-4 max-h-96 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                         {log.map((line, i) => (
                             <div key={i} className={`flex items-start gap-2 ${lineColor(line.type)}`}>
                                 <span className="flex-1">{line.text}</span>
@@ -398,12 +389,12 @@ function ModeCard({
     icon: React.ReactNode
 }) {
     const colors = {
-        purple: 'border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400',
+        purple: 'border-accent/30 bg-accent/5 hover:bg-accent/10 text-accent',
         teal:   'border-teal-500/30 bg-teal-500/5 hover:bg-teal-500/10 text-teal-400',
         amber:  'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400',
     }
     const btnColors = {
-        purple: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500',
+        purple: 'bg-accent hover:bg-accent/90',
         teal:   'bg-teal-600 hover:bg-teal-500',
         amber:  'bg-amber-600 hover:bg-amber-500',
     }

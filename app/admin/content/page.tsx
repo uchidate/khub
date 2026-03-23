@@ -67,7 +67,7 @@ export default async function AdminContentPage() {
           <div className="mb-12 animate-fade-in">
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors mb-6"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors mb-6"
             >
               <ArrowLeft size={20} />
               Voltar ao Painel Admin
@@ -86,7 +86,7 @@ export default async function AdminContentPage() {
               <Link
                 key={section.href}
                 href={section.href}
-                className="bg-surface border border-border rounded-2xl p-8 hover:border-purple-500 transition-all hover:shadow-lg hover:shadow-purple-500/20 animate-slide-up group"
+                className="bg-surface border border-border rounded-2xl p-8 hover:border-accent/50 transition-all hover:shadow-lg hover:shadow-accent/10 animate-slide-up group"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className={`w-16 h-16 bg-${section.color}-500/10 rounded-xl flex items-center justify-center mb-6`}>

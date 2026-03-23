@@ -1,5 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
+import { type ArtistForBadge } from "@/lib/trending/badges"
+import { getArtistBadgeDisplay } from "@/lib/trending/display"
 
 interface FeaturedStory {
     id: string
@@ -18,7 +20,7 @@ interface SecondaryStory {
     tags: string[]
 }
 
-interface TrendingArtist {
+interface TrendingArtist extends ArtistForBadge {
     id: string
     nameRomanized: string
     nameHangul: string | null
@@ -106,7 +108,7 @@ export function HomeFrontPage({
     if (!featuredStory) return null
 
     const safeSecondary = secondaryStories.slice(0, 4)
-    const safeArtists = trendingArtists.slice(0, 5)
+    const safeArtists = trendingArtists.slice(0, 8)
     const spotlightArtist = safeArtists[0]
 
     return (
@@ -233,7 +235,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className="flex items-center gap-3 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[52px]"
+                                    className={`items-center gap-3 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[52px] ${idx >= 5 ? 'hidden lg:flex' : 'flex'}`}
                                 >
                                     <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 text-center">
                                         {String(idx + 1).padStart(2, '0')}
@@ -259,15 +261,15 @@ export function HomeFrontPage({
                                             {artist.agency?.name ? ` · ${artist.agency.name}` : ''}
                                         </p>
                                     </div>
-                                    <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
-                                        idx === 0
-                                            ? 'bg-accent-soft text-accent'
-                                            : idx % 2 === 1
-                                            ? 'bg-green-500/10 text-green-500'
-                                            : 'bg-accent-soft text-accent'
-                                    }`}>
-                                        {idx === 0 ? 'HOT' : idx % 2 === 1 ? `↑${idx + 1}` : 'NOVO'}
-                                    </span>
+                                    {(() => {
+                                        const display = getArtistBadgeDisplay(artist)
+                                        if (!display) return null
+                                        return (
+                                            <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${display.className}`}>
+                                                {display.label}
+                                            </span>
+                                        )
+                                    })()}
                                 </Link>
                             ))}
                         </div>

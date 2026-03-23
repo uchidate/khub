@@ -71,7 +71,7 @@ export default function AdminEmailDetailPage() {
         <AdminLayout title="Email">
             <div className="p-6">
                 <p className="text-muted">Email não encontrado.</p>
-                <Link href="/admin/emails" className="text-purple-400 text-sm mt-2 inline-block">← Voltar</Link>
+                <Link href="/admin/emails" className="text-accent text-sm mt-2 inline-block">← Voltar</Link>
             </div>
         </AdminLayout>
     )
@@ -87,7 +87,7 @@ export default function AdminEmailDetailPage() {
                 </Link>
 
                 <div className="flex items-center gap-3 mb-6">
-                    <Mail size={20} className="text-purple-400" />
+                    <Mail size={20} className="text-accent" />
                     <h1 className="text-xl font-black text-foreground">Detalhe do Email</h1>
                     <span className={`flex items-center gap-1.5 ml-auto px-3 py-1 rounded-lg text-sm font-black ${cfg.color} bg-white/5`}>
                         <StatusIcon size={14} />

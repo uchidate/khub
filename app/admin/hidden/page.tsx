@@ -113,7 +113,7 @@ export default function HiddenItemsPage() {
                             onClick={() => setTab(t.key)}
                             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
                                 tab === t.key
-                                    ? 'border-purple-500 text-purple-400 bg-purple-500/5'
+                                    ? 'border-accent text-accent bg-accent/5'
                                     : 'border-transparent text-muted hover:text-foreground'
                             }`}
                         >
@@ -130,7 +130,7 @@ export default function HiddenItemsPage() {
 
                 {loading ? (
                     <div className="flex justify-center py-20">
-                        <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : (
                     <>

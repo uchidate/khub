@@ -110,7 +110,7 @@ export function PipelineBatchAction({ ids, type, action }: Props) {
     return (
         <button
             onClick={handleBatch}
-            className="flex items-center gap-1 text-[10px] text-muted hover:text-purple-400 transition-colors font-medium"
+            className="flex items-center gap-1 text-[10px] text-muted hover:text-accent transition-colors font-medium"
             title={`${BATCH_LABELS[action]} (${ids.length} itens)`}
         >
             <Zap size={10} />

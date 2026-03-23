@@ -51,7 +51,7 @@ export default async function AdminDatabasePage() {
           <div className="mb-12 animate-fade-in">
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors mb-6"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors mb-6"
             >
               <ArrowLeft size={20} />
               Voltar ao Painel Admin

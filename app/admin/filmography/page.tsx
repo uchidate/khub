@@ -5,6 +5,7 @@ import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } fro
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
 import { AdminEmptyState, AdminButton, SectionHeader } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 interface Artist {
   id: string
@@ -47,6 +48,7 @@ function timeAgoOrDate(date: Date | string | null): string | null {
 }
 
 export default function FilmographyAdminPage() {
+  const toast = useAdminToast()
   const [artists, setArtists] = useState<Artist[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -84,10 +86,10 @@ export default function FilmographyAdminPage() {
         body: JSON.stringify({ artistIds: [artistId], strategy: 'SMART_MERGE' }),
       })
       const result = await res.json()
-      if (!result.success) alert(`Erro: ${result.message || 'Falha na sincronização'}`)
+      if (!result.success) toast.error(result.message || 'Falha na sincronização')
       await loadData()
     } catch {
-      alert('Erro ao sincronizar filmografia')
+      toast.error('Erro ao sincronizar filmografia')
     } finally {
       setSyncing(null)
     }
@@ -109,10 +111,10 @@ export default function FilmographyAdminPage() {
         setBatchResult(`✓ ${result.result.successCount}/${result.result.total} sincronizados · ${result.result.failureCount} falhas · ${(result.result.duration / 1000).toFixed(1)}s`)
         await loadData()
       } else {
-        alert(`Erro: ${result.message || 'Falha na sincronização em lote'}`)
+        toast.error(result.message || 'Falha na sincronização em lote')
       }
     } catch {
-      alert('Erro ao sincronizar filmografias')
+      toast.error('Erro ao sincronizar filmografias')
     } finally {
       setBatchSyncing(false)
     }
@@ -211,7 +213,7 @@ export default function FilmographyAdminPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
+              <RefreshCw className="w-6 h-6 text-accent animate-spin" />
             </div>
           ) : filteredArtists.length === 0 ? (
             <AdminEmptyState title="Nenhum artista encontrado" size="sm" />

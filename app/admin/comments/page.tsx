@@ -58,12 +58,12 @@ function CommentCard({
     onNote: (id: string, current: string | null) => void
 }) {
     return (
-        <div className={`p-4 border-b border-border last:border-0 ${selected ? 'bg-purple-500/5' : ''}`}>
+        <div className={`p-4 border-b border-border last:border-0 ${selected ? 'bg-accent/5' : ''}`}>
             <div className="flex items-start gap-3">
                 {/* Checkbox + Avatar */}
                 <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
                     <input type="checkbox" checked={selected} onChange={onToggle}
-                        className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer" />
+                        className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer" />
                     {comment.user.image ? (
                         <img src={comment.user.image} alt="" className="w-6 h-6 rounded-full object-cover" />
                     ) : (
@@ -93,7 +93,7 @@ function CommentCard({
                         <p className="text-[11px] text-yellow-500/80 italic mb-2">📝 {comment.moderationNote}</p>
                     )}
                     <Link href={`/news/${comment.news.id}`} target="_blank"
-                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1 transition-colors mb-3">
+                        className="text-xs text-muted hover:text-accent flex items-center gap-1 transition-colors mb-3">
                         <ExternalLink className="w-3 h-3 flex-shrink-0" />
                         <span className="truncate">{comment.news.title}</span>
                     </Link>
@@ -417,7 +417,7 @@ export default function AdminCommentsPage() {
                         <input type="checkbox"
                             checked={selected.size === comments.length && comments.length > 0}
                             onChange={toggleAll}
-                            className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
+                            className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer"
                         />
                         <span className="text-xs font-black text-muted uppercase tracking-wider">
                             {selected.size > 0 ? `${selected.size} selecionado(s)` : 'Selecionar todos'}
@@ -445,7 +445,7 @@ export default function AdminCommentsPage() {
                             <input type="checkbox"
                                 checked={selected.size === comments.length && comments.length > 0}
                                 onChange={toggleAll}
-                                className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
+                                className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer"
                             />
                         </div>
                         <div className="flex items-center gap-1"><Filter className="w-3 h-3" /> Comentário</div>
@@ -458,14 +458,14 @@ export default function AdminCommentsPage() {
                     {comments.map(comment => (
                         <div key={comment.id}
                             className={`grid grid-cols-[auto_1fr_200px_100px_110px] gap-4 px-4 py-4 border-b border-border last:border-0 hover:bg-surface transition-colors items-start ${
-                                selected.has(comment.id) ? 'bg-purple-500/5' : ''
+                                selected.has(comment.id) ? 'bg-accent/5' : ''
                             }`}>
                             {/* Checkbox */}
                             <div className="pt-1">
                                 <input type="checkbox"
                                     checked={selected.has(comment.id)}
                                     onChange={() => toggleSelect(comment.id)}
-                                    className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
+                                    className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer"
                                 />
                             </div>
 
@@ -504,7 +504,7 @@ export default function AdminCommentsPage() {
                             {/* News */}
                             <div className="min-w-0">
                                 <Link href={`/news/${comment.news.id}`} target="_blank"
-                                    className="text-xs text-muted hover:text-purple-400 line-clamp-2 flex items-start gap-1 transition-colors group">
+                                    className="text-xs text-muted hover:text-accent line-clamp-2 flex items-start gap-1 transition-colors group">
                                     <ExternalLink className="w-3 h-3 mt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     {comment.news.title}
                                 </Link>
@@ -568,7 +568,7 @@ export default function AdminCommentsPage() {
                                     if (e.key === 'Escape') { setEditingPage(false); setPageJump('') }
                                 }}
                                 onBlur={() => { setEditingPage(false); setPageJump('') }}
-                                className="w-14 text-center px-2 py-1 bg-surface border border-purple-500/50 rounded text-sm text-foreground focus:outline-none"
+                                className="w-14 text-center px-2 py-1 bg-surface border border-accent/50 rounded text-sm text-foreground focus:outline-none"
                             />
                         ) : (
                             <button onClick={() => { setEditingPage(true); setPageJump(String(page)) }}

@@ -195,13 +195,13 @@ function CalendarView() {
                             day === null
                                 ? 'border-transparent bg-transparent'
                                 : isToday(day)
-                                    ? 'border-purple-500/40 bg-purple-900/10'
+                                    ? 'border-accent/40 bg-accent/10'
                                     : 'border-border bg-surface hover:border-border'
                         }`}
                     >
                         {day !== null && (
                             <>
-                                <p className={`text-[11px] font-bold mb-1 ${isToday(day) ? 'text-purple-400' : 'text-muted'}`}>
+                                <p className={`text-[11px] font-bold mb-1 ${isToday(day) ? 'text-accent' : 'text-muted'}`}>
                                     {day}
                                 </p>
                                 <div className="space-y-0.5">

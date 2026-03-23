@@ -27,7 +27,7 @@ const ACTIVITY_TYPE_CONFIG: Record<string, {
     LOGIN:           { label: 'Login',          color: 'text-blue-400 bg-blue-400/10',    border: 'border-blue-500/40',   icon: LogIn },
     LOGOUT:          { label: 'Logout',         color: 'text-muted bg-surface',    border: 'border-border',   icon: LogOut },
     REGISTER:        { label: 'Registro',       color: 'text-green-400 bg-green-400/10',  border: 'border-green-500/40',  icon: UserPlus },
-    SEARCH:          { label: 'Busca',          color: 'text-purple-400 bg-purple-400/10',border: 'border-purple-500/40', icon: Search },
+    SEARCH:          { label: 'Busca',          color: 'text-accent bg-accent/10',        border: 'border-accent/40',    icon: Search },
     VIEW:            { label: 'Visualização',   color: 'text-muted bg-surface',    border: 'border-border',   icon: Eye },
     FAVORITE_ADD:    { label: 'Fav. Adicionado',color: 'text-pink-400 bg-pink-400/10',    border: 'border-pink-500/40',   icon: Heart },
     FAVORITE_REMOVE: { label: 'Fav. Removido',  color: 'text-orange-400 bg-orange-400/10',border: 'border-orange-500/40', icon: HeartOff },
@@ -50,7 +50,7 @@ const AUDIT_ACTION_CONFIG: Record<string, { label: string; color: string; border
     DELETE:  { label: 'Exclusão',  color: 'text-red-400 bg-red-400/10',       border: 'border-red-500/40',    icon: Trash2 },
     APPROVE: { label: 'Aprovado',  color: 'text-green-400 bg-green-400/10',   border: 'border-green-500/40',  icon: CheckCircle },
     REJECT:  { label: 'Rejeitado', color: 'text-orange-400 bg-orange-400/10', border: 'border-orange-500/40', icon: XCircle },
-    RESEND:  { label: 'Reenvio',   color: 'text-purple-400 bg-purple-400/10', border: 'border-purple-500/40', icon: Send },
+    RESEND:  { label: 'Reenvio',   color: 'text-accent bg-accent/10',        border: 'border-accent/40',    icon: Send },
     SEED:    { label: 'Seed',      color: 'text-muted bg-surface',     border: 'border-border',   icon: Database },
 }
 
@@ -411,7 +411,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                                 </span>
                                                 {entityName && (
                                                     entityHref ? (
-                                                        <Link href={entityHref} className="text-xs text-foreground hover:text-purple-300 hover:underline truncate max-w-[200px]">
+                                                        <Link href={entityHref} className="text-xs text-foreground hover:text-accent/70 hover:underline truncate max-w-[200px]">
                                                             {entityName}
                                                         </Link>
                                                     ) : (

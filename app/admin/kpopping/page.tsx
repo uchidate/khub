@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { AdminButton } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
@@ -266,7 +267,7 @@ function TMDBPanel({
   return (
     <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wide">Resultados TMDB</span>
         <AdminButton onClick={doSearch} variant="ghost" size="sm">
           <RefreshCw size={10} /> Refazer
         </AdminButton>
@@ -380,7 +381,7 @@ function TMDBGroupPanel({
   return (
     <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wide">Resultados TMDB</span>
         <AdminButton onClick={doSearch} variant="ghost" size="sm">
           <RefreshCw size={10} /> Refazer
         </AdminButton>
@@ -435,6 +436,7 @@ function IdolCard({
 }: {
   idol: IdolItem
 }) {
+  const toast = useAdminToast()
   const [pending, setPending] = useState(false)
   const [showTMDB, setShowTMDB] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
@@ -513,7 +515,7 @@ function IdolCard({
       if (!res.ok) throw new Error(data.error || 'Erro ao criar cantor')
       await doAction('confirm', data.id)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao criar cantor')
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar cantor')
       setPending(false)
     }
   }
@@ -703,6 +705,7 @@ function IdolCard({
 // ─── Group Card ────────────────────────────────────────────────────────────────
 
 function GroupCard({ group }: { group: GroupItem }) {
+  const toast = useAdminToast()
   const [pending, setPending] = useState(false)
   const [localGroup, setLocalGroup] = useState(group.musicalGroup)
   const [localGroupId, setLocalGroupId] = useState(group.musicalGroupId)
@@ -765,7 +768,7 @@ function GroupCard({ group }: { group: GroupItem }) {
       // Auto-confirm the match with the newly created group
       await doAction('confirm', data.id)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao criar grupo')
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar grupo')
       setPending(false)
     }
   }
@@ -1141,7 +1144,7 @@ function MembershipCard({
             type="checkbox"
             checked={isActive}
             onChange={e => setIsActive(e.target.checked)}
-            className="accent-purple-500"
+            className="accent-pink-500"
           />
           Ativo
         </label>
@@ -1527,7 +1530,7 @@ export default function KpoppingCurationPage() {
               </AdminButton>
             </div>
             {backfillResult && (
-              <p className="text-xs text-purple-400">
+              <p className="text-xs text-accent">
                 {backfillResult.total} candidatos · Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Aprovadas: {backfillResult.suggestionsApproved} · Artistas enriquecidos: {backfillResult.artistsEnriched} · Grupos enriquecidos: {backfillResult.groupsEnriched} · {backfillResult.errors} erros
               </p>
             )}
@@ -1550,7 +1553,7 @@ export default function KpoppingCurationPage() {
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 tab === t.key
-                  ? 'border-purple-500 text-purple-400'
+                  ? 'border-accent text-accent'
                   : 'border-transparent text-muted hover:text-foreground'
               }`}
             >

@@ -220,7 +220,7 @@ export default function EditGroupPage() {
         }
     }
 
-    const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 text-sm"
+    const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 text-sm"
     const labelCls = "block text-xs font-bold text-muted uppercase tracking-widest mb-1.5"
 
     return (
@@ -266,7 +266,7 @@ export default function EditGroupPage() {
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
-                        <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                     </div>
                 )}
 

@@ -71,7 +71,7 @@ const GROUP_BAR_COLORS: Record<string, string> = {
 }
 
 const SECTION_COLORS: Record<string, { bar: string; text: string; bg: string; border: string }> = {
-    'News':      { bar: 'bg-purple-500', text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/20' },
+    'News':      { bar: 'bg-accent',      text: 'text-accent',     bg: 'bg-accent/10',     border: 'border-accent/20' },
     'Artistas':  { bar: 'bg-pink-500',   text: 'text-pink-400',   bg: 'bg-pink-400/10',   border: 'border-pink-400/20' },
     'Produções': { bar: 'bg-blue-500',   text: 'text-blue-400',   bg: 'bg-blue-400/10',   border: 'border-blue-400/20' },
     'Grupos':    { bar: 'bg-cyan-500',   text: 'text-cyan-400',   bg: 'bg-cyan-400/10',   border: 'border-cyan-400/20' },
