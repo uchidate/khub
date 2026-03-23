@@ -281,20 +281,38 @@ export function HomeFrontPage({
                             <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-muted">
                                 Artista em destaque · Esta semana
                             </p>
-                            <div>
-                                <p className="text-2xl font-black tracking-[-0.05em] text-foreground leading-none">
-                                    {spotlightArtist.nameRomanized}
-                                </p>
-                                {spotlightArtist.nameHangul && (
-                                    <p className="text-[13px] font-normal text-muted mt-1">
-                                        {spotlightArtist.nameHangul}
+                            {/* Foto */}
+                            <div className="flex items-center gap-3">
+                                <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-surface border border-border">
+                                    {spotlightArtist.primaryImageUrl ? (
+                                        <Image
+                                            src={spotlightArtist.primaryImageUrl}
+                                            alt={spotlightArtist.nameRomanized}
+                                            width={56}
+                                            height={56}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-[#ff2d78] flex items-center justify-center text-white text-lg font-bold">
+                                            {spotlightArtist.nameRomanized[0]}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-black tracking-[-0.05em] text-foreground leading-none">
+                                        {spotlightArtist.nameRomanized}
                                     </p>
-                                )}
-                                {spotlightArtist.agency?.name && (
-                                    <p className="text-[12px] text-muted mt-0.5 leading-snug">
-                                        {spotlightArtist.agency.name}
-                                    </p>
-                                )}
+                                    {spotlightArtist.nameHangul && (
+                                        <p className="text-[13px] font-normal text-muted mt-0.5">
+                                            {spotlightArtist.nameHangul}
+                                        </p>
+                                    )}
+                                    {spotlightArtist.agency?.name && (
+                                        <p className="text-[11px] text-muted leading-snug">
+                                            {spotlightArtist.agency.name}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                             {/* Métricas */}
                             <div className="flex gap-5">
@@ -329,7 +347,7 @@ export function HomeFrontPage({
                             )}
                             <Link
                                 href={`/artists/${spotlightArtist.id}`}
-                                className="w-full text-center bg-foreground text-background text-[13px] font-semibold rounded-full py-3 hover:bg-accent hover:text-white transition-colors"
+                                className="w-full text-center bg-foreground text-background text-[12px] font-semibold rounded-full py-1.5 hover:bg-accent hover:text-white transition-colors"
                             >
                                 Ver perfil de {spotlightArtist.nameRomanized} →
                             </Link>
