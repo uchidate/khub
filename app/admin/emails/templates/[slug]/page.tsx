@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ArrowLeft, Save, RefreshCw, Eye, EyeOff } from 'lucide-react'
+import { AdminButton } from '@/components/admin'
 
 interface Template {
     slug: string
@@ -88,21 +89,23 @@ export default function AdminTemplateEditorPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         {msg && <span className="text-sm font-bold text-green-400">{msg}</span>}
-                        <button
+                        <AdminButton
+                            variant="secondary"
+                            size="md"
                             onClick={() => setPreview(p => !p)}
-                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground hover:bg-surface-hover font-bold text-sm rounded-lg transition-colors"
                         >
                             {preview ? <EyeOff size={14} /> : <Eye size={14} />}
                             {preview ? 'Editar' : 'Preview'}
-                        </button>
-                        <button
+                        </AdminButton>
+                        <AdminButton
+                            variant="primary"
+                            size="lg"
                             onClick={handleSave}
                             disabled={saving}
-                            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold text-sm rounded-lg transition-colors"
                         >
                             {saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                             Salvar
-                        </button>
+                        </AdminButton>
                     </div>
                 </div>
 

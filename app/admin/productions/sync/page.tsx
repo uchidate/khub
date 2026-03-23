@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { RefreshCw, Film, Wand2, Square } from 'lucide-react'
+import { AdminButton } from '@/components/admin'
 
 const SYNC_BATCH_SIZE = 100  // 100 × ~300ms + 3 TMDB calls ≈ 1-2min por lote
 const STORAGE_KEY = 'khub-sync-productions-progress'
@@ -267,18 +268,20 @@ export default function SyncProductionsTmdbPage() {
                             </p>
                         </div>
                         <div className="flex gap-2">
-                            <button
+                            <AdminButton
+                                variant="warning"
+                                size="md"
                                 onClick={() => runBatches((savedProgress.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedProgress)}
-                                className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-foreground rounded-lg text-sm font-bold transition-colors"
                             >
                                 ▶️ Retomar
-                            </button>
-                            <button
+                            </AdminButton>
+                            <AdminButton
+                                variant="secondary"
+                                size="md"
                                 onClick={() => { try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ } setSavedProgress(null) }}
-                                className="px-3 py-2 bg-surface hover:bg-surface-hover text-foreground rounded-lg text-sm transition-colors"
                             >
                                 Descartar
-                            </button>
+                            </AdminButton>
                         </div>
                     </div>
                 )}
@@ -348,13 +351,14 @@ export default function SyncProductionsTmdbPage() {
                 {/* Parar */}
                 {running && (
                     <div className="flex justify-end">
-                        <button
+                        <AdminButton
+                            variant="danger"
+                            size="md"
                             onClick={() => { abortRef.current = true }}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-foreground rounded-lg text-sm font-bold transition-colors"
                         >
                             <Square className="w-4 h-4" />
                             Parar (salva progresso)
-                        </button>
+                        </AdminButton>
                     </div>
                 )}
 

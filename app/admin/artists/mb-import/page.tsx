@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ArrowLeft, RefreshCw, Search, Plus, CheckCircle, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
+import { AdminButton, AdminLinkButton } from '@/components/admin'
 import type { MBArtistCandidate } from '@/lib/services/musicbrainz-service'
 
 export default function MBImportPage() {
@@ -80,16 +81,17 @@ export default function MBImportPage() {
                         autoFocus
                         className="flex-1 px-4 py-2.5 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 text-sm"
                     />
-                    <button
+                    <AdminButton
                         type="submit"
+                        variant="primary"
+                        size="lg"
                         disabled={loading || !search.trim()}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:bg-purple-900 disabled:opacity-60 text-white rounded-lg text-sm font-bold transition-colors"
                     >
                         {loading
                             ? <RefreshCw className="w-4 h-4 animate-spin" />
                             : <Search className="w-4 h-4" />}
                         Buscar
-                    </button>
+                    </AdminButton>
                 </form>
 
                 {/* Loading */}
@@ -149,30 +151,33 @@ export default function MBImportPage() {
                                     </div>
 
                                     {imported ? (
-                                        <Link
+                                        <AdminLinkButton
                                             href={`/admin/artists/${imported.id}`}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-900/40 border border-green-500/30 text-green-400 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-green-900/60 transition-colors"
+                                            variant="secondary"
+                                            size="sm"
                                         >
                                             <CheckCircle className="w-3.5 h-3.5" /> Ver artista
-                                        </Link>
+                                        </AdminLinkButton>
                                     ) : existingId ? (
-                                        <Link
+                                        <AdminLinkButton
                                             href={`/admin/artists/${existingId}`}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-900/30 border border-yellow-500/30 text-yellow-400 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-yellow-900/50 transition-colors"
+                                            variant="secondary"
+                                            size="sm"
                                         >
                                             <ExternalLink className="w-3.5 h-3.5" /> Já cadastrado
-                                        </Link>
+                                        </AdminLinkButton>
                                     ) : (
-                                        <button
+                                        <AdminButton
+                                            variant="primary"
+                                            size="sm"
                                             onClick={() => handleImport(c)}
                                             disabled={isImporting || !!importingMbid}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:bg-purple-900 disabled:opacity-60 text-white rounded-lg text-xs font-bold whitespace-nowrap transition-colors"
                                         >
                                             {isImporting
                                                 ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                                                 : <Plus className="w-3.5 h-3.5" />}
                                             Importar
-                                        </button>
+                                        </AdminButton>
                                     )}
                                 </div>
                             )

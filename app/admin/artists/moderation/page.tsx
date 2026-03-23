@@ -8,7 +8,7 @@ import {
   ShieldAlert, Flag, FlagOff, CheckSquare, Square, Minus,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ConfirmDialog } from '@/components/admin'
+import { ConfirmDialog, AdminButton } from '@/components/admin'
 
 type Artist = {
   id: string
@@ -254,7 +254,9 @@ export default function ArtistModerationPage() {
             </span>
             {filter !== 'adult' && (
               <>
-                <button
+                <AdminButton
+                  variant="danger"
+                  size="sm"
                   onClick={() => {
                     const ids = Array.from(selected)
                     openConfirm({
@@ -265,11 +267,12 @@ export default function ArtistModerationPage() {
                       onConfirm: () => doFlag(ids, true),
                     })
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 rounded-lg transition-colors"
                 >
                   <Flag size={12} /> Marcar
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     const ids = Array.from(selected)
                     openConfirm({
@@ -280,18 +283,18 @@ export default function ArtistModerationPage() {
                       onConfirm: () => doFlag(ids, false),
                     })
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30 rounded-lg transition-colors"
                 >
                   <FlagOff size={12} /> Desmarcar
-                </button>
+                </AdminButton>
               </>
             )}
-            <button
+            <AdminButton
+              variant="secondary"
+              size="sm"
               onClick={handleBulkHide}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface text-foreground hover:bg-surface border border-border rounded-lg transition-colors"
             >
               <EyeOff size={12} /> Ocultar
-            </button>
+            </AdminButton>
             <button onClick={() => setSelected(new Set())} className="text-muted hover:text-foreground transition-colors text-xs">
               Limpar
             </button>
@@ -411,7 +414,9 @@ export default function ArtistModerationPage() {
                       {/* Actions */}
                       <div className="flex items-center gap-2">
                         {filter !== 'adult' && (
-                          <button
+                          <AdminButton
+                            variant={artist.flaggedAsNonKorean ? 'secondary' : 'danger'}
+                            size="sm"
                             onClick={() => {
                               const ids = [artist.id]
                               openConfirm({
@@ -423,24 +428,20 @@ export default function ArtistModerationPage() {
                               })
                             }}
                             disabled={isActioning}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
-                              artist.flaggedAsNonKorean
-                                ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30 border border-green-600/30'
-                                : 'bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30'
-                            }`}
                           >
                             {artist.flaggedAsNonKorean ? <FlagOff size={12} /> : <Flag size={12} />}
                             {artist.flaggedAsNonKorean ? 'Desmarcar' : 'Não é coreano'}
-                          </button>
+                          </AdminButton>
                         )}
-                        <button
+                        <AdminButton
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleHide(artist)}
                           disabled={isActioning}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-muted hover:bg-surface hover:text-foreground transition-colors disabled:opacity-50 border border-border"
                         >
                           {isActioning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
                           Ocultar
-                        </button>
+                        </AdminButton>
                         <Link href={`/artists/${artist.id}`} target="_blank" className="text-xs text-purple-400 hover:underline">
                           Ver →
                         </Link>
@@ -456,21 +457,23 @@ export default function ArtistModerationPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between gap-4 pt-2">
-            <button
+            <AdminButton
+              variant="secondary"
+              size="md"
               onClick={() => setPage(p => p - 1)}
               disabled={page === 1}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Anterior
-            </button>
+            </AdminButton>
             <span className="text-sm text-muted">{page} / {totalPages}</span>
-            <button
+            <AdminButton
+              variant="secondary"
+              size="md"
               onClick={() => setPage(p => p + 1)}
               disabled={page === totalPages}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Próxima
-            </button>
+            </AdminButton>
           </div>
         )}
       </div>

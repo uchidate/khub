@@ -5,6 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { Users, RefreshCw, Music2 } from 'lucide-react'
 import Image from 'next/image'
+import { AdminButton } from '@/components/admin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -294,13 +295,12 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
               {[20, 50, 100, 200].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
-          <button onClick={startSync} disabled={running}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+          <AdminButton variant="primary" size="md" onClick={startSync} disabled={running}>
             {running
               ? <><RefreshCw className="w-4 h-4 animate-spin" /> Sincronizando...</>
               : <><Users className="w-4 h-4" /> Sincronizar Lote</>
             }
-          </button>
+          </AdminButton>
         </div>
       </div>
 
