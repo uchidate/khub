@@ -7,6 +7,7 @@ import {
     Eye, RefreshCw, Search, Film, Shield,
     CheckCircle, Loader2, ExternalLink, ChevronDown, ChevronRight, UserX,
 } from 'lucide-react'
+import { AdminButton, AdminIconButton, AdminIconLink } from '@/components/admin'
 
 type HideReason = 'adult_content' | 'hidden_productions' | 'no_productions'
 type ReasonFilter = 'all' | 'no_productions' | 'hidden_productions' | 'adult_content'
@@ -215,7 +216,7 @@ export default function ArtistVisibilityPage() {
                             {REASON_FILTERS.map(([val, label]) => (
                                 <button key={val} onClick={() => setReasonFilter(val)}
                                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                                        reasonFilter === val ? 'bg-purple-600 text-foreground' : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
+                                        reasonFilter === val ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                                     }`}
                                 >
                                     {label}
@@ -226,18 +227,19 @@ export default function ArtistVisibilityPage() {
                             ))}
                         </div>
                         <div className="ml-auto flex items-center gap-2">
-                            <button onClick={fetchData} className="p-1.5 text-muted hover:text-muted" title="Recarregar">
+                            <AdminIconButton onClick={fetchData} title="Recarregar" size="md">
                                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                            </button>
-                            <button
+                            </AdminIconButton>
+                            <AdminButton
+                                variant="secondary"
+                                size="sm"
                                 onClick={handleReconcile}
                                 disabled={reconciling}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-surface text-foreground border border-border rounded-lg hover:bg-surface disabled:opacity-50 transition-colors"
                                 title="Reavalia todos os artistas auto-ocultos (max 500)"
                             >
                                 <RefreshCw className={`w-3.5 h-3.5 ${reconciling ? 'animate-spin' : ''}`} />
                                 {reconciling ? 'Reconciliando...' : 'Reconciliar tudo'}
-                            </button>
+                            </AdminButton>
                         </div>
                     </div>
 
@@ -250,12 +252,13 @@ export default function ArtistVisibilityPage() {
                     {selected.size > 0 && (
                         <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20">
                             <span className="text-xs text-muted">{selected.size} selecionados</span>
-                            <button
+                            <AdminButton
+                                variant="warning"
+                                size="sm"
                                 onClick={() => handleShow(Array.from(selected))}
-                                className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-foreground rounded-lg hover:bg-green-600 transition-colors"
                             >
                                 <Eye className="w-3 h-3" /> Mostrar selecionados
-                            </button>
+                            </AdminButton>
                             <button onClick={() => setSelected(new Set())} className="text-xs text-muted hover:text-muted">Limpar</button>
                         </div>
                     )}
@@ -313,34 +316,31 @@ export default function ArtistVisibilityPage() {
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-2 flex-shrink-0">
-                                                <Link href={`/artists/${item.id}`} target="_blank"
+                                                <AdminIconLink href={`/artists/${item.id}`} target="_blank"
                                                     onClick={e => e.stopPropagation()}
-                                                    className="p-1 text-muted hover:text-muted transition-colors"
                                                     title="Ver página pública"
+                                                    size="sm"
                                                 >
                                                     <ExternalLink className="w-3 h-3" />
-                                                </Link>
-                                                <Link href={`/admin/artists/${item.id}`}
-                                                    className="p-1 text-muted hover:text-muted transition-colors"
+                                                </AdminIconLink>
+                                                <AdminIconLink href={`/admin/artists/${item.id}`}
                                                     title="Editar no admin"
+                                                    size="sm"
                                                 >
                                                     <UserX className="w-3.5 h-3.5" />
-                                                </Link>
+                                                </AdminIconLink>
                                                 {canShow && (
-                                                    <button
+                                                    <AdminButton
+                                                        variant={isDone ? 'secondary' : 'secondary'}
+                                                        size="sm"
                                                         onClick={() => handleShow([item.id])}
                                                         disabled={isShowing || isDone}
-                                                        className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-colors disabled:opacity-50 ${
-                                                            isDone
-                                                                ? 'bg-green-900/40 text-green-400 border-green-700/30'
-                                                                : 'bg-surface text-muted border-border hover:bg-green-900/30 hover:text-green-400 hover:border-green-700/30'
-                                                        }`}
                                                     >
                                                         {isShowing ? <Loader2 className="w-3 h-3 animate-spin" />
                                                             : isDone ? <CheckCircle className="w-3 h-3" />
                                                             : <Eye className="w-3 h-3" />}
                                                         {isDone ? 'Mostrado' : 'Mostrar'}
-                                                    </button>
+                                                    </AdminButton>
                                                 )}
                                                 {!canShow && (
                                                     <span className="flex items-center gap-1 px-2.5 py-1 text-[10px] text-red-500/60 border border-red-900/20 rounded-lg">
@@ -359,15 +359,13 @@ export default function ArtistVisibilityPage() {
                         <div className="flex items-center justify-between px-4 py-3 border-t border-border">
                             <span className="text-xs text-muted">{total} artistas</span>
                             <div className="flex gap-2 items-center">
-                                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                                    className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted">
+                                <AdminButton variant="secondary" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
                                     Anterior
-                                </button>
+                                </AdminButton>
                                 <span className="text-xs text-muted">Página {page} de {totalPages}</span>
-                                <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}
-                                    className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted">
+                                <AdminButton variant="secondary" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>
                                     Próxima
-                                </button>
+                                </AdminButton>
                             </div>
                         </div>
                     )}

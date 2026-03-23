@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
-import { StatCard } from '@/components/admin/StatCard'
+import { StatCard } from '@/components/admin'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
+import { AdminButton, AdminIconButton, BulkActionBar } from '@/components/admin'
 import { CheckCircle, Eye, XCircle, ExternalLink, RefreshCw, Flag, Search, Trash2 } from 'lucide-react'
 import { AdminEmptyState } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,25 +89,22 @@ function ActionButtons({ report, onUpdate, updatingId }: {
   return (
     <div className="flex items-center gap-1">
       {report.status === 'PENDING' && (
-        <button onClick={() => onUpdate(report.id, 'REVIEWED')} disabled={disabled}
-          title="Marcar como em revisão"
-          className="p-1.5 rounded-lg hover:bg-blue-500/20 text-muted hover:text-blue-400 transition-colors disabled:opacity-40">
+        <AdminIconButton onClick={() => onUpdate(report.id, 'REVIEWED')} disabled={disabled}
+          title="Marcar como em revisão" variant="success">
           <Eye size={14} />
-        </button>
+        </AdminIconButton>
       )}
       {report.status !== 'RESOLVED' && report.status !== 'DISMISSED' && (
-        <button onClick={() => onUpdate(report.id, 'RESOLVED')} disabled={disabled}
-          title="Marcar como resolvido"
-          className="p-1.5 rounded-lg hover:bg-green-500/20 text-muted hover:text-green-400 transition-colors disabled:opacity-40">
+        <AdminIconButton onClick={() => onUpdate(report.id, 'RESOLVED')} disabled={disabled}
+          title="Marcar como resolvido" variant="success">
           <CheckCircle size={14} />
-        </button>
+        </AdminIconButton>
       )}
       {report.status !== 'DISMISSED' && (
-        <button onClick={() => onUpdate(report.id, 'DISMISSED')} disabled={disabled}
-          title="Descartar"
-          className="p-1.5 rounded-lg hover:bg-red-500/20 text-muted hover:text-red-400 transition-colors disabled:opacity-40">
+        <AdminIconButton onClick={() => onUpdate(report.id, 'DISMISSED')} disabled={disabled}
+          title="Descartar" variant="danger">
           <XCircle size={14} />
-        </button>
+        </AdminIconButton>
       )}
     </div>
   )
@@ -210,6 +209,8 @@ export default function ReportsPage() {
   const [bulkLoading,    setBulkLoading]    = useState(false)
   const [confirmModal,   setConfirmModal]   = useState<ConfirmState>({ open: false, message: '', onConfirm: () => {} })
   const debounceRef = useRef<NodeJS.Timeout>(undefined)
+  const toast = useAdminToast()
+  const clear = () => setSelected(new Set())
 
   const fetchStats = useCallback(async () => {
     try {
@@ -234,10 +235,12 @@ export default function ReportsPage() {
         setTotalPages(data.totalPages)
         setSelected(new Set())
       }
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao carregar dados')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => {
@@ -291,8 +294,13 @@ export default function ReportsPage() {
         body: JSON.stringify({ status }),
       })
       if (res.ok) {
+        toast.success('Status atualizado')
         await Promise.all([fetchReports(page, statusFilter, entityFilter, categoryFilter, search), fetchStats()])
+      } else {
+        toast.error('Erro ao atualizar status')
       }
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao atualizar status')
     } finally {
       setUpdatingId(null)
     }
@@ -309,8 +317,13 @@ export default function ReportsPage() {
         body: JSON.stringify({ ids, status }),
       })
       if (res.ok) {
+        toast.success(`${ids.length} reporte${ids.length !== 1 ? 's' : ''} atualizado${ids.length !== 1 ? 's' : ''}`)
         await Promise.all([fetchReports(page, statusFilter, entityFilter, categoryFilter, search), fetchStats()])
+      } else {
+        toast.error('Erro ao atualizar reportes')
       }
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao atualizar reportes')
     } finally {
       setBulkLoading(false)
     }
@@ -326,8 +339,13 @@ export default function ReportsPage() {
         body: JSON.stringify({ ids }),
       })
       if (res.ok) {
+        toast.success(`${ids.length} reporte${ids.length !== 1 ? 's' : ''} deletado${ids.length !== 1 ? 's' : ''}`)
         await Promise.all([fetchReports(page, statusFilter, entityFilter, categoryFilter, search), fetchStats()])
+      } else {
+        toast.error('Erro ao deletar reportes')
       }
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao deletar reportes')
     } finally {
       setBulkLoading(false)
     }
@@ -355,12 +373,13 @@ export default function ReportsPage() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4 -mt-6 flex-wrap">
           <p className="text-muted text-sm">Problemas reportados por usuários nas páginas públicas</p>
-          <button
+          <AdminButton
             onClick={() => { fetchReports(page, statusFilter, entityFilter, categoryFilter, search); fetchStats() }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface hover:bg-surface text-muted hover:text-foreground transition-colors text-sm"
+            variant="secondary"
+            size="sm"
           >
             <RefreshCw size={14} /> Atualizar
-          </button>
+          </AdminButton>
         </div>
 
         {/* Stats bar */}
@@ -430,34 +449,32 @@ export default function ReportsPage() {
 
         {/* Bulk action bar */}
         {someSelected && (
-          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-purple-600/10 border border-purple-500/30 rounded-xl">
-            <span className="text-sm text-purple-300 font-medium">
-              {selected.size} selecionado{selected.size !== 1 ? 's' : ''}
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => confirmBulk('Resolver', () => bulkUpdateStatus('RESOLVED'))}
-                disabled={bulkLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 text-xs font-medium transition-colors disabled:opacity-40"
-              >
-                <CheckCircle size={13} /> Resolver
-              </button>
-              <button
-                onClick={() => confirmBulk('Descartar', () => bulkUpdateStatus('DISMISSED'))}
-                disabled={bulkLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface text-muted text-xs font-medium transition-colors disabled:opacity-40"
-              >
-                <XCircle size={13} /> Descartar
-              </button>
-              <button
-                onClick={() => confirmBulk('Deletar permanentemente', () => bulkDelete())}
-                disabled={bulkLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-medium transition-colors disabled:opacity-40"
-              >
-                <Trash2 size={13} /> Deletar
-              </button>
-            </div>
-          </div>
+          <BulkActionBar count={selected.size} onClear={clear}>
+            <AdminButton
+              onClick={() => confirmBulk('Resolver', () => bulkUpdateStatus('RESOLVED'))}
+              disabled={bulkLoading}
+              variant="secondary"
+              size="sm"
+            >
+              <CheckCircle size={13} /> Resolver
+            </AdminButton>
+            <AdminButton
+              onClick={() => confirmBulk('Descartar', () => bulkUpdateStatus('DISMISSED'))}
+              disabled={bulkLoading}
+              variant="secondary"
+              size="sm"
+            >
+              <XCircle size={13} /> Descartar
+            </AdminButton>
+            <AdminButton
+              onClick={() => confirmBulk('Deletar permanentemente', () => bulkDelete())}
+              disabled={bulkLoading}
+              variant="danger"
+              size="sm"
+            >
+              <Trash2 size={13} /> Deletar
+            </AdminButton>
+          </BulkActionBar>
         )}
 
         {/* Content */}
@@ -569,21 +586,21 @@ export default function ReportsPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between gap-4">
-            <button
+            <AdminButton
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              variant="secondary"
             >
               ← Anterior
-            </button>
+            </AdminButton>
             <span className="text-sm text-muted">{page} / {totalPages}</span>
-            <button
+            <AdminButton
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              variant="secondary"
             >
               Próxima →
-            </button>
+            </AdminButton>
           </div>
         )}
       </div>

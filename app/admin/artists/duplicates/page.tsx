@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban, Zap, UserPlus } from 'lucide-react'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, AdminButton, AdminLinkButton } from '@/components/admin'
 import Image from 'next/image'
-import Link from 'next/link'
 
 interface ArtistCard {
     id: string
@@ -330,18 +329,18 @@ export default function DuplicatesPage() {
                         ))}
                     </div>
                     <div className="ml-auto flex items-center gap-2">
-                        <Link
+                        <AdminLinkButton
                             href="/admin/artists/mb-import"
-                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border hover:bg-surface-hover text-foreground rounded-lg text-sm font-bold transition-colors"
+                            variant="secondary"
+                            size="md"
                         >
                             <UserPlus className="w-4 h-4" />
                             Importar artista
-                        </Link>
-                        <button onClick={fetchPairs} disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors disabled:opacity-50">
+                        </AdminLinkButton>
+                        <AdminButton variant="secondary" size="md" onClick={fetchPairs} disabled={loading}>
                             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             Reanalisar
-                        </button>
+                        </AdminButton>
                     </div>
                 </div>
 
@@ -412,14 +411,15 @@ export default function DuplicatesPage() {
 
                                         {/* Action buttons (outside expand area) */}
                                         <div className="flex items-center gap-1 flex-shrink-0">
-                                            <button
+                                            <AdminButton
+                                                variant="secondary"
+                                                size="sm"
                                                 onClick={() => dismiss(pair.id)}
                                                 title="Não é duplicata — descartar"
-                                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border text-muted hover:border-border hover:text-muted transition-colors text-xs font-bold"
                                             >
                                                 <Ban size={12} />
                                                 Ignorar
-                                            </button>
+                                            </AdminButton>
                                             <button
                                                 onClick={() => setExpanded(isExpanded ? null : pair.id)}
                                                 className="p-1.5 text-muted hover:text-foreground transition-colors"
@@ -463,7 +463,7 @@ export default function DuplicatesPage() {
                                                                                 onClick={() => rawId && !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne || !rawId}
                                                                                 className={`flex flex-col gap-1.5 p-3 rounded-lg border text-left transition-all ${
-                                                                                    isSelected && rawId ? 'border-purple-500 bg-purple-500/10' : 'border-border bg-surface'
+                                                                                    isSelected && rawId ? 'border-accent bg-accent/10' : 'border-border bg-surface'
                                                                                 } ${rawId && !onlyOne ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
                                                                             >
                                                                                 {rawId ? (
@@ -524,7 +524,7 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne}
-                                                                                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-purple-500' : 'border-border opacity-40'} ${!onlyOne ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                                                                                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-accent' : 'border-border opacity-40'} ${!onlyOne ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
                                                                             >
                                                                                 {artist.primaryImageUrl ? (
                                                                                     <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="64px" className="object-cover" />
@@ -545,7 +545,7 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && val && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne || !val}
-                                                                                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${isSelected && val ? 'border-purple-500 bg-purple-500/10 text-foreground' : 'border-border text-muted'} ${!onlyOne && val ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
+                                                                                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${isSelected && val ? 'border-accent bg-accent/10 text-foreground' : 'border-border text-muted'} ${!onlyOne && val ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
                                                                             >
                                                                                 {val ? <span className="line-clamp-3">{val}</span> : <span className="text-muted italic">Sem bio</span>}
                                                                             </button>
@@ -567,7 +567,7 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne}
-                                                                                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${isSelected ? 'border-purple-500 bg-purple-500/10 text-purple-300' : 'border-border text-muted hover:border-border'} ${!onlyOne ? 'cursor-pointer' : 'cursor-default'}`}
+                                                                                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${isSelected ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted hover:border-border'} ${!onlyOne ? 'cursor-pointer' : 'cursor-default'}`}
                                                                             >
                                                                                 {val}
                                                                                 {onlyOne && <span className="ml-1 text-green-500 text-[10px]">✓ único</span>}
@@ -596,20 +596,17 @@ export default function DuplicatesPage() {
                                                     A={pair.a.nameRomanized} será mantido · B={pair.b.nameRomanized} será deletado
                                                 </p>
                                                 <div className="flex gap-2 flex-shrink-0">
-                                                    <button onClick={() => dismiss(pair.id)}
-                                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted text-xs font-bold hover:border-border hover:text-foreground transition-colors">
+                                                    <AdminButton variant="secondary" size="sm" onClick={() => dismiss(pair.id)}>
                                                         <Ban className="w-3 h-3" />
                                                         Ignorar
-                                                    </button>
-                                                    <button onClick={() => setExpanded(null)}
-                                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted text-xs font-bold hover:border-border transition-colors">
+                                                    </AdminButton>
+                                                    <AdminButton variant="secondary" size="sm" onClick={() => setExpanded(null)}>
                                                         <X className="w-3 h-3" />
                                                         Cancelar
-                                                    </button>
-                                                    <button onClick={() => executeMerge(pair)} disabled={merging}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors">
+                                                    </AdminButton>
+                                                    <AdminButton variant="primary" size="sm" onClick={() => executeMerge(pair)} disabled={merging}>
                                                         {merging ? <><RefreshCw className="w-3 h-3 animate-spin" /> Mesclando...</> : <><GitMerge className="w-3 h-3" /> Mesclar Perfis</>}
-                                                    </button>
+                                                    </AdminButton>
                                                 </div>
                                             </div>
                                         </div>

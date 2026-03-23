@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
-import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { AdminEmptyState, AdminModalOverlay } from '@/components/admin'
+import { Instagram, Twitter, Youtube, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
 interface SocialLinks {
@@ -214,50 +214,44 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
     }
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-surface border border-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center gap-4 rounded-t-2xl">
-                    {artist.primaryImageUrl ? (
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
-                        </div>
-                    ) : (
-                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-muted flex-shrink-0">
-                            {artist.nameRomanized[0]}
-                        </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                        <h2 className="text-base font-bold text-foreground truncate">{artist.nameRomanized}</h2>
-                        {artist.nameHangul && <p className="text-xs text-muted">{artist.nameHangul}</p>}
+        <AdminModalOverlay
+            open
+            onClose={onClose}
+            title={artist.nameRomanized}
+            subtitle={artist.nameHangul ?? undefined}
+            icon={
+                artist.primaryImageUrl ? (
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                        <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="32px" className="object-cover" />
                     </div>
-                    <button onClick={onClose} className="text-muted hover:text-foreground transition-colors">
-                        <X size={20} />
-                    </button>
-                </div>
+                ) : (
+                    <span className="text-sm font-black text-muted">{artist.nameRomanized[0]}</span>
+                )
+            }
+            maxWidth="lg"
+            zIndex={200}
+        >
+            <div className="max-h-[65vh] overflow-y-auto -mx-5 px-5 space-y-4">
+                {error && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{error}</div>
+                )}
+                {PLATFORMS.map(({ key, label, placeholder, icon, color }) => (
+                    <div key={key}>
+                        <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-2">
+                            <span className={color}>{icon}</span>
+                            <span className="text-muted">{label}</span>
+                        </label>
+                        <input
+                            type="url"
+                            value={links[key] || ''}
+                            onChange={(e) => setLinks(prev => ({ ...prev, [key]: e.target.value }))}
+                            placeholder={placeholder}
+                            className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 text-sm"
+                        />
+                    </div>
+                ))}
 
-                <div className="p-6 space-y-4">
-                    {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{error}</div>
-                    )}
-                    {PLATFORMS.map(({ key, label, placeholder, icon, color }) => (
-                        <div key={key}>
-                            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-2">
-                                <span className={color}>{icon}</span>
-                                <span className="text-muted">{label}</span>
-                            </label>
-                            <input
-                                type="url"
-                                value={links[key] || ''}
-                                onChange={(e) => setLinks(prev => ({ ...prev, [key]: e.target.value }))}
-                                placeholder={placeholder}
-                                className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 text-sm"
-                            />
-                        </div>
-                    ))}
-                </div>
-
-                <div className="mx-6 mb-4 p-4 bg-pink-500/5 border border-pink-500/20 rounded-xl">
+                <div className="p-4 bg-pink-500/5 border border-pink-500/20 rounded-xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Instagram className="w-4 h-4 text-pink-400" />
                         <span className="text-xs font-black text-pink-400 uppercase tracking-widest">Instagram RSS.app</span>
@@ -287,17 +281,17 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
                         </button>
                     </div>
                 </div>
-
-                <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 flex gap-3 rounded-b-2xl">
-                    <button onClick={onClose} className="flex-1 py-2.5 bg-surface text-foreground rounded-xl hover:bg-surface transition-colors font-medium text-sm">
-                        Cancelar
-                    </button>
-                    <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 transition-colors font-bold text-sm">
-                        {saving ? 'Salvando...' : 'Salvar'}
-                    </button>
-                </div>
             </div>
-        </div>
+
+            <div className="flex gap-3 pt-4 border-t border-border mt-4">
+                <button onClick={onClose} className="flex-1 py-2.5 bg-surface text-foreground rounded-xl hover:bg-surface transition-colors font-medium text-sm">
+                    Cancelar
+                </button>
+                <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 transition-colors font-bold text-sm">
+                    {saving ? 'Salvando...' : 'Salvar'}
+                </button>
+            </div>
+        </AdminModalOverlay>
     )
 }
 
@@ -622,7 +616,7 @@ export default function SocialLinksAdminPage() {
     const pct = totalGlobal > 0 ? Math.round((processed / totalGlobal) * 100) : 0
 
     const filterTabs: { value: FilterType; label: string; count: number; color: string; activeColor: string }[] = [
-        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-border text-muted hover:border-border',                         activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
+        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-border text-muted hover:border-border',                         activeColor: 'border-accent/40 bg-accent/20 text-accent' },
         { value: 'pending',  label: 'Pendentes',   count: globalStats.pending,  color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
         { value: 'attempted',label: 'Já tentados', count: globalStats.attempted,color: 'border-border bg-surface text-muted hover:bg-surface',           activeColor: 'border-border bg-surface text-foreground' },
         { value: 'complete', label: 'Com links',   count: globalStats.complete, color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',     activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },

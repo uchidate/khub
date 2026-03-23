@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminLinkButton, AdminButton } from '@/components/admin'
 import Image from 'next/image'
-import Link from 'next/link'
 import { EyeOff, Eye, Music2, Film, UsersRound, ExternalLink } from 'lucide-react'
 
 interface HiddenArtist {
@@ -257,21 +257,19 @@ function HiddenCard({
 
             {/* Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
-                <Link
-                    href={editHref}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border rounded-lg transition-colors"
-                >
+                <AdminLinkButton href={editHref} variant="secondary" size="sm">
                     <ExternalLink size={12} />
                     Editar
-                </Link>
-                <button
+                </AdminLinkButton>
+                <AdminButton
                     onClick={onRestore}
                     disabled={restoring}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-green-400 hover:text-foreground bg-green-900/20 hover:bg-green-600 border border-green-800/40 hover:border-green-500 rounded-lg transition-colors disabled:opacity-50"
+                    variant="primary"
+                    size="sm"
                 >
                     <Eye size={12} />
                     {restoring ? 'Restaurando...' : 'Restaurar'}
-                </button>
+                </AdminButton>
             </div>
         </div>
     )

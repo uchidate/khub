@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { Languages, RefreshCw, AlertTriangle, CheckCircle, Type, Database, Link2, HelpCircle, Play } from 'lucide-react'
+import { AdminButton } from '@/components/admin'
 
 const SYNC_BATCH_SIZE = 250    // 250 × ~750ms ≈ 3min por lote, abaixo do maxDuration=300s
 const LINK_BATCH_SIZE = 200
@@ -227,13 +228,13 @@ function LogPanel({
                     </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                    <button onClick={onStart} disabled={running} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+                    <AdminButton variant="primary" size="lg" onClick={onStart} disabled={running}>
                         {running ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><CheckCircle className="w-4 h-4" /> {buttonLabel}</>}
-                    </button>
+                    </AdminButton>
                     {onStartAll && buttonAllLabel && (
-                        <button onClick={onStartAll} disabled={running} className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors">
+                        <AdminButton variant="warning" size="lg" onClick={onStartAll} disabled={running}>
                             {running ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> {buttonAllLabel}</>}
-                        </button>
+                        </AdminButton>
                     )}
                 </div>
             </div>
@@ -629,18 +630,18 @@ export default function FixNamesAdminPage() {
                             </div>
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
-                            <button onClick={() => runLinkBatches()} disabled={linkRunning} className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors">
+                            <AdminButton variant="warning" size="lg" onClick={() => runLinkBatches()} disabled={linkRunning}>
                                 {linkRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Buscando...</> : <><Link2 className="w-4 h-4" /> Vincular TMDB IDs</>}
-                            </button>
+                            </AdminButton>
                             {savedLink && !linkRunning && (
-                                <button onClick={() => runLinkBatches(savedLink)} className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-foreground rounded-lg text-sm font-bold transition-colors" title={`Retomar do offset ${savedLink.offset.toLocaleString('pt-BR')}`}>
+                                <AdminButton variant="secondary" size="lg" onClick={() => runLinkBatches(savedLink)} title={`Retomar do offset ${savedLink.offset.toLocaleString('pt-BR')}`}>
                                     <Play className="w-4 h-4" /> Retomar ({savedLink.offset.toLocaleString('pt-BR')}/{savedLink.totalGlobal.toLocaleString('pt-BR')})
-                                </button>
+                                </AdminButton>
                             )}
                             {linkRunning && (
-                                <button onClick={() => { linkAbortRef.current = true }} className="px-3 py-2.5 bg-red-600 hover:bg-red-500 text-foreground rounded-lg text-sm font-bold transition-colors" title="Parar após o lote atual">
+                                <AdminButton variant="danger" size="lg" onClick={() => { linkAbortRef.current = true }} title="Parar após o lote atual">
                                     ✕ Parar
-                                </button>
+                                </AdminButton>
                             )}
                         </div>
                     </div>
@@ -729,24 +730,24 @@ export default function FixNamesAdminPage() {
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                             {savedSync && !syncRunning ? (
-                                <button onClick={resumeSyncTmdb} className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-foreground rounded-lg text-sm font-bold transition-colors" title={`Retomar do offset ${savedSync.offset.toLocaleString('pt-BR')}`}>
+                                <AdminButton variant="secondary" size="lg" onClick={resumeSyncTmdb} title={`Retomar do offset ${savedSync.offset.toLocaleString('pt-BR')}`}>
                                     <Play className="w-4 h-4" /> Retomar ({savedSync.offset.toLocaleString('pt-BR')}/{savedSync.totalGlobal.toLocaleString('pt-BR')})
-                                </button>
+                                </AdminButton>
                             ) : (
-                                <button onClick={startSyncTmdb} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+                                <AdminButton variant="primary" size="lg" onClick={startSyncTmdb} disabled={syncRunning}>
                                     {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><CheckCircle className="w-4 h-4" /> Preencher vazios</>}
-                                </button>
+                                </AdminButton>
                             )}
                             <button onClick={startSyncTmdbSmart} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors" title="Atualiza todos os campos não editados manualmente">
                                 {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> Smart sync</>}
                             </button>
-                            <button onClick={startSyncTmdbAll} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors">
+                            <AdminButton variant="warning" size="lg" onClick={startSyncTmdbAll} disabled={syncRunning}>
                                 {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> Forçar todos ({artistStats?.withTmdb.toLocaleString('pt-BR') ?? '…'})</>}
-                            </button>
+                            </AdminButton>
                             {syncRunning && (
-                                <button onClick={() => { syncAbortRef.current = true }} className="px-3 py-2.5 bg-red-600 hover:bg-red-500 text-foreground rounded-lg text-sm font-bold transition-colors" title="Parar após o lote atual">
+                                <AdminButton variant="danger" size="lg" onClick={() => { syncAbortRef.current = true }} title="Parar após o lote atual">
                                     ✕ Parar
-                                </button>
+                                </AdminButton>
                             )}
                         </div>
                     </div>

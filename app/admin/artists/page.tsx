@@ -250,7 +250,7 @@ function FixNamesButton({ artist, onFixed, onFailed }: {
     : display === 'err'  ? 'text-red-400 border-red-500/30'
     : needsFixName
       ? 'text-orange-400 border-orange-500/30 hover:bg-orange-500/10'
-      : 'text-purple-400 border-purple-500/30 hover:bg-purple-500/10'
+      : 'text-accent border-accent/30 hover:bg-accent/10'
 
   const label =
     display === 'ok' ? '✓'

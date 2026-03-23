@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, AdminButton, SectionHeader } from '@/components/admin'
 
 interface Artist {
   id: string
@@ -179,14 +179,14 @@ export default function FilmographyAdminPage() {
             </div>
 
             {/* Batch sync */}
-            <button
+            <AdminButton
               onClick={syncOutdated}
               disabled={batchSyncing}
-              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              variant="primary"
             >
               <RefreshCw size={14} className={batchSyncing ? 'animate-spin' : ''} />
               {batchSyncing ? 'Sincronizando...' : 'Sync Desatualizados'}
-            </button>
+            </AdminButton>
           </div>
 
           {/* Filters */}
@@ -205,9 +205,7 @@ export default function FilmographyAdminPage() {
         {/* Artist list */}
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <h2 className="text-xs font-black text-muted uppercase tracking-wider">
-              Artistas
-            </h2>
+            <SectionHeader title="Artistas" />
             <span className="text-xs text-muted tabular-nums">{filteredArtists.length} resultado{filteredArtists.length !== 1 ? 's' : ''}</span>
           </div>
 
@@ -246,14 +244,15 @@ export default function FilmographyAdminPage() {
                       </div>
                     </div>
 
-                    <button
+                    <AdminButton
                       onClick={() => syncArtist(artist.id)}
                       disabled={!!syncing}
-                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-foreground border border-border rounded-lg hover:bg-surface-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      variant="secondary"
+                      size="sm"
                     >
                       <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} />
                       {isSyncing ? 'Sync...' : 'Sync'}
-                    </button>
+                    </AdminButton>
                   </div>
                 )
               })}

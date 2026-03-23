@@ -8,6 +8,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { StatCard } from '@/components/admin'
 import { AdminBadge } from '@/components/admin/AdminBadge'
 import { AdminIconButton, AdminIconLink } from '@/components/admin/AdminIconButton'
 import {
@@ -136,7 +137,7 @@ function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
             {shown.map(({ artist }) => (
                 <span
                     key={artist.id}
-                    className="flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/10 text-purple-300 rounded text-[10px] font-medium border border-purple-500/20"
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-accent/10 text-accent rounded text-[10px] font-medium border border-accent/20"
                 >
                     {artist.primaryImageUrl ? (
                         <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={12} height={12} className="rounded-full object-cover flex-shrink-0" />
@@ -424,6 +425,8 @@ export default function NewsAdminPage() {
             setDeleteOpen(false)
             refetchTable()
             fetchStats()
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar dados')
         } finally {
             setDeleteLoading(false)
         }
@@ -537,29 +540,16 @@ export default function NewsAdminPage() {
 
                 {/* ── Stats ─────────────────────────────────────────────── */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {STAT_CARDS.map(({ label, value, color, filterValue, activeColor, hint }) => {
-                        const isActive = filterStatus === filterValue && filterValue !== ''
-                        return (
-                            <button
-                                key={label}
-                                onClick={() => setFilterStatus(prev => prev === filterValue ? '' : filterValue)}
-                                className={`rounded-xl border bg-surface px-4 py-3 text-center transition-colors hover:border-border ${
-                                    isActive ? activeColor : 'border-border'
-                                }`}
-                            >
-                                <p className={`text-2xl font-black tabular-nums ${color}`}>
-                                    {value === undefined
-                                        ? <Loader2 size={18} className="animate-spin mx-auto text-muted" />
-                                        : value.toLocaleString('pt-BR')
-                                    }
-                                </p>
-                                <p className="text-[11px] text-muted mt-0.5">
-                                    {label}
-                                    {hint && <span className="text-muted ml-1">· {hint}</span>}
-                                </p>
-                            </button>
-                        )
-                    })}
+                    {STAT_CARDS.map(({ label, value, color, filterValue, hint }) => (
+                        <StatCard
+                            key={label}
+                            label={hint ? `${label} · ${hint}` : label}
+                            value={value}
+                            color={color}
+                            onClick={() => setFilterStatus(prev => prev === filterValue ? '' : filterValue)}
+                            active={filterStatus === filterValue && filterValue !== ''}
+                        />
+                    ))}
                 </div>
 
                 {/* ── Filters ───────────────────────────────────────────── */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ArrowLeft, RefreshCw, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
@@ -40,6 +41,7 @@ const SOURCE_STYLES: Record<string, string> = {
 }
 
 export default function TranslationLogPage() {
+  const toast = useAdminToast()
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -49,17 +51,22 @@ export default function TranslationLogPage() {
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams({ page: String(page), limit: '50' })
-    if (entityTypeFilter) params.set('entityType', entityTypeFilter)
-    const res = await fetch(`/api/admin/translations/log?${params}`)
-    if (res.ok) {
-      const data = await res.json()
-      setLogs(data.logs)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '50' })
+      if (entityTypeFilter) params.set('entityType', entityTypeFilter)
+      const res = await fetch(`/api/admin/translations/log?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        setLogs(data.logs)
+        setTotal(data.total)
+        setTotalPages(data.totalPages)
+      }
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao carregar dados')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }, [page, entityTypeFilter])
+  }, [page, entityTypeFilter, toast])
 
   useEffect(() => { setPage(1) }, [entityTypeFilter])
   useEffect(() => { fetchLogs() }, [fetchLogs])

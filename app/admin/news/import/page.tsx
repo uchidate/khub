@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminButton, StatCard } from '@/components/admin'
 import { BatchProgressPanel, type StreamProgress, type StreamLogEntry } from '@/components/admin/news/BatchProgressPanel'
 import { Download, Loader2, CalendarDays, X } from 'lucide-react'
 
@@ -277,66 +278,59 @@ export default function NewsImportPage() {
                         </div>
 
                         {/* Counts card */}
-                        <div className="rounded-xl border border-border bg-surface p-4 flex items-center gap-6 flex-wrap">
-                            <div className="text-center min-w-[80px]">
-                                <p className="text-2xl font-black text-foreground tabular-nums">
-                                    {dbCount === null ? <Loader2 size={20} className="animate-spin mx-auto text-muted" /> : dbCount.toLocaleString('pt-BR')}
-                                </p>
-                                <p className="text-[11px] text-muted mt-0.5">no banco{(dateFrom || dateTo) ? ' (período)' : ''}</p>
-                            </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <StatCard
+                                label={`no banco${(dateFrom || dateTo) ? ' (período)' : ''}`}
+                                value={dbCount ?? undefined}
+                                color="text-foreground"
+                            />
 
                             {dateFrom && (
-                                <>
-                                    <div className="h-8 w-px bg-surface hidden sm:block" />
-                                    <div className="text-center min-w-[80px]">
-                                        <p className="text-2xl font-black tabular-nums">
-                                            {availableCount === null ? (
-                                                <Loader2 size={20} className="animate-spin mx-auto text-muted" />
-                                            ) : availableCount === -1 ? (
-                                                <span className="text-muted text-base">N/D</span>
-                                            ) : (
-                                                <span className={availableCount > (dbCount ?? 0) ? 'text-emerald-400' : 'text-foreground'}>
-                                                    {(availableCount as number).toLocaleString('pt-BR')}
-                                                </span>
-                                            )}
-                                        </p>
-                                        <p className="text-[11px] text-muted mt-0.5">disponíveis na fonte</p>
-                                    </div>
-
-                                    {newToImport !== null && newToImport > 0 && (
-                                        <>
-                                            <div className="h-8 w-px bg-surface hidden sm:block" />
-                                            <div className="text-center min-w-[80px]">
-                                                <p className="text-2xl font-black text-emerald-400 tabular-nums">
-                                                    {newToImport.toLocaleString('pt-BR')}
-                                                </p>
-                                                <p className="text-[11px] text-muted mt-0.5">novos para importar</p>
-                                            </div>
-                                        </>
-                                    )}
-                                </>
+                                <StatCard
+                                    label="disponíveis na fonte"
+                                    value={
+                                        availableCount === null
+                                            ? undefined
+                                            : availableCount === -1
+                                            ? 'N/D'
+                                            : (availableCount as number)
+                                    }
+                                    color={
+                                        availableCount !== null && availableCount !== -1 && availableCount > (dbCount ?? 0)
+                                            ? 'text-emerald-400'
+                                            : 'text-foreground'
+                                    }
+                                />
                             )}
 
-                            {!dateFrom && (
-                                <p className="text-xs text-muted italic">
-                                    Selecione um período para ver quantos estão disponíveis na fonte
-                                </p>
+                            {dateFrom && newToImport !== null && newToImport > 0 && (
+                                <StatCard
+                                    label="novos para importar"
+                                    value={newToImport}
+                                    color="text-emerald-400"
+                                />
                             )}
                         </div>
 
+                        {!dateFrom && (
+                            <p className="text-xs text-muted italic">
+                                Selecione um período para ver quantos estão disponíveis na fonte
+                            </p>
+                        )}
+
                         {/* Action */}
                         <div className="flex items-center gap-3 flex-wrap">
-                            <button
+                            <AdminButton
                                 onClick={handleImport}
                                 disabled={isStreaming || !dateFrom || availableCount === -1 || availableCount === null}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-foreground font-bold rounded-xl transition-colors text-sm"
+                                variant="primary"
                             >
                                 {isStreaming
                                     ? <Loader2 size={16} className="animate-spin" />
                                     : <Download size={16} />
                                 }
                                 {isStreaming ? 'Importando...' : 'Importar novos artigos'}
-                            </button>
+                            </AdminButton>
                             {!dateFrom && (
                                 <p className="text-xs text-muted">Selecione um período para importar</p>
                             )}

@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { AdminButton, SectionHeader } from '@/components/admin'
 import { TrendingUp, Search, Heart, Eye, Newspaper, Music2, Users, BarChart3, RefreshCw } from 'lucide-react'
 import prisma from '@/lib/prisma'
 
@@ -109,13 +110,10 @@ export default async function AdminAnalyticsPage() {
                         <p className="text-muted text-sm mt-1">Métricas de uso e performance do conteúdo</p>
                     </div>
                     <form action="/api/cron/update-trending" method="POST">
-                        <button
-                            type="submit"
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 border border-purple-500/30 rounded-lg text-sm text-purple-400 hover:bg-purple-600/30 transition-all"
-                        >
+                        <AdminButton type="submit" variant="secondary">
                             <RefreshCw className="w-4 h-4" />
                             Atualizar Trending
-                        </button>
+                        </AdminButton>
                     </form>
                 </div>
 
@@ -148,10 +146,7 @@ export default async function AdminAnalyticsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Top Artistas Trending */}
                     <section className="p-6 bg-surface border border-border rounded-xl">
-                        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted mb-5">
-                            <Music2 className="w-4 h-4" />
-                            Top Artistas Trending
-                        </h2>
+                        <SectionHeader icon={<Music2 size={14} />} title="Top Artistas Trending" className="mb-5" />
                         <div className="space-y-3">
                             {topArtists.map((artist, i) => (
                                 <div key={artist.id} className="flex items-center gap-3">
@@ -182,10 +177,7 @@ export default async function AdminAnalyticsPage() {
 
                     {/* Top Grupos Trending */}
                     <section className="p-6 bg-surface border border-border rounded-xl">
-                        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted mb-5">
-                            <Users className="w-4 h-4" />
-                            Top Grupos Trending
-                        </h2>
+                        <SectionHeader icon={<Users size={14} />} title="Top Grupos Trending" className="mb-5" />
                         <div className="space-y-3">
                             {topGroups.map((group, i) => (
                                 <div key={group.id} className="flex items-center gap-3">
@@ -216,10 +208,7 @@ export default async function AdminAnalyticsPage() {
 
                     {/* Top Notícias (7d) */}
                     <section className="p-6 bg-surface border border-border rounded-xl">
-                        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted mb-5">
-                            <Newspaper className="w-4 h-4" />
-                            Top Notícias — Últimos 7 dias
-                        </h2>
+                        <SectionHeader icon={<Newspaper size={14} />} title="Top Notícias — Últimos 7 dias" className="mb-5" />
                         <div className="space-y-3">
                             {topNews.map((item, i) => (
                                 <div key={item.id} className="flex items-start gap-3">
@@ -249,10 +238,7 @@ export default async function AdminAnalyticsPage() {
 
                     {/* Buscas Populares */}
                     <section className="p-6 bg-surface border border-border rounded-xl">
-                        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted mb-5">
-                            <Search className="w-4 h-4" />
-                            Buscas Populares — 30 dias
-                        </h2>
+                        <SectionHeader icon={<Search size={14} />} title="Buscas Populares — 30 dias" className="mb-5" />
                         {topSearchTerms.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {topSearchTerms.map(([term, count]) => (
@@ -274,7 +260,7 @@ export default async function AdminAnalyticsPage() {
                         {/* Buscas recentes */}
                         {recentSearches.length > 0 && (
                             <div className="mt-6">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-3">Recentes (7d)</p>
+                                <SectionHeader title="Recentes (7d)" />
                                 <div className="space-y-1.5">
                                     {recentSearches.slice(0, 8).map((act, i) => {
                                         const meta = act.metadata as any
@@ -294,10 +280,7 @@ export default async function AdminAnalyticsPage() {
 
                     {/* Engajamento por tipo (30d) */}
                     <section className="p-6 bg-surface border border-border rounded-xl lg:col-span-2">
-                        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted mb-5">
-                            <Heart className="w-4 h-4" />
-                            Engajamento por Tipo — Últimos 30 dias
-                        </h2>
+                        <SectionHeader icon={<Heart size={14} />} title="Engajamento por Tipo — Últimos 30 dias" className="mb-5" />
                         {activityByType30d.length > 0 ? (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {activityByType30d.map((act) => (

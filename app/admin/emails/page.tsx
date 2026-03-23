@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
 import { Mail, CheckCircle, XCircle, Clock, FileText } from 'lucide-react'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, AdminLinkButton } from '@/components/admin'
 
 const TYPE_LABELS: Record<string, string> = {
     WELCOME: 'Boas-vindas',
@@ -86,10 +86,10 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                         </h1>
                         <p className="text-muted text-sm mt-1">{total} emails nos últimos {days} dias</p>
                     </div>
-                    <Link href="/admin/emails/templates" className="flex items-center gap-2 text-xs font-bold text-foreground transition-colors px-3 py-2 bg-surface hover:bg-surface-hover rounded-lg border border-border">
+                    <AdminLinkButton href="/admin/emails/templates" variant="secondary" size="sm">
                         <FileText size={14} />
                         Templates
-                    </Link>
+                    </AdminLinkButton>
                 </div>
 
                 {/* Stats */}

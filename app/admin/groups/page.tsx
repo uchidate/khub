@@ -9,6 +9,7 @@ import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { SocialBadges } from '@/components/admin/SocialBadges'
+import { StatCard } from '@/components/admin'
 import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
 import { AdminIconButton } from '@/components/admin/AdminIconButton'
 import { Plus, Users, Music2, EyeOff, Pencil, Trash2, Languages } from 'lucide-react'
@@ -237,6 +238,8 @@ export default function GroupsPage() {
       setDeleteOpen(false)
       refetchTable()
       fetchStats()
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao carregar dados')
     } finally {
       setDeleteLoading(false)
     }
@@ -253,12 +256,12 @@ export default function GroupsPage() {
         <button key={val} onClick={() => setStatusFilter(val)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
             statusFilter === val
-              ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
+              ? 'bg-accent border-transparent text-white'
               : 'bg-surface border-border text-muted hover:border-border hover:text-foreground'
           }`}>
           {label}
           {count != null && (
-            <span className={`font-mono tabular-nums ${statusFilter === val ? 'text-purple-300' : 'text-muted'}`}>
+            <span className={`font-mono tabular-nums ${statusFilter === val ? 'text-white/80' : 'text-muted'}`}>
               {count}
             </span>
           )}
@@ -288,22 +291,10 @@ export default function GroupsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { icon: Music2, label: 'Total',          value: stats?.total,     color: 'bg-surface-hover text-foreground' },
-            { icon: Users,  label: 'Ativos',          value: stats?.active,    color: 'bg-green-500/10 text-green-400' },
-            { icon: Users,  label: 'Disbandados',     value: stats?.disbanded, color: 'bg-red-500/10 text-red-400' },
-            { icon: Users,  label: 'Sem membros',     value: stats?.noMembers, color: 'bg-amber-500/10 text-amber-400' },
-          ].map(({ icon: Icon, label, value, color }) => (
-            <div key={label} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${color}`}>
-                <Icon size={16} />
-              </div>
-              <div>
-                <div className="text-xl font-bold text-foreground tabular-nums">{value ?? '—'}</div>
-                <div className="text-xs text-muted">{label}</div>
-              </div>
-            </div>
-          ))}
+          <StatCard label="Total"       value={stats?.total}     icon={<Music2 size={16} />} color="text-foreground" />
+          <StatCard label="Ativos"      value={stats?.active}    icon={<Users size={16} />}  color="text-green-400" />
+          <StatCard label="Disbandados" value={stats?.disbanded} icon={<Users size={16} />}  color="text-red-400" />
+          <StatCard label="Sem membros" value={stats?.noMembers} icon={<Users size={16} />}  color="text-amber-400" />
         </div>
 
         <DataTable<MusicalGroup>

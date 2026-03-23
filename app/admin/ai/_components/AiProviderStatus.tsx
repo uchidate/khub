@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { AdminButton } from '@/components/admin'
 import { Loader2, Zap, AlertTriangle, FlaskConical } from 'lucide-react'
 
 interface ProviderStatus {
@@ -58,15 +59,16 @@ export default function AiProviderStatus() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted">Status dos providers</p>
                 <div className="flex items-center gap-2">
                     {(loading || testing) && <Loader2 className="w-3 h-3 text-muted animate-spin" />}
-                    <button
+                    <AdminButton
                         onClick={() => load(true)}
                         disabled={loading || testing}
                         title="Executar teste de latência ao vivo (faz chamada real à API)"
-                        className="flex items-center gap-1 text-[10px] text-muted hover:text-muted transition-colors disabled:opacity-40"
+                        variant="ghost"
+                        size="sm"
                     >
                         <FlaskConical className="w-3 h-3" />
                         {testing ? 'Testando...' : 'Testar'}
-                    </button>
+                    </AdminButton>
                 </div>
             </div>
 

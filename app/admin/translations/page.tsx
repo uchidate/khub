@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
+import { AdminButton, AdminIconButton, AdminIconLink } from '@/components/admin'
 import { Search, ChevronRight, RefreshCw, Zap, CheckCircle, XCircle, SkipForward, Loader2, Pencil, AlertCircle, History, ChevronDown, Sparkles, ExternalLink, DollarSign, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 
@@ -590,13 +591,9 @@ function TranslationsPageContent() {
                 </button>
               )}
               {/* Link para log */}
-              <Link
-                href="/admin/translations/log"
-                title="Ver log de traduções"
-                className="p-1.5 text-muted hover:text-muted transition-colors rounded-lg hover:bg-surface"
-              >
+              <AdminIconLink href="/admin/translations/log" title="Ver log de traduções">
                 <History className="w-4 h-4" />
-              </Link>
+              </AdminIconLink>
               {canTranslate && (
                 <>
                   <div className="relative">
@@ -613,24 +610,26 @@ function TranslationsPageContent() {
                     </select>
                     <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted pointer-events-none" />
                   </div>
-                  <button
+                  <AdminButton
                     onClick={handleRunBatch}
                     disabled={running}
                     title={`Traduzir próximos ${batchLimit} ${ENTITY_LABELS[activeTab].toLowerCase()} pendentes`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 transition-colors"
+                    variant="primary"
+                    size="sm"
                   >
                     <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
                     {running ? 'Traduzindo...' : 'Traduzir (IA)'}
-                  </button>
-                  <button
+                  </AdminButton>
+                  <AdminButton
                     onClick={handleResetCircuits}
                     disabled={running || resettingCircuits}
                     title="Resetar circuit breakers dos providers de IA (usar se houver falhas em série)"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-foreground border border-border rounded-lg hover:border-border disabled:opacity-40 transition-colors"
+                    variant="secondary"
+                    size="sm"
                   >
                     <RotateCcw className={`w-3.5 h-3.5 ${resettingCircuits ? 'animate-spin' : ''}`} />
                     Reset circuits
-                  </button>
+                  </AdminButton>
                 </>
               )}
             </div>
@@ -718,9 +717,9 @@ function TranslationsPageContent() {
                 </div>
               )}
             </div>
-            <button onClick={fetchItems} className="ml-auto p-1.5 text-muted hover:text-muted" title="Recarregar">
+            <AdminIconButton onClick={fetchItems} title="Recarregar" variant="default" className="ml-auto">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+            </AdminIconButton>
           </div>
 
           {/* Barra de ações em massa */}
@@ -728,23 +727,25 @@ function TranslationsPageContent() {
             <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20 flex-wrap">
               <span className="text-xs text-muted">{selected.size} selecionados</span>
               {canTranslate && (
-                <button
+                <AdminButton
                   onClick={handleBulkTranslate}
                   disabled={bulkTranslating || bulkApproving}
-                  className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white disabled:opacity-50 transition-colors"
+                  variant="primary"
+                  size="sm"
                 >
                   <Sparkles className="w-3 h-3" />
                   {bulkTranslating ? `Traduzindo ${bulkTranslateProgress}/${selected.size}...` : 'Traduzir (IA)'}
-                </button>
+                </AdminButton>
               )}
-              <button
+              <AdminButton
                 onClick={handleBulkApprove}
                 disabled={bulkApproving || bulkTranslating}
-                className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-foreground rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
+                variant="secondary"
+                size="sm"
               >
                 <CheckCircle className="w-3 h-3" />
                 {bulkApproving ? 'Aprovando...' : `Aprovar ${selected.size}`}
-              </button>
+              </AdminButton>
               <button
                 onClick={() => setSelected(new Set())}
                 className="text-xs text-muted hover:text-muted"
@@ -932,21 +933,23 @@ function TranslationsPageContent() {
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
               <span className="text-xs text-muted">{total} itens</span>
               <div className="flex gap-2 items-center">
-                <button
+                <AdminButton
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted"
+                  variant="secondary"
+                  size="sm"
                 >
                   Anterior
-                </button>
+                </AdminButton>
                 <span className="px-3 py-1 text-xs text-muted">Página {page} de {totalPages}</span>
-                <button
+                <AdminButton
                   onClick={() => setPage(p => p + 1)}
                   disabled={page >= totalPages}
-                  className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted"
+                  variant="secondary"
+                  size="sm"
                 >
                   Próxima
-                </button>
+                </AdminButton>
               </div>
             </div>
           )}

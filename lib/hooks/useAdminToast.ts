@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useToast } from './useToast'
 
 /**
@@ -7,11 +8,13 @@ import { useToast } from './useToast'
  *
  * Wrapper conveniente sobre useToast com helpers semânticos.
  * Padroniza feedback de ações no admin (salvar, excluir, erro, etc.).
+ *
+ * Retorna um objeto estável (useMemo) — seguro usar em deps de useCallback/useEffect.
  */
 export function useAdminToast() {
   const { addToast } = useToast()
 
-  return {
+  return useMemo(() => ({
     success: (message: string) =>
       addToast({ type: 'success', message, duration: 3000 }),
     error: (message: string) =>
@@ -31,5 +34,5 @@ export function useAdminToast() {
       addToast({ type: 'error', message: 'Falha na tradução. Verifique os providers de IA.', duration: 5000 }),
     copyDone: () =>
       addToast({ type: 'info', message: 'Copiado para o clipboard', duration: 2000 }),
-  }
+  }), [addToast])
 }

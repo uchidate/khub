@@ -8,6 +8,7 @@ import {
   ShieldAlert, Flag, FlagOff, CheckSquare, Square, Minus,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { ConfirmDialog, AdminButton } from '@/components/admin'
 
 type Artist = {
   id: string
@@ -46,36 +47,6 @@ function detectAdultKeywords(text: string): string[] {
   return ADULT_KEYWORDS.filter(kw => lower.includes(kw))
 }
 
-function ConfirmModal({
-  open, title, message, confirmLabel, destructive, onConfirm, onCancel,
-}: {
-  open: boolean; title: string; message: string; confirmLabel: string
-  destructive?: boolean; onConfirm: () => void; onCancel: () => void
-}) {
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onCancel}>
-      <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-foreground font-bold text-lg mb-2">{title}</h3>
-        <p className="text-muted text-sm mb-6">{message}</p>
-        <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 rounded-lg bg-surface text-foreground hover:bg-surface transition-colors">
-            Cancelar
-          </button>
-          <button
-            onClick={onConfirm}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              destructive ? 'bg-red-600 hover:bg-red-500 text-foreground' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
-            }`}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function ArtistModerationPage() {
   const [artists, setArtists] = useState<Artist[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
@@ -88,9 +59,9 @@ export default function ArtistModerationPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [actioningIds, setActioningIds] = useState<Set<string>>(new Set())
   const [modal, setModal] = useState<{
-    open: boolean; title: string; message: string
-    confirmLabel: string; destructive?: boolean; onConfirm: () => void
-  }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} })
+    open: boolean; title: string; description: string
+    confirmLabel: string; variant?: 'danger' | 'default'; onConfirm: () => void
+  }>({ open: false, title: '', description: '', confirmLabel: '', onConfirm: () => {} })
 
   const fetchStats = useCallback(async () => {
     try {
@@ -156,7 +127,7 @@ export default function ArtistModerationPage() {
     openConfirm({
       open: true,
       title: 'Ocultar artista',
-      message: `"${artist.nameRomanized}" ficará oculto do site público. É possível restaurar depois em Admin → Artistas.`,
+      description: `"${artist.nameRomanized}" ficará oculto do site público. É possível restaurar depois em Admin → Artistas.`,
       confirmLabel: 'Ocultar',
       onConfirm: () => doHide([artist.id]),
     })
@@ -167,7 +138,7 @@ export default function ArtistModerationPage() {
     openConfirm({
       open: true,
       title: `Ocultar ${ids.length} artistas`,
-      message: `${ids.length} artistas ficarão ocultos do site público. É possível restaurar depois em Admin → Artistas.`,
+      description: `${ids.length} artistas ficarão ocultos do site público. É possível restaurar depois em Admin → Artistas.`,
       confirmLabel: 'Ocultar todos',
       onConfirm: () => doHide(ids),
     })
@@ -194,8 +165,12 @@ export default function ArtistModerationPage() {
 
   return (
     <AdminLayout title="Moderação de Artistas">
-      <ConfirmModal
-        {...modal}
+      <ConfirmDialog
+        open={modal.open}
+        title={modal.title}
+        description={modal.description}
+        confirmLabel={modal.confirmLabel}
+        variant={modal.variant ?? 'default'}
         onConfirm={() => { setModal(m => ({ ...m, open: false })); modal.onConfirm() }}
         onCancel={() => setModal(m => ({ ...m, open: false }))}
       />
@@ -279,44 +254,47 @@ export default function ArtistModerationPage() {
             </span>
             {filter !== 'adult' && (
               <>
-                <button
+                <AdminButton
+                  variant="danger"
+                  size="sm"
                   onClick={() => {
                     const ids = Array.from(selected)
                     openConfirm({
                       open: true,
                       title: `Marcar ${ids.length} artistas`,
-                      message: `${ids.length} artistas serão marcados como não-relevantes.`,
+                      description: `${ids.length} artistas serão marcados como não-relevantes.`,
                       confirmLabel: 'Marcar todos',
                       onConfirm: () => doFlag(ids, true),
                     })
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 rounded-lg transition-colors"
                 >
                   <Flag size={12} /> Marcar
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     const ids = Array.from(selected)
                     openConfirm({
                       open: true,
                       title: `Desmarcar ${ids.length} artistas`,
-                      message: `${ids.length} artistas serão desmarcados.`,
+                      description: `${ids.length} artistas serão desmarcados.`,
                       confirmLabel: 'Desmarcar todos',
                       onConfirm: () => doFlag(ids, false),
                     })
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30 rounded-lg transition-colors"
                 >
                   <FlagOff size={12} /> Desmarcar
-                </button>
+                </AdminButton>
               </>
             )}
-            <button
+            <AdminButton
+              variant="secondary"
+              size="sm"
               onClick={handleBulkHide}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface text-foreground hover:bg-surface border border-border rounded-lg transition-colors"
             >
               <EyeOff size={12} /> Ocultar
-            </button>
+            </AdminButton>
             <button onClick={() => setSelected(new Set())} className="text-muted hover:text-foreground transition-colors text-xs">
               Limpar
             </button>
@@ -436,36 +414,34 @@ export default function ArtistModerationPage() {
                       {/* Actions */}
                       <div className="flex items-center gap-2">
                         {filter !== 'adult' && (
-                          <button
+                          <AdminButton
+                            variant={artist.flaggedAsNonKorean ? 'secondary' : 'danger'}
+                            size="sm"
                             onClick={() => {
                               const ids = [artist.id]
                               openConfirm({
                                 open: true,
                                 title: artist.flaggedAsNonKorean ? 'Desmarcar artista' : 'Marcar como não-relevante',
-                                message: `"${artist.nameRomanized}" será ${artist.flaggedAsNonKorean ? 'desmarcado' : 'marcado como não-relevante'}.`,
+                                description: `"${artist.nameRomanized}" será ${artist.flaggedAsNonKorean ? 'desmarcado' : 'marcado como não-relevante'}.`,
                                 confirmLabel: artist.flaggedAsNonKorean ? 'Desmarcar' : 'Marcar',
                                 onConfirm: () => doFlag(ids, !artist.flaggedAsNonKorean),
                               })
                             }}
                             disabled={isActioning}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
-                              artist.flaggedAsNonKorean
-                                ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30 border border-green-600/30'
-                                : 'bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30'
-                            }`}
                           >
                             {artist.flaggedAsNonKorean ? <FlagOff size={12} /> : <Flag size={12} />}
                             {artist.flaggedAsNonKorean ? 'Desmarcar' : 'Não é coreano'}
-                          </button>
+                          </AdminButton>
                         )}
-                        <button
+                        <AdminButton
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleHide(artist)}
                           disabled={isActioning}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-muted hover:bg-surface hover:text-foreground transition-colors disabled:opacity-50 border border-border"
                         >
                           {isActioning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
                           Ocultar
-                        </button>
+                        </AdminButton>
                         <Link href={`/artists/${artist.id}`} target="_blank" className="text-xs text-purple-400 hover:underline">
                           Ver →
                         </Link>
@@ -481,21 +457,23 @@ export default function ArtistModerationPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between gap-4 pt-2">
-            <button
+            <AdminButton
+              variant="secondary"
+              size="md"
               onClick={() => setPage(p => p - 1)}
               disabled={page === 1}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Anterior
-            </button>
+            </AdminButton>
             <span className="text-sm text-muted">{page} / {totalPages}</span>
-            <button
+            <AdminButton
+              variant="secondary"
+              size="md"
               onClick={() => setPage(p => p + 1)}
               disabled={page === totalPages}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Próxima
-            </button>
+            </AdminButton>
           </div>
         )}
       </div>

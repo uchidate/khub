@@ -7,6 +7,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus, Shield, Users, CheckCircle, UserPlus, Heart } from 'lucide-react'
 import { FilterPills } from '@/components/admin/FilterPills'
+import { AdminButton } from '@/components/admin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -198,13 +199,10 @@ export default function UsersAdminPage() {
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <p className="text-muted text-sm -mt-4">Gerencie os usuários da plataforma</p>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all flex-shrink-0"
-          >
+          <AdminButton variant="primary" size="lg" onClick={handleCreate}>
             <Plus size={16} />
             Novo Usuário
-          </button>
+          </AdminButton>
         </div>
 
         {/* Stats */}

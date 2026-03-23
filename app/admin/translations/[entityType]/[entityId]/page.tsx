@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ArrowLeft, Save, ExternalLink, Clock, CheckCircle2, FileEdit } from 'lucide-react'
 import Link from 'next/link'
 
@@ -82,6 +83,7 @@ const STATUS_LABELS: Record<TranslationStatus, string> = {
 }
 
 export default function TranslationEditorPage() {
+  const toast = useAdminToast()
   const params = useParams()
   const entityType = params.entityType as EntityType
   const entityId = params.entityId as string
@@ -100,72 +102,85 @@ export default function TranslationEditorPage() {
 
   // Busca entidade original
   const fetchEntity = useCallback(async () => {
-    let url = ''
-    if (entityType === 'artist') url = `/api/admin/artists?id=${entityId}`
-    else if (entityType === 'group') url = `/api/admin/groups?id=${entityId}`
-    else if (entityType === 'production') url = `/api/admin/productions?id=${entityId}`
-    else if (entityType === 'news') url = `/api/admin/news?id=${entityId}`
+    try {
+      let url = ''
+      if (entityType === 'artist') url = `/api/admin/artists?id=${entityId}`
+      else if (entityType === 'group') url = `/api/admin/groups?id=${entityId}`
+      else if (entityType === 'production') url = `/api/admin/productions?id=${entityId}`
+      else if (entityType === 'news') url = `/api/admin/news?id=${entityId}`
 
-    const res = await fetch(url)
-    if (!res.ok) return
-    const data = await res.json()
+      const res = await fetch(url)
+      if (!res.ok) return
+      const data = await res.json()
 
-    let newOriginals: Record<string, string | null> = {}
-    if (entityType === 'artist') {
-      setEntityName(data.nameRomanized)
-      newOriginals = { bio: data.bio }
-    } else if (entityType === 'group') {
-      setEntityName(data.name)
-      newOriginals = { bio: data.bio }
-    } else if (entityType === 'production') {
-      setEntityName(data.titlePt)
-      newOriginals = { synopsis: data.synopsis, tagline: data.tagline }
-    } else if (entityType === 'news') {
-      setEntityName(data.originalTitle ?? data.title)
-      newOriginals = { title: data.originalTitle ?? data.title, contentMd: data.originalContent ?? data.contentMd }
-    }
-    setOriginals(newOriginals)
-
-    // Se original já é PT-BR, pré-preencher tradução para facilitar aprovação
-    setDrafts(prev => {
-      const next = { ...prev }
-      for (const [key, val] of Object.entries(newOriginals)) {
-        if (val && !next[key] && detectOriginalLang(val) === 'pt') {
-          next[key] = val
-        }
+      let newOriginals: Record<string, string | null> = {}
+      if (entityType === 'artist') {
+        setEntityName(data.nameRomanized)
+        newOriginals = { bio: data.bio }
+      } else if (entityType === 'group') {
+        setEntityName(data.name)
+        newOriginals = { bio: data.bio }
+      } else if (entityType === 'production') {
+        setEntityName(data.titlePt)
+        newOriginals = { synopsis: data.synopsis, tagline: data.tagline }
+      } else if (entityType === 'news') {
+        setEntityName(data.originalTitle ?? data.title)
+        newOriginals = { title: data.originalTitle ?? data.title, contentMd: data.originalContent ?? data.contentMd }
       }
-      return next
-    })
-  }, [entityType, entityId])
+      setOriginals(newOriginals)
+
+      // Se original já é PT-BR, pré-preencher tradução para facilitar aprovação
+      setDrafts(prev => {
+        const next = { ...prev }
+        for (const [key, val] of Object.entries(newOriginals)) {
+          if (val && !next[key] && detectOriginalLang(val) === 'pt') {
+            next[key] = val
+          }
+        }
+        return next
+      })
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao carregar dados')
+    }
+  }, [entityType, entityId, toast])
 
   // Busca traduções existentes
   const fetchTranslations = useCallback(async () => {
-    const res = await fetch(`/api/admin/translations?entityType=${entityType}&entityId=${entityId}&locale=pt-BR`)
-    if (!res.ok) return
-    const data = await res.json()
-    const map: Record<string, Translation> = {}
-    const draftMap: Record<string, string> = {}
-    const statusMap: Record<string, TranslationStatus> = {}
-    for (const t of data.translations) {
-      map[t.field] = t
-      draftMap[t.field] = t.value
-      statusMap[t.field] = t.status
+    try {
+      const res = await fetch(`/api/admin/translations?entityType=${entityType}&entityId=${entityId}&locale=pt-BR`)
+      if (!res.ok) return
+      const data = await res.json()
+      const map: Record<string, Translation> = {}
+      const draftMap: Record<string, string> = {}
+      const statusMap: Record<string, TranslationStatus> = {}
+      for (const t of data.translations) {
+        map[t.field] = t
+        draftMap[t.field] = t.value
+        statusMap[t.field] = t.status
+      }
+      setTranslations(map)
+      setDrafts(draftMap)
+      setStatuses(statusMap)
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao carregar dados')
     }
-    setTranslations(map)
-    setDrafts(draftMap)
-    setStatuses(statusMap)
-  }, [entityType, entityId])
+  }, [entityType, entityId, toast])
 
   // Busca log
   const fetchLogs = useCallback(async () => {
     setLogsLoading(true)
-    const res = await fetch(`/api/admin/translations/log?entityType=${entityType}&entityId=${entityId}&limit=20`)
-    if (res.ok) {
-      const data = await res.json()
-      setLogs(data.logs)
+    try {
+      const res = await fetch(`/api/admin/translations/log?entityType=${entityType}&entityId=${entityId}&limit=20`)
+      if (res.ok) {
+        const data = await res.json()
+        setLogs(data.logs)
+      }
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao carregar dados')
+    } finally {
+      setLogsLoading(false)
     }
-    setLogsLoading(false)
-  }, [entityType, entityId])
+  }, [entityType, entityId, toast])
 
   useEffect(() => {
     fetchEntity()

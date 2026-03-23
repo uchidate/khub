@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { AdminButton } from '@/components/admin'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { FEATURE_LABELS } from '@/lib/ai/ai-features'
 import type { AiFeature } from '@/lib/ai/ai-features'
@@ -68,6 +69,8 @@ export default function AiLogsTable({ initialLogs }: Props) {
             const r    = await fetch(`/api/admin/ai/logs?${p}`)
             const data = await r.json()
             setLogs(data.logs ?? [])
+        } catch (err) {
+            console.error('AiLogsTable fetch error:', err)
         } finally {
             setLoading(false)
         }
@@ -117,14 +120,16 @@ export default function AiLogsTable({ initialLogs }: Props) {
                     <option value="circuit_open">Circuit open</option>
                 </select>
 
-                <button
+                <AdminButton
                     onClick={() => load()}
                     disabled={loading}
-                    className="ml-auto flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors disabled:opacity-50"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto"
                 >
                     {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                     Atualizar
-                </button>
+                </AdminButton>
             </div>
 
             {logs.length === 0 ? (

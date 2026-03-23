@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, StatCard, SectionHeader } from '@/components/admin'
+import { AdminButton } from '@/components/admin'
 import {
-    RefreshCw, Trash2, AlertTriangle, CheckCircle2, ServerCrash,
-    ChevronDown, ChevronRight, Search, X, Globe, Clock, Layers, Info,
+    RefreshCw, Trash2, CheckCircle2,
+    ChevronDown, ChevronRight, Search, X, Globe, Clock, Info,
     ShieldAlert,
 } from 'lucide-react'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 interface ServerLogEntry {
     id: string
@@ -109,6 +111,7 @@ function parseUserAgent(ua: string | null): string {
 }
 
 export default function ServerLogsPage() {
+    const toast = useAdminToast()
     const [activeTab, setActiveTab] = useState<'app' | 'gateway'>('app')
 
     // App logs state
@@ -147,10 +150,12 @@ export default function ServerLogsPage() {
             setPages(json.pages ?? 1)
             setPage(json.page ?? 1)
             if (json.counts) setCounts(json.counts)
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar logs')
         } finally {
             setLoading(false)
         }
-    }, [filter, search, page])
+    }, [filter, search, page, toast])
 
     const fetchGwLogs = useCallback(async () => {
         setGwLoading(true)
@@ -161,12 +166,16 @@ export default function ServerLogsPage() {
             setGwCounts(json.counts ?? { total: 0, s502: 0, s504: 0 })
             setGwAvailable(json.available)
             setGwMessage(json.message)
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar logs de gateway')
         } finally {
             setGwLoading(false)
         }
-    }, [])
+    }, [toast])
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchLogs(1) }, [filter, search])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchLogs(page) }, [page])
     useEffect(() => { if (activeTab === 'gateway') fetchGwLogs() }, [activeTab, fetchGwLogs])
 
@@ -195,9 +204,16 @@ export default function ServerLogsPage() {
         if (!confirm(days === 0 ? 'Apagar TODOS os logs?' : `Apagar logs com mais de ${days} dias?`)) return
         setClearMenu(false)
         setDeleting(true)
-        await fetch(`/api/admin/server-logs?days=${days}`, { method: 'DELETE' })
-        setDeleting(false)
-        fetchLogs(1)
+        try {
+            const res = await fetch(`/api/admin/server-logs?days=${days}`, { method: 'DELETE' })
+            if (!res.ok) { const e = await res.json(); toast.error(e.error || 'Erro ao limpar logs'); return }
+            toast.success(days === 0 ? 'Todos os logs foram apagados' : `Logs com mais de ${days} dias apagados`)
+            fetchLogs(1)
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao limpar logs')
+        } finally {
+            setDeleting(false)
+        }
     }
 
     const handleSearch = (e: React.FormEvent) => {
@@ -218,7 +234,7 @@ export default function ServerLogsPage() {
                             onClick={() => setActiveTab(tab.value as 'app' | 'gateway')}
                             className={`px-4 py-2 text-xs font-bold transition-colors flex items-center gap-1.5 ${
                                 activeTab === tab.value
-                                    ? 'bg-purple-600 text-foreground'
+                                    ? 'bg-accent text-white'
                                     : 'text-muted hover:text-foreground hover:bg-surface'
                             }`}
                         >
@@ -233,38 +249,10 @@ export default function ServerLogsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Total</p>
-                            <Layers size={14} className="text-muted" />
-                        </div>
-                        <p className="text-2xl font-black text-foreground">{counts.all.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">registros no banco</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Todos erros</p>
-                            <AlertTriangle size={14} className="text-orange-500" />
-                        </div>
-                        <p className="text-2xl font-black text-orange-400">{counts.errors.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">4xx + 5xx</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Server errors</p>
-                            <ServerCrash size={14} className="text-red-500" />
-                        </div>
-                        <p className="text-2xl font-black text-red-400">{counts.fivexx.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">status 5xx</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Bad requests</p>
-                            <AlertTriangle size={14} className="text-yellow-500" />
-                        </div>
-                        <p className="text-2xl font-black text-yellow-400">{counts.fourxx.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">status 4xx</p>
-                    </div>
+                    <StatCard label="Total" value={counts.all} color="text-foreground" sub="registros no banco" />
+                    <StatCard label="Todos erros" value={counts.errors} color="text-orange-400" sub="4xx + 5xx" />
+                    <StatCard label="Server errors" value={counts.fivexx} color="text-red-400" sub="status 5xx" />
+                    <StatCard label="Bad requests" value={counts.fourxx} color="text-yellow-400" sub="status 4xx" />
                 </div>
 
                 {/* Toolbar */}
@@ -277,7 +265,7 @@ export default function ServerLogsPage() {
                                 onClick={() => { setFilter(opt.value); setPage(1) }}
                                 className={`px-3 py-2 text-xs font-bold transition-colors ${
                                     filter === opt.value
-                                        ? 'bg-purple-600 text-foreground'
+                                        ? 'bg-accent text-white'
                                         : 'text-muted hover:text-foreground hover:bg-surface'
                                 }`}
                             >
@@ -319,26 +307,28 @@ export default function ServerLogsPage() {
                     </button>
 
                     {/* Refresh */}
-                    <button
+                    <AdminButton
                         onClick={() => fetchLogs(page)}
                         disabled={loading}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-surface border border-border text-muted hover:text-foreground rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                        variant="secondary"
+                        size="sm"
                     >
                         <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                         <span className="hidden sm:inline">Atualizar</span>
-                    </button>
+                    </AdminButton>
 
                     {/* Clear dropdown */}
                     <div className="relative ml-auto" ref={clearMenuRef}>
-                        <button
+                        <AdminButton
                             onClick={() => setClearMenu(v => !v)}
                             disabled={deleting}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-red-950/40 border border-red-800/40 text-red-400 hover:bg-red-900/40 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                            variant="danger"
+                            size="sm"
                         >
                             <Trash2 size={12} />
                             <span className="hidden sm:inline">Limpar</span>
                             <ChevronDown size={12} />
-                        </button>
+                        </AdminButton>
                         {clearMenu && (
                             <div className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-44">
                                 {[
@@ -447,7 +437,7 @@ export default function ServerLogsPage() {
                                         {/* Error message */}
                                         {log.error && (
                                             <div>
-                                                <p className="text-[10px] text-muted uppercase tracking-widest font-bold mb-1.5">Erro / Resposta</p>
+                                                <SectionHeader title="Erro / Resposta" className="mb-1.5" />
                                                 <pre className="text-xs text-orange-300 font-mono whitespace-pre-wrap break-all bg-orange-950/20 border border-orange-900/40 rounded-lg p-3 max-h-64 overflow-y-auto">
                                                     {log.error}
                                                 </pre>
@@ -472,7 +462,7 @@ export default function ServerLogsPage() {
                                             </div>
                                             {log.body && log.body !== log.error && (
                                                 <div className="sm:col-span-2">
-                                                    <p className="text-[10px] text-muted uppercase tracking-widest font-bold mb-1">Request Body</p>
+                                                    <SectionHeader title="Request Body" className="mb-1" />
                                                     <pre className="text-xs text-muted font-mono whitespace-pre-wrap break-all bg-surface border border-border rounded p-2">
                                                         {log.body}
                                                     </pre>
@@ -489,21 +479,23 @@ export default function ServerLogsPage() {
                 {/* Pagination */}
                 {pages > 1 && (
                     <div className="flex items-center justify-between text-xs">
-                        <button
+                        <AdminButton
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page <= 1}
-                            className="px-3 py-2 rounded-xl bg-surface border border-border text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
+                            variant="secondary"
+                            size="sm"
                         >
                             ← Anterior
-                        </button>
+                        </AdminButton>
                         <span className="text-muted">{page} / {pages}</span>
-                        <button
+                        <AdminButton
                             onClick={() => setPage(p => Math.min(pages, p + 1))}
                             disabled={page >= pages}
-                            className="px-3 py-2 rounded-xl bg-surface border border-border text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
+                            variant="secondary"
+                            size="sm"
                         >
                             Próxima →
-                        </button>
+                        </AdminButton>
                     </div>
                 )}
                 </>)}
@@ -526,30 +518,9 @@ export default function ServerLogsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">Total</p>
-                            <Layers size={14} className="text-muted" />
-                        </div>
-                        <p className="text-2xl font-black text-foreground">{gwCounts.total.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">últimas {gwCounts.total > 0 ? gwCounts.total : '—'} entradas</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">502 Bad Gateway</p>
-                            <ServerCrash size={14} className="text-red-500" />
-                        </div>
-                        <p className="text-2xl font-black text-red-400">{gwCounts.s502.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">app inacessível</p>
-                    </div>
-                    <div className="bg-surface border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-muted font-medium">504 Timeout</p>
-                            <Clock size={14} className="text-orange-500" />
-                        </div>
-                        <p className="text-2xl font-black text-orange-400">{gwCounts.s504.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-muted mt-0.5">resposta lenta</p>
-                    </div>
+                    <StatCard label="Total" value={gwCounts.total} color="text-foreground" sub={`últimas ${gwCounts.total > 0 ? gwCounts.total : '—'} entradas`} />
+                    <StatCard label="502 Bad Gateway" value={gwCounts.s502} color="text-red-400" sub="app inacessível" />
+                    <StatCard label="504 Timeout" value={gwCounts.s504} color="text-orange-400" sub="resposta lenta" />
                 </div>
 
                 {/* Toolbar */}
@@ -565,14 +536,15 @@ export default function ServerLogsPage() {
                         <RefreshCw size={12} className={autoRefresh ? 'animate-spin' : ''} />
                         {autoRefresh ? '30s' : 'Auto'}
                     </button>
-                    <button
+                    <AdminButton
                         onClick={fetchGwLogs}
                         disabled={gwLoading}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-surface border border-border text-muted hover:text-foreground rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                        variant="secondary"
+                        size="sm"
                     >
                         <RefreshCw size={12} className={gwLoading ? 'animate-spin' : ''} />
                         Atualizar
-                    </button>
+                    </AdminButton>
                 </div>
 
                 {/* Gateway log list */}

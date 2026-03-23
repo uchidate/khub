@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
+import { AdminButton } from '@/components/admin'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
@@ -266,9 +267,9 @@ function TMDBPanel({
     <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
-        <button onClick={doSearch} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+        <AdminButton onClick={doSearch} variant="ghost" size="sm">
           <RefreshCw size={10} /> Refazer
-        </button>
+        </AdminButton>
       </div>
 
       {loading && <p className="text-xs text-gray-500 py-2">Buscando...</p>}
@@ -297,13 +298,14 @@ function TMDBPanel({
             {r.alreadyExists ? (
               <span className="text-xs text-yellow-500 flex-shrink-0">Já existe</span>
             ) : (
-              <button
+              <AdminButton
                 onClick={() => addArtist(r.tmdbId)}
                 disabled={adding === r.tmdbId}
-                className="flex-shrink-0 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white px-2 py-1 rounded"
+                variant="primary"
+                size="sm"
               >
                 {adding === r.tmdbId ? '...' : '+ Criar'}
-              </button>
+              </AdminButton>
             )}
           </li>
         ))}
@@ -379,9 +381,9 @@ function TMDBGroupPanel({
     <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
-        <button onClick={doSearch} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+        <AdminButton onClick={doSearch} variant="ghost" size="sm">
           <RefreshCw size={10} /> Refazer
-        </button>
+        </AdminButton>
       </div>
 
       {loading && <p className="text-xs text-gray-500 py-2">Buscando...</p>}
@@ -410,13 +412,14 @@ function TMDBGroupPanel({
             {r.existingGroupId ? (
               <span className="text-xs text-yellow-500 flex-shrink-0">Já existe</span>
             ) : (
-              <button
+              <AdminButton
                 onClick={() => addGroup(r)}
                 disabled={adding === r.tmdbId}
-                className="flex-shrink-0 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white px-2 py-1 rounded"
+                variant="primary"
+                size="sm"
               >
                 {adding === r.tmdbId ? '...' : '+ Criar'}
-              </button>
+              </AdminButton>
             )}
           </li>
         ))}
@@ -607,81 +610,90 @@ function IdolCard({
 
       {/* Confirm pending manual selection */}
       {localArtistId && localArtistId !== idol.artistId && localReason !== 'user_confirmed' && (
-        <button
+        <AdminButton
           onClick={() => doAction('confirm', localArtistId)}
           disabled={pending}
-          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground py-1.5 rounded flex items-center justify-center gap-1"
+          variant="secondary"
+          size="sm"
+          className="w-full justify-center"
         >
           <CheckCircle size={12} /> Confirmar seleção manual
-        </button>
+        </AdminButton>
       )}
 
       {/* Actions */}
       <div className="flex gap-2 flex-wrap">
         {!isConfirmed && !isRejected && localArtistId && localArtistId === idol.artistId && (
-          <button
+          <AdminButton
             onClick={() => doAction('confirm', localArtistId)}
             disabled={pending}
-            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground px-3 py-1.5 rounded flex items-center gap-1"
+            variant="secondary"
+            size="sm"
           >
             <CheckCircle size={12} /> Confirmar
-          </button>
+          </AdminButton>
         )}
 
         {!isRejected && (
-          <button
+          <AdminButton
             onClick={() => doAction('reject')}
             disabled={pending}
-            className="text-xs bg-red-900 hover:bg-red-800 disabled:opacity-50 text-red-300 px-3 py-1.5 rounded flex items-center gap-1"
+            variant="danger"
+            size="sm"
           >
             <XCircle size={12} /> Rejeitar
-          </button>
+          </AdminButton>
         )}
 
-        <button
+        <AdminButton
           onClick={() => { setShowSearch(!showSearch); setShowTMDB(false) }}
           disabled={pending}
-          className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded flex items-center gap-1"
+          variant="secondary"
+          size="sm"
         >
           <Search size={12} /> HallyuHub
-        </button>
+        </AdminButton>
 
-        <button
+        <AdminButton
           onClick={() => { setShowTMDB(!showTMDB); setShowSearch(false) }}
           disabled={pending}
-          className="text-xs bg-surface border border-border text-foreground hover:bg-surface-hover px-3 py-1.5 rounded flex items-center gap-1"
+          variant="secondary"
+          size="sm"
         >
           <Star size={12} /> TMDB
-        </button>
+        </AdminButton>
 
         {!isConfirmed && (
-          <button
+          <AdminButton
             onClick={createArtist}
             disabled={pending}
             title={`Criar "${idol.idolName}" como novo cantor no HallyuHub`}
-            className="text-xs bg-blue-900 hover:bg-blue-800 disabled:opacity-50 text-blue-300 px-3 py-1.5 rounded flex items-center gap-1"
+            variant="secondary"
+            size="sm"
           >
             <Plus size={12} /> Criar no HallyuHub
-          </button>
+          </AdminButton>
         )}
 
         {isRejected && (
-          <button
+          <AdminButton
             onClick={() => doAction('reset')}
             disabled={pending}
-            className="text-xs text-red-400 hover:text-red-300 border border-red-700/50 hover:border-red-500/70 bg-red-900/20 hover:bg-red-900/30 px-2 py-1.5 flex items-center gap-1 rounded transition-colors"
+            variant="danger"
+            size="sm"
           >
             <RotateCcw size={10} /> Cancelar Rejeição
-          </button>
+          </AdminButton>
         )}
         {isConfirmed && (
-          <button
+          <AdminButton
             onClick={() => doAction('reset')}
             disabled={pending}
-            className="text-xs text-gray-600 hover:text-gray-400 px-2 py-1.5 flex items-center gap-1"
+            variant="ghost"
+            size="sm"
           >
             <RotateCcw size={10} /> Reset
-          </button>
+          </AdminButton>
         )}
       </div>
     </div>
@@ -877,92 +889,103 @@ function GroupCard({ group }: { group: GroupItem }) {
       )}
 
       {localGroupId && localGroupId !== group.musicalGroupId && localReason !== 'user_confirmed' && (
-        <button
+        <AdminButton
           onClick={() => doAction('confirm', localGroupId)}
           disabled={pending}
-          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground py-1.5 rounded flex items-center justify-center gap-1"
+          variant="secondary"
+          size="sm"
+          className="w-full justify-center"
         >
           <CheckCircle size={12} /> Confirmar seleção manual
-        </button>
+        </AdminButton>
       )}
 
       <div className="flex gap-2 flex-wrap">
         {!isConfirmed && !isRejected && localGroupId && localGroupId === group.musicalGroupId && (
-          <button
+          <AdminButton
             onClick={() => doAction('confirm', localGroupId)}
             disabled={pending}
-            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground px-3 py-1.5 rounded flex items-center gap-1"
+            variant="secondary"
+            size="sm"
           >
             <CheckCircle size={12} /> Confirmar
-          </button>
+          </AdminButton>
         )}
 
         {!isRejected && (
-          <button
+          <AdminButton
             onClick={() => doAction('reject')}
             disabled={pending}
-            className="text-xs bg-red-900 hover:bg-red-800 disabled:opacity-50 text-red-300 px-3 py-1.5 rounded flex items-center gap-1"
+            variant="danger"
+            size="sm"
           >
             <XCircle size={12} /> Rejeitar
-          </button>
+          </AdminButton>
         )}
 
-        <button
+        <AdminButton
           onClick={() => { setShowSearch(!showSearch); setShowTMDB(false) }}
           disabled={pending}
-          className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded flex items-center gap-1"
+          variant="secondary"
+          size="sm"
         >
           <Search size={12} /> HallyuHub
-        </button>
+        </AdminButton>
 
-        <button
+        <AdminButton
           onClick={() => { setShowTMDB(!showTMDB); setShowSearch(false) }}
           disabled={pending}
-          className="text-xs bg-surface border border-border text-foreground hover:bg-surface-hover px-3 py-1.5 rounded flex items-center gap-1"
+          variant="secondary"
+          size="sm"
         >
           <Star size={12} /> TMDB
-        </button>
+        </AdminButton>
 
         {!isConfirmed && (
-          <button
+          <AdminButton
             onClick={createGroup}
             disabled={pending}
             title={`Criar "${group.groupName}" como novo grupo no HallyuHub`}
-            className="text-xs bg-blue-900 hover:bg-blue-800 disabled:opacity-50 text-blue-300 px-3 py-1.5 rounded flex items-center gap-1"
+            variant="secondary"
+            size="sm"
           >
             <Plus size={12} /> Criar no HallyuHub
-          </button>
+          </AdminButton>
         )}
 
         {isRejected && (
-          <button
+          <AdminButton
             onClick={() => doAction('reset')}
             disabled={pending}
-            className="text-xs text-red-400 hover:text-red-300 border border-red-700/50 hover:border-red-500/70 bg-red-900/20 hover:bg-red-900/30 px-2 py-1.5 flex items-center gap-1 rounded transition-colors"
+            variant="danger"
+            size="sm"
           >
             <RotateCcw size={10} /> Cancelar Rejeição
-          </button>
+          </AdminButton>
         )}
         {isConfirmed && (
-          <button
+          <AdminButton
             onClick={() => doAction('reset')}
             disabled={pending}
-            className="text-xs text-gray-600 hover:text-gray-400 px-2 py-1.5 flex items-center gap-1"
+            variant="ghost"
+            size="sm"
           >
             <RotateCcw size={10} /> Reset
-          </button>
+          </AdminButton>
         )}
 
         {/* Toggle membros Kpopping */}
         {group.memberCount > 0 && (
-          <button
+          <AdminButton
             onClick={toggleMembers}
-            className="ml-auto text-xs text-gray-400 hover:text-foreground border border-border hover:border-gray-500 bg-background px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors"
+            variant="secondary"
+            size="sm"
+            className="ml-auto"
           >
             <Users size={12} />
             Membros Kpopping ({group.memberCount})
             {showMembers ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-          </button>
+          </AdminButton>
         )}
       </div>
 
@@ -1122,13 +1145,15 @@ function MembershipCard({
           />
           Ativo
         </label>
-        <button
+        <AdminButton
           onClick={apply}
           disabled={pending}
-          className="ml-auto text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white px-4 py-1.5 rounded flex items-center gap-1"
+          variant="primary"
+          size="sm"
+          className="ml-auto"
         >
           <Link2 size={12} /> {pending ? 'Aplicando...' : 'Aplicar Vínculo'}
-        </button>
+        </AdminButton>
       </div>
     </div>
   )
@@ -1226,7 +1251,7 @@ function IdolsTab() {
             onClick={() => setFilter(f.key)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
-                ? 'bg-purple-600 border-purple-500 text-foreground'
+                ? 'bg-accent border-transparent text-white'
                 : 'border-border text-gray-400 hover:text-foreground'
             }`}
           >
@@ -1317,7 +1342,7 @@ function GroupsTab() {
             onClick={() => setFilter(f.key)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
-                ? 'bg-purple-600 border-purple-500 text-foreground'
+                ? 'bg-accent border-transparent text-white'
                 : 'border-border text-gray-400 hover:text-foreground'
             }`}
           >
@@ -1483,23 +1508,23 @@ export default function KpoppingCurationPage() {
           <p className="text-sm text-muted">Confirme idols → artistas e grupos → musicais, depois aplique os vínculos.</p>
           <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-4">
             <div className="flex gap-2">
-              <button
+              <AdminButton
                 onClick={backfill}
                 disabled={backfilling}
                 title="Garante que todas as sugestões APPROVED tenham ArtistGroupMembership no DB"
-                className="text-sm bg-surface border border-border text-foreground hover:bg-surface-hover disabled:opacity-50"
+                variant="secondary"
               >
                 <Star size={14} className={backfilling ? 'animate-pulse' : ''} />
                 {backfilling ? 'Corrigindo...' : 'Backfill Vínculos'}
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={generate}
                 disabled={generating}
-                className="text-sm bg-surface hover:bg-surface-hover disabled:opacity-50 text-foreground px-4 py-2 rounded-lg flex items-center gap-2"
+                variant="secondary"
               >
                 <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
                 {generating ? 'Gerando...' : 'Gerar Sugestões'}
-              </button>
+              </AdminButton>
             </div>
             {backfillResult && (
               <p className="text-xs text-purple-400">

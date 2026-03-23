@@ -6,6 +6,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { AdminButton, AdminIconButton } from '@/components/admin'
 import { Plus, Users, Loader2, ExternalLink, User, X } from 'lucide-react'
 
 interface Agency {
@@ -63,12 +64,9 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
             </span>
           )}
         </div>
-        <button
-          onClick={onClose}
-          className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
-        >
+        <AdminIconButton onClick={onClose} title="Fechar" variant="default">
           <X className="w-4 h-4" />
-        </button>
+        </AdminIconButton>
       </div>
 
       <div className="p-4">
@@ -219,13 +217,10 @@ export default function AgenciesPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-muted">Gerencie as agências de entretenimento da plataforma</p>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
-          >
+          <AdminButton onClick={handleCreate} variant="primary">
             <Plus size={18} />
             Nova Agência
-          </button>
+          </AdminButton>
         </div>
 
         <DataTable<Agency>
@@ -235,17 +230,13 @@ export default function AgenciesPage() {
           onDelete={handleDelete}
           searchPlaceholder="Buscar por nome..."
           actions={(agency) => (
-            <button
+            <AdminIconButton
               onClick={() => setExpanded(prev => prev?.id === agency.id ? null : { id: agency.id, name: agency.name })}
               title="Ver artistas"
-              className={`p-1.5 rounded-lg transition-colors ${
-                expanded?.id === agency.id
-                  ? 'bg-purple-600/20 text-purple-400'
-                  : 'hover:bg-surface text-muted hover:text-foreground'
-              }`}
+              variant={expanded?.id === agency.id ? 'accent' : 'default'}
             >
               <Users className="w-3.5 h-3.5" />
-            </button>
+            </AdminIconButton>
           )}
         />
 

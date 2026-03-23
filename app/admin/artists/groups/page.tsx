@@ -5,6 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { Users, RefreshCw, Music2 } from 'lucide-react'
 import Image from 'next/image'
+import { AdminButton } from '@/components/admin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,14 +160,14 @@ function StatsBar({ stats, filter, onFilter }: {
             <button key={tab.value} onClick={() => onFilter(tab.value)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                 isActive
-                  ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
+                  ? 'bg-accent border-transparent text-white'
                   : 'bg-surface border-border text-muted hover:border-border hover:text-foreground'
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
               {tab.label}
               {tab.count != null && (
-                <span className={`font-mono tabular-nums ${isActive ? 'text-purple-300' : 'text-muted'}`}>
+                <span className={`font-mono tabular-nums ${isActive ? 'text-white/80' : 'text-muted'}`}>
                   {tab.count}
                 </span>
               )}
@@ -294,13 +295,12 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
               {[20, 50, 100, 200].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
-          <button onClick={startSync} disabled={running}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+          <AdminButton variant="primary" size="md" onClick={startSync} disabled={running}>
             {running
               ? <><RefreshCw className="w-4 h-4 animate-spin" /> Sincronizando...</>
               : <><Users className="w-4 h-4" /> Sincronizar Lote</>
             }
-          </button>
+          </AdminButton>
         </div>
       </div>
 
@@ -390,7 +390,7 @@ export default function ArtistGroupsAdminPage() {
         const groupName = override !== undefined ? override.name : artist.musicalGroupName
         if (groupName) {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-full text-xs font-bold">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent/10 border border-accent/20 text-accent rounded-full text-xs font-bold">
               <Music2 className="w-3 h-3" />
               {groupName}
             </span>

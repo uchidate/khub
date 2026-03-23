@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
@@ -8,7 +9,7 @@ import { AdminModalOverlay } from '@/components/admin/AdminModalOverlay'
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState'
 import { AdminTableRow } from '@/components/admin/AdminTableRow'
 import { AdminIconButton } from '@/components/admin/AdminIconButton'
-import { StatCard } from '@/components/admin/StatCard'
+import { StatCard } from '@/components/admin'
 import {
     Tag, RefreshCw, Pencil, Trash2, Check, X, Search,
     Newspaper, Film, GitMerge, AlertTriangle, ArrowUpDown, SortAsc,
@@ -89,7 +90,7 @@ function MergeModal({
                         <button key={t.tag} onClick={() => setSelected(t.tag)}
                             className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
                                 selected === t.tag
-                                    ? 'bg-purple-600/20 text-purple-300'
+                                    ? 'bg-accent/20 text-accent'
                                     : 'text-foreground hover:bg-surface'
                             }`}>
                             <span className="font-mono truncate">{t.tag}</span>
@@ -204,6 +205,7 @@ function DuplicatesPanel({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function TagsAdminPage() {
+    const toast = useAdminToast()
     const [tags, setTags] = useState<TagEntry[]>([])
     const [duplicateGroups, setDuplicateGroups] = useState<string[][]>([])
     const [loading, setLoading] = useState(true)
@@ -230,10 +232,12 @@ export default function TagsAdminPage() {
             const data = await res.json()
             setTags(data.tags || [])
             setDuplicateGroups(data.duplicateGroups || [])
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar tags')
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [toast])
 
     useEffect(() => { fetchTags() }, [fetchTags])
 
@@ -282,11 +286,14 @@ export default function TagsAdminPage() {
                     setMergeConflict({ oldTag, newTag })
                     return
                 }
-                alert(data.error || 'Erro ao renomear')
+                toast.error(data.error || 'Erro ao renomear')
                 return
             }
+            toast.success(force ? `Tag mesclada em "${newTag}"` : `Tag renomeada para "${newTag}"`)
             cancelEdit()
             await fetchTags()
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao renomear tag')
         } finally {
             setSaving(false)
         }
@@ -294,35 +301,45 @@ export default function TagsAdminPage() {
 
     // ── Merge ──
     const handleMerge = async (source: string, target: string) => {
-        const res = await fetch('/api/admin/tags', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ oldTag: source, newTag: target, merge: true }),
-        })
-        if (!res.ok) {
-            const err = await res.json()
-            alert(err.error || 'Erro ao mesclar')
-            return
+        try {
+            const res = await fetch('/api/admin/tags', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldTag: source, newTag: target, merge: true }),
+            })
+            if (!res.ok) {
+                const err = await res.json()
+                toast.error(err.error || 'Erro ao mesclar')
+                return
+            }
+            toast.success(`"${source}" mesclada em "${target}"`)
+            setMergingTag(null)
+            cancelEdit()
+            await fetchTags()
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao mesclar tags')
         }
-        setMergingTag(null)
-        cancelEdit()
-        await fetchTags()
     }
 
     // ── Delete ──
     const confirmDelete = async (tag: string) => {
-        const res = await fetch('/api/admin/tags', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tag }),
-        })
-        if (!res.ok) {
-            const err = await res.json()
-            alert(err.error || 'Erro ao deletar')
-            return
+        try {
+            const res = await fetch('/api/admin/tags', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tag }),
+            })
+            if (!res.ok) {
+                const err = await res.json()
+                toast.error(err.error || 'Erro ao deletar tag')
+                return
+            }
+            toast.deleted('Tag')
+            setDeletingTag(null)
+            await fetchTags()
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao deletar tag')
         }
-        setDeletingTag(null)
-        await fetchTags()
     }
 
     return (
@@ -331,7 +348,7 @@ export default function TagsAdminPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <StatCard label="Tags únicas"  value={tags.length}          color="text-foreground" />
-                    <StatCard label="Usos totais"  value={totalUsage}           color="text-purple-400" />
+                    <StatCard label="Usos totais"  value={totalUsage}           color="text-accent" />
                     <StatCard label="Partilhadas"  value={shared}               color="text-blue-400" />
                     <StatCard label="Exclusivas"   value={newsOnly + prodsOnly} color="text-amber-400" />
                 </div>
@@ -497,7 +514,7 @@ export default function TagsAdminPage() {
                                             </span>
                                         )}
                                         {entry.productionCount > 0 && (
-                                            <span className="flex items-center gap-1 text-xs text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-2 py-0.5">
+                                            <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 border border-accent/20 rounded-full px-2 py-0.5">
                                                 <Film className="w-3 h-3" />
                                                 <span className="tabular-nums">{entry.productionCount}</span>
                                             </span>

@@ -17,7 +17,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
   Check, AlertCircle, Film, Star, Languages,
 } from 'lucide-react'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, AdminModalOverlay } from '@/components/admin'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -211,43 +211,37 @@ function CastModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="flex items-start justify-between p-5 border-b border-border">
-          <div>
-            <h2 className="text-base font-black text-foreground">{production.titlePt}</h2>
-            <p className="text-xs text-muted mt-0.5">
-              {loading ? '...' : `${cast.length} artista${cast.length !== 1 ? 's' : ''} no elenco`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {production.tmdbId && (
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-bold transition-all disabled:opacity-50"
-              >
-                <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
-                {syncing ? 'Sincronizando...' : 'Re-sync TMDB'}
-              </button>
-            )}
-            <button onClick={onClose} className="text-muted hover:text-foreground transition-colors p-1">
-              <X size={20} />
-            </button>
-          </div>
+    <AdminModalOverlay
+      open
+      onClose={onClose}
+      title={production.titlePt}
+      subtitle={loading ? '...' : `${cast.length} artista${cast.length !== 1 ? 's' : ''} no elenco`}
+      maxWidth="2xl"
+    >
+      {/* Re-sync button */}
+      {production.tmdbId && (
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-bold transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Sincronizando...' : 'Re-sync TMDB'}
+          </button>
         </div>
+      )}
 
-        {msg && (
-          <div className={`mx-5 mt-3 px-3 py-2 rounded-lg text-xs font-medium ${
-            msg.startsWith('✅') ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-          }`}>
-            {msg}
-          </div>
-        )}
+      {msg && (
+        <div className={`mb-3 px-3 py-2 rounded-lg text-xs font-medium ${
+          msg.startsWith('✅') ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+        }`}>
+          {msg}
+        </div>
+      )}
 
-        {/* Cast list */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+      {/* Cast list */}
+      <div className="max-h-[55vh] overflow-y-auto -mx-5 px-4 space-y-1.5">
           {loading ? (
             <div className="text-center py-12 text-muted">
               <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
@@ -361,9 +355,8 @@ function CastModal({
               </div>
             ))
           )}
-        </div>
       </div>
-    </div>
+    </AdminModalOverlay>
   )
 }
 

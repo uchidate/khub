@@ -512,7 +512,7 @@ export default function EditArtistPage() {
                             <div className="flex items-center gap-2 mb-1.5">
                                 <span className="text-xs font-bold text-muted uppercase tracking-widest">Análise Editorial</span>
                                 {form.analiseEditorial && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-purple-500/10 text-purple-400 border-purple-500/30">
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-accent/10 text-accent border-accent/30">
                                         {form.analiseEditorial.length} chars
                                     </span>
                                 )}
@@ -658,7 +658,7 @@ export default function EditArtistPage() {
                                     type="button"
                                     onClick={() => handleGenerateEditorial(['bio'])}
                                     disabled={generatingEditorial}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-purple-300 border border-purple-500/30 hover:border-purple-500/60 disabled:opacity-40 transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-accent border border-accent/30 hover:border-accent/60 disabled:opacity-40 transition-colors"
                                 >
                                     {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                     Bio (~$0.002)
@@ -667,7 +667,7 @@ export default function EditArtistPage() {
                                     type="button"
                                     onClick={() => handleGenerateEditorial(['editorial', 'curiosidades'])}
                                     disabled={generatingEditorial}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-purple-300 border border-purple-500/30 hover:border-purple-500/60 disabled:opacity-40 transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-accent border border-accent/30 hover:border-accent/60 disabled:opacity-40 transition-colors"
                                 >
                                     {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                     Análise + Curiosidades (~$0.003)
@@ -676,7 +676,7 @@ export default function EditArtistPage() {
                                     type="button"
                                     onClick={() => handleGenerateEditorial(['bio', 'editorial', 'curiosidades'])}
                                     disabled={generatingEditorial}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/40 disabled:opacity-40 transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-accent/20 text-accent border border-accent/30 hover:bg-accent/40 disabled:opacity-40 transition-colors"
                                 >
                                     {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                     Tudo (~$0.005)
@@ -782,13 +782,13 @@ export default function EditArtistPage() {
                                     <span className="text-[10px] text-muted self-center">Aplicar ao artista (só campos vazios):</span>
                                     {tmdbPreview.photoUrl && !form.primaryImageUrl && (
                                         <button type="button" onClick={() => applyFromTmdb('primaryImageUrl', tmdbPreview.photoUrl)}
-                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            className="text-[10px] px-2 py-1 bg-accent/20 hover:bg-accent/40 text-accent rounded font-bold transition-colors">
                                             + Foto
                                         </button>
                                     )}
                                     {tmdbPreview.hangulName && !form.nameHangul && (
                                         <button type="button" onClick={() => applyFromTmdb('nameHangul', tmdbPreview.hangulName)}
-                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            className="text-[10px] px-2 py-1 bg-accent/20 hover:bg-accent/40 text-accent rounded font-bold transition-colors">
                                             + Hangul
                                         </button>
                                     )}
@@ -802,19 +802,19 @@ export default function EditArtistPage() {
                                                 setBioSource('tmdb_en')
                                             }
                                         }}
-                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            className="text-[10px] px-2 py-1 bg-accent/20 hover:bg-accent/40 text-accent rounded font-bold transition-colors">
                                             + Bio
                                         </button>
                                     )}
                                     {tmdbPreview.birthday && !form.birthDate && (
                                         <button type="button" onClick={() => applyFromTmdb('birthDate', tmdbPreview.birthday)}
-                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            className="text-[10px] px-2 py-1 bg-accent/20 hover:bg-accent/40 text-accent rounded font-bold transition-colors">
                                             + Nascimento
                                         </button>
                                     )}
                                     {tmdbPreview.placeOfBirth && !form.placeOfBirth && (
                                         <button type="button" onClick={() => applyFromTmdb('placeOfBirth', tmdbPreview.placeOfBirth)}
-                                            className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
+                                            className="text-[10px] px-2 py-1 bg-accent/20 hover:bg-accent/40 text-accent rounded font-bold transition-colors">
                                             + Local
                                         </button>
                                     )}

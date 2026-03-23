@@ -10,6 +10,7 @@ import {
 import { getBotGroup, BOT_GROUPS } from '@/lib/utils/bot-detector'
 
 import { SITE_URL } from '@/lib/constants/site'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 const BASE_URL = SITE_URL
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -206,6 +207,7 @@ function LogCard({ log, expanded, onToggle }: { log: BotLog; expanded: boolean; 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function BotLogsPage() {
+    const toast = useAdminToast()
     const [stats, setStats]               = useState<Stats | null>(null)
     const [logs, setLogs]                 = useState<BotLog[]>([])
     const [total, setTotal]               = useState(0)
@@ -233,10 +235,12 @@ export default function BotLogsPage() {
             if (pathFilter) params.set('path', pathFilter)
             const r = await fetch(`/api/admin/bot-logs?${params}`)
             if (r.ok) setStats(await r.json())
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar dados')
         } finally {
             setStatsLoading(false)
         }
-    }, [days, botFilter, pathFilter])
+    }, [days, botFilter, pathFilter, toast])
 
     const fetchLogs = useCallback(async (p = 1) => {
         setLoading(true)
@@ -252,10 +256,12 @@ export default function BotLogsPage() {
                 setPages(data.pages)
                 setPage(p)
             }
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar dados')
         } finally {
             setLoading(false)
         }
-    }, [days, botFilter, pathFilter])
+    }, [days, botFilter, pathFilter, toast])
 
     useEffect(() => {
         fetchStats()
