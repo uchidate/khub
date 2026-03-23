@@ -60,7 +60,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const validated = updateSchema.parse(body)
 
   const data: Record<string, unknown> = { ...validated }
-  if (validated.contentMd) data.readingTimeMin = calcReadingTime(validated.contentMd)
+  // Prioridade: blocos > markdown (posts novos usam blocos)
+  if (validated.blocks && validated.blocks.length > 0) {
+    data.readingTimeMin = calcReadingTime(validated.blocks)
+  } else if (validated.contentMd) {
+    data.readingTimeMin = calcReadingTime(validated.contentMd)
+  }
   // Reset to DRAFT when contributor edits a pending post
   if (post.status === 'PENDING_REVIEW' && !isAdmin) data.status = 'DRAFT'
   // Only admins/editors can set featured

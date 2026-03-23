@@ -43,7 +43,9 @@ export async function POST(request: NextRequest) {
       coverImageUrl: validated.coverImageUrl || null,
       categoryId: validated.categoryId || null,
       tags: validated.tags ?? [],
-      readingTimeMin: calcReadingTime(validated.contentMd),
+      readingTimeMin: validated.blocks?.length
+        ? calcReadingTime(validated.blocks)
+        : calcReadingTime(validated.contentMd),
       authorId: session!.user.id,
       status: 'DRAFT',
       blocks: (validated.blocks ?? undefined) as Prisma.InputJsonValue | undefined,
