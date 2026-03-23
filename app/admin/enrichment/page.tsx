@@ -84,13 +84,13 @@ const TAB_CONFIG: Record<Tab, { label: string; icon: React.ElementType; batchLim
 }
 
 function CompletenessBar({ score, present, total }: { score: number; present: number; total: number }) {
-    const color = score === 100 ? 'bg-emerald-500' : score > 0 ? 'bg-blue-500' : 'bg-zinc-700'
+    const color = score === 100 ? 'bg-emerald-500' : score > 0 ? 'bg-blue-500' : 'bg-surface'
     return (
         <div className="flex items-center gap-2">
-            <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="flex-1 h-1 bg-surface rounded-full overflow-hidden">
                 <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${score}%` }} />
             </div>
-            <span className="text-[10px] text-zinc-500 shrink-0">{present}/{total}</span>
+            <span className="text-[10px] text-muted shrink-0">{present}/{total}</span>
         </div>
     )
 }
@@ -155,8 +155,8 @@ function EnrichButton({
                 error
                     ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
                     : present
-                        ? 'bg-zinc-800/60 border border-white/8 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200'
-                        : 'bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+                        ? 'bg-surface border border-border text-muted hover:bg-surface-hover hover:text-foreground'
+                        : 'bg-surface border border-border text-foreground hover:bg-surface-hover'
             }`}
         >
             {loading
@@ -218,7 +218,7 @@ function ProcessAllButton({
             onClick={handleClick}
             disabled={loading || disabled}
             title={`Gerar: ${missing.map(c => c.label).join(', ')}`}
-            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition-all disabled:opacity-40"
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-surface border border-border text-foreground hover:bg-surface-hover transition-colors disabled:opacity-40"
         >
             {justDone
                 ? <CheckCircle className="w-3 h-3" />
@@ -538,16 +538,16 @@ function EnrichmentPageInner() {
                                     className={`text-left p-2.5 rounded-xl border transition-all ${
                                         isActive && fieldFilter === field
                                             ? 'bg-blue-900/20 border-blue-500/30'
-                                            : 'bg-zinc-900/40 border-white/5 hover:border-white/10 hover:bg-zinc-900/60'
+                                            : 'bg-surface border-border hover:border-border hover:bg-surface'
                                     }`}
                                 >
-                                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-black truncate">{label}</p>
-                                    <p className={`text-lg font-black tabular-nums leading-tight ${count === 0 ? 'text-emerald-400' : 'text-white'}`}>
+                                    <p className="text-[9px] text-muted uppercase tracking-widest font-black truncate">{label}</p>
+                                    <p className={`text-lg font-black tabular-nums leading-tight ${count === 0 ? 'text-emerald-400' : 'text-foreground'}`}>
                                         {count}
                                     </p>
                                     <div className="flex items-center gap-1 mt-0.5">
                                         <div className={`w-1.5 h-1.5 rounded-full ${budgetOk ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                        <span className="text-[9px] text-zinc-600">{budgetOk ? 'ok' : 'esgotado'}</span>
+                                        <span className="text-[9px] text-muted">{budgetOk ? 'ok' : 'esgotado'}</span>
                                     </div>
                                 </button>
                             )
@@ -556,19 +556,19 @@ function EnrichmentPageInner() {
                 )}
 
                 {/* Cost + session summary */}
-                <div className="flex items-center gap-4 flex-wrap text-xs text-zinc-600">
+                <div className="flex items-center gap-4 flex-wrap text-xs text-muted">
                     <span className="flex items-center gap-1">
                         <DollarSign className="w-3 h-3" />
-                        Custo geral estimado: <span className="text-zinc-400 font-mono">${(stats?.totalEstimate ?? 0).toFixed(3)}</span>
+                        Custo geral estimado: <span className="text-muted font-mono">${(stats?.totalEstimate ?? 0).toFixed(3)}</span>
                     </span>
                     {currentQueue && (
                         <span>
-                            Fila: <span className="text-zinc-400">{totalInQueue}</span> itens
+                            Fila: <span className="text-muted">{totalInQueue}</span> itens
                             {currentQueue.totalCostEstimate > 0 && (
-                                <> · ~<span className="text-zinc-400 font-mono">${currentQueue.totalCostEstimate.toFixed(4)}</span></>
+                                <> · ~<span className="text-muted font-mono">${currentQueue.totalCostEstimate.toFixed(4)}</span></>
                             )}
                             {completeCount > 0 && (
-                                <span className="text-zinc-600"> · {completeCount} completos</span>
+                                <span className="text-muted"> · {completeCount} completos</span>
                             )}
                         </span>
                     )}
@@ -583,19 +583,19 @@ function EnrichmentPageInner() {
 
                 {/* Search — auto-search with debounce */}
                 <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={e => handleSearchInput(e.target.value)}
                         placeholder={`Buscar ${cfg.label.toLowerCase()}...`}
-                        className="w-full pl-9 pr-8 py-2 text-sm bg-zinc-900/60 border border-white/8 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 focus:bg-zinc-900 transition-all"
+                        className="w-full px-4 pr-10 py-2 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-all"
                     />
                     {searchQuery && (
                         <button
                             type="button"
                             onClick={() => handleSearchInput('')}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-muted transition-colors"
                         >
                             <X className="w-3.5 h-3.5" />
                         </button>
@@ -604,7 +604,7 @@ function EnrichmentPageInner() {
 
                 {/* Tab bar + filter chips + hide-complete + refresh */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1 bg-zinc-900/60 border border-white/6 rounded-xl p-1">
+                    <div className="flex items-center gap-1 bg-surface border border-border rounded-xl p-1">
                         {(Object.entries(TAB_CONFIG) as [Tab, typeof cfg][]).map(([tab, c]) => {
                             const Icon  = c.icon
                             const count = queue[tab]?.total
@@ -614,15 +614,15 @@ function EnrichmentPageInner() {
                                     onClick={() => setActiveTab(tab)}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                         activeTab === tab
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                            ? 'bg-blue-600 text-foreground shadow-lg shadow-blue-500/20'
+                                            : 'text-muted hover:text-foreground hover:bg-surface'
                                     }`}
                                 >
                                     <Icon className="w-3.5 h-3.5" />
                                     {c.label}
                                     {count != null && (
                                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                                            activeTab === tab ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-400'
+                                            activeTab === tab ? 'bg-white/20 text-foreground' : 'bg-surface text-muted'
                                         }`}>
                                             {count}
                                         </span>
@@ -638,8 +638,8 @@ function EnrichmentPageInner() {
                             onClick={() => { setFieldFilter('all'); fetchQueue(activeTab, false, 0, 'all') }}
                             className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
                                 fieldFilter === 'all'
-                                    ? 'bg-zinc-700 text-white'
-                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                                    ? 'bg-surface text-foreground'
+                                    : 'text-muted hover:text-foreground hover:bg-surface'
                             }`}
                         >
                             Todos
@@ -654,7 +654,7 @@ function EnrichmentPageInner() {
                                     className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-all ${
                                         fieldFilter === key
                                             ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
-                                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                                            : 'text-muted hover:text-foreground hover:bg-surface'
                                     }`}
                                 >
                                     Sem {c.label}{count > 0 ? ` (${count})` : ''}
@@ -668,8 +668,8 @@ function EnrichmentPageInner() {
                         onClick={() => setHideComplete(v => !v)}
                         className={`flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
                             hideComplete
-                                ? 'bg-zinc-800 border-white/10 text-zinc-300'
-                                : 'bg-transparent border-white/6 text-zinc-600 hover:text-zinc-400'
+                                ? 'bg-surface border-border text-foreground'
+                                : 'bg-transparent border-border text-muted hover:text-muted'
                         }`}
                         title={hideComplete ? 'Mostrar completos' : 'Ocultar completos'}
                     >
@@ -682,7 +682,7 @@ function EnrichmentPageInner() {
                             <a
                                 href="/api/admin/export/artists-excel"
                                 download
-                                className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-zinc-800"
+                                className="flex items-center gap-1.5 text-xs text-muted hover:text-emerald-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-surface"
                                 title="Exportar todos os artistas para Excel"
                             >
                                 <FileDown className="w-3.5 h-3.5" />
@@ -692,7 +692,7 @@ function EnrichmentPageInner() {
                         <button
                             onClick={() => { fetchQueue(activeTab, false, 0, fieldFilter); fetchStats() }}
                             disabled={loading}
-                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1.5 rounded-lg hover:bg-zinc-800"
+                            className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface"
                         >
                             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                             Atualizar
@@ -701,8 +701,8 @@ function EnrichmentPageInner() {
                 </div>
 
                 {/* Batch field selector + cost estimate + run */}
-                <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl bg-zinc-900/30 border border-white/5">
-                    <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest shrink-0">Lote:</span>
+                <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl bg-surface border border-border">
+                    <span className="text-[10px] text-muted font-black uppercase tracking-widest shrink-0">Lote:</span>
                     {Object.entries(fieldMap).map(([key, c]) => {
                         const missing = stats?.counts[statsKeys[key]] ?? 0
                         return (
@@ -713,7 +713,7 @@ function EnrichmentPageInner() {
                                 className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all disabled:opacity-40 ${
                                     selectedBatchFields.has(key)
                                         ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
-                                        : 'bg-transparent border-white/8 text-zinc-600 hover:text-zinc-400 hover:border-white/15'
+                                        : 'bg-transparent border-border text-muted hover:text-muted hover:border-border'
                                 }`}
                             >
                                 {selectedBatchFields.has(key) ? '✓' : '○'} {c.label}
@@ -734,7 +734,7 @@ function EnrichmentPageInner() {
                                 className={`text-[10px] font-semibold px-2 py-1 rounded-md border transition-all disabled:opacity-40 ${
                                     batchLimit === n
                                         ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
-                                        : 'bg-transparent border-white/8 text-zinc-600 hover:text-zinc-400 hover:border-white/15'
+                                        : 'bg-transparent border-border text-muted hover:text-muted hover:border-border'
                                 }`}
                             >
                                 {n}
@@ -744,7 +744,7 @@ function EnrichmentPageInner() {
 
                     {/* Estimated cost for batch */}
                     {batchCostEstimate > 0 && !batchRunning && (
-                        <span className="text-[10px] text-zinc-600 font-mono">
+                        <span className="text-[10px] text-muted font-mono">
                             ~${batchCostEstimate.toFixed(4)}
                         </span>
                     )}
@@ -753,7 +753,7 @@ function EnrichmentPageInner() {
                         <button
                             onClick={runBatch}
                             disabled={batchRunning || loading || totalInQueue === 0 || isSearching || selectedBatchFields.size === 0}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-foreground disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
                         >
                             {batchRunning
                                 ? <><Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />Processando...</>
@@ -765,14 +765,14 @@ function EnrichmentPageInner() {
                         {batchRunning && batchProgress && (
                             <div className="min-w-[200px] max-w-xs space-y-1">
                                 <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[10px] text-zinc-400 truncate max-w-[160px]" title={batchProgress.itemName}>
+                                    <span className="text-[10px] text-muted truncate max-w-[160px]" title={batchProgress.itemName}>
                                         {batchProgress.fieldLabel} · {batchProgress.itemName}
                                     </span>
-                                    <span className="text-[10px] text-zinc-500 shrink-0 tabular-nums">
+                                    <span className="text-[10px] text-muted shrink-0 tabular-nums">
                                         {batchProgress.itemIndex + 1}/{batchProgress.itemTotal}
                                     </span>
                                 </div>
-                                <div className="h-1 rounded-full bg-zinc-800 overflow-hidden">
+                                <div className="h-1 rounded-full bg-surface overflow-hidden">
                                     <div
                                         className="h-full bg-blue-500 transition-all duration-300"
                                         style={{ width: `${Math.round(((batchProgress.itemIndex) / batchProgress.itemTotal) * 100)}%` }}
@@ -789,35 +789,35 @@ function EnrichmentPageInner() {
                 {/* Queue list */}
                 {loading && !currentQueue ? (
                     <div className="flex justify-center py-16">
-                        <Loader2 className="w-6 h-6 text-zinc-600 animate-spin" />
+                        <Loader2 className="w-6 h-6 text-muted animate-spin" />
                     </div>
                 ) : visibleItems.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-white/6 rounded-xl">
+                    <div className="text-center py-16 border border-dashed border-border rounded-xl">
                         {isSearching ? (
                             <>
-                                <Search className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-white">Nenhum resultado</p>
-                                <p className="text-xs text-zinc-500 mt-1">Tente outro termo de busca.</p>
+                                <Search className="w-8 h-8 text-muted mx-auto mb-3" />
+                                <p className="text-sm font-medium text-foreground">Nenhum resultado</p>
+                                <p className="text-xs text-muted mt-1">Tente outro termo de busca.</p>
                             </>
                         ) : fieldFilter !== 'all' ? (
                             <>
                                 <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-white">Nenhum item sem &ldquo;{fieldMap[fieldFilter]?.label}&rdquo;</p>
-                                <p className="text-xs text-zinc-500 mt-1">Todos os itens visíveis têm este campo preenchido.</p>
+                                <p className="text-sm font-medium text-foreground">Nenhum item sem &ldquo;{fieldMap[fieldFilter]?.label}&rdquo;</p>
+                                <p className="text-xs text-muted mt-1">Todos os itens visíveis têm este campo preenchido.</p>
                             </>
                         ) : hideComplete && completeCount > 0 ? (
                             <>
                                 <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-white">Todos os itens carregados estão completos!</p>
-                                <button onClick={() => setHideComplete(false)} className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors">
+                                <p className="text-sm font-medium text-foreground">Todos os itens carregados estão completos!</p>
+                                <button onClick={() => setHideComplete(false)} className="text-xs text-muted hover:text-foreground mt-1 transition-colors">
                                     Mostrar {completeCount} itens completos
                                 </button>
                             </>
                         ) : (
                             <>
                                 <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-white">Tudo enriquecido!</p>
-                                <p className="text-xs text-zinc-500 mt-1">Nenhum item pendente nesta categoria.</p>
+                                <p className="text-sm font-medium text-foreground">Tudo enriquecido!</p>
+                                <p className="text-xs text-muted mt-1">Nenhum item pendente nesta categoria.</p>
                             </>
                         )}
                     </div>
@@ -840,7 +840,7 @@ function EnrichmentPageInner() {
                             <button
                                 onClick={() => fetchQueue(activeTab, true, allItems.length, fieldFilter)}
                                 disabled={loadingMore}
-                                className="w-full flex items-center justify-center gap-2 py-3 text-xs text-zinc-500 hover:text-zinc-300 transition-colors border border-dashed border-white/6 rounded-xl hover:border-white/12"
+                                className="w-full flex items-center justify-center gap-2 py-3 text-xs text-muted hover:text-foreground transition-colors border border-dashed border-border rounded-xl hover:border-border"
                             >
                                 {loadingMore
                                     ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Carregando...</>
@@ -850,7 +850,7 @@ function EnrichmentPageInner() {
                         )}
 
                         {isSearching && totalInQueue > allItems.length && (
-                            <p className="text-center text-xs text-zinc-600 pt-2">
+                            <p className="text-center text-xs text-muted pt-2">
                                 +{totalInQueue - allItems.length} resultados · refine a busca
                             </p>
                         )}
@@ -878,28 +878,28 @@ function QueueItemRow({
     return (
         <div className={`rounded-xl border transition-all ${
             curating
-                ? 'border-amber-500/30 bg-zinc-900/60'
+                ? 'border-amber-500/30 bg-surface'
                 : allPresent
                     ? 'border-emerald-500/20 bg-emerald-900/5'
-                    : 'border-white/6 bg-zinc-900/40 hover:border-blue-500/20 hover:bg-zinc-900/60'
+                    : 'border-border bg-surface hover:bg-surface-hover'
         }`}>
             {/* Main row */}
             <div className="flex items-center gap-3 p-3 group">
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/6">
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
                     {item.imageUrl ? (
                         <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                            <Sparkles className="w-4 h-4 text-zinc-700" />
+                            <Sparkles className="w-4 h-4 text-muted" />
                         </div>
                     )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white truncate">{item.name}</span>
+                        <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
                         {item.subtitle && (
-                            <span className="text-[11px] text-zinc-500 truncate hidden sm:block">{item.subtitle}</span>
+                            <span className="text-[11px] text-muted truncate hidden sm:block">{item.subtitle}</span>
                         )}
                     </div>
                     <div className="mt-1.5">
@@ -908,7 +908,7 @@ function QueueItemRow({
                 </div>
 
                 <div className="shrink-0 text-right hidden md:block">
-                    <span className="text-[10px] text-zinc-600 font-mono">~${item.estimatedCost.toFixed(4)}</span>
+                    <span className="text-[10px] text-muted font-mono">~${item.estimatedCost.toFixed(4)}</span>
                 </div>
 
                 <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
@@ -938,7 +938,7 @@ function QueueItemRow({
                             className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md transition-all ${
                                 curating
                                     ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300'
-                                    : 'bg-zinc-800/60 border border-white/8 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200 opacity-0 group-hover:opacity-100'
+                                    : 'bg-surface border border-border text-muted hover:bg-surface hover:text-foreground opacity-0 group-hover:opacity-100'
                             }`}
                         >
                             {curating ? <ChevronUp className="w-3 h-3" /> : <PenLine className="w-3 h-3" />}
@@ -950,7 +950,7 @@ function QueueItemRow({
                             href={`/artists/${item.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                            className="inline-flex items-center p-1 rounded text-muted hover:text-muted transition-colors opacity-0 group-hover:opacity-100"
                             title="Ver perfil público"
                         >
                             <ExternalLink className="w-3 h-3" />
@@ -962,7 +962,7 @@ function QueueItemRow({
                             tab === 'productions' ? `/admin/productions/${item.id}` :
                             `/admin/news/${item.id}/edit`
                         }
-                        className="inline-flex items-center p-1 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                        className="inline-flex items-center p-1 rounded text-muted hover:text-muted transition-colors opacity-0 group-hover:opacity-100"
                         title="Abrir página completa"
                     >
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -1067,7 +1067,7 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
         <div className="border-t border-amber-500/20 px-4 pb-4 pt-3 space-y-4">
             {loading ? (
                 <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-5 h-5 text-zinc-500 animate-spin" />
+                    <Loader2 className="w-5 h-5 text-muted animate-spin" />
                 </div>
             ) : (
                 <>
@@ -1078,54 +1078,54 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
                                 Curadoria — {original?.nameRomanized}{original?.nameHangul ? ` (${original.nameHangul})` : ''}
                             </p>
                             {genAt && (
-                                <p className="text-[10px] text-zinc-600 mt-0.5">Gerado em {genAt}</p>
+                                <p className="text-[10px] text-muted mt-0.5">Gerado em {genAt}</p>
                             )}
                         </div>
                     </div>
 
                     {/* Bio */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bio</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted">Bio</label>
                         <textarea
                             value={bio}
                             onChange={e => setBio(e.target.value)}
                             rows={5}
-                            className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-sans leading-relaxed"
+                            className="w-full px-3 py-2.5 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-amber-500/50 resize-y font-sans leading-relaxed"
                             placeholder="Bio do artista..."
                         />
                     </div>
 
                     {/* Análise editorial */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Análise Editorial</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted">Análise Editorial</label>
                         <textarea
                             value={editorial}
                             onChange={e => setEditorial(e.target.value)}
                             rows={8}
-                            className="w-full px-3 py-2.5 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-y font-mono leading-relaxed"
+                            className="w-full px-3 py-2.5 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-amber-500/50 resize-y font-mono leading-relaxed"
                             placeholder="**Projetos**&#10;...&#10;&#10;**Reconhecimento**&#10;..."
                         />
                     </div>
 
                     {/* Curiosidades */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted">
                             Curiosidades ({curiosidades.filter(c => c.trim()).length})
                         </label>
                         <div className="space-y-2">
                             {curiosidades.map((c, i) => (
                                 <div key={i} className="flex gap-2 items-start">
-                                    <span className="text-[10px] text-zinc-600 font-mono pt-2.5 shrink-0 w-4 text-right">{i + 1}.</span>
+                                    <span className="text-[10px] text-muted font-mono pt-2.5 shrink-0 w-4 text-right">{i + 1}.</span>
                                     <textarea
                                         value={c}
                                         onChange={e => updateCuriosidade(i, e.target.value)}
                                         rows={2}
-                                        className="flex-1 px-3 py-2 text-sm bg-zinc-900/80 border border-white/8 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 resize-none font-sans leading-relaxed"
+                                        className="flex-1 px-3 py-2 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-amber-500/50 resize-none font-sans leading-relaxed"
                                         placeholder={`Curiosidade ${i + 1}...`}
                                     />
                                     <button
                                         onClick={() => removeCuriosidade(i)}
-                                        className="mt-1.5 p-1.5 text-zinc-600 hover:text-red-400 transition-colors rounded-md hover:bg-red-500/10"
+                                        className="mt-1.5 p-1.5 text-muted hover:text-red-400 transition-colors rounded-md hover:bg-red-500/10"
                                         title="Remover"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
@@ -1134,7 +1134,7 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
                             ))}
                             <button
                                 onClick={addCuriosidade}
-                                className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-zinc-800"
+                                className="flex items-center gap-1.5 text-[10px] font-medium text-muted hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-surface"
                             >
                                 <Plus className="w-3 h-3" />
                                 Adicionar curiosidade
@@ -1143,18 +1143,18 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-white/6">
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-border">
                         <button
                             onClick={onClose}
                             disabled={saving}
-                            className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors rounded-lg hover:bg-zinc-800 disabled:opacity-40"
+                            className="px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface disabled:opacity-40"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-all disabled:opacity-40 shadow-lg shadow-amber-500/20"
+                            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-foreground rounded-lg transition-all disabled:opacity-40 shadow-lg shadow-amber-500/20"
                         >
                             {saving
                                 ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Salvando...</>

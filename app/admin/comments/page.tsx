@@ -8,6 +8,9 @@ import {
     RefreshCw, Filter,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { StatCard } from '@/components/admin/StatCard'
 
 interface Comment {
     id: string
@@ -28,7 +31,7 @@ interface Stats {
 }
 
 const STATUS_OPTS = [
-    { value: '',        label: 'Todos',       color: 'text-zinc-300' },
+    { value: '',        label: 'Todos',       color: 'text-foreground' },
     { value: 'ACTIVE',  label: 'Ativos',      color: 'text-green-400' },
     { value: 'FLAGGED', label: 'Sinalizados', color: 'text-yellow-400' },
     { value: 'REMOVED', label: 'Removidos',   color: 'text-red-400' },
@@ -54,17 +57,17 @@ function CommentCard({
     onNote: (id: string, current: string | null) => void
 }) {
     return (
-        <div className={`p-4 border-b border-white/5 last:border-0 ${selected ? 'bg-purple-500/5' : ''}`}>
+        <div className={`p-4 border-b border-border last:border-0 ${selected ? 'bg-purple-500/5' : ''}`}>
             <div className="flex items-start gap-3">
                 {/* Checkbox + Avatar */}
                 <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
                     <input type="checkbox" checked={selected} onChange={onToggle}
-                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-purple-500 cursor-pointer" />
+                        className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer" />
                     {comment.user.image ? (
                         <img src={comment.user.image} alt="" className="w-6 h-6 rounded-full object-cover" />
                     ) : (
-                        <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center">
-                            <span className="text-[10px] font-black text-zinc-400">
+                        <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center">
+                            <span className="text-[10px] font-black text-muted">
                                 {(comment.user.name ?? comment.user.email)[0]?.toUpperCase()}
                             </span>
                         </div>
@@ -74,20 +77,22 @@ function CommentCard({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs font-bold text-zinc-300 truncate">{comment.user.name ?? comment.user.email}</span>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black border flex-shrink-0 ${STATUS_BADGE[comment.status] ?? ''}`}>
-                            {STATUS_LABEL[comment.status] ?? comment.status}
-                        </span>
-                        <span className="text-[10px] text-zinc-600 ml-auto flex-shrink-0">
+                        <span className="text-xs font-bold text-foreground truncate">{comment.user.name ?? comment.user.email}</span>
+                        <AdminStatusBadge
+                            label={STATUS_LABEL[comment.status] ?? comment.status}
+                            color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'}
+                            variant="pill"
+                        />
+                        <span className="text-[10px] text-muted ml-auto flex-shrink-0">
                             {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
                         </span>
                     </div>
-                    <p className="text-sm text-zinc-300 leading-relaxed line-clamp-3 break-words mb-2">{comment.content}</p>
+                    <p className="text-sm text-foreground leading-relaxed line-clamp-3 break-words mb-2">{comment.content}</p>
                     {comment.moderationNote && (
                         <p className="text-[11px] text-yellow-500/80 italic mb-2">📝 {comment.moderationNote}</p>
                     )}
                     <Link href={`/news/${comment.news.id}`} target="_blank"
-                        className="text-xs text-zinc-500 hover:text-purple-400 flex items-center gap-1 transition-colors mb-3">
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1 transition-colors mb-3">
                         <ExternalLink className="w-3 h-3 flex-shrink-0" />
                         <span className="truncate">{comment.news.title}</span>
                     </Link>
@@ -111,7 +116,7 @@ function CommentCard({
                             </button>
                         )}
                         <button onClick={() => onNote(comment.id, comment.moderationNote)} title="Nota de moderação"
-                            className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-700 hover:text-white transition-colors text-[11px] font-black">
+                            className="p-1.5 rounded-xl text-muted hover:bg-surface hover:text-foreground transition-colors text-[11px] font-black">
                             📝
                         </button>
                         <button onClick={() => onDelete(comment.id)} title="Excluir permanentemente"
@@ -125,14 +130,6 @@ function CommentCard({
     )
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
-    return (
-        <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 text-center">
-            <div className={`text-2xl font-black ${color}`}>{value.toLocaleString('pt-BR')}</div>
-            <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider mt-0.5">{label}</div>
-        </div>
-    )
-}
 
 export default function AdminCommentsPage() {
     const [comments, setComments]     = useState<Comment[]>([])
@@ -272,36 +269,26 @@ export default function AdminCommentsPage() {
 
     return (
         <AdminLayout title="Comentários">
-        {/* Confirm modal */}
-        {confirmModal.open && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setConfirmModal(m => ({ ...m, open: false }))}>
-                <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-                    <h3 className="text-white font-bold text-lg mb-2">Confirmar ação</h3>
-                    <p className="text-zinc-400 text-sm mb-6">{confirmModal.message}</p>
-                    <div className="flex gap-3 justify-end">
-                        <button onClick={() => setConfirmModal(m => ({ ...m, open: false }))} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors">
-                            Cancelar
-                        </button>
-                        <button onClick={() => { setConfirmModal(m => ({ ...m, open: false })); confirmModal.onConfirm() }} className="px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-500 text-white transition-colors">
-                            Confirmar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
+        <ConfirmDialog
+            open={confirmModal.open}
+            title={confirmModal.message}
+            variant="danger"
+            onConfirm={() => { confirmModal.onConfirm(); setConfirmModal(m => ({ ...m, open: false })) }}
+            onCancel={() => setConfirmModal(m => ({ ...m, open: false }))}
+        />
         <div className="space-y-6">
             {/* Header row: description + refresh */}
             <div className="flex items-center justify-between flex-wrap gap-3 -mt-6">
-                <p className="text-sm text-zinc-500">Gerencie e modere os comentários dos usuários</p>
+                <p className="text-sm text-muted">Gerencie e modere os comentários dos usuários</p>
                 <button onClick={fetchComments}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-all text-sm">
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface hover:bg-surface text-muted hover:text-foreground transition-all text-sm">
                     <RefreshCw className="w-3.5 h-3.5" /> Atualizar
                 </button>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard label="Total"       value={stats.total}   color="text-zinc-300" />
+                <StatCard label="Total"       value={stats.total}   color="text-foreground" />
                 <StatCard label="Ativos"      value={stats.active}  color="text-green-400" />
                 <StatCard label="Sinalizados" value={stats.flagged} color="text-yellow-400" />
                 <StatCard label="Removidos"   value={stats.removed} color="text-red-400" />
@@ -311,17 +298,17 @@ export default function AdminCommentsPage() {
             <div className="space-y-3">
                 {/* Search */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                     <input
                         type="text"
                         value={search}
                         onChange={e => handleSearch(e.target.value)}
                         placeholder="Buscar no conteúdo dos comentários..."
-                        className="w-full pl-10 pr-10 py-3 bg-zinc-900/50 border border-white/10 rounded-xl text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 transition-all"
+                        className="w-full px-4 pr-10 py-3 bg-background border border-border rounded-xl text-foreground text-sm placeholder:text-muted focus:outline-none focus:border-accent/50 transition-all"
                     />
                     {search && (
                         <button onClick={() => handleSearch('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
                             <X className="w-4 h-4" />
                         </button>
                     )}
@@ -330,14 +317,14 @@ export default function AdminCommentsPage() {
                 {/* Status + Sort */}
                 <div className="flex flex-wrap gap-3">
                     {/* Status tabs */}
-                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl">
+                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl">
                         {STATUS_OPTS.map(opt => (
                             <button key={opt.value}
                                 onClick={() => handleStatus(opt.value)}
                                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
                                     status === opt.value
-                                        ? 'bg-purple-600 text-white'
-                                        : `${opt.color} hover:bg-zinc-800`
+                                        ? 'bg-purple-600 text-foreground'
+                                        : `${opt.color} hover:bg-surface`
                                 }`}>
                                 {opt.label}
                             </button>
@@ -345,12 +332,12 @@ export default function AdminCommentsPage() {
                     </div>
 
                     {/* Sort */}
-                    <div className="flex gap-1 p-1 bg-zinc-900/50 border border-white/10 rounded-xl ml-auto">
+                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl ml-auto">
                         {[{ v: 'newest', l: 'Recentes' }, { v: 'oldest', l: 'Antigos' }].map(({ v, l }) => (
                             <button key={v}
                                 onClick={() => { setSortBy(v); setPage(1) }}
                                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-                                    sortBy === v ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-white'
+                                    sortBy === v ? 'bg-purple-600 text-foreground' : 'text-muted hover:text-foreground'
                                 }`}>
                                 {l}
                             </button>
@@ -360,7 +347,7 @@ export default function AdminCommentsPage() {
 
                 {/* Result count */}
                 {!isLoading && (
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted">
                         {pagination.total.toLocaleString('pt-BR')} comentário(s) encontrado(s)
                     </p>
                 )}
@@ -395,27 +382,27 @@ export default function AdminCommentsPage() {
             {isLoading ? (
                 <div className="space-y-3">
                     {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="h-20 rounded-xl bg-zinc-900/50 animate-pulse" />
+                        <div key={i} className="h-20 rounded-xl bg-surface animate-pulse" />
                     ))}
                 </div>
             ) : comments.length === 0 ? (
-                <div className="text-center py-20 bg-zinc-900/30 rounded-2xl border border-white/5">
-                    <MessageSquare className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                    <p className="text-zinc-400 font-bold">Nenhum comentário encontrado</p>
-                    <p className="text-zinc-600 text-sm mt-1">Tente ajustar os filtros</p>
+                <div className="text-center py-20 bg-surface rounded-2xl border border-border">
+                    <MessageSquare className="w-12 h-12 text-muted mx-auto mb-4" />
+                    <p className="text-muted font-bold">Nenhum comentário encontrado</p>
+                    <p className="text-muted text-sm mt-1">Tente ajustar os filtros</p>
                 </div>
             ) : (
                 <>
                 {/* Mobile cards */}
-                <div className="md:hidden bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden">
+                <div className="md:hidden bg-surface border border-border rounded-2xl overflow-hidden">
                     {/* Header com select-all */}
-                    <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-zinc-900/50">
+                    <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface">
                         <input type="checkbox"
                             checked={selected.size === comments.length && comments.length > 0}
                             onChange={toggleAll}
-                            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-purple-500 cursor-pointer"
+                            className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
                         />
-                        <span className="text-xs font-black text-zinc-500 uppercase tracking-wider">
+                        <span className="text-xs font-black text-muted uppercase tracking-wider">
                             {selected.size > 0 ? `${selected.size} selecionado(s)` : 'Selecionar todos'}
                         </span>
                     </div>
@@ -433,15 +420,15 @@ export default function AdminCommentsPage() {
                 </div>
 
                 {/* Desktop grid */}
-                <div className="hidden md:block bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto">
+                <div className="hidden md:block bg-surface border border-border rounded-2xl overflow-hidden overflow-x-auto">
                   <div className="min-w-[700px]">
                     {/* Table header */}
-                    <div className="grid grid-cols-[auto_1fr_200px_100px_110px] gap-4 px-4 py-3 border-b border-white/5 bg-zinc-900/50 text-xs font-black text-zinc-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[auto_1fr_200px_100px_110px] gap-4 px-4 py-3 border-b border-border bg-surface text-xs font-black text-muted uppercase tracking-wider">
                         <div className="flex items-center">
                             <input type="checkbox"
                                 checked={selected.size === comments.length && comments.length > 0}
                                 onChange={toggleAll}
-                                className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-purple-500 cursor-pointer"
+                                className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
                             />
                         </div>
                         <div className="flex items-center gap-1"><Filter className="w-3 h-3" /> Comentário</div>
@@ -453,7 +440,7 @@ export default function AdminCommentsPage() {
                     {/* Rows */}
                     {comments.map(comment => (
                         <div key={comment.id}
-                            className={`grid grid-cols-[auto_1fr_200px_100px_110px] gap-4 px-4 py-4 border-b border-white/5 last:border-0 hover:bg-zinc-800/20 transition-colors items-start ${
+                            className={`grid grid-cols-[auto_1fr_200px_100px_110px] gap-4 px-4 py-4 border-b border-border last:border-0 hover:bg-surface transition-colors items-start ${
                                 selected.has(comment.id) ? 'bg-purple-500/5' : ''
                             }`}>
                             {/* Checkbox */}
@@ -461,7 +448,7 @@ export default function AdminCommentsPage() {
                                 <input type="checkbox"
                                     checked={selected.has(comment.id)}
                                     onChange={() => toggleSelect(comment.id)}
-                                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 accent-purple-500 cursor-pointer"
+                                    className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
                                 />
                             </div>
 
@@ -472,21 +459,21 @@ export default function AdminCommentsPage() {
                                     {comment.user.image ? (
                                         <img src={comment.user.image} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                                     ) : (
-                                        <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
-                                            <span className="text-[10px] font-black text-zinc-400">
+                                        <div className="w-6 h-6 rounded-full bg-surface flex items-center justify-center flex-shrink-0">
+                                            <span className="text-[10px] font-black text-muted">
                                                 {(comment.user.name ?? comment.user.email)[0]?.toUpperCase()}
                                             </span>
                                         </div>
                                     )}
-                                    <span className="text-xs font-bold text-zinc-300 truncate">
+                                    <span className="text-xs font-bold text-foreground truncate">
                                         {comment.user.name ?? comment.user.email}
                                     </span>
-                                    <span className="text-[10px] text-zinc-600 flex-shrink-0">
+                                    <span className="text-[10px] text-muted flex-shrink-0">
                                         {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
                                     </span>
                                 </div>
                                 {/* Text */}
-                                <p className="text-sm text-zinc-300 leading-relaxed line-clamp-3 break-words">
+                                <p className="text-sm text-foreground leading-relaxed line-clamp-3 break-words">
                                     {comment.content}
                                 </p>
                                 {/* Moderation note */}
@@ -500,7 +487,7 @@ export default function AdminCommentsPage() {
                             {/* News */}
                             <div className="min-w-0">
                                 <Link href={`/news/${comment.news.id}`} target="_blank"
-                                    className="text-xs text-zinc-400 hover:text-purple-400 line-clamp-2 flex items-start gap-1 transition-colors group">
+                                    className="text-xs text-muted hover:text-purple-400 line-clamp-2 flex items-start gap-1 transition-colors group">
                                     <ExternalLink className="w-3 h-3 mt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     {comment.news.title}
                                 </Link>
@@ -508,9 +495,11 @@ export default function AdminCommentsPage() {
 
                             {/* Status badge */}
                             <div>
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black border ${STATUS_BADGE[comment.status] ?? ''}`}>
-                                    {STATUS_LABEL[comment.status] ?? comment.status}
-                                </span>
+                                <AdminStatusBadge
+                                    label={STATUS_LABEL[comment.status] ?? comment.status}
+                                    color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'}
+                                    variant="pill"
+                                />
                             </div>
 
                             {/* Actions */}
@@ -538,7 +527,7 @@ export default function AdminCommentsPage() {
                                 )}
                                 <button onClick={() => openNote(comment.id, comment.moderationNote)}
                                     title="Nota de moderação"
-                                    className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-700 hover:text-white transition-colors text-[11px] font-black">
+                                    className="p-1.5 rounded-xl text-muted hover:bg-surface hover:text-foreground transition-colors text-[11px] font-black">
                                     📝
                                 </button>
                                 <button onClick={() => deleteSingle(comment.id)}
@@ -558,12 +547,12 @@ export default function AdminCommentsPage() {
             {pagination.pages > 1 && (
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                     <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                        className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl text-sm text-foreground hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                         <ChevronLeft className="w-4 h-4" /> Anterior
                     </button>
 
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-zinc-500">Página</span>
+                        <span className="text-sm text-muted">Página</span>
                         {editingPage ? (
                             <input autoFocus type="number" min={1} max={pagination.pages}
                                 value={pageJump} onChange={e => setPageJump(e.target.value)}
@@ -572,24 +561,24 @@ export default function AdminCommentsPage() {
                                     if (e.key === 'Escape') { setEditingPage(false); setPageJump('') }
                                 }}
                                 onBlur={() => { setEditingPage(false); setPageJump('') }}
-                                className="w-14 text-center px-2 py-1 bg-zinc-800 border border-purple-500/50 rounded text-sm text-white focus:outline-none"
+                                className="w-14 text-center px-2 py-1 bg-surface border border-purple-500/50 rounded text-sm text-foreground focus:outline-none"
                             />
                         ) : (
                             <button onClick={() => { setEditingPage(true); setPageJump(String(page)) }}
-                                className="px-2 py-1 rounded text-sm font-bold text-white bg-zinc-800 hover:bg-zinc-700 hover:text-purple-400 transition-colors min-w-[2rem] text-center"
+                                className="px-2 py-1 rounded text-sm font-bold text-foreground bg-surface hover:bg-surface-hover transition-colors min-w-[2rem] text-center"
                                 title="Clique para ir a uma página específica">
                                 {page}
                             </button>
                         )}
-                        <span className="text-sm text-zinc-500">de {pagination.pages}</span>
-                        <span className="text-xs text-zinc-600 hidden sm:inline">
+                        <span className="text-sm text-muted">de {pagination.pages}</span>
+                        <span className="text-xs text-muted hidden sm:inline">
                             ({pagination.total.toLocaleString('pt-BR')} total)
                         </span>
                     </div>
 
                     <button onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
                         disabled={page === pagination.pages}
-                        className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-300 hover:border-purple-500/50 hover:text-purple-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl text-sm text-foreground hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                         Próxima <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
@@ -598,22 +587,22 @@ export default function AdminCommentsPage() {
             {/* Moderation note modal */}
             {noteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                        <h3 className="text-white font-black text-lg mb-4">Nota de Moderação</h3>
+                    <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                        <h3 className="text-foreground font-black text-lg mb-4">Nota de Moderação</h3>
                         <textarea
                             value={noteInput}
                             onChange={e => setNoteInput(e.target.value)}
                             placeholder="Descreva o motivo da ação de moderação..."
                             rows={4}
-                            className="w-full bg-zinc-800 border border-white/10 rounded-xl p-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 resize-none"
+                            className="w-full bg-background border border-border rounded-xl p-3 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 resize-none"
                         />
                         <div className="flex justify-end gap-3 mt-4">
                             <button onClick={() => setNoteModal(null)}
-                                className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors">
+                                className="px-4 py-2 text-sm text-muted hover:text-foreground transition-colors">
                                 Cancelar
                             </button>
                             <button onClick={saveNote}
-                                className="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-500 transition-colors">
+                                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-colors">
                                 Salvar Nota
                             </button>
                         </div>

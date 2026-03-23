@@ -240,7 +240,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                 {/* Breadcrumbs */}
                 <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20">
-                    <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: group.name }]} />
+                    <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: group.name }]} onDark className="" />
                 </div>
 
                 {/* Hero content */}

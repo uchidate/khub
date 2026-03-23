@@ -16,7 +16,7 @@ const REASON_STYLES: Record<string, string> = {
   DMCA:         'bg-red-500/20 text-red-300 border-red-500/30',
   COPYRIGHT:    'bg-orange-500/20 text-orange-300 border-orange-500/30',
   LEGAL_NOTICE: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  MANUAL:       'bg-zinc-500/20 text-zinc-300 border-zinc-500/30',
+  MANUAL:       'bg-surface text-foreground border-border',
 }
 
 async function getActiveTakedowns() {
@@ -55,51 +55,51 @@ export default async function TakedownsPage() {
 
         {takedowns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <ShieldAlert className="mb-3 h-10 w-10 text-zinc-700" />
-            <p className="text-sm font-medium text-zinc-500">Nenhum takedown ativo</p>
-            <p className="mt-1 text-xs text-zinc-600">Todas as produções estão disponíveis publicamente.</p>
+            <ShieldAlert className="mb-3 h-10 w-10 text-muted" />
+            <p className="text-sm font-medium text-muted">Nenhum takedown ativo</p>
+            <p className="mt-1 text-xs text-muted">Todas as produções estão disponíveis publicamente.</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-zinc-800/60">
+          <div className="overflow-hidden rounded-xl border border-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800/60 bg-zinc-900/50">
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Produção</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Tipo</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Motivo</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Referência</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Ocultado em</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Por</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-500">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-zinc-500">Ações</th>
+                <tr className="border-b border-border bg-surface">
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted">Produção</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted">Tipo</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted">Motivo</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted">Referência</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted">Ocultado em</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted">Por</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-muted">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/40">
+              <tbody className="divide-y divide-border">
                 {takedowns.map(td => (
-                  <tr key={td.id} className="bg-zinc-950 hover:bg-zinc-900/50 transition-colors">
+                  <tr key={td.id} className="bg-background hover:bg-surface transition-colors">
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/productions/${td.production.id}`}
-                        className="font-medium text-white hover:text-purple-400 transition-colors"
+                        className="font-medium text-foreground hover:text-purple-400 transition-colors"
                       >
                         {td.production.titlePt}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-xs text-zinc-500">
+                    <td className="px-4 py-3 text-xs text-muted">
                       {td.production.type}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${REASON_STYLES[td.reason] ?? 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30'}`}>
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold ${REASON_STYLES[td.reason] ?? 'bg-surface text-foreground border-border'}`}>
                         {REASON_LABELS[td.reason] ?? td.reason}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-zinc-400 max-w-[160px] truncate">
-                      {td.noticeReference ?? <span className="text-zinc-700">—</span>}
+                    <td className="px-4 py-3 text-xs text-muted max-w-[160px] truncate">
+                      {td.noticeReference ?? <span className="text-muted">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-xs text-zinc-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-muted whitespace-nowrap">
                       {new Date(td.hiddenAt).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="px-4 py-3 text-xs text-zinc-400 max-w-[120px] truncate">
+                    <td className="px-4 py-3 text-xs text-muted max-w-[120px] truncate">
                       {td.hiddenBy.name ?? td.hiddenBy.email}
                     </td>
                     <td className="px-4 py-3">
@@ -110,7 +110,7 @@ export default async function TakedownsPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/admin/productions/${td.production.id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-700/60 bg-zinc-800/60 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-600 hover:text-white transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs text-muted hover:border-border hover:text-foreground transition-colors"
                       >
                         <ExternalLink className="h-3 w-3" />
                         Editar

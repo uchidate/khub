@@ -23,7 +23,7 @@ interface StatusResponse {
 }
 
 function StatusDot({ ok, warn }: { ok: boolean; warn?: boolean }) {
-    if (!ok) return <span className="w-2 h-2 rounded-full bg-zinc-700 shrink-0" />
+    if (!ok) return <span className="w-2 h-2 rounded-full bg-surface shrink-0" />
     if (warn) return <span className="w-2 h-2 rounded-full bg-yellow-500 shrink-0 animate-pulse" />
     return <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
 }
@@ -53,16 +53,16 @@ export default function AiProviderStatus() {
     useEffect(() => { load() }, [load])
 
     return (
-        <div className="bg-zinc-900 border border-white/8 rounded-xl p-4">
+        <div className="bg-surface border border-border rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Status dos providers</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted">Status dos providers</p>
                 <div className="flex items-center gap-2">
-                    {(loading || testing) && <Loader2 className="w-3 h-3 text-zinc-600 animate-spin" />}
+                    {(loading || testing) && <Loader2 className="w-3 h-3 text-muted animate-spin" />}
                     <button
                         onClick={() => load(true)}
                         disabled={loading || testing}
                         title="Executar teste de latência ao vivo (faz chamada real à API)"
-                        className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-40"
+                        className="flex items-center gap-1 text-[10px] text-muted hover:text-muted transition-colors disabled:opacity-40"
                     >
                         <FlaskConical className="w-3 h-3" />
                         {testing ? 'Testando...' : 'Testar'}
@@ -77,14 +77,14 @@ export default function AiProviderStatus() {
             {!loading && !error && data && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     {data.providers.map(p => (
-                        <div key={p.name} className="bg-zinc-800/50 rounded-lg p-3 border border-white/6 space-y-2">
+                        <div key={p.name} className="bg-surface rounded-lg p-3 border border-border space-y-2">
                             <div className="flex items-center gap-2">
                                 <StatusDot ok={p.configured && !p.circuitOpen} warn={p.configured && p.circuitOpen} />
-                                <span className="text-xs font-semibold text-zinc-200 capitalize">{p.name}</span>
+                                <span className="text-xs font-semibold text-foreground capitalize">{p.name}</span>
                             </div>
 
                             {!p.configured ? (
-                                <span className="text-[10px] text-zinc-600">Não configurado</span>
+                                <span className="text-[10px] text-muted">Não configurado</span>
                             ) : p.circuitOpen ? (
                                 <div className="flex items-center gap-1 text-yellow-500">
                                     <AlertTriangle className="w-3 h-3" />
@@ -97,11 +97,11 @@ export default function AiProviderStatus() {
                                 </div>
                             )}
 
-                            <div className="text-[10px] text-zinc-600 space-y-0.5">
+                            <div className="text-[10px] text-muted space-y-0.5">
                                 <p>{p.stats.requests} req · {p.stats.failures} erros</p>
                                 <p>{fmtCost(p.stats.cost)} sessão</p>
                                 {p.name === data.testedProvider && data.testLatencyMs && (
-                                    <p className="text-zinc-500">{data.testLatencyMs}ms ping</p>
+                                    <p className="text-muted">{data.testLatencyMs}ms ping</p>
                                 )}
                             </div>
                         </div>

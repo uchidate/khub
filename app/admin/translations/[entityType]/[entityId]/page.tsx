@@ -214,21 +214,21 @@ export default function TranslationEditorPage() {
         <div className="flex items-center gap-3 flex-wrap">
           <Link
             href="/admin/translations"
-            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {config?.backLabel ?? 'Traduções'}
           </Link>
           {entityName && (
             <>
-              <span className="text-zinc-700">/</span>
-              <span className="text-sm text-zinc-400 truncate max-w-xs">{entityName}</span>
+              <span className="text-muted">/</span>
+              <span className="text-sm text-muted truncate max-w-xs">{entityName}</span>
             </>
           )}
           {adminLink && (
             <Link
               href={adminLink}
-              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 ml-auto transition-colors border border-white/10 rounded-lg px-2.5 py-1.5 hover:bg-zinc-800"
+              className="flex items-center gap-1 text-xs text-muted hover:text-foreground ml-auto transition-colors border border-border rounded-lg px-2.5 py-1.5 hover:bg-surface"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               Ver no admin
@@ -243,11 +243,11 @@ export default function TranslationEditorPage() {
           const currentStatus = statuses[fieldConfig.key] ?? 'draft'
 
           return (
-            <div key={fieldConfig.key} className="bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
+            <div key={fieldConfig.key} className="bg-surface rounded-xl border border-border overflow-hidden">
               {/* Field header */}
-              <div className="px-4 py-3 border-b border-white/10 flex items-center gap-3 bg-zinc-800/40">
-                <FileEdit className="w-4 h-4 text-zinc-500" />
-                <h2 className="font-semibold text-zinc-200 text-sm">{fieldConfig.label}</h2>
+              <div className="px-4 py-3 border-b border-border flex items-center gap-3 bg-surface">
+                <FileEdit className="w-4 h-4 text-muted" />
+                <h2 className="font-semibold text-foreground text-sm">{fieldConfig.label}</h2>
                 {translation?.sourceLang && (
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-blue-700/30">
                     {translation.sourceLang}
@@ -259,13 +259,13 @@ export default function TranslationEditorPage() {
                       ? 'bg-green-900/40 text-green-400 border-green-700/30'
                       : translation.status === 'draft' || translation.status === 'ai'
                         ? 'bg-yellow-900/40 text-yellow-400 border-yellow-700/30'
-                        : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                        : 'bg-surface text-muted border-border'
                   }`}>
                     {STATUS_LABELS[translation.status] ?? translation.status}
                   </span>
                 )}
                 {translation?.updatedAt && (
-                  <span className="text-xs text-zinc-600 ml-auto">
+                  <span className="text-xs text-muted ml-auto">
                     atualizado {new Date(translation.updatedAt).toLocaleString('pt-BR')}
                   </span>
                 )}
@@ -273,33 +273,33 @@ export default function TranslationEditorPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/5">
                 {/* Original */}
-                <div className="p-4 bg-zinc-950/30">
+                <div className="p-4 bg-background/30">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">Original</span>
+                    <span className="text-[11px] font-bold text-muted uppercase tracking-widest">Original</span>
                     {(() => {
                       const lang = original ? detectOriginalLang(original) : 'unknown'
                       if (lang === 'pt') return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-900/30 text-green-400 border border-green-700/20">PT-BR</span>
                       if (lang === 'ko') return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-900/30 text-blue-400 border border-blue-700/20">KR</span>
-                      if (lang === 'en') return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-zinc-700 text-zinc-400 border border-zinc-600">EN</span>
+                      if (lang === 'en') return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-surface text-muted border border-border">EN</span>
                       return null
                     })()}
                   </div>
                   {original ? (
                     fieldConfig.multiline ? (
-                      <div className="text-sm text-zinc-400 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+                      <div className="text-sm text-muted whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto pr-1 scrollbar-thin">
                         {original}
                       </div>
                     ) : (
-                      <div className="text-sm text-zinc-400">{original}</div>
+                      <div className="text-sm text-muted">{original}</div>
                     )
                   ) : (
-                    <div className="text-sm text-zinc-600 italic">Sem conteúdo original</div>
+                    <div className="text-sm text-muted italic">Sem conteúdo original</div>
                   )}
                 </div>
 
                 {/* Tradução */}
                 <div className="p-4 space-y-3">
-                  <div className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">
+                  <div className="text-[11px] font-bold text-muted uppercase tracking-widest">
                     Tradução (PT-BR)
                   </div>
                   {fieldConfig.multiline ? (
@@ -307,7 +307,7 @@ export default function TranslationEditorPage() {
                       value={drafts[fieldConfig.key] ?? ''}
                       onChange={e => setDrafts(d => ({ ...d, [fieldConfig.key]: e.target.value }))}
                       rows={10}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-y"
+                      className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-y"
                       placeholder="Digite a tradução..."
                     />
                   ) : (
@@ -315,7 +315,7 @@ export default function TranslationEditorPage() {
                       type="text"
                       value={drafts[fieldConfig.key] ?? ''}
                       onChange={e => setDrafts(d => ({ ...d, [fieldConfig.key]: e.target.value }))}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+                      className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50"
                       placeholder="Digite a tradução..."
                     />
                   )}
@@ -323,14 +323,14 @@ export default function TranslationEditorPage() {
                   {/* Status toggle + salvar */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Toggle de status */}
-                    <div className="flex rounded-lg overflow-hidden border border-white/10">
+                    <div className="flex rounded-lg overflow-hidden border border-border">
                       <button
                         type="button"
                         onClick={() => setStatuses(s => ({ ...s, [fieldConfig.key]: 'draft' }))}
                         className={`px-3 py-1.5 text-xs font-bold transition-colors ${
                           currentStatus === 'draft' || currentStatus === 'ai'
-                            ? 'bg-zinc-700 text-zinc-200'
-                            : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                            ? 'bg-surface text-foreground'
+                            : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                         }`}
                       >
                         Rascunho
@@ -338,10 +338,10 @@ export default function TranslationEditorPage() {
                       <button
                         type="button"
                         onClick={() => setStatuses(s => ({ ...s, [fieldConfig.key]: 'approved' }))}
-                        className={`px-3 py-1.5 text-xs font-bold transition-colors border-l border-white/10 ${
+                        className={`px-3 py-1.5 text-xs font-bold transition-colors border-l border-border ${
                           currentStatus === 'approved'
                             ? 'bg-green-900/50 text-green-300'
-                            : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                            : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                         }`}
                       >
                         <CheckCircle2 className="w-3 h-3 inline mr-1" />
@@ -354,8 +354,8 @@ export default function TranslationEditorPage() {
                       disabled={saving[fieldConfig.key]}
                       className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-lg transition-colors ml-auto ${
                         saved[fieldConfig.key]
-                          ? 'bg-green-700 text-white'
-                          : 'bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-50'
+                          ? 'bg-green-700 text-foreground'
+                          : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 disabled:opacity-50'
                       }`}
                     >
                       <Save className="w-3.5 h-3.5" />
@@ -369,36 +369,36 @@ export default function TranslationEditorPage() {
         })}
 
         {/* Histórico */}
-        <div className="bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2 bg-zinc-800/40">
-            <Clock className="w-4 h-4 text-zinc-500" />
-            <h2 className="font-semibold text-sm text-zinc-200">Histórico de alterações</h2>
+        <div className="bg-surface rounded-xl border border-border overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-surface">
+            <Clock className="w-4 h-4 text-muted" />
+            <h2 className="font-semibold text-sm text-foreground">Histórico de alterações</h2>
           </div>
           {logsLoading ? (
-            <div className="p-6 text-center text-zinc-600 text-sm">Carregando...</div>
+            <div className="p-6 text-center text-muted text-sm">Carregando...</div>
           ) : logs.length === 0 ? (
-            <div className="p-6 text-center text-zinc-600 text-sm">Nenhuma alteração registrada</div>
+            <div className="p-6 text-center text-muted text-sm">Nenhuma alteração registrada</div>
           ) : (
             <ul className="divide-y divide-white/5">
               {logs.map(log => (
-                <li key={log.id} className="px-4 py-3 text-sm hover:bg-zinc-800/30 transition-colors">
-                  <div className="flex items-center gap-2 text-zinc-500 mb-1.5">
-                    <span className="font-mono text-xs bg-zinc-800 border border-white/10 px-1.5 py-0.5 rounded text-zinc-400">
+                <li key={log.id} className="px-4 py-3 text-sm hover:bg-surface transition-colors">
+                  <div className="flex items-center gap-2 text-muted mb-1.5">
+                    <span className="font-mono text-xs bg-surface border border-border px-1.5 py-0.5 rounded text-muted">
                       {log.field}
                     </span>
-                    <span className="text-xs text-zinc-500">{log.changedBy}</span>
+                    <span className="text-xs text-muted">{log.changedBy}</span>
                     {log.source && log.source !== 'manual' && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-900/30 text-purple-400 border border-purple-700/20">
                         {log.source}
                       </span>
                     )}
-                    <span className="ml-auto text-xs text-zinc-600">
+                    <span className="ml-auto text-xs text-muted">
                       {new Date(log.createdAt).toLocaleString('pt-BR')}
                     </span>
                   </div>
-                  <div className="text-zinc-300 line-clamp-2 text-sm">{log.newValue}</div>
+                  <div className="text-foreground line-clamp-2 text-sm">{log.newValue}</div>
                   {log.previousValue && (
-                    <div className="text-zinc-600 line-clamp-1 text-xs mt-0.5">
+                    <div className="text-muted line-clamp-1 text-xs mt-0.5">
                       anterior: {log.previousValue}
                     </div>
                   )}

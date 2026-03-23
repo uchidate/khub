@@ -72,10 +72,10 @@ export default async function AdminContentPage() {
               <ArrowLeft size={20} />
               Voltar ao Painel Admin
             </Link>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
+            <h1 className="text-4xl md:text-5xl font-black text-foreground mb-4">
               Gerenciar Conteúdo
             </h1>
-            <p className="text-xl text-zinc-400">
+            <p className="text-xl text-muted">
               Selecione o tipo de conteúdo que deseja gerenciar
             </p>
           </div>
@@ -86,15 +86,15 @@ export default async function AdminContentPage() {
               <Link
                 key={section.href}
                 href={section.href}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 hover:border-purple-500 transition-all hover:shadow-lg hover:shadow-purple-500/20 animate-slide-up group"
+                className="bg-surface border border-border rounded-2xl p-8 hover:border-purple-500 transition-all hover:shadow-lg hover:shadow-purple-500/20 animate-slide-up group"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className={`w-16 h-16 bg-${section.color}-500/10 rounded-xl flex items-center justify-center mb-6`}>
                   <section.icon className={`text-${section.color}-500 group-hover:scale-110 transition-transform`} size={32} />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3">{section.title}</h2>
-                <p className="text-zinc-400 mb-4">{section.description}</p>
-                <p className="text-sm text-zinc-500">{section.count}</p>
+                <h2 className="text-2xl font-bold text-foreground mb-3">{section.title}</h2>
+                <p className="text-muted mb-4">{section.description}</p>
+                <p className="text-sm text-muted">{section.count}</p>
               </Link>
             ))}
           </div>

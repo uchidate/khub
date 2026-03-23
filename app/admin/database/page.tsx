@@ -58,11 +58,11 @@ export default async function AdminDatabasePage() {
             </Link>
             <div className="flex items-center gap-3 mb-4">
               <Database className="text-blue-500" size={40} />
-              <h1 className="text-4xl md:text-5xl font-black text-white">
+              <h1 className="text-4xl md:text-5xl font-black text-foreground">
                 Banco de Dados
               </h1>
             </div>
-            <p className="text-xl text-zinc-400">
+            <p className="text-xl text-muted">
               Estatísticas e visão geral do banco de dados
             </p>
           </div>
@@ -72,33 +72,33 @@ export default async function AdminDatabasePage() {
             {stats.map((stat, index) => (
               <div
                 key={stat.label}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 animate-slide-up"
+                className="bg-surface border border-border rounded-2xl p-6 animate-slide-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex items-center justify-between mb-4">
                   <stat.icon className={`text-${stat.color}-500`} size={24} />
-                  <BarChart3 className="text-zinc-600" size={20} />
+                  <BarChart3 className="text-muted" size={20} />
                 </div>
-                <p className="text-sm text-zinc-500 mb-2">{stat.label}</p>
-                <p className="text-3xl font-bold text-white">{stat.value.toLocaleString()}</p>
+                <p className="text-sm text-muted mb-2">{stat.label}</p>
+                <p className="text-3xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
               </div>
             ))}
           </div>
 
           {/* Info Card */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <div className="bg-surface border border-border rounded-2xl p-8">
             <div className="flex items-start gap-4">
               <HardDrive className="text-blue-500 flex-shrink-0" size={32} />
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">
+                <h2 className="text-2xl font-bold text-foreground mb-2">
                   Visão Geral do Banco
                 </h2>
-                <p className="text-zinc-400 mb-4">
-                  Total de registros no banco de dados: <span className="text-white font-bold">
+                <p className="text-muted mb-4">
+                  Total de registros no banco de dados: <span className="text-foreground font-bold">
                     {(usersCount + artistsCount + agenciesCount + productionsCount + newsCount + albumsCount).toLocaleString()}
                   </span>
                 </p>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-muted">
                   Funcionalidades avançadas de gerenciamento de banco de dados estarão disponíveis em breve.
                 </p>
               </div>

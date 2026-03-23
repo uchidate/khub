@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
-    Eye, EyeOff, RefreshCw, Search, Film, Shield,
+    Eye, RefreshCw, Search, Film, Shield,
     CheckCircle, Loader2, ExternalLink, ChevronDown, ChevronRight, UserX,
 } from 'lucide-react'
 
@@ -42,7 +42,7 @@ interface Stats {
 const REASON_CONFIG: Record<HideReason, { label: string; cls: string; description: string }> = {
     adult_content:      { label: 'Conteúdo adulto',          cls: 'bg-red-900/40 text-red-400 border-red-700/30',       description: 'Participa de produção com conteúdo sexual adulto — não pode ser mostrado automaticamente.' },
     hidden_productions: { label: 'Só prod. não-coreanas/18+', cls: 'bg-amber-900/40 text-amber-400 border-amber-700/30', description: 'Todas as produções são não-coreanas, estão ocultas ou têm classificação 18+.' },
-    no_productions:     { label: 'Sem produções',             cls: 'bg-zinc-800 text-zinc-500 border-zinc-700',          description: 'Nenhuma produção vinculada.' },
+    no_productions:     { label: 'Sem produções',             cls: 'bg-surface text-muted border-border',          description: 'Nenhuma produção vinculada.' },
 }
 
 const REASON_FILTERS: [ReasonFilter, string][] = [
@@ -66,13 +66,13 @@ function ProductionPill({ prod }: { prod: Production }) {
     const cls = prod.isAdultContent
         ? 'bg-red-900/30 text-red-400'
         : prod.isHidden || prod.ageRating === '18'
-            ? 'bg-zinc-800 text-zinc-600 line-through'
+            ? 'bg-surface text-muted line-through'
             : 'bg-green-900/30 text-green-400'
     return (
         <Link
             href={`/admin/productions/${prod.id}`}
             onClick={e => e.stopPropagation()}
-            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border border-white/5 hover:opacity-80 ${cls}`}
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border border-border hover:opacity-80 ${cls}`}
             title={
                 prod.isAdultContent ? 'Conteúdo adulto'
                 : prod.isHidden ? 'Oculta'
@@ -172,7 +172,7 @@ export default function ArtistVisibilityPage() {
     const statCards = [
         { label: 'Auto-ocultos total', value: stats?.totalAutoHidden, cls: 'text-amber-400' },
         { label: 'Não-coreanas/ocultas', value: stats?.hiddenProductions, cls: 'text-amber-400' },
-        { label: 'Sem produções',      value: stats?.noProductions,     cls: 'text-zinc-500' },
+        { label: 'Sem produções',      value: stats?.noProductions,     cls: 'text-muted' },
         { label: 'Conteúdo adulto',    value: stats?.adultContent,      cls: 'text-red-400' },
     ]
 
@@ -183,39 +183,39 @@ export default function ArtistVisibilityPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {statCards.map(({ label, value, cls }) => (
-                        <div key={label} className="p-4 rounded-xl border border-white/10 bg-zinc-900">
-                            <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">{label}</div>
+                        <div key={label} className="p-4 rounded-xl border border-border bg-surface">
+                            <div className="text-xs font-bold text-muted uppercase tracking-widest mb-1">{label}</div>
                             <div className={`text-2xl font-black ${cls}`}>{value ?? '—'}</div>
                         </div>
                     ))}
                 </div>
 
                 {/* Explicação */}
-                <div className="px-4 py-3 rounded-xl border border-zinc-700/40 bg-zinc-900/60 text-xs text-zinc-400 space-y-1.5">
-                    <p className="font-semibold text-zinc-300">Como funciona o auto-hide de artistas</p>
-                    <p>Um artista fica <span className="text-amber-400">auto-oculto</span> quando não possui nenhuma produção <strong>coreana</strong> visível. Produção coreana visível = <span className="text-zinc-200">não está flagged como não-coreana + não está oculta + classificação não é 18+ + não é conteúdo adulto sexual.</span></p>
+                <div className="px-4 py-3 rounded-xl border border-border bg-surface text-xs text-muted space-y-1.5">
+                    <p className="font-semibold text-foreground">Como funciona o auto-hide de artistas</p>
+                    <p>Um artista fica <span className="text-amber-400">auto-oculto</span> quando não possui nenhuma produção <strong>coreana</strong> visível. Produção coreana visível = <span className="text-foreground">não está flagged como não-coreana + não está oculta + classificação não é 18+ + não é conteúdo adulto sexual.</span></p>
                     <p>Artistas com conteúdo adulto sexual <span className="text-red-400 font-medium">não podem ser mostrados</span> aqui — precisam ser tratados na página de moderação.</p>
-                    <p>Usar <span className="text-green-400 font-medium">Mostrar</span> seta <code className="bg-zinc-800 px-1 rounded">autoHidden=false</code> — o sistema deixa de re-ocultar esse artista nos próximos ciclos de reconciliação.</p>
+                    <p>Usar <span className="text-green-400 font-medium">Mostrar</span> seta <code className="bg-surface px-1 rounded">autoHidden=false</code> — o sistema deixa de re-ocultar esse artista nos próximos ciclos de reconciliação.</p>
                 </div>
 
                 {/* Filtros + ações */}
-                <div className="bg-zinc-900 rounded-xl border border-white/10">
-                    <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-white/10">
+                <div className="bg-surface rounded-xl border border-border">
+                    <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-border">
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                             <input
                                 type="text"
                                 placeholder="Buscar artista..."
                                 value={q}
                                 onChange={e => setQ(e.target.value)}
-                                className="pl-9 pr-3 py-1.5 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+                                className="px-4 pr-10 py-1.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
                             />
                         </div>
                         <div className="flex gap-1 flex-wrap">
                             {REASON_FILTERS.map(([val, label]) => (
                                 <button key={val} onClick={() => setReasonFilter(val)}
                                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                                        reasonFilter === val ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                                        reasonFilter === val ? 'bg-purple-600 text-foreground' : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                                     }`}
                                 >
                                     {label}
@@ -226,13 +226,13 @@ export default function ArtistVisibilityPage() {
                             ))}
                         </div>
                         <div className="ml-auto flex items-center gap-2">
-                            <button onClick={fetchData} className="p-1.5 text-zinc-600 hover:text-zinc-400" title="Recarregar">
+                            <button onClick={fetchData} className="p-1.5 text-muted hover:text-muted" title="Recarregar">
                                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             </button>
                             <button
                                 onClick={handleReconcile}
                                 disabled={reconciling}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-zinc-800 text-zinc-300 border border-white/10 rounded-lg hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-surface text-foreground border border-border rounded-lg hover:bg-surface disabled:opacity-50 transition-colors"
                                 title="Reavalia todos os artistas auto-ocultos (max 500)"
                             >
                                 <RefreshCw className={`w-3.5 h-3.5 ${reconciling ? 'animate-spin' : ''}`} />
@@ -249,23 +249,23 @@ export default function ArtistVisibilityPage() {
 
                     {selected.size > 0 && (
                         <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20">
-                            <span className="text-xs text-zinc-400">{selected.size} selecionados</span>
+                            <span className="text-xs text-muted">{selected.size} selecionados</span>
                             <button
                                 onClick={() => handleShow(Array.from(selected))}
-                                className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors"
+                                className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-foreground rounded-lg hover:bg-green-600 transition-colors"
                             >
                                 <Eye className="w-3 h-3" /> Mostrar selecionados
                             </button>
-                            <button onClick={() => setSelected(new Set())} className="text-xs text-zinc-600 hover:text-zinc-400">Limpar</button>
+                            <button onClick={() => setSelected(new Set())} className="text-xs text-muted hover:text-muted">Limpar</button>
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="p-8 text-center text-zinc-600 flex items-center justify-center gap-2">
+                        <div className="p-8 text-center text-muted flex items-center justify-center gap-2">
                             <Loader2 className="w-4 h-4 animate-spin" /> Carregando...
                         </div>
                     ) : items.length === 0 ? (
-                        <div className="p-8 text-center text-zinc-600">Nenhum artista encontrado</div>
+                        <div className="p-8 text-center text-muted">Nenhum artista encontrado</div>
                     ) : (
                         <ul className="divide-y divide-white/5">
                             {items.map(item => {
@@ -276,7 +276,7 @@ export default function ArtistVisibilityPage() {
                                 const canShow = item.hideReason !== 'adult_content'
                                 return (
                                     <li key={item.id} className={isSelected ? 'bg-purple-900/10' : ''}>
-                                        <div className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/40 transition-colors">
+                                        <div className="flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors">
                                             <input
                                                 type="checkbox"
                                                 checked={isSelected}
@@ -286,14 +286,14 @@ export default function ArtistVisibilityPage() {
                                             />
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="font-medium text-zinc-100">{item.nameRomanized}</span>
-                                                    {item.nameHangul && <span className="text-xs text-zinc-600">{item.nameHangul}</span>}
+                                                    <span className="font-medium text-foreground">{item.nameRomanized}</span>
+                                                    {item.nameHangul && <span className="text-xs text-muted">{item.nameHangul}</span>}
                                                     <ReasonBadge reason={item.hideReason} />
                                                 </div>
                                                 {item.productionCount > 0 ? (
                                                     <button
                                                         onClick={() => toggleExpand(item.id)}
-                                                        className="mt-1 flex items-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-400"
+                                                        className="mt-1 flex items-center gap-1 text-[10px] text-muted hover:text-muted"
                                                     >
                                                         {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                                                         {item.productionCount} produção{item.productionCount !== 1 ? 'ões' : ''}
@@ -302,7 +302,7 @@ export default function ArtistVisibilityPage() {
                                                         )}
                                                     </button>
                                                 ) : (
-                                                    <div className="mt-1 flex items-center gap-1 text-[10px] text-zinc-700">
+                                                    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted">
                                                         <Film className="w-3 h-3" /> Sem produções
                                                     </div>
                                                 )}
@@ -315,13 +315,13 @@ export default function ArtistVisibilityPage() {
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 <Link href={`/artists/${item.id}`} target="_blank"
                                                     onClick={e => e.stopPropagation()}
-                                                    className="p-1 text-zinc-700 hover:text-zinc-400 transition-colors"
+                                                    className="p-1 text-muted hover:text-muted transition-colors"
                                                     title="Ver página pública"
                                                 >
                                                     <ExternalLink className="w-3 h-3" />
                                                 </Link>
                                                 <Link href={`/admin/artists/${item.id}`}
-                                                    className="p-1 text-zinc-700 hover:text-zinc-400 transition-colors"
+                                                    className="p-1 text-muted hover:text-muted transition-colors"
                                                     title="Editar no admin"
                                                 >
                                                     <UserX className="w-3.5 h-3.5" />
@@ -333,7 +333,7 @@ export default function ArtistVisibilityPage() {
                                                         className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-colors disabled:opacity-50 ${
                                                             isDone
                                                                 ? 'bg-green-900/40 text-green-400 border-green-700/30'
-                                                                : 'bg-zinc-800 text-zinc-400 border-white/10 hover:bg-green-900/30 hover:text-green-400 hover:border-green-700/30'
+                                                                : 'bg-surface text-muted border-border hover:bg-green-900/30 hover:text-green-400 hover:border-green-700/30'
                                                         }`}
                                                     >
                                                         {isShowing ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -356,16 +356,16 @@ export default function ArtistVisibilityPage() {
                     )}
 
                     {total > 30 && (
-                        <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
-                            <span className="text-xs text-zinc-600">{total} artistas</span>
+                        <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                            <span className="text-xs text-muted">{total} artistas</span>
                             <div className="flex gap-2 items-center">
                                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                                    className="px-3 py-1 text-xs border border-white/10 rounded-lg disabled:opacity-40 hover:bg-zinc-800 text-zinc-400">
+                                    className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted">
                                     Anterior
                                 </button>
-                                <span className="text-xs text-zinc-500">Página {page} de {totalPages}</span>
+                                <span className="text-xs text-muted">Página {page} de {totalPages}</span>
                                 <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}
-                                    className="px-3 py-1 text-xs border border-white/10 rounded-lg disabled:opacity-40 hover:bg-zinc-800 text-zinc-400">
+                                    className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted">
                                     Próxima
                                 </button>
                             </div>

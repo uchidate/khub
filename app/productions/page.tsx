@@ -28,6 +28,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProductionsPage() {
+    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false } }).catch(() => null)
+
     return (
         <>
         <JsonLd data={{
@@ -43,6 +45,8 @@ export default async function ProductionsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
             <SectionHeader
                 title="Produções"
+                count={total}
+                countLabel="produções"
                 backHref="/"
             />
 

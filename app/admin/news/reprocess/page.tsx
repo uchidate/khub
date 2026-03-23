@@ -288,10 +288,10 @@ export default function NewsReprocessPage() {
             <div className="max-w-3xl space-y-8">
 
                 {/* ── Card: Candidatos ──────────────────────────────────── */}
-                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-zinc-800">
-                        <h2 className="font-bold text-white text-base">Reprocessar candidatos</h2>
-                        <p className="text-xs text-zinc-500 mt-0.5">
+                <section className="rounded-2xl border border-border bg-surface overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border">
+                        <h2 className="font-bold text-foreground text-base">Reprocessar candidatos</h2>
+                        <p className="text-xs text-muted mt-0.5">
                             Re-busca e atualiza artigos sem imagem ou com conteúdo curto/truncado (lote de 50)
                         </p>
                     </div>
@@ -299,7 +299,7 @@ export default function NewsReprocessPage() {
                         <button
                             onClick={handleBatchReprocess}
                             disabled={isStreaming}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors text-sm"
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors text-sm"
                         >
                             {isStreaming
                                 ? <Loader2 size={15} className="animate-spin" />
@@ -311,10 +311,10 @@ export default function NewsReprocessPage() {
                 </section>
 
                 {/* ── Card: Por fonte ───────────────────────────────────── */}
-                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-zinc-800">
-                        <h2 className="font-bold text-white text-base">Reprocessar por fonte</h2>
-                        <p className="text-xs text-zinc-500 mt-0.5">
+                <section className="rounded-2xl border border-border bg-surface overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border">
+                        <h2 className="font-bold text-foreground text-base">Reprocessar por fonte</h2>
+                        <p className="text-xs text-muted mt-0.5">
                             Reprocessa todos os artigos de uma fonte, re-buscando conteúdo e re-extraindo artistas
                         </p>
                     </div>
@@ -332,7 +332,7 @@ export default function NewsReprocessPage() {
                                         className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border disabled:opacity-50 ${
                                             active && c
                                                 ? `${c.bg} ${c.text} ${c.border}`
-                                                : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
+                                                : 'bg-surface border-border text-muted hover:text-foreground hover:border-border'
                                         }`}
                                     >
                                         {s}
@@ -345,7 +345,7 @@ export default function NewsReprocessPage() {
                             <div className="space-y-4">
                                 {/* Period */}
                                 <div className="space-y-2">
-                                    <p className="text-xs text-zinc-500 font-medium">Período (opcional)</p>
+                                    <p className="text-xs text-muted font-medium">Período (opcional)</p>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {[
                                             { label: 'Últimos 7d',  from: daysAgoISO(7),  to: todayISO() },
@@ -356,7 +356,7 @@ export default function NewsReprocessPage() {
                                                 key={preset.label}
                                                 onClick={() => { setDateFrom(preset.from); setDateTo(preset.to) }}
                                                 disabled={isStreaming}
-                                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] text-zinc-400 border border-zinc-700 hover:border-purple-500/50 hover:text-purple-300 transition-colors disabled:opacity-50"
+                                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] text-foreground border border-border hover:bg-surface-hover transition-colors disabled:opacity-50"
                                             >
                                                 <CalendarDays size={11} />
                                                 {preset.label}
@@ -366,17 +366,17 @@ export default function NewsReprocessPage() {
                                             type="date" value={dateFrom}
                                             onChange={e => setDateFrom(e.target.value)}
                                             disabled={isStreaming}
-                                            className="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                                            className="bg-surface border border-border rounded-lg px-2 py-1 text-xs text-foreground focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
                                         />
-                                        <span className="text-zinc-600 text-xs">até</span>
+                                        <span className="text-muted text-xs">até</span>
                                         <input
                                             type="date" value={dateTo}
                                             onChange={e => setDateTo(e.target.value)}
                                             disabled={isStreaming}
-                                            className="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                                            className="bg-surface border border-border rounded-lg px-2 py-1 text-xs text-foreground focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
                                         />
                                         {(dateFrom || dateTo) && (
-                                            <button onClick={() => { setDateFrom(''); setDateTo('') }} disabled={isStreaming} className="p-1 text-zinc-600 hover:text-zinc-300 disabled:opacity-50">
+                                            <button onClick={() => { setDateFrom(''); setDateTo('') }} disabled={isStreaming} className="p-1 text-muted hover:text-foreground disabled:opacity-50">
                                                 <X size={12} />
                                             </button>
                                         )}
@@ -385,21 +385,21 @@ export default function NewsReprocessPage() {
 
                                 {/* Count + quantity selector */}
                                 <div className="flex items-center gap-4 text-sm flex-wrap">
-                                    <span className="text-zinc-400">
+                                    <span className="text-muted">
                                         {sourceCount === null ? (
-                                            <span className="flex items-center gap-1 text-zinc-600"><Loader2 size={12} className="animate-spin" /> carregando...</span>
+                                            <span className="flex items-center gap-1 text-muted"><Loader2 size={12} className="animate-spin" /> carregando...</span>
                                         ) : (
-                                            <><strong className="text-zinc-200">{sourceCount.toLocaleString('pt-BR')}</strong> <span className="text-zinc-500">no banco{(dateFrom || dateTo) ? ' (período)' : ''}</span></>
+                                            <><strong className="text-foreground">{sourceCount.toLocaleString('pt-BR')}</strong> <span className="text-muted">no banco{(dateFrom || dateTo) ? ' (período)' : ''}</span></>
                                         )}
                                     </span>
                                     {!(dateFrom || dateTo) && (
-                                        <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+                                        <span className="flex items-center gap-1.5 text-xs text-muted">
                                             Processar
                                             <input
                                                 type="number" min={1} max={sourceCount ?? 9999} value={sourceTotal}
                                                 onChange={e => setSourceTotal(Math.max(1, parseInt(e.target.value) || 1))}
                                                 disabled={isStreaming}
-                                                className="w-20 bg-zinc-800 border border-zinc-700 rounded px-2 py-0.5 text-xs text-zinc-200 text-center focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                                                className="w-20 bg-surface border border-border rounded px-2 py-0.5 text-xs text-foreground text-center focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
                                             />
                                             de {sourceCount ?? '?'}
                                         </span>
@@ -411,7 +411,7 @@ export default function NewsReprocessPage() {
                                     <button
                                         onClick={() => handleSourceReprocess(0)}
                                         disabled={isStreaming || sourceCount === null}
-                                        className="flex items-center gap-2 px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-semibold rounded-xl hover:border-purple-500/50 hover:text-purple-300 transition-all disabled:opacity-50 text-sm"
+                                        className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground font-semibold rounded-xl hover:bg-surface-hover transition-colors disabled:opacity-50 text-sm"
                                     >
                                         {isStreaming
                                             ? <Loader2 size={14} className="animate-spin" />
@@ -428,7 +428,7 @@ export default function NewsReprocessPage() {
                                             onClick={() => handleSourceReprocess(reprocessResume.offset)}
                                             disabled={isStreaming}
                                             title={`Retomar do artigo ${reprocessResume.offset + 1} de ${reprocessResume.total}`}
-                                            className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-amber-700/60 text-amber-400 font-semibold rounded-xl hover:border-amber-500/80 hover:text-amber-300 transition-all disabled:opacity-50 text-sm"
+                                            className="flex items-center gap-2 px-3 py-2 bg-surface border border-amber-700/60 text-amber-400 font-semibold rounded-xl hover:border-amber-500/80 hover:text-amber-300 transition-all disabled:opacity-50 text-sm"
                                         >
                                             <RotateCcw size={14} />
                                             Retomar do {reprocessResume.offset + 1}
@@ -451,10 +451,10 @@ export default function NewsReprocessPage() {
                 )}
 
                 {/* ── Card: Dedup ───────────────────────────────────────── */}
-                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-zinc-800">
-                        <h2 className="font-bold text-white text-base">Remover duplicatas</h2>
-                        <p className="text-xs text-zinc-500 mt-0.5">
+                <section className="rounded-2xl border border-border bg-surface overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border">
+                        <h2 className="font-bold text-foreground text-base">Remover duplicatas</h2>
+                        <p className="text-xs text-muted mt-0.5">
                             Identifica artigos com o mesmo URL canônico (strip UTM) e mantém o registro com
                             conteúdo mais completo
                         </p>
@@ -463,7 +463,7 @@ export default function NewsReprocessPage() {
                         <button
                             onClick={handleDedup}
                             disabled={dedupRunning || isStreaming}
-                            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-semibold rounded-xl hover:border-amber-500/50 hover:text-amber-300 transition-all disabled:opacity-50 text-sm"
+                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground font-semibold rounded-xl hover:border-amber-500/50 hover:text-amber-300 transition-all disabled:opacity-50 text-sm"
                         >
                             {dedupRunning
                                 ? <Loader2 size={14} className="animate-spin" />
@@ -479,17 +479,17 @@ export default function NewsReprocessPage() {
                                     <strong>{dedupResult.deleted}</strong> artigos removidos,{' '}
                                     <strong>{dedupResult.normalized}</strong> URLs normalizadas
                                 </span>
-                                <button onClick={() => setDedupResult(null)} className="ml-auto text-zinc-500 hover:text-white">✕</button>
+                                <button onClick={() => setDedupResult(null)} className="ml-auto text-muted hover:text-foreground">✕</button>
                             </div>
                         )}
                     </div>
                 </section>
 
                 {/* ── Card: Gerar 1 ─────────────────────────────────────── */}
-                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-zinc-800">
-                        <h2 className="font-bold text-white text-base">Gerar 1 notícia</h2>
-                        <p className="text-xs text-zinc-500 mt-0.5">
+                <section className="rounded-2xl border border-border bg-surface overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border">
+                        <h2 className="font-bold text-foreground text-base">Gerar 1 notícia</h2>
+                        <p className="text-xs text-muted mt-0.5">
                             Busca e processa um único artigo pendente automaticamente (pipeline completo)
                         </p>
                     </div>
@@ -497,7 +497,7 @@ export default function NewsReprocessPage() {
                         <button
                             onClick={handleGenerateOne}
                             disabled={generating || isStreaming}
-                            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-300 font-semibold rounded-xl hover:border-emerald-500/50 hover:text-emerald-300 transition-all disabled:opacity-50 text-sm"
+                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground font-semibold rounded-xl hover:bg-surface-hover transition-colors disabled:opacity-50 text-sm"
                         >
                             {generating
                                 ? <Loader2 size={14} className="animate-spin" />
@@ -519,8 +519,8 @@ export default function NewsReprocessPage() {
                                 <div className="flex-1">
                                     {generateResult.success && generateResult.news ? (
                                         <>
-                                            <p className="font-bold text-white">{generateResult.news.title}</p>
-                                            <p className="text-zinc-400 mt-0.5 text-xs">
+                                            <p className="font-bold text-foreground">{generateResult.news.title}</p>
+                                            <p className="text-muted mt-0.5 text-xs">
                                                 {generateResult.news.artistsCount > 0
                                                     ? `Artistas: ${generateResult.news.artists.map(a => a.name).join(', ')}`
                                                     : 'Nenhum artista identificado'
@@ -532,7 +532,7 @@ export default function NewsReprocessPage() {
                                         <p className="text-red-400">{generateResult.error}</p>
                                     )}
                                 </div>
-                                <button onClick={() => setGenerateResult(null)} className="text-zinc-500 hover:text-white">✕</button>
+                                <button onClick={() => setGenerateResult(null)} className="text-muted hover:text-foreground">✕</button>
                             </div>
                         )}
                     </div>

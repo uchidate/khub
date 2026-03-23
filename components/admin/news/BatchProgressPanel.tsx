@@ -59,17 +59,17 @@ export function BatchProgressPanel({
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-3 mb-1.5">
-                        <span className="text-sm font-semibold text-white truncate">
+                        <span className="text-sm font-semibold text-foreground truncate">
                             {isError  ? 'Erro no processamento'
                             : isDone  ? `Concluído — ${progress.label}`
                             : progress.label}
                         </span>
-                        <span className="text-xs text-zinc-400 shrink-0 font-mono">
+                        <span className="text-xs text-muted shrink-0 font-mono">
                             {progress.current}/{progress.total}
                         </span>
                     </div>
 
-                    <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden">
                         <div
                             className={`h-full rounded-full transition-all duration-300 ${
                                 isError ? 'bg-red-500' : isDone ? 'bg-emerald-500' : 'bg-purple-500'
@@ -80,7 +80,7 @@ export function BatchProgressPanel({
                 </div>
 
                 {(isDone || isError) && (
-                    <button onClick={onClose} className="text-zinc-500 hover:text-white text-xs shrink-0 ml-1">
+                    <button onClick={onClose} className="text-muted hover:text-foreground text-xs shrink-0 ml-1">
                         ✕
                     </button>
                 )}
@@ -99,8 +99,8 @@ export function BatchProgressPanel({
                     </span>
                 )}
                 {progress.skipped > 0 && (
-                    <span className="flex items-center gap-1 text-zinc-500">
-                        <span className="w-2.5 h-2.5 rounded-full border border-zinc-600 inline-block" />
+                    <span className="flex items-center gap-1 text-muted">
+                        <span className="w-2.5 h-2.5 rounded-full border border-border inline-block" />
                         <strong>{progress.skipped}</strong> {skippedLabel}
                     </span>
                 )}
@@ -109,20 +109,20 @@ export function BatchProgressPanel({
                     <strong>{progress.errors}</strong> erros
                 </span>
                 {!isDone && !isError && (
-                    <span className="ml-auto text-zinc-500 font-mono">{pct}%</span>
+                    <span className="ml-auto text-muted font-mono">{pct}%</span>
                 )}
             </div>
 
             {/* Custom done hint */}
             {isDone && doneHint && (
-                <div className="px-4 pb-2 pt-1 text-xs border-t border-white/5">
+                <div className="px-4 pb-2 pt-1 text-xs border-t border-border">
                     {doneHint}
                 </div>
             )}
 
             {/* Live log */}
             {progress.log.length > 0 && (
-                <div className="border-t border-white/5 max-h-48 overflow-y-auto">
+                <div className="border-t border-border max-h-48 overflow-y-auto">
                     {[...progress.log].reverse().map((entry, i) => (
                         <div
                             key={i}
@@ -131,14 +131,14 @@ export function BatchProgressPanel({
                             <span className={`mt-0.5 shrink-0 ${
                                 entry.result === 'updated' ? 'text-emerald-400' :
                                 entry.result === 'exists'  ? 'text-blue-500' :
-                                entry.result === 'skipped' ? 'text-zinc-600' :
+                                entry.result === 'skipped' ? 'text-muted' :
                                 'text-red-400'
                             }`}>
                                 {entry.result === 'updated' ? '✓' :
                                  entry.result === 'exists'  ? '=' :
                                  entry.result === 'skipped' ? '—' : '✕'}
                             </span>
-                            <span className="text-xs text-zinc-400 leading-snug truncate flex-1">
+                            <span className="text-xs text-muted leading-snug truncate flex-1">
                                 {entry.title}
                             </span>
                             {entry.result === 'updated' && entry.artistCount > 0 && (

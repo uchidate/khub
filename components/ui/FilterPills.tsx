@@ -12,7 +12,7 @@ interface FilterPillsProps {
 
 export function FilterPills({ options, value, onChange, className = '' }: FilterPillsProps) {
     return (
-        <div className={`flex gap-1 p-1 bg-surface border border-border rounded-xl overflow-x-auto ${className}`}>
+        <div className={`flex flex-wrap gap-1 p-1 bg-surface border border-border rounded-xl ${className}`}>
             {options.map(opt => (
                 <button
                     key={opt.value}

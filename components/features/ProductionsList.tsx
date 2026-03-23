@@ -8,7 +8,6 @@ import { Film } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
-import { FilterPills } from '@/components/ui/FilterPills'
 
 interface Production {
     id: string
@@ -24,7 +23,7 @@ interface Production {
 }
 
 const TYPE_OPTIONS: { value: string; label: string }[] = [
-    { value: '', label: 'Todos' },
+    { value: '', label: 'Todas' },
     { value: 'MOVIE', label: 'Filmes' },
     { value: 'SERIES', label: 'Séries' },
     { value: 'SPECIAL', label: 'Especiais' },
@@ -234,23 +233,22 @@ export function ProductionsList() {
                     placeholder="Buscar filme, série ou drama"
                 />
 
-                {/* Type + Sort row */}
-                <div className="flex flex-col sm:flex-row gap-3 min-w-0">
-                    {/* Type filter */}
-                    <div className="flex gap-1 p-1 bg-surface border border-border rounded-xl overflow-x-auto flex-1 min-w-0">
+                {/* Type + Sort */}
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
                         {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => handleType(opt.value)}
-                                className={`px-2.5 py-2 md:px-4 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                     filters.type === opt.value
                                         ? 'bg-accent text-white'
-                                        : 'text-muted hover:text-foreground'
+                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
                                 {opt.value && typeCounts && (
-                                    <span className="ml-1 opacity-50 font-normal normal-case tracking-normal">
+                                    <span className="ml-1 opacity-50 font-normal">
                                         {typeCounts[opt.value] ?? 0}
                                     </span>
                                 )}
@@ -258,28 +256,36 @@ export function ProductionsList() {
                         ))}
                     </div>
 
-                    {/* Sort */}
-                    <FilterPills
-                        options={SORT_OPTIONS}
-                        value={filters.sortBy}
-                        onChange={handleSort}
-                        className="sm:ml-auto flex-shrink-0"
-                    />
+                    <div className="flex items-center gap-1 flex-wrap">
+                        {SORT_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => handleSort(opt.value)}
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                    filters.sortBy === opt.value
+                                        ? 'bg-accent text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Age Rating filter */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-xs font-bold text-muted uppercase tracking-wider mr-1">Classificação:</span>
                     {AGE_RATING_OPTIONS.map(opt => (
                         <button
                             key={opt.value}
                             onClick={() => handleAgeRating(opt.value)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                 filters.ageRating === opt.value
                                     ? opt.color
-                                        ? `${opt.color} text-white ring-2 ring-white/20`
+                                        ? `${opt.color} text-white`
                                         : 'bg-accent text-white'
-                                    : 'bg-background border border-border text-muted hover:text-foreground'
+                                    : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                             }`}
                         >
                             {opt.label}

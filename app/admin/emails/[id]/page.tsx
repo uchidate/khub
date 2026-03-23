@@ -62,7 +62,7 @@ export default function AdminEmailDetailPage() {
     if (loading) return (
         <AdminLayout title="Email">
             <div className="p-6 flex items-center justify-center min-h-[200px]">
-                <RefreshCw className="animate-spin text-zinc-600" size={24} />
+                <RefreshCw className="animate-spin text-muted" size={24} />
             </div>
         </AdminLayout>
     )
@@ -70,7 +70,7 @@ export default function AdminEmailDetailPage() {
     if (!log) return (
         <AdminLayout title="Email">
             <div className="p-6">
-                <p className="text-zinc-500">Email não encontrado.</p>
+                <p className="text-muted">Email não encontrado.</p>
                 <Link href="/admin/emails" className="text-purple-400 text-sm mt-2 inline-block">← Voltar</Link>
             </div>
         </AdminLayout>
@@ -82,13 +82,13 @@ export default function AdminEmailDetailPage() {
     return (
         <AdminLayout title="Email">
             <div className="p-6 max-w-3xl mx-auto">
-                <Link href="/admin/emails" className="flex items-center gap-2 text-zinc-500 hover:text-white text-sm mb-6 transition-colors w-fit">
+                <Link href="/admin/emails" className="flex items-center gap-2 text-muted hover:text-foreground text-sm mb-6 transition-colors w-fit">
                     <ArrowLeft size={14} /> Histórico de Emails
                 </Link>
 
                 <div className="flex items-center gap-3 mb-6">
                     <Mail size={20} className="text-purple-400" />
-                    <h1 className="text-xl font-black text-white">Detalhe do Email</h1>
+                    <h1 className="text-xl font-black text-foreground">Detalhe do Email</h1>
                     <span className={`flex items-center gap-1.5 ml-auto px-3 py-1 rounded-lg text-sm font-black ${cfg.color} bg-white/5`}>
                         <StatusIcon size={14} />
                         {cfg.label}
@@ -106,9 +106,9 @@ export default function AdminEmailDetailPage() {
                         { label: 'Enviado em', value: log.sentAt ? new Date(log.sentAt).toLocaleString('pt-BR') : '—' },
                         { label: 'Criado em', value: new Date(log.createdAt).toLocaleString('pt-BR') },
                     ].map(({ label, value }) => (
-                        <div key={label} className="glass-card px-4 py-3 rounded-xl border border-white/5 flex gap-4">
-                            <span className="text-xs font-black text-zinc-500 uppercase tracking-wider w-28 flex-shrink-0 pt-0.5">{label}</span>
-                            <span className="text-sm text-white break-all">{value}</span>
+                        <div key={label} className="glass-card px-4 py-3 rounded-xl border border-border flex gap-4">
+                            <span className="text-xs font-black text-muted uppercase tracking-wider w-28 flex-shrink-0 pt-0.5">{label}</span>
+                            <span className="text-sm text-foreground break-all">{value}</span>
                         </div>
                     ))}
 
@@ -120,9 +120,9 @@ export default function AdminEmailDetailPage() {
                     )}
 
                     {log.metadata && (
-                        <div className="glass-card px-4 py-3 rounded-xl border border-white/5">
-                            <p className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-2">Metadata</p>
-                            <pre className="text-xs text-zinc-400 font-mono overflow-auto">{JSON.stringify(log.metadata, null, 2)}</pre>
+                        <div className="glass-card px-4 py-3 rounded-xl border border-border">
+                            <p className="text-xs font-black text-muted uppercase tracking-wider mb-2">Metadata</p>
+                            <pre className="text-xs text-muted font-mono overflow-auto">{JSON.stringify(log.metadata, null, 2)}</pre>
                         </div>
                     )}
                 </div>
@@ -137,7 +137,7 @@ export default function AdminEmailDetailPage() {
                         <button
                             onClick={handleResend}
                             disabled={resending}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors"
                         >
                             <RefreshCw size={14} className={resending ? 'animate-spin' : ''} />
                             {resending ? 'Reenviando...' : 'Reenviar Email'}

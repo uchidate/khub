@@ -2,15 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Search } from "lucide-react"
-import { GlobalSearch } from "@/components/ui/GlobalSearch"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
-import { MobileSearchOverlay } from "@/components/features/MobileSearchOverlay"
 import { NotificationBell } from "@/components/features/NotificationBell"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useSession } from "next-auth/react"
+import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
 
 function OrbitalMark({ size = 28 }: { size?: number }) {
     return (
@@ -27,15 +26,13 @@ const NavBar = () => {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
-    const [searchOpen, setSearchOpen] = useState(false)
+    const openSearch = useQuickSearch(s => s.open)
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 0)
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
-
-    const closeSearch = useCallback(() => setSearchOpen(false), [])
 
     if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
 
@@ -91,7 +88,7 @@ const NavBar = () => {
                         <div className="flex items-center gap-2 flex-shrink-0">
                             {/* Search bar (tablet+) */}
                             <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[150px] lg:min-w-[200px]"
-                                onClick={() => setSearchOpen(true)}
+                                onClick={() => openSearch()}
                             >
                                 <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 opacity-50">
                                     <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -102,7 +99,7 @@ const NavBar = () => {
 
                             {/* Mobile search icon */}
                             <button
-                                onClick={() => setSearchOpen(true)}
+                                onClick={() => openSearch()}
                                 className="sm:hidden w-10 h-10 flex items-center justify-center rounded-full text-muted hover:bg-surface transition-colors"
                                 aria-label="Buscar"
                             >
@@ -142,7 +139,6 @@ const NavBar = () => {
                 </div>
             </nav>
 
-            <MobileSearchOverlay isOpen={searchOpen} onClose={closeSearch} />
         </>
     )
 }

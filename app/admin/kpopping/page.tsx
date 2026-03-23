@@ -180,14 +180,14 @@ function InlineSearch({
   return (
     <div className="relative mt-2">
       <input
-        className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
+        className="w-full bg-background border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
         placeholder={placeholder}
         value={q}
         onChange={e => handleChange(e.target.value)}
       />
       {loading && <span className="absolute right-2 top-2 text-xs text-gray-500">...</span>}
       {results.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg max-h-48 overflow-y-auto">
+        <ul className="absolute z-50 w-full mt-1 bg-background border border-border rounded shadow-lg max-h-48 overflow-y-auto">
           {results.map(item => (
             <li
               key={item.id}
@@ -205,7 +205,7 @@ function InlineSearch({
                 />
               </div>
               <div>
-                <span className="text-sm text-gray-200">{item.nameRomanized ?? item.name}</span>
+                <span className="text-sm text-foreground">{item.nameRomanized ?? item.name}</span>
                 {item.nameHangul && <span className="text-xs text-gray-500 ml-1">{item.nameHangul}</span>}
               </div>
             </li>
@@ -262,7 +262,7 @@ function TMDBPanel({
   }
 
   return (
-    <div className="mt-3 bg-gray-900 border border-gray-700 rounded-lg p-3">
+    <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
         <button onClick={doSearch} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
@@ -287,7 +287,7 @@ function TMDBPanel({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-200 truncate">{r.name}</p>
+              <p className="text-sm text-foreground truncate">{r.name}</p>
               <p className="text-xs text-gray-500">
                 {r.knownForDepartment} · ★ {r.popularity.toFixed(1)}
                 {r.knownFor.length > 0 && ` · ${r.knownFor.join(', ')}`}
@@ -299,7 +299,7 @@ function TMDBPanel({
               <button
                 onClick={() => addArtist(r.tmdbId)}
                 disabled={adding === r.tmdbId}
-                className="flex-shrink-0 text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-2 py-1 rounded"
+                className="flex-shrink-0 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white px-2 py-1 rounded"
               >
                 {adding === r.tmdbId ? '...' : '+ Criar'}
               </button>
@@ -375,7 +375,7 @@ function TMDBGroupPanel({
   const mediaLabel: Record<string, string> = { tv: 'TV Show', movie: 'Filme', person: 'Pessoa' }
 
   return (
-    <div className="mt-3 bg-gray-900 border border-gray-700 rounded-lg p-3">
+    <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
         <button onClick={doSearch} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
@@ -400,7 +400,7 @@ function TMDBGroupPanel({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-200 truncate">{r.name}</p>
+              <p className="text-sm text-foreground truncate">{r.name}</p>
               <p className="text-xs text-gray-500">
                 {mediaLabel[r.mediaType] ?? r.mediaType} · ★ {r.popularity.toFixed(1)}
                 {r.firstAirDate && ` · ${r.firstAirDate.slice(0, 4)}`}
@@ -412,7 +412,7 @@ function TMDBGroupPanel({
               <button
                 onClick={() => addGroup(r)}
                 disabled={adding === r.tmdbId}
-                className="flex-shrink-0 text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-2 py-1 rounded"
+                className="flex-shrink-0 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white px-2 py-1 rounded"
               >
                 {adding === r.tmdbId ? '...' : '+ Criar'}
               </button>
@@ -518,8 +518,8 @@ function IdolCard({
   const artistImg = localArtist?.primaryImageUrl ?? avatarPlaceholder(localArtist?.nameRomanized ?? '?')
 
   return (
-    <div className={`bg-gray-800 border rounded-xl p-4 space-y-3 ${
-      isConfirmed ? 'border-green-700/50' : isRejected ? 'border-red-700/50' : 'border-gray-700'
+    <div className={`bg-background border rounded-xl p-4 space-y-3 ${
+      isConfirmed ? 'border-green-700/50' : isRejected ? 'border-red-700/50' : 'border-border'
     }`}>
       {/* Status badge */}
       <div className="flex items-center justify-between">
@@ -553,7 +553,7 @@ function IdolCard({
             <Image src={idolImg} alt={idol.idolName} width={48} height={48} className="object-cover w-full h-full" unoptimized />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-200 truncate">{idol.idolName}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{idol.idolName}</p>
             {idol.idolNameHangul && <p className="text-xs text-gray-500">{idol.idolNameHangul}</p>}
             {idol.idolBirthday && <p className="text-xs text-gray-600">{formatDate(idol.idolBirthday)}</p>}
             {(idol.idolHeight || idol.idolBloodType) && (
@@ -573,7 +573,7 @@ function IdolCard({
                 <Image src={artistImg} alt={localArtist.nameRomanized} width={48} height={48} className="object-cover w-full h-full" unoptimized />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-200 truncate">{localArtist.nameRomanized}</p>
+                <p className="text-sm font-semibold text-foreground truncate">{localArtist.nameRomanized}</p>
                 {localArtist.nameHangul && <p className="text-xs text-gray-500">{localArtist.nameHangul}</p>}
                 {localArtist.birthDate && <p className="text-xs text-gray-600">{formatDate(localArtist.birthDate)}</p>}
               </div>
@@ -609,7 +609,7 @@ function IdolCard({
         <button
           onClick={() => doAction('confirm', localArtistId)}
           disabled={pending}
-          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white py-1.5 rounded flex items-center justify-center gap-1"
+          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground py-1.5 rounded flex items-center justify-center gap-1"
         >
           <CheckCircle size={12} /> Confirmar seleção manual
         </button>
@@ -621,7 +621,7 @@ function IdolCard({
           <button
             onClick={() => doAction('confirm', localArtistId)}
             disabled={pending}
-            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-3 py-1.5 rounded flex items-center gap-1"
+            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground px-3 py-1.5 rounded flex items-center gap-1"
           >
             <CheckCircle size={12} /> Confirmar
           </button>
@@ -648,7 +648,7 @@ function IdolCard({
         <button
           onClick={() => { setShowTMDB(!showTMDB); setShowSearch(false) }}
           disabled={pending}
-          className="text-xs bg-purple-900 hover:bg-purple-800 text-purple-300 px-3 py-1.5 rounded flex items-center gap-1"
+          className="text-xs bg-surface border border-border text-foreground hover:bg-surface-hover px-3 py-1.5 rounded flex items-center gap-1"
         >
           <Star size={12} /> TMDB
         </button>
@@ -799,8 +799,8 @@ function GroupCard({ group }: { group: GroupItem }) {
   const khubImg = localGroup?.profileImageUrl ?? avatarPlaceholder(localGroup?.name ?? '?')
 
   return (
-    <div className={`bg-gray-800 border rounded-xl p-4 space-y-3 ${
-      isConfirmed ? 'border-green-700/50' : isRejected ? 'border-red-700/50' : 'border-gray-700'
+    <div className={`bg-background border rounded-xl p-4 space-y-3 ${
+      isConfirmed ? 'border-green-700/50' : isRejected ? 'border-red-700/50' : 'border-border'
     }`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -832,7 +832,7 @@ function GroupCard({ group }: { group: GroupItem }) {
             <Image src={groupImg} alt={group.groupName} width={48} height={48} className="object-cover w-full h-full" unoptimized />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-200 truncate">{group.groupName}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{group.groupName}</p>
             {group.groupNameHangul && <p className="text-xs text-gray-500">{group.groupNameHangul}</p>}
             {group.groupDebutDate && <p className="text-xs text-gray-600">Debut: {formatDate(group.groupDebutDate)}</p>}
             {group.groupAgency && <p className="text-xs text-gray-600 truncate">{group.groupAgency}</p>}
@@ -846,7 +846,7 @@ function GroupCard({ group }: { group: GroupItem }) {
                 <Image src={khubImg} alt={localGroup.name} width={48} height={48} className="object-cover w-full h-full" unoptimized />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-200 truncate">{localGroup.name}</p>
+                <p className="text-sm font-semibold text-foreground truncate">{localGroup.name}</p>
                 {localGroup.nameHangul && <p className="text-xs text-gray-500">{localGroup.nameHangul}</p>}
                 {localGroup.agency?.name && <p className="text-xs text-gray-600 truncate">{localGroup.agency.name}</p>}
               </div>
@@ -879,7 +879,7 @@ function GroupCard({ group }: { group: GroupItem }) {
         <button
           onClick={() => doAction('confirm', localGroupId)}
           disabled={pending}
-          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white py-1.5 rounded flex items-center justify-center gap-1"
+          className="w-full text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground py-1.5 rounded flex items-center justify-center gap-1"
         >
           <CheckCircle size={12} /> Confirmar seleção manual
         </button>
@@ -890,7 +890,7 @@ function GroupCard({ group }: { group: GroupItem }) {
           <button
             onClick={() => doAction('confirm', localGroupId)}
             disabled={pending}
-            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-3 py-1.5 rounded flex items-center gap-1"
+            className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-foreground px-3 py-1.5 rounded flex items-center gap-1"
           >
             <CheckCircle size={12} /> Confirmar
           </button>
@@ -917,7 +917,7 @@ function GroupCard({ group }: { group: GroupItem }) {
         <button
           onClick={() => { setShowTMDB(!showTMDB); setShowSearch(false) }}
           disabled={pending}
-          className="text-xs bg-purple-900 hover:bg-purple-800 text-purple-300 px-3 py-1.5 rounded flex items-center gap-1"
+          className="text-xs bg-surface border border-border text-foreground hover:bg-surface-hover px-3 py-1.5 rounded flex items-center gap-1"
         >
           <Star size={12} /> TMDB
         </button>
@@ -956,7 +956,7 @@ function GroupCard({ group }: { group: GroupItem }) {
         {group.memberCount > 0 && (
           <button
             onClick={toggleMembers}
-            className="ml-auto text-xs text-gray-400 hover:text-gray-200 border border-gray-700 hover:border-gray-500 bg-gray-800 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors"
+            className="ml-auto text-xs text-gray-400 hover:text-foreground border border-border hover:border-gray-500 bg-background px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors"
           >
             <Users size={12} />
             Membros Kpopping ({group.memberCount})
@@ -967,7 +967,7 @@ function GroupCard({ group }: { group: GroupItem }) {
 
       {/* Lista de membros do grupo no Kpopping */}
       {showMembers && (
-        <div className="border-t border-gray-700 pt-3 space-y-1.5">
+        <div className="border-t border-border pt-3 space-y-1.5">
           {membersLoading ? (
             <div className="text-center py-4 text-gray-500 text-xs flex items-center justify-center gap-2">
               <RefreshCw size={12} className="animate-spin" /> Carregando membros...
@@ -987,7 +987,7 @@ function GroupCard({ group }: { group: GroupItem }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-semibold text-gray-200 truncate">{member.idolName}</span>
+                      <span className="text-xs font-semibold text-foreground truncate">{member.idolName}</span>
                       {member.idolNameHangul && (
                         <span className="text-[10px] text-gray-500">{member.idolNameHangul}</span>
                       )}
@@ -1068,7 +1068,7 @@ function MembershipCard({
   if (done) return null
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-3">
+    <div className="bg-background border border-border rounded-xl p-4 space-y-3">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
@@ -1081,7 +1081,7 @@ function MembershipCard({
             />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-200 truncate">{item.artist.nameRomanized}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{item.artist.nameRomanized}</p>
             {item.artist.nameHangul && <p className="text-xs text-gray-500">{item.artist.nameHangul}</p>}
           </div>
         </div>
@@ -1090,7 +1090,7 @@ function MembershipCard({
 
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
           <div className="text-right min-w-0">
-            <p className="text-sm font-semibold text-gray-200 truncate">{item.musicalGroup.name}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{item.musicalGroup.name}</p>
             {item.musicalGroup.nameHangul && <p className="text-xs text-gray-500">{item.musicalGroup.nameHangul}</p>}
           </div>
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
@@ -1107,7 +1107,7 @@ function MembershipCard({
 
       <div className="flex items-center gap-3 flex-wrap">
         <input
-          className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 w-36 focus:outline-none focus:border-purple-500"
+          className="bg-gray-900 border border-border rounded px-2 py-1 text-xs text-gray-300 w-36 focus:outline-none focus:border-accent/50"
           placeholder="Role (vocalist...)"
           value={role}
           onChange={e => setRole(e.target.value)}
@@ -1124,7 +1124,7 @@ function MembershipCard({
         <button
           onClick={apply}
           disabled={pending}
-          className="ml-auto text-xs bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-1.5 rounded flex items-center gap-1"
+          className="ml-auto text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white px-4 py-1.5 rounded flex items-center gap-1"
         >
           <Link2 size={12} /> {pending ? 'Aplicando...' : 'Aplicar Vínculo'}
         </button>
@@ -1150,7 +1150,7 @@ function Pagination({
       <button
         onClick={() => onPage(page - 1)}
         disabled={page <= 1}
-        className="p-1.5 rounded bg-gray-800 text-gray-400 hover:text-gray-200 disabled:opacity-30"
+        className="p-1.5 rounded bg-background text-gray-400 hover:text-foreground disabled:opacity-30"
       >
         <ChevronLeft size={16} />
       </button>
@@ -1158,7 +1158,7 @@ function Pagination({
       <button
         onClick={() => onPage(page + 1)}
         disabled={page >= totalPages}
-        className="p-1.5 rounded bg-gray-800 text-gray-400 hover:text-gray-200 disabled:opacity-30"
+        className="p-1.5 rounded bg-background text-gray-400 hover:text-foreground disabled:opacity-30"
       >
         <ChevronRight size={16} />
       </button>
@@ -1209,12 +1209,12 @@ function IdolsTab() {
     <div>
       <div className="flex gap-2 mb-3">
         <div className="relative flex-1 max-w-xs">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <Search size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Buscar idol..."
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
+            className="w-full px-4 pr-10 py-1.5 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
           />
         </div>
       </div>
@@ -1225,8 +1225,8 @@ function IdolsTab() {
             onClick={() => setFilter(f.key)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
-                ? 'bg-purple-600 border-purple-500 text-white'
-                : 'border-gray-700 text-gray-400 hover:text-gray-200'
+                ? 'bg-purple-600 border-purple-500 text-foreground'
+                : 'border-border text-gray-400 hover:text-foreground'
             }`}
           >
             {f.label}
@@ -1300,12 +1300,12 @@ function GroupsTab() {
     <div>
       <div className="flex gap-2 mb-3">
         <div className="relative flex-1 max-w-xs">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <Search size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Buscar grupo..."
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
+            className="w-full px-4 pr-10 py-1.5 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
           />
         </div>
       </div>
@@ -1316,8 +1316,8 @@ function GroupsTab() {
             onClick={() => setFilter(f.key)}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
-                ? 'bg-purple-600 border-purple-500 text-white'
-                : 'border-gray-700 text-gray-400 hover:text-gray-200'
+                ? 'bg-purple-600 border-purple-500 text-foreground'
+                : 'border-border text-gray-400 hover:text-foreground'
             }`}
           >
             {f.label}
@@ -1385,12 +1385,12 @@ function MembershipsTab() {
           Vínculos prontos — idol e grupo ambos confirmados.
         </p>
         <div className="relative">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+          <Search size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Buscar idol ou grupo..."
-            className="pl-8 pr-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500 w-52"
+            className="px-4 pr-10 py-1.5 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 w-52"
           />
         </div>
         <button onClick={load} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
@@ -1478,14 +1478,14 @@ export default function KpoppingCurationPage() {
       <div className="space-y-6">
         {/* Actions */}
         <div className="flex items-start justify-between -mt-6">
-          <p className="text-sm text-zinc-400">Confirme idols → artistas e grupos → musicais, depois aplique os vínculos.</p>
+          <p className="text-sm text-muted">Confirme idols → artistas e grupos → musicais, depois aplique os vínculos.</p>
           <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-4">
             <div className="flex gap-2">
               <button
                 onClick={backfill}
                 disabled={backfilling}
                 title="Garante que todas as sugestões APPROVED tenham ArtistGroupMembership no DB"
-                className="text-sm bg-purple-900/50 hover:bg-purple-800/50 disabled:opacity-50 text-purple-300 px-4 py-2 rounded-lg flex items-center gap-2 border border-purple-700/30"
+                className="text-sm bg-surface border border-border text-foreground hover:bg-surface-hover disabled:opacity-50"
               >
                 <Star size={14} className={backfilling ? 'animate-pulse' : ''} />
                 {backfilling ? 'Corrigindo...' : 'Backfill Vínculos'}
@@ -1493,7 +1493,7 @@ export default function KpoppingCurationPage() {
               <button
                 onClick={generate}
                 disabled={generating}
-                className="text-sm bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-zinc-200 px-4 py-2 rounded-lg flex items-center gap-2"
+                className="text-sm bg-surface hover:bg-surface-hover disabled:opacity-50 text-foreground px-4 py-2 rounded-lg flex items-center gap-2"
               >
                 <RefreshCw size={14} className={generating ? 'animate-spin' : ''} />
                 {generating ? 'Gerando...' : 'Gerar Sugestões'}
@@ -1508,7 +1508,7 @@ export default function KpoppingCurationPage() {
               <p className="text-xs text-red-400">Backfill erro: {backfillError}</p>
             )}
             {generateStats && (
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted">
                 {generateStats.created} criadas · {generateStats.updated} atualizadas · {generateStats.skipped} ignoradas · {generateStats.errors} erros
               </p>
             )}
@@ -1516,7 +1516,7 @@ export default function KpoppingCurationPage() {
         </div>
 
           {/* Tabs */}
-        <div className="flex gap-1 border-b border-zinc-800">
+        <div className="flex gap-1 border-b border-border">
           {tabs.map(t => (
             <button
               key={t.key}
@@ -1524,7 +1524,7 @@ export default function KpoppingCurationPage() {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 tab === t.key
                   ? 'border-purple-500 text-purple-400'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                  : 'border-transparent text-muted hover:text-foreground'
               }`}
             >
               <t.icon size={15} />

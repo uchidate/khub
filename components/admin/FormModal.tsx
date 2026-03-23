@@ -85,19 +85,19 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
     setFormData((prev) => ({ ...prev, [key]: value }))
   }
 
-  const baseInputClass = "w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/60 focus:bg-zinc-900/80 text-sm transition-all"
+  const baseInputClass = "w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-foreground placeholder-muted focus:outline-none focus:border-purple-500/60 focus:bg-surface text-sm transition-all"
   const selectClass = `${baseInputClass} cursor-pointer`
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="relative bg-background border border-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-zinc-950 border-b border-zinc-800/80 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-          <h2 className="text-base font-bold text-white">{title}</h2>
+        <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+          <h2 className="text-base font-bold text-foreground">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
           >
             <X size={18} />
           </button>
@@ -117,11 +117,11 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
               return (
                 <div key={field.key} className="pt-2 first:pt-0">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{field.label}</span>
-                    <div className="flex-1 h-px bg-zinc-800" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted">{field.label}</span>
+                    <div className="flex-1 h-px bg-border" />
                   </div>
                   {field.description && (
-                    <p className="text-xs text-zinc-600 mt-1">{field.description}</p>
+                    <p className="text-xs text-muted mt-1">{field.description}</p>
                   )}
                 </div>
               )
@@ -130,11 +130,11 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
             return (
               <div key={field.key}>
                 {field.type !== 'toggle' && (
-                  <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
+                  <label className="block text-xs font-semibold text-muted mb-1.5">
                     {field.label}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
                     {field.description && (
-                      <span className="ml-2 font-normal text-zinc-600 normal-case tracking-normal">{field.description}</span>
+                      <span className="ml-2 font-normal text-muted normal-case tracking-normal">{field.description}</span>
                     )}
                   </label>
                 )}
@@ -193,13 +193,13 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
                         checked={!!formData[field.key]}
                         onChange={(e) => handleChange(field.key, e.target.checked)}
                       />
-                      <div className="w-10 h-6 bg-zinc-700 peer-checked:bg-green-600 rounded-full transition-colors duration-200" />
+                      <div className="w-10 h-6 bg-surface peer-checked:bg-green-600 rounded-full transition-colors duration-200" />
                       <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4" />
                     </div>
                     <div>
-                      <span className="text-sm font-semibold text-zinc-300">{field.label}</span>
+                      <span className="text-sm font-semibold text-foreground">{field.label}</span>
                       {field.description && (
-                        <p className="text-xs text-zinc-600 mt-0.5">{field.description}</p>
+                        <p className="text-xs text-muted mt-0.5">{field.description}</p>
                       )}
                     </div>
                   </label>
@@ -217,12 +217,12 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
             )
           })}
 
-          <div className="flex gap-3 pt-3 border-t border-zinc-800/60">
+          <div className="flex gap-3 pt-3 border-t border-border">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-zinc-700 disabled:opacity-50 transition-colors font-medium text-sm"
+              className="flex-1 py-2.5 bg-surface text-foreground rounded-xl hover:bg-surface-hover disabled:opacity-50 transition-colors font-medium text-sm"
             >
               Cancelar
             </button>

@@ -54,7 +54,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-zinc-800 text-zinc-400',
+  pending: 'bg-surface text-muted',
   draft: 'bg-yellow-900/40 text-yellow-400',
   approved: 'bg-green-900/40 text-green-400',
 }
@@ -109,7 +109,7 @@ function formatElapsed(seconds: number) {
 function ProductionBadge({ item }: { item: TranslationItem }) {
   if (!item.hasSynopsis) {
     return (
-      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-600 border border-zinc-700">
+      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-surface text-muted border border-border">
         Sem sinopse
       </span>
     )
@@ -128,7 +128,7 @@ function ProductionBadge({ item }: { item: TranslationItem }) {
       </span>
     )
   }
-  return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">Pendente</span>
+  return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-surface text-muted border border-border">Pendente</span>
 }
 
 function TranslationsPageContent() {
@@ -407,21 +407,21 @@ function TranslationsPageContent() {
                 className={`p-4 rounded-xl border text-left transition-colors ${
                   activeTab === type
                     ? 'border-purple-500/50 bg-purple-900/20'
-                    : 'border-white/10 bg-zinc-900 hover:bg-zinc-800'
+                    : 'border-border bg-surface hover:bg-surface'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{ENTITY_LABELS[type]}</span>
+                  <span className="text-xs font-bold text-muted uppercase tracking-widest">{ENTITY_LABELS[type]}</span>
                   {TRANSLATABLE_TYPES.includes(type) && (
-                    <span className="text-[10px] text-zinc-600 font-medium">IA</span>
+                    <span className="text-[10px] text-muted font-medium">IA</span>
                   )}
                 </div>
                 {statsLoading ? (
-                  <div className="mt-2 h-7 bg-zinc-800 rounded animate-pulse" />
+                  <div className="mt-2 h-7 bg-surface rounded animate-pulse" />
                 ) : (
-                  <div className="mt-1 text-2xl font-black text-white">
+                  <div className="mt-1 text-2xl font-black text-foreground">
                     {s?.translated ?? 0}
-                    <span className="text-sm font-normal text-zinc-500">/{s?.total ?? 0}</span>
+                    <span className="text-sm font-normal text-muted">/{s?.total ?? 0}</span>
                   </div>
                 )}
                 {s && !statsLoading && (
@@ -430,18 +430,18 @@ function TranslationsPageContent() {
                       <span className="text-[10px] text-amber-500 font-medium">{pendingCount} pendentes</span>
                     )}
                     {(s as { hiddenPending?: number } | undefined)?.hiddenPending ? (
-                      <span className="text-[10px] text-zinc-500 font-medium">+{(s as { hiddenPending: number }).hiddenPending} ocultos</span>
+                      <span className="text-[10px] text-muted font-medium">+{(s as { hiddenPending: number }).hiddenPending} ocultos</span>
                     ) : null}
                     {prodS?.failed && prodS.failed > 0 ? (
                       <span className="text-[10px] text-red-400 font-medium">{prodS.failed} falhas</span>
                     ) : null}
                     {prodS?.noSynopsis && prodS.noSynopsis > 0 ? (
-                      <span className="text-[10px] text-zinc-600">{prodS.noSynopsis} sem sinopse</span>
+                      <span className="text-[10px] text-muted">{prodS.noSynopsis} sem sinopse</span>
                     ) : null}
                   </div>
                 )}
                 {s && s.total > 0 && (
-                  <div className="mt-2 h-1.5 bg-zinc-800 rounded-full overflow-hidden flex">
+                  <div className="mt-2 h-1.5 bg-surface rounded-full overflow-hidden flex">
                     <div className="h-full bg-green-500 transition-all" style={{ width: `${Math.round(((s as { approved?: number }).approved ?? 0) / s.total * 100)}%` }} />
                     <div className="h-full bg-yellow-500/70 transition-all" style={{ width: `${Math.round(((s as { draft?: number }).draft ?? 0) / s.total * 100)}%` }} />
                   </div>
@@ -454,7 +454,7 @@ function TranslationsPageContent() {
                     {((s as { draft?: number }).draft ?? 0) > 0 && (
                       <span className="text-yellow-500/80">{(s as { draft: number }).draft} IA</span>
                     )}
-                    <span className="text-zinc-600 ml-auto">{pct}%</span>
+                    <span className="text-muted ml-auto">{pct}%</span>
                   </div>
                 )}
               </button>
@@ -464,22 +464,22 @@ function TranslationsPageContent() {
 
         {/* Widget de custo */}
         {(historicalCost !== null || sessionStats.translated > 0) && (
-          <div className="flex flex-wrap gap-3 items-center px-4 py-2.5 rounded-xl border border-white/10 bg-zinc-900">
-            <DollarSign className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
+          <div className="flex flex-wrap gap-3 items-center px-4 py-2.5 rounded-xl border border-border bg-surface">
+            <DollarSign className="w-3.5 h-3.5 text-muted flex-shrink-0" />
             {historicalCost !== null && (
               <>
-                <span className="text-xs text-zinc-500">
-                  Total histórico: <span className="text-zinc-300 font-mono">${historicalCost.allTime.toFixed(4)}</span>
+                <span className="text-xs text-muted">
+                  Total histórico: <span className="text-foreground font-mono">${historicalCost.allTime.toFixed(4)}</span>
                 </span>
-                <span className="text-xs text-zinc-600">·</span>
-                <span className="text-xs text-zinc-500">
-                  Últimos 30 dias: <span className="text-zinc-300 font-mono">${historicalCost.last30d.toFixed(4)}</span>
+                <span className="text-xs text-muted">·</span>
+                <span className="text-xs text-muted">
+                  Últimos 30 dias: <span className="text-foreground font-mono">${historicalCost.last30d.toFixed(4)}</span>
                 </span>
               </>
             )}
             {sessionStats.translated > 0 && (
               <>
-                {historicalCost !== null && <span className="text-xs text-zinc-700">|</span>}
+                {historicalCost !== null && <span className="text-xs text-muted">|</span>}
                 <span className="text-xs text-emerald-500/80 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
                   Sessão: {sessionStats.translated} traduzidos
@@ -492,17 +492,17 @@ function TranslationsPageContent() {
 
         {/* Painel de tradução em tempo real — colapsável */}
         {showBatchPanel && (
-          <div className="bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 bg-zinc-800/50 border-b border-white/10">
+          <div className="bg-surface rounded-xl border border-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-surface border-b border-border">
               <div className="flex items-center gap-3">
                 {running
                   ? <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
                   : <CheckCircle className="w-4 h-4 text-green-400" />}
-                <span className="text-sm font-medium text-zinc-200">
+                <span className="text-sm font-medium text-foreground">
                   {running ? 'Tradução em andamento...' : 'Tradução concluída'}
                 </span>
               </div>
-              <div className="flex items-center gap-4 text-xs text-zinc-500">
+              <div className="flex items-center gap-4 text-xs text-muted">
                 <span className="font-mono tabular-nums">⏱ {formatElapsed(elapsed)}</span>
                 <span className="text-green-400 font-medium">{translatedCount} ✓</span>
                 {skippedCount > 0 && <span>{skippedCount} ignorados</span>}
@@ -510,7 +510,7 @@ function TranslationsPageContent() {
                 {!running && (
                   <button
                     onClick={() => { setProgressLog([]); setRunResult(null); setElapsed(0); setBatchPanelOpen(false) }}
-                    className="text-zinc-600 hover:text-zinc-400 text-xs underline"
+                    className="text-muted hover:text-muted text-xs underline"
                   >
                     Fechar
                   </button>
@@ -518,7 +518,7 @@ function TranslationsPageContent() {
               </div>
             </div>
             {currentItem && (
-              <div className="h-1 bg-zinc-800">
+              <div className="h-1 bg-surface">
                 <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${Math.round((processedCount / currentItem.total) * 100)}%` }} />
               </div>
             )}
@@ -526,13 +526,13 @@ function TranslationsPageContent() {
               {progressLog.map((entry, i) => (
                 <div key={i} className="flex items-center gap-2 py-0.5 text-sm">
                   {entry.status === 'translated' && <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />}
-                  {entry.status === 'skipped' && <SkipForward className="w-3.5 h-3.5 text-zinc-600 flex-shrink-0" />}
+                  {entry.status === 'skipped' && <SkipForward className="w-3.5 h-3.5 text-muted flex-shrink-0" />}
                   {entry.status === 'failed' && <XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />}
                   <span className={`flex-1 truncate text-sm ${
                     entry.status === 'failed' ? 'text-red-400' :
-                    entry.status === 'skipped' ? 'text-zinc-600' : 'text-zinc-300'
+                    entry.status === 'skipped' ? 'text-muted' : 'text-foreground'
                   }`}>{entry.name}</span>
-                  <span className="text-xs text-zinc-600 flex-shrink-0">
+                  <span className="text-xs text-muted flex-shrink-0">
                     {entry.status === 'translated' ? 'traduzido' : entry.status === 'skipped' ? 'já em PT' : 'falhou'}
                   </span>
                 </div>
@@ -557,9 +557,9 @@ function TranslationsPageContent() {
         )}
 
         {/* Tabs + filtros + lista */}
-        <div className="bg-zinc-900 rounded-xl border border-white/10">
+        <div className="bg-surface rounded-xl border border-border">
           {/* Tabs */}
-          <div className="flex items-center gap-1 px-4 pt-4 border-b border-white/10 flex-wrap">
+          <div className="flex items-center gap-1 px-4 pt-4 border-b border-border flex-wrap">
             {(['artist', 'group', 'production', 'news'] as EntityType[]).map(type => (
               <button
                 key={type}
@@ -567,7 +567,7 @@ function TranslationsPageContent() {
                 className={`pb-3 px-3 text-sm font-bold border-b-2 transition-colors ${
                   activeTab === type
                     ? 'border-purple-500 text-purple-300'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    : 'border-transparent text-muted hover:text-foreground'
                 }`}
               >
                 {ENTITY_LABELS[type]}
@@ -584,7 +584,7 @@ function TranslationsPageContent() {
               {!batchPanelOpen && runResult && (
                 <button
                   onClick={() => setBatchPanelOpen(true)}
-                  className="text-xs text-zinc-600 hover:text-zinc-400 underline"
+                  className="text-xs text-muted hover:text-muted underline"
                 >
                   Ver resultado anterior
                 </button>
@@ -593,7 +593,7 @@ function TranslationsPageContent() {
               <Link
                 href="/admin/translations/log"
                 title="Ver log de traduções"
-                className="p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors rounded-lg hover:bg-zinc-800"
+                className="p-1.5 text-muted hover:text-muted transition-colors rounded-lg hover:bg-surface"
               >
                 <History className="w-4 h-4" />
               </Link>
@@ -604,20 +604,20 @@ function TranslationsPageContent() {
                       value={batchLimit}
                       onChange={e => setBatchLimit(Number(e.target.value))}
                       disabled={running}
-                      className="appearance-none pl-2 pr-6 py-1.5 bg-zinc-800 border border-white/10 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50 cursor-pointer"
+                      className="appearance-none pl-2 pr-6 py-1.5 bg-background border border-border rounded-xl text-xs text-foreground focus:outline-none focus:border-accent/50 disabled:opacity-50 cursor-pointer"
                       title="Quantidade por lote"
                     >
                       {BATCH_LIMIT_OPTIONS.map(n => (
                         <option key={n} value={n}>{n}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500 pointer-events-none" />
+                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted pointer-events-none" />
                   </div>
                   <button
                     onClick={handleRunBatch}
                     disabled={running}
                     title={`Traduzir próximos ${batchLimit} ${ENTITY_LABELS[activeTab].toLowerCase()} pendentes`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 transition-colors"
                   >
                     <Zap className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} />
                     {running ? 'Traduzindo...' : 'Traduzir (IA)'}
@@ -626,7 +626,7 @@ function TranslationsPageContent() {
                     onClick={handleResetCircuits}
                     disabled={running || resettingCircuits}
                     title="Resetar circuit breakers dos providers de IA (usar se houver falhas em série)"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 border border-white/8 rounded-lg hover:border-white/15 disabled:opacity-40 transition-colors"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-foreground border border-border rounded-lg hover:border-border disabled:opacity-40 transition-colors"
                   >
                     <RotateCcw className={`w-3.5 h-3.5 ${resettingCircuits ? 'animate-spin' : ''}`} />
                     Reset circuits
@@ -649,16 +649,16 @@ function TranslationsPageContent() {
           )}
 
           {/* Busca + filtros de status */}
-          <div className="p-4 flex flex-wrap gap-3 items-center border-b border-white/5">
+          <div className="p-4 flex flex-wrap gap-3 items-center border-b border-border">
             <form onSubmit={handleSearch} className="flex gap-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                 <input
                   type="text"
                   placeholder="Buscar..."
                   value={q}
                   onChange={e => setQ(e.target.value)}
-                  className="pl-9 pr-3 py-1.5 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+                  className="px-4 pr-10 py-1.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
                 />
               </div>
             </form>
@@ -669,15 +669,15 @@ function TranslationsPageContent() {
                   onClick={() => setStatusFilter(val)}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
                     statusFilter === val
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
+                      ? 'bg-purple-600 text-foreground'
+                      : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                   }`}
                 >
                   {label}
                 </button>
               ))}
               {/* Subfiltro visibilidade */}
-              <div className="flex gap-1 ml-2 pl-2 border-l border-white/10">
+              <div className="flex gap-1 ml-2 pl-2 border-l border-border">
                 {(['visible', 'hidden'] as const).map(v => {
                   const s = stats?.[activeTab]
                   const hiddenCount = (s as { hiddenPending?: number } | undefined)?.hiddenPending ?? 0
@@ -687,13 +687,13 @@ function TranslationsPageContent() {
                       onClick={() => setHiddenFilter(v)}
                       className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 ${
                         hiddenFilter === v
-                          ? 'bg-zinc-600 text-white'
-                          : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+                          ? 'bg-surface-hover text-foreground'
+                          : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                       }`}
                     >
                       {v === 'visible' ? 'Visíveis' : 'Ocultos'}
                       {v === 'hidden' && hiddenCount > 0 && (
-                        <span className="text-[10px] font-bold px-1 rounded text-zinc-400">{hiddenCount}</span>
+                        <span className="text-[10px] font-bold px-1 rounded text-muted">{hiddenCount}</span>
                       )}
                     </button>
                   )
@@ -701,15 +701,15 @@ function TranslationsPageContent() {
               </div>
               {/* Subfiltro de fonte — apenas para artistas */}
               {activeTab === 'artist' && (
-                <div className="flex gap-1 ml-2 pl-2 border-l border-white/10">
+                <div className="flex gap-1 ml-2 pl-2 border-l border-border">
                   {SOURCE_FILTER_OPTIONS.map(([val, label]) => (
                     <button
                       key={val}
                       onClick={() => setSourceFilter(val)}
                       className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
                         sourceFilter === val
-                          ? 'bg-zinc-600 text-white'
-                          : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+                          ? 'bg-surface-hover text-foreground'
+                          : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                       }`}
                     >
                       {label}
@@ -718,7 +718,7 @@ function TranslationsPageContent() {
                 </div>
               )}
             </div>
-            <button onClick={fetchItems} className="ml-auto p-1.5 text-zinc-600 hover:text-zinc-400" title="Recarregar">
+            <button onClick={fetchItems} className="ml-auto p-1.5 text-muted hover:text-muted" title="Recarregar">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
@@ -726,12 +726,12 @@ function TranslationsPageContent() {
           {/* Barra de ações em massa */}
           {selected.size > 0 && (
             <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20 flex-wrap">
-              <span className="text-xs text-zinc-400">{selected.size} selecionados</span>
+              <span className="text-xs text-muted">{selected.size} selecionados</span>
               {canTranslate && (
                 <button
                   onClick={handleBulkTranslate}
                   disabled={bulkTranslating || bulkApproving}
-                  className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-purple-700 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white disabled:opacity-50 transition-colors"
                 >
                   <Sparkles className="w-3 h-3" />
                   {bulkTranslating ? `Traduzindo ${bulkTranslateProgress}/${selected.size}...` : 'Traduzir (IA)'}
@@ -740,21 +740,21 @@ function TranslationsPageContent() {
               <button
                 onClick={handleBulkApprove}
                 disabled={bulkApproving || bulkTranslating}
-                className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-700 text-foreground rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
               >
                 <CheckCircle className="w-3 h-3" />
                 {bulkApproving ? 'Aprovando...' : `Aprovar ${selected.size}`}
               </button>
               <button
                 onClick={() => setSelected(new Set())}
-                className="text-xs text-zinc-600 hover:text-zinc-400"
+                className="text-xs text-muted hover:text-muted"
               >
                 Limpar
               </button>
               {draftCount > 0 && (
                 <button
                   onClick={selectAllDraft}
-                  className="text-xs text-zinc-600 hover:text-zinc-400 ml-auto"
+                  className="text-xs text-muted hover:text-muted ml-auto"
                 >
                   Sel. todos rascunhos ({draftCount})
                 </button>
@@ -764,10 +764,10 @@ function TranslationsPageContent() {
 
           {/* Header de seleção quando há rascunhos visíveis */}
           {selected.size === 0 && draftCount > 0 && (
-            <div className="flex items-center gap-3 px-4 py-1.5 border-b border-white/5">
+            <div className="flex items-center gap-3 px-4 py-1.5 border-b border-border">
               <button
                 onClick={selectAllDraft}
-                className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                className="text-[11px] text-muted hover:text-muted transition-colors"
               >
                 Selecionar {draftCount} rascunho{draftCount !== 1 ? 's' : ''} desta página
               </button>
@@ -784,9 +784,9 @@ function TranslationsPageContent() {
 
           {/* Lista */}
           {loading ? (
-            <div className="p-8 text-center text-zinc-600">Carregando...</div>
+            <div className="p-8 text-center text-muted">Carregando...</div>
           ) : items.length === 0 ? (
-            <div className="p-8 text-center text-zinc-600">Nenhum resultado</div>
+            <div className="p-8 text-center text-muted">Nenhum resultado</div>
           ) : (
             <ul className="divide-y divide-white/5">
               {items.map(item => {
@@ -805,7 +805,7 @@ function TranslationsPageContent() {
                 const canApprove = item.status === 'draft'
                 return (
                   <li key={item.id} className={isSelectedItem ? 'bg-purple-900/10' : ''}>
-                    <div className="flex items-start gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors group">
+                    <div className="flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors group">
                       {/* Checkbox */}
                       <div className="flex-shrink-0 mt-1">
                         <input
@@ -820,9 +820,9 @@ function TranslationsPageContent() {
                       <Link href={editHref} className="flex-1 min-w-0 flex items-start gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-zinc-100 truncate">{item.label}</span>
+                            <span className="font-medium text-foreground truncate">{item.label}</span>
                             {item.subtitle && (
-                              <span className="text-xs text-zinc-600 truncate hidden sm:inline">{item.subtitle}</span>
+                              <span className="text-xs text-muted truncate hidden sm:inline">{item.subtitle}</span>
                             )}
                             {/* Badge fonte para artistas */}
                             {activeTab === 'artist' && item.bioSource && SYNOPSIS_SOURCE_LABELS[item.bioSource] && (
@@ -833,14 +833,14 @@ function TranslationsPageContent() {
                           </div>
                           {/* Snippet original */}
                           {item.snippet && (
-                            <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2 leading-relaxed">
+                            <p className="text-xs text-muted mt-0.5 line-clamp-2 leading-relaxed">
                               {item.snippet}
                             </p>
                           )}
                           {/* Preview PT-BR via ContentTranslation */}
                           {item.ptSnippet && (item.status === 'draft' || item.status === 'approved') && (
                             <p className="text-xs text-purple-400/70 mt-1 line-clamp-2 leading-relaxed">
-                              <span className="text-zinc-600 mr-1">pt-BR:</span>{item.ptSnippet}
+                              <span className="text-muted mr-1">pt-BR:</span>{item.ptSnippet}
                             </p>
                           )}
                           {/* Produções TMDB·pt: sinopse já está em PT no campo original */}
@@ -850,7 +850,7 @@ function TranslationsPageContent() {
                             </p>
                           )}
                           {isProduction && item.synopsisSource && item.synopsisSource !== 'tmdb_pt' && item.status !== 'draft' && item.status !== 'approved' && (
-                            <div className="text-[10px] text-zinc-600 mt-0.5">
+                            <div className="text-[10px] text-muted mt-0.5">
                               Origem: {SYNOPSIS_SOURCE_LABELS[item.synopsisSource]?.label ?? item.synopsisSource}
                             </div>
                           )}
@@ -863,7 +863,7 @@ function TranslationsPageContent() {
                               href={publicHref}
                               target="_blank"
                               onClick={e => e.stopPropagation()}
-                              className="p-1 text-zinc-700 hover:text-zinc-400 transition-colors flex-shrink-0"
+                              className="p-1 text-muted hover:text-muted transition-colors flex-shrink-0"
                               title="Ver página pública"
                             >
                               <ExternalLink className="w-3 h-3" />
@@ -894,7 +894,7 @@ function TranslationsPageContent() {
                               className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold transition-colors disabled:opacity-50 ${
                                 isDone
                                   ? 'bg-green-900/40 text-green-400 border border-green-700/30'
-                                  : 'bg-zinc-800 text-zinc-500 hover:bg-purple-900/40 hover:text-purple-400 border border-white/5 hover:border-purple-700/30'
+                                  : 'bg-surface text-muted hover:bg-purple-900/40 hover:text-purple-400 border border-border hover:border-purple-700/30'
                               }`}
                             >
                               {isTranslating
@@ -916,8 +916,8 @@ function TranslationsPageContent() {
                             ) : null}
 
                           {isProduction
-                            ? <Pencil className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-400" />
-                            : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400" />}
+                            ? <Pencil className="w-3.5 h-3.5 text-muted group-hover:text-muted" />
+                            : <ChevronRight className="w-4 h-4 text-muted group-hover:text-muted" />}
                         </div>
                       </Link>
                     </div>
@@ -929,21 +929,21 @@ function TranslationsPageContent() {
 
           {/* Paginação */}
           {total > 30 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
-              <span className="text-xs text-zinc-600">{total} itens</span>
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+              <span className="text-xs text-muted">{total} itens</span>
               <div className="flex gap-2 items-center">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1 text-xs border border-white/10 rounded-lg disabled:opacity-40 hover:bg-zinc-800 text-zinc-400"
+                  className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted"
                 >
                   Anterior
                 </button>
-                <span className="px-3 py-1 text-xs text-zinc-500">Página {page} de {totalPages}</span>
+                <span className="px-3 py-1 text-xs text-muted">Página {page} de {totalPages}</span>
                 <button
                   onClick={() => setPage(p => p + 1)}
                   disabled={page >= totalPages}
-                  className="px-3 py-1 text-xs border border-white/10 rounded-lg disabled:opacity-40 hover:bg-zinc-800 text-zinc-400"
+                  className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-surface text-muted"
                 >
                   Próxima
                 </button>

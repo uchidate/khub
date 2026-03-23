@@ -24,19 +24,19 @@ export default function AdminError({ error, reset }: ErrorProps) {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-white">Erro no painel admin</h1>
-          <p className="text-zinc-400">
+          <h1 className="text-3xl font-bold text-foreground">Erro no painel admin</h1>
+          <p className="text-muted">
             Ocorreu um erro inesperado. Tente recarregar a página.
           </p>
         </div>
 
         {(error.message || error.digest) && (
-          <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg text-left">
+          <div className="p-4 bg-surface border border-border rounded-lg text-left">
             {process.env.NODE_ENV === 'development' && (
               <p className="text-xs font-mono text-red-400 break-all">{error.message}</p>
             )}
             {error.digest && (
-              <p className="text-xs font-mono text-zinc-500 mt-1">digest: {error.digest}</p>
+              <p className="text-xs font-mono text-muted mt-1">digest: {error.digest}</p>
             )}
           </div>
         )}
@@ -44,14 +44,14 @@ export default function AdminError({ error, reset }: ErrorProps) {
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
           <button
             onClick={reset}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-medium transition-colors"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-pink-600 hover:bg-pink-700 text-foreground rounded-lg font-medium transition-colors"
           >
             <RefreshCw size={18} />
             Tentar Novamente
           </button>
           <Link
             href="/admin"
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-colors"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg font-medium transition-colors"
           >
             <LayoutDashboard size={18} />
             Voltar ao Admin

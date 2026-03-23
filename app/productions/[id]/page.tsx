@@ -242,27 +242,28 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
                 </div>
 
-                {/* Breadcrumbs */}
+                {/* Breadcrumbs + actions */}
                 <div className="relative z-10 pt-6 px-4 sm:px-12 md:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
-                    <Breadcrumbs items={[
-                        { label: 'Produções', href: '/productions' },
-                        { label: production.titlePt }
-                    ]} />
+                    <Breadcrumbs
+                        items={[
+                            { label: 'Produções', href: '/productions' },
+                            { label: production.titlePt }
+                        ]}
+                        onDark
+                        className=""
+                    />
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                         <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/productions/${production.id}`)}`} label="Editar" />
                         <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt}
-                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70" />
+                            className="bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-sm" />
                         <FavoriteButton
                             id={production.id}
                             itemName={production.titlePt}
                             itemType="produção"
-                            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                            className="bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-sm"
                         />
                     </div>
                 </div>
-
-                {/* Spacer — pushes hero content to the bottom */}
-                <div className="flex-1 min-h-[24px]" />
 
                 {/* Hero content */}
                 <div className="relative z-10 px-4 sm:px-12 md:px-20 pb-10 md:pb-16">

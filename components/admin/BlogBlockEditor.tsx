@@ -30,19 +30,19 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
 
 const COLORS: Record<BlogBlockType, string> = {
     blog_heading:         'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    blog_paragraph:       'bg-zinc-700/50 text-zinc-400 border-zinc-600/30',
+    blog_paragraph:       'bg-surface text-muted border-border',
     blog_quote:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
     blog_image:           'bg-blue-500/20 text-blue-300 border-blue-500/30',
     blog_gallery:         'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
     blog_video:           'bg-red-500/20 text-red-300 border-red-500/30',
     blog_twitter:         'bg-sky-500/20 text-sky-300 border-sky-500/30',
     blog_instagram:       'bg-pink-500/20 text-pink-300 border-pink-500/30',
-    blog_tiktok:          'bg-zinc-800/60 text-zinc-300 border-zinc-600/30',
+    blog_tiktok:          'bg-surface text-foreground border-border',
     blog_artist_card:     'bg-violet-500/20 text-violet-300 border-violet-500/30',
     blog_production_card: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     blog_stats_row:       'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
     blog_rating:          'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-    blog_divider:         'bg-zinc-800/40 text-zinc-600 border-zinc-700/30',
+    blog_divider:         'bg-surface text-muted border-border',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
@@ -81,21 +81,21 @@ function TypeSelector({ onSelect, onClose }: {
     onClose: () => void
 }) {
     return (
-        <div className="absolute z-20 mt-1 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-3 min-w-[220px] left-0">
+        <div className="absolute z-20 mt-1 bg-surface border border-border rounded-xl shadow-2xl p-3 min-w-[220px] left-0">
             <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tipo de bloco</span>
-                <button onClick={onClose} className="text-zinc-600 hover:text-zinc-400">
+                <span className="text-xs font-bold text-muted uppercase tracking-wider">Tipo de bloco</span>
+                <button onClick={onClose} className="text-muted hover:text-foreground">
                     <X className="w-3.5 h-3.5" />
                 </button>
             </div>
             {TYPE_GROUPS.map(group => (
                 <div key={group.label} className="mb-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 px-2 mb-1">{group.label}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted px-2 mb-1">{group.label}</p>
                     {group.types.map(type => (
                         <button
                             key={type}
                             onClick={() => { onSelect(type); onClose() }}
-                            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors text-left"
+                            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-surface-hover hover:text-foreground transition-colors text-left"
                         >
                             <span className={`flex items-center justify-center w-6 h-6 rounded border text-[11px] ${COLORS[type]}`}>
                                 {ICONS[type]}
@@ -111,8 +111,8 @@ function TypeSelector({ onSelect, onClose }: {
 
 // ─── Individual field editors ─────────────────────────────────────────────────
 
-const inputCls = "w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-purple-500/50 resize-y"
-const labelCls = "text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1 block"
+const inputCls = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-y"
+const labelCls = "text-[10px] font-bold uppercase tracking-widest text-muted mb-1 block"
 
 function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b: BlogBlock) => void }) {
     switch (block.type) {
@@ -124,7 +124,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <button
                                 key={l}
                                 onClick={() => onChange({ ...block, level: l })}
-                                className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${block.level === l ? 'bg-purple-600/30 border-purple-500/40 text-purple-300' : 'border-white/8 text-zinc-500 hover:text-zinc-300'}`}
+                                className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${block.level === l ? 'bg-purple-600/30 border-purple-500/40 text-purple-300' : 'border-border text-muted hover:text-foreground'}`}
                             >
                                 H{l}
                             </button>
@@ -156,7 +156,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="URL da imagem..." className={inputCls} />
                     <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
                         placeholder="Legenda (opcional)..." className={inputCls} />
-                    <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
                         <input type="checkbox" checked={block.fullWidth || false}
                             onChange={e => onChange({ ...block, fullWidth: e.target.checked })}
                             className="rounded" />
@@ -175,13 +175,13 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                 onChange({ ...block, urls })
                             }} placeholder={`URL da imagem ${i + 1}...`} className={inputCls} />
                             <button onClick={() => onChange({ ...block, urls: block.urls.filter((_, j) => j !== i) })}
-                                className="text-zinc-600 hover:text-red-400 shrink-0">
+                                className="text-muted hover:text-red-400 shrink-0">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
                     ))}
                     <button onClick={() => onChange({ ...block, urls: [...block.urls, ''] })}
-                        className="text-xs text-zinc-500 hover:text-purple-400 transition-colors flex items-center gap-1">
+                        className="text-xs text-muted hover:text-purple-400 transition-colors flex items-center gap-1">
                         <Plus className="w-3.5 h-3.5" /> Adicionar imagem
                     </button>
                     <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
@@ -253,13 +253,13 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                 onChange({ ...block, items })
                             }} placeholder="Valor..." className={inputCls} />
                             <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
-                                className="text-zinc-600 hover:text-red-400 shrink-0">
+                                className="text-muted hover:text-red-400 shrink-0">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
                     ))}
                     <button onClick={() => onChange({ ...block, items: [...block.items, { label: '', value: '' }] })}
-                        className="text-xs text-zinc-500 hover:text-purple-400 transition-colors flex items-center gap-1">
+                        className="text-xs text-muted hover:text-purple-400 transition-colors flex items-center gap-1">
                         <Plus className="w-3.5 h-3.5" /> Adicionar linha
                     </button>
                 </div>
@@ -273,7 +273,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         <input type="number" min={0} max={10} step={0.5}
                             value={block.score}
                             onChange={e => onChange({ ...block, score: parseFloat(e.target.value) || 0 })}
-                            className="w-20 bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50" />
+                            className="w-20 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-yellow-500/50" />
                         <input value={block.label || ''} onChange={e => onChange({ ...block, label: e.target.value })}
                             placeholder="Rótulo (ex: Drama, Álbum)..." className={inputCls} />
                     </div>
@@ -283,7 +283,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             )
 
         case 'blog_divider':
-            return <div className="h-px bg-white/10 my-1 rounded" />
+            return <div className="h-px bg-border my-1 rounded" />
     }
 }
 
@@ -297,16 +297,16 @@ function BlockRow({
     onDelete: () => void; onMoveUp: () => void; onMoveDown: () => void
 }) {
     return (
-        <div className="group relative bg-zinc-800/40 border border-white/6 rounded-xl p-4 hover:border-white/10 transition-colors">
+        <div className="group relative bg-surface border border-border rounded-xl p-4 hover:border-border transition-colors">
             <div className="flex items-start gap-3">
                 <div className="flex flex-col items-center gap-0.5 pt-0.5 shrink-0">
-                    <GripVertical className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors cursor-grab" />
+                    <GripVertical className="w-4 h-4 text-muted group-hover:text-muted transition-colors cursor-grab" />
                     <button onClick={onMoveUp} disabled={index === 0}
-                        className="text-zinc-700 hover:text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                        className="text-muted hover:text-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
                         <ChevronUp className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={onMoveDown} disabled={index === total - 1}
-                        className="text-zinc-700 hover:text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                        className="text-muted hover:text-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
                         <ChevronDown className="w-3.5 h-3.5" />
                     </button>
                 </div>
@@ -316,11 +316,11 @@ function BlockRow({
                             {ICONS[block.type]}
                             {BLOG_BLOCK_TYPE_LABELS[block.type]}
                         </span>
-                        <span className="text-[10px] text-zinc-700">#{index + 1}</span>
+                        <span className="text-[10px] text-muted">#{index + 1}</span>
                     </div>
                     <BlockFieldEditor block={block} onChange={onChange} />
                 </div>
-                <button onClick={onDelete} className="shrink-0 text-zinc-700 hover:text-red-400 transition-colors mt-0.5">
+                <button onClick={onDelete} className="shrink-0 text-muted hover:text-red-400 transition-colors mt-0.5">
                     <Trash2 className="w-4 h-4" />
                 </button>
             </div>
@@ -353,8 +353,8 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
     return (
         <div className="space-y-3">
             {blocks.length === 0 && (
-                <div className="text-center py-12 text-zinc-600 text-sm border border-dashed border-white/8 rounded-xl">
-                    Nenhum bloco ainda. Clique em <span className="text-zinc-400">+ Bloco</span> para começar, ou escolha um template acima.
+                <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl">
+                    Nenhum bloco ainda. Clique em <span className="text-foreground">+ Bloco</span> para começar, ou escolha um template acima.
                 </div>
             )}
 
@@ -370,7 +370,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
             <div className="relative">
                 <button
                     onClick={() => setShowSelector(v => !v)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-white/10 text-sm text-zinc-500 hover:text-zinc-300 hover:border-white/20 transition-colors w-full justify-center"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-border text-sm text-muted hover:text-foreground hover:border-border transition-colors w-full justify-center"
                 >
                     <Plus className="w-4 h-4" /> Bloco
                 </button>

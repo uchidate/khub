@@ -75,6 +75,10 @@ async function NewsContent() {
 }
 
 export default async function NewsPage() {
+    const total = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+        ? null
+        : await prisma.news.count({ where: { status: 'published', isHidden: false } }).catch(() => null)
+
     return (
         <>
         <JsonLd data={{
@@ -90,6 +94,8 @@ export default async function NewsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
             <SectionHeader
                 title="Notícias"
+                count={total}
+                countLabel="notícias"
                 backHref="/"
             />
 

@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { useCallback, useTransition } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import { X, ChevronDown } from 'lucide-react'
+import { AdminSearchInput } from '@/components/admin/AdminSearchInput'
 
 /**
  * AdminFilters
@@ -81,29 +82,24 @@ function Search({
   className?: string
 }) {
   const { setParam, getParam } = useAdminFilter()
-  const value = getParam(name)
+  const urlValue = getParam(name)
+  const [value, setValue] = useState(urlValue)
+
+  // Sync local state when URL changes externally (e.g., clearAll)
+  useEffect(() => { setValue(urlValue) }, [urlValue])
+
+  const commit = (v: string) => setParam(name, v || null)
 
   return (
-    <div className={`relative ${className ?? ''}`}>
-      <input
-        type="text"
-        defaultValue={value}
-        placeholder={placeholder}
-        onBlur={e => setParam(name, e.target.value || null)}
-        onKeyDown={e => {
-          if (e.key === 'Enter') setParam(name, (e.target as HTMLInputElement).value || null)
-        }}
-        className="h-8 pl-3 pr-8 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder:text-zinc-600 outline-none focus:border-purple-500/50 transition-colors min-w-[180px]"
-      />
-      {value && (
-        <button
-          onClick={() => setParam(name, null)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300 transition-colors"
-        >
-          <X size={13} />
-        </button>
-      )}
-    </div>
+    <AdminSearchInput
+      value={value}
+      onChange={v => { setValue(v); if (!v) commit(v) }}
+      onClear={() => commit('')}
+      onBlur={e => commit(e.target.value)}
+      onKeyDown={e => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value) }}
+      placeholder={placeholder}
+      className={`min-w-[180px] ${className ?? ''}`}
+    />
   )
 }
 
@@ -126,7 +122,7 @@ function Select({
       <select
         value={value}
         onChange={e => setParam(name, e.target.value || null)}
-        className="h-8 pl-3 pr-7 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg text-sm text-zinc-300 outline-none focus:border-purple-500/50 transition-colors appearance-none cursor-pointer"
+        className="h-8 pl-3 pr-7 bg-surface border border-border hover:border-border rounded-lg text-sm text-foreground outline-none focus:border-purple-500/50 transition-colors appearance-none cursor-pointer"
       >
         <option value="">{label}</option>
         {options.map(opt => (
@@ -135,7 +131,7 @@ function Select({
           </option>
         ))}
       </select>
-      <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+      <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
     </div>
   )
 }
@@ -155,10 +151,10 @@ function Toggle({
   return (
     <button
       onClick={() => setParam(name, active ? null : '1')}
-      className={`h-8 px-3 rounded-lg text-xs font-medium border transition-colors ${
+      className={`h-8 px-3 rounded-full text-xs font-semibold transition-all ${
         active
-          ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
-          : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+          ? 'bg-accent text-white'
+          : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
       }`}
     >
       {label}
@@ -175,7 +171,7 @@ function ClearButton() {
   return (
     <button
       onClick={clearAll}
-      className="flex items-center gap-1 h-8 px-3 text-xs text-zinc-500 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-colors"
+      className="flex items-center gap-1 h-8 px-3 text-xs text-muted hover:text-foreground border border-border hover:border-border rounded-lg transition-colors"
     >
       <X size={12} />
       Limpar filtros
@@ -240,23 +236,23 @@ export function AdminPagination({
   if (totalPages <= 1) return null
 
   return (
-    <div className={`flex items-center justify-between px-4 py-3 border-t border-zinc-800/60 ${className ?? ''}`}>
-      <span className="text-xs text-zinc-600">{total.toLocaleString('pt-BR')} itens</span>
+    <div className={`flex items-center justify-between px-4 py-3 border-t border-border ${className ?? ''}`}>
+      <span className="text-xs text-muted">{total.toLocaleString('pt-BR')} itens</span>
       <div className="flex items-center gap-2">
         <button
           onClick={() => setParam('page', String(page - 1))}
           disabled={page <= 1}
-          className="px-3 py-1 text-xs border border-zinc-800 rounded-lg disabled:opacity-30 hover:bg-zinc-800 text-zinc-400 transition-colors"
+          className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-30 hover:bg-surface-hover text-muted transition-colors"
         >
           ← Anterior
         </button>
-        <span className="text-xs text-zinc-500 tabular-nums">
+        <span className="text-xs text-muted tabular-nums">
           {page} / {totalPages}
         </span>
         <button
           onClick={() => setParam('page', String(page + 1))}
           disabled={page >= totalPages}
-          className="px-3 py-1 text-xs border border-zinc-800 rounded-lg disabled:opacity-30 hover:bg-zinc-800 text-zinc-400 transition-colors"
+          className="px-3 py-1 text-xs border border-border rounded-lg disabled:opacity-30 hover:bg-surface-hover text-muted transition-colors"
         >
           Próxima →
         </button>

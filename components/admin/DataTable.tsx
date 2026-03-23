@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Search, ChevronLeft, ChevronRight, Trash2, ArrowUpDown, X, SearchX } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, ArrowUpDown, SearchX } from 'lucide-react'
+import { AdminSearchInput } from '@/components/admin/AdminSearchInput'
 
 export interface Column<T> {
   key: string
@@ -66,7 +67,7 @@ function PageNumbers({
     <div className="hidden sm:flex items-center gap-1">
       {pages.map((page, i) =>
         page === 'ellipsis' ? (
-          <span key={`e${i}`} className="px-1 text-zinc-600 text-sm">…</span>
+          <span key={`e${i}`} className="px-1 text-muted text-sm">…</span>
         ) : (
           <button
             key={page}
@@ -74,7 +75,7 @@ function PageNumbers({
             className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
               page === current
                 ? 'bg-purple-600 text-white'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                : 'text-muted hover:text-foreground hover:bg-surface-hover'
             }`}
           >
             {page}
@@ -187,21 +188,12 @@ export function DataTable<T extends { id: string }>({
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={15} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
-            placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-10 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/60 focus:bg-zinc-900 text-sm transition-all"
-          />
-          {search && (
-            <button onClick={() => { setSearch(''); setPagination(p => ({ ...p, page: 1 })) }} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors z-10">
-              <X size={15} />
-            </button>
-          )}
-        </div>
+        <AdminSearchInput
+          value={search}
+          onChange={(v) => { setSearch(v); setPagination(p => ({ ...p, page: 1 })) }}
+          placeholder={searchPlaceholder}
+          className="w-full sm:w-80"
+        />
         <div className="flex items-center gap-2 flex-wrap">
           {filters}
           {selected.size > 0 && bulkActions && bulkActions(Array.from(selected), clearSelection)}
@@ -219,27 +211,27 @@ export function DataTable<T extends { id: string }>({
 
       {/* Mobile cards (only when renderMobileCard is provided) */}
       {renderMobileCard && (
-        <div className="md:hidden rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900/30">
+        <div className="md:hidden rounded-xl border border-border overflow-hidden bg-surface">
           {loading ? (
-            <div className="divide-y divide-zinc-800/50">
+            <div className="divide-y divide-border">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 p-3">
-                  <div className="w-10 h-14 rounded-lg bg-zinc-800 animate-pulse flex-shrink-0" />
+                  <div className="w-10 h-14 rounded-lg bg-skeleton animate-pulse flex-shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-zinc-800 rounded-md animate-pulse w-2/3" />
-                    <div className="h-3 bg-zinc-800 rounded-md animate-pulse w-1/2" />
-                    <div className="h-3 bg-zinc-800 rounded-md animate-pulse w-1/3" />
+                    <div className="h-4 bg-skeleton rounded-md animate-pulse w-2/3" />
+                    <div className="h-3 bg-skeleton rounded-md animate-pulse w-1/2" />
+                    <div className="h-3 bg-skeleton rounded-md animate-pulse w-1/3" />
                   </div>
                 </div>
               ))}
             </div>
           ) : data.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16 text-zinc-600">
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted">
               <SearchX size={36} strokeWidth={1.5} />
               <p className="text-sm">Nenhum resultado encontrado</p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-800/50">
+            <div className="divide-y divide-border">
               {data.map(item => (
                 <div key={item.id}>{renderMobileCard(item)}</div>
               ))}
@@ -249,25 +241,25 @@ export function DataTable<T extends { id: string }>({
       )}
 
       {/* Table — overflow-x-auto + min-w-max ensures horizontal scroll instead of column squishing */}
-      <div className={`overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/20 ${renderMobileCard ? 'hidden md:block' : ''}`}>
+      <div className={`overflow-x-auto rounded-xl border border-border bg-surface ${renderMobileCard ? 'hidden md:block' : ''}`}>
         <table className="min-w-max w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-800">
+            <tr className="border-b border-border">
               {onDelete && (
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
                     checked={data.length > 0 && selected.size === data.length}
                     onChange={toggleSelectAll}
-                    className="rounded border-zinc-700 bg-zinc-900 accent-purple-500"
+                    className="rounded border-border bg-surface accent-purple-500"
                   />
                 </th>
               )}
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-zinc-500 whitespace-nowrap ${
-                    col.sortable ? 'cursor-pointer hover:text-zinc-300 select-none' : ''
+                  className={`px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-muted whitespace-nowrap ${
+                    col.sortable ? 'cursor-pointer hover:text-foreground select-none' : ''
                   } ${col.className ?? ''}`}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                 >
@@ -276,39 +268,39 @@ export function DataTable<T extends { id: string }>({
                     {col.sortable && (
                       <ArrowUpDown
                         size={12}
-                        className={sortBy === col.key ? 'text-purple-400' : 'text-zinc-700'}
+                        className={sortBy === col.key ? 'text-purple-400' : 'text-muted'}
                       />
                     )}
                   </span>
                 </th>
               ))}
               {hasActions && (
-                <th className="sticky right-0 bg-zinc-950 border-l border-zinc-800/50 px-4 py-3 text-right text-[11px] font-bold uppercase tracking-widest text-zinc-500 shadow-[-8px_0_16px_rgba(0,0,0,0.5)]">
+                <th className="sticky right-0 bg-background border-l border-border px-4 py-3 text-right text-[11px] font-bold uppercase tracking-widest text-muted shadow-[-8px_0_16px_rgba(0,0,0,0.5)]">
                   Ações
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800/40">
+          <tbody className="divide-y divide-border">
             {loading ? (
               Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   {onDelete && (
                     <td className="px-4 py-3">
-                      <div className="w-4 h-4 bg-zinc-800 rounded" />
+                      <div className="w-4 h-4 bg-skeleton rounded" />
                     </td>
                   )}
                   {columns.map((col) => (
                     <td key={col.key} className={`px-4 py-3 ${col.className ?? ''}`}>
                       <div
-                        className="h-4 bg-zinc-800 rounded-md"
+                        className="h-4 bg-skeleton rounded-md"
                         style={{ width: `${55 + ((i * 37 + col.key.length * 13) % 40)}%` }}
                       />
                     </td>
                   ))}
                   {hasActions && (
-                    <td className="sticky right-0 bg-zinc-950 border-l border-zinc-800/50 px-4 py-3">
-                      <div className="w-16 h-6 bg-zinc-800 rounded-lg ml-auto" />
+                    <td className="sticky right-0 bg-background border-l border-border px-4 py-3">
+                      <div className="w-16 h-6 bg-skeleton rounded-lg ml-auto" />
                     </td>
                   )}
                 </tr>
@@ -316,7 +308,7 @@ export function DataTable<T extends { id: string }>({
             ) : data.length === 0 ? (
               <tr>
                 <td colSpan={columns.length + (onDelete ? 1 : 0) + (hasActions ? 1 : 0)}>
-                  <div className="flex flex-col items-center justify-center gap-3 py-16 text-zinc-600">
+                  <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted">
                     <SearchX size={36} strokeWidth={1.5} />
                     <p className="text-sm">Nenhum resultado encontrado</p>
                   </div>
@@ -324,30 +316,30 @@ export function DataTable<T extends { id: string }>({
               </tr>
             ) : (
               data.map((item) => (
-                <tr key={item.id} className={`hover:bg-zinc-800/30 transition-colors ${selected.has(item.id) ? 'bg-purple-500/5' : ''}`}>
+                <tr key={item.id} className={`hover:bg-surface-hover transition-colors ${selected.has(item.id) ? 'bg-purple-500/5' : ''}`}>
                   {onDelete && (
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
                         checked={selected.has(item.id)}
                         onChange={() => toggleSelect(item.id)}
-                        className="rounded border-zinc-700 bg-zinc-900 accent-purple-500"
+                        className="rounded border-border bg-surface accent-purple-500"
                       />
                     </td>
                   )}
                   {columns.map((col) => (
-                    <td key={col.key} className={`px-4 py-3 text-zinc-300 ${col.className ?? ''}`}>
+                    <td key={col.key} className={`px-4 py-3 text-foreground ${col.className ?? ''}`}>
                       {col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}
                   {hasActions && (
-                    <td className="sticky right-0 bg-zinc-950 border-l border-zinc-800/50 px-4 py-3 text-right shadow-[-8px_0_16px_rgba(0,0,0,0.5)]">
+                    <td className="sticky right-0 bg-background border-l border-border px-4 py-3 text-right shadow-[-8px_0_16px_rgba(0,0,0,0.5)]">
                       <div className="flex items-center justify-end gap-2">
                         {actions?.(item)}
                         {editHref && (
                           <Link
                             href={editHref(item)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:text-white hover:bg-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
+                            className="text-xs px-3 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:text-foreground hover:bg-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
                           >
                             Editar
                           </Link>
@@ -355,7 +347,7 @@ export function DataTable<T extends { id: string }>({
                         {onEdit && !editHref && (
                           <button
                             onClick={() => onEdit(item)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:text-white hover:bg-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
+                            className="text-xs px-3 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:text-foreground hover:bg-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
                           >
                             Editar
                           </button>
@@ -371,7 +363,7 @@ export function DataTable<T extends { id: string }>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between gap-3 text-sm text-zinc-500">
+      <div className="flex items-center justify-between gap-3 text-sm text-muted">
         {/* Left: total + per-page selector */}
         <div className="flex items-center gap-3">
           <span className="tabular-nums whitespace-nowrap">
@@ -380,7 +372,7 @@ export function DataTable<T extends { id: string }>({
           <select
             value={pagination.limit}
             onChange={(e) => setLimit(Number(e.target.value))}
-            className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-400 px-2 py-1.5 focus:outline-none focus:border-zinc-600 cursor-pointer hover:border-zinc-700 transition-colors"
+            className="bg-surface border border-border rounded-lg text-xs text-muted px-2 py-1.5 focus:outline-none focus:border-border cursor-pointer hover:border-border transition-colors"
           >
             {PAGE_SIZE_OPTIONS.map(n => (
               <option key={n} value={n}>{n} / pág</option>
@@ -400,18 +392,18 @@ export function DataTable<T extends { id: string }>({
           <button
             onClick={() => setPage(pagination.page - 1)}
             disabled={pagination.page <= 1}
-            className="p-1.5 rounded-lg hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Página anterior"
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="text-zinc-400 text-xs tabular-nums px-1 sm:hidden">
+          <span className="text-muted text-xs tabular-nums px-1 sm:hidden">
             {pagination.page}/{pagination.totalPages || 1}
           </span>
           <button
             onClick={() => setPage(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages}
-            className="p-1.5 rounded-lg hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Próxima página"
           >
             <ChevronRight size={16} />

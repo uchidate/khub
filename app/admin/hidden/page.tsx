@@ -95,7 +95,7 @@ export default function HiddenItemsPage() {
     return (
         <AdminLayout title="Itens Ocultos">
             <div className="space-y-6">
-                <p className="text-zinc-400 text-sm">
+                <p className="text-muted text-sm">
                     {total === 0 && !loading
                         ? 'Nenhum item oculto no momento.'
                         : `${total} item(ns) oculto(s) do site público.`}
@@ -106,7 +106,7 @@ export default function HiddenItemsPage() {
                 )}
 
                 {/* Tabs */}
-                <div className="flex gap-1 border-b border-zinc-800 pb-0">
+                <div className="flex gap-1 border-b border-border pb-0">
                     {tabs.map(t => (
                         <button
                             key={t.key}
@@ -114,13 +114,13 @@ export default function HiddenItemsPage() {
                             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
                                 tab === t.key
                                     ? 'border-purple-500 text-purple-400 bg-purple-500/5'
-                                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                                    : 'border-transparent text-muted hover:text-foreground'
                             }`}
                         >
                             <t.icon size={14} />
                             {t.label}
                             {t.count > 0 && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-red-600/80 text-white text-[10px] font-black leading-none">
+                                <span className="px-1.5 py-0.5 rounded-full bg-red-600/80 text-foreground text-[10px] font-black leading-none">
                                     {t.count}
                                 </span>
                             )}
@@ -210,7 +210,7 @@ export default function HiddenItemsPage() {
 
 function EmptyState({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
     return (
-        <div className="flex flex-col items-center justify-center py-20 text-zinc-600">
+        <div className="flex flex-col items-center justify-center py-20 text-muted">
             <Icon size={40} className="mb-3 opacity-40" />
             <p className="text-sm">{label}</p>
         </div>
@@ -230,9 +230,9 @@ function HiddenCard({
     imageRounded?: boolean
 }) {
     return (
-        <div className="flex items-center gap-4 p-4 bg-zinc-900/60 border border-white/5 rounded-xl hover:border-white/10 transition-colors">
+        <div className="flex items-center gap-4 p-4 bg-surface border border-border rounded-xl hover:border-border transition-colors">
             {/* Image */}
-            <div className={`w-12 h-12 flex-shrink-0 overflow-hidden bg-zinc-800 flex items-center justify-center ${imageRounded ? 'rounded-full' : 'rounded-lg'}`}>
+            <div className={`w-12 h-12 flex-shrink-0 overflow-hidden bg-surface flex items-center justify-center ${imageRounded ? 'rounded-full' : 'rounded-lg'}`}>
                 {imageUrl ? (
                     <Image
                         src={imageUrl}
@@ -242,15 +242,15 @@ function HiddenCard({
                         className="object-cover w-full h-full"
                     />
                 ) : (
-                    <EyeOff size={18} className="text-zinc-600" />
+                    <EyeOff size={18} className="text-muted" />
                 )}
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-                <p className="font-bold text-white text-sm truncate">{name}</p>
-                {subtitle && <p className="text-xs text-zinc-500">{subtitle}</p>}
-                <p className="text-[10px] text-zinc-700 mt-0.5">
+                <p className="font-bold text-foreground text-sm truncate">{name}</p>
+                {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+                <p className="text-[10px] text-muted mt-0.5">
                     Oculto desde {new Date(updatedAt).toLocaleDateString('pt-BR')}
                 </p>
             </div>
@@ -259,7 +259,7 @@ function HiddenCard({
             <div className="flex items-center gap-2 flex-shrink-0">
                 <Link
                     href={editHref}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-400 hover:text-white border border-white/10 hover:border-white/20 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border rounded-lg transition-colors"
                 >
                     <ExternalLink size={12} />
                     Editar
@@ -267,7 +267,7 @@ function HiddenCard({
                 <button
                     onClick={onRestore}
                     disabled={restoring}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-green-400 hover:text-white bg-green-900/20 hover:bg-green-600 border border-green-800/40 hover:border-green-500 rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-green-400 hover:text-foreground bg-green-900/20 hover:bg-green-600 border border-green-800/40 hover:border-green-500 rounded-lg transition-colors disabled:opacity-50"
                 >
                     <Eye size={12} />
                     {restoring ? 'Restaurando...' : 'Restaurar'}

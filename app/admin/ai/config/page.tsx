@@ -94,7 +94,7 @@ export default function AiConfigPage() {
         return (
             <AdminLayout title="Configuração de IA">
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-6 h-6 text-zinc-600 animate-spin" />
+                    <Loader2 className="w-6 h-6 text-muted animate-spin" />
                 </div>
             </AdminLayout>
         )
@@ -107,14 +107,14 @@ export default function AiConfigPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => router.push('/admin/ai')}
-                        className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                        className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />
                         Dashboard
                     </button>
                     <div>
-                        <h1 className="text-xl font-bold text-white">Configuração de IA</h1>
-                        <p className="text-xs text-zinc-500 mt-0.5">Provider preferido, limites de orçamento e habilitação por feature</p>
+                        <h1 className="text-xl font-bold text-foreground">Configuração de IA</h1>
+                        <p className="text-xs text-muted mt-0.5">Provider preferido, limites de orçamento e habilitação por feature</p>
                     </div>
                 </div>
 
@@ -132,8 +132,8 @@ export default function AiConfigPage() {
                         return (
                             <div
                                 key={feat}
-                                className={`bg-zinc-900 border rounded-xl p-4 transition-colors ${
-                                    form.enabled ? 'border-white/8' : 'border-white/4 opacity-60'
+                                className={`bg-surface border rounded-xl p-4 transition-colors ${
+                                    form.enabled ? 'border-border' : 'border-border opacity-60'
                                 }`}
                             >
                                 <div className="flex items-start gap-4">
@@ -141,7 +141,7 @@ export default function AiConfigPage() {
                                     <button
                                         onClick={() => updateForm(feat, 'enabled', !form.enabled)}
                                         className={`mt-0.5 w-8 h-4.5 rounded-full transition-colors relative shrink-0 ${
-                                            form.enabled ? 'bg-purple-600' : 'bg-zinc-700'
+                                            form.enabled ? 'bg-purple-600' : 'bg-surface'
                                         }`}
                                         title={form.enabled ? 'Desabilitar' : 'Habilitar'}
                                     >
@@ -155,13 +155,13 @@ export default function AiConfigPage() {
                                     <div className="flex-1 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm font-semibold text-white">{FEATURE_LABELS[feat as AiFeature | 'unknown']}</p>
-                                                <p className="text-[10px] text-zinc-600 font-mono">{feat}</p>
+                                                <p className="text-sm font-semibold text-foreground">{FEATURE_LABELS[feat as AiFeature | 'unknown']}</p>
+                                                <p className="text-[10px] text-muted font-mono">{feat}</p>
                                             </div>
                                             <button
                                                 onClick={() => handleSave(feat)}
                                                 disabled={isSav}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white transition-colors"
                                             >
                                                 {isSav  ? <Loader2 className="w-3 h-3 animate-spin" /> :
                                                  isDone ? <CheckCircle className="w-3 h-3 text-emerald-300" /> :
@@ -172,13 +172,13 @@ export default function AiConfigPage() {
 
                                         <div className="grid sm:grid-cols-2 gap-3">
                                             <div>
-                                                <label className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">
+                                                <label className="text-[10px] text-muted uppercase tracking-wide block mb-1">
                                                     Provider preferido
                                                 </label>
                                                 <select
                                                     value={form.preferredProvider}
                                                     onChange={e => updateForm(feat, 'preferredProvider', e.target.value)}
-                                                    className="w-full text-xs bg-zinc-800 border border-white/10 rounded-lg px-2.5 py-1.5 text-zinc-300"
+                                                    className="w-full text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground"
                                                 >
                                                     {PROVIDER_OPTIONS.map(o => (
                                                         <option key={o.value} value={o.value}>{o.label}</option>
@@ -186,7 +186,7 @@ export default function AiConfigPage() {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">
+                                                <label className="text-[10px] text-muted uppercase tracking-wide block mb-1">
                                                     Orçamento mensal (USD) — opcional
                                                 </label>
                                                 <input
@@ -196,13 +196,13 @@ export default function AiConfigPage() {
                                                     placeholder="ex: 5.00"
                                                     value={form.monthlyBudgetUsd}
                                                     onChange={e => updateForm(feat, 'monthlyBudgetUsd', e.target.value)}
-                                                    className="w-full text-xs bg-zinc-800 border border-white/10 rounded-lg px-2.5 py-1.5 text-zinc-300 placeholder:text-zinc-600"
+                                                    className="w-full text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground placeholder:text-muted"
                                                 />
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">
+                                            <label className="text-[10px] text-muted uppercase tracking-wide block mb-1">
                                                 Observações
                                             </label>
                                             <input
@@ -211,7 +211,7 @@ export default function AiConfigPage() {
                                                 placeholder="Notas internas..."
                                                 value={form.notes}
                                                 onChange={e => updateForm(feat, 'notes', e.target.value)}
-                                                className="w-full text-xs bg-zinc-800 border border-white/10 rounded-lg px-2.5 py-1.5 text-zinc-300 placeholder:text-zinc-600"
+                                                className="w-full text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground placeholder:text-muted"
                                             />
                                         </div>
                                     </div>
@@ -221,7 +221,7 @@ export default function AiConfigPage() {
                     })}
                 </div>
 
-                <p className="text-[10px] text-zinc-700">
+                <p className="text-[10px] text-muted">
                     Nota: o orçamento é apenas informativo no momento — a aplicação exibe alerta no dashboard mas não bloqueia chamadas automaticamente.
                 </p>
             </div>

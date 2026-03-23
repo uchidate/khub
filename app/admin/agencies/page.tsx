@@ -52,20 +52,20 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+    <div className="bg-surface border border-border rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-purple-400" />
-          <span className="text-sm font-bold text-white">Artistas de {agencyName}</span>
+          <span className="text-sm font-bold text-foreground">Artistas de {agencyName}</span>
           {artists && (
-            <span className="text-xs text-zinc-500 font-medium">
+            <span className="text-xs text-muted font-medium">
               ({artists.length} artista{artists.length !== 1 ? 's' : ''})
             </span>
           )}
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+          className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -73,12 +73,12 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
 
       <div className="p-4">
         {loading ? (
-          <div className="flex items-center justify-center py-8 gap-2 text-zinc-500">
+          <div className="flex items-center justify-center py-8 gap-2 text-muted">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="text-sm">Carregando...</span>
           </div>
         ) : !artists || artists.length === 0 ? (
-          <div className="py-8 text-center text-sm text-zinc-600">
+          <div className="py-8 text-center text-sm text-muted">
             Nenhum artista vinculado a esta agência
           </div>
         ) : (
@@ -89,9 +89,9 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
                 href={`/artists/${artist.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition-all group"
+                className="flex items-center gap-2 p-2 rounded-lg bg-surface hover:bg-surface border border-transparent hover:border-border transition-all group"
               >
-                <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-zinc-700">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-surface">
                   {artist.primaryImageUrl ? (
                     <Image
                       src={artist.primaryImageUrl}
@@ -102,19 +102,19 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-zinc-500" />
+                      <User className="w-4 h-4 text-muted" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-zinc-300 truncate group-hover:text-white transition-colors">
+                  <p className="text-xs font-bold text-foreground truncate group-hover:text-foreground transition-colors">
                     {artist.nameRomanized}
                   </p>
                   {artist.nameHangul && (
-                    <p className="text-[10px] text-zinc-600 truncate">{artist.nameHangul}</p>
+                    <p className="text-[10px] text-muted truncate">{artist.nameHangul}</p>
                   )}
                 </div>
-                <ExternalLink className="w-3 h-3 text-zinc-700 opacity-0 group-hover:opacity-100 flex-shrink-0 shrink-0" />
+                <ExternalLink className="w-3 h-3 text-muted opacity-0 group-hover:opacity-100 flex-shrink-0 shrink-0" />
               </a>
             ))}
           </div>
@@ -193,7 +193,7 @@ export default function AgenciesPage() {
             {agency.website.replace(/^https?:\/\//, '')}
           </a>
         ) : (
-          <span className="text-zinc-600 text-xs">—</span>
+          <span className="text-muted text-xs">—</span>
         ),
     },
     {
@@ -201,7 +201,7 @@ export default function AgenciesPage() {
       label: 'Artistas',
       sortable: true,
       render: (agency) => (
-        <span className="text-zinc-400 font-mono text-sm">{agency.artistsCount}</span>
+        <span className="text-muted font-mono text-sm">{agency.artistsCount}</span>
       ),
     },
     {
@@ -209,7 +209,7 @@ export default function AgenciesPage() {
       label: 'Cadastro',
       sortable: true,
       render: (agency) => (
-        <span className="text-xs text-zinc-500">{new Date(agency.createdAt).toLocaleDateString('pt-BR')}</span>
+        <span className="text-xs text-muted">{new Date(agency.createdAt).toLocaleDateString('pt-BR')}</span>
       ),
     },
   ]
@@ -218,7 +218,7 @@ export default function AgenciesPage() {
     <AdminLayout title="Agências">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-zinc-400">Gerencie as agências de entretenimento da plataforma</p>
+          <p className="text-muted">Gerencie as agências de entretenimento da plataforma</p>
           <button
             onClick={handleCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
@@ -241,7 +241,7 @@ export default function AgenciesPage() {
               className={`p-1.5 rounded-lg transition-colors ${
                 expanded?.id === agency.id
                   ? 'bg-purple-600/20 text-purple-400'
-                  : 'hover:bg-zinc-700 text-zinc-500 hover:text-white'
+                  : 'hover:bg-surface text-muted hover:text-foreground'
               }`}
             >
               <Users className="w-3.5 h-3.5" />

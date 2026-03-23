@@ -27,12 +27,12 @@ const BLOCK_ICONS: Record<NewsBlockType, React.ReactNode> = {
 
 const BLOCK_COLORS: Record<NewsBlockType, string> = {
     heading:         'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    paragraph:       'bg-zinc-700/50 text-zinc-400 border-zinc-600/30',
+    paragraph:       'bg-surface text-muted border-border',
     quote:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
     image:           'bg-blue-500/20 text-blue-300 border-blue-500/30',
     twitter_embed:   'bg-sky-500/20 text-sky-300 border-sky-500/30',
     instagram_embed: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-    tiktok_embed:    'bg-zinc-800/60 text-zinc-300 border-zinc-600/30',
+    tiktok_embed:    'bg-surface text-foreground border-border',
     video:           'bg-red-500/20 text-red-300 border-red-500/30',
 }
 
@@ -59,10 +59,10 @@ function BlockTypeSelector({ onSelect, onClose }: {
 }) {
     const types: NewsBlockType[] = ['heading', 'paragraph', 'quote', 'image', 'twitter_embed', 'instagram_embed', 'tiktok_embed', 'video']
     return (
-        <div className="absolute z-10 mt-1 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-2 min-w-[180px]">
+        <div className="absolute z-10 mt-1 bg-surface border border-border rounded-xl shadow-2xl p-2 min-w-[180px]">
             <div className="flex justify-between items-center px-2 py-1 mb-1">
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tipo de bloco</span>
-                <button onClick={onClose} className="text-zinc-600 hover:text-zinc-400">
+                <span className="text-xs font-bold text-muted uppercase tracking-wider">Tipo de bloco</span>
+                <button onClick={onClose} className="text-muted hover:text-foreground">
                     <X className="w-3.5 h-3.5" />
                 </button>
             </div>
@@ -70,7 +70,7 @@ function BlockTypeSelector({ onSelect, onClose }: {
                 <button
                     key={type}
                     onClick={() => { onSelect(type); onClose() }}
-                    className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors text-left"
+                    className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-surface-hover hover:text-foreground transition-colors text-left"
                 >
                     <span className={`flex items-center justify-center w-6 h-6 rounded border text-[11px] ${BLOCK_COLORS[type]}`}>
                         {BLOCK_ICONS[type]}
@@ -99,7 +99,7 @@ function TextBlockEditor({
     return (
         <div className="grid grid-cols-2 gap-3">
             <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1 block">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1 block">
                     Original
                 </label>
                 <El
@@ -107,11 +107,11 @@ function TextBlockEditor({
                     onChange={e => onChange({ ...block, original: e.target.value })}
                     rows={multiline ? 3 : undefined}
                     placeholder="Texto original..."
-                    className="w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-purple-500/50 resize-y"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-y"
                 />
             </div>
             <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1 block">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1 block">
                     Tradução (pt-BR)
                 </label>
                 <El
@@ -119,7 +119,7 @@ function TextBlockEditor({
                     onChange={e => onChange({ ...block, translated: e.target.value })}
                     rows={multiline ? 3 : undefined}
                     placeholder={`Tradução do ${label.toLowerCase()}...`}
-                    className="w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-purple-500/50 resize-y"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-y"
                 />
             </div>
         </div>
@@ -133,13 +133,13 @@ function ImageBlockEditor({ block, onChange }: { block: ImageBlock; onChange: (u
                 value={block.url}
                 onChange={e => onChange({ ...block, url: e.target.value })}
                 placeholder="URL da imagem..."
-                className="w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-blue-500/50"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-blue-500/50"
             />
             <input
                 value={block.caption || ''}
                 onChange={e => onChange({ ...block, caption: e.target.value })}
                 placeholder="Legenda (opcional)..."
-                className="w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-blue-500/50"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-blue-500/50"
             />
         </div>
     )
@@ -160,14 +160,14 @@ function UrlBlockEditor({
                 value={block.url}
                 onChange={e => onChange({ ...block, url: e.target.value })}
                 placeholder={placeholder}
-                className="w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-zinc-500/50"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-border"
             />
             {'caption' in block && (
                 <input
                     value={(block as VideoBlock).caption || ''}
                     onChange={e => onChange({ ...(block as VideoBlock), caption: e.target.value })}
                     placeholder="Legenda (opcional)..."
-                    className="w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-zinc-500/50"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-border"
                 />
             )}
         </div>
@@ -207,22 +207,22 @@ function BlockRow({
     onMoveDown: () => void
 }) {
     return (
-        <div className="group relative bg-zinc-800/40 border border-white/6 rounded-xl p-4 hover:border-white/10 transition-colors">
+        <div className="group relative bg-surface border border-border rounded-xl p-4 hover:border-border transition-colors">
             <div className="flex items-start gap-3">
                 {/* Drag handle + move buttons */}
                 <div className="flex flex-col items-center gap-0.5 pt-0.5 shrink-0">
-                    <GripVertical className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors cursor-grab" />
+                    <GripVertical className="w-4 h-4 text-muted group-hover:text-muted transition-colors cursor-grab" />
                     <button
                         onClick={onMoveUp}
                         disabled={index === 0}
-                        className="text-zinc-700 hover:text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        className="text-muted hover:text-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                     >
                         <ChevronUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={onMoveDown}
                         disabled={index === total - 1}
-                        className="text-zinc-700 hover:text-zinc-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        className="text-muted hover:text-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                     >
                         <ChevronDown className="w-3.5 h-3.5" />
                     </button>
@@ -235,7 +235,7 @@ function BlockRow({
                             {BLOCK_ICONS[block.type]}
                             {BLOCK_TYPE_LABELS[block.type]}
                         </span>
-                        <span className="text-[10px] text-zinc-700">#{index + 1}</span>
+                        <span className="text-[10px] text-muted">#{index + 1}</span>
                     </div>
                     <BlockFieldEditor block={block} onChange={onChange} />
                 </div>
@@ -243,7 +243,7 @@ function BlockRow({
                 {/* Delete */}
                 <button
                     onClick={onDelete}
-                    className="shrink-0 text-zinc-700 hover:text-red-400 transition-colors mt-0.5"
+                    className="shrink-0 text-muted hover:text-red-400 transition-colors mt-0.5"
                 >
                     <Trash2 className="w-4 h-4" />
                 </button>
@@ -286,7 +286,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
     return (
         <div className="space-y-3">
             {blocks.length === 0 && (
-                <div className="text-center py-10 text-zinc-600 text-sm border border-dashed border-white/8 rounded-xl">
+                <div className="text-center py-10 text-muted text-sm border border-dashed border-border rounded-xl">
                     Nenhum bloco. Clique em &quot;+ Bloco&quot; para começar.
                 </div>
             )}
@@ -308,7 +308,7 @@ export function BlockEditor({ blocks, onChange }: BlockEditorProps) {
             <div className="relative">
                 <button
                     onClick={() => setShowTypeSelector(v => !v)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-white/10 text-sm text-zinc-500 hover:text-zinc-300 hover:border-white/20 transition-colors w-full justify-center"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-border text-sm text-muted hover:text-foreground hover:border-border transition-colors w-full justify-center"
                 >
                     <Plus className="w-4 h-4" />
                     Bloco

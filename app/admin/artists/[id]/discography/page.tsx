@@ -58,8 +58,8 @@ const columns: Column<Album>[] = [
           className="w-12 h-12 rounded object-cover"
         />
       ) : (
-        <div className="w-12 h-12 rounded bg-zinc-800 flex items-center justify-center">
-          <Music className="w-4 h-4 text-zinc-600" />
+        <div className="w-12 h-12 rounded bg-surface flex items-center justify-center">
+          <Music className="w-4 h-4 text-muted" />
         </div>
       ),
   },
@@ -69,7 +69,7 @@ const columns: Column<Album>[] = [
     label: 'Tipo',
     sortable: true,
     render: (album) => (
-      <span className={`px-2 py-1 rounded text-xs font-bold ${TYPE_STYLE[album.type] ?? 'bg-zinc-800 text-zinc-400'}`}>
+      <span className={`px-2 py-1 rounded text-xs font-bold ${TYPE_STYLE[album.type] ?? 'bg-surface text-muted'}`}>
         {TYPE_LABEL[album.type] ?? album.type}
       </span>
     ),
@@ -80,11 +80,11 @@ const columns: Column<Album>[] = [
     sortable: true,
     render: (album) =>
       album.releaseDate ? (
-        <span className="text-zinc-300 text-sm">
+        <span className="text-foreground text-sm">
           {new Date(album.releaseDate).getUTCFullYear()}
         </span>
       ) : (
-        <span className="text-zinc-600">—</span>
+        <span className="text-muted">—</span>
       ),
   },
   {
@@ -114,7 +114,7 @@ const columns: Column<Album>[] = [
           </a>
         )}
         {!album.spotifyUrl && !album.appleMusicUrl && !album.youtubeUrl && (
-          <span className="text-zinc-600 text-xs">—</span>
+          <span className="text-muted text-xs">—</span>
         )}
       </div>
     ),
@@ -128,13 +128,13 @@ const columns: Column<Album>[] = [
           href={`https://musicbrainz.org/release-group/${album.mbid}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[10px] font-mono text-zinc-500 hover:text-purple-400 transition-colors"
+          className="text-[10px] font-mono text-muted hover:text-purple-400 transition-colors"
           title={album.mbid}
         >
           {album.mbid.slice(0, 8)}…
         </a>
       ) : (
-        <span className="text-zinc-700 text-xs">—</span>
+        <span className="text-muted text-xs">—</span>
       ),
   },
 ]
@@ -416,29 +416,29 @@ export default function ArtistDiscographyPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
               <Link href="/admin/artists"
-                className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors">
+                className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors">
                 <ArrowLeft className="w-4 h-4" />
                 Artistas
               </Link>
               {!artistLoading && artist && (
                 <div className="flex items-center gap-3">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
                     {artist.primaryImageUrl ? (
                       <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Music className="w-4 h-4 text-zinc-600" />
+                        <Music className="w-4 h-4 text-muted" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="font-black text-white">{artist.nameRomanized}</p>
+                    <p className="font-black text-foreground">{artist.nameRomanized}</p>
                     {artist.nameHangul && (
-                      <p className="text-xs text-zinc-500">{artist.nameHangul}</p>
+                      <p className="text-xs text-muted">{artist.nameHangul}</p>
                     )}
                   </div>
                   {syncLastDate && (
-                    <span className="text-xs text-zinc-600 flex items-center gap-1">
+                    <span className="text-xs text-muted flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />
                       Sync: {syncLastDate}
                     </span>
@@ -501,7 +501,7 @@ export default function ArtistDiscographyPage() {
 
                 return (
                   <div key={field} className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-black uppercase text-zinc-600">{label}</span>
+                    <span className="text-[10px] font-black uppercase text-muted">{label}</span>
 
                     {isEditing ? (
                       <div className="flex items-center gap-1">
@@ -514,7 +514,7 @@ export default function ArtistDiscographyPage() {
                             if (e.key === 'Escape') setEditingField(null)
                           }}
                           placeholder={field === 'mbid' ? 'UUID do MusicBrainz' : 'ID numérico do TMDB'}
-                          className="text-xs font-mono bg-zinc-800 border border-zinc-600 text-white rounded px-2 py-0.5 w-52 focus:outline-none focus:border-purple-500"
+                          className="text-xs font-mono bg-surface border border-border text-foreground rounded px-2 py-0.5 w-52 focus:outline-none focus:border-purple-500"
                           autoFocus
                         />
                         <button
@@ -527,7 +527,7 @@ export default function ArtistDiscographyPage() {
                         </button>
                         <button
                           onClick={() => setEditingField(null)}
-                          className="p-1 text-zinc-500 hover:text-zinc-300"
+                          className="p-1 text-muted hover:text-foreground"
                           title="Cancelar"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -536,15 +536,15 @@ export default function ArtistDiscographyPage() {
                     ) : (
                       <div className="flex items-center gap-1">
                         {currentVal ? (
-                          <span className="text-xs font-mono text-zinc-400 bg-zinc-800/60 px-1.5 py-0.5 rounded border border-zinc-700">
+                          <span className="text-xs font-mono text-muted bg-surface px-1.5 py-0.5 rounded border border-border">
                             {currentVal.length > 16 ? `${currentVal.slice(0, 8)}…` : currentVal}
                           </span>
                         ) : (
-                          <span className="text-xs text-zinc-600 italic">não definido</span>
+                          <span className="text-xs text-muted italic">não definido</span>
                         )}
                         {externalLink && (
                           <a href={externalLink} target="_blank" rel="noopener noreferrer"
-                            className="p-0.5 text-zinc-600 hover:text-purple-400 transition-colors"
+                            className="p-0.5 text-muted hover:text-purple-400 transition-colors"
                             title={`Abrir no ${label}`}>
                             <ExternalLink className="w-3 h-3" />
                           </a>
@@ -554,7 +554,7 @@ export default function ArtistDiscographyPage() {
                             setEditingField(field)
                             setEditingValue(artist[field] ?? '')
                           }}
-                          className="p-0.5 text-zinc-600 hover:text-zinc-300 transition-colors"
+                          className="p-0.5 text-muted hover:text-foreground transition-colors"
                           title={`Editar ${label} ID`}
                         >
                           <Pencil className="w-3 h-3" />
@@ -582,9 +582,9 @@ export default function ArtistDiscographyPage() {
       {/* Sync modal */}
       {syncModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 rounded-2xl border border-zinc-700 p-6 w-full max-w-md space-y-4">
-            <h2 className="text-lg font-black text-white">Sincronizar via MusicBrainz</h2>
-            <p className="text-sm text-zinc-400">
+          <div className="bg-surface rounded-2xl border border-border p-6 w-full max-w-md space-y-4">
+            <h2 className="text-lg font-black text-foreground">Sincronizar via MusicBrainz</h2>
+            <p className="text-sm text-muted">
               Busca a discografia no MusicBrainz (com fallback via IA). Pode demorar até 1 min.
             </p>
             <label className="flex items-center gap-3 cursor-pointer group">
@@ -595,20 +595,20 @@ export default function ArtistDiscographyPage() {
                 className="w-4 h-4 rounded"
               />
               <div>
-                <span className="text-sm font-bold text-white">Limpar álbuns antes de sincronizar</span>
-                <p className="text-xs text-zinc-500">Remove todos os álbuns atuais e re-importa do zero. Útil para corrigir vinculações erradas.</p>
+                <span className="text-sm font-bold text-foreground">Limpar álbuns antes de sincronizar</span>
+                <p className="text-xs text-muted">Remove todos os álbuns atuais e re-importa do zero. Útil para corrigir vinculações erradas.</p>
               </div>
             </label>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => { setSyncModalOpen(false); setSyncClearFirst(false) }}
-                className="px-4 py-2 text-sm font-bold text-zinc-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-bold text-muted hover:text-foreground transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSync}
-                className="px-4 py-2 text-sm font-bold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-colors"
               >
                 {syncClearFirst ? 'Limpar e Sincronizar' : 'Sincronizar'}
               </button>
@@ -639,17 +639,17 @@ export default function ArtistDiscographyPage() {
       {/* Clear all confirmation */}
       {clearAllOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 rounded-2xl border border-zinc-700 p-6 w-full max-w-md space-y-4">
-            <h2 className="text-lg font-black text-white">Limpar discografia</h2>
-            <p className="text-sm text-zinc-400">
-              Remove <strong className="text-white">todos</strong> os álbuns de{' '}
-              <strong className="text-white">{artist?.nameRomanized ?? 'este artista'}</strong>.
+          <div className="bg-surface rounded-2xl border border-border p-6 w-full max-w-md space-y-4">
+            <h2 className="text-lg font-black text-foreground">Limpar discografia</h2>
+            <p className="text-sm text-muted">
+              Remove <strong className="text-foreground">todos</strong> os álbuns de{' '}
+              <strong className="text-foreground">{artist?.nameRomanized ?? 'este artista'}</strong>.
               Esta ação não pode ser desfeita.
             </p>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setClearAllOpen(false)}
-                className="px-4 py-2 text-sm font-bold text-zinc-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-bold text-muted hover:text-foreground transition-colors"
               >
                 Cancelar
               </button>
@@ -662,7 +662,7 @@ export default function ArtistDiscographyPage() {
                     showToast(`❌ ${err instanceof Error ? err.message : 'Erro ao limpar'}`, false)
                   }
                 }}
-                className="px-4 py-2 text-sm font-bold bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-bold bg-red-700 hover:bg-red-600 text-foreground rounded-lg transition-colors"
               >
                 Limpar tudo
               </button>

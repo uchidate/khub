@@ -131,38 +131,38 @@ export default function InstagramAdminPage() {
 
                 {/* Stats + Sync */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-white">{total}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Total artistas</p>
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-foreground">{total}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Total artistas</p>
                     </div>
-                    <div className="bg-zinc-900 border border-pink-500/20 rounded-xl p-4 text-center">
+                    <div className="bg-surface border border-pink-500/20 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-pink-400">{totalConfigured}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Com feed RSS.app</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Com feed RSS.app</p>
                     </div>
-                    <div className="sm:col-span-1 col-span-2 bg-zinc-900 border border-zinc-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2">
+                    <div className="sm:col-span-1 col-span-2 bg-surface border border-border rounded-xl p-4 flex flex-col items-center justify-center gap-2">
                         <button
                             onClick={handleSyncAll}
                             disabled={syncing || totalConfigured === 0}
-                            className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-40 text-white rounded-lg text-sm font-bold transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-40 text-foreground rounded-lg text-sm font-bold transition-colors"
                         >
                             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                             {syncing ? 'Sincronizando...' : 'Sync Manual'}
                         </button>
                         {syncMsg && (
-                            <p className="text-xs text-center text-zinc-400">{syncMsg}</p>
+                            <p className="text-xs text-center text-muted">{syncMsg}</p>
                         )}
                     </div>
                 </div>
 
                 {/* Sync result details */}
                 {syncDetails.length > 0 && (
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                        <p className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-3">Resultado do sync</p>
+                    <div className="bg-surface border border-border rounded-xl p-4">
+                        <p className="text-xs font-black text-muted uppercase tracking-widest mb-3">Resultado do sync</p>
                         <div className="space-y-1.5">
                             {syncDetails.map((r, i) => (
                                 <div key={i} className="text-xs space-y-1">
                                     <div className="flex items-start justify-between gap-4">
-                                        <span className="text-zinc-300 font-medium">{r.name}</span>
+                                        <span className="text-foreground font-medium">{r.name}</span>
                                         {r.error ? (
                                             <span className="text-red-400 font-mono text-[10px] text-right max-w-xs truncate" title={r.error}>
                                                 ❌ {r.error.replace('Error: ', '').slice(0, 80)}
@@ -177,14 +177,14 @@ export default function InstagramAdminPage() {
                                         <div className="ml-2 pl-2 border-l border-yellow-500/30 space-y-0.5">
                                             <p className="text-yellow-500/70 text-[10px] font-bold uppercase">URLs do feed (amostra):</p>
                                             {r.debug.map((d, j) => (
-                                                <div key={j} className="text-[10px] text-zinc-500 font-mono truncate" title={`id: ${d.id}\nurl: ${d.url}\nexternal_url: ${d.external_url ?? '-'}`}>
+                                                <div key={j} className="text-[10px] text-muted font-mono truncate" title={`id: ${d.id}\nurl: ${d.url}\nexternal_url: ${d.external_url ?? '-'}`}>
                                                     url: {d.url || '(vazio)'}
                                                 </div>
                                             ))}
                                         </div>
                                     )}
                                     {r.posts === 0 && !r.error && r.debug && r.debug.length === 0 && (
-                                        <p className="ml-2 text-[10px] text-zinc-600 italic">Feed retornou 0 itens</p>
+                                        <p className="ml-2 text-[10px] text-muted italic">Feed retornou 0 itens</p>
                                     )}
                                 </div>
                             ))}
@@ -193,15 +193,15 @@ export default function InstagramAdminPage() {
                 )}
 
                 {/* Como configurar */}
-                <div className="bg-zinc-900 border border-pink-500/10 rounded-xl p-5">
+                <div className="bg-surface border border-pink-500/10 rounded-xl p-5">
                     <div className="flex items-center gap-2 mb-3">
                         <Instagram className="w-4 h-4 text-pink-400" />
-                        <span className="text-sm font-black text-white">Como configurar</span>
+                        <span className="text-sm font-black text-foreground">Como configurar</span>
                     </div>
-                    <ol className="text-xs text-zinc-400 space-y-1.5 list-none">
+                    <ol className="text-xs text-muted space-y-1.5 list-none">
                         <li><span className="text-pink-400 font-bold mr-2">1.</span>Acesse <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline font-bold">rss.app</a> e crie uma conta</li>
-                        <li><span className="text-pink-400 font-bold mr-2">2.</span>Crie um novo feed apontando para o perfil do Instagram: <code className="text-zinc-300 bg-zinc-800 px-1 py-0.5 rounded text-[11px]">https://www.instagram.com/@handle</code></li>
-                        <li><span className="text-pink-400 font-bold mr-2">3.</span>Copie a URL do feed no formato JSON: <code className="text-zinc-300 bg-zinc-800 px-1 py-0.5 rounded text-[11px]">https://rss.app/feeds/XXXXXXXX.json</code></li>
+                        <li><span className="text-pink-400 font-bold mr-2">2.</span>Crie um novo feed apontando para o perfil do Instagram: <code className="text-foreground bg-surface px-1 py-0.5 rounded text-[11px]">https://www.instagram.com/@handle</code></li>
+                        <li><span className="text-pink-400 font-bold mr-2">3.</span>Copie a URL do feed no formato JSON: <code className="text-foreground bg-surface px-1 py-0.5 rounded text-[11px]">https://rss.app/feeds/XXXXXXXX.json</code></li>
                         <li><span className="text-pink-400 font-bold mr-2">4.</span>Cole na coluna "Feed URL" do artista abaixo e clique em Salvar</li>
                     </ol>
                 </div>
@@ -209,13 +209,13 @@ export default function InstagramAdminPage() {
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-3">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Buscar artista..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-pink-500/50"
+                            className="w-full px-4 pr-10 py-2.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
                         />
                     </div>
                     <div className="flex gap-2">
@@ -223,7 +223,7 @@ export default function InstagramAdminPage() {
                             <button
                                 key={val}
                                 onClick={() => setFilter(val)}
-                                className={`px-4 py-2.5 rounded-lg text-sm font-bold transition-colors ${filter === val ? 'bg-pink-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-600'}`}
+                                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${filter === val ? 'bg-pink-600 text-foreground' : 'bg-surface border border-border text-muted hover:border-border'}`}
                             >
                                 {label}
                             </button>
@@ -233,7 +233,7 @@ export default function InstagramAdminPage() {
 
                 {/* Count */}
                 {!loading && (
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted">
                         {total === 0 ? 'Nenhum artista encontrado' : `Mostrando ${from}–${to} de ${total} artistas`}
                     </p>
                 )}
@@ -242,13 +242,13 @@ export default function InstagramAdminPage() {
                 {loading ? (
                     <div className="space-y-2">
                         {Array.from({ length: 8 }).map((_, i) => (
-                            <div key={i} className="h-16 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />
+                            <div key={i} className="h-16 bg-surface border border-border rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
                     <div className="space-y-2">
                         {artists.length === 0 && (
-                            <div className="text-center py-16 text-zinc-500">Nenhum artista encontrado</div>
+                            <div className="text-center py-16 text-muted">Nenhum artista encontrado</div>
                         )}
                         {artists.map((artist) => {
                             const isSaved = saved === artist.id
@@ -259,7 +259,7 @@ export default function InstagramAdminPage() {
                             return (
                                 <div
                                     key={artist.id}
-                                    className={`flex items-center gap-3 p-4 bg-zinc-900 border rounded-xl transition-colors ${artist.instagramFeedUrl ? 'border-pink-500/20' : 'border-zinc-800'}`}
+                                    className={`flex items-center gap-3 p-4 bg-surface border rounded-xl transition-colors ${artist.instagramFeedUrl ? 'border-pink-500/20' : 'border-border'}`}
                                 >
                                     {/* Avatar */}
                                     {artist.primaryImageUrl ? (
@@ -267,17 +267,17 @@ export default function InstagramAdminPage() {
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
                                         </div>
                                     ) : (
-                                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-black text-zinc-400 flex-shrink-0">
+                                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-muted flex-shrink-0">
                                             {artist.nameRomanized[0]}
                                         </div>
                                     )}
 
                                     {/* Name */}
                                     <div className="w-32 flex-shrink-0 min-w-0">
-                                        <p className="font-bold text-white text-sm truncate">{artist.nameRomanized}</p>
-                                        {artist.nameHangul && <p className="text-xs text-zinc-500 truncate">{artist.nameHangul}</p>}
+                                        <p className="font-bold text-foreground text-sm truncate">{artist.nameRomanized}</p>
+                                        {artist.nameHangul && <p className="text-xs text-muted truncate">{artist.nameHangul}</p>}
                                         {artist.instagramLastSync && (
-                                            <p className="text-[10px] text-zinc-700 flex items-center gap-1 mt-0.5">
+                                            <p className="text-[10px] text-muted flex items-center gap-1 mt-0.5">
                                                 <Clock className="w-2.5 h-2.5" />
                                                 {timeAgo(artist.instagramLastSync)}
                                             </p>
@@ -298,7 +298,7 @@ export default function InstagramAdminPage() {
                                             </span>
                                         </a>
                                     ) : (
-                                        <div className="hidden sm:flex items-center gap-1 text-[10px] text-zinc-700 flex-shrink-0 w-24">
+                                        <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted flex-shrink-0 w-24">
                                             <AlertCircle className="w-3 h-3" />
                                             <span>sem @</span>
                                         </div>
@@ -311,10 +311,10 @@ export default function InstagramAdminPage() {
                                             value={currentFeed}
                                             onChange={(e) => setFeedValues(prev => ({ ...prev, [artist.id]: e.target.value }))}
                                             placeholder="https://rss.app/feeds/XXXXXXXX.json"
-                                            className={`w-full px-3 py-2 bg-black/50 border rounded-lg text-white placeholder-zinc-600 focus:outline-none text-xs ${
+                                            className={`w-full px-3 py-2 bg-background/50 border rounded-xl text-foreground placeholder:text-muted focus:outline-none text-xs ${
                                                 currentFeed && !currentFeed.endsWith('.json')
                                                     ? 'border-yellow-500/60 focus:border-yellow-500'
-                                                    : 'border-zinc-800 focus:border-pink-500/50'
+                                                    : 'border-border focus:border-accent/50'
                                             }`}
                                         />
                                         {currentFeed && !currentFeed.endsWith('.json') && (
@@ -328,7 +328,7 @@ export default function InstagramAdminPage() {
                                             href={artist.instagramFeedUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex-shrink-0 text-zinc-600 hover:text-pink-400 transition-colors"
+                                            className="flex-shrink-0 text-muted hover:text-pink-400 transition-colors"
                                             title="Abrir feed"
                                         >
                                             <ExternalLink className="w-3.5 h-3.5" />
@@ -340,14 +340,14 @@ export default function InstagramAdminPage() {
                                         onClick={() => handleSave(artist.id)}
                                         disabled={isSaving || (!hasChanged && !isSaved)}
                                         className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                                            isSaved ? 'bg-green-600 text-white' :
-                                            hasChanged ? 'bg-pink-600 hover:bg-pink-500 text-white' :
-                                            'bg-zinc-800 text-zinc-600 cursor-default'
+                                            isSaved ? 'bg-green-600 text-foreground' :
+                                            hasChanged ? 'bg-pink-600 hover:bg-pink-500 text-foreground' :
+                                            'bg-surface text-muted cursor-default'
                                         }`}
                                     >
                                         {isSaved ? <><Check className="w-3 h-3" /> Salvo</> :
                                          isSaving ? '...' :
-                                         hasChanged ? 'Salvar' : <Check className="w-3 h-3 text-zinc-700" />}
+                                         hasChanged ? 'Salvar' : <Check className="w-3 h-3 text-muted" />}
                                     </button>
                                 </div>
                             )
@@ -361,18 +361,18 @@ export default function InstagramAdminPage() {
                         <button
                             onClick={() => handlePageChange(page - 1)}
                             disabled={page <= 1}
-                            className="flex items-center gap-1 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-default transition-colors"
+                            className="flex items-center gap-1 px-3 py-2 bg-surface border border-border rounded-xl text-sm text-muted hover:text-foreground disabled:opacity-30 disabled:cursor-default transition-colors"
                         >
                             <ChevronLeft className="w-4 h-4" />
                             Anterior
                         </button>
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-muted">
                             Página {page} de {totalPages}
                         </span>
                         <button
                             onClick={() => handlePageChange(page + 1)}
                             disabled={page >= totalPages}
-                            className="flex items-center gap-1 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-default transition-colors"
+                            className="flex items-center gap-1 px-3 py-2 bg-surface border border-border rounded-xl text-sm text-muted hover:text-foreground disabled:opacity-30 disabled:cursor-default transition-colors"
                         >
                             Próxima
                             <ChevronRight className="w-4 h-4" />

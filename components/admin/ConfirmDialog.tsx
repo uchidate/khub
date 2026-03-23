@@ -65,15 +65,15 @@ export function ConfirmDialog({
   if (!open) return null
 
   const confirmStyles = {
-    danger: 'bg-red-600 hover:bg-red-500 text-white',
-    warning: 'bg-yellow-600 hover:bg-yellow-500 text-white',
-    default: 'bg-zinc-700 hover:bg-zinc-600 text-white',
+    danger: 'bg-red-600 hover:bg-red-500 text-foreground',
+    warning: 'bg-yellow-600 hover:bg-yellow-500 text-foreground',
+    default: 'bg-surface hover:bg-surface-hover text-foreground',
   }
 
   const iconStyles = {
     danger: 'bg-red-500/15 text-red-400',
     warning: 'bg-yellow-500/15 text-yellow-400',
-    default: 'bg-zinc-800 text-zinc-400',
+    default: 'bg-surface text-muted',
   }
 
   return (
@@ -82,7 +82,7 @@ export function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-sm bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -91,25 +91,25 @@ export function ConfirmDialog({
             <AlertTriangle size={16} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-white">{title}</h3>
+            <h3 className="text-sm font-bold text-foreground">{title}</h3>
             {description && (
-              <p className="mt-1 text-xs text-zinc-400 leading-relaxed">{description}</p>
+              <p className="mt-1 text-xs text-muted leading-relaxed">{description}</p>
             )}
           </div>
           <button
             onClick={onCancel}
-            className="p-1 text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0"
+            className="p-1 text-muted hover:text-foreground transition-colors flex-shrink-0"
           >
             <X size={15} />
           </button>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 px-5 py-4 border-t border-zinc-800">
+        <div className="flex items-center gap-2 px-5 py-4 border-t border-border">
           <button
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 px-4 py-2 text-sm font-medium text-zinc-400 bg-zinc-800 hover:bg-zinc-700 hover:text-white border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 text-sm font-medium text-muted bg-surface hover:bg-surface-hover hover:text-foreground border border-border rounded-lg transition-colors disabled:opacity-50"
           >
             {cancelLabel}
           </button>

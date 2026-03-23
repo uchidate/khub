@@ -52,7 +52,7 @@ export function FavoriteButton({ id, className = '', itemName, itemType }: Favor
       className={`
         p-2 rounded-full
         transition-colors duration-200
-        ${favorited ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}
+        ${favorited ? 'text-red-500' : 'text-foreground/60 hover:text-red-400'}
         ${!isLoaded ? 'opacity-50 cursor-wait' : ''}
         ${className}
       `}

@@ -55,17 +55,17 @@ function ConfirmModal({
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onCancel}>
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-white font-bold text-lg mb-2">{title}</h3>
-        <p className="text-zinc-400 text-sm mb-6">{message}</p>
+      <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h3 className="text-foreground font-bold text-lg mb-2">{title}</h3>
+        <p className="text-muted text-sm mb-6">{message}</p>
         <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors">
+          <button onClick={onCancel} className="px-4 py-2 rounded-lg bg-surface text-foreground hover:bg-surface transition-colors">
             Cancelar
           </button>
           <button
             onClick={onConfirm}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              destructive ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-purple-600 hover:bg-purple-500 text-white'
+              destructive ? 'bg-red-600 hover:bg-red-500 text-foreground' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
             }`}
           >
             {confirmLabel}
@@ -201,7 +201,7 @@ export default function ArtistModerationPage() {
       />
 
       <div className="space-y-4">
-        <p className="text-zinc-400 text-sm -mt-6">Revise e gerencie artistas com relevância duvidosa para a cultura coreana</p>
+        <p className="text-muted text-sm -mt-6">Revise e gerencie artistas com relevância duvidosa para a cultura coreana</p>
 
         {/* Stats */}
         {stats && (
@@ -209,35 +209,35 @@ export default function ArtistModerationPage() {
             {[
               { label: 'Suspeitos', value: stats.suspicious, color: 'text-red-400' },
               { label: 'Recentes (7d)', value: stats.recent, color: 'text-yellow-400' },
-              { label: 'Marcados', value: stats.flagged, color: 'text-zinc-400' },
+              { label: 'Marcados', value: stats.flagged, color: 'text-muted' },
               { label: 'Adulto', value: stats.adult, color: 'text-pink-400' },
               { label: 'Total ativos', value: stats.all, color: 'text-purple-400' },
             ].map(s => (
-              <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+              <div key={s.label} className="bg-surface border border-border rounded-xl p-3 text-center">
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString()}</div>
-                <div className="text-xs text-zinc-500 mt-0.5">{s.label}</div>
+                <div className="text-xs text-muted mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
         )}
 
         {/* Filter tabs */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+        <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
           <div className="flex flex-wrap gap-2">
             {filterTabs.map(f => {
               const isActive = filter === f.key
-              const activeClass = f.danger ? 'bg-pink-700 text-white' : 'bg-purple-600 text-white'
+              const activeClass = f.danger ? 'bg-pink-700 text-foreground' : 'bg-accent text-white'
               const inactiveClass = f.danger
                 ? 'bg-pink-600/10 text-pink-400 border border-pink-600/30 hover:bg-pink-600/20'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
               const badgeClass = isActive
-                ? f.danger ? 'bg-pink-600/50' : 'bg-purple-500/50'
-                : 'bg-zinc-700'
+                ? f.danger ? 'bg-pink-600/50' : 'bg-white/20 text-white'
+                : 'bg-surface'
               return (
                 <button
                   key={f.key}
                   onClick={() => setFilter(f.key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? activeClass : inactiveClass}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${isActive ? activeClass : inactiveClass}`}
                 >
                   {f.danger && <ShieldAlert size={13} />}
                   {f.label}
@@ -249,16 +249,16 @@ export default function ArtistModerationPage() {
             })}
           </div>
           {/* Subfiltro visibilidade */}
-          <div className="flex items-center gap-1 pt-1 border-t border-zinc-800">
-            <span className="text-xs text-zinc-600 mr-1">Visibilidade:</span>
+          <div className="flex items-center gap-1 pt-1 border-t border-border">
+            <span className="text-xs text-muted mr-1">Visibilidade:</span>
             {(['all', 'visible', 'hidden'] as const).map(v => (
               <button
                 key={v}
                 onClick={() => setHiddenFilter(v)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
                   hiddenFilter === v
-                    ? 'bg-zinc-600 text-white'
-                    : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+                    ? 'bg-accent text-white'
+                    : 'bg-surface text-muted hover:bg-surface hover:text-foreground'
                 }`}
               >
                 {v === 'all' ? 'Todos' : v === 'visible' ? 'Visíveis' : 'Ocultos'}
@@ -313,11 +313,11 @@ export default function ArtistModerationPage() {
             )}
             <button
               onClick={handleBulkHide}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface text-foreground hover:bg-surface border border-border rounded-lg transition-colors"
             >
               <EyeOff size={12} /> Ocultar
             </button>
-            <button onClick={() => setSelected(new Set())} className="text-zinc-500 hover:text-zinc-300 transition-colors text-xs">
+            <button onClick={() => setSelected(new Set())} className="text-muted hover:text-foreground transition-colors text-xs">
               Limpar
             </button>
           </div>
@@ -326,13 +326,13 @@ export default function ArtistModerationPage() {
         {/* Select-all + count */}
         {artists.length > 0 && !loading && (
           <div className="flex items-center gap-2 px-1">
-            <button onClick={toggleSelectAll} className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+            <button onClick={toggleSelectAll} className="flex items-center gap-2 text-xs text-muted hover:text-foreground transition-colors">
               {allSelected ? <CheckSquare size={14} className="text-purple-400" />
                 : someSelected ? <Minus size={14} className="text-purple-400" />
                 : <Square size={14} />}
               {allSelected ? 'Desmarcar todos' : 'Selecionar todos'}
             </button>
-            <span className="text-xs text-zinc-600 ml-auto">{total} artista{total !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-muted ml-auto">{total} artista{total !== 1 ? 's' : ''}</span>
           </div>
         )}
 
@@ -342,9 +342,9 @@ export default function ArtistModerationPage() {
             <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
           </div>
         ) : artists.length === 0 ? (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
+          <div className="bg-surface border border-border rounded-2xl p-12 text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <p className="text-zinc-400">Nenhum artista encontrado nesta categoria</p>
+            <p className="text-muted">Nenhum artista encontrado nesta categoria</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -357,7 +357,7 @@ export default function ArtistModerationPage() {
               const borderClass = filter === 'adult'
                 ? 'border-pink-500/40 bg-pink-500/5'
                 : artist.flaggedAsNonKorean
-                ? 'border-zinc-700'
+                ? 'border-border'
                 : artist.suspicionScore >= 7 ? 'border-red-500/30 bg-red-500/5'
                 : artist.suspicionScore >= 4 ? 'border-yellow-500/20 bg-yellow-500/5'
                 : 'border-green-500/10'
@@ -366,7 +366,7 @@ export default function ArtistModerationPage() {
                 <div key={artist.id} className={`border rounded-xl transition-colors ${borderClass} ${isSelected ? 'ring-1 ring-purple-500' : ''}`}>
                   <div className="flex gap-3 p-3">
                     {/* Checkbox */}
-                    <button onClick={() => toggleSelect(artist.id)} className="shrink-0 mt-1 text-zinc-500 hover:text-purple-400 transition-colors">
+                    <button onClick={() => toggleSelect(artist.id)} className="shrink-0 mt-1 text-muted hover:text-purple-400 transition-colors">
                       {isSelected ? <CheckSquare size={18} className="text-purple-400" /> : <Square size={18} />}
                     </button>
 
@@ -375,8 +375,8 @@ export default function ArtistModerationPage() {
                       {artist.primaryImageUrl ? (
                         <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={56} height={56} className="rounded-lg object-cover w-14 h-14" />
                       ) : (
-                        <div className="w-14 h-14 bg-zinc-800 rounded-lg flex items-center justify-center">
-                          <Shield size={20} className="text-zinc-600" />
+                        <div className="w-14 h-14 bg-surface rounded-lg flex items-center justify-center">
+                          <Shield size={20} className="text-muted" />
                         </div>
                       )}
                     </div>
@@ -385,8 +385,8 @@ export default function ArtistModerationPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2 mb-1">
                         <div className="flex-1 min-w-0">
-                          <span className="font-semibold text-white text-sm">{artist.nameRomanized}</span>
-                          {artist.nameHangul && <span className="text-xs text-zinc-500 ml-2">{artist.nameHangul}</span>}
+                          <span className="font-semibold text-foreground text-sm">{artist.nameRomanized}</span>
+                          {artist.nameHangul && <span className="text-xs text-muted ml-2">{artist.nameHangul}</span>}
                           {artist.flaggedAsNonKorean && (
                             <span className="ml-2 text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded">Marcado</span>
                           )}
@@ -400,12 +400,12 @@ export default function ArtistModerationPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs text-muted mb-2 flex-wrap">
                         {artist.placeOfBirth
                           ? <span>{artist.placeOfBirth}</span>
                           : <span className="text-red-400/70">Sem local de nascimento</span>}
                         <span>·</span>
-                        <span>{artist._count.productions} prod.{artist.hiddenProductionsCount > 0 && <span className="text-zinc-600 ml-0.5">({artist.hiddenProductionsCount} ocultas)</span>}</span>
+                        <span>{artist._count.productions} prod.{artist.hiddenProductionsCount > 0 && <span className="text-muted ml-0.5">({artist.hiddenProductionsCount} ocultas)</span>}</span>
                         <span>{artist._count.memberships} grupos</span>
                         {artist.tmdbId && <span className="text-blue-400/80">TMDB ✓</span>}
                       </div>
@@ -423,14 +423,14 @@ export default function ArtistModerationPage() {
                       {artist.suspicionReasons.length > 0 && filter !== 'adult' && (
                         <div className="flex flex-wrap gap-1 mb-2">
                           {artist.suspicionReasons.map((r, i) => (
-                            <span key={i} className="text-xs px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-400">{r}</span>
+                            <span key={i} className="text-xs px-2 py-0.5 bg-surface border border-border rounded-full text-muted">{r}</span>
                           ))}
                         </div>
                       )}
 
                       {/* Bio preview */}
                       {artist.bio && (
-                        <p className="text-xs text-zinc-500 line-clamp-1 mb-2">{artist.bio}</p>
+                        <p className="text-xs text-muted line-clamp-1 mb-2">{artist.bio}</p>
                       )}
 
                       {/* Actions */}
@@ -461,7 +461,7 @@ export default function ArtistModerationPage() {
                         <button
                           onClick={() => handleHide(artist)}
                           disabled={isActioning}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors disabled:opacity-50 border border-zinc-700"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-muted hover:bg-surface hover:text-foreground transition-colors disabled:opacity-50 border border-border"
                         >
                           {isActioning ? <RefreshCw size={12} className="animate-spin" /> : <EyeOff size={12} />}
                           Ocultar
@@ -484,15 +484,15 @@ export default function ArtistModerationPage() {
             <button
               onClick={() => setPage(p => p - 1)}
               disabled={page === 1}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Anterior
             </button>
-            <span className="text-sm text-zinc-500">{page} / {totalPages}</span>
+            <span className="text-sm text-muted">{page} / {totalPages}</span>
             <button
               onClick={() => setPage(p => p + 1)}
               disabled={page === totalPages}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Próxima
             </button>

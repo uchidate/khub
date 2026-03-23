@@ -7,7 +7,10 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Plus, RefreshCw, Instagram, Twitter, Youtube, Music2, ExternalLink, Type, ImagePlus, EyeOff, Languages } from 'lucide-react'
+import { SocialBadges } from '@/components/admin/SocialBadges'
+import { FilterPills } from '@/components/admin/FilterPills'
+import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { Plus, RefreshCw, Type, ImagePlus, EyeOff, Languages, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -73,48 +76,6 @@ type FilterType =
   | 'flagged'
   | 'korean_no_tmdb'
 
-// ─── Social Badges ────────────────────────────────────────────────────────────
-
-const SOCIAL_ICONS: Record<string, React.ReactNode> = {
-  instagram: <Instagram size={12} />,
-  twitter: <Twitter size={12} />,
-  youtube: <Youtube size={12} />,
-  tiktok: <Music2 size={12} />,
-}
-
-const SOCIAL_COLORS: Record<string, string> = {
-  instagram: 'text-pink-400 bg-pink-500/10 hover:bg-pink-500/20',
-  twitter: 'text-sky-400 bg-sky-500/10 hover:bg-sky-500/20',
-  youtube: 'text-red-400 bg-red-500/10 hover:bg-red-500/20',
-  tiktok: 'text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20',
-}
-
-function SocialBadges({ links }: { links: Record<string, string> | null }) {
-  if (!links || Object.keys(links).length === 0) {
-    return <span className="text-zinc-600 text-xs">—</span>
-  }
-  return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {Object.entries(links).map(([platform, url]) => (
-        <a
-          key={platform}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          title={platform}
-          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
-            SOCIAL_COLORS[platform] ?? 'text-zinc-400 bg-zinc-800 hover:bg-zinc-700'
-          }`}
-        >
-          {SOCIAL_ICONS[platform] ?? <ExternalLink size={12} />}
-          <span className="capitalize">{platform}</span>
-        </a>
-      ))}
-    </div>
-  )
-}
-
 // ─── Action Buttons ───────────────────────────────────────────────────────────
 
 const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
@@ -159,7 +120,7 @@ function WikidataSyncButton({ artist, onSynced, onFailed }: {
 
   const colorClass =
     display === 'ok'   ? 'text-green-400 border-green-500/30'
-    : display === 'warn' ? 'text-zinc-500 border-zinc-700'
+    : display === 'warn' ? 'text-muted border-border'
     : display === 'err'  ? 'text-red-400 border-red-500/30'
     : 'text-blue-400 border-blue-500/30 hover:text-blue-300 hover:bg-blue-500/10'
 
@@ -215,7 +176,7 @@ function PhotoSyncButton({ artist, onSynced, onFailed }: {
 
   const colorClass =
     display === 'ok'   ? 'text-green-400 border-green-500/30'
-    : display === 'warn' ? 'text-zinc-500 border-zinc-700'
+    : display === 'warn' ? 'text-muted border-border'
     : display === 'err'  ? 'text-red-400 border-red-500/30'
     : 'text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10'
 
@@ -285,7 +246,7 @@ function FixNamesButton({ artist, onFixed, onFailed }: {
 
   const colorClass =
     display === 'ok'   ? 'text-green-400 border-green-500/30'
-    : display === 'warn' ? 'text-zinc-500 border-zinc-700'
+    : display === 'warn' ? 'text-muted border-border'
     : display === 'err'  ? 'text-red-400 border-red-500/30'
     : needsFixName
       ? 'text-orange-400 border-orange-500/30 hover:bg-orange-500/10'
@@ -333,13 +294,13 @@ function StatsBar({ stats, filter, onFilter }: {
   const isAutoHidden = filter === 'auto_hidden'
 
   const mainTabs = [
-    { label: 'Todos', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-zinc-400' },
+    { label: 'Todos', value: '' as FilterType, count: stats?.total ?? null, dot: 'bg-foreground/40' },
     { label: 'Sem Hangul', value: 'no_hangul' as FilterType, count: stats?.noHangul ?? null, dot: 'bg-purple-400' },
     { label: 'Sem Romanizado', value: 'no_romanized' as FilterType, count: stats?.noRomanized ?? null, dot: 'bg-amber-400' },
     { label: 'Sem Foto', value: 'no_photo' as FilterType, count: stats?.noPhoto ?? null, dot: 'bg-orange-400' },
     { label: 'Sem Redes', value: 'no_social' as FilterType, count: stats?.noSocialTotal ?? null, dot: 'bg-blue-400' },
     { label: 'Sem Produção', value: 'no_productions' as FilterType, count: stats?.noProductions ?? null, dot: 'bg-yellow-500' },
-    { label: 'Auto-ocultos', value: 'auto_hidden' as FilterType, count: stats?.autoHidden ?? null, dot: 'bg-zinc-500' },
+    { label: 'Auto-ocultos', value: 'auto_hidden' as FilterType, count: stats?.autoHidden ?? null, dot: 'bg-muted' },
     { label: 'Flagged', value: 'flagged' as FilterType, count: stats?.flagged ?? null, dot: 'bg-red-400' },
   ]
 
@@ -347,79 +308,56 @@ function StatsBar({ stats, filter, onFilter }: {
 
   const todosSubs: SubTab[] = [
     { label: 'Com TMDB', value: 'with_tmdb', count: stats?.withTmdb ?? null, title: 'Artistas com TMDB ID cadastrado', color: 'text-green-400 border-green-500/30 bg-green-500/10 hover:bg-green-500/20', activeColor: 'text-green-300 border-green-400/50 bg-green-500/20' },
-    { label: 'Sem TMDB', value: 'no_tmdb', count: stats?.noTmdb ?? null, title: 'Artistas sem TMDB ID — requer curadoria', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
+    { label: 'Sem TMDB', value: 'no_tmdb', count: stats?.noTmdb ?? null, title: 'Artistas sem TMDB ID — requer curadoria', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-muted border-border bg-surface-hover' },
   ]
 
   const hangulSubs: SubTab[] = [
     { label: 'Pendentes', value: 'no_hangul_pending', count: stats?.noHangulPending ?? null, title: 'Tem TMDB — nunca tentado, clique "Hangul" para preencher', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
-    { label: 'Já tentados', value: 'no_hangul_attempted', count: stats?.noHangulAttempted ?? null, title: 'Já processado — TMDB não encontrou hangul', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
-    { label: 'Sem TMDB', value: 'no_hangul_no_tmdb', count: stats?.noHangulNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
+    { label: 'Já tentados', value: 'no_hangul_attempted', count: stats?.noHangulAttempted ?? null, title: 'Já processado — TMDB não encontrou hangul', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-foreground border-border bg-surface-hover' },
+    { label: 'Sem TMDB', value: 'no_hangul_no_tmdb', count: stats?.noHangulNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-muted border-border bg-surface-hover' },
   ]
 
   const photoSubs: SubTab[] = [
     { label: 'Pendentes', value: 'no_photo_pending', count: stats?.noPhotoPending ?? null, title: 'Tem TMDB — nunca tentado, clique "Foto" para sincronizar', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
-    { label: 'Já tentados', value: 'no_photo_attempted', count: stats?.noPhotoAttempted ?? null, title: 'Já processado — TMDB não encontrou foto', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
-    { label: 'Sem TMDB', value: 'no_photo_no_tmdb', count: stats?.noPhotoNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
+    { label: 'Já tentados', value: 'no_photo_attempted', count: stats?.noPhotoAttempted ?? null, title: 'Já processado — TMDB não encontrou foto', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-foreground border-border bg-surface-hover' },
+    { label: 'Sem TMDB', value: 'no_photo_no_tmdb', count: stats?.noPhotoNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-muted border-border bg-surface-hover' },
   ]
 
   const socialSubs: SubTab[] = [
     { label: 'Pendentes', value: 'no_social_pending', count: stats?.noSocialPending ?? null, title: 'Nunca tentado — clique "Wiki" para sincronizar', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
-    { label: 'Já tentados', value: 'no_social_attempted', count: stats?.noSocialAttempted ?? null, title: 'Já processado, Wikidata não encontrou redes', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
-    { label: 'Sem TMDB', value: 'no_social_no_tmdb', count: stats?.noSocialNoTmdb ?? null, title: 'Sem redes E sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
+    { label: 'Já tentados', value: 'no_social_attempted', count: stats?.noSocialAttempted ?? null, title: 'Já processado, Wikidata não encontrou redes', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-foreground border-border bg-surface-hover' },
+    { label: 'Sem TMDB', value: 'no_social_no_tmdb', count: stats?.noSocialNoTmdb ?? null, title: 'Sem redes E sem TMDB ID — requer entrada manual', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-muted border-border bg-surface-hover' },
   ]
 
   const romanizedSubs: SubTab[] = [
     { label: 'Pendentes', value: 'no_romanized_pending', count: stats?.noRomanizedPending ?? null, title: 'Tem TMDB — nunca tentado, clique "Nome" para corrigir', color: 'text-orange-400 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20', activeColor: 'text-orange-300 border-orange-400/50 bg-orange-500/20' },
-    { label: 'Já tentados', value: 'no_romanized_attempted', count: stats?.noRomanizedAttempted ?? null, title: 'Já processado — TMDB não encontrou nome romanizado', color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60', activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60' },
-    { label: 'Sem TMDB', value: 'no_romanized_no_tmdb', count: stats?.noRomanizedNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-zinc-600 border-zinc-800 bg-zinc-900 hover:bg-zinc-800', activeColor: 'text-zinc-500 border-zinc-700 bg-zinc-800' },
+    { label: 'Já tentados', value: 'no_romanized_attempted', count: stats?.noRomanizedAttempted ?? null, title: 'Já processado — TMDB não encontrou nome romanizado', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-foreground border-border bg-surface-hover' },
+    { label: 'Sem TMDB', value: 'no_romanized_no_tmdb', count: stats?.noRomanizedNoTmdb ?? null, title: 'Sem TMDB ID — requer entrada manual', color: 'text-muted border-border bg-surface hover:bg-surface-hover', activeColor: 'text-muted border-border bg-surface-hover' },
   ]
 
   const subTabs = isTodos ? todosSubs : isNoHangul ? hangulSubs : isNoPhoto ? photoSubs : isNoSocial ? socialSubs : isNoRomanized ? romanizedSubs : []
   const parentFilter = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : isNoSocial ? 'no_social' : isNoRomanized ? 'no_romanized' : isAutoHidden ? 'auto_hidden' : 'no_productions'
 
+  const activeMainValue = isTodos ? '' : isNoHangul ? 'no_hangul' : isNoPhoto ? 'no_photo' : isNoSocial ? 'no_social' : isNoRomanized ? 'no_romanized' : isNoProductions ? 'no_productions' : isAutoHidden ? 'auto_hidden' : filter
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        {mainTabs.map((tab) => {
-          const isActive = tab.value === ''
-            ? isTodos
-            : tab.value === 'no_hangul' ? isNoHangul
-            : tab.value === 'no_photo' ? isNoPhoto
-            : tab.value === 'no_social' ? isNoSocial
-            : tab.value === 'no_romanized' ? isNoRomanized
-            : tab.value === 'no_productions' ? isNoProductions
-            : tab.value === 'auto_hidden' ? isAutoHidden
-            : filter === tab.value
-          return (
-            <button key={tab.value} onClick={() => onFilter(tab.value)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                isActive
-                  ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
-              {tab.label}
-              {tab.count != null && (
-                <span className={`font-mono tabular-nums ${isActive ? 'text-purple-300' : 'text-zinc-500'}`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      <FilterPills
+        pills={mainTabs}
+        active={activeMainValue as FilterType}
+        onChange={onFilter}
+      />
 
       {subTabs.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap pl-1">
-          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mr-1">↳</span>
+          <span className="text-[10px] font-black text-muted uppercase tracking-widest mr-1">↳</span>
           {subTabs.map((sub) => {
             const isActive = filter === sub.value
             return (
               <button key={sub.value}
                 onClick={() => onFilter(isActive ? parentFilter as FilterType : sub.value)}
                 title={sub.title}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold transition-all border ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all border ${
                   isActive ? sub.activeColor : sub.color
                 }`}
               >
@@ -528,7 +466,7 @@ export default function ArtistsAdminPage() {
               className="rounded-lg object-cover hover:ring-2 hover:ring-purple-500/50 transition-all" />
           </Link>
         ) : (
-          <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center text-xs text-zinc-500">N/A</div>
+          <div className="w-10 h-10 bg-surface rounded-lg flex items-center justify-center text-xs text-muted">N/A</div>
         )
       },
     },
@@ -540,11 +478,11 @@ export default function ArtistsAdminPage() {
         const hasKorean = KOREAN_REGEX.test(name)
         return (
           <div className="flex items-center gap-2">
-            <span className={hasKorean ? 'text-orange-400 font-semibold' : 'text-white font-medium'}>
+            <span className={hasKorean ? 'text-orange-400 font-semibold' : 'text-foreground font-medium'}>
               {name}
             </span>
             <Link href={`/artists/${artist.id}`} target="_blank" onClick={e => e.stopPropagation()}
-              className="text-zinc-600 hover:text-zinc-400 transition-colors flex-shrink-0">
+              className="text-muted hover:text-foreground transition-colors flex-shrink-0">
               <ExternalLink size={11} />
             </Link>
           </div>
@@ -557,14 +495,14 @@ export default function ArtistsAdminPage() {
         const override = nameOverrides[artist.id]
         const hangul = override?.nameHangul ?? artist.nameHangul
         return hangul
-          ? <span className="text-zinc-400 text-xs">{hangul}</span>
-          : <span className="text-zinc-700 text-xs font-bold">—</span>
+          ? <span className="text-muted text-xs">{hangul}</span>
+          : <span className="text-muted text-xs font-bold">—</span>
       },
     },
     {
       key: 'agencyName', label: 'Agência',
       className: 'hidden xl:table-cell',
-      render: (artist) => <span className="text-zinc-400 text-xs">{artist.agencyName || '—'}</span>,
+      render: (artist) => <span className="text-muted text-xs">{artist.agencyName || '—'}</span>,
     },
     {
       key: 'musicalGroupName', label: 'Grupo',
@@ -573,7 +511,7 @@ export default function ArtistsAdminPage() {
         <span className="text-cyan-400 text-xs font-medium px-2 py-0.5 bg-cyan-400/10 rounded-full whitespace-nowrap">
           {artist.musicalGroupName}
         </span>
-      ) : <span className="text-zinc-600 text-xs">—</span>,
+      ) : <span className="text-muted text-xs">—</span>,
     },
     {
       key: 'socialLinks', label: 'Redes',
@@ -597,7 +535,7 @@ export default function ArtistsAdminPage() {
     {
       key: 'createdAt', label: 'Cadastro', sortable: true,
       className: 'hidden lg:table-cell',
-      render: (artist) => <span className="text-zinc-500 text-xs">{new Date(artist.createdAt).toLocaleDateString('pt-BR')}</span>,
+      render: (artist) => <span className="text-muted text-xs">{new Date(artist.createdAt).toLocaleDateString('pt-BR')}</span>,
     },
   ]
 
@@ -674,18 +612,14 @@ export default function ArtistsAdminPage() {
       subtitle="Gerencie artistas de K-Drama e K-Pop"
       actions={
         <div className="flex items-center gap-2">
-          <Link href="/admin/translations?tab=artist"
-            className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-1 rounded-lg transition-colors">
+          <AdminLinkButton href="/admin/translations?tab=artist" size="sm">
             <Languages size={11} />
             Traduções
-          </Link>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
-          >
+          </AdminLinkButton>
+          <AdminButton variant="primary" onClick={handleCreate}>
             <Plus size={18} />
             Novo Artista
-          </button>
+          </AdminButton>
         </div>
       }
     >
@@ -719,13 +653,10 @@ export default function ArtistsAdminPage() {
           editHref={(artist) => `/admin/artists/${artist.id}`}
           onDelete={handleDelete}
           bulkActions={(ids, clearSelection) => (
-            <button
-              onClick={() => handleBulkHide(ids, clearSelection)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-700/50 border border-zinc-600/40 text-zinc-300 rounded-lg text-sm hover:bg-zinc-600/50 transition-colors font-medium"
-            >
+            <AdminButton onClick={() => handleBulkHide(ids, clearSelection)} size="sm">
               <EyeOff size={14} />
               Ocultar {ids.length}
-            </button>
+            </AdminButton>
           )}
           searchPlaceholder="Buscar por nome..."
           actions={(artist) => (
@@ -748,7 +679,7 @@ export default function ArtistsAdminPage() {
                   <Image src={imageUrl} alt={name} width={48} height={48}
                     className="rounded-lg object-cover flex-shrink-0 w-12 h-12" />
                 ) : (
-                  <div className="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center text-xs text-zinc-500 flex-shrink-0 font-bold">
+                  <div className="w-12 h-12 bg-surface rounded-lg flex items-center justify-center text-xs text-muted flex-shrink-0 font-bold">
                     N/A
                   </div>
                 )}
@@ -756,13 +687,13 @@ export default function ArtistsAdminPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className={`font-semibold truncate ${hasKorean ? 'text-orange-400' : 'text-white'}`}>
+                      <div className={`font-semibold truncate ${hasKorean ? 'text-orange-400' : 'text-foreground'}`}>
                         {name}
                       </div>
-                      {hangul && <div className="text-xs text-zinc-500 truncate">{hangul}</div>}
+                      {hangul && <div className="text-xs text-muted truncate">{hangul}</div>}
                     </div>
                     <Link href={`/admin/artists/${artist.id}`}
-                      className="flex-shrink-0 text-xs text-zinc-500 hover:text-purple-400 px-2 py-0.5 border border-zinc-700 rounded hover:border-purple-500/50 transition-colors"
+                      className="flex-shrink-0 text-xs text-foreground px-2 py-0.5 border border-border rounded hover:bg-surface-hover transition-colors"
                       onClick={e => e.stopPropagation()}>
                       Editar
                     </Link>

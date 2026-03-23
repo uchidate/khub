@@ -141,14 +141,14 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-2xl max-h-[90vh] bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+            <div className="relative w-full max-w-2xl max-h-[90vh] bg-surface border border-border rounded-2xl overflow-hidden flex flex-col shadow-2xl">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <div className="flex items-center justify-between p-6 border-b border-border">
                     <div>
-                        <h2 className="text-lg font-bold text-white">Membros — {groupName}</h2>
-                        <p className="text-xs text-zinc-500 mt-0.5">{activeMembers.length} ativos · {formerMembers.length} ex-membros</p>
+                        <h2 className="text-lg font-bold text-foreground">Membros — {groupName}</h2>
+                        <p className="text-xs text-muted mt-0.5">{activeMembers.length} ativos · {formerMembers.length} ex-membros</p>
                     </div>
-                    <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-muted hover:text-foreground transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -156,16 +156,16 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* Add member */}
                     <div className="space-y-3">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500">Adicionar Membro</h3>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-muted">Adicionar Membro</h3>
                         <div className="flex gap-2">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
                                 <input
                                     type="text"
                                     placeholder="Buscar artista..."
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                                    className="w-full pl-9 pr-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500"
                                 />
                             </div>
                             <input
@@ -173,36 +173,36 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
                                 placeholder="Papel (ex: vocal)"
                                 value={addRole}
                                 onChange={e => setAddRole(e.target.value)}
-                                className="w-40 px-3 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                                className="w-40 px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500"
                             />
                         </div>
 
                         {/* Search results */}
                         {searchResults.length > 0 && (
-                            <div className="bg-zinc-800/80 border border-white/10 rounded-lg overflow-hidden divide-y divide-white/5">
+                            <div className="bg-surface border border-border rounded-lg overflow-hidden divide-y divide-white/5">
                                 {searchResults.map(artist => {
                                     const alreadyMember = members.some(m => m.artistId === artist.id)
                                     return (
                                         <div key={artist.id} className="flex items-center gap-3 p-3">
-                                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-surface flex-shrink-0">
                                                 {artist.primaryImageUrl ? (
                                                     <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-zinc-400">
+                                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-muted">
                                                         {artist.nameRomanized[0]}
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-white truncate">{artist.nameRomanized}</p>
-                                                {artist.nameHangul && <p className="text-xs text-zinc-500">{artist.nameHangul}</p>}
+                                                <p className="text-sm font-medium text-foreground truncate">{artist.nameRomanized}</p>
+                                                {artist.nameHangul && <p className="text-xs text-muted">{artist.nameHangul}</p>}
                                             </div>
                                             <button
                                                 onClick={() => !alreadyMember && addMember(artist)}
                                                 disabled={alreadyMember || saving === artist.id}
                                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                                     alreadyMember
-                                                        ? 'bg-zinc-700 text-zinc-500 cursor-default'
+                                                        ? 'bg-surface text-muted cursor-default'
                                                         : 'bg-purple-600 hover:bg-purple-500 text-white'
                                                 }`}
                                             >
@@ -214,21 +214,21 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
                                 })}
                             </div>
                         )}
-                        {searching && <p className="text-xs text-zinc-500">Buscando...</p>}
+                        {searching && <p className="text-xs text-muted">Buscando...</p>}
                     </div>
 
                     {/* Active members */}
                     {loading ? (
                         <div className="space-y-2">
                             {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="h-14 bg-zinc-800/50 rounded-lg animate-pulse" />
+                                <div key={i} className="h-14 bg-surface rounded-lg animate-pulse" />
                             ))}
                         </div>
                     ) : (
                         <>
                             {activeMembers.length > 0 && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-muted flex items-center gap-2">
                                         <UserCheck size={14} className="text-green-500" />
                                         Membros Ativos ({activeMembers.length})
                                     </h3>
@@ -240,7 +240,7 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
 
                             {formerMembers.length > 0 && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-muted flex items-center gap-2">
                                         <UserMinus size={14} className="text-red-400" />
                                         Ex-Membros ({formerMembers.length})
                                     </h3>
@@ -251,7 +251,7 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
                             )}
 
                             {members.length === 0 && (
-                                <p className="text-center text-zinc-500 text-sm py-8">Nenhum membro cadastrado. Use a busca acima para adicionar.</p>
+                                <p className="text-center text-muted text-sm py-8">Nenhum membro cadastrado. Use a busca acima para adicionar.</p>
                             )}
                         </>
                     )}
@@ -273,19 +273,19 @@ function MemberRow({
     onRemove: (id: string) => void
 }) {
     return (
-        <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${m.isActive ? 'bg-zinc-800/40 border-white/5' : 'bg-zinc-900/40 border-white/5 opacity-60'}`}>
-            <div className="relative w-9 h-9 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
+        <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${m.isActive ? 'bg-surface border-border' : 'bg-surface border-border opacity-60'}`}>
+            <div className="relative w-9 h-9 rounded-full overflow-hidden bg-surface flex-shrink-0">
                 {m.artist.primaryImageUrl ? (
                     <Image src={m.artist.primaryImageUrl} alt={m.artist.nameRomanized} fill className="object-cover" />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-zinc-400">
+                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-muted">
                         {m.artist.nameRomanized[0]}
                     </div>
                 )}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{m.artist.nameRomanized}</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm font-medium text-foreground truncate">{m.artist.nameRomanized}</p>
+                <p className="text-xs text-muted">
                     {m.role || 'Sem papel definido'}
                     {m.leaveDate && ` · Saiu em ${new Date(m.leaveDate).getUTCFullYear()}`}
                 </p>
@@ -295,7 +295,7 @@ function MemberRow({
                     onClick={() => onToggle(m)}
                     disabled={saving === m.artistId}
                     title={m.isActive ? 'Marcar como ex-membro' : 'Reativar membro'}
-                    className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-700 transition-all"
+                    className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-all"
                 >
                     {m.isActive ? <UserMinus size={14} /> : <UserCheck size={14} />}
                 </button>
@@ -303,7 +303,7 @@ function MemberRow({
                     onClick={() => onRemove(m.artistId)}
                     disabled={saving === m.artistId}
                     title="Remover do grupo"
-                    className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-900/20 transition-all"
+                    className="p-1.5 rounded-lg text-muted hover:text-red-400 hover:bg-red-900/20 transition-all"
                 >
                     <Trash2 size={14} />
                 </button>

@@ -219,8 +219,8 @@ export default function EditGroupPage() {
         }
     }
 
-    const inputCls = "w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
-    const labelCls = "block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5"
+    const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 text-sm"
+    const labelCls = "block text-xs font-bold text-muted uppercase tracking-widest mb-1.5"
 
     return (
         <AdminLayout title={group ? `Editar: ${group.name}` : 'Editar Grupo'}>
@@ -234,7 +234,7 @@ export default function EditGroupPage() {
                         <Link
                             href={`/groups/${id}`}
                             target="_blank"
-                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 px-3 py-1.5 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 text-xs text-foreground border border-border hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-colors"
                         >
                             Ver no site
                             <ExternalLink className="w-3 h-3" />
@@ -244,7 +244,7 @@ export default function EditGroupPage() {
                         <button
                             type="button"
                             onClick={() => setConfirmDelete(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-red-950 border border-zinc-700 hover:border-red-800 text-zinc-400 hover:text-red-400 rounded-lg text-xs font-medium transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-red-950 border border-border hover:border-red-800 text-muted hover:text-red-400 rounded-lg text-xs font-medium transition-colors"
                         >
                             <Trash2 className="w-3.5 h-3.5" />
                             Excluir
@@ -270,7 +270,7 @@ export default function EditGroupPage() {
                 )}
 
                 {!loading && !group && (
-                    <div className="text-center py-20 text-zinc-500">Grupo não encontrado.</div>
+                    <div className="text-center py-20 text-muted">Grupo não encontrado.</div>
                 )}
 
                 {group && form && (
@@ -287,8 +287,8 @@ export default function EditGroupPage() {
                                         className="rounded-full object-cover w-20 h-20"
                                     />
                                 ) : (
-                                    <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center">
-                                        <Users className="w-8 h-8 text-zinc-600" />
+                                    <div className="w-20 h-20 rounded-full bg-surface flex items-center justify-center">
+                                        <Users className="w-8 h-8 text-muted" />
                                     </div>
                                 )}
                             </div>
@@ -414,8 +414,8 @@ export default function EditGroupPage() {
                         </div>
 
                         {/* Redes sociais */}
-                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/50 space-y-3">
-                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Redes Sociais</h3>
+                        <div className="border border-border rounded-xl p-4 bg-surface space-y-3">
+                            <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Redes Sociais</h3>
                             <div className="grid grid-cols-1 gap-3">
                                 {SOCIAL_PLATFORMS.map(p => (
                                     <div key={p}>
@@ -433,8 +433,8 @@ export default function EditGroupPage() {
                         </div>
 
                         {/* MVs */}
-                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/50 space-y-4">
-                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">🎬 MVs Principais</h3>
+                        <div className="border border-border rounded-xl p-4 bg-surface space-y-4">
+                            <h3 className="text-xs font-bold text-muted uppercase tracking-widest">🎬 MVs Principais</h3>
                             {Array.from({ length: MAX_MVS }, (_, i) => i + 1).map(i => (
                                 <div key={i} className="grid grid-cols-2 gap-3">
                                     <div>
@@ -462,7 +462,7 @@ export default function EditGroupPage() {
                         </div>
 
                         {/* Visibilidade */}
-                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/50">
+                        <div className="border border-border rounded-xl p-4 bg-surface">
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <div className="relative flex-shrink-0">
                                     <input
@@ -471,14 +471,14 @@ export default function EditGroupPage() {
                                         checked={form.isHidden}
                                         onChange={e => set('isHidden', e.target.checked)}
                                     />
-                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
+                                    <div className="w-10 h-6 bg-border peer-checked:bg-red-600 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-zinc-200">
+                                    <p className="text-sm font-bold text-foreground">
                                         {form.isHidden ? 'Oculto do site público' : 'Visível no site público'}
                                     </p>
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-xs text-muted">
                                         {form.isHidden
                                             ? 'Este grupo não aparece em listagens públicas'
                                             : 'Este grupo aparece normalmente no site'}
@@ -492,14 +492,14 @@ export default function EditGroupPage() {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
                             >
                                 {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 {saving ? 'Salvando...' : 'Salvar'}
                             </button>
                             <Link
                                 href="/admin/groups"
-                                className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-bold transition-colors"
+                                className="px-5 py-2.5 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors"
                             >
                                 Cancelar
                             </Link>

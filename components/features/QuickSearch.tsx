@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Search, X, Command, User, Film, Newspaper, Loader2, TrendingUp, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -8,27 +8,35 @@ import Link from 'next/link'
 import { useGlobalSearch } from '@/hooks/useGlobalSearch'
 import { getRoleLabel } from '@/lib/utils/role-labels'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useQuickSearch } from '@/lib/hooks/useQuickSearch'
 
 export function QuickSearch() {
-    const [modalOpen, setModalOpen] = useState(false)
+    const modalOpen = useQuickSearch(s => s.isOpen)
+    const openModal = useQuickSearch(s => s.open)
+    const storeClose = useQuickSearch(s => s.close)
     const router = useRouter()
     const inputRef = useRef<HTMLInputElement>(null)
     const { trackSearch } = useAnalytics()
 
     const { query, setQuery, results, isLoading, clearSearch } = useGlobalSearch()
 
+    const closeModal = () => {
+        storeClose()
+        clearSearch()
+    }
+
     // CMD+K / CTRL+K
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault()
-                setModalOpen(prev => !prev)
+                modalOpen ? closeModal() : openModal()
             }
             if (e.key === 'Escape') closeModal()
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [modalOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Focar + travar scroll
     useEffect(() => {
@@ -40,11 +48,6 @@ export function QuickSearch() {
         }
         return () => { document.body.style.overflow = '' }
     }, [modalOpen])
-
-    const closeModal = () => {
-        setModalOpen(false)
-        clearSearch()
-    }
 
     const handleNavigate = (href: string) => {
         closeModal()

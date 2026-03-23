@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import { BookOpen, Clock, Eye } from 'lucide-react'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import prisma from '@/lib/prisma'
@@ -73,7 +74,7 @@ function PostCard({ post, featured = false }: { post: PostWithRelations; feature
       <div className="flex flex-col gap-3 p-5 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           {post.category && (
-            <span className="px-2 py-0.5 bg-[#ff2d78]/10 text-[#ff2d78] rounded text-xs font-semibold uppercase tracking-wider">
+            <span className="px-2 py-0.5 bg-accent/10 text-accent rounded text-xs font-semibold uppercase tracking-wider">
               {post.category.name}
             </span>
           )}
@@ -83,7 +84,7 @@ function PostCard({ post, featured = false }: { post: PostWithRelations; feature
             </span>
           )}
         </div>
-        <h2 className={`font-bold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-snug ${featured ? 'text-xl' : 'text-base'}`}>
+        <h2 className={`font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug ${featured ? 'text-xl' : 'text-base'}`}>
           {post.title}
         </h2>
         {post.excerpt && (
@@ -93,7 +94,7 @@ function PostCard({ post, featured = false }: { post: PostWithRelations; feature
           {post.author?.image ? (
             <Image src={post.author.image} alt={post.author.name ?? ''} width={20} height={20} className="rounded-full object-cover flex-shrink-0" />
           ) : (
-            <div className="w-5 h-5 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-[9px] font-bold text-[#ff2d78] flex-shrink-0">
+            <div className="w-5 h-5 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-[9px] font-bold text-accent flex-shrink-0">
               {post.author?.name?.[0] ?? '?'}
             </div>
           )}
@@ -109,11 +110,13 @@ function PostCard({ post, featured = false }: { post: PostWithRelations; feature
   )
 }
 
-export default async function BlogPage() {
+export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
     return null
   }
+  const { category: activeCategory } = await searchParams
   const { featured, recent, categories } = await getPosts()
+  const total = await prisma.blogPost.count({ where: { ...PUBLIC_WHERE } }).catch(() => null)
 
   return (
     <>
@@ -128,24 +131,34 @@ export default async function BlogPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Header */}
-          <div className="flex items-baseline gap-3 mb-8">
-            <h1 className="text-[1.75rem] md:text-[2rem] font-black text-foreground tracking-[-0.04em] leading-none">
-              Blog
-            </h1>
-            <p className="text-sm text-muted hidden sm:block">Artigos, análises e reflexões sobre o universo Hallyu.</p>
-          </div>
+          <SectionHeader
+            title="Blog"
+            count={total}
+            countLabel="artigos"
+            backHref="/"
+          />
 
           {/* Categories */}
           {categories.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8">
+            <div className="flex items-center gap-1 flex-wrap mb-8">
+              <Link
+                href="/blog"
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  !activeCategory ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                }`}
+              >
+                Todas
+              </Link>
               {categories.filter(c => c._count.posts > 0).map(c => (
                 <Link
                   key={c.id}
                   href={`/blog?category=${c.slug}`}
-                  className="px-3 py-1.5 rounded-full border border-border bg-surface text-muted hover:text-[#ff2d78] hover:border-[#ff2d78]/30 text-xs font-semibold transition-colors"
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    activeCategory === c.slug ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                  }`}
                 >
                   {c.name}
-                  <span className="ml-1.5 text-muted/60">{c._count.posts}</span>
+                  <span className="ml-1.5 opacity-50">{c._count.posts}</span>
                 </Link>
               ))}
             </div>
@@ -155,7 +168,7 @@ export default async function BlogPage() {
           {featured.length > 0 && (
             <section className="mb-10">
               <h2 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-                <BookOpen size={16} className="text-[#ff2d78]" /> Em destaque
+                <BookOpen size={16} className="text-accent" /> Em destaque
               </h2>
               <div className="grid gap-4">
                 {featured.map(p => <PostCard key={p.id} post={p} featured />)}

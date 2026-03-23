@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -202,7 +203,7 @@ function NavBadge({ count }: { count: number }) {
 
 function NewBadge() {
   return (
-    <span className="ml-auto text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
+    <span className="ml-auto text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-500/30 flex-shrink-0">
       novo
     </span>
   )
@@ -234,8 +235,8 @@ function NavLink({
         title={item.label}
         className={`relative flex items-center justify-center w-9 h-9 rounded-lg mx-auto transition-all duration-150 ${
           highlighted
-            ? 'bg-blue-500/15 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]'
-            : 'text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60'
+            ? 'bg-blue-500/15 text-blue-600 dark:text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]'
+            : 'text-muted hover:text-foreground hover:bg-surface-hover'
         }`}
       >
         <item.icon size={16} className={highlighted ? 'text-blue-400' : ''} />
@@ -254,18 +255,18 @@ function NavLink({
       onClick={onNav}
       className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
         highlighted
-          ? 'bg-blue-500/10 text-blue-100 font-semibold shadow-[0_0_0_1px_rgba(59,130,246,0.2)]'
-          : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 font-medium'
+          ? 'bg-blue-500/10 text-blue-700 dark:text-blue-100 font-semibold shadow-[0_0_0_1px_rgba(59,130,246,0.2)]'
+          : 'text-muted hover:text-foreground hover:bg-surface-hover font-medium'
       }`}
     >
-      <item.icon size={14} className={highlighted ? 'text-blue-400' : 'text-zinc-600'} />
+      <item.icon size={14} className={highlighted ? 'text-blue-500 dark:text-blue-400' : 'text-muted'} />
       <span className="truncate flex-1">{item.label}</span>
       {badge > 0 ? (
         <NavBadge count={badge} />
       ) : item.isNew ? (
         <NewBadge />
       ) : highlighted && !hasActiveSub ? (
-        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400 flex-shrink-0" />
       ) : null}
     </Link>
   )
@@ -289,11 +290,11 @@ function SubNavLink({
       onClick={onNav}
       className={`flex items-center gap-2 pl-8 pr-3 py-1.5 rounded-lg text-[12px] transition-all duration-150 ${
         isActive
-          ? 'text-blue-300 bg-blue-500/8 font-medium'
-          : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40 font-normal'
+          ? 'text-blue-600 dark:text-blue-300 bg-blue-500/8 font-medium'
+          : 'text-muted hover:text-foreground hover:bg-surface-hover font-normal'
       }`}
     >
-      <item.icon size={12} className={isActive ? 'text-blue-400' : 'text-zinc-700'} />
+      <item.icon size={12} className={isActive ? 'text-blue-500 dark:text-blue-400' : 'text-muted'} />
       <span className="truncate flex-1">{item.label}</span>
       {badge > 0 && <NavBadge count={badge} />}
     </Link>
@@ -362,7 +363,7 @@ function NavSectionBlock({
   // Modo compacto: sem labels, items empilhados com separador
   if (compact) {
     return (
-      <div className="py-1.5 border-b border-zinc-800/40 last:border-0 space-y-0.5">
+      <div className="py-1.5 border-b border-border last:border-0 space-y-0.5">
         {section.items.map(item => (
           <NavItemBlock key={item.href} item={item} pathname={pathname} onNav={onNav} counts={counts} compact />
         ))}
@@ -373,7 +374,7 @@ function NavSectionBlock({
   return (
     <div className="space-y-0.5">
       {/* Label de seção */}
-      <p className="px-3 pt-3 pb-1 text-[9px] font-black uppercase tracking-widest text-zinc-700 select-none">
+      <p className="px-3 pt-3 pb-1 text-[9px] font-black uppercase tracking-widest text-muted select-none">
         {section.label}
       </p>
       {section.items.map(item => (
@@ -397,7 +398,7 @@ function SidebarContent({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className={`border-b border-zinc-800/60 flex-shrink-0 ${compact ? 'p-2' : 'p-4'}`}>
+      <div className={`border-b border-border flex-shrink-0 ${compact ? 'p-2' : 'p-4'}`}>
         {compact ? (
           <Link
             href="/admin"
@@ -414,13 +415,13 @@ function SidebarContent({
                 <Shield className="text-blue-400" size={15} />
               </div>
               <div>
-                <span className="text-sm font-black text-white tracking-tight block leading-none">HallyuHub</span>
-                <span className="text-[9px] text-zinc-600 font-medium">Admin Panel</span>
+                <span className="text-sm font-black text-foreground tracking-tight block leading-none">HallyuHub</span>
+                <span className="text-[9px] text-muted font-medium">Admin Panel</span>
               </div>
             </Link>
             <Link
               href="/"
-              className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 px-3 py-1.5 rounded-lg transition-all w-full"
+              className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground bg-surface hover:bg-surface-hover border border-border px-3 py-1.5 rounded-lg transition-all w-full"
               onClick={onNav}
             >
               <ChevronLeft size={12} />
@@ -445,16 +446,33 @@ function SidebarContent({
       </nav>
 
       {/* Footer */}
-      <div className={`border-t border-zinc-800/60 flex-shrink-0 ${compact ? 'p-2' : 'p-3'}`}>
-        <button
-          onClick={onToggleCompact}
-          title={compact ? 'Expandir menu' : 'Compactar menu'}
-          className={`flex items-center gap-2 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800/60 rounded-lg transition-colors ${
-            compact ? 'w-9 h-9 justify-center mx-auto' : 'w-full px-3 py-2 text-xs font-medium'
-          }`}
-        >
-          {compact ? <PanelLeftOpen size={15} /> : <><PanelLeftClose size={15} /><span>Compactar</span></>}
-        </button>
+      <div className={`border-t border-border flex-shrink-0 ${compact ? 'p-2 space-y-1' : 'p-3 space-y-1'}`}>
+        {compact ? (
+          <>
+            <div className="flex justify-center"><ThemeToggle /></div>
+            <button
+              onClick={onToggleCompact}
+              title="Expandir menu"
+              className="flex items-center justify-center w-9 h-9 mx-auto text-muted hover:text-foreground hover:bg-surface-hover rounded-lg transition-colors"
+            >
+              <PanelLeftOpen size={15} />
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[9px] font-black uppercase tracking-widest text-muted">Tema</span>
+              <ThemeToggle />
+            </div>
+            <button
+              onClick={onToggleCompact}
+              title="Compactar menu"
+              className="flex items-center gap-2 text-muted hover:text-foreground hover:bg-surface-hover rounded-lg transition-colors w-full px-3 py-2 text-xs font-medium"
+            >
+              <PanelLeftClose size={15} /><span>Compactar</span>
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -470,39 +488,39 @@ function TopBar({ pathname, title, onSearchClick }: {
   const breadcrumbs = buildBreadcrumbs(pathname ?? '')
 
   return (
-    <div className="hidden lg:flex sticky top-0 z-40 h-11 items-center gap-3 px-6 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800/60">
+    <div className="hidden lg:flex sticky top-0 z-40 h-11 items-center gap-3 px-6 bg-background/90 backdrop-blur-sm border-b border-border">
       <div className="flex items-center gap-1.5 text-sm flex-1 min-w-0">
-        <Link href="/admin" className="flex items-center gap-1 text-zinc-700 hover:text-zinc-300 transition-colors flex-shrink-0">
+        <Link href="/admin" className="flex items-center gap-1 text-border hover:text-muted transition-colors flex-shrink-0">
           <Home size={12} />
         </Link>
         {breadcrumbs.map((crumb, i) => (
           <span key={i} className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-zinc-800">/</span>
-            <Link href={crumb.href} className="text-zinc-500 hover:text-zinc-200 transition-colors truncate max-w-[140px] text-xs">
+            <span className="text-border">/</span>
+            <Link href={crumb.href} className="text-muted hover:text-foreground transition-colors truncate max-w-[140px] text-xs">
               {crumb.label}
             </Link>
           </span>
         ))}
         <span className="flex items-center gap-1.5 min-w-0">
-          <span className="text-zinc-800">/</span>
-          <span className="text-zinc-300 font-medium truncate text-xs">{title}</span>
+          <span className="text-border">/</span>
+          <span className="text-foreground font-medium truncate text-xs">{title}</span>
         </span>
       </div>
 
       <button
         onClick={onSearchClick}
-        className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 transition-all flex-shrink-0"
+        className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-xl text-sm text-muted hover:text-foreground hover:border-accent/50 transition-all flex-shrink-0 min-w-[160px] xl:min-w-[220px]"
       >
-        <Search size={12} />
-        <span className="hidden xl:inline">Buscar...</span>
-        <kbd className="hidden xl:inline text-[10px] bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
+        <Search size={14} className="opacity-50 flex-shrink-0" />
+        <span className="flex-1 text-left">Buscar no admin…</span>
+        <kbd className="hidden xl:inline text-[10px] bg-surface border border-border px-1.5 py-0.5 rounded font-mono flex-shrink-0">⌘K</kbd>
       </button>
 
       <Link
         href="/"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1.5 text-xs text-zinc-700 hover:text-zinc-300 transition-colors flex-shrink-0"
+        className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors flex-shrink-0"
         title="Ver site"
       >
         <ExternalLink size={12} />
@@ -587,11 +605,11 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
   const mainMargin   = compact ? 'lg:ml-16' : 'lg:ml-56'
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-background">
       <div className="flex">
 
         {/* Sidebar desktop */}
-        <aside className={`hidden lg:flex flex-col min-h-screen bg-[#080c14] border-r border-zinc-800/60 fixed top-0 bottom-0 transition-all duration-200 ${sidebarWidth}`}>
+        <aside className={`hidden lg:flex flex-col min-h-screen bg-surface border-r border-border fixed top-0 bottom-0 transition-all duration-200 ${sidebarWidth}`}>
           <SidebarContent pathname={pathname} counts={counts} compact={compact} onToggleCompact={toggleCompact} />
         </aside>
 
@@ -599,10 +617,10 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-            <aside className="relative flex flex-col w-64 max-w-[85vw] bg-[#080c14] border-r border-zinc-800/60 h-full overflow-y-auto">
+            <aside className="relative flex flex-col w-64 max-w-[85vw] bg-surface border-r border-border h-full overflow-y-auto">
               <button
                 onClick={() => setMobileOpen(false)}
-                className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                className="absolute top-3 right-3 p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 <X size={16} />
               </button>
@@ -618,20 +636,20 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
           <TopBar pathname={pathname} title={title} onSearchClick={() => setSearchOpen(true)} />
 
           {/* Header mobile */}
-          <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/60 px-4 py-3 flex items-center justify-between">
+          <div className="lg:hidden sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileOpen(true)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
               >
                 <Menu size={19} />
               </button>
               <div className="flex items-center gap-2">
-                <Shield className="text-blue-400" size={15} />
-                <span className="font-bold text-white text-sm">{title}</span>
+                <Shield className="text-blue-500 dark:text-blue-400" size={15} />
+                <span className="font-bold text-foreground text-sm">{title}</span>
               </div>
             </div>
-            <Link href="/" className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+            <Link href="/" className="text-xs text-muted hover:text-foreground transition-colors flex items-center gap-1">
               <ChevronLeft size={13} />Site
             </Link>
           </div>
@@ -640,8 +658,8 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
           <div className="p-4 sm:p-5 lg:p-8">
             <div className={`flex items-start justify-between gap-4 ${subtitle || actions ? 'mb-6' : 'mb-5 lg:mb-7'}`}>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white leading-tight">{title}</h1>
-                {subtitle && <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>}
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-foreground leading-tight">{title}</h1>
+                {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
               </div>
               {actions && (
                 <div className="flex items-center gap-2 flex-shrink-0 mt-1">{actions}</div>
