@@ -7,7 +7,7 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { useToast } from '@/lib/hooks/useToast'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
-import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminIconLink } from '@/components/admin/AdminIconButton'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,

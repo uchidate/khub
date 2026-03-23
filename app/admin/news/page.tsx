@@ -15,7 +15,6 @@ import {
     Download, RotateCcw, Send, Check, X, Sparkles,
 } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -387,7 +386,6 @@ export default function NewsAdminPage() {
                 return <AdminBadge variant="published"><Eye size={10} /> Visível</AdminBadge>
             },
         },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     ], [localArtistsOverride])
 
     const handleFormSubmit = async (data: Record<string, unknown>) => {
