@@ -1,55 +1,41 @@
-// Layout
-export { AdminLayout } from './AdminLayout'
-export type { AdminLayoutProps } from './AdminLayout'
-
-// Cabeçalhos
-export { PageHeader } from './PageHeader'
-
-// Busca global
-export { AdminSearch } from './AdminSearch'
-
-// Filtros e paginação
-export { AdminFilters, AdminPagination, useAdminFilter } from './AdminFilters'
-
-// Skeletons
-export { AdminTableSkeleton, AdminCardSkeleton, AdminStatsSkeleton } from './AdminTableSkeleton'
-
-// Entidades relacionadas
-export { RelatedEntities } from './RelatedEntities'
-
-// Navegação prev/next
-export { EntityNav } from './EntityNav'
-
-// Dashboard ao vivo
-export { LiveUrgentPanel, AiWidget } from './DashboardLive'
-
-// Diálogo de confirmação
-export { ConfirmDialog } from './ConfirmDialog'
-
-// Botões
+// ─── Ações ───────────────────────────────────────────────────────────────────
 export { AdminButton, AdminLinkButton } from './AdminButton'
 export type { AdminButtonVariant, AdminButtonSize } from './AdminButton'
 
-// Ícone-botão
 export { AdminIconButton, AdminIconLink } from './AdminIconButton'
 export type { AdminIconButtonVariant, AdminIconButtonSize } from './AdminIconButton'
 
-// Cards/containers
+// ─── Layout / Containers ─────────────────────────────────────────────────────
 export { AdminCard } from './AdminCard'
+export { AdminModalOverlay } from './AdminModalOverlay'
 
-// Badges
-export { AdminBadge, AdminBadgeCount } from './AdminBadge'
-export type { AdminBadgeVariant } from './AdminBadge'
-
-// Filter pills
+// ─── Filtros / Busca ─────────────────────────────────────────────────────────
+export { AdminFilters, AdminPagination, useAdminFilter } from './AdminFilters'
 export { FilterPills } from './FilterPills'
 export type { FilterPill } from './FilterPills'
-
-// Tab group
 export { AdminTabGroup } from './AdminTabGroup'
-
-// Search input
 export { AdminSearchInput } from './AdminSearchInput'
 
-// Componentes legados (re-export por conveniência)
+// ─── Feedback / Estado ───────────────────────────────────────────────────────
+export { AdminBadge, AdminBadgeCount } from './AdminBadge'
+export type { AdminBadgeVariant } from './AdminBadge'
+export { AdminStatusBadge } from './AdminStatusBadge'
+export { AdminEmptyState } from './AdminEmptyState'
+export { ConfirmDialog } from './ConfirmDialog'
+
+// ─── Formulários ─────────────────────────────────────────────────────────────
+export { AdminInputField, ADMIN_INPUT_CLASS, ADMIN_INPUT_ERROR_CLASS } from './AdminInputField'
+
+// ─── Tabelas / Listas ────────────────────────────────────────────────────────
 export { DataTable } from './DataTable'
+export { AdminTableRow } from './AdminTableRow'
+
+// ─── Estrutura ───────────────────────────────────────────────────────────────
+export { AdminLayout } from './AdminLayout'
+export type { AdminLayoutProps } from './AdminLayout'
+export { PageHeader } from './PageHeader'
+export { AdminSearch } from './AdminSearch'
+export { AdminTableSkeleton, AdminCardSkeleton, AdminStatsSkeleton } from './AdminTableSkeleton'
+export { RelatedEntities } from './RelatedEntities'
+export { EntityNav } from './EntityNav'
+export { LiveUrgentPanel, AiWidget } from './DashboardLive'

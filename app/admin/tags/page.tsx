@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { AdminModalOverlay } from '@/components/admin/AdminModalOverlay'
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState'
+import { AdminTableRow } from '@/components/admin/AdminTableRow'
+import { AdminIconButton } from '@/components/admin/AdminIconButton'
+import { StatCard } from '@/components/admin/StatCard'
 import {
     Tag, RefreshCw, Pencil, Trash2, Check, X, Search,
     Newspaper, Film, GitMerge, AlertTriangle, ArrowUpDown, SortAsc,
@@ -54,12 +60,14 @@ function MergeModal({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-surface border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
-                <div className="flex items-center gap-3">
-                    <GitMerge className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <h2 className="text-base font-black text-foreground">Mesclar tag</h2>
-                </div>
+        <AdminModalOverlay
+            open={true}
+            onClose={onClose}
+            title="Mesclar tag"
+            maxWidth="sm"
+            icon={<GitMerge className="w-4 h-4 text-purple-400" />}
+        >
+            <div className="space-y-4">
                 <p className="text-sm text-muted">
                     Mesclar <span className="font-mono font-bold text-foreground bg-surface px-1.5 py-0.5 rounded">{source}</span> em:
                 </p>
@@ -106,7 +114,7 @@ function MergeModal({
                     </button>
                 </div>
             </div>
-        </div>
+        </AdminModalOverlay>
     )
 }
 
@@ -322,17 +330,10 @@ export default function TagsAdminPage() {
             <div className="space-y-5">
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                        { label: 'Tags únicas',  value: tags.length,          color: 'border-border',       text: 'text-foreground' },
-                        { label: 'Usos totais',  value: totalUsage,           color: 'border-purple-500/20',  text: 'text-purple-400' },
-                        { label: 'Partilhadas',  value: shared,               color: 'border-blue-500/20',    text: 'text-blue-400' },
-                        { label: 'Exclusivas',   value: newsOnly + prodsOnly, color: 'border-amber-500/20',   text: 'text-amber-400' },
-                    ].map(({ label, value, color, text }) => (
-                        <div key={label} className={`bg-surface border ${color} rounded-xl p-4 text-center`}>
-                            <p className={`text-2xl font-black ${text} tabular-nums`}>{value}</p>
-                            <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">{label}</p>
-                        </div>
-                    ))}
+                    <StatCard label="Tags únicas"  value={tags.length}          color="text-foreground" />
+                    <StatCard label="Usos totais"  value={totalUsage}           color="text-purple-400" />
+                    <StatCard label="Partilhadas"  value={shared}               color="text-blue-400" />
+                    <StatCard label="Exclusivas"   value={newsOnly + prodsOnly} color="text-amber-400" />
                 </div>
 
                 {/* Duplicates panel */}
@@ -401,21 +402,65 @@ export default function TagsAdminPage() {
                         ))}
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div className="text-center py-16 text-muted">
-                        <Tag className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p>Nenhuma tag encontrada</p>
-                    </div>
+                    <AdminEmptyState
+                        icon={<Tag className="w-8 h-8" />}
+                        title="Nenhuma tag encontrada"
+                        size="lg"
+                    />
                 ) : (
                     <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
                         {filtered.map(entry => (
-                            <div key={entry.tag} className="relative group bg-surface hover:bg-surface transition-colors">
-                                {/* Usage bar (background) */}
-                                <div
-                                    className="absolute left-0 top-0 bottom-0 bg-purple-500/5 pointer-events-none transition-all"
-                                    style={{ width: `${(entry.total / maxUsage) * 100}%` }}
-                                />
-
-                                <div className="relative flex items-center gap-3 px-4 py-3">
+                            <AdminTableRow
+                                key={entry.tag}
+                                backgroundBar={{ width: (entry.total / maxUsage) * 100, color: 'bg-purple-500/5' }}
+                                actions={
+                                    editingTag === entry.tag ? (
+                                        <div className="flex gap-1 flex-shrink-0">
+                                            {mergeConflict ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => saveRename(entry.tag, true)}
+                                                        disabled={saving}
+                                                        title="Confirmar mesclagem"
+                                                        className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <GitMerge className="w-3.5 h-3.5" />}
+                                                    </button>
+                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-surface hover:bg-surface text-muted transition-colors">
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => saveRename(entry.tag)}
+                                                        disabled={saving}
+                                                        className="p-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                                    </button>
+                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-surface hover:bg-surface text-muted transition-colors">
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <AdminIconButton onClick={() => startEdit(entry.tag)} title="Renomear">
+                                                <Pencil size={14} />
+                                            </AdminIconButton>
+                                            <AdminIconButton onClick={() => setMergingTag(entry.tag)} title="Mesclar em outra tag">
+                                                <GitMerge size={14} />
+                                            </AdminIconButton>
+                                            <AdminIconButton variant="danger" onClick={() => setDeletingTag(entry.tag)} title="Remover de todos os conteúdos">
+                                                <Trash2 size={14} />
+                                            </AdminIconButton>
+                                        </>
+                                    )
+                                }
+                            >
+                                <div className="flex items-center gap-3">
                                     <Tag className="w-3.5 h-3.5 text-muted flex-shrink-0" />
 
                                     {/* Tag name or edit input */}
@@ -461,66 +506,8 @@ export default function TagsAdminPage() {
                                             {entry.total}×
                                         </span>
                                     </div>
-
-                                    {/* Actions */}
-                                    {editingTag === entry.tag ? (
-                                        <div className="flex gap-1 flex-shrink-0">
-                                            {mergeConflict ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => saveRename(entry.tag, true)}
-                                                        disabled={saving}
-                                                        title="Confirmar mesclagem"
-                                                        className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 transition-colors disabled:opacity-50"
-                                                    >
-                                                        {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <GitMerge className="w-3.5 h-3.5" />}
-                                                    </button>
-                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-surface hover:bg-surface text-muted transition-colors">
-                                                        <X className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        onClick={() => saveRename(entry.tag)}
-                                                        disabled={saving}
-                                                        className="p-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 transition-colors disabled:opacity-50"
-                                                    >
-                                                        {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                                                    </button>
-                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-surface hover:bg-surface text-muted transition-colors">
-                                                        <X className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="flex gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => startEdit(entry.tag)}
-                                                className="p-1.5 rounded-xl bg-surface hover:bg-surface text-muted hover:text-foreground transition-colors"
-                                                title="Renomear"
-                                            >
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setMergingTag(entry.tag)}
-                                                className="p-1.5 rounded-lg bg-surface hover:bg-purple-500/20 text-muted hover:text-purple-400 transition-colors"
-                                                title="Mesclar em outra tag"
-                                            >
-                                                <GitMerge className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeletingTag(entry.tag)}
-                                                className="p-1.5 rounded-lg bg-surface hover:bg-red-500/20 text-muted hover:text-red-400 transition-colors"
-                                                title="Remover de todos os conteúdos"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
+                            </AdminTableRow>
                         ))}
                     </div>
                 )}
@@ -537,30 +524,15 @@ export default function TagsAdminPage() {
             )}
 
             {/* Delete confirm modal */}
-            {deletingTag && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-surface border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-                        <div className="flex items-center gap-3 mb-3">
-                            <Trash2 className="w-5 h-5 text-red-400 flex-shrink-0" />
-                            <h2 className="text-base font-black text-foreground">Remover tag</h2>
-                        </div>
-                        <p className="text-muted text-sm mb-1">
-                            Remover <span className="font-mono font-bold text-foreground bg-surface px-1.5 py-0.5 rounded">{deletingTag}</span> de todos os conteúdos?
-                        </p>
-                        <p className="text-muted text-xs mb-5">Esta ação não pode ser desfeita.</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setDeletingTag(null)}
-                                className="flex-1 py-2.5 rounded-lg border border-border text-muted text-sm font-bold hover:border-border transition-colors">
-                                Cancelar
-                            </button>
-                            <button onClick={() => confirmDelete(deletingTag)}
-                                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-foreground text-sm font-bold transition-colors">
-                                Remover
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmDialog
+                open={!!deletingTag}
+                title="Remover tag"
+                description={`Remover "${deletingTag}"? Esta ação não pode ser desfeita.`}
+                confirmLabel="Remover"
+                variant="danger"
+                onConfirm={() => { if (deletingTag) confirmDelete(deletingTag) }}
+                onCancel={() => setDeletingTag(null)}
+            />
         </AdminLayout>
     )
 }
