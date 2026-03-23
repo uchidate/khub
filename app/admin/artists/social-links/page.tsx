@@ -105,7 +105,7 @@ const lineColor = (type: LogLine['type']) => {
     if (type === 'success') return 'text-green-400'
     if (type === 'error') return 'text-red-400'
     if (type === 'warning') return 'text-yellow-400'
-    if (type === 'done') return 'text-purple-400 font-bold'
+    if (type === 'done') return 'text-accent font-bold'
     if (type === 'progress') return 'text-muted'
     return 'text-foreground'
 }
@@ -647,9 +647,9 @@ export default function SocialLinksAdminPage() {
                 </div>
 
                 {/* Bulk sync via Wikidata */}
-                <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
+                <div className="bg-surface border border-accent/20 rounded-xl p-5 space-y-4">
                     <div className="flex items-center gap-3">
-                        <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                        <Sparkles className="w-5 h-5 text-accent flex-shrink-0" />
                         <div>
                             <p className="text-sm font-black text-foreground">Busca automática em lote via Wikidata</p>
                             <p className="text-xs text-muted mt-0.5">
@@ -722,7 +722,7 @@ export default function SocialLinksAdminPage() {
                             </div>
                             <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                                    className="h-full bg-accent rounded-full transition-all duration-500"
                                     style={{ width: `${pct}%` }}
                                 />
                             </div>

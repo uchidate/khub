@@ -38,7 +38,7 @@ function Avatar({ name, role }: { name: string | null; role: string }) {
     : '?'
   return (
     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-      role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-surface text-foreground'
+      role === 'admin' ? 'bg-accent/15 text-accent' : 'bg-surface text-foreground'
     }`}>
       {letters}
     </div>
@@ -48,7 +48,7 @@ function Avatar({ name, role }: { name: string | null; role: string }) {
 function RoleBadge({ role }: { role: string }) {
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold ${
-      role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-surface text-muted'
+      role === 'admin' ? 'bg-accent/15 text-accent' : 'bg-surface text-muted'
     }`}>
       {role === 'admin' && <Shield size={10} />}
       {role === 'admin' ? 'Admin' : 'Usuário'}
@@ -209,7 +209,7 @@ export default function UsersAdminPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { icon: Users,       label: 'Total',        value: stats?.total,       color: 'bg-blue-500/10 text-blue-400' },
-            { icon: Shield,      label: 'Admins',       value: stats?.admins,      color: 'bg-purple-500/10 text-purple-400' },
+            { icon: Shield,      label: 'Admins',       value: stats?.admins,      color: 'bg-accent/10 text-accent' },
             { icon: CheckCircle, label: 'Verificados',  value: stats?.verified,    color: 'bg-green-500/10 text-green-400' },
             { icon: UserPlus,    label: 'Esta semana',  value: stats?.newThisWeek, color: 'bg-pink-500/10 text-pink-400' },
           ].map(({ icon: Icon, label, value, color }) => (

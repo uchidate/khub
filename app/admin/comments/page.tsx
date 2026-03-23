@@ -63,7 +63,7 @@ function CommentCard({
                 {/* Checkbox + Avatar */}
                 <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
                     <input type="checkbox" checked={selected} onChange={onToggle}
-                        className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer" />
+                        className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer" />
                     {comment.user.image ? (
                         <img src={comment.user.image} alt="" className="w-6 h-6 rounded-full object-cover" />
                     ) : (
@@ -417,7 +417,7 @@ export default function AdminCommentsPage() {
                         <input type="checkbox"
                             checked={selected.size === comments.length && comments.length > 0}
                             onChange={toggleAll}
-                            className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
+                            className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer"
                         />
                         <span className="text-xs font-black text-muted uppercase tracking-wider">
                             {selected.size > 0 ? `${selected.size} selecionado(s)` : 'Selecionar todos'}
@@ -445,7 +445,7 @@ export default function AdminCommentsPage() {
                             <input type="checkbox"
                                 checked={selected.size === comments.length && comments.length > 0}
                                 onChange={toggleAll}
-                                className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
+                                className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer"
                             />
                         </div>
                         <div className="flex items-center gap-1"><Filter className="w-3 h-3" /> Comentário</div>
@@ -465,7 +465,7 @@ export default function AdminCommentsPage() {
                                 <input type="checkbox"
                                     checked={selected.has(comment.id)}
                                     onChange={() => toggleSelect(comment.id)}
-                                    className="w-4 h-4 rounded border-border bg-surface accent-purple-500 cursor-pointer"
+                                    className="w-4 h-4 rounded border-border bg-surface accent-pink-500 cursor-pointer"
                                 />
                             </div>
 

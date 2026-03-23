@@ -411,7 +411,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                                 </span>
                                                 {entityName && (
                                                     entityHref ? (
-                                                        <Link href={entityHref} className="text-xs text-foreground hover:text-purple-300 hover:underline truncate max-w-[200px]">
+                                                        <Link href={entityHref} className="text-xs text-foreground hover:text-accent/70 hover:underline truncate max-w-[200px]">
                                                             {entityName}
                                                         </Link>
                                                     ) : (

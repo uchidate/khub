@@ -213,7 +213,7 @@ export default function FilmographyAdminPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
+              <RefreshCw className="w-6 h-6 text-accent animate-spin" />
             </div>
           ) : filteredArtists.length === 0 ? (
             <AdminEmptyState title="Nenhum artista encontrado" size="sm" />

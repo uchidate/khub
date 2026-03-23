@@ -250,7 +250,7 @@ export default function ArtistVisibilityPage() {
                     )}
 
                     {selected.size > 0 && (
-                        <div className="flex items-center gap-3 px-4 py-2 bg-purple-900/20 border-b border-purple-700/20">
+                        <div className="flex items-center gap-3 px-4 py-2 bg-accent/10 border-b border-accent/20">
                             <span className="text-xs text-muted">{selected.size} selecionados</span>
                             <AdminButton
                                 variant="warning"
@@ -278,14 +278,14 @@ export default function ArtistVisibilityPage() {
                                 const isExpanded = expanded.has(item.id)
                                 const canShow = item.hideReason !== 'adult_content'
                                 return (
-                                    <li key={item.id} className={isSelected ? 'bg-purple-900/10' : ''}>
+                                    <li key={item.id} className={isSelected ? 'bg-accent/10' : ''}>
                                         <div className="flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors">
                                             <input
                                                 type="checkbox"
                                                 checked={isSelected}
                                                 onChange={() => toggleSelect(item.id, item.hideReason)}
                                                 disabled={!canShow}
-                                                className="accent-purple-500 cursor-pointer w-3.5 h-3.5 flex-shrink-0 disabled:opacity-30"
+                                                className="accent-pink-500 cursor-pointer w-3.5 h-3.5 flex-shrink-0 disabled:opacity-30"
                                             />
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">

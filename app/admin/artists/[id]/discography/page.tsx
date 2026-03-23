@@ -36,7 +36,7 @@ interface Album {
 }
 
 const TYPE_STYLE: Record<string, string> = {
-  ALBUM: 'bg-purple-500/20 text-purple-400',
+  ALBUM: 'bg-accent/15 text-accent',
   EP: 'bg-blue-500/20 text-blue-400',
   SINGLE: 'bg-pink-500/20 text-pink-400',
 }
@@ -129,7 +129,7 @@ const columns: Column<Album>[] = [
           href={`https://musicbrainz.org/release-group/${album.mbid}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[10px] font-mono text-muted hover:text-purple-400 transition-colors"
+          className="text-[10px] font-mono text-muted hover:text-accent transition-colors"
           title={album.mbid}
         >
           {album.mbid.slice(0, 8)}…
@@ -516,7 +516,7 @@ export default function ArtistDiscographyPage() {
                             if (e.key === 'Escape') setEditingField(null)
                           }}
                           placeholder={field === 'mbid' ? 'UUID do MusicBrainz' : 'ID numérico do TMDB'}
-                          className="text-xs font-mono bg-surface border border-border text-foreground rounded px-2 py-0.5 w-52 focus:outline-none focus:border-purple-500"
+                          className="text-xs font-mono bg-surface border border-border text-foreground rounded px-2 py-0.5 w-52 focus:outline-none focus:border-accent"
                           autoFocus
                         />
                         <button
@@ -546,7 +546,7 @@ export default function ArtistDiscographyPage() {
                         )}
                         {externalLink && (
                           <a href={externalLink} target="_blank" rel="noopener noreferrer"
-                            className="p-0.5 text-muted hover:text-purple-400 transition-colors"
+                            className="p-0.5 text-muted hover:text-accent transition-colors"
                             title={`Abrir no ${label}`}>
                             <ExternalLink className="w-3 h-3" />
                           </a>

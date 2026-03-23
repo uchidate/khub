@@ -1144,7 +1144,7 @@ function MembershipCard({
             type="checkbox"
             checked={isActive}
             onChange={e => setIsActive(e.target.checked)}
-            className="accent-purple-500"
+            className="accent-pink-500"
           />
           Ativo
         </label>

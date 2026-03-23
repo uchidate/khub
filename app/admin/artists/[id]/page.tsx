@@ -239,7 +239,7 @@ export default function EditArtistPage() {
         }
     }
 
-    const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 text-sm"
+    const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-accent text-sm"
     const labelCls = "block text-xs font-bold text-muted uppercase tracking-widest mb-1.5"
 
     const sources = (form.fieldSources ?? {}) as FieldSources
@@ -300,7 +300,7 @@ export default function EditArtistPage() {
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
-                        <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                     </div>
                 )}
 
@@ -538,7 +538,7 @@ export default function EditArtistPage() {
                                 <button
                                     type="button"
                                     onClick={() => setForm(prev => ({ ...prev, curiosidades: [...(prev.curiosidades ?? []), ''] }))}
-                                    className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors"
+                                    className="flex items-center gap-1 text-[10px] text-accent hover:text-accent/70 transition-colors"
                                 >
                                     <Plus className="w-3 h-3" /> Adicionar
                                 </button>
@@ -584,7 +584,7 @@ export default function EditArtistPage() {
                                 <button
                                     type="button"
                                     onClick={() => setSocialPairs(prev => [...prev, ['', '']])}
-                                    className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors"
+                                    className="flex items-center gap-1 text-[10px] text-accent hover:text-accent/70 transition-colors"
                                 >
                                     <Plus className="w-3 h-3" /> Adicionar
                                 </button>
@@ -602,7 +602,7 @@ export default function EditArtistPage() {
                                                 next[i] = [e.target.value, value]
                                                 setSocialPairs(next)
                                             }}
-                                            className="w-36 px-2 py-2 bg-surface border border-border rounded-lg text-foreground text-xs focus:outline-none focus:border-purple-500/50"
+                                            className="w-36 px-2 py-2 bg-surface border border-border rounded-lg text-foreground text-xs focus:outline-none focus:border-accent"
                                         >
                                             <option value="">Plataforma...</option>
                                             {KNOWN_SOCIAL_KEYS.map(({ key: k, label }) => (
@@ -636,16 +636,16 @@ export default function EditArtistPage() {
                         </div>
 
                         {/* Conteúdo Editorial (IA) */}
-                        <div className="border border-purple-500/20 rounded-xl p-4 bg-purple-900/5">
+                        <div className="border border-accent/20 rounded-xl p-4 bg-accent/5">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-purple-400" />
+                                    <Sparkles className="w-4 h-4 text-accent" />
                                     <span className="text-sm font-semibold text-foreground">Conteúdo Editorial</span>
                                     <span className="text-[10px] text-muted font-mono">DeepSeek-V3</span>
                                 </div>
                                 <Link
                                     href="/admin/enrichment"
-                                    className="text-[10px] text-muted hover:text-purple-400 transition-colors"
+                                    className="text-[10px] text-muted hover:text-accent transition-colors"
                                 >
                                     Ver lote →
                                 </Link>
@@ -758,7 +758,7 @@ export default function EditArtistPage() {
                                         {tmdbPreview.hangulName && (
                                             <div>
                                                 <span className="text-muted">Hangul:</span>{' '}
-                                                <span className="text-purple-300">{tmdbPreview.hangulName}</span>
+                                                <span className="text-accent">{tmdbPreview.hangulName}</span>
                                             </div>
                                         )}
                                         {tmdbPreview.birthday && (
