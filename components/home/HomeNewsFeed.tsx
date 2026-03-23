@@ -186,11 +186,11 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                         <div>
                             {productions.slice(0, 5).map((prod, idx) => {
                                 const GRAD_STYLES = [
-                                    'linear-gradient(135deg,#c084fc,#818cf8)',
-                                    'linear-gradient(135deg,#6d28d9,#a855f7)',
-                                    'linear-gradient(135deg,#ff2d78,#ff6fa3)',
-                                    'linear-gradient(135deg,#0ea5e9,#38bdf8)',
-                                    'linear-gradient(135deg,#f59e0b,#fbbf24)',
+                                    'linear-gradient(135deg,#27272a,#18181b)',
+                                    'linear-gradient(135deg,#1f1f22,#111114)',
+                                    'linear-gradient(135deg,#27272a,#18181b)',
+                                    'linear-gradient(135deg,#1f1f22,#111114)',
+                                    'linear-gradient(135deg,#27272a,#18181b)',
                                 ]
                                 return (
                                     <Link

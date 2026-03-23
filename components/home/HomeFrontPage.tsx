@@ -39,12 +39,12 @@ interface HomeFrontPageProps {
 }
 
 const AVATAR_GRADIENTS = [
-    "from-[#c084fc] to-[#818cf8]",
-    "from-[#6d28d9] to-[#a855f7]",
-    "from-[#ff2d78] to-[#ff6fa3]",
-    "from-[#0ea5e9] to-[#38bdf8]",
-    "from-[#10b981] to-[#34d399]",
-    "from-[#f59e0b] to-[#fbbf24]",
+    "from-zinc-700 to-zinc-800",
+    "from-zinc-600 to-zinc-700",
+    "from-zinc-800 to-zinc-900",
+    "from-zinc-700 to-zinc-800",
+    "from-zinc-600 to-zinc-700",
+    "from-zinc-800 to-zinc-900",
 ]
 
 const TAG_COLORS: Record<string, string> = {

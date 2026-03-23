@@ -38,14 +38,14 @@ export function LatestProductions({
     const displayTitle = title ?? (variant === 'top' ? 'Mais Bem Avaliados' : 'Recém Adicionados')
     const displaySubtitle = subtitle ?? (variant === 'top' ? 'Nota TMDB acima de 7.5' : 'Últimos dramas e filmes no catálogo')
     const Icon = variant === 'top' ? Trophy : Sparkles
-    const iconGradient = variant === 'top' ? 'from-yellow-500 to-orange-500' : 'from-[#ff2d78] to-pink-600'
+    const iconBg = variant === 'top' ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-[#ff2d78]/10 border border-[#ff2d78]/20'
 
     return (
         <section className="py-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                    <div className={`p-2 bg-gradient-to-br ${iconGradient} rounded-xl`}>
+                    <div className={`p-2 ${iconBg} rounded-xl`}>
                         <Icon className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -80,7 +80,7 @@ export function LatestProductions({
                             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-[#080808] mb-3 shadow-lg">
                                 {/* New Badge */}
                                 {isNew(production.createdAt) && variant === 'latest' && (
-                                    <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-gradient-to-r from-[#ff2d78] to-pink-600 rounded-full">
+                                    <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-[#ff2d78] rounded-full">
                                         <span className="text-white text-xs font-black uppercase">
                                             Novo
                                         </span>
@@ -157,7 +157,7 @@ export function LatestProductions({
             <div className="mt-6 md:hidden text-center">
                 <Link
                     href="/productions"
-                    className="inline-block px-6 py-3 bg-gradient-to-r from-[#ff2d78] to-pink-600 text-white rounded-full font-bold text-sm hover:opacity-90 transition-opacity"
+                    className="inline-block px-6 py-3 bg-[#ff2d78] text-white rounded-full font-bold text-sm hover:bg-[#e0256a] transition-colors"
                 >
                     Ver todas as produções
                 </Link>

@@ -130,7 +130,7 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
                                     className="w-10 h-10 rounded-full object-cover"
                                 />
                             ) : (
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff2d78] to-pink-500 flex items-center justify-center text-white font-medium">
+                                <div className="w-10 h-10 rounded-full bg-[#ff2d78] flex items-center justify-center text-white font-medium">
                                     {(comment.user.name || 'U')[0].toUpperCase()}
                                 </div>
                             )}

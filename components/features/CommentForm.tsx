@@ -84,7 +84,7 @@ export function CommentForm({ newsId, onCommentAdded }: CommentFormProps) {
                             className="w-10 h-10 rounded-full object-cover"
                         />
                     ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff2d78]/10 to-[#ff6fa3]/10 border border-[#ff2d78]/20 flex items-center justify-center text-muted font-medium text-sm">
+                        <div className="w-10 h-10 rounded-full bg-[#ff2d78] flex items-center justify-center text-white font-medium text-sm">
                             {session?.user?.name?.[0]?.toUpperCase() ?? '?'}
                         </div>
                     )}

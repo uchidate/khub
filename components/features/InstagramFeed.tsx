@@ -29,7 +29,7 @@ export function InstagramFeed({ posts, instagramUrl }: InstagramFeedProps) {
         <section>
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-pink-500 via-rose-500 to-orange-400 rounded-xl">
+                    <div className="p-2 bg-surface border border-border rounded-xl">
                         <Instagram className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -67,7 +67,7 @@ export function InstagramFeed({ posts, instagramUrl }: InstagramFeedProps) {
                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500/10 to-orange-400/10">
+                            <div className="w-full h-full flex items-center justify-center bg-surface">
                                 <Instagram className="w-6 h-6 text-pink-500/50" />
                             </div>
                         )}

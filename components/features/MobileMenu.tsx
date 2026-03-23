@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useSession } from "next-auth/react"
 import { Mic2, Users, Film, Newspaper, PenLine, Search, User } from "lucide-react"
+import { BrandMark } from "@/components/ui/BrandMark"
 
 interface MobileMenuProps {
   links: Array<{ label: string; href: string }>
@@ -19,16 +20,6 @@ const LINK_ICONS: Record<string, React.ElementType> = {
   "/blog":        PenLine,
 }
 
-function OrbitalMark() {
-  return (
-    <svg viewBox="0 0 38 38" fill="none" width={26} height={26}>
-      <rect x="5"  y="8" width="6" height="22" rx="3" fill="currentColor"/>
-      <rect x="27" y="8" width="6" height="22" rx="3" fill="currentColor"/>
-      <path d="M11 19 Q19 13 27 19" stroke="#ff2d78" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-      <circle cx="19" cy="13.5" r="2.5" fill="#ff2d78"/>
-    </svg>
-  )
-}
 
 export const MobileMenu = ({ links }: MobileMenuProps) => {
   const { data: session } = useSession()
@@ -61,7 +52,7 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
           {/* Drawer header */}
           <div className="flex items-center justify-between px-5 border-b border-border h-[52px] flex-shrink-0">
             <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 text-foreground">
-              <OrbitalMark />
+              <BrandMark size={26} />
               <span className="text-[14px] font-bold tracking-[-0.02em] text-foreground">
                 Hallyu<span className="text-accent">Hub</span>
               </span>

@@ -10,17 +10,7 @@ import { NotificationBell } from "@/components/features/NotificationBell"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useSession } from "next-auth/react"
 import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
-
-function OrbitalMark({ size = 28 }: { size?: number }) {
-    return (
-        <svg viewBox="0 0 38 38" fill="none" width={size} height={size}>
-            <rect x="5"  y="8" width="6" height="22" rx="3" fill="currentColor"/>
-            <rect x="27" y="8" width="6" height="22" rx="3" fill="currentColor"/>
-            <path d="M11 19 Q19 13 27 19" stroke="#ff2d78" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-            <circle cx="19" cy="13.5" r="2.5" fill="#ff2d78"/>
-        </svg>
-    )
-}
+import { BrandMark } from "@/components/ui/BrandMark"
 
 const NavBar = () => {
     const pathname = usePathname()
@@ -60,8 +50,8 @@ const NavBar = () => {
                                 <MobileMenu links={navLinks} />
                             </div>
                             <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
-                                <OrbitalMark size={28} />
-                                <span className="text-[14px] font-bold tracking-[-0.02em] text-foreground">
+                                <BrandMark size={36} />
+                                <span className="text-[22px] font-bold tracking-[-0.02em] text-foreground">
                                     Hallyu<span className="text-[#ff2d78]">Hub</span>
                                 </span>
                             </Link>

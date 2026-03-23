@@ -29,7 +29,7 @@ export function TrendingGroups({ groups }: TrendingGroupsProps) {
         <section>
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-[#ff2d78] to-pink-600 rounded-xl">
+                    <div className="p-2 bg-[#ff2d78]/10 border border-[#ff2d78]/20 rounded-xl">
                         <Music2 className="w-5 h-5 text-white" />
                     </div>
                     <div>

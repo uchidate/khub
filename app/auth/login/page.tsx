@@ -5,17 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, AlertCircle } from 'lucide-react'
-
-function OrbitalMark() {
-  return (
-    <svg viewBox="0 0 38 38" fill="none" width={30} height={30}>
-      <rect x="5"  y="8" width="6" height="22" rx="3" fill="currentColor"/>
-      <rect x="27" y="8" width="6" height="22" rx="3" fill="currentColor"/>
-      <path d="M11 19 Q19 13 27 19" stroke="#ff2d78" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-      <circle cx="19" cy="13.5" r="2.5" fill="#ff2d78"/>
-    </svg>
-  )
-}
+import { BrandMark } from '@/components/ui/BrandMark'
 
 function GoogleIcon() {
   return (
@@ -75,7 +65,7 @@ function LoginForm() {
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
-            <OrbitalMark />
+            <BrandMark size={30} />
             <span className="text-xl font-black tracking-[-0.02em] text-foreground">
               Hallyu<span className="text-[#ff2d78]">Hub</span>
             </span>

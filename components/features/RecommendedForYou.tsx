@@ -30,7 +30,7 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl">
+                    <div className="p-2 bg-[#ff2d78]/10 border border-[#ff2d78]/20 rounded-xl">
                         <Heart className="w-6 h-6 text-white fill-white" />
                     </div>
                     <div>
@@ -65,7 +65,7 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
                             {/* Image */}
                             <div className="relative aspect-video overflow-hidden dark:bg-[#080808] bg-[#f0f0f0]">
                                 {/* Recommended Badge */}
-                                <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full flex items-center gap-1.5">
+                                <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-[#ff2d78] rounded-full flex items-center gap-1.5">
                                     <Heart className="w-3 h-3 text-white fill-white" />
                                     <span className="text-white text-xs font-black uppercase">
                                         Para Você
@@ -81,7 +81,7 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
                                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-pink-900 to-rose-900 flex items-center justify-center">
+                                    <div className="w-full h-full bg-[#111] flex items-center justify-center">
                                         <Heart className="w-12 h-12 text-white/30" />
                                     </div>
                                 )}
@@ -140,7 +140,7 @@ export function RecommendedForYou({ news, isAuthenticated, favoritesCount }: Rec
             <div className="mt-6 md:hidden text-center">
                 <Link
                     href="/news/feed"
-                    className="inline-block px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full font-bold text-sm hover:opacity-90 transition-opacity"
+                    className="inline-block px-6 py-3 bg-[#ff2d78] text-white rounded-full font-bold text-sm hover:bg-[#e0256a] transition-colors"
                 >
                     Ver feed personalizado
                 </Link>
