@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { Languages, RefreshCw, AlertTriangle, CheckCircle, Type, Database, Link2, HelpCircle, Play } from 'lucide-react'
-import { AdminButton } from '@/components/admin'
+import { AdminButton, StatCard, SectionHeader } from '@/components/admin'
 
 const SYNC_BATCH_SIZE = 250    // 250 × ~750ms ≈ 3min por lote, abaixo do maxDuration=300s
 const LINK_BATCH_SIZE = 200
@@ -208,20 +208,26 @@ function LogPanel({
     title: string; description: string; buttonLabel: string; buttonAllLabel?: string; statLabels: [string, string, string]
     icon: React.ElementType
 }) {
+    const logRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
+    }, [log])
+
     const lineColor = (type: LogLine['type']) => {
         if (type === 'success') return 'text-green-400'
         if (type === 'error') return 'text-red-400'
         if (type === 'warning') return 'text-yellow-400'
-        if (type === 'done') return 'text-purple-400 font-bold'
+        if (type === 'done') return 'text-accent font-bold'
         if (type === 'progress') return 'text-muted'
         return 'text-foreground'
     }
 
     return (
-        <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
+        <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                    <Icon className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                    <Icon className="w-5 h-5 text-accent flex-shrink-0" />
                     <div>
                         <p className="text-sm font-bold text-foreground">{title}</p>
                         <p className="text-xs text-muted mt-0.5">{description}</p>
@@ -241,23 +247,14 @@ function LogPanel({
 
             {stats && (
                 <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
-                        <p className="text-xl font-black text-green-400">{stats.main}</p>
-                        <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">{statLabels[0]}</p>
-                    </div>
-                    <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
-                        <p className="text-xl font-black text-yellow-400">{stats.secondary}</p>
-                        <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">{statLabels[1]}</p>
-                    </div>
-                    <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
-                        <p className="text-xl font-black text-red-400">{stats.errors}</p>
-                        <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">{statLabels[2]}</p>
-                    </div>
+                    <StatCard label={statLabels[0]} value={stats.main} color="text-green-400" />
+                    <StatCard label={statLabels[1]} value={stats.secondary} color="text-yellow-400" />
+                    <StatCard label={statLabels[2]} value={stats.errors} color="text-red-400" />
                 </div>
             )}
 
             {log.length > 0 && (
-                <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
+                <div ref={logRef} className="bg-background rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                     {log.map((line, i) => (
                         <div key={i} className={`flex items-center gap-2 ${lineColor(line.type)}`}>
                             <span>{line.text}</span>
@@ -305,6 +302,9 @@ export default function FixNamesAdminPage() {
     const [linkProcessed, setLinkProcessed] = useState(0)
     const linkAbortRef = useRef(false)
 
+    const syncLogRef = useRef<HTMLDivElement>(null)
+    const linkLogRef = useRef<HTMLDivElement>(null)
+
     useEffect(() => {
         fetch('/api/admin/artists/fix-names')
             .then(r => r.json())
@@ -319,6 +319,14 @@ export default function FixNamesAdminPage() {
             if (link) setSavedLink(JSON.parse(link))
         } catch { /* ignore */ }
     }, [])
+
+    useEffect(() => {
+        if (syncLogRef.current) syncLogRef.current.scrollTop = syncLogRef.current.scrollHeight
+    }, [syncLog])
+
+    useEffect(() => {
+        if (linkLogRef.current) linkLogRef.current.scrollTop = linkLogRef.current.scrollHeight
+    }, [linkLog])
 
     async function runStream(
         endpoint: string, body: Record<string, unknown>, parser: (line: string) => LogLine,
@@ -541,40 +549,41 @@ export default function FixNamesAdminPage() {
     const completionRate = artistStats ? Math.round((artistStats.complete / artistStats.withTmdb) * 100) : 0
 
     return (
-        <AdminLayout title="Enriquecimento de Artistas via TMDB">
+        <AdminLayout title="Enriquecimento de Artistas" subtitle="Vincula TMDB IDs, corrige nomes e sincroniza dados biográficos">
             <div className="space-y-6">
 
                 {/* ── Painel de estatísticas ── */}
                 <div className="bg-surface border border-border rounded-xl p-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-bold text-foreground">Cobertura de dados</h2>
-                        {statsLoading && <RefreshCw className="w-4 h-4 text-muted animate-spin" />}
-                    </div>
+                    <SectionHeader
+                        title="Cobertura de dados"
+                        actions={statsLoading ? <RefreshCw className="w-4 h-4 text-muted animate-spin" /> : undefined}
+                    />
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                        <div className="bg-black/30 border border-border rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-foreground">{artistStats?.total.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Total</p>
-                        </div>
-                        <div className="bg-black/30 border border-green-500/30 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-green-400">{artistStats?.withTmdb.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Com TMDB ID</p>
-                            {artistStats && <p className="text-xs text-muted mt-1">{tmdbCoverage}%</p>}
-                        </div>
-                        <div className="bg-black/30 border border-amber-500/30 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-amber-400">{artistStats?.withoutTmdb.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem TMDB ID</p>
-                            <p className="text-[10px] text-muted mt-1">não sincronizável</p>
-                        </div>
-                        <div className="bg-black/30 border border-blue-500/30 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-blue-400">{artistStats?.complete.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Bio + foto + Hangul</p>
-                            {artistStats && <p className="text-xs text-muted mt-1">{completionRate}% dos com TMDB</p>}
-                        </div>
-                        <div className="bg-black/30 border border-border rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-muted">{artistStats?.flagged.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Não coreanos</p>
-                            <p className="text-[10px] text-muted mt-1">excluídos do sync</p>
-                        </div>
+                        <StatCard label="Total" value={artistStats?.total ?? undefined} color="text-foreground" />
+                        <StatCard
+                            label="Com TMDB ID"
+                            value={artistStats?.withTmdb ?? undefined}
+                            color="text-green-400"
+                            sub={artistStats ? `${tmdbCoverage}%` : undefined}
+                        />
+                        <StatCard
+                            label="Sem TMDB ID"
+                            value={artistStats?.withoutTmdb ?? undefined}
+                            color="text-amber-400"
+                            sub="não sincronizável"
+                        />
+                        <StatCard
+                            label="Bio + foto + Hangul"
+                            value={artistStats?.complete ?? undefined}
+                            color="text-blue-400"
+                            sub={artistStats ? `${completionRate}% dos com TMDB` : undefined}
+                        />
+                        <StatCard
+                            label="Não coreanos"
+                            value={artistStats?.flagged ?? undefined}
+                            color="text-muted"
+                            sub="excluídos do sync"
+                        />
                     </div>
 
                     {/* Barra de cobertura TMDB */}
@@ -617,7 +626,7 @@ export default function FixNamesAdminPage() {
                 </div>
 
                 {/* ── 1. Vincular TMDB IDs (nova operação) ── */}
-                <div className="bg-surface border border-amber-500/20 rounded-xl p-5 space-y-4">
+                <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex items-center gap-3 flex-1">
                             <Link2 className="w-5 h-5 text-amber-400 flex-shrink-0" />
@@ -625,7 +634,7 @@ export default function FixNamesAdminPage() {
                                 <p className="text-sm font-bold text-foreground">Vincular TMDB IDs automaticamente</p>
                                 <p className="text-xs text-muted mt-0.5">
                                     Busca cada artista sem tmdbId pelo nome no TMDB. Vincula quando o nome corresponde exatamente (alta confiança). Casos incertos são listados para revisão manual.
-                                    {artistStats && <span className="ml-1 text-amber-400 font-medium">→ {artistStats.withoutTmdb.toLocaleString('pt-BR')} artistas elegíveis</span>}
+                                    {artistStats && <span className="ml-1 text-accent font-medium">→ {artistStats.withoutTmdb.toLocaleString('pt-BR')} artistas elegíveis</span>}
                                 </p>
                             </div>
                         </div>
@@ -650,7 +659,7 @@ export default function FixNamesAdminPage() {
                         <div className="space-y-1">
                             <div className="flex justify-between text-xs text-muted">
                                 <span>Progresso</span>
-                                <span>{linkProcessed.toLocaleString('pt-BR')} / {linkTotalGlobal.toLocaleString('pt-BR')}</span>
+                                <span>{linkProcessed.toLocaleString('pt-BR')} / {linkTotalGlobal.toLocaleString('pt-BR')} · {Math.min(100, Math.round((linkProcessed / linkTotalGlobal) * 100))}%</span>
                             </div>
                             <div className="h-2 bg-surface rounded-full overflow-hidden">
                                 <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.round((linkProcessed / linkTotalGlobal) * 100))}%` }} />
@@ -660,23 +669,14 @@ export default function FixNamesAdminPage() {
 
                     {linkStats && (
                         <div className="grid grid-cols-3 gap-3">
-                            <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xl font-black text-green-400">{linkStats.main}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Vinculados</p>
-                            </div>
-                            <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xl font-black text-yellow-400">{linkStats.secondary}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem match / incerto</p>
-                            </div>
-                            <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xl font-black text-red-400">{linkStats.errors}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
-                            </div>
+                            <StatCard label="Vinculados" value={linkStats.main} color="text-green-400" />
+                            <StatCard label="Sem match / incerto" value={linkStats.secondary} color="text-yellow-400" />
+                            <StatCard label="Erros" value={linkStats.errors} color="text-red-400" />
                         </div>
                     )}
 
                     {linkLog.length > 0 && (
-                        <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
+                        <div ref={linkLogRef} className="bg-background rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                             {linkLog.map((line, i) => {
                                 const color = line.type === 'success' ? 'text-green-400' : line.type === 'error' ? 'text-red-400' : line.type === 'warning' ? 'text-yellow-400' : line.type === 'done' ? 'text-amber-400 font-bold' : line.type === 'progress' ? 'text-muted' : 'text-foreground'
                                 return (
@@ -716,15 +716,15 @@ export default function FixNamesAdminPage() {
                 />
 
                 {/* ── 4. Sync TMDB ── */}
-                <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
+                <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex items-center gap-3 flex-1">
-                            <Database className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                            <Database className="w-5 h-5 text-accent flex-shrink-0" />
                             <div>
                                 <p className="text-sm font-bold text-foreground">Sincronizar dados biográficos do TMDB</p>
                                 <p className="text-xs text-muted mt-0.5">
                                     Foto, bio, nascimento, local, gênero — processa em lotes de 500.
-                                    {artistStats && <span className="ml-1 text-purple-400 font-medium">→ {artistStats.withTmdb.toLocaleString('pt-BR')} artistas elegíveis (com TMDB ID)</span>}
+                                    {artistStats && <span className="ml-1 text-accent font-medium">→ {artistStats.withTmdb.toLocaleString('pt-BR')} artistas elegíveis (com TMDB ID)</span>}
                                 </p>
                             </div>
                         </div>
@@ -738,7 +738,12 @@ export default function FixNamesAdminPage() {
                                     {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><CheckCircle className="w-4 h-4" /> Preencher vazios</>}
                                 </AdminButton>
                             )}
-                            <button onClick={startSyncTmdbSmart} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors" title="Atualiza todos os campos não editados manualmente">
+                            <button
+                                onClick={startSyncTmdbSmart}
+                                disabled={syncRunning}
+                                className="flex items-center gap-2 px-4 py-2 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-400 disabled:opacity-50 rounded-lg text-sm font-bold transition-colors"
+                                title="Atualiza todos os campos não editados manualmente"
+                            >
                                 {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> Smart sync</>}
                             </button>
                             <AdminButton variant="warning" size="lg" onClick={startSyncTmdbAll} disabled={syncRunning}>
@@ -756,35 +761,26 @@ export default function FixNamesAdminPage() {
                         <div className="space-y-1">
                             <div className="flex justify-between text-xs text-muted">
                                 <span>Progresso global</span>
-                                <span>{syncProcessed.toLocaleString('pt-BR')} / {syncTotalGlobal.toLocaleString('pt-BR')} artistas</span>
+                                <span>{syncProcessed.toLocaleString('pt-BR')} / {syncTotalGlobal.toLocaleString('pt-BR')} artistas · {Math.min(100, Math.round((syncProcessed / syncTotalGlobal) * 100))}%</span>
                             </div>
                             <div className="h-2 bg-surface rounded-full overflow-hidden">
-                                <div className="h-full bg-purple-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.round((syncProcessed / syncTotalGlobal) * 100))}%` }} />
+                                <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.round((syncProcessed / syncTotalGlobal) * 100))}%` }} />
                             </div>
                         </div>
                     )}
 
                     {syncStats && (
                         <div className="grid grid-cols-3 gap-3">
-                            <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xl font-black text-green-400">{syncStats.main}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Enriquecidos</p>
-                            </div>
-                            <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xl font-black text-yellow-400">{syncStats.secondary}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem dados TMDB</p>
-                            </div>
-                            <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xl font-black text-red-400">{syncStats.errors}</p>
-                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
-                            </div>
+                            <StatCard label="Enriquecidos" value={syncStats.main} color="text-green-400" />
+                            <StatCard label="Sem dados TMDB" value={syncStats.secondary} color="text-yellow-400" />
+                            <StatCard label="Erros" value={syncStats.errors} color="text-red-400" />
                         </div>
                     )}
 
                     {syncLog.length > 0 && (
-                        <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
+                        <div ref={syncLogRef} className="bg-background rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                             {syncLog.map((line, i) => {
-                                const color = line.type === 'success' ? 'text-green-400' : line.type === 'error' ? 'text-red-400' : line.type === 'warning' ? 'text-yellow-400' : line.type === 'done' ? 'text-purple-400 font-bold' : line.type === 'progress' ? 'text-muted' : 'text-foreground'
+                                const color = line.type === 'success' ? 'text-green-400' : line.type === 'error' ? 'text-red-400' : line.type === 'warning' ? 'text-yellow-400' : line.type === 'done' ? 'text-accent font-bold' : line.type === 'progress' ? 'text-muted' : 'text-foreground'
                                 return (
                                     <div key={i} className={`flex items-center gap-2 ${color}`}>
                                         <span>{line.text}</span>
