@@ -8,7 +8,8 @@ import {
     RefreshCw, Filter,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ConfirmDialog, AdminEmptyState, AdminModalOverlay, AdminIconButton, AdminButton } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { ConfirmDialog, AdminEmptyState, AdminModalOverlay, AdminIconButton, AdminButton, BulkActionBar } from '@/components/admin'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { StatCard } from '@/components/admin'
 
@@ -139,6 +140,9 @@ export default function AdminCommentsPage() {
     const [bulkWorking, setBulkWorking] = useState(false)
     const [confirmModal, setConfirmModal] = useState<{ open: boolean; message: string; onConfirm: () => void }>({ open: false, message: '', onConfirm: () => {} })
 
+    const toast = useAdminToast()
+    const clear = () => setSelected(new Set())
+
     // Filters
     const [search,  setSearch]  = useState('')
     const [status,  setStatus]  = useState('')
@@ -161,6 +165,8 @@ export default function AdminCommentsPage() {
             setComments(data.comments  || [])
             setPagination(data.pagination)
             setStats(data.stats)
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar dados')
         } finally {
             setIsLoading(false)
         }
@@ -170,12 +176,18 @@ export default function AdminCommentsPage() {
 
     /* ── Single comment actions ── */
     const patch = async (id: string, body: object) => {
-        await fetch(`/api/admin/comments/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        })
-        fetchComments()
+        try {
+            const res = await fetch(`/api/admin/comments/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            })
+            if (!res.ok) throw new Error('Falha ao atualizar comentário')
+            toast.success('Comentário atualizado')
+            fetchComments()
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao atualizar comentário')
+        }
     }
 
     const deleteSingle = (id: string) => {
@@ -183,8 +195,14 @@ export default function AdminCommentsPage() {
             open: true,
             message: 'Excluir este comentário permanentemente?',
             onConfirm: async () => {
-                await fetch(`/api/admin/comments/${id}`, { method: 'DELETE' })
-                fetchComments()
+                try {
+                    const res = await fetch(`/api/admin/comments/${id}`, { method: 'DELETE' })
+                    if (!res.ok) throw new Error('Falha ao excluir comentário')
+                    toast.success('Comentário excluído')
+                    fetchComments()
+                } catch (err) {
+                    toast.error((err as Error).message || 'Erro ao excluir comentário')
+                }
             },
         })
     }
@@ -200,12 +218,16 @@ export default function AdminCommentsPage() {
                 onConfirm: async () => {
                     setBulkWorking(true)
                     try {
-                        await fetch('/api/admin/comments', {
+                        const res = await fetch('/api/admin/comments', {
                             method: 'DELETE',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ ids }),
                         })
+                        if (!res.ok) throw new Error('Falha ao excluir comentários')
+                        toast.success(`${ids.length} comentário(s) excluído(s)`)
                         fetchComments()
+                    } catch (err) {
+                        toast.error((err as Error).message || 'Erro ao excluir comentários')
                     } finally {
                         setBulkWorking(false)
                     }
@@ -220,7 +242,12 @@ export default function AdminCommentsPage() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: statusMap[action as keyof typeof statusMap] }),
                 })
-            )).then(() => fetchComments()).finally(() => setBulkWorking(false))
+            )).then(() => {
+                toast.success(`${ids.length} comentário(s) atualizados`)
+                fetchComments()
+            }).catch(err => {
+                toast.error((err as Error).message || 'Erro ao atualizar comentários')
+            }).finally(() => setBulkWorking(false))
         }
     }
 
@@ -349,23 +376,20 @@ export default function AdminCommentsPage() {
 
             {/* Bulk action bar */}
             {selected.size > 0 && (
-                <div className="flex items-center gap-3 flex-wrap p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-                    <span className="text-sm font-bold text-purple-300">{selected.size} selecionado(s)</span>
-                    <div className="flex gap-2 ml-auto flex-wrap">
-                        <AdminButton onClick={() => bulkAction('activate')} disabled={bulkWorking} variant="secondary" size="sm">
-                            <CheckCircle className="w-3.5 h-3.5" /> Ativar
-                        </AdminButton>
-                        <AdminButton onClick={() => bulkAction('flag')} disabled={bulkWorking} variant="warning" size="sm">
-                            <Flag className="w-3.5 h-3.5" /> Sinalizar
-                        </AdminButton>
-                        <AdminButton onClick={() => bulkAction('remove')} disabled={bulkWorking} variant="warning" size="sm">
-                            <AlertTriangle className="w-3.5 h-3.5" /> Remover
-                        </AdminButton>
-                        <AdminButton onClick={() => bulkAction('delete')} disabled={bulkWorking} variant="danger" size="sm">
-                            <Trash2 className="w-3.5 h-3.5" /> Excluir
-                        </AdminButton>
-                    </div>
-                </div>
+                <BulkActionBar count={selected.size} onClear={clear}>
+                    <AdminButton onClick={() => bulkAction('activate')} disabled={bulkWorking} variant="secondary" size="sm">
+                        <CheckCircle className="w-3.5 h-3.5" /> Ativar
+                    </AdminButton>
+                    <AdminButton onClick={() => bulkAction('flag')} disabled={bulkWorking} variant="warning" size="sm">
+                        <Flag className="w-3.5 h-3.5" /> Sinalizar
+                    </AdminButton>
+                    <AdminButton onClick={() => bulkAction('remove')} disabled={bulkWorking} variant="warning" size="sm">
+                        <AlertTriangle className="w-3.5 h-3.5" /> Remover
+                    </AdminButton>
+                    <AdminButton onClick={() => bulkAction('delete')} disabled={bulkWorking} variant="danger" size="sm">
+                        <Trash2 className="w-3.5 h-3.5" /> Excluir
+                    </AdminButton>
+                </BulkActionBar>
             )}
 
             {/* Table */}
