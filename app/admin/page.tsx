@@ -174,7 +174,7 @@ export default async function AdminPage() {
 
   // Pipeline steps com % de progresso visual
   const pipelineSteps = [
-    { label: 'Importadas', count: newsImportedToday, color: 'bg-zinc-600' },
+    { label: 'Importadas', count: newsImportedToday, color: 'bg-border' },
     { label: 'Em fila',    count: newsQueueToday,    color: 'bg-yellow-500' },
     { label: 'Publicadas', count: newsPublishedToday, color: 'bg-emerald-500' },
   ]
@@ -192,14 +192,14 @@ export default async function AdminPage() {
         {/* Greeting */}
         <div className="flex items-center justify-between -mt-2">
           <div>
-            <h2 className="text-lg font-black text-white">
+            <h2 className="text-lg font-black text-foreground">
               {greet}, <span className="text-blue-300">{name}</span>
             </h2>
-            <p className="text-xs text-zinc-600 capitalize">{dateStr}</p>
+            <p className="text-xs text-muted capitalize">{dateStr}</p>
           </div>
           <Link
             href="/admin/pipeline"
-            className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-600 bg-zinc-900 hover:bg-zinc-800 px-3 py-1.5 rounded-lg transition-all"
+            className="hidden sm:flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-all"
           >
             <Workflow size={13} className="text-blue-400" />
             Ver pipeline
@@ -213,7 +213,7 @@ export default async function AdminPage() {
         {/* Atenção agora */}
         {actionCards.length > 0 && (
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-2">Atenção agora</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Atenção agora</p>
             <div className={`grid gap-2 ${actionCards.length === 1 ? 'grid-cols-1' : actionCards.length === 2 ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
               {actionCards.map(card => (
                 <Link
@@ -236,10 +236,10 @@ export default async function AdminPage() {
         )}
 
         {/* Pipeline hoje */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-surface border border-border rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Pipeline hoje</p>
-            <Link href="/admin/pipeline" className="text-[10px] text-zinc-500 hover:text-blue-400 transition-colors flex items-center gap-1">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted">Pipeline hoje</p>
+            <Link href="/admin/pipeline" className="text-[10px] text-muted hover:text-blue-400 transition-colors flex items-center gap-1">
               Ver completo <ArrowRight size={10} />
             </Link>
           </div>
@@ -251,48 +251,48 @@ export default async function AdminPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${step.color}`} />
-                      <span className="text-[10px] text-zinc-500 font-medium truncate">{step.label}</span>
+                      <span className="text-[10px] text-muted font-medium truncate">{step.label}</span>
                     </div>
-                    <p className="text-xl font-black text-white tabular-nums pl-3.5">{step.count}</p>
+                    <p className="text-xl font-black text-foreground tabular-nums pl-3.5">{step.count}</p>
                   </div>
-                  {!isLast && <ArrowRight size={12} className="text-zinc-700 flex-shrink-0 mx-2" />}
+                  {!isLast && <ArrowRight size={12} className="text-muted flex-shrink-0 mx-2" />}
                 </div>
               )
             })}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-zinc-700" />
-                <span className="text-[10px] text-zinc-500 font-medium">Ocultas</span>
+                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-border" />
+                <span className="text-[10px] text-muted font-medium">Ocultas</span>
               </div>
-              <p className="text-xl font-black text-zinc-600 tabular-nums pl-3.5">{newsHidden}</p>
+              <p className="text-xl font-black text-muted tabular-nums pl-3.5">{newsHidden}</p>
             </div>
           </div>
         </div>
 
         {/* Stats grid */}
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-2">Totais (30 dias)</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Totais (30 dias)</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {stats.map(stat => (
               <Link
                 key={stat.label}
                 href={stat.href}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 hover:border-zinc-700 hover:shadow-[0_0_0_1px_rgba(59,130,246,0.12)] transition-all group flex flex-col gap-1"
+                className="bg-surface border border-border rounded-xl p-3 hover:border-border hover:shadow-[0_0_0_1px_rgba(59,130,246,0.12)] transition-all group flex flex-col gap-1"
               >
                 <div className="flex items-center justify-between">
-                  <stat.icon className="w-3.5 h-3.5 text-zinc-700 group-hover:text-zinc-500 transition-colors" />
+                  <stat.icon className="w-3.5 h-3.5 text-muted group-hover:text-muted transition-colors" />
                   {stat.new > 0 && (
                     <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded-full">
                       +{stat.new}
                     </span>
                   )}
                 </div>
-                <p className="text-xl font-black text-white tabular-nums mt-0.5">{stat.value.toLocaleString('pt-BR')}</p>
+                <p className="text-xl font-black text-foreground tabular-nums mt-0.5">{stat.value.toLocaleString('pt-BR')}</p>
                 <div className="flex items-end justify-between mt-auto pt-1">
                   <div>
-                    <p className="text-[11px] text-zinc-500 font-medium">{stat.label}</p>
+                    <p className="text-[11px] text-muted font-medium">{stat.label}</p>
                     {stat.sub && (
-                      <p className="text-[9px] text-zinc-700 flex items-center gap-0.5 mt-0.5">
+                      <p className="text-[9px] text-muted flex items-center gap-0.5 mt-0.5">
                         <TrendingUp className="w-2.5 h-2.5" />{stat.sub}
                       </p>
                     )}
@@ -308,36 +308,36 @@ export default async function AdminPage() {
         <div className="grid lg:grid-cols-3 gap-4">
 
           {/* Atividade recente */}
-          <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+          <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Activity className="w-3.5 h-3.5 text-zinc-600" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Atividade recente</p>
+              <Activity className="w-3.5 h-3.5 text-muted" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted">Atividade recente</p>
             </div>
             <div className="space-y-0.5">
               {activityEvents.length > 0 ? activityEvents.map((event, i) => (
                 <Link
                   key={i}
                   href={event.href}
-                  className="flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-zinc-800/50 transition-colors group"
+                  className="flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-surface-hover transition-colors group"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colorMap[event.color]?.dot}`} />
                   <span className={`hidden sm:inline text-[9px] font-black uppercase px-1.5 py-0.5 rounded border flex-shrink-0 ${colorMap[event.color]?.badge}`}>
                     {event.type}
                   </span>
-                  <span className="text-xs text-zinc-400 truncate flex-1 group-hover:text-zinc-200 transition-colors">
+                  <span className="text-xs text-muted truncate flex-1 group-hover:text-foreground transition-colors">
                     {event.label}
                   </span>
-                  <span className="text-[10px] text-zinc-700 flex-shrink-0 tabular-nums">{timeAgo(event.time)}</span>
+                  <span className="text-[10px] text-muted flex-shrink-0 tabular-nums">{timeAgo(event.time)}</span>
                 </Link>
               )) : (
-                <p className="text-center text-zinc-700 py-6 text-xs">Nenhuma atividade recente</p>
+                <p className="text-center text-muted py-6 text-xs">Nenhuma atividade recente</p>
               )}
             </div>
           </div>
 
           {/* Atalhos rápidos */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-3">Acesso rápido</p>
+          <div className="bg-surface border border-border rounded-xl p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-3">Acesso rápido</p>
             <div className="space-y-1">
               {[
                 { href: '/admin/pipeline',    label: 'Pipeline de conteúdo', icon: Workflow,   badge: null },
@@ -350,9 +350,9 @@ export default async function AdminPage() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 transition-all group"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-muted hover:text-foreground hover:bg-surface transition-all group"
                 >
-                  <Icon size={13} className="text-zinc-600 group-hover:text-zinc-400 transition-colors flex-shrink-0" />
+                  <Icon size={13} className="text-muted group-hover:text-muted transition-colors flex-shrink-0" />
                   <span className="flex-1 truncate">{label}</span>
                   {badge != null && badge > 0 ? (
                     <span className="text-[9px] font-black bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded-full flex-shrink-0">

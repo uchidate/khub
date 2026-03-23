@@ -142,14 +142,14 @@ export default function NewsBlockEditPage({
     if (loading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-zinc-600 animate-spin" />
+                <Loader2 className="w-8 h-8 text-muted animate-spin" />
             </div>
         )
     }
 
     if (!news) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center text-zinc-500">
+            <div className="min-h-screen bg-black flex items-center justify-center text-muted">
                 Notícia não encontrada.
             </div>
         )
@@ -158,13 +158,13 @@ export default function NewsBlockEditPage({
     const originalContent = news.originalContent || news.contentMd
 
     return (
-        <div className="min-h-screen bg-zinc-950 flex flex-col">
+        <div className="min-h-screen bg-background flex flex-col">
             {/* Top bar */}
-            <header className="sticky top-0 z-20 bg-zinc-950/90 backdrop-blur border-b border-white/8 px-4 py-2.5 flex items-center gap-3">
+            <header className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b border-border px-4 py-2.5 flex items-center gap-3">
                 {/* Back + title */}
                 <Link
                     href={returnTo}
-                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-sm transition-colors shrink-0"
+                    className="flex items-center gap-1.5 text-muted hover:text-foreground text-sm transition-colors shrink-0"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     <span className="hidden sm:inline">Voltar</span>
@@ -172,14 +172,14 @@ export default function NewsBlockEditPage({
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                        <h1 className="text-sm font-semibold text-white truncate">{news.title}</h1>
+                        <h1 className="text-sm font-semibold text-foreground truncate">{news.title}</h1>
                         {isDirty && (
                             <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
                                 não salvo
                             </span>
                         )}
                     </div>
-                    <p className="text-[11px] text-zinc-600">Editor de blocos · {blocks.length} bloco{blocks.length !== 1 ? 's' : ''}</p>
+                    <p className="text-[11px] text-muted">Editor de blocos · {blocks.length} bloco{blocks.length !== 1 ? 's' : ''}</p>
                 </div>
 
                 {/* Secondary actions — view / original */}
@@ -187,7 +187,7 @@ export default function NewsBlockEditPage({
                     <Link
                         href={`/news/${news.id}`}
                         target="_blank"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 border border-white/8 hover:border-white/15 transition-colors"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-muted hover:text-foreground border border-border hover:border-border transition-colors"
                     >
                         <ExternalLink className="w-3.5 h-3.5" />
                         Ver
@@ -196,8 +196,8 @@ export default function NewsBlockEditPage({
                         onClick={() => setShowOriginal(v => !v)}
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border transition-colors ${
                             showOriginal
-                                ? 'text-zinc-300 border-white/15 bg-zinc-800/60'
-                                : 'text-zinc-500 border-white/8 hover:text-zinc-300 hover:border-white/15'
+                                ? 'text-foreground border-border bg-surface'
+                                : 'text-muted border-border hover:text-foreground hover:border-border'
                         }`}
                     >
                         {showOriginal ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -214,7 +214,7 @@ export default function NewsBlockEditPage({
                         onClick={handleTranslate}
                         disabled={translating || saving}
                         title="Traduzir com DeepSeek-V3"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/50 disabled:opacity-50 transition-colors"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-foreground border border-border hover:bg-surface-hover disabled:opacity-50 transition-colors"
                     >
                         {translating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
                         <span className="hidden sm:inline">{translating ? 'Traduzindo...' : 'Traduzir'}</span>
@@ -227,7 +227,7 @@ export default function NewsBlockEditPage({
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border disabled:opacity-50 transition-colors ${
                             news.isHidden
                                 ? 'text-amber-400 border-amber-500/30 hover:border-amber-500/50 hover:text-amber-300'
-                                : 'text-zinc-500 border-white/8 hover:text-zinc-300 hover:border-white/15'
+                                : 'text-muted border-border hover:text-foreground hover:border-border'
                         }`}
                     >
                         {togglingHidden
@@ -245,8 +245,8 @@ export default function NewsBlockEditPage({
                         title="Salvar (⌘S)"
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${
                             isDirty
-                                ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                : 'bg-zinc-800 text-zinc-500 border border-white/8'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
+                                : 'bg-surface text-muted border border-border'
                         }`}
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -262,11 +262,11 @@ export default function NewsBlockEditPage({
                     <div className="overflow-y-auto p-6">
                         <div className="max-w-2xl mx-auto">
                             <div className="flex items-center gap-2 mb-6">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted">
                                     Conteúdo original
                                 </span>
                                 {news.source && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-500 border border-white/8">
+                                    <span className="text-[10px] px-2 py-0.5 rounded bg-surface text-muted border border-border">
                                         {news.source}
                                     </span>
                                 )}
@@ -284,10 +284,10 @@ export default function NewsBlockEditPage({
                 <div className="overflow-y-auto p-6">
                     <div className="max-w-2xl mx-auto">
                         <div className="flex items-center justify-between mb-6">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted">
                                 Blocos traduzidos
                             </span>
-                            <kbd className="text-[10px] font-mono text-zinc-700">⌘S</kbd>
+                            <kbd className="text-[10px] font-mono text-muted">⌘S</kbd>
                         </div>
                         <BlockEditor blocks={blocks} onChange={setBlocks} />
                     </div>

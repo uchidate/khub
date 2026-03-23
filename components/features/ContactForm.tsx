@@ -46,13 +46,13 @@ export function ContactForm() {
                 <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                     <CheckCircle className="w-7 h-7 text-emerald-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white">Mensagem enviada!</h3>
-                <p className="text-sm text-[#999] max-w-sm">
+                <h3 className="text-lg font-bold text-foreground">Mensagem enviada!</h3>
+                <p className="text-sm text-muted max-w-sm">
                     Recebemos seu contato e responderemos em até 48h úteis no e-mail informado.
                 </p>
                 <button
                     onClick={() => setStatus('idle')}
-                    className="text-xs text-[#ff2d78] hover:text-[#ff2d78] underline underline-offset-4 transition-colors"
+                    className="text-xs text-accent hover:text-accent/70 underline underline-offset-4 transition-colors"
                 >
                     Enviar outra mensagem
                 </button>
@@ -73,7 +73,7 @@ export function ContactForm() {
                         value={form.name}
                         onChange={e => set('name', e.target.value)}
                         placeholder="Seu nome"
-                        className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent/50 transition-colors"
+                        className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
                     />
                 </div>
                 <div>
@@ -86,7 +86,7 @@ export function ContactForm() {
                         value={form.email}
                         onChange={e => set('email', e.target.value)}
                         placeholder="seu@email.com"
-                        className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent/50 transition-colors"
+                        className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
                     />
                 </div>
             </div>
@@ -99,7 +99,7 @@ export function ContactForm() {
                     required
                     value={form.subject}
                     onChange={e => set('subject', e.target.value)}
-                    className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
+                    className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
                 >
                     {SUBJECTS.map(s => (
                         <option key={s} value={s}>{s}</option>
@@ -118,7 +118,7 @@ export function ContactForm() {
                     onChange={e => set('message', e.target.value)}
                     placeholder="Escreva sua mensagem aqui..."
                     minLength={20}
-                    className="w-full bg-[#080808] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent/50 transition-colors resize-y"
+                    className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors resize-y"
                 />
             </div>
 
@@ -132,7 +132,7 @@ export function ContactForm() {
             <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-[#ff2d78] hover:bg-[#ff2d78] disabled:opacity-50 text-white font-bold text-sm transition-colors"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-accent hover:bg-accent/90 disabled:opacity-50 text-white font-bold text-sm transition-colors"
             >
                 {status === 'sending'
                     ? <><Loader2 size={16} className="animate-spin" /> Enviando...</>

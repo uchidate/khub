@@ -35,7 +35,7 @@ const columns: Column<Album>[] = [
           className="w-12 h-12 rounded object-cover"
         />
       ) : (
-        <div className="w-12 h-12 rounded bg-zinc-800 flex items-center justify-center text-zinc-500 text-xs">
+        <div className="w-12 h-12 rounded bg-surface flex items-center justify-center text-muted text-xs">
           N/A
         </div>
       ),
@@ -58,7 +58,7 @@ const columns: Column<Album>[] = [
     render: (album) =>
       album.releaseDate
         ? new Date(album.releaseDate).toLocaleDateString('pt-BR')
-        : <span className="text-zinc-500">N/A</span>,
+        : <span className="text-muted">N/A</span>,
   },
 ]
 
@@ -165,7 +165,7 @@ export default function AlbumsPage() {
     <AdminLayout title="Álbuns">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <p className="text-zinc-400">Gerencie os álbuns, EPs e singles da plataforma</p>
+          <p className="text-muted">Gerencie os álbuns, EPs e singles da plataforma</p>
           <button
             onClick={handleCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"

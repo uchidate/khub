@@ -51,8 +51,8 @@ export function RestoreModal({ productionId, productionTitle, takedownReason, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-xl border border-yellow-800/50 bg-gray-950 p-6 shadow-2xl">
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-white">
+      <div className="relative w-full max-w-md rounded-xl border border-yellow-800/50 bg-background p-6 shadow-2xl">
+        <button onClick={onClose} className="absolute right-4 top-4 text-muted hover:text-foreground">
           <X className="h-5 w-5" />
         </button>
 
@@ -61,8 +61,8 @@ export function RestoreModal({ productionId, productionTitle, takedownReason, on
             <RotateCcw className="h-5 w-5 text-yellow-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">Restaurar Produção</h2>
-            <p className="text-sm text-gray-400 truncate max-w-xs">{productionTitle}</p>
+            <h2 className="text-lg font-semibold text-foreground">Restaurar Produção</h2>
+            <p className="text-sm text-muted truncate max-w-xs">{productionTitle}</p>
           </div>
         </div>
 
@@ -74,7 +74,7 @@ export function RestoreModal({ productionId, productionTitle, takedownReason, on
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Motivo da Restauração <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -84,9 +84,9 @@ export function RestoreModal({ productionId, productionTitle, takedownReason, on
               minLength={10}
               maxLength={5000}
               placeholder="Ex: Notificação contestada com sucesso. Documentação comprobatória arquivada em..."
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-yellow-500 focus:outline-none resize-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-yellow-500 focus:outline-none resize-none"
             />
-            <p className="mt-1 text-xs text-gray-600">{restoredReason.length}/5000 (mínimo 10)</p>
+            <p className="mt-1 text-xs text-muted">{restoredReason.length}/5000 (mínimo 10)</p>
           </div>
 
           {error && (
@@ -99,7 +99,7 @@ export function RestoreModal({ productionId, productionTitle, takedownReason, on
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+              className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-hover"
             >
               Cancelar
             </button>

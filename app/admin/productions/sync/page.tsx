@@ -74,8 +74,8 @@ const lineColor = (type: LogLine['type']) => {
     if (type === 'error') return 'text-red-400'
     if (type === 'warning') return 'text-yellow-400'
     if (type === 'done') return 'text-purple-400 font-bold'
-    if (type === 'progress') return 'text-zinc-500'
-    return 'text-zinc-300'
+    if (type === 'progress') return 'text-muted'
+    return 'text-foreground'
 }
 
 export default function SyncProductionsTmdbPage() {
@@ -239,18 +239,18 @@ export default function SyncProductionsTmdbPage() {
 
                 {/* Header */}
                 <div className="flex items-center gap-4">
-                    <div className="p-2 bg-zinc-800 rounded-xl">
+                    <div className="p-2 bg-surface rounded-xl">
                         <Film className="w-5 h-5 text-purple-400" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black text-white">Sincronizar dados do TMDB — Produções</h1>
-                        <p className="text-sm text-zinc-500 mt-0.5">
+                        <h1 className="text-xl font-black text-foreground">Sincronizar dados do TMDB — Produções</h1>
+                        <p className="text-sm text-muted mt-0.5">
                             Atualiza em lote: sinopse, poster, backdrop, tagline, ano, nota, trailer, episódios, canal e mais
                         </p>
                     </div>
                     <Link
                         href="/admin/productions"
-                        className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                        className="ml-auto text-xs text-muted hover:text-foreground transition-colors"
                     >
                         ← Produções
                     </Link>
@@ -261,7 +261,7 @@ export default function SyncProductionsTmdbPage() {
                     <div className="flex items-center justify-between p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
                         <div>
                             <p className="text-sm font-bold text-amber-400">Sync pausado — progresso salvo</p>
-                            <p className="text-xs text-zinc-400 mt-0.5">
+                            <p className="text-xs text-muted mt-0.5">
                                 Offset {savedProgress.offset.toLocaleString('pt-BR')} de {savedProgress.totalGlobal.toLocaleString('pt-BR')} ·
                                 modo: {savedProgress.mode} · {savedProgress.grandEnriched} enriquecidas
                             </p>
@@ -269,13 +269,13 @@ export default function SyncProductionsTmdbPage() {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => runBatches((savedProgress.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedProgress)}
-                                className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-bold transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-foreground rounded-lg text-sm font-bold transition-colors"
                             >
                                 ▶️ Retomar
                             </button>
                             <button
                                 onClick={() => { try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ } setSavedProgress(null) }}
-                                className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg text-sm transition-colors"
+                                className="px-3 py-2 bg-surface hover:bg-surface-hover text-foreground rounded-lg text-sm transition-colors"
                             >
                                 Descartar
                             </button>
@@ -314,11 +314,11 @@ export default function SyncProductionsTmdbPage() {
                 {/* Progresso geral */}
                 {(running || processed > 0) && (
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-zinc-400">
+                        <div className="flex items-center justify-between text-xs text-muted">
                             <span>{processed.toLocaleString('pt-BR')} / {totalGlobal.toLocaleString('pt-BR')} produções</span>
                             <span>{pct}%</span>
                         </div>
-                        <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-purple-500 rounded-full transition-all duration-500"
                                 style={{ width: `${pct}%` }}
@@ -332,15 +332,15 @@ export default function SyncProductionsTmdbPage() {
                     <div className="grid grid-cols-3 gap-3">
                         <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
                             <p className="text-2xl font-black text-green-400">{stats.enriched}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Enriquecidas</p>
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Enriquecidas</p>
                         </div>
                         <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
                             <p className="text-2xl font-black text-yellow-400">{stats.noData}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Sem dados TMDB</p>
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem dados TMDB</p>
                         </div>
                         <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
                             <p className="text-2xl font-black text-red-400">{stats.errors}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Erros</p>
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
                         </div>
                     </div>
                 )}
@@ -350,7 +350,7 @@ export default function SyncProductionsTmdbPage() {
                     <div className="flex justify-end">
                         <button
                             onClick={() => { abortRef.current = true }}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-foreground rounded-lg text-sm font-bold transition-colors"
                         >
                             <Square className="w-4 h-4" />
                             Parar (salva progresso)
@@ -360,7 +360,7 @@ export default function SyncProductionsTmdbPage() {
 
                 {/* Log */}
                 {log.length > 0 && (
-                    <div className="bg-black/40 rounded-xl p-4 max-h-96 overflow-y-auto font-mono text-xs space-y-1 border border-white/5">
+                    <div className="bg-black/40 rounded-xl p-4 max-h-96 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                         {log.map((line, i) => (
                             <div key={i} className={`flex items-start gap-2 ${lineColor(line.type)}`}>
                                 <span className="flex-1">{line.text}</span>
@@ -399,20 +399,20 @@ function ModeCard({
         amber:  'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400',
     }
     const btnColors = {
-        purple: 'bg-purple-600 hover:bg-purple-500',
+        purple: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500',
         teal:   'bg-teal-600 hover:bg-teal-500',
         amber:  'bg-amber-600 hover:bg-amber-500',
     }
     return (
         <div className={`rounded-xl border p-4 space-y-3 transition-colors ${colors[color]}`}>
             <div>
-                <p className="text-sm font-black text-white">{title}</p>
-                <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{description}</p>
+                <p className="text-sm font-black text-foreground">{title}</p>
+                <p className="text-[11px] text-muted mt-1 leading-relaxed">{description}</p>
             </div>
             <button
                 onClick={onClick}
                 disabled={disabled}
-                className={`w-full flex items-center justify-center gap-2 py-2 ${btnColors[color]} disabled:opacity-40 text-white rounded-lg text-sm font-bold transition-colors`}
+                className={`w-full flex items-center justify-center gap-2 py-2 ${btnColors[color]} disabled:opacity-40 text-foreground rounded-lg text-sm font-bold transition-colors`}
             >
                 {disabled ? <RefreshCw className="w-4 h-4 animate-spin" /> : icon}
                 {disabled ? 'Processando...' : title}

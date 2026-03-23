@@ -159,27 +159,27 @@ export function SeoChecklist({
                 <div className="flex items-center gap-3">
                     <span className={`text-2xl font-black ${scoreColor}`}>{score}</span>
                     <div>
-                        <p className="text-xs font-black uppercase tracking-widest text-zinc-400">SEO Score</p>
-                        <p className="text-[10px] text-zinc-600">
+                        <p className="text-xs font-black uppercase tracking-widest text-muted">SEO Score</p>
+                        <p className="text-[10px] text-muted">
                             {okCount} ok · {failCount} problema{failCount !== 1 ? 's' : ''}
                         </p>
                     </div>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {open && (
                 <div className="px-4 pb-4 space-y-3">
                     {/* Focus keyword */}
                     <div>
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-1 block">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted mb-1 block">
                             Palavra-chave foco
                         </label>
                         <input
                             value={focusKeyword}
                             onChange={e => onFocusKeywordChange(e.target.value)}
                             placeholder="ex: Jisoo BLACKPINK"
-                            className="w-full bg-zinc-900 border border-white/8 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-purple-500/50"
+                            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50"
                         />
                     </div>
 
@@ -192,11 +192,11 @@ export function SeoChecklist({
                                 {check.status === 'fail' && <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
                                 <div>
                                     <p className={`text-xs font-medium ${
-                                        check.status === 'ok' ? 'text-zinc-300' :
+                                        check.status === 'ok' ? 'text-foreground' :
                                         check.status === 'warn' ? 'text-yellow-300' : 'text-red-300'
                                     }`}>{check.label}</p>
                                     {check.detail && (
-                                        <p className="text-[11px] text-zinc-600">{check.detail}</p>
+                                        <p className="text-[11px] text-muted">{check.detail}</p>
                                     )}
                                 </div>
                             </div>

@@ -212,26 +212,26 @@ function LogPanel({
         if (type === 'error') return 'text-red-400'
         if (type === 'warning') return 'text-yellow-400'
         if (type === 'done') return 'text-purple-400 font-bold'
-        if (type === 'progress') return 'text-zinc-500'
-        return 'text-zinc-300'
+        if (type === 'progress') return 'text-muted'
+        return 'text-foreground'
     }
 
     return (
-        <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5 space-y-4">
+        <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-3 flex-1">
                     <Icon className="w-5 h-5 text-purple-400 flex-shrink-0" />
                     <div>
-                        <p className="text-sm font-bold text-white">{title}</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+                        <p className="text-sm font-bold text-foreground">{title}</p>
+                        <p className="text-xs text-muted mt-0.5">{description}</p>
                     </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                    <button onClick={onStart} disabled={running} className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+                    <button onClick={onStart} disabled={running} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
                         {running ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><CheckCircle className="w-4 h-4" /> {buttonLabel}</>}
                     </button>
                     {onStartAll && buttonAllLabel && (
-                        <button onClick={onStartAll} disabled={running} className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+                        <button onClick={onStartAll} disabled={running} className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors">
                             {running ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> {buttonAllLabel}</>}
                         </button>
                     )}
@@ -242,21 +242,21 @@ function LogPanel({
                 <div className="grid grid-cols-3 gap-3">
                     <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
                         <p className="text-xl font-black text-green-400">{stats.main}</p>
-                        <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">{statLabels[0]}</p>
+                        <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">{statLabels[0]}</p>
                     </div>
                     <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
                         <p className="text-xl font-black text-yellow-400">{stats.secondary}</p>
-                        <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">{statLabels[1]}</p>
+                        <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">{statLabels[1]}</p>
                     </div>
                     <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
                         <p className="text-xl font-black text-red-400">{stats.errors}</p>
-                        <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">{statLabels[2]}</p>
+                        <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">{statLabels[2]}</p>
                     </div>
                 </div>
             )}
 
             {log.length > 0 && (
-                <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-white/5">
+                <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                     {log.map((line, i) => (
                         <div key={i} className={`flex items-center gap-2 ${lineColor(line.type)}`}>
                             <span>{line.text}</span>
@@ -544,46 +544,46 @@ export default function FixNamesAdminPage() {
             <div className="space-y-6">
 
                 {/* ── Painel de estatísticas ── */}
-                <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+                <div className="bg-surface border border-border rounded-xl p-5">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-bold text-white">Cobertura de dados</h2>
-                        {statsLoading && <RefreshCw className="w-4 h-4 text-zinc-500 animate-spin" />}
+                        <h2 className="text-sm font-bold text-foreground">Cobertura de dados</h2>
+                        {statsLoading && <RefreshCw className="w-4 h-4 text-muted animate-spin" />}
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                        <div className="bg-black/30 border border-zinc-700 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-white">{artistStats?.total.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Total</p>
+                        <div className="bg-black/30 border border-border rounded-lg p-3 text-center">
+                            <p className="text-2xl font-black text-foreground">{artistStats?.total.toLocaleString('pt-BR') ?? '—'}</p>
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Total</p>
                         </div>
                         <div className="bg-black/30 border border-green-500/30 rounded-lg p-3 text-center">
                             <p className="text-2xl font-black text-green-400">{artistStats?.withTmdb.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Com TMDB ID</p>
-                            {artistStats && <p className="text-xs text-zinc-600 mt-1">{tmdbCoverage}%</p>}
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Com TMDB ID</p>
+                            {artistStats && <p className="text-xs text-muted mt-1">{tmdbCoverage}%</p>}
                         </div>
                         <div className="bg-black/30 border border-amber-500/30 rounded-lg p-3 text-center">
                             <p className="text-2xl font-black text-amber-400">{artistStats?.withoutTmdb.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Sem TMDB ID</p>
-                            <p className="text-[10px] text-zinc-600 mt-1">não sincronizável</p>
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem TMDB ID</p>
+                            <p className="text-[10px] text-muted mt-1">não sincronizável</p>
                         </div>
                         <div className="bg-black/30 border border-blue-500/30 rounded-lg p-3 text-center">
                             <p className="text-2xl font-black text-blue-400">{artistStats?.complete.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Bio + foto + Hangul</p>
-                            {artistStats && <p className="text-xs text-zinc-600 mt-1">{completionRate}% dos com TMDB</p>}
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Bio + foto + Hangul</p>
+                            {artistStats && <p className="text-xs text-muted mt-1">{completionRate}% dos com TMDB</p>}
                         </div>
-                        <div className="bg-black/30 border border-zinc-600 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-black text-zinc-400">{artistStats?.flagged.toLocaleString('pt-BR') ?? '—'}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Não coreanos</p>
-                            <p className="text-[10px] text-zinc-600 mt-1">excluídos do sync</p>
+                        <div className="bg-black/30 border border-border rounded-lg p-3 text-center">
+                            <p className="text-2xl font-black text-muted">{artistStats?.flagged.toLocaleString('pt-BR') ?? '—'}</p>
+                            <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Não coreanos</p>
+                            <p className="text-[10px] text-muted mt-1">excluídos do sync</p>
                         </div>
                     </div>
 
                     {/* Barra de cobertura TMDB */}
                     {artistStats && (
                         <div className="mt-4 space-y-1">
-                            <div className="flex justify-between text-xs text-zinc-500">
+                            <div className="flex justify-between text-xs text-muted">
                                 <span>Cobertura TMDB ID</span>
                                 <span>{artistStats.withTmdb.toLocaleString('pt-BR')} / {artistStats.total.toLocaleString('pt-BR')}</span>
                             </div>
-                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-2 bg-surface rounded-full overflow-hidden">
                                 <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${tmdbCoverage}%` }} />
                             </div>
                         </div>
@@ -591,54 +591,54 @@ export default function FixNamesAdminPage() {
                 </div>
 
                 {/* ── Guia de operações ── */}
-                <div className="bg-zinc-900 border border-amber-500/20 rounded-xl p-5">
+                <div className="bg-surface border border-amber-500/20 rounded-xl p-5">
                     <div className="flex items-start gap-3">
                         <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                         <div className="grid sm:grid-cols-4 gap-4 flex-1">
                             <div>
-                                <p className="text-xs font-bold text-white flex items-center gap-1.5 mb-1"><Link2 className="w-3.5 h-3.5 text-amber-400" />Vincular TMDB IDs</p>
-                                <p className="text-xs text-zinc-500">Artistas sem tmdbId → busca por nome no TMDB, vincula automaticamente com alta confiança</p>
+                                <p className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1"><Link2 className="w-3.5 h-3.5 text-amber-400" />Vincular TMDB IDs</p>
+                                <p className="text-xs text-muted">Artistas sem tmdbId → busca por nome no TMDB, vincula automaticamente com alta confiança</p>
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-white flex items-center gap-1.5 mb-1"><Type className="w-3.5 h-3.5 text-amber-400" />Corrigir Nomes</p>
-                                <p className="text-xs text-zinc-500">Hangul em nameRomanized → busca nome correto no TMDB, move para nameHangul</p>
+                                <p className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1"><Type className="w-3.5 h-3.5 text-amber-400" />Corrigir Nomes</p>
+                                <p className="text-xs text-muted">Hangul em nameRomanized → busca nome correto no TMDB, move para nameHangul</p>
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-white flex items-center gap-1.5 mb-1"><Languages className="w-3.5 h-3.5 text-amber-400" />Preencher Hangul</p>
-                                <p className="text-xs text-zinc-500">Tem tmdbId mas sem nameHangul → busca no also_known_as do TMDB</p>
+                                <p className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1"><Languages className="w-3.5 h-3.5 text-amber-400" />Preencher Hangul</p>
+                                <p className="text-xs text-muted">Tem tmdbId mas sem nameHangul → busca no also_known_as do TMDB</p>
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-white flex items-center gap-1.5 mb-1"><Database className="w-3.5 h-3.5 text-amber-400" />Sync TMDB</p>
-                                <p className="text-xs text-zinc-500">Preenche campos vazios (foto, bio, nascimento, local, gênero) — só para artistas COM tmdbId</p>
+                                <p className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1"><Database className="w-3.5 h-3.5 text-amber-400" />Sync TMDB</p>
+                                <p className="text-xs text-muted">Preenche campos vazios (foto, bio, nascimento, local, gênero) — só para artistas COM tmdbId</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* ── 1. Vincular TMDB IDs (nova operação) ── */}
-                <div className="bg-zinc-900 border border-amber-500/20 rounded-xl p-5 space-y-4">
+                <div className="bg-surface border border-amber-500/20 rounded-xl p-5 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex items-center gap-3 flex-1">
                             <Link2 className="w-5 h-5 text-amber-400 flex-shrink-0" />
                             <div>
-                                <p className="text-sm font-bold text-white">Vincular TMDB IDs automaticamente</p>
-                                <p className="text-xs text-zinc-500 mt-0.5">
+                                <p className="text-sm font-bold text-foreground">Vincular TMDB IDs automaticamente</p>
+                                <p className="text-xs text-muted mt-0.5">
                                     Busca cada artista sem tmdbId pelo nome no TMDB. Vincula quando o nome corresponde exatamente (alta confiança). Casos incertos são listados para revisão manual.
                                     {artistStats && <span className="ml-1 text-amber-400 font-medium">→ {artistStats.withoutTmdb.toLocaleString('pt-BR')} artistas elegíveis</span>}
                                 </p>
                             </div>
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
-                            <button onClick={() => runLinkBatches()} disabled={linkRunning} className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+                            <button onClick={() => runLinkBatches()} disabled={linkRunning} className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors">
                                 {linkRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Buscando...</> : <><Link2 className="w-4 h-4" /> Vincular TMDB IDs</>}
                             </button>
                             {savedLink && !linkRunning && (
-                                <button onClick={() => runLinkBatches(savedLink)} className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-sm font-bold transition-colors" title={`Retomar do offset ${savedLink.offset.toLocaleString('pt-BR')}`}>
+                                <button onClick={() => runLinkBatches(savedLink)} className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-foreground rounded-lg text-sm font-bold transition-colors" title={`Retomar do offset ${savedLink.offset.toLocaleString('pt-BR')}`}>
                                     <Play className="w-4 h-4" /> Retomar ({savedLink.offset.toLocaleString('pt-BR')}/{savedLink.totalGlobal.toLocaleString('pt-BR')})
                                 </button>
                             )}
                             {linkRunning && (
-                                <button onClick={() => { linkAbortRef.current = true }} className="px-3 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-bold transition-colors" title="Parar após o lote atual">
+                                <button onClick={() => { linkAbortRef.current = true }} className="px-3 py-2.5 bg-red-600 hover:bg-red-500 text-foreground rounded-lg text-sm font-bold transition-colors" title="Parar após o lote atual">
                                     ✕ Parar
                                 </button>
                             )}
@@ -647,11 +647,11 @@ export default function FixNamesAdminPage() {
 
                     {linkTotalGlobal > 0 && (
                         <div className="space-y-1">
-                            <div className="flex justify-between text-xs text-zinc-400">
+                            <div className="flex justify-between text-xs text-muted">
                                 <span>Progresso</span>
                                 <span>{linkProcessed.toLocaleString('pt-BR')} / {linkTotalGlobal.toLocaleString('pt-BR')}</span>
                             </div>
-                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-2 bg-surface rounded-full overflow-hidden">
                                 <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.round((linkProcessed / linkTotalGlobal) * 100))}%` }} />
                             </div>
                         </div>
@@ -661,23 +661,23 @@ export default function FixNamesAdminPage() {
                         <div className="grid grid-cols-3 gap-3">
                             <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
                                 <p className="text-xl font-black text-green-400">{linkStats.main}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Vinculados</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Vinculados</p>
                             </div>
                             <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
                                 <p className="text-xl font-black text-yellow-400">{linkStats.secondary}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Sem match / incerto</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem match / incerto</p>
                             </div>
                             <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
                                 <p className="text-xl font-black text-red-400">{linkStats.errors}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Erros</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
                             </div>
                         </div>
                     )}
 
                     {linkLog.length > 0 && (
-                        <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-white/5">
+                        <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                             {linkLog.map((line, i) => {
-                                const color = line.type === 'success' ? 'text-green-400' : line.type === 'error' ? 'text-red-400' : line.type === 'warning' ? 'text-yellow-400' : line.type === 'done' ? 'text-amber-400 font-bold' : line.type === 'progress' ? 'text-zinc-500' : 'text-zinc-300'
+                                const color = line.type === 'success' ? 'text-green-400' : line.type === 'error' ? 'text-red-400' : line.type === 'warning' ? 'text-yellow-400' : line.type === 'done' ? 'text-amber-400 font-bold' : line.type === 'progress' ? 'text-muted' : 'text-foreground'
                                 return (
                                     <div key={i} className={`flex items-center gap-2 ${color}`}>
                                         <span>{line.text}</span>
@@ -688,7 +688,7 @@ export default function FixNamesAdminPage() {
                         </div>
                     )}
 
-                    <div className="flex items-start gap-2 text-xs text-zinc-600">
+                    <div className="flex items-start gap-2 text-xs text-muted">
                         <HelpCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                         <span>Após vincular novos TMDB IDs, execute "Sync TMDB" abaixo para preencher foto, bio e outros dados dos artistas recém-vinculados.</span>
                     </div>
@@ -715,13 +715,13 @@ export default function FixNamesAdminPage() {
                 />
 
                 {/* ── 4. Sync TMDB ── */}
-                <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5 space-y-4">
+                <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex items-center gap-3 flex-1">
                             <Database className="w-5 h-5 text-purple-400 flex-shrink-0" />
                             <div>
-                                <p className="text-sm font-bold text-white">Sincronizar dados biográficos do TMDB</p>
-                                <p className="text-xs text-zinc-500 mt-0.5">
+                                <p className="text-sm font-bold text-foreground">Sincronizar dados biográficos do TMDB</p>
+                                <p className="text-xs text-muted mt-0.5">
                                     Foto, bio, nascimento, local, gênero — processa em lotes de 500.
                                     {artistStats && <span className="ml-1 text-purple-400 font-medium">→ {artistStats.withTmdb.toLocaleString('pt-BR')} artistas elegíveis (com TMDB ID)</span>}
                                 </p>
@@ -729,22 +729,22 @@ export default function FixNamesAdminPage() {
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                             {savedSync && !syncRunning ? (
-                                <button onClick={resumeSyncTmdb} className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-sm font-bold transition-colors" title={`Retomar do offset ${savedSync.offset.toLocaleString('pt-BR')}`}>
+                                <button onClick={resumeSyncTmdb} className="flex items-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-600 text-foreground rounded-lg text-sm font-bold transition-colors" title={`Retomar do offset ${savedSync.offset.toLocaleString('pt-BR')}`}>
                                     <Play className="w-4 h-4" /> Retomar ({savedSync.offset.toLocaleString('pt-BR')}/{savedSync.totalGlobal.toLocaleString('pt-BR')})
                                 </button>
                             ) : (
-                                <button onClick={startSyncTmdb} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+                                <button onClick={startSyncTmdb} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
                                     {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><CheckCircle className="w-4 h-4" /> Preencher vazios</>}
                                 </button>
                             )}
-                            <button onClick={startSyncTmdbSmart} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors" title="Atualiza todos os campos não editados manualmente">
+                            <button onClick={startSyncTmdbSmart} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors" title="Atualiza todos os campos não editados manualmente">
                                 {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> Smart sync</>}
                             </button>
-                            <button onClick={startSyncTmdbAll} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+                            <button onClick={startSyncTmdbAll} disabled={syncRunning} className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors">
                                 {syncRunning ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processando...</> : <><RefreshCw className="w-4 h-4" /> Forçar todos ({artistStats?.withTmdb.toLocaleString('pt-BR') ?? '…'})</>}
                             </button>
                             {syncRunning && (
-                                <button onClick={() => { syncAbortRef.current = true }} className="px-3 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-bold transition-colors" title="Parar após o lote atual">
+                                <button onClick={() => { syncAbortRef.current = true }} className="px-3 py-2.5 bg-red-600 hover:bg-red-500 text-foreground rounded-lg text-sm font-bold transition-colors" title="Parar após o lote atual">
                                     ✕ Parar
                                 </button>
                             )}
@@ -753,11 +753,11 @@ export default function FixNamesAdminPage() {
 
                     {syncTotalGlobal > 0 && (
                         <div className="space-y-1">
-                            <div className="flex justify-between text-xs text-zinc-400">
+                            <div className="flex justify-between text-xs text-muted">
                                 <span>Progresso global</span>
                                 <span>{syncProcessed.toLocaleString('pt-BR')} / {syncTotalGlobal.toLocaleString('pt-BR')} artistas</span>
                             </div>
-                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-2 bg-surface rounded-full overflow-hidden">
                                 <div className="h-full bg-purple-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.round((syncProcessed / syncTotalGlobal) * 100))}%` }} />
                             </div>
                         </div>
@@ -767,23 +767,23 @@ export default function FixNamesAdminPage() {
                         <div className="grid grid-cols-3 gap-3">
                             <div className="bg-black/30 border border-green-500/20 rounded-lg p-3 text-center">
                                 <p className="text-xl font-black text-green-400">{syncStats.main}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Enriquecidos</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Enriquecidos</p>
                             </div>
                             <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-3 text-center">
                                 <p className="text-xl font-black text-yellow-400">{syncStats.secondary}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Sem dados TMDB</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Sem dados TMDB</p>
                             </div>
                             <div className="bg-black/30 border border-red-500/20 rounded-lg p-3 text-center">
                                 <p className="text-xl font-black text-red-400">{syncStats.errors}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Erros</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
                             </div>
                         </div>
                     )}
 
                     {syncLog.length > 0 && (
-                        <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-white/5">
+                        <div className="bg-black/40 rounded-lg p-4 max-h-72 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                             {syncLog.map((line, i) => {
-                                const color = line.type === 'success' ? 'text-green-400' : line.type === 'error' ? 'text-red-400' : line.type === 'warning' ? 'text-yellow-400' : line.type === 'done' ? 'text-purple-400 font-bold' : line.type === 'progress' ? 'text-zinc-500' : 'text-zinc-300'
+                                const color = line.type === 'success' ? 'text-green-400' : line.type === 'error' ? 'text-red-400' : line.type === 'warning' ? 'text-yellow-400' : line.type === 'done' ? 'text-purple-400 font-bold' : line.type === 'progress' ? 'text-muted' : 'text-foreground'
                                 return (
                                     <div key={i} className={`flex items-center gap-2 ${color}`}>
                                         <span>{line.text}</span>

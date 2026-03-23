@@ -94,7 +94,7 @@ function IdBadges({ artist }: { artist: ArtistCard }) {
                     TMDB
                 </a>
             ) : (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-700 border border-zinc-800">TMDB</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface text-muted border border-border">TMDB</span>
             )}
             {artist.mbid ? (
                 <a href={mbUrl(artist.mbid)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
@@ -103,7 +103,7 @@ function IdBadges({ artist }: { artist: ArtistCard }) {
                     MB
                 </a>
             ) : (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-700 border border-zinc-800">MB</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface text-muted border border-border">MB</span>
             )}
         </div>
     )
@@ -136,14 +136,14 @@ function PairComparison({ a, b }: { a: ArtistCard; b: ArtistCard }) {
                 return (
                     <span key={i} className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border ${
                         match    ? 'bg-green-500/10 border-green-500/25 text-green-400'
-                        : onlyA  ? 'bg-blue-500/8 border-blue-500/20 text-zinc-400'
-                        : onlyB  ? 'bg-orange-500/8 border-orange-500/20 text-zinc-400'
+                        : onlyA  ? 'bg-blue-500/8 border-blue-500/20 text-muted'
+                        : onlyB  ? 'bg-orange-500/8 border-orange-500/20 text-muted'
                         : 'bg-amber-500/8 border-amber-500/20 text-amber-400'
                     }`}>
                         <span>{f.icon}</span>
                         {match   ? <span className="font-medium">{f.va} ✓</span>
-                        : onlyA  ? <span>{f.va} / <span className="text-zinc-700">—</span></span>
-                        : onlyB  ? <span className="text-zinc-700">—</span>
+                        : onlyA  ? <span>{f.va} / <span className="text-muted">—</span></span>
+                        : onlyB  ? <span className="text-muted">—</span>
                         : <span>{f.va} <span className="opacity-50">↔</span> {f.vb}</span>}
                     </span>
                 )
@@ -289,7 +289,7 @@ export default function DuplicatesPage() {
         if (score === 4) return 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
         if (score === 3) return 'bg-orange-500/10 border border-orange-500/30 text-orange-400'
         if (score === 2) return 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-400'
-        return 'bg-zinc-800 border border-zinc-700 text-zinc-400'
+        return 'bg-surface border border-border text-muted'
     }
 
     const highCount = pairs.filter(p => p.confidence === 'high').length
@@ -300,21 +300,21 @@ export default function DuplicatesPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-white">{total}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Detectados</p>
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-foreground">{total}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Detectados</p>
                     </div>
-                    <div className="bg-zinc-900 border border-red-500/20 rounded-xl p-4 text-center">
+                    <div className="bg-surface border border-red-500/20 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-red-400">{highCount}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Alta confiança</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Alta confiança</p>
                     </div>
-                    <div className="bg-zinc-900 border border-green-500/20 rounded-xl p-4 text-center">
+                    <div className="bg-surface border border-green-500/20 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-green-400">{merged.size}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Mesclados</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Mesclados</p>
                     </div>
-                    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-zinc-400">{dismissed.size}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Descartados</p>
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-muted">{dismissed.size}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Descartados</p>
                     </div>
                 </div>
 
@@ -323,7 +323,7 @@ export default function DuplicatesPage() {
                     <div className="flex gap-2 flex-wrap">
                         {([['all', 'Todos'], ['high', 'Alta confiança'], ['medium', 'Média confiança']] as const).map(([val, label]) => (
                             <button key={val} onClick={() => setFilter(val)}
-                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${filter === val ? 'bg-purple-600 text-white' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-600'}`}>
+                                className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${filter === val ? 'bg-accent text-white' : 'bg-surface border border-border text-muted hover:bg-surface-hover hover:text-foreground'}`}>
                                 {label}
                             </button>
                         ))}
@@ -331,13 +331,13 @@ export default function DuplicatesPage() {
                     <div className="ml-auto flex items-center gap-2">
                         <Link
                             href="/admin/artists/mb-import"
-                            className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-700 hover:border-purple-500/50 text-zinc-300 hover:text-purple-300 rounded-lg text-sm font-bold transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border hover:bg-surface-hover text-foreground rounded-lg text-sm font-bold transition-colors"
                         >
                             <UserPlus className="w-4 h-4" />
                             Importar artista
                         </Link>
                         <button onClick={fetchPairs} disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-bold transition-colors disabled:opacity-50">
+                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors disabled:opacity-50">
                             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             Reanalisar
                         </button>
@@ -348,11 +348,11 @@ export default function DuplicatesPage() {
                 {loading ? (
                     <div className="space-y-3">
                         {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="h-20 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />
+                            <div key={i} className="h-20 bg-surface border border-border rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : visible.length === 0 ? (
-                    <div className="text-center py-20 text-zinc-500">
+                    <div className="text-center py-20 text-muted">
                         <CheckCircle className="w-10 h-10 text-green-500/50 mx-auto mb-3" />
                         <p className="font-bold">Nenhum par pendente</p>
                         <p className="text-sm mt-1">para o filtro selecionado</p>
@@ -364,12 +364,12 @@ export default function DuplicatesPage() {
                             const pairSels = getSelections(pair.id)
 
                             return (
-                                <div key={pair.id} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                                <div key={pair.id} className="bg-surface border border-border rounded-xl overflow-hidden">
                                     {/* Pair header — NOT a button; children handle their own clicks */}
                                     <div className="flex items-start gap-3 p-4">
                                         {/* Expand area */}
                                         <button
-                                            className="flex-1 min-w-0 text-left hover:bg-zinc-800/30 rounded-lg p-2 -m-2 transition-colors"
+                                            className="flex-1 min-w-0 text-left hover:bg-surface rounded-lg p-2 -m-2 transition-colors"
                                             onClick={() => setExpanded(isExpanded ? null : pair.id)}
                                         >
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -384,11 +384,11 @@ export default function DuplicatesPage() {
                                                             <Image src={pair.a.primaryImageUrl} alt={pair.a.nameRomanized} fill sizes="28px" className="object-cover" />
                                                         </div>
                                                     )}
-                                                    <span className="font-bold text-white text-sm truncate">{pair.a.nameRomanized}</span>
+                                                    <span className="font-bold text-foreground text-sm truncate">{pair.a.nameRomanized}</span>
                                                     <IdBadges artist={pair.a} />
                                                 </div>
 
-                                                <span className="text-zinc-600 text-xs flex-shrink-0">↔</span>
+                                                <span className="text-muted text-xs flex-shrink-0">↔</span>
 
                                                 {/* Artist B */}
                                                 <div className="flex items-center gap-1.5 min-w-0">
@@ -397,7 +397,7 @@ export default function DuplicatesPage() {
                                                             <Image src={pair.b.primaryImageUrl} alt={pair.b.nameRomanized} fill sizes="28px" className="object-cover" />
                                                         </div>
                                                     )}
-                                                    <span className="font-bold text-zinc-400 text-sm truncate">{pair.b.nameRomanized}</span>
+                                                    <span className="font-bold text-muted text-sm truncate">{pair.b.nameRomanized}</span>
                                                     <IdBadges artist={pair.b} />
                                                 </div>
 
@@ -413,14 +413,14 @@ export default function DuplicatesPage() {
                                             <button
                                                 onClick={() => dismiss(pair.id)}
                                                 title="Não é duplicata — descartar"
-                                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400 transition-colors text-xs font-bold"
+                                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border text-muted hover:border-border hover:text-muted transition-colors text-xs font-bold"
                                             >
                                                 <Ban size={12} />
                                                 Ignorar
                                             </button>
                                             <button
                                                 onClick={() => setExpanded(isExpanded ? null : pair.id)}
-                                                className="p-1.5 text-zinc-500 hover:text-zinc-300 transition-colors"
+                                                className="p-1.5 text-muted hover:text-foreground transition-colors"
                                             >
                                                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                             </button>
@@ -429,8 +429,8 @@ export default function DuplicatesPage() {
 
                                     {/* Expanded curation panel */}
                                     {isExpanded && (
-                                        <div className="border-t border-zinc-800 p-4 space-y-4">
-                                            <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">
+                                        <div className="border-t border-border p-4 space-y-4">
+                                            <p className="text-xs text-muted font-bold uppercase tracking-widest">
                                                 Curadoria de Campos — selecione o valor a manter no perfil final
                                             </p>
 
@@ -445,7 +445,7 @@ export default function DuplicatesPage() {
 
                                                     return (
                                                         <div key={field} className="flex flex-col gap-2">
-                                                            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wide">{FIELD_LABELS[field]}</p>
+                                                            <p className="text-xs font-bold text-muted uppercase tracking-wide">{FIELD_LABELS[field]}</p>
                                                             {(field === 'tmdbId' || field === 'mbid') ? (
                                                                 <>
                                                                 <div className="grid grid-cols-2 gap-2">
@@ -461,20 +461,20 @@ export default function DuplicatesPage() {
                                                                                 onClick={() => rawId && !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne || !rawId}
                                                                                 className={`flex flex-col gap-1.5 p-3 rounded-lg border text-left transition-all ${
-                                                                                    isSelected && rawId ? 'border-purple-500 bg-purple-500/10' : 'border-zinc-800 bg-zinc-900/50'
-                                                                                } ${rawId && !onlyOne ? 'cursor-pointer hover:border-zinc-600' : 'cursor-default'}`}
+                                                                                    isSelected && rawId ? 'border-purple-500 bg-purple-500/10' : 'border-border bg-surface'
+                                                                                } ${rawId && !onlyOne ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
                                                                             >
                                                                                 {rawId ? (
-                                                                                    <span className="text-xs font-mono text-zinc-300 truncate">{rawId}</span>
+                                                                                    <span className="text-xs font-mono text-foreground truncate">{rawId}</span>
                                                                                 ) : (
-                                                                                    <span className="text-xs text-zinc-700 italic">Sem ID</span>
+                                                                                    <span className="text-xs text-muted italic">Sem ID</span>
                                                                                 )}
                                                                                 <a href={href} target="_blank" rel="noopener noreferrer"
                                                                                     onClick={e => e.stopPropagation()}
                                                                                     className={`flex items-center gap-1 text-[11px] font-bold transition-colors ${
                                                                                         rawId
                                                                                             ? field === 'tmdbId' ? 'text-blue-400 hover:text-blue-300' : 'text-orange-400 hover:text-orange-300'
-                                                                                            : 'text-zinc-600 hover:text-zinc-400'
+                                                                                            : 'text-muted hover:text-muted'
                                                                                     }`}
                                                                                 >
                                                                                     {rawId ? <ExternalLink size={10} /> : <Search size={10} />}
@@ -499,7 +499,7 @@ export default function DuplicatesPage() {
                                                                                     disabled={status === 'loading'}
                                                                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all disabled:opacity-50 ${
                                                                                         status === 'found'     ? 'border-green-500/40 bg-green-500/10 text-green-400' :
-                                                                                        status === 'not_found' ? 'border-zinc-700 text-zinc-600 cursor-default' :
+                                                                                        status === 'not_found' ? 'border-border text-muted cursor-default' :
                                                                                         'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50'
                                                                                     }`}
                                                                                 >
@@ -522,12 +522,12 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne}
-                                                                                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-purple-500' : 'border-zinc-700 opacity-40'} ${!onlyOne ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                                                                                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-purple-500' : 'border-border opacity-40'} ${!onlyOne ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
                                                                             >
                                                                                 {artist.primaryImageUrl ? (
                                                                                     <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="64px" className="object-cover" />
                                                                                 ) : (
-                                                                                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-xs text-zinc-500">—</div>
+                                                                                    <div className="w-full h-full bg-surface flex items-center justify-center text-xs text-muted">—</div>
                                                                                 )}
                                                                             </button>
                                                                         )
@@ -543,9 +543,9 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && val && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne || !val}
-                                                                                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${isSelected && val ? 'border-purple-500 bg-purple-500/10 text-zinc-300' : 'border-zinc-700 text-zinc-600'} ${!onlyOne && val ? 'cursor-pointer hover:border-zinc-500' : 'cursor-default'}`}
+                                                                                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${isSelected && val ? 'border-purple-500 bg-purple-500/10 text-foreground' : 'border-border text-muted'} ${!onlyOne && val ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
                                                                             >
-                                                                                {val ? <span className="line-clamp-3">{val}</span> : <span className="text-zinc-700 italic">Sem bio</span>}
+                                                                                {val ? <span className="line-clamp-3">{val}</span> : <span className="text-muted italic">Sem bio</span>}
                                                                             </button>
                                                                         )
                                                                     })}
@@ -557,7 +557,7 @@ export default function DuplicatesPage() {
                                                                         const val = getFieldValue(artist, field)
                                                                         const isSelected = onlyOne ? !!val : selected === side
                                                                         if (!val) return (
-                                                                            <span key={artist.id} className="px-3 py-1.5 rounded-lg border border-zinc-800 text-zinc-700 text-xs italic">
+                                                                            <span key={artist.id} className="px-3 py-1.5 rounded-lg border border-border text-muted text-xs italic">
                                                                                 ({side === 'a' ? pair.a.nameRomanized : pair.b.nameRomanized}: sem valor)
                                                                             </span>
                                                                         )
@@ -565,7 +565,7 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne}
-                                                                                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${isSelected ? 'border-purple-500 bg-purple-500/10 text-purple-300' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'} ${!onlyOne ? 'cursor-pointer' : 'cursor-default'}`}
+                                                                                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${isSelected ? 'border-purple-500 bg-purple-500/10 text-purple-300' : 'border-border text-muted hover:border-border'} ${!onlyOne ? 'cursor-pointer' : 'cursor-default'}`}
                                                                             >
                                                                                 {val}
                                                                                 {onlyOne && <span className="ml-1 text-green-500 text-[10px]">✓ único</span>}
@@ -580,32 +580,32 @@ export default function DuplicatesPage() {
                                             </div>
 
                                             {/* Combined info */}
-                                            <div className="bg-black/30 rounded-lg p-3 text-xs text-zinc-500 space-y-1 border border-white/5">
-                                                <p className="font-bold text-zinc-400 mb-2">Combinados automaticamente:</p>
-                                                <p>• Produções: <span className="text-zinc-300">{pair.a._count.productions} (A) + {pair.b._count.productions} (B)</span></p>
-                                                <p>• Álbuns: <span className="text-zinc-300">{pair.a._count.albums} (A) + {pair.b._count.albums} (B)</span></p>
+                                            <div className="bg-black/30 rounded-lg p-3 text-xs text-muted space-y-1 border border-border">
+                                                <p className="font-bold text-muted mb-2">Combinados automaticamente:</p>
+                                                <p>• Produções: <span className="text-foreground">{pair.a._count.productions} (A) + {pair.b._count.productions} (B)</span></p>
+                                                <p>• Álbuns: <span className="text-foreground">{pair.a._count.albums} (A) + {pair.b._count.albums} (B)</span></p>
                                                 <p>• Grupos musicais, favoritos de usuários e notícias serão todos transferidos</p>
-                                                <p>• Nome de B (<span className="text-zinc-300">{pair.b.nameRomanized}</span>) será salvo como nome alternativo de A</p>
+                                                <p>• Nome de B (<span className="text-foreground">{pair.b.nameRomanized}</span>) será salvo como nome alternativo de A</p>
                                             </div>
 
                                             {/* Actions */}
                                             <div className="flex items-center justify-between gap-3 pt-2">
-                                                <p className="text-xs text-zinc-600">
+                                                <p className="text-xs text-muted">
                                                     A={pair.a.nameRomanized} será mantido · B={pair.b.nameRomanized} será deletado
                                                 </p>
                                                 <div className="flex gap-2 flex-shrink-0">
                                                     <button onClick={() => dismiss(pair.id)}
-                                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-700 text-zinc-500 text-xs font-bold hover:border-zinc-500 hover:text-zinc-300 transition-colors">
+                                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted text-xs font-bold hover:border-border hover:text-foreground transition-colors">
                                                         <Ban className="w-3 h-3" />
                                                         Ignorar
                                                     </button>
                                                     <button onClick={() => setExpanded(null)}
-                                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-700 text-zinc-400 text-xs font-bold hover:border-zinc-500 transition-colors">
+                                                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted text-xs font-bold hover:border-border transition-colors">
                                                         <X className="w-3 h-3" />
                                                         Cancelar
                                                     </button>
                                                     <button onClick={() => executeMerge(pair)} disabled={merging}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors">
+                                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors">
                                                         {merging ? <><RefreshCw className="w-3 h-3 animate-spin" /> Mesclando...</> : <><GitMerge className="w-3 h-3" /> Mesclar Perfis</>}
                                                     </button>
                                                 </div>
@@ -622,7 +622,7 @@ export default function DuplicatesPage() {
                 {donePairs.length > 0 && (
                     <div className="pt-2">
                         <button onClick={() => setShowDone(v => !v)}
-                            className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mb-3">
+                            className="flex items-center gap-2 text-xs text-muted hover:text-foreground transition-colors mb-3">
                             <CheckCircle className="w-4 h-4 text-green-500" />
                             {donePairs.length} par{donePairs.length !== 1 ? 'es' : ''} processado{donePairs.length !== 1 ? 's' : ''}
                             {showDone ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -633,23 +633,23 @@ export default function DuplicatesPage() {
                                 {donePairs.map(pair => {
                                     const wasMerged = merged.has(pair.id)
                                     return (
-                                        <div key={pair.id} className="flex items-center gap-3 p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-xl opacity-60">
+                                        <div key={pair.id} className="flex items-center gap-3 p-3 bg-surface border border-border rounded-xl opacity-60">
                                             {wasMerged
                                                 ? <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                                : <Ban className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                                                : <Ban className="w-4 h-4 text-muted flex-shrink-0" />
                                             }
-                                            <span className="text-sm text-zinc-400">
+                                            <span className="text-sm text-muted">
                                                 {pair.a.nameRomanized} {wasMerged ? '←' : '≠'} {pair.b.nameRomanized}
                                             </span>
                                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ml-auto flex-shrink-0 ${
-                                                wasMerged ? 'bg-green-500/10 text-green-500' : 'bg-zinc-800 text-zinc-600'
+                                                wasMerged ? 'bg-green-500/10 text-green-500' : 'bg-surface text-muted'
                                             }`}>
                                                 {wasMerged ? 'mesclado' : 'ignorado'}
                                             </span>
                                             {/* Undo dismiss */}
                                             {!wasMerged && (
                                                 <button onClick={() => setDismissed(prev => { const n = new Set(Array.from(prev)); n.delete(pair.id); return n })}
-                                                    className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors flex-shrink-0">
+                                                    className="text-xs text-muted hover:text-muted transition-colors flex-shrink-0">
                                                     desfazer
                                                 </button>
                                             )}

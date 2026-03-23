@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { FilterPills } from '@/components/admin/FilterPills'
 import {
     Tag, RefreshCw, Pencil, Trash2, Check, X, Search,
     Newspaper, Film, GitMerge, AlertTriangle, ArrowUpDown, SortAsc,
@@ -54,37 +55,37 @@ function MergeModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="bg-surface border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
                 <div className="flex items-center gap-3">
                     <GitMerge className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <h2 className="text-base font-black text-white">Mesclar tag</h2>
+                    <h2 className="text-base font-black text-foreground">Mesclar tag</h2>
                 </div>
-                <p className="text-sm text-zinc-400">
-                    Mesclar <span className="font-mono font-bold text-white bg-zinc-800 px-1.5 py-0.5 rounded">{source}</span> em:
+                <p className="text-sm text-muted">
+                    Mesclar <span className="font-mono font-bold text-foreground bg-surface px-1.5 py-0.5 rounded">{source}</span> em:
                 </p>
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
                     <input
                         type="text"
                         value={targetSearch}
                         onChange={e => setTargetSearch(e.target.value)}
                         placeholder="Buscar tag destino..."
-                        className="w-full pl-8 pr-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
+                        className="w-full px-4 pr-10 py-2 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
                         autoFocus
                     />
                 </div>
-                <div className="max-h-44 overflow-y-auto space-y-1 rounded-lg border border-zinc-800">
+                <div className="max-h-44 overflow-y-auto space-y-1 rounded-lg border border-border">
                     {options.length === 0 ? (
-                        <p className="text-center text-zinc-600 text-xs py-6">Nenhuma tag encontrada</p>
+                        <p className="text-center text-muted text-xs py-6">Nenhuma tag encontrada</p>
                     ) : options.map(t => (
                         <button key={t.tag} onClick={() => setSelected(t.tag)}
                             className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
                                 selected === t.tag
                                     ? 'bg-purple-600/20 text-purple-300'
-                                    : 'text-zinc-300 hover:bg-zinc-800'
+                                    : 'text-foreground hover:bg-surface'
                             }`}>
                             <span className="font-mono truncate">{t.tag}</span>
-                            <span className="text-xs text-zinc-500 ml-2 flex-shrink-0">{t.total}×</span>
+                            <span className="text-xs text-muted ml-2 flex-shrink-0">{t.total}×</span>
                         </button>
                     ))}
                 </div>
@@ -95,11 +96,11 @@ function MergeModal({
                 )}
                 <div className="flex gap-3 pt-1">
                     <button onClick={onClose}
-                        className="flex-1 py-2.5 rounded-lg border border-zinc-700 text-zinc-400 text-sm font-bold hover:border-zinc-500 transition-colors">
+                        className="flex-1 py-2.5 rounded-lg border border-border text-muted text-sm font-bold hover:border-border transition-colors">
                         Cancelar
                     </button>
                     <button onClick={handle} disabled={!selected || saving}
-                        className="flex-1 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
                         {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <GitMerge className="w-3.5 h-3.5" />}
                         Mesclar
                     </button>
@@ -158,14 +159,14 @@ function DuplicatesPanel({
                         })
                         const [preferred, ...variants] = sorted
                         return (
-                            <div key={group.join('|')} className="bg-zinc-900/60 border border-zinc-800/60 rounded-lg px-3 py-2.5">
+                            <div key={group.join('|')} className="bg-surface border border-border rounded-lg px-3 py-2.5">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Manter:</span>
-                                    <span className="font-mono text-sm font-bold text-white bg-zinc-800 px-2 py-0.5 rounded">
+                                    <span className="text-xs text-muted font-bold uppercase tracking-wider">Manter:</span>
+                                    <span className="font-mono text-sm font-bold text-foreground bg-surface px-2 py-0.5 rounded">
                                         {preferred}
-                                        <span className="text-zinc-500 font-normal ml-1 text-xs">{tagMap.get(preferred)?.total ?? 0}×</span>
+                                        <span className="text-muted font-normal ml-1 text-xs">{tagMap.get(preferred)?.total ?? 0}×</span>
                                     </span>
-                                    <span className="text-xs text-zinc-600">←</span>
+                                    <span className="text-xs text-muted">←</span>
                                     {variants.map(v => (
                                         <button
                                             key={v}
@@ -179,7 +180,7 @@ function DuplicatesPanel({
                                                 : <GitMerge className="w-2.5 h-2.5" />
                                             }
                                             {v}
-                                            <span className="text-zinc-600 ml-0.5">{tagMap.get(v)?.total ?? 0}×</span>
+                                            <span className="text-muted ml-0.5">{tagMap.get(v)?.total ?? 0}×</span>
                                         </button>
                                     ))}
                                 </div>
@@ -322,14 +323,14 @@ export default function TagsAdminPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                        { label: 'Tags únicas',  value: tags.length,          color: 'border-zinc-700',       text: 'text-white' },
+                        { label: 'Tags únicas',  value: tags.length,          color: 'border-border',       text: 'text-foreground' },
                         { label: 'Usos totais',  value: totalUsage,           color: 'border-purple-500/20',  text: 'text-purple-400' },
                         { label: 'Partilhadas',  value: shared,               color: 'border-blue-500/20',    text: 'text-blue-400' },
                         { label: 'Exclusivas',   value: newsOnly + prodsOnly, color: 'border-amber-500/20',   text: 'text-amber-400' },
                     ].map(({ label, value, color, text }) => (
-                        <div key={label} className={`bg-zinc-900 border ${color} rounded-xl p-4 text-center`}>
+                        <div key={label} className={`bg-surface border ${color} rounded-xl p-4 text-center`}>
                             <p className={`text-2xl font-black ${text} tabular-nums`}>{value}</p>
-                            <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">{label}</p>
+                            <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">{label}</p>
                         </div>
                     ))}
                 </div>
@@ -346,39 +347,38 @@ export default function TagsAdminPage() {
                 {/* Filters + Sort + Search */}
                 <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                         <input
                             type="text"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar tag..."
-                            className="w-full pl-9 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
+                            className="w-full px-4 pr-10 py-2.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
                         />
                     </div>
                     <div className="flex gap-1.5 flex-wrap">
                         {/* Type filter */}
-                        {([['all', 'Todas'], ['news', 'Notícias'], ['productions', 'Produções']] as const).map(([val, label]) => (
-                            <button key={val} onClick={() => setFilterType(val)}
-                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors border ${
-                                    filterType === val
-                                        ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-                                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
-                                }`}>
-                                {label}
-                            </button>
-                        ))}
+                        <FilterPills
+                            pills={[
+                                { value: 'all' as const, label: 'Todas' },
+                                { value: 'news' as const, label: 'Notícias' },
+                                { value: 'productions' as const, label: 'Produções' },
+                            ]}
+                            active={filterType}
+                            onChange={setFilterType}
+                        />
                         {/* Sort */}
                         <button
                             onClick={() => setSortType(s => s === 'usage' ? 'az' : s === 'az' ? 'za' : 'usage')}
                             title={sortType === 'usage' ? 'Ordenado por uso' : sortType === 'az' ? 'A → Z' : 'Z → A'}
-                            className="px-3 py-2 rounded-lg text-xs font-bold transition-colors border bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300 flex items-center gap-1.5"
+                            className="px-3 py-2 rounded-xl text-xs font-bold transition-colors border bg-surface border-border text-muted hover:border-border hover:text-foreground flex items-center gap-1.5"
                         >
                             {sortType === 'usage' ? <ArrowUpDown className="w-3.5 h-3.5" /> : <SortAsc className="w-3.5 h-3.5" />}
                             {sortType === 'usage' ? 'Uso' : sortType === 'az' ? 'A→Z' : 'Z→A'}
                         </button>
                         {/* Refresh */}
                         <button onClick={fetchTags} disabled={loading}
-                            className="px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-400 rounded-lg transition-colors disabled:opacity-50">
+                            className="px-3 py-2 bg-surface border border-border hover:border-border text-muted rounded-lg transition-colors disabled:opacity-50">
                             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
@@ -386,7 +386,7 @@ export default function TagsAdminPage() {
 
                 {/* Result count */}
                 {!loading && (
-                    <p className="text-xs text-zinc-600 -mt-2">
+                    <p className="text-xs text-muted -mt-2">
                         {filtered.length === tags.length
                             ? `${tags.length} tags`
                             : `${filtered.length} de ${tags.length} tags`}
@@ -397,18 +397,18 @@ export default function TagsAdminPage() {
                 {loading ? (
                     <div className="space-y-2">
                         {Array.from({ length: 10 }).map((_, i) => (
-                            <div key={i} className="h-14 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />
+                            <div key={i} className="h-14 bg-surface border border-border rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div className="text-center py-16 text-zinc-500">
+                    <div className="text-center py-16 text-muted">
                         <Tag className="w-8 h-8 mx-auto mb-2 opacity-30" />
                         <p>Nenhuma tag encontrada</p>
                     </div>
                 ) : (
-                    <div className="rounded-xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/50">
+                    <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
                         {filtered.map(entry => (
-                            <div key={entry.tag} className="relative group bg-zinc-900 hover:bg-zinc-900/80 transition-colors">
+                            <div key={entry.tag} className="relative group bg-surface hover:bg-surface transition-colors">
                                 {/* Usage bar (background) */}
                                 <div
                                     className="absolute left-0 top-0 bottom-0 bg-purple-500/5 pointer-events-none transition-all"
@@ -416,7 +416,7 @@ export default function TagsAdminPage() {
                                 />
 
                                 <div className="relative flex items-center gap-3 px-4 py-3">
-                                    <Tag className="w-3.5 h-3.5 text-zinc-600 flex-shrink-0" />
+                                    <Tag className="w-3.5 h-3.5 text-muted flex-shrink-0" />
 
                                     {/* Tag name or edit input */}
                                     {editingTag === entry.tag ? (
@@ -430,7 +430,7 @@ export default function TagsAdminPage() {
                                                     if (e.key === 'Escape') cancelEdit()
                                                 }}
                                                 autoFocus
-                                                className="flex-1 min-w-0 bg-zinc-800 border border-purple-500/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500"
+                                                className="flex-1 min-w-0 bg-background border border-purple-500/50 rounded-xl px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-accent/50"
                                             />
                                             {/* Merge conflict warning */}
                                             {mergeConflict && (
@@ -440,7 +440,7 @@ export default function TagsAdminPage() {
                                             )}
                                         </div>
                                     ) : (
-                                        <span className="flex-1 text-sm font-bold text-white font-mono truncate">{entry.tag}</span>
+                                        <span className="flex-1 text-sm font-bold text-foreground font-mono truncate">{entry.tag}</span>
                                     )}
 
                                     {/* Usage badges */}
@@ -457,7 +457,7 @@ export default function TagsAdminPage() {
                                                 <span className="tabular-nums">{entry.productionCount}</span>
                                             </span>
                                         )}
-                                        <span className="text-xs text-zinc-600 w-7 text-right tabular-nums hidden sm:block">
+                                        <span className="text-xs text-muted w-7 text-right tabular-nums hidden sm:block">
                                             {entry.total}×
                                         </span>
                                     </div>
@@ -475,7 +475,7 @@ export default function TagsAdminPage() {
                                                     >
                                                         {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <GitMerge className="w-3.5 h-3.5" />}
                                                     </button>
-                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 transition-colors">
+                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-surface hover:bg-surface text-muted transition-colors">
                                                         <X className="w-3.5 h-3.5" />
                                                     </button>
                                                 </>
@@ -488,7 +488,7 @@ export default function TagsAdminPage() {
                                                     >
                                                         {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                                                     </button>
-                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 transition-colors">
+                                                    <button onClick={cancelEdit} className="p-1.5 rounded-lg bg-surface hover:bg-surface text-muted transition-colors">
                                                         <X className="w-3.5 h-3.5" />
                                                     </button>
                                                 </>
@@ -498,21 +498,21 @@ export default function TagsAdminPage() {
                                         <div className="flex gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => startEdit(entry.tag)}
-                                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+                                                className="p-1.5 rounded-xl bg-surface hover:bg-surface text-muted hover:text-foreground transition-colors"
                                                 title="Renomear"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => setMergingTag(entry.tag)}
-                                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-purple-500/20 text-zinc-400 hover:text-purple-400 transition-colors"
+                                                className="p-1.5 rounded-lg bg-surface hover:bg-purple-500/20 text-muted hover:text-purple-400 transition-colors"
                                                 title="Mesclar em outra tag"
                                             >
                                                 <GitMerge className="w-3.5 h-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => setDeletingTag(entry.tag)}
-                                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 transition-colors"
+                                                className="p-1.5 rounded-lg bg-surface hover:bg-red-500/20 text-muted hover:text-red-400 transition-colors"
                                                 title="Remover de todos os conteúdos"
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -539,22 +539,22 @@ export default function TagsAdminPage() {
             {/* Delete confirm modal */}
             {deletingTag && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+                    <div className="bg-surface border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl">
                         <div className="flex items-center gap-3 mb-3">
                             <Trash2 className="w-5 h-5 text-red-400 flex-shrink-0" />
-                            <h2 className="text-base font-black text-white">Remover tag</h2>
+                            <h2 className="text-base font-black text-foreground">Remover tag</h2>
                         </div>
-                        <p className="text-zinc-400 text-sm mb-1">
-                            Remover <span className="font-mono font-bold text-white bg-zinc-800 px-1.5 py-0.5 rounded">{deletingTag}</span> de todos os conteúdos?
+                        <p className="text-muted text-sm mb-1">
+                            Remover <span className="font-mono font-bold text-foreground bg-surface px-1.5 py-0.5 rounded">{deletingTag}</span> de todos os conteúdos?
                         </p>
-                        <p className="text-zinc-600 text-xs mb-5">Esta ação não pode ser desfeita.</p>
+                        <p className="text-muted text-xs mb-5">Esta ação não pode ser desfeita.</p>
                         <div className="flex gap-3">
                             <button onClick={() => setDeletingTag(null)}
-                                className="flex-1 py-2.5 rounded-lg border border-zinc-700 text-zinc-400 text-sm font-bold hover:border-zinc-500 transition-colors">
+                                className="flex-1 py-2.5 rounded-lg border border-border text-muted text-sm font-bold hover:border-border transition-colors">
                                 Cancelar
                             </button>
                             <button onClick={() => confirmDelete(deletingTag)}
-                                className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition-colors">
+                                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-foreground text-sm font-bold transition-colors">
                                 Remover
                             </button>
                         </div>

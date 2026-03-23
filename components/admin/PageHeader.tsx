@@ -44,7 +44,7 @@ export function PageHeader({
       {backHref && (
         <Link
           href={backHref}
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 w-fit transition-colors"
+          className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground w-fit transition-colors"
         >
           <ArrowLeft size={13} />
           {backLabel ?? 'Voltar'}
@@ -55,11 +55,11 @@ export function PageHeader({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl lg:text-3xl font-black text-white leading-tight">{title}</h1>
+            <h1 className="text-2xl lg:text-3xl font-black text-foreground leading-tight">{title}</h1>
             {badge}
           </div>
           {subtitle && (
-            <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>
+            <p className="mt-1 text-sm text-muted">{subtitle}</p>
           )}
         </div>
 
@@ -87,7 +87,7 @@ PageHeader.Badge = function Badge({
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'purple'
 }) {
   const styles = {
-    default: 'bg-zinc-800 text-zinc-400 border-zinc-700',
+    default: 'bg-surface text-muted border-border',
     success: 'bg-green-900/40 text-green-400 border-green-700/30',
     warning: 'bg-yellow-900/40 text-yellow-400 border-yellow-700/30',
     danger: 'bg-red-900/40 text-red-400 border-red-700/30',

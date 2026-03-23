@@ -238,8 +238,8 @@ export default function EditArtistPage() {
         }
     }
 
-    const inputCls = "w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
-    const labelCls = "block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5"
+    const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 text-sm"
+    const labelCls = "block text-xs font-bold text-muted uppercase tracking-widest mb-1.5"
 
     const sources = (form.fieldSources ?? {}) as FieldSources
     const SourceBadge = ({ field }: { field: string }) => {
@@ -272,7 +272,7 @@ export default function EditArtistPage() {
     }
     const FieldLabel = ({ label, field, required: req }: { label: string; field: string; required?: boolean }) => (
         <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{label}{req ? ' *' : ''}</span>
+            <span className="text-xs font-bold text-muted uppercase tracking-widest">{label}{req ? ' *' : ''}</span>
             <SourceBadge field={field} />
         </div>
     )
@@ -289,7 +289,7 @@ export default function EditArtistPage() {
                         <Link
                             href={`/artists/${id}`}
                             target="_blank"
-                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 px-3 py-1.5 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 text-xs text-foreground border border-border hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-colors"
                         >
                             Ver no site
                             <ExternalLink className="w-3 h-3" />
@@ -304,7 +304,7 @@ export default function EditArtistPage() {
                 )}
 
                 {!loading && !artist && (
-                    <div className="text-center py-20 text-zinc-500">Artista não encontrado.</div>
+                    <div className="text-center py-20 text-muted">Artista não encontrado.</div>
                 )}
 
                 {artist && (
@@ -321,8 +321,8 @@ export default function EditArtistPage() {
                                         className="rounded-full object-cover w-24 h-24"
                                     />
                                 ) : (
-                                    <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
-                                        <User className="w-8 h-8 text-zinc-600" />
+                                    <div className="w-24 h-24 rounded-full bg-surface flex items-center justify-center">
+                                        <User className="w-8 h-8 text-muted" />
                                     </div>
                                 )}
                             </div>
@@ -465,7 +465,7 @@ export default function EditArtistPage() {
                         {/* Bio */}
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Biografia</span>
+                                <span className="text-xs font-bold text-muted uppercase tracking-widest">Biografia</span>
                                 <SourceBadge field="bio" />
                                 {bioSource && (
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
@@ -498,7 +498,7 @@ export default function EditArtistPage() {
                                         }
                                     }}
                                     disabled={previewLoading}
-                                    className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                    className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-surface disabled:opacity-50 text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
                                 >
                                     {previewLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                     Buscar do TMDB
@@ -509,7 +509,7 @@ export default function EditArtistPage() {
                         {/* Análise Editorial */}
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Análise Editorial</span>
+                                <span className="text-xs font-bold text-muted uppercase tracking-widest">Análise Editorial</span>
                                 {form.analiseEditorial && (
                                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-purple-500/10 text-purple-400 border-purple-500/30">
                                         {form.analiseEditorial.length} chars
@@ -523,15 +523,15 @@ export default function EditArtistPage() {
                                 rows={8}
                                 className={inputCls + ' resize-y font-mono text-xs'}
                             />
-                            <p className="mt-1 text-[10px] text-zinc-600">
-                                Formato: <code className="text-zinc-500">**Título da Seção**</code> seguido de nova linha e conteúdo
+                            <p className="mt-1 text-[10px] text-muted">
+                                Formato: <code className="text-muted">**Título da Seção**</code> seguido de nova linha e conteúdo
                             </p>
                         </div>
 
                         {/* Curiosidades */}
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                                <span className="text-xs font-bold text-muted uppercase tracking-widest">
                                     Curiosidades ({(form.curiosidades ?? []).length})
                                 </span>
                                 <button
@@ -544,11 +544,11 @@ export default function EditArtistPage() {
                             </div>
                             <div className="space-y-2">
                                 {(form.curiosidades ?? []).length === 0 && (
-                                    <p className="text-xs text-zinc-600 py-2">Nenhuma curiosidade. Gere via IA ou adicione manualmente.</p>
+                                    <p className="text-xs text-muted py-2">Nenhuma curiosidade. Gere via IA ou adicione manualmente.</p>
                                 )}
                                 {(form.curiosidades ?? []).map((item, i) => (
                                     <div key={i} className="flex gap-2 items-start">
-                                        <span className="text-[10px] text-zinc-600 font-mono mt-2.5 w-5 text-right flex-shrink-0">{i + 1}</span>
+                                        <span className="text-[10px] text-muted font-mono mt-2.5 w-5 text-right flex-shrink-0">{i + 1}</span>
                                         <textarea
                                             value={item}
                                             onChange={e => {
@@ -565,7 +565,7 @@ export default function EditArtistPage() {
                                                 const next = (form.curiosidades ?? []).filter((_, j) => j !== i)
                                                 setForm(prev => ({ ...prev, curiosidades: next }))
                                             }}
-                                            className="mt-2 text-zinc-600 hover:text-red-400 transition-colors flex-shrink-0"
+                                            className="mt-2 text-muted hover:text-red-400 transition-colors flex-shrink-0"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -577,7 +577,7 @@ export default function EditArtistPage() {
                         {/* Redes Sociais */}
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                                <span className="text-xs font-bold text-muted uppercase tracking-widest">
                                     Redes Sociais ({socialPairs.length})
                                 </span>
                                 <button
@@ -590,7 +590,7 @@ export default function EditArtistPage() {
                             </div>
                             <div className="space-y-2">
                                 {socialPairs.length === 0 && (
-                                    <p className="text-xs text-zinc-600 py-2">Nenhum link social. Sincronize via Wikidata/MusicBrainz ou adicione manualmente.</p>
+                                    <p className="text-xs text-muted py-2">Nenhum link social. Sincronize via Wikidata/MusicBrainz ou adicione manualmente.</p>
                                 )}
                                 {socialPairs.map(([key, value], i) => (
                                     <div key={i} className="flex gap-2 items-center">
@@ -601,7 +601,7 @@ export default function EditArtistPage() {
                                                 next[i] = [e.target.value, value]
                                                 setSocialPairs(next)
                                             }}
-                                            className="w-36 px-2 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500/50"
+                                            className="w-36 px-2 py-2 bg-surface border border-border rounded-lg text-foreground text-xs focus:outline-none focus:border-purple-500/50"
                                         >
                                             <option value="">Plataforma...</option>
                                             {KNOWN_SOCIAL_KEYS.map(({ key: k, label }) => (
@@ -625,7 +625,7 @@ export default function EditArtistPage() {
                                         <button
                                             type="button"
                                             onClick={() => setSocialPairs(prev => prev.filter((_, j) => j !== i))}
-                                            className="text-zinc-600 hover:text-red-400 transition-colors flex-shrink-0"
+                                            className="text-muted hover:text-red-400 transition-colors flex-shrink-0"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -639,17 +639,17 @@ export default function EditArtistPage() {
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-purple-400" />
-                                    <span className="text-sm font-semibold text-white">Conteúdo Editorial</span>
-                                    <span className="text-[10px] text-zinc-500 font-mono">DeepSeek-V3</span>
+                                    <span className="text-sm font-semibold text-foreground">Conteúdo Editorial</span>
+                                    <span className="text-[10px] text-muted font-mono">DeepSeek-V3</span>
                                 </div>
                                 <Link
                                     href="/admin/enrichment"
-                                    className="text-[10px] text-zinc-600 hover:text-purple-400 transition-colors"
+                                    className="text-[10px] text-muted hover:text-purple-400 transition-colors"
                                 >
                                     Ver lote →
                                 </Link>
                             </div>
-                            <p className="text-xs text-zinc-500 mb-3">
+                            <p className="text-xs text-muted mb-3">
                                 Gera conteúdo autoral em PT-BR (bio 400+ palavras, análise editorial, curiosidades). Salve antes de gerar.
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -700,7 +700,7 @@ export default function EditArtistPage() {
                                         onClick={() => fetchTMDBPreview()}
                                         disabled={previewLoading || !form.tmdbId}
                                         title="Verificar no TMDB"
-                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-zinc-300 rounded-lg text-xs font-bold transition-colors"
+                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface disabled:opacity-40 text-foreground rounded-lg text-xs font-bold transition-colors"
                                     >
                                         {previewLoading
                                             ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -730,7 +730,7 @@ export default function EditArtistPage() {
                             </div>
                         )}
                         {tmdbPreview && (
-                            <div className="bg-zinc-800/60 border border-white/10 rounded-xl p-4 space-y-3">
+                            <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
                                 <div className="flex items-center gap-2 text-xs font-bold text-green-400 mb-1">
                                     <CheckCircle className="w-4 h-4" />
                                     TMDB verificado — confirme se é a pessoa correta
@@ -745,40 +745,40 @@ export default function EditArtistPage() {
                                             className="rounded-lg object-cover flex-shrink-0"
                                         />
                                     ) : (
-                                        <div className="w-16 h-24 rounded-lg bg-zinc-700 flex items-center justify-center flex-shrink-0">
-                                            <User className="w-6 h-6 text-zinc-500" />
+                                        <div className="w-16 h-24 rounded-lg bg-surface flex items-center justify-center flex-shrink-0">
+                                            <User className="w-6 h-6 text-muted" />
                                         </div>
                                     )}
                                     <div className="flex-1 space-y-1.5 text-xs">
                                         <div>
-                                            <span className="text-zinc-500">Nome TMDB:</span>{' '}
-                                            <span className="text-white font-bold">{tmdbPreview.name}</span>
+                                            <span className="text-muted">Nome TMDB:</span>{' '}
+                                            <span className="text-foreground font-bold">{tmdbPreview.name}</span>
                                         </div>
                                         {tmdbPreview.hangulName && (
                                             <div>
-                                                <span className="text-zinc-500">Hangul:</span>{' '}
+                                                <span className="text-muted">Hangul:</span>{' '}
                                                 <span className="text-purple-300">{tmdbPreview.hangulName}</span>
                                             </div>
                                         )}
                                         {tmdbPreview.birthday && (
                                             <div>
-                                                <span className="text-zinc-500">Nascimento:</span>{' '}
-                                                <span className="text-zinc-300">{tmdbPreview.birthday}{tmdbPreview.placeOfBirth ? ` — ${tmdbPreview.placeOfBirth}` : ''}</span>
+                                                <span className="text-muted">Nascimento:</span>{' '}
+                                                <span className="text-foreground">{tmdbPreview.birthday}{tmdbPreview.placeOfBirth ? ` — ${tmdbPreview.placeOfBirth}` : ''}</span>
                                             </div>
                                         )}
                                         {tmdbPreview.knownFor && (
                                             <div>
-                                                <span className="text-zinc-500">Conhecido por:</span>{' '}
-                                                <span className="text-zinc-300">{tmdbPreview.knownFor}</span>
+                                                <span className="text-muted">Conhecido por:</span>{' '}
+                                                <span className="text-foreground">{tmdbPreview.knownFor}</span>
                                             </div>
                                         )}
                                         {tmdbPreview.biography && (
-                                            <p className="text-zinc-400 line-clamp-2 mt-1">{tmdbPreview.biography}</p>
+                                            <p className="text-muted line-clamp-2 mt-1">{tmdbPreview.biography}</p>
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap gap-2 pt-1 border-t border-white/5">
-                                    <span className="text-[10px] text-zinc-500 self-center">Aplicar ao artista (só campos vazios):</span>
+                                <div className="flex flex-wrap gap-2 pt-1 border-t border-border">
+                                    <span className="text-[10px] text-muted self-center">Aplicar ao artista (só campos vazios):</span>
                                     {tmdbPreview.photoUrl && !form.primaryImageUrl && (
                                         <button type="button" onClick={() => applyFromTmdb('primaryImageUrl', tmdbPreview.photoUrl)}
                                             className="text-[10px] px-2 py-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded font-bold transition-colors">
@@ -822,7 +822,7 @@ export default function EditArtistPage() {
                         )}
 
                         {/* Visibilidade */}
-                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/50">
+                        <div className="border border-border rounded-xl p-4 bg-surface">
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <div className="relative flex-shrink-0">
                                     <input
@@ -831,14 +831,14 @@ export default function EditArtistPage() {
                                         checked={form.isHidden ?? false}
                                         onChange={e => set('isHidden' as keyof Artist, e.target.checked)}
                                     />
-                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
+                                    <div className="w-10 h-6 bg-border peer-checked:bg-red-600 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-zinc-200">
+                                    <p className="text-sm font-bold text-foreground">
                                         {form.isHidden ? 'Oculto do site público' : 'Visível no site público'}
                                     </p>
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-xs text-muted">
                                         {form.isHidden
                                             ? 'Este artista não aparece em listagens públicas'
                                             : 'Este artista aparece normalmente no site'}
@@ -857,15 +857,15 @@ export default function EditArtistPage() {
                                         checked={form.flaggedAsNonKorean ?? false}
                                         onChange={e => set('flaggedAsNonKorean' as keyof Artist, e.target.checked)}
                                     />
-                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-amber-600 rounded-full transition-colors" />
+                                    <div className="w-10 h-6 bg-border peer-checked:bg-amber-600 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                                        <p className="text-sm font-bold text-zinc-200">Flaggado como não-coreano</p>
+                                        <p className="text-sm font-bold text-foreground">Flaggado como não-coreano</p>
                                     </div>
-                                    <p className="text-xs text-zinc-500 mt-0.5">
+                                    <p className="text-xs text-muted mt-0.5">
                                         Exclui este artista de enrichment automático e filas de moderação
                                     </p>
                                 </div>
@@ -877,20 +877,20 @@ export default function EditArtistPage() {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
                             >
                                 {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 {saving ? 'Salvando...' : 'Salvar'}
                             </button>
                             <Link
                                 href="/admin/artists"
-                                className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-bold transition-colors"
+                                className="px-5 py-2.5 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors"
                             >
                                 Cancelar
                             </Link>
                             <Link
                                 href={`/admin/artists/${id}/discography`}
-                                className="ml-auto px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-bold transition-colors"
+                                className="ml-auto px-5 py-2.5 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors"
                             >
                                 Discografia →
                             </Link>

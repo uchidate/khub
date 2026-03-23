@@ -74,7 +74,7 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
   return (
     <div className="space-y-2">
       {/* Hour labels */}
-      <div className="flex text-[9px] text-zinc-600 font-mono select-none">
+      <div className="flex text-[9px] text-muted font-mono select-none">
         {hours.map(h => (
           <div key={h} className="flex-1 text-center">{h.toString().padStart(2,'0')}</div>
         ))}
@@ -85,14 +85,14 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
         const colors = COLOR_MAP[job.color] ?? COLOR_MAP.blue
         return (
           <div key={job.id} className="flex items-center gap-2">
-            <span className="w-28 text-[10px] text-zinc-400 truncate shrink-0 text-right">{job.emoji} {job.name.split(' ').slice(-1)[0]}</span>
+            <span className="w-28 text-[10px] text-muted truncate shrink-0 text-right">{job.emoji} {job.name.split(' ').slice(-1)[0]}</span>
             <div className="flex flex-1">
               {hours.map(h => {
                 const active = runHours.includes(h)
                 return (
                   <div
                     key={h}
-                    className={`flex-1 h-4 mx-px rounded-sm ${active ? `${colors.dot} opacity-80` : 'bg-zinc-800/50'}`}
+                    className={`flex-1 h-4 mx-px rounded-sm ${active ? `${colors.dot} opacity-80` : 'bg-surface'}`}
                     title={active ? `${job.name} às ${h.toString().padStart(2,'0')}:00 UTC` : undefined}
                   />
                 )
@@ -148,9 +148,9 @@ export default function AdminCronPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white">Agendamentos</h1>
+            <h1 className="text-xl font-bold text-foreground">Agendamentos</h1>
             {data && (
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 Atualizado {new Date(data.timestamp).toLocaleString('pt-BR')} · {jobs.length} jobs via GitHub Actions
               </p>
             )}
@@ -158,7 +158,7 @@ export default function AdminCronPage() {
           <button
             onClick={fetch_}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover text-xs font-medium transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
@@ -173,13 +173,13 @@ export default function AdminCronPage() {
             { label: 'Produções', icon: Film,     total: stats?.totalProductions,  delta: stats?.productionsLast24h, sub: 'visíveis',    color: 'text-blue-400' },
             { label: 'Notícias 7d', icon: Activity, total: stats?.newsLast7days,  delta: stats?.newsLast24h,        sub: 'últimos 7 dias', color: 'text-amber-400' },
           ].map(({ label, icon: Icon, total, delta, sub, color }) => (
-            <div key={label} className="bg-zinc-900/60 border border-white/6 rounded-xl p-4">
+            <div key={label} className="bg-surface border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">{label}</span>
+                <span className="text-[10px] text-muted uppercase tracking-widest font-black">{label}</span>
                 <Icon className={`w-3.5 h-3.5 ${color}`} />
               </div>
-              <p className="text-2xl font-black text-white tabular-nums">{total ?? '—'}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">
+              <p className="text-2xl font-black text-foreground tabular-nums">{total ?? '—'}</p>
+              <p className="text-[10px] text-muted mt-0.5">
                 {delta != null && delta > 0 && <span className="text-emerald-400">+{delta} hoje · </span>}
                 {sub}
               </p>
@@ -189,13 +189,13 @@ export default function AdminCronPage() {
 
         {/* Timeline */}
         {jobs.length > 0 && (
-          <div className="bg-zinc-900/60 border border-white/6 rounded-xl p-4">
+          <div className="bg-surface border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-4 h-4 text-zinc-400" />
-              <h2 className="text-sm font-bold text-zinc-300">Timeline 24h (UTC)</h2>
+              <Clock className="w-4 h-4 text-muted" />
+              <h2 className="text-sm font-bold text-foreground">Timeline 24h (UTC)</h2>
             </div>
             <TimelineBar jobs={jobs} />
-            <p className="text-[10px] text-zinc-600 mt-3">Cada bloco colorido = execução agendada naquela hora UTC</p>
+            <p className="text-[10px] text-muted mt-3">Cada bloco colorido = execução agendada naquela hora UTC</p>
           </div>
         )}
 
@@ -210,23 +210,23 @@ export default function AdminCronPage() {
               : null
 
             return (
-              <div key={job.id} className={`bg-zinc-900/50 border border-white/6 rounded-xl p-4 transition-all hover:border-white/10 ring-0 ${state === 'ok' ? `ring-1 ${colors.ring}` : ''}`}>
+              <div key={job.id} className={`bg-surface border border-border rounded-xl p-4 transition-all hover:border-border ring-0 ${state === 'ok' ? `ring-1 ${colors.ring}` : ''}`}>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-lg">{job.emoji}</span>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-white leading-tight">{job.name}</h3>
-                      <p className="text-[10px] text-zinc-500 mt-0.5 leading-tight">{job.description}</p>
+                      <h3 className="text-sm font-bold text-foreground leading-tight">{job.name}</h3>
+                      <p className="text-[10px] text-muted mt-0.5 leading-tight">{job.description}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => trigger(job.id)}
                     disabled={state === 'running'}
                     className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                      state === 'running' ? 'bg-zinc-700 text-zinc-400 cursor-wait' :
+                      state === 'running' ? 'bg-surface text-muted cursor-wait' :
                       state === 'ok'      ? `${colors.badge} border` :
                       state === 'error'   ? 'bg-red-500/15 text-red-300 border border-red-500/20' :
-                      'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-transparent'
+                      'bg-surface text-muted hover:bg-surface hover:text-foreground border border-transparent'
                     }`}
                     title="Disparar agora"
                   >
@@ -241,19 +241,19 @@ export default function AdminCronPage() {
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono border ${colors.badge}`}>
                     {job.schedule}
                   </span>
-                  <span className="text-[10px] text-zinc-500">{job.frequencyLabel}</span>
+                  <span className="text-[10px] text-muted">{job.frequencyLabel}</span>
                 </div>
 
                 {nextRunDelta != null && (
-                  <div className="flex items-center gap-1 mt-2.5 text-[10px] text-zinc-600">
+                  <div className="flex items-center gap-1 mt-2.5 text-[10px] text-muted">
                     <ChevronRight className="w-3 h-3" />
                     Próxima em{' '}
-                    <span className="text-zinc-400 font-mono">
+                    <span className="text-muted font-mono">
                       {nextRunDelta < 60
                         ? `${nextRunDelta}min`
                         : `${Math.floor(nextRunDelta / 60)}h${nextRunDelta % 60 > 0 ? `${nextRunDelta % 60}m` : ''}`}
                     </span>
-                    <span className="text-zinc-700">·</span>
+                    <span className="text-muted">·</span>
                     <span>{new Date(nextRun!).toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC</span>
                   </div>
                 )}
@@ -264,17 +264,17 @@ export default function AdminCronPage() {
 
         {/* Recent news */}
         {data?.recentNews && data.recentNews.length > 0 && (
-          <div className="bg-zinc-900/50 border border-white/6 rounded-xl p-4">
+          <div className="bg-surface border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Newspaper className="w-4 h-4 text-zinc-400" />
-              <h2 className="text-sm font-bold text-zinc-300">Últimas Notícias Criadas</h2>
+              <Newspaper className="w-4 h-4 text-muted" />
+              <h2 className="text-sm font-bold text-foreground">Últimas Notícias Criadas</h2>
             </div>
             <div className="space-y-1.5">
               {data.recentNews.map((news, i) => (
-                <div key={news.id} className="flex items-center gap-3 py-1.5 border-b border-white/4 last:border-0">
-                  <span className="text-[10px] text-zinc-600 tabular-nums w-4 shrink-0">{i + 1}</span>
-                  <p className="text-xs text-zinc-300 truncate flex-1">{news.title}</p>
-                  <span className="text-[10px] text-zinc-600 shrink-0">
+                <div key={news.id} className="flex items-center gap-3 py-1.5 border-b border-border last:border-0">
+                  <span className="text-[10px] text-muted tabular-nums w-4 shrink-0">{i + 1}</span>
+                  <p className="text-xs text-foreground truncate flex-1">{news.title}</p>
+                  <span className="text-[10px] text-muted shrink-0">
                     {new Date(news.createdAt).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
                   </span>
                 </div>
@@ -285,7 +285,7 @@ export default function AdminCronPage() {
 
         {loading && !data && (
           <div className="flex justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-zinc-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted" />
           </div>
         )}
 

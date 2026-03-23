@@ -54,7 +54,7 @@ export default function PrivacidadePage() {
             </span>
           </h1>
           <p className="text-muted text-sm max-w-2xl">
-            Sua privacidade é importante para nós. Esta política explica quais dados coletamos, como os usamos e quais são os seus direitos — em conformidade com a <strong className="text-[#e8e8e8]">Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018)</strong>.
+            Sua privacidade é importante para nós. Esta política explica quais dados coletamos, como os usamos e quais são os seus direitos — em conformidade com a <strong className="text-foreground">Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018)</strong>.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ export default function PrivacidadePage() {
                   <a
                     key={item.id}
                     href={`#${item.id}`}
-                    className="block text-xs text-muted hover:text-foreground transition-colors py-1 px-2 rounded hover:bg-[#e8e8e8]"
+                    className="block text-xs text-muted hover:text-foreground transition-colors py-1 px-2 rounded hover:bg-surface-hover"
                   >
                     {item.label}
                   </a>
@@ -83,7 +83,7 @@ export default function PrivacidadePage() {
 
             <Section id="intro" title="Introdução">
               <p>
-                Esta Política de Privacidade aplica-se ao site HallyuHub (<strong className="text-[#e8e8e8]">hallyuhub.com.br</strong>) e a todos os serviços oferecidos pela plataforma. Ao usar o HallyuHub, você consente com as práticas descritas neste documento.
+                Esta Política de Privacidade aplica-se ao site HallyuHub (<strong className="text-foreground">hallyuhub.com.br</strong>) e a todos os serviços oferecidos pela plataforma. Ao usar o HallyuHub, você consente com as práticas descritas neste documento.
               </p>
               <p>
                 Somos o controlador dos seus dados pessoais nos termos da LGPD. Tratamos dados de forma transparente, com finalidade definida e pelo tempo mínimo necessário.
@@ -91,18 +91,18 @@ export default function PrivacidadePage() {
             </Section>
 
             <Section id="coleta" title="Dados que coletamos">
-              <p><strong className="text-[#e8e8e8]">Dados fornecidos por você:</strong></p>
+              <p><strong className="text-foreground">Dados fornecidos por você:</strong></p>
               <ul className="list-disc pl-5 space-y-1">
-                <li><strong className="text-[#e8e8e8]">Cadastro:</strong> nome, endereço de e-mail e senha (armazenada com hash bcrypt)</li>
-                <li><strong className="text-[#e8e8e8]">Login social:</strong> nome e e-mail obtidos do Google (se você escolher autenticar por esse meio)</li>
-                <li><strong className="text-[#e8e8e8]">Comentários:</strong> texto publicado por você nas notícias</li>
-                <li><strong className="text-[#e8e8e8]">Interações:</strong> favoritos, avaliações e preferências de conteúdo</li>
+                <li><strong className="text-foreground">Cadastro:</strong> nome, endereço de e-mail e senha (armazenada com hash bcrypt)</li>
+                <li><strong className="text-foreground">Login social:</strong> nome e e-mail obtidos do Google (se você escolher autenticar por esse meio)</li>
+                <li><strong className="text-foreground">Comentários:</strong> texto publicado por você nas notícias</li>
+                <li><strong className="text-foreground">Interações:</strong> favoritos, avaliações e preferências de conteúdo</li>
               </ul>
-              <p><strong className="text-[#e8e8e8]">Dados coletados automaticamente:</strong></p>
+              <p><strong className="text-foreground">Dados coletados automaticamente:</strong></p>
               <ul className="list-disc pl-5 space-y-1">
-                <li><strong className="text-[#e8e8e8]">Logs de acesso:</strong> endereço IP, navegador, sistema operacional, páginas visitadas e horários — para segurança e diagnóstico</li>
-                <li><strong className="text-[#e8e8e8]">Cookies de sessão:</strong> necessários para manter você logado</li>
-                <li><strong className="text-[#e8e8e8]">Dados analíticos:</strong> comportamento de navegação anonimizado via Google Analytics 4</li>
+                <li><strong className="text-foreground">Logs de acesso:</strong> endereço IP, navegador, sistema operacional, páginas visitadas e horários — para segurança e diagnóstico</li>
+                <li><strong className="text-foreground">Cookies de sessão:</strong> necessários para manter você logado</li>
+                <li><strong className="text-foreground">Dados analíticos:</strong> comportamento de navegação anonimizado via Google Analytics 4</li>
               </ul>
               <p>
                 Não coletamos dados de categorias sensíveis (origem racial, convicções religiosas, saúde, biometria, etc.).
@@ -112,11 +112,11 @@ export default function PrivacidadePage() {
             <Section id="uso" title="Como usamos seus dados">
               <p>Usamos seus dados para as seguintes finalidades (bases legais da LGPD em parênteses):</p>
               <ul className="list-disc pl-5 space-y-2">
-                <li><strong className="text-[#e8e8e8]">Fornecer o serviço</strong> — autenticação, feed personalizado, favoritos (execução de contrato)</li>
-                <li><strong className="text-[#e8e8e8]">Comunicações transacionais</strong> — confirmação de cadastro, redefinição de senha, notificações de novidades nos seus artistas favoritos (execução de contrato)</li>
-                <li><strong className="text-[#e8e8e8]">Segurança</strong> — detecção de fraudes, abuso e acesso não autorizado (interesse legítimo)</li>
-                <li><strong className="text-[#e8e8e8]">Melhorias da plataforma</strong> — análise de uso anonimizado para entender como funcionalidades são utilizadas (interesse legítimo)</li>
-                <li><strong className="text-[#e8e8e8]">Comunicações de marketing</strong> — novidades, lançamentos premium e promoções, <em>somente com seu consentimento explícito</em> (consentimento)</li>
+                <li><strong className="text-foreground">Fornecer o serviço</strong> — autenticação, feed personalizado, favoritos (execução de contrato)</li>
+                <li><strong className="text-foreground">Comunicações transacionais</strong> — confirmação de cadastro, redefinição de senha, notificações de novidades nos seus artistas favoritos (execução de contrato)</li>
+                <li><strong className="text-foreground">Segurança</strong> — detecção de fraudes, abuso e acesso não autorizado (interesse legítimo)</li>
+                <li><strong className="text-foreground">Melhorias da plataforma</strong> — análise de uso anonimizado para entender como funcionalidades são utilizadas (interesse legítimo)</li>
+                <li><strong className="text-foreground">Comunicações de marketing</strong> — novidades, lançamentos premium e promoções, <em>somente com seu consentimento explícito</em> (consentimento)</li>
               </ul>
             </Section>
 
@@ -125,10 +125,10 @@ export default function PrivacidadePage() {
                 <strong className="text-foreground">Não vendemos seus dados pessoais.</strong> Podemos compartilhá-los apenas com:
               </p>
               <ul className="list-disc pl-5 space-y-1">
-                <li><strong className="text-[#e8e8e8]">Google Analytics:</strong> dados de navegação anonimizados para análise de tráfego</li>
-                <li><strong className="text-[#e8e8e8]">Google OAuth:</strong> somente para autenticação, quando você escolhe &quot;Entrar com Google&quot;</li>
-                <li><strong className="text-[#e8e8e8]">Provedores de infraestrutura:</strong> hospedagem e banco de dados (dados processados sob acordo de confidencialidade)</li>
-                <li><strong className="text-[#e8e8e8]">Autoridades públicas:</strong> quando exigido por lei ou ordem judicial</li>
+                <li><strong className="text-foreground">Google Analytics:</strong> dados de navegação anonimizados para análise de tráfego</li>
+                <li><strong className="text-foreground">Google OAuth:</strong> somente para autenticação, quando você escolhe &quot;Entrar com Google&quot;</li>
+                <li><strong className="text-foreground">Provedores de infraestrutura:</strong> hospedagem e banco de dados (dados processados sob acordo de confidencialidade)</li>
+                <li><strong className="text-foreground">Autoridades públicas:</strong> quando exigido por lei ou ordem judicial</li>
               </ul>
               <p>
                 Qualquer terceiro que processe dados em nosso nome está contratualmente obrigado a tratar esses dados com segurança e confidencialidade, de acordo com a LGPD.
@@ -148,7 +148,7 @@ export default function PrivacidadePage() {
                 </div>
                 <div className="p-4 bg-surface border border-border rounded-xl">
                   <p className="font-bold text-foreground mb-1">Publicitários (Google AdSense)</p>
-                  <p>Usados para exibir anúncios relevantes. Somente ativados se você consentir. Você pode gerenciar preferências em <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-[#ff2d78] hover:underline">adssettings.google.com</a>.</p>
+                  <p>Usados para exibir anúncios relevantes. Somente ativados se você consentir. Você pode gerenciar preferências em <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">adssettings.google.com</a>.</p>
                 </div>
               </div>
             </Section>
@@ -156,10 +156,10 @@ export default function PrivacidadePage() {
             <Section id="retencao" title="Retenção de dados">
               <p>Mantemos seus dados pelo tempo necessário para cumprir as finalidades descritas:</p>
               <ul className="list-disc pl-5 space-y-1">
-                <li><strong className="text-[#e8e8e8]">Dados de conta:</strong> enquanto sua conta estiver ativa ou até solicitação de exclusão</li>
-                <li><strong className="text-[#e8e8e8]">Logs de segurança:</strong> até 90 dias</li>
-                <li><strong className="text-[#e8e8e8]">Dados analíticos (Google Analytics):</strong> 14 meses (configuração padrão)</li>
-                <li><strong className="text-[#e8e8e8]">Backup de banco de dados:</strong> até 30 dias após geração</li>
+                <li><strong className="text-foreground">Dados de conta:</strong> enquanto sua conta estiver ativa ou até solicitação de exclusão</li>
+                <li><strong className="text-foreground">Logs de segurança:</strong> até 90 dias</li>
+                <li><strong className="text-foreground">Dados analíticos (Google Analytics):</strong> 14 meses (configuração padrão)</li>
+                <li><strong className="text-foreground">Backup de banco de dados:</strong> até 30 dias após geração</li>
               </ul>
               <p>
                 Após o encerramento da conta, seus dados pessoais são excluídos em até 30 dias. Comentários publicados podem ser anonimizados (não excluídos) para manter a integridade das discussões.
@@ -169,14 +169,14 @@ export default function PrivacidadePage() {
             <Section id="direitos" title="Seus direitos (LGPD)">
               <p>Nos termos da LGPD, você tem direito a:</p>
               <ul className="list-disc pl-5 space-y-1">
-                <li><strong className="text-[#e8e8e8]">Confirmação e acesso:</strong> saber se tratamos seus dados e obter uma cópia</li>
-                <li><strong className="text-[#e8e8e8]">Correção:</strong> solicitar atualização de dados incorretos ou incompletos</li>
-                <li><strong className="text-[#e8e8e8]">Anonimização, bloqueio ou eliminação:</strong> dos dados desnecessários ou tratados em desconformidade</li>
-                <li><strong className="text-[#e8e8e8]">Portabilidade:</strong> receber seus dados em formato estruturado</li>
-                <li><strong className="text-[#e8e8e8]">Eliminação:</strong> solicitar a exclusão dos dados tratados com base no consentimento</li>
-                <li><strong className="text-[#e8e8e8]">Revogação do consentimento:</strong> a qualquer momento, sem custo</li>
-                <li><strong className="text-[#e8e8e8]">Oposição:</strong> opor-se a tratamentos que causem dano</li>
-                <li><strong className="text-[#e8e8e8]">Reclamação:</strong> perante a ANPD (Autoridade Nacional de Proteção de Dados)</li>
+                <li><strong className="text-foreground">Confirmação e acesso:</strong> saber se tratamos seus dados e obter uma cópia</li>
+                <li><strong className="text-foreground">Correção:</strong> solicitar atualização de dados incorretos ou incompletos</li>
+                <li><strong className="text-foreground">Anonimização, bloqueio ou eliminação:</strong> dos dados desnecessários ou tratados em desconformidade</li>
+                <li><strong className="text-foreground">Portabilidade:</strong> receber seus dados em formato estruturado</li>
+                <li><strong className="text-foreground">Eliminação:</strong> solicitar a exclusão dos dados tratados com base no consentimento</li>
+                <li><strong className="text-foreground">Revogação do consentimento:</strong> a qualquer momento, sem custo</li>
+                <li><strong className="text-foreground">Oposição:</strong> opor-se a tratamentos que causem dano</li>
+                <li><strong className="text-foreground">Reclamação:</strong> perante a ANPD (Autoridade Nacional de Proteção de Dados)</li>
               </ul>
               <p>
                 Para exercer esses direitos, entre em contato pelo e-mail <a href="mailto:privacidade@hallyuhub.com.br" className="text-pink-400 hover:underline">privacidade@hallyuhub.com.br</a>. Responderemos em até 15 dias úteis.
@@ -219,8 +219,8 @@ export default function PrivacidadePage() {
                 Para exercer seus direitos, tirar dúvidas ou fazer solicitações relacionadas a dados pessoais:
               </p>
               <ul className="list-none space-y-1">
-                <li><strong className="text-[#e8e8e8]">Privacidade / LGPD:</strong> <a href="mailto:privacidade@hallyuhub.com.br" className="text-pink-400 hover:underline">privacidade@hallyuhub.com.br</a></li>
-                <li><strong className="text-[#e8e8e8]">Contato geral:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-pink-400 hover:underline">contato@hallyuhub.com.br</a></li>
+                <li><strong className="text-foreground">Privacidade / LGPD:</strong> <a href="mailto:privacidade@hallyuhub.com.br" className="text-pink-400 hover:underline">privacidade@hallyuhub.com.br</a></li>
+                <li><strong className="text-foreground">Contato geral:</strong> <a href="mailto:contato@hallyuhub.com.br" className="text-pink-400 hover:underline">contato@hallyuhub.com.br</a></li>
               </ul>
               <p>
                 Você também pode registrar reclamações diretamente na <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">ANPD (Autoridade Nacional de Proteção de Dados)</a>.

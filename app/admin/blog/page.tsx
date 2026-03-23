@@ -7,6 +7,8 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { useToast } from '@/lib/hooks/useToast'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
+import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { AdminIconLink } from '@/components/admin/AdminIconButton'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
@@ -65,7 +67,7 @@ interface CalendarPost {
 }
 
 const CALENDAR_STATUS_COLORS: Record<string, string> = {
-    DRAFT:          'bg-zinc-700/80 text-zinc-300 border-zinc-600/50',
+    DRAFT:          'bg-surface text-foreground border-border',
     PENDING_REVIEW: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
     PUBLISHED:      'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     ARCHIVED:       'bg-red-500/15 text-red-400 border-red-500/20',
@@ -148,20 +150,20 @@ function CalendarView() {
             {/* Header row */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-3">
-                    <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                    <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-surface-hover text-muted hover:text-foreground transition-colors">
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <h2 className="text-base font-bold text-white min-w-[160px] text-center">
+                    <h2 className="text-base font-bold text-foreground min-w-[160px] text-center">
                         {MONTH_NAMES[month - 1]} {year}
                     </h2>
-                    <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                    <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-surface-hover text-muted hover:text-foreground transition-colors">
                         <ChevronRight className="w-4 h-4" />
                     </button>
-                    <button onClick={goToday} className="text-xs text-zinc-500 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-zinc-800">
+                    <button onClick={goToday} className="text-xs text-muted hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-surface-hover">
                         Hoje
                     </button>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-zinc-500">
+                <div className="flex items-center gap-4 text-xs text-muted">
                     <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400/60 inline-block" />
                         {publishedCount} publicado{publishedCount !== 1 ? 's' : ''}
@@ -177,7 +179,7 @@ function CalendarView() {
             {/* Weekday headers */}
             <div className="grid grid-cols-7 gap-1">
                 {WEEKDAYS.map(d => (
-                    <div key={d} className="text-center text-[11px] font-bold uppercase tracking-widest text-zinc-600 py-1">
+                    <div key={d} className="text-center text-[11px] font-bold uppercase tracking-widest text-muted py-1">
                         {d}
                     </div>
                 ))}
@@ -193,12 +195,12 @@ function CalendarView() {
                                 ? 'border-transparent bg-transparent'
                                 : isToday(day)
                                     ? 'border-purple-500/40 bg-purple-900/10'
-                                    : 'border-white/5 bg-zinc-900/30 hover:border-white/10'
+                                    : 'border-border bg-surface hover:border-border'
                         }`}
                     >
                         {day !== null && (
                             <>
-                                <p className={`text-[11px] font-bold mb-1 ${isToday(day) ? 'text-purple-400' : 'text-zinc-500'}`}>
+                                <p className={`text-[11px] font-bold mb-1 ${isToday(day) ? 'text-purple-400' : 'text-muted'}`}>
                                     {day}
                                 </p>
                                 <div className="space-y-0.5">
@@ -213,7 +215,7 @@ function CalendarView() {
                                         </a>
                                     ))}
                                     {(byDay.get(day)?.length ?? 0) > 3 && (
-                                        <p className="text-[10px] text-zinc-600 pl-1">
+                                        <p className="text-[10px] text-muted pl-1">
                                             +{(byDay.get(day)?.length ?? 0) - 3} mais
                                         </p>
                                     )}
@@ -225,7 +227,7 @@ function CalendarView() {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 pt-2 border-t border-white/5 flex-wrap">
+            <div className="flex items-center gap-4 pt-2 border-t border-border flex-wrap">
                 {Object.entries({ PUBLISHED: 'Publicado', PENDING_REVIEW: 'Em revisão', DRAFT: 'Rascunho', ARCHIVED: 'Arquivado' }).map(([k, label]) => (
                     <span key={k} className={`inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded border ${CALENDAR_STATUS_COLORS[k]}`}>
                         {label}
@@ -239,7 +241,7 @@ function CalendarView() {
 // ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-    DRAFT:          { label: 'Rascunho',   color: 'bg-zinc-700 text-zinc-400'         },
+    DRAFT:          { label: 'Rascunho',   color: 'bg-surface text-muted'             },
     PENDING_REVIEW: { label: 'Em revisão', color: 'bg-yellow-500/20 text-yellow-400'  },
     PUBLISHED:      { label: 'Publicado',  color: 'bg-green-500/20 text-green-400'    },
     ARCHIVED:       { label: 'Arquivado',  color: 'bg-red-500/20 text-red-400'        },
@@ -290,10 +292,10 @@ function SuggestionRow({
         <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all group ${
             done
                 ? 'border-emerald-500/20 bg-emerald-900/5 opacity-60'
-                : 'border-white/6 bg-zinc-900/40 hover:border-blue-500/20 hover:bg-zinc-900/60'
+                : 'border-border bg-surface hover:bg-surface-hover'
         }`}>
             {/* Thumbnail */}
-            <div className="w-12 h-9 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/6">
+            <div className="w-12 h-9 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
                 {item.imageUrl ? (
                     <Image
                         src={item.imageUrl}
@@ -305,21 +307,21 @@ function SuggestionRow({
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                        <Newspaper className="w-4 h-4 text-zinc-700" />
+                        <Newspaper className="w-4 h-4 text-muted" />
                     </div>
                 )}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{item.name}</p>
+                <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
                 {item.subtitle && (
-                    <p className="text-[11px] text-zinc-500 truncate mt-0.5">{item.subtitle}</p>
+                    <p className="text-[11px] text-muted truncate mt-0.5">{item.subtitle}</p>
                 )}
             </div>
 
             {/* Arrow indicator */}
-            <ArrowRight className="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" />
+            <ArrowRight className="w-4 h-4 text-muted shrink-0 hidden sm:block" />
 
             {/* Actions */}
             <div className="shrink-0 flex items-center gap-2">
@@ -328,20 +330,20 @@ function SuggestionRow({
                         <CheckCircle className="w-3.5 h-3.5" /> Gerado
                     </span>
                 ) : (
-                    <button
+                    <AdminButton
                         onClick={generate}
                         disabled={loading}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 text-blue-400 hover:text-blue-300 disabled:opacity-40 transition-all"
+                        size="sm"
                     >
                         {loading
                             ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
                             : <><Sparkles className="w-3.5 h-3.5" /> Gerar Post</>
                         }
-                    </button>
+                    </AdminButton>
                 )}
                 <a
                     href={`/admin/news/${item.id}/edit`}
-                    className="p-1.5 rounded text-zinc-600 hover:text-zinc-400 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded text-muted hover:text-muted transition-colors opacity-0 group-hover:opacity-100"
                     title="Ver notícia"
                 >
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -412,7 +414,7 @@ function FeaturedButton({ post, onDone }: { post: BlogPost; onDone: () => void }
             className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
                 post.featured
                     ? 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10'
-                    : 'text-zinc-600 hover:text-yellow-400 hover:bg-yellow-400/10'
+                    : 'text-muted hover:text-yellow-400 hover:bg-yellow-400/10'
             }`}
         >
             <Star size={14} className={post.featured ? 'fill-yellow-400' : ''} />
@@ -489,8 +491,8 @@ export default function AdminBlogPage() {
                 post.coverImageUrl ? (
                     <Image src={post.coverImageUrl} alt={post.title} width={52} height={36} className="rounded-lg object-cover" unoptimized />
                 ) : (
-                    <div className="w-[52px] h-9 bg-zinc-800 rounded-lg flex items-center justify-center">
-                        <BookOpen size={14} className="text-zinc-600" />
+                    <div className="w-[52px] h-9 bg-surface rounded-lg flex items-center justify-center">
+                        <BookOpen size={14} className="text-muted" />
                     </div>
                 ),
         },
@@ -500,8 +502,8 @@ export default function AdminBlogPage() {
             sortable: true,
             render: (post) => (
                 <div className="max-w-sm">
-                    <p className="font-medium text-white truncate">{post.title}</p>
-                    <p className="text-xs text-zinc-500 truncate">{post.author.name} · {post.category?.name ?? '—'}</p>
+                    <p className="font-medium text-foreground truncate">{post.title}</p>
+                    <p className="text-xs text-muted truncate">{post.author.name} · {post.category?.name ?? '—'}</p>
                 </div>
             ),
         },
@@ -509,7 +511,7 @@ export default function AdminBlogPage() {
             key: 'status',
             label: 'Status',
             render: (post) => {
-                const s = STATUS_LABELS[post.status] ?? { label: post.status, color: 'bg-zinc-700 text-zinc-400' }
+                const s = STATUS_LABELS[post.status] ?? { label: post.status, color: 'bg-surface text-muted' }
                 return <AdminStatusBadge label={s.label} color={s.color} />
             },
         },
@@ -518,20 +520,20 @@ export default function AdminBlogPage() {
             label: 'Destaque',
             render: (post) => post.featured
                 ? <span className="flex items-center gap-1 text-xs font-bold text-yellow-400"><Star size={11} className="fill-yellow-400" /> Sim</span>
-                : <span className="text-xs text-zinc-700">—</span>,
+                : <span className="text-xs text-muted">—</span>,
         },
         {
             key: 'viewCount',
             label: 'Views',
             sortable: true,
-            render: (post) => <span className="text-sm text-zinc-400 flex items-center gap-1"><Eye size={11} />{post.viewCount}</span>,
+            render: (post) => <span className="text-sm text-muted flex items-center gap-1"><Eye size={11} />{post.viewCount}</span>,
         },
         {
             key: 'publishedAt',
             label: 'Data',
             sortable: true,
             render: (post) => (
-                <span className="text-sm text-zinc-400">
+                <span className="text-sm text-muted">
                     {post.publishedAt
                         ? new Date(post.publishedAt).toLocaleDateString('pt-BR')
                         : new Date(post.createdAt).toLocaleDateString('pt-BR')}
@@ -566,7 +568,7 @@ export default function AdminBlogPage() {
 
                 {/* Header */}
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted">
                         Gerencie posts publicados e converta notícias em conteúdo editorial com IA.
                     </p>
                     <Link
@@ -595,13 +597,13 @@ export default function AdminBlogPage() {
                     <div className="space-y-4">
                         {/* Controls */}
                         <div className="flex items-center gap-2">
-                            <p className="text-xs text-zinc-500 flex-1">
+                            <p className="text-xs text-muted flex-1">
                                 Notícias publicadas sem blog post gerado, ordenadas por recência.
                             </p>
                             <button
                                 onClick={fetchSuggestions}
                                 disabled={loading}
-                                className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1.5 rounded-lg hover:bg-zinc-800"
+                                className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-hover"
                             >
                                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                                 Atualizar
@@ -619,14 +621,14 @@ export default function AdminBlogPage() {
                         </div>
 
                         {/* Pipeline legend */}
-                        <div className="flex items-center gap-2 text-[11px] text-zinc-600">
+                        <div className="flex items-center gap-2 text-[11px] text-muted">
                             <Newspaper className="w-3.5 h-3.5" />
                             <span>Notícia publicada</span>
                             <ArrowRight className="w-3 h-3" />
                             <Sparkles className="w-3.5 h-3.5 text-blue-400/60" />
                             <span>Geração IA</span>
                             <ArrowRight className="w-3 h-3" />
-                            <FileText className="w-3.5 h-3.5 text-zinc-500" />
+                            <FileText className="w-3.5 h-3.5 text-muted" />
                             <span>Rascunho</span>
                             <ArrowRight className="w-3 h-3" />
                             <Eye className="w-3.5 h-3.5 text-emerald-400/60" />
@@ -636,13 +638,13 @@ export default function AdminBlogPage() {
                         {/* List */}
                         {loading && visibleSuggestions.length === 0 ? (
                             <div className="flex justify-center py-12">
-                                <Loader2 className="w-6 h-6 text-zinc-600 animate-spin" />
+                                <Loader2 className="w-6 h-6 text-muted animate-spin" />
                             </div>
                         ) : visibleSuggestions.length === 0 ? (
-                            <div className="text-center py-14 border border-dashed border-white/6 rounded-xl">
+                            <div className="text-center py-14 border border-dashed border-border rounded-xl">
                                 <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-white">Nenhuma sugestão pendente</p>
-                                <p className="text-xs text-zinc-500 mt-1">Todas as notícias publicadas já têm blog posts.</p>
+                                <p className="text-sm font-medium text-foreground">Nenhuma sugestão pendente</p>
+                                <p className="text-xs text-muted mt-1">Todas as notícias publicadas já têm blog posts.</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -671,14 +673,13 @@ export default function AdminBlogPage() {
                         searchPlaceholder="Buscar por título..."
                         actions={(post) => (
                             <div className="flex items-center gap-1">
-                                <Link
+                                <AdminIconLink
                                     href={`/write?edit=${post.id}`}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="p-1.5 rounded text-zinc-400 hover:text-blue-300 hover:bg-blue-400/10 transition-colors"
                                     title="Editar"
                                 >
                                     <BookOpen size={14} />
-                                </Link>
+                                </AdminIconLink>
                                 <FeaturedButton post={post} onDone={refetchTable} />
                                 <PublishButton post={post} onDone={refetchTable} />
                                 {post.status === 'PUBLISHED' && (
@@ -686,7 +687,7 @@ export default function AdminBlogPage() {
                                         href={(post as unknown as { isPrivate?: boolean }).isPrivate ? `/blog/preview/${post.slug}` : `/blog/${post.slug}`}
                                         target="_blank"
                                         onClick={(e) => e.stopPropagation()}
-                                        className="p-1.5 rounded text-zinc-400 hover:text-green-300 hover:bg-green-400/10 transition-colors"
+                                        className="p-1.5 rounded text-muted hover:text-green-300 hover:bg-green-400/10 transition-colors"
                                         title={(post as unknown as { isPrivate?: boolean }).isPrivate ? 'Ver prévia privada' : 'Ver publicado'}
                                     >
                                         <Eye size={14} />

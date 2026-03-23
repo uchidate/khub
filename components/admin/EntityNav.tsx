@@ -56,7 +56,7 @@ export function EntityNav({
       {prevHref ? (
         <Link
           href={prevHref}
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-3 py-2 rounded-lg transition-all max-w-[40%] group"
+          className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-2 rounded-lg transition-all max-w-[40%] group"
         >
           <ChevronLeft size={13} className="flex-shrink-0" />
           <span className="truncate">{prevLabel ?? `${entityLabel} anterior`}</span>
@@ -67,7 +67,7 @@ export function EntityNav({
 
       {/* Contador central */}
       {currentIndex !== undefined && total !== undefined && (
-        <span className="text-xs text-zinc-600 text-center flex-shrink-0 tabular-nums">
+        <span className="text-xs text-muted text-center flex-shrink-0 tabular-nums">
           {currentIndex} de {total.toLocaleString('pt-BR')} {entityLabel}s
         </span>
       )}
@@ -76,7 +76,7 @@ export function EntityNav({
       {nextHref ? (
         <Link
           href={nextHref}
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 bg-zinc-900 hover:bg-zinc-800 px-3 py-2 rounded-lg transition-all max-w-[40%] group"
+          className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-2 rounded-lg transition-all max-w-[40%] group"
         >
           <span className="truncate">{nextLabel ?? `próximo ${entityLabel}`}</span>
           <ChevronRight size={13} className="flex-shrink-0" />

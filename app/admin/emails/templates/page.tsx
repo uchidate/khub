@@ -19,31 +19,31 @@ export default async function AdminEmailTemplatesPage() {
             <div className="p-6 max-w-4xl mx-auto">
                 <div className="flex items-center gap-3 mb-6">
                     <FileText size={20} className="text-purple-400" />
-                    <h1 className="text-2xl font-black text-white">Templates de Email</h1>
+                    <h1 className="text-2xl font-black text-foreground">Templates de Email</h1>
                 </div>
 
                 <div className="space-y-3">
                     {templates.length === 0 && (
-                        <div className="glass-card p-8 text-center text-zinc-600 rounded-xl">
+                        <div className="glass-card p-8 text-center text-muted rounded-xl">
                             <p>Nenhum template encontrado.</p>
                             <p className="text-sm mt-1">Execute o seed para criar os templates padrão.</p>
                         </div>
                     )}
                     {templates.map(tpl => (
-                        <div key={tpl.id} className="glass-card p-5 rounded-xl border border-white/5 flex items-center gap-4">
+                        <div key={tpl.id} className="glass-card p-5 rounded-xl border border-border flex items-center gap-4">
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <p className="font-black text-white">{tpl.name}</p>
-                                    <span className="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded">{tpl.slug}</span>
+                                    <p className="font-black text-foreground">{tpl.name}</p>
+                                    <span className="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">{tpl.slug}</span>
                                     {tpl.isActive
                                         ? <CheckCircle size={13} className="text-green-400" />
                                         : <XCircle size={13} className="text-red-400" />}
                                 </div>
-                                <p className="text-sm text-zinc-400 truncate">{tpl.subject}</p>
-                                <p className="text-[11px] text-zinc-600 mt-1">
+                                <p className="text-sm text-muted truncate">{tpl.subject}</p>
+                                <p className="text-[11px] text-muted mt-1">
                                     Variáveis: {tpl.variables.map(v => `{{${v}}}`).join(', ')}
                                 </p>
-                                <p className="text-[11px] text-zinc-700 mt-0.5">
+                                <p className="text-[11px] text-muted mt-0.5">
                                     Atualizado: {new Date(tpl.updatedAt).toLocaleDateString('pt-BR')}
                                 </p>
                             </div>

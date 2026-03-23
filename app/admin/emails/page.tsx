@@ -79,13 +79,13 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-black text-white flex items-center gap-2">
+                        <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
                             <Mail size={22} className="text-purple-400" />
                             Histórico de Emails
                         </h1>
-                        <p className="text-zinc-500 text-sm mt-1">{total} emails nos últimos {days} dias</p>
+                        <p className="text-muted text-sm mt-1">{total} emails nos últimos {days} dias</p>
                     </div>
-                    <Link href="/admin/emails/templates" className="flex items-center gap-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors px-3 py-2 bg-purple-400/10 rounded-lg border border-purple-400/20">
+                    <Link href="/admin/emails/templates" className="flex items-center gap-2 text-xs font-bold text-foreground transition-colors px-3 py-2 bg-surface hover:bg-surface-hover rounded-lg border border-border">
                         <FileText size={14} />
                         Templates
                     </Link>
@@ -98,11 +98,11 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                         const Icon = cfg.icon
                         return (
                             <Link key={s} href={buildUrl({ status: status === s ? '' : s })}
-                                className={`glass-card p-4 flex items-center gap-3 rounded-xl border border-white/5 hover:border-white/10 transition-colors ${status === s ? 'border-white/20' : ''}`}>
+                                className={`glass-card p-4 flex items-center gap-3 rounded-xl border border-border hover:border-border transition-colors ${status === s ? 'border-border' : ''}`}>
                                 <Icon size={18} className={cfg.color.split(' ')[0]} />
                                 <div>
-                                    <p className="text-xl font-black text-white">{countMap[s] ?? 0}</p>
-                                    <p className="text-[11px] text-zinc-500">{cfg.label}</p>
+                                    <p className="text-xl font-black text-foreground">{countMap[s] ?? 0}</p>
+                                    <p className="text-[11px] text-muted">{cfg.label}</p>
                                 </div>
                             </Link>
                         )
@@ -113,23 +113,23 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 <div className="flex flex-wrap gap-2 mb-4">
                     {[7, 30, 90].map(d => (
                         <Link key={d} href={buildUrl({ days: String(d) })}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${days === d ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}>
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${days === d ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}>
                             {d}d
                         </Link>
                     ))}
-                    <div className="w-px bg-zinc-700 mx-1" />
+                    <div className="w-px bg-surface mx-1" />
                     {Object.entries(TYPE_LABELS).map(([t, label]) => (
                         <Link key={t} href={buildUrl({ type: type === t ? '' : t })}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${type === t ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}>
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${type === t ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}>
                             {label}
                         </Link>
                     ))}
                 </div>
 
                 {/* Mobile cards */}
-                <div className="md:hidden glass-card rounded-xl border border-white/5 overflow-hidden divide-y divide-white/5">
+                <div className="md:hidden glass-card rounded-xl border border-border overflow-hidden divide-y divide-white/5">
                     {logs.length === 0 && (
-                        <p className="text-center py-12 text-zinc-600">Nenhum email encontrado</p>
+                        <p className="text-center py-12 text-muted">Nenhum email encontrado</p>
                     )}
                     {logs.map(log => {
                         const cfg = STATUS_CONFIG[log.status] ?? STATUS_CONFIG.PENDING
@@ -137,20 +137,20 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                         return (
                             <div key={log.id} className="p-4">
                                 <div className="flex items-start justify-between gap-2 mb-1">
-                                    <p className="text-white font-medium text-sm truncate">{log.to}</p>
+                                    <p className="text-foreground font-medium text-sm truncate">{log.to}</p>
                                     <span className={`flex items-center gap-1 shrink-0 px-2 py-0.5 rounded text-[10px] font-black ${cfg.color}`}>
                                         <Icon size={10} />
                                         {cfg.label}
                                     </span>
                                 </div>
-                                {log.user?.name && <p className="text-[11px] text-zinc-500 mb-1">{log.user.name}</p>}
-                                <p className="text-xs text-zinc-400 truncate mb-2">{log.subject}</p>
+                                {log.user?.name && <p className="text-[11px] text-muted mb-1">{log.user.name}</p>}
+                                <p className="text-xs text-muted truncate mb-2">{log.subject}</p>
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-zinc-800 text-zinc-400">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-surface text-muted">
                                             {TYPE_LABELS[log.type] ?? log.type}
                                         </span>
-                                        <span className="text-[10px] text-zinc-600">
+                                        <span className="text-[10px] text-muted">
                                             {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
@@ -164,10 +164,10 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 </div>
 
                 {/* Tabela — desktop */}
-                <div className="hidden md:block glass-card rounded-xl overflow-hidden overflow-x-auto border border-white/5">
+                <div className="hidden md:block glass-card rounded-xl overflow-hidden overflow-x-auto border border-border">
                     <table className="w-full min-w-[600px] text-sm">
                         <thead>
-                            <tr className="border-b border-white/5 text-[11px] uppercase tracking-wider text-zinc-500">
+                            <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted">
                                 <th className="text-left px-4 py-3">Para</th>
                                 <th className="text-left px-4 py-3">Assunto</th>
                                 <th className="text-left px-4 py-3">Tipo</th>
@@ -178,20 +178,20 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                         </thead>
                         <tbody>
                             {logs.length === 0 && (
-                                <tr><td colSpan={6} className="text-center py-12 text-zinc-600">Nenhum email encontrado</td></tr>
+                                <tr><td colSpan={6} className="text-center py-12 text-muted">Nenhum email encontrado</td></tr>
                             )}
                             {logs.map(log => {
                                 const cfg = STATUS_CONFIG[log.status] ?? STATUS_CONFIG.PENDING
                                 const Icon = cfg.icon
                                 return (
-                                    <tr key={log.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                                    <tr key={log.id} className="border-b border-border hover:bg-white/[0.02] transition-colors">
                                         <td className="px-4 py-3">
-                                            <p className="text-white font-medium truncate max-w-[160px]">{log.to}</p>
-                                            {log.user?.name && <p className="text-[11px] text-zinc-500">{log.user.name}</p>}
+                                            <p className="text-foreground font-medium truncate max-w-[160px]">{log.to}</p>
+                                            {log.user?.name && <p className="text-[11px] text-muted">{log.user.name}</p>}
                                         </td>
-                                        <td className="px-4 py-3 text-zinc-300 truncate max-w-[200px]">{log.subject}</td>
+                                        <td className="px-4 py-3 text-foreground truncate max-w-[200px]">{log.subject}</td>
                                         <td className="px-4 py-3">
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-zinc-800 text-zinc-400">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-surface text-muted">
                                                 {TYPE_LABELS[log.type] ?? log.type}
                                             </span>
                                         </td>
@@ -201,7 +201,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                                                 {cfg.label}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-zinc-500 text-[11px] whitespace-nowrap">
+                                        <td className="px-4 py-3 text-muted text-[11px] whitespace-nowrap">
                                             {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </td>
                                         <td className="px-4 py-3 text-right">
@@ -221,7 +221,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                     <div className="flex justify-center gap-2 mt-4">
                         {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
                             <Link key={p} href={buildUrl({ page: String(p) })}
-                                className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-colors ${p === page ? 'bg-purple-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}>
+                                className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-colors ${p === page ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}>
                                 {p}
                             </Link>
                         ))}

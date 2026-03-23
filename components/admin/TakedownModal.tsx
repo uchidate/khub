@@ -59,8 +59,8 @@ export function TakedownModal({ productionId, productionTitle, onSuccess, onClos
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-xl border border-red-800/50 bg-gray-950 p-6 shadow-2xl">
-        <button onClick={onClose} className="absolute right-4 top-4 text-gray-500 hover:text-white">
+      <div className="relative w-full max-w-lg rounded-xl border border-red-800/50 bg-background p-6 shadow-2xl">
+        <button onClick={onClose} className="absolute right-4 top-4 text-muted hover:text-foreground">
           <X className="h-5 w-5" />
         </button>
 
@@ -69,21 +69,21 @@ export function TakedownModal({ productionId, productionTitle, onSuccess, onClos
             <ShieldAlert className="h-5 w-5 text-red-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">Notificação Legal</h2>
-            <p className="text-sm text-gray-400 truncate max-w-xs">{productionTitle}</p>
+            <h2 className="text-lg font-semibold text-foreground">Notificação Legal</h2>
+            <p className="text-sm text-muted truncate max-w-xs">{productionTitle}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Tipo de Notificação <span className="text-red-400">*</span>
             </label>
             <select
               value={reason}
               onChange={e => setReason(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-red-500 focus:outline-none"
             >
               <option value="">Selecionar...</option>
               {Object.entries(REASON_LABELS).map(([value, label]) => (
@@ -93,7 +93,7 @@ export function TakedownModal({ productionId, productionTitle, onSuccess, onClos
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Referência da Notificação
             </label>
             <input
@@ -102,24 +102,24 @@ export function TakedownModal({ productionId, productionTitle, onSuccess, onClos
               onChange={e => setNoticeReference(e.target.value)}
               placeholder="Nº processo, URL, ID da notificação..."
               maxLength={500}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-red-500 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-red-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Data da Notificação
             </label>
             <input
               type="date"
               value={noticeDate}
               onChange={e => setNoticeDate(e.target.value)}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-red-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Observações
             </label>
             <textarea
@@ -128,7 +128,7 @@ export function TakedownModal({ productionId, productionTitle, onSuccess, onClos
               rows={3}
               maxLength={5000}
               placeholder="Detalhes adicionais sobre a notificação..."
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-red-500 focus:outline-none resize-none"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-red-500 focus:outline-none resize-none"
             />
           </div>
 
@@ -155,7 +155,7 @@ export function TakedownModal({ productionId, productionTitle, onSuccess, onClos
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+              className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-hover"
             >
               Cancelar
             </button>

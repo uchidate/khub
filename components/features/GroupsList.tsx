@@ -8,7 +8,6 @@ import { Users, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { FilterPills } from '@/components/ui/FilterPills'
 
 type Group = {
     id: string
@@ -103,47 +102,72 @@ export function GroupsList() {
 
             {/* Filtros */}
             <div className="mb-8 space-y-3">
-                {/* Busca + Status */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <SearchInput
-                        value={search}
-                        onChange={setSearch}
-                        placeholder="Buscar grupo ou agência"
-                        className="flex-1"
-                    />
+                {/* Busca */}
+                <SearchInput
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Buscar grupo ou agência"
+                />
 
-                    <FilterPills
-                        options={[
+                {/* Status + Geração */}
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
+                        {([
                             { value: 'all', label: 'Todos' },
                             { value: 'active', label: 'Ativos' },
                             { value: 'disbanded', label: 'Disbandados' },
-                        ]}
-                        value={statusFilter}
-                        onChange={v => setStatusFilter(v as 'all' | 'active' | 'disbanded')}
-                    />
-                </div>
-
-                {/* Geração + Ordenação */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <FilterPills
-                        options={[
+                        ] as const).map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setStatusFilter(opt.value)}
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                    statusFilter === opt.value
+                                        ? 'bg-accent text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                        <span className="w-px h-4 bg-border mx-0.5" />
+                        {([
                             { value: 'all', label: 'Toda Geração' },
                             ...GENERATIONS.map(g => ({ value: g.label, label: g.label })),
-                        ]}
-                        value={generationFilter}
-                        onChange={setGenerationFilter}
-                    />
-                    <FilterPills
-                        options={[
+                        ]).map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setGenerationFilter(opt.value)}
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                    generationFilter === opt.value
+                                        ? 'bg-accent text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-1 flex-wrap">
+                        {([
                             { value: 'popular', label: 'Populares' },
-                            { value: 'name', label: 'A-Z' },
+                            { value: 'name', label: 'A–Z' },
                             { value: 'debut', label: 'Estreia' },
                             { value: 'members', label: 'Membros' },
-                        ]}
-                        value={sortBy}
-                        onChange={v => setSortBy(v as typeof sortBy)}
-                        className="ml-auto"
-                    />
+                        ] as const).map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setSortBy(opt.value)}
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                    sortBy === opt.value
+                                        ? 'bg-accent text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {hasActiveFilters && (
@@ -153,7 +177,7 @@ export function GroupsList() {
                         </p>
                         <button
                             onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }}
-                            className="text-xs text-accent hover:text-accent transition-colors"
+                            className="text-xs text-accent hover:text-accent/70 transition-colors"
                         >
                             Limpar filtros
                         </button>

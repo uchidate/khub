@@ -58,7 +58,7 @@ export default function InstagramStatusPage() {
       case 'never_synced':
         return <XCircle className="w-5 h-5 text-red-500" />
       default:
-        return <Clock className="w-5 h-5 text-zinc-500" />
+        return <Clock className="w-5 h-5 text-muted" />
     }
   }
 
@@ -84,7 +84,7 @@ export default function InstagramStatusPage() {
       case 'never_synced':
         return 'border-red-500/20 bg-red-500/5'
       default:
-        return 'border-zinc-700 bg-zinc-900'
+        return 'border-border bg-surface'
     }
   }
 
@@ -123,40 +123,40 @@ export default function InstagramStatusPage() {
           </Link>
           <div className="flex items-center gap-3 mb-4">
             <Instagram className="text-pink-500" size={40} />
-            <h1 className="text-4xl font-black text-white">Status Instagram</h1>
+            <h1 className="text-4xl font-black text-foreground">Status Instagram</h1>
           </div>
-          <p className="text-xl text-zinc-400">Diagnóstico de sincronização de posts</p>
+          <p className="text-xl text-muted">Diagnóstico de sincronização de posts</p>
         </div>
 
         {/* Stats Grid */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-              <p className="text-sm text-zinc-500 mb-1">Total de Posts</p>
-              <p className="text-3xl font-black text-white">{stats.totalPosts}</p>
+            <div className="bg-surface border border-border rounded-2xl p-5">
+              <p className="text-sm text-muted mb-1">Total de Posts</p>
+              <p className="text-3xl font-black text-foreground">{stats.totalPosts}</p>
             </div>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-              <p className="text-sm text-zinc-500 mb-1">Com Feed</p>
-              <p className="text-3xl font-black text-white">{stats.artistsWithFeed}</p>
+            <div className="bg-surface border border-border rounded-2xl p-5">
+              <p className="text-sm text-muted mb-1">Com Feed</p>
+              <p className="text-3xl font-black text-foreground">{stats.artistsWithFeed}</p>
             </div>
-            <div className="bg-zinc-900 border border-green-500/20 rounded-2xl p-5">
-              <p className="text-sm text-zinc-500 mb-1">Com Posts</p>
+            <div className="bg-surface border border-green-500/20 rounded-2xl p-5">
+              <p className="text-sm text-muted mb-1">Com Posts</p>
               <p className="text-3xl font-black text-green-500">{stats.artistsWithPosts}</p>
             </div>
-            <div className="bg-zinc-900 border border-red-500/20 rounded-2xl p-5">
-              <p className="text-sm text-zinc-500 mb-1">Sem Posts</p>
+            <div className="bg-surface border border-red-500/20 rounded-2xl p-5">
+              <p className="text-sm text-muted mb-1">Sem Posts</p>
               <p className="text-3xl font-black text-red-500">{stats.artistsWithoutPosts}</p>
             </div>
           </div>
         )}
 
         {/* Artists List */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+        <div className="bg-surface border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Artistas com Feed Configurado</h2>
+            <h2 className="text-xl font-bold text-foreground">Artistas com Feed Configurado</h2>
             <button
               onClick={fetchStatus}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Atualizar
@@ -176,11 +176,11 @@ export default function InstagramStatusPage() {
                       <Link
                         href={`/artists/${artist.id}`}
                         target="_blank"
-                        className="font-bold text-white hover:text-purple-400 transition-colors"
+                        className="font-bold text-foreground hover:text-purple-400 transition-colors"
                       >
                         {artist.name}
                       </Link>
-                      <p className="text-xs text-zinc-500 mt-0.5">
+                      <p className="text-xs text-muted mt-0.5">
                         {getStatusText(artist.status)}
                       </p>
                     </div>
@@ -188,12 +188,12 @@ export default function InstagramStatusPage() {
 
                   <div className="flex items-center gap-6 text-sm">
                     <div className="text-right">
-                      <p className="text-zinc-500">Posts</p>
-                      <p className="font-bold text-white">{artist.postsCount}</p>
+                      <p className="text-muted">Posts</p>
+                      <p className="font-bold text-foreground">{artist.postsCount}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-zinc-500">Última Sync</p>
-                      <p className="font-bold text-white">{formatDate(artist.lastSync)}</p>
+                      <p className="text-muted">Última Sync</p>
+                      <p className="font-bold text-foreground">{formatDate(artist.lastSync)}</p>
                     </div>
                     <Link
                       href={`/admin/artists/${artist.id}/instagram-feed`}
@@ -217,8 +217,8 @@ export default function InstagramStatusPage() {
 
           {artists.length === 0 && (
             <div className="text-center py-12">
-              <Instagram className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-500">Nenhum artista com feed configurado</p>
+              <Instagram className="w-16 h-16 text-muted mx-auto mb-4" />
+              <p className="text-muted">Nenhum artista com feed configurado</p>
             </div>
           )}
         </div>

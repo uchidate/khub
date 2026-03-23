@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { FilterPills } from '@/components/admin/FilterPills'
 
 interface Artist {
   id: string
@@ -28,7 +29,7 @@ const STATUS_CONFIG: Record<string, { icon: React.ElementType; label: string; co
   SYNCED:    { icon: CheckCircle,  label: 'Sincronizado',           color: 'text-green-400',  badge: 'bg-green-500/10 text-green-400 border-green-500/20' },
   NOT_FOUND: { icon: XCircle,      label: 'Não encontrado no TMDB', color: 'text-yellow-400', badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
   ERROR:     { icon: AlertCircle,  label: 'Erro',                   color: 'text-red-400',    badge: 'bg-red-500/10 text-red-400 border-red-500/20' },
-  PENDING:   { icon: Clock,        label: 'Pendente',               color: 'text-zinc-500',   badge: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  PENDING:   { icon: Clock,        label: 'Pendente',               color: 'text-muted',   badge: 'bg-surface text-muted border-border' },
 }
 
 function getStatus(status: string | null) {
@@ -138,7 +139,7 @@ export default function FilmographyAdminPage() {
   return (
     <AdminLayout title="Filmografias">
       <div className="space-y-4">
-        <p className="text-zinc-500 text-xs -mt-6 flex items-center gap-1.5">
+        <p className="text-muted text-xs -mt-6 flex items-center gap-1.5">
           <Info size={12} />
           Sync automático a cada 15 min via cron · Use para forçar manualmente
         </p>
@@ -147,32 +148,32 @@ export default function FilmographyAdminPage() {
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {[
-              { label: 'Total',            value: stats.totalArtists,     color: 'text-white' },
+              { label: 'Total',            value: stats.totalArtists,     color: 'text-foreground' },
               { label: 'Com filmografia',  value: stats.withFilmography,  color: 'text-green-400' },
               { label: 'Sem filmografia',  value: stats.withoutFilmography, color: 'text-yellow-400' },
               { label: 'Atualizados (7d)', value: stats.syncedRecently,   color: 'text-blue-400' },
               { label: 'Precisam sync',    value: stats.needsUpdate,      color: 'text-orange-400' },
             ].map(s => (
-              <div key={s.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
+              <div key={s.label} className="bg-surface border border-border rounded-xl p-3">
                 <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
-                <p className="text-xs text-zinc-500 font-medium mt-0.5">{s.label}</p>
+                <p className="text-xs text-muted font-medium mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
         )}
 
         {/* Toolbar */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 space-y-3">
+        <div className="bg-surface border border-border rounded-xl p-3 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
             <div className="relative flex-1 min-w-[180px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Buscar artista..."
-                className="w-full pl-8 pr-3 py-2 bg-black border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500"
+                className="w-full px-4 pr-10 py-2 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-border"
               />
             </div>
 
@@ -180,7 +181,7 @@ export default function FilmographyAdminPage() {
             <button
               onClick={syncOutdated}
               disabled={batchSyncing}
-              className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
             >
               <RefreshCw size={14} className={batchSyncing ? 'animate-spin' : ''} />
               {batchSyncing ? 'Sincronizando...' : 'Sync Desatualizados'}
@@ -188,26 +189,11 @@ export default function FilmographyAdminPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap gap-1.5">
-            {filters.map(f => (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  filter === f.value
-                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-zinc-600'
-                }`}
-              >
-                {f.label}
-                {f.count !== undefined && (
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                    filter === f.value ? 'bg-purple-500/30' : 'bg-zinc-700'
-                  }`}>{f.count}</span>
-                )}
-              </button>
-            ))}
-          </div>
+          <FilterPills
+            pills={filters.map(f => ({ value: f.value, label: f.label, count: f.count ?? null }))}
+            active={filter}
+            onChange={setFilter}
+          />
 
           {/* Batch result */}
           {batchResult && (
@@ -216,12 +202,12 @@ export default function FilmographyAdminPage() {
         </div>
 
         {/* Artist list */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-            <h2 className="text-xs font-black text-zinc-400 uppercase tracking-wider">
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <h2 className="text-xs font-black text-muted uppercase tracking-wider">
               Artistas
             </h2>
-            <span className="text-xs text-zinc-600 tabular-nums">{filteredArtists.length} resultado{filteredArtists.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-muted tabular-nums">{filteredArtists.length} resultado{filteredArtists.length !== 1 ? 's' : ''}</span>
           </div>
 
           {loading ? (
@@ -229,9 +215,9 @@ export default function FilmographyAdminPage() {
               <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
             </div>
           ) : filteredArtists.length === 0 ? (
-            <p className="text-zinc-600 text-sm text-center py-12">Nenhum artista encontrado</p>
+            <p className="text-muted text-sm text-center py-12">Nenhum artista encontrado</p>
           ) : (
-            <div className="divide-y divide-zinc-800/60">
+            <div className="divide-y divide-border">
               {filteredArtists.map(artist => {
                 const status = getStatus(artist.tmdbSyncStatus)
                 const StatusIcon = status.icon
@@ -239,20 +225,20 @@ export default function FilmographyAdminPage() {
                 const isSyncing = syncing === artist.id
 
                 return (
-                  <div key={artist.id} className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/30 transition-colors group">
+                  <div key={artist.id} className="flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors group">
                     <StatusIcon size={15} className={`flex-shrink-0 ${status.color}`} />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-white">{artist.nameRomanized}</span>
+                        <span className="text-sm font-semibold text-foreground">{artist.nameRomanized}</span>
                         {artist.nameHangul && (
-                          <span className="text-xs text-zinc-500">{artist.nameHangul}</span>
+                          <span className="text-xs text-muted">{artist.nameHangul}</span>
                         )}
                         <span className={`hidden sm:inline text-[10px] font-black px-1.5 py-0.5 rounded border ${status.badge}`}>
                           {status.label}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 mt-0.5 text-[11px] text-zinc-600">
+                      <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted">
                         <span>{artist.productionsCount} prod.</span>
                         {lastSync && <span>sync {lastSync}</span>}
                         {!artist.tmdbId && <span className="text-red-400/70">sem TMDB ID</span>}
@@ -262,7 +248,7 @@ export default function FilmographyAdminPage() {
                     <button
                       onClick={() => syncArtist(artist.id)}
                       disabled={!!syncing}
-                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-400 border border-zinc-700 rounded-lg hover:border-purple-500/50 hover:text-purple-400 hover:bg-purple-500/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-foreground border border-border rounded-lg hover:bg-surface-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} />
                       {isSyncing ? 'Sync...' : 'Sync'}

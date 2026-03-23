@@ -19,10 +19,10 @@ const ACTION_CONFIG: Record<ActionType, {
     icon:      React.ElementType
     cls:       string
 }> = {
-    publish:   { label: 'Publicar',        loadLabel: 'Publicando...',   icon: Globe,     cls: 'text-zinc-400 hover:text-white hover:bg-zinc-700/60' },
+    publish:   { label: 'Publicar',        loadLabel: 'Publicando...',   icon: Globe,     cls: 'text-muted hover:text-foreground hover:bg-surface-hover' },
     translate: { label: 'Traduzir IA',     loadLabel: 'Traduzindo...',   icon: Languages, cls: 'text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-500/10' },
     enrich:    { label: 'Enriquecer IA',   loadLabel: 'Gerando...',      icon: Sparkles,  cls: 'text-blue-400/80 hover:text-blue-300 hover:bg-blue-500/10' },
-    show:          { label: 'Tornar visível',  loadLabel: 'Salvando...',     icon: Eye,          cls: 'text-zinc-400 hover:text-white hover:bg-zinc-700/60' },
+    show:          { label: 'Tornar visível',  loadLabel: 'Salvando...',     icon: Eye,          cls: 'text-muted hover:text-foreground hover:bg-surface-hover' },
     hide:          { label: 'Ocultar',         loadLabel: 'Ocultando...',    icon: EyeOff,       cls: 'text-red-400/80 hover:text-red-300 hover:bg-red-500/10' },
     approve:       { label: 'Aprovar',          loadLabel: 'Aprovando...',    icon: CheckCircle2, cls: 'text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10' },
     flagAdult:     { label: 'Adulto 18+',       loadLabel: 'Marcando...',     icon: ShieldAlert,  cls: 'text-red-400/80 hover:text-red-300 hover:bg-red-500/10' },

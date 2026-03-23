@@ -30,7 +30,7 @@ const PLATFORMS: { key: keyof SocialLinks; label: string; placeholder: string; i
     { key: 'instagram', label: 'Instagram', placeholder: 'https://www.instagram.com/username', color: 'text-pink-400', icon: <Instagram className="w-4 h-4" /> },
     { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username', color: 'text-sky-400', icon: <Twitter className="w-4 h-4" /> },
     { key: 'youtube', label: 'YouTube', placeholder: 'https://www.youtube.com/@channel', color: 'text-red-400', icon: <Youtube className="w-4 h-4" /> },
-    { key: 'tiktok', label: 'TikTok', placeholder: 'https://www.tiktok.com/@username', color: 'text-zinc-300', icon: <span className="text-sm font-black">TK</span> },
+    { key: 'tiktok', label: 'TikTok', placeholder: 'https://www.tiktok.com/@username', color: 'text-foreground', icon: <span className="text-sm font-black">TK</span> },
     { key: 'weverse', label: 'Weverse', placeholder: 'https://weverse.io/artist-name', color: 'text-green-400', icon: <span className="text-sm font-black">W</span> },
     { key: 'fancafe', label: 'Fancafe (Daum)', placeholder: 'https://cafe.daum.net/cafename', color: 'text-yellow-400', icon: <span className="text-sm font-black">FC</span> },
     { key: 'naverBlog', label: 'Naver Blog', placeholder: 'https://blog.naver.com/username', color: 'text-emerald-400', icon: <span className="text-sm font-black">N</span> },
@@ -105,8 +105,8 @@ const lineColor = (type: LogLine['type']) => {
     if (type === 'error') return 'text-red-400'
     if (type === 'warning') return 'text-yellow-400'
     if (type === 'done') return 'text-purple-400 font-bold'
-    if (type === 'progress') return 'text-zinc-500'
-    return 'text-zinc-300'
+    if (type === 'progress') return 'text-muted'
+    return 'text-foreground'
 }
 
 // ─── Per-artist Wiki Sync button ─────────────────────────────────────────────
@@ -151,9 +151,9 @@ function WikiSyncButton({ artist, onSynced, onFailed }: {
 
     const colorClass =
         display === 'ok'   ? 'bg-green-500/10 text-green-400 border-green-500/30'
-        : display === 'warn' ? 'bg-zinc-800 text-zinc-500 border-zinc-700'
+        : display === 'warn' ? 'bg-surface text-muted border-border'
         : display === 'err'  ? 'bg-red-500/10 text-red-400 border-red-500/30'
-        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white border-zinc-700'
+        : 'bg-surface text-foreground hover:bg-surface hover:text-foreground border-border'
 
     return (
         <button
@@ -215,22 +215,22 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-zinc-900 border-b border-zinc-800 px-6 py-4 flex items-center gap-4 rounded-t-2xl">
+            <div className="relative bg-surface border border-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center gap-4 rounded-t-2xl">
                     {artist.primaryImageUrl ? (
                         <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
                         </div>
                     ) : (
-                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-black text-zinc-400 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-muted flex-shrink-0">
                             {artist.nameRomanized[0]}
                         </div>
                     )}
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-base font-bold text-white truncate">{artist.nameRomanized}</h2>
-                        {artist.nameHangul && <p className="text-xs text-zinc-500">{artist.nameHangul}</p>}
+                        <h2 className="text-base font-bold text-foreground truncate">{artist.nameRomanized}</h2>
+                        {artist.nameHangul && <p className="text-xs text-muted">{artist.nameHangul}</p>}
                     </div>
-                    <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-muted hover:text-foreground transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -243,14 +243,14 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
                         <div key={key}>
                             <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-2">
                                 <span className={color}>{icon}</span>
-                                <span className="text-zinc-400">{label}</span>
+                                <span className="text-muted">{label}</span>
                             </label>
                             <input
                                 type="url"
                                 value={links[key] || ''}
                                 onChange={(e) => setLinks(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder={placeholder}
-                                className="w-full px-4 py-2.5 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
+                                className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 text-sm"
                             />
                         </div>
                     ))}
@@ -261,12 +261,12 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
                         <Instagram className="w-4 h-4 text-pink-400" />
                         <span className="text-xs font-black text-pink-400 uppercase tracking-widest">Instagram RSS.app</span>
                         {artist.instagramLastSync && (
-                            <span className="text-[10px] text-zinc-600 ml-auto">
+                            <span className="text-[10px] text-muted ml-auto">
                                 Sync: {new Date(artist.instagramLastSync).toLocaleDateString('pt-BR')}
                             </span>
                         )}
                     </div>
-                    <p className="text-[11px] text-zinc-500 mb-3">
+                    <p className="text-[11px] text-muted mb-3">
                         Cole a URL do feed JSON gerado no <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">RSS.app</a> para este artista.
                     </p>
                     <div className="flex gap-2">
@@ -275,23 +275,23 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
                             value={feedUrl}
                             onChange={(e) => setFeedUrl(e.target.value)}
                             placeholder="https://rss.app/feeds/XXXXXXXX.json"
-                            className="flex-1 px-3 py-2 bg-black/50 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:border-pink-500/50 text-xs"
+                            className="flex-1 px-3 py-2 bg-background/50 border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 text-xs"
                         />
                         <button
                             onClick={handleFeedSave}
                             disabled={feedSaving}
-                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${feedSaved ? 'bg-green-600 text-white' : 'bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white'}`}
+                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${feedSaved ? 'bg-green-600 text-foreground' : 'bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-foreground'}`}
                         >
                             {feedSaved ? <><Check className="w-3 h-3" /> OK</> : feedSaving ? '...' : 'Salvar'}
                         </button>
                     </div>
                 </div>
 
-                <div className="sticky bottom-0 bg-zinc-900 border-t border-zinc-800 px-6 py-4 flex gap-3 rounded-b-2xl">
-                    <button onClick={onClose} className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-zinc-700 transition-colors font-medium text-sm">
+                <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 flex gap-3 rounded-b-2xl">
+                    <button onClick={onClose} className="flex-1 py-2.5 bg-surface text-foreground rounded-xl hover:bg-surface transition-colors font-medium text-sm">
                         Cancelar
                     </button>
-                    <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-500 disabled:opacity-50 transition-colors font-bold text-sm">
+                    <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 transition-colors font-bold text-sm">
                         {saving ? 'Salvando...' : 'Salvar'}
                     </button>
                 </div>
@@ -318,20 +318,20 @@ function ModeCard({
         amber:  'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400',
     }
     const btnColors = {
-        purple: 'bg-purple-600 hover:bg-purple-500',
+        purple: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500',
         teal:   'bg-teal-600 hover:bg-teal-500',
         amber:  'bg-amber-600 hover:bg-amber-500',
     }
     return (
         <div className={`rounded-xl border p-4 space-y-3 transition-colors ${colors[color]}`}>
             <div>
-                <p className="text-sm font-black text-white">{title}</p>
-                <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{description}</p>
+                <p className="text-sm font-black text-foreground">{title}</p>
+                <p className="text-[11px] text-muted mt-1 leading-relaxed">{description}</p>
             </div>
             <button
                 onClick={onClick}
                 disabled={disabled}
-                className={`w-full flex items-center justify-center gap-2 py-2 ${btnColors[color]} disabled:opacity-40 text-white rounded-lg text-sm font-bold transition-colors`}
+                className={`w-full flex items-center justify-center gap-2 py-2 ${btnColors[color]} disabled:opacity-40 text-foreground rounded-lg text-sm font-bold transition-colors`}
             >
                 {disabled ? <RefreshCw className="w-4 h-4 animate-spin" /> : icon}
                 {disabled ? 'Processando...' : title}
@@ -621,9 +621,9 @@ export default function SocialLinksAdminPage() {
     const pct = totalGlobal > 0 ? Math.round((processed / totalGlobal) * 100) : 0
 
     const filterTabs: { value: FilterType; label: string; count: number; color: string; activeColor: string }[] = [
-        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-zinc-800 text-zinc-400 hover:border-zinc-600',                         activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
+        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-border text-muted hover:border-border',                         activeColor: 'border-purple-500/40 bg-purple-600/20 text-purple-300' },
         { value: 'pending',  label: 'Pendentes',   count: globalStats.pending,  color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
-        { value: 'attempted',label: 'Já tentados', count: globalStats.attempted,color: 'border-zinc-700 bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60',           activeColor: 'border-zinc-500 bg-zinc-700/60 text-zinc-300' },
+        { value: 'attempted',label: 'Já tentados', count: globalStats.attempted,color: 'border-border bg-surface text-muted hover:bg-surface',           activeColor: 'border-border bg-surface text-foreground' },
         { value: 'complete', label: 'Com links',   count: globalStats.complete, color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',     activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },
     ]
 
@@ -633,31 +633,31 @@ export default function SocialLinksAdminPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-white">{globalStats.total.toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Total</p>
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-foreground">{globalStats.total.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Total</p>
                     </div>
-                    <div className="bg-zinc-900 border border-orange-500/20 rounded-xl p-4 text-center">
+                    <div className="bg-surface border border-orange-500/20 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-orange-400">{globalStats.pending.toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Pendentes</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Pendentes</p>
                     </div>
-                    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-center">
-                        <p className="text-2xl font-black text-zinc-400">{globalStats.attempted.toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Já tentados</p>
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-muted">{globalStats.attempted.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Já tentados</p>
                     </div>
-                    <div className="bg-zinc-900 border border-green-500/20 rounded-xl p-4 text-center">
+                    <div className="bg-surface border border-green-500/20 rounded-xl p-4 text-center">
                         <p className="text-2xl font-black text-green-400">{globalStats.complete.toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-bold">Com links</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Com links</p>
                     </div>
                 </div>
 
                 {/* Bulk sync via Wikidata */}
-                <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5 space-y-4">
+                <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
                     <div className="flex items-center gap-3">
                         <Sparkles className="w-5 h-5 text-purple-400 flex-shrink-0" />
                         <div>
-                            <p className="text-sm font-black text-white">Busca automática em lote via Wikidata</p>
-                            <p className="text-xs text-zinc-500 mt-0.5">
+                            <p className="text-sm font-black text-foreground">Busca automática em lote via Wikidata</p>
+                            <p className="text-xs text-muted mt-0.5">
                                 Lotes de {SYNC_BATCH_SIZE} artistas · progresso salvo automaticamente
                             </p>
                         </div>
@@ -668,7 +668,7 @@ export default function SocialLinksAdminPage() {
                         <div className="flex items-center justify-between p-3 rounded-xl border border-amber-500/30 bg-amber-500/5">
                             <div>
                                 <p className="text-sm font-bold text-amber-400">Sync pausado — progresso salvo</p>
-                                <p className="text-xs text-zinc-400 mt-0.5">
+                                <p className="text-xs text-muted mt-0.5">
                                     Offset {savedProgress.offset.toLocaleString('pt-BR')} de {savedProgress.totalGlobal.toLocaleString('pt-BR')} ·
                                     modo: {savedProgress.mode} · {savedProgress.grandFound} encontrados
                                 </p>
@@ -676,13 +676,13 @@ export default function SocialLinksAdminPage() {
                             <div className="flex gap-2 flex-shrink-0">
                                 <button
                                     onClick={() => runBatches((savedProgress.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedProgress)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-bold transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-foreground rounded-lg text-sm font-bold transition-colors"
                                 >
                                     ▶️ Retomar
                                 </button>
                                 <button
                                     onClick={() => { try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ } setSavedProgress(null) }}
-                                    className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg text-sm transition-colors"
+                                    className="px-3 py-2 bg-surface hover:bg-surface-hover text-foreground rounded-lg text-sm transition-colors"
                                 >
                                     Descartar
                                 </button>
@@ -721,11 +721,11 @@ export default function SocialLinksAdminPage() {
                     {/* Progresso geral */}
                     {(running || processed > 0) && (
                         <div className="space-y-1.5">
-                            <div className="flex items-center justify-between text-xs text-zinc-400">
+                            <div className="flex items-center justify-between text-xs text-muted">
                                 <span>{processed.toLocaleString('pt-BR')} / {totalGlobal.toLocaleString('pt-BR')} artistas</span>
                                 <span>{pct}%</span>
                             </div>
-                            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-purple-500 rounded-full transition-all duration-500"
                                     style={{ width: `${pct}%` }}
@@ -739,15 +739,15 @@ export default function SocialLinksAdminPage() {
                         <div className="grid grid-cols-3 gap-2">
                             <div className="bg-black/30 border border-green-500/20 rounded-lg p-2 text-center">
                                 <p className="text-xl font-black text-green-400">{syncStats.found}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Encontrados</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Encontrados</p>
                             </div>
                             <div className="bg-black/30 border border-yellow-500/20 rounded-lg p-2 text-center">
                                 <p className="text-xl font-black text-yellow-400">{syncStats.notFound}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Não encontrados</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Não encontrados</p>
                             </div>
                             <div className="bg-black/30 border border-red-500/20 rounded-lg p-2 text-center">
                                 <p className="text-xl font-black text-red-400">{syncStats.errors}</p>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-widest font-bold">Erros</p>
+                                <p className="text-[10px] text-muted mt-0.5 uppercase tracking-widest font-bold">Erros</p>
                             </div>
                         </div>
                     )}
@@ -757,7 +757,7 @@ export default function SocialLinksAdminPage() {
                         <div className="flex justify-end">
                             <button
                                 onClick={() => { abortRef.current = true }}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-foreground rounded-lg text-sm font-bold transition-colors"
                             >
                                 <Square className="w-4 h-4" />
                                 Parar (salva progresso)
@@ -767,7 +767,7 @@ export default function SocialLinksAdminPage() {
 
                     {/* Log */}
                     {log.length > 0 && (
-                        <div className="bg-black/40 rounded-xl p-4 max-h-64 overflow-y-auto font-mono text-xs space-y-1 border border-white/5">
+                        <div className="bg-black/40 rounded-xl p-4 max-h-64 overflow-y-auto font-mono text-xs space-y-1 border border-border">
                             {log.map((line, i) => (
                                 <div key={i} className={lineColor(line.type)}>{line.text}</div>
                             ))}
@@ -791,13 +791,13 @@ export default function SocialLinksAdminPage() {
                         ))}
                     </div>
                     <div className="relative flex-1 sm:ml-auto sm:max-w-xs">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => handleSearch(e.target.value)}
                             placeholder="Buscar artista..."
-                            className="w-full pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
+                            className="w-full px-4 pr-10 py-2 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
                         />
                     </div>
                 </div>
@@ -806,13 +806,13 @@ export default function SocialLinksAdminPage() {
                 {loading ? (
                     <div className="space-y-2">
                         {Array.from({ length: 8 }).map((_, i) => (
-                            <div key={i} className="h-16 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />
+                            <div key={i} className="h-16 bg-surface border border-border rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
                     <div className="space-y-2">
                         {artists.length === 0 && (
-                            <div className="text-center py-16 text-zinc-500">Nenhum artista encontrado</div>
+                            <div className="text-center py-16 text-muted">Nenhum artista encontrado</div>
                         )}
                         {artists.map((artist) => {
                             const linkCount = countLinks(artist.socialLinks)
@@ -821,7 +821,7 @@ export default function SocialLinksAdminPage() {
                             return (
                                 <div
                                     key={artist.id}
-                                    className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-colors"
+                                    className="flex items-center gap-3 p-4 bg-surface border border-border rounded-xl hover:border-border transition-colors"
                                 >
                                     {/* Avatar */}
                                     {artist.primaryImageUrl ? (
@@ -829,17 +829,17 @@ export default function SocialLinksAdminPage() {
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
                                         </div>
                                     ) : (
-                                        <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-black text-zinc-400 flex-shrink-0">
+                                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-muted flex-shrink-0">
                                             {artist.nameRomanized[0]}
                                         </div>
                                     )}
 
                                     {/* Name */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-white text-sm truncate">{artist.nameRomanized}</p>
-                                        {artist.nameHangul && <p className="text-xs text-zinc-500 truncate">{artist.nameHangul}</p>}
+                                        <p className="font-bold text-foreground text-sm truncate">{artist.nameRomanized}</p>
+                                        {artist.nameHangul && <p className="text-xs text-muted truncate">{artist.nameHangul}</p>}
                                         {wasTried && artist.socialLinksUpdatedAt && (
-                                            <p className="text-[10px] text-zinc-700 mt-0.5">
+                                            <p className="text-[10px] text-muted mt-0.5">
                                                 tentado {formatDate(artist.socialLinksUpdatedAt)}
                                             </p>
                                         )}
@@ -850,7 +850,7 @@ export default function SocialLinksAdminPage() {
                                         {PLATFORMS.map(({ key, color, icon }) => {
                                             const url = artist.socialLinks?.[key]
                                             return (
-                                                <span key={key} className={`transition-opacity ${url ? color : 'text-zinc-700'}`} title={key}>
+                                                <span key={key} className={`transition-opacity ${url ? color : 'text-muted'}`} title={key}>
                                                     {url ? (
                                                         <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="hover:opacity-80">
                                                             {icon}
@@ -869,7 +869,7 @@ export default function SocialLinksAdminPage() {
                                     )}
 
                                     {/* Link count badge */}
-                                    <span className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 ${linkCount > 0 ? 'bg-green-500/10 text-green-400' : wasTried ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/10 text-orange-400'}`}>
+                                    <span className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 ${linkCount > 0 ? 'bg-green-500/10 text-green-400' : wasTried ? 'bg-surface text-muted' : 'bg-orange-500/10 text-orange-400'}`}>
                                         {linkCount}/{PLATFORMS.length}
                                     </span>
 
@@ -885,7 +885,7 @@ export default function SocialLinksAdminPage() {
                                     {/* Edit button */}
                                     <button
                                         onClick={() => setEditing(artist)}
-                                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isSaved ? 'bg-green-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'}`}
+                                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${isSaved ? 'bg-green-600 text-foreground' : 'bg-surface text-foreground hover:bg-surface hover:text-foreground'}`}
                                     >
                                         {isSaved ? <><Check className="w-3 h-3" /> Salvo</> : <><ExternalLink className="w-3 h-3" /> Editar</>}
                                     </button>
@@ -898,21 +898,21 @@ export default function SocialLinksAdminPage() {
                 {/* Pagination */}
                 {pages > 1 && (
                     <div className="flex items-center justify-between py-2">
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-muted">
                             {totalFiltered.toLocaleString('pt-BR')} artistas · página {page} de {pages}
                         </span>
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => handlePage(page - 1)}
                                 disabled={page === 1 || loading}
-                                className="p-2 rounded hover:bg-zinc-800 disabled:opacity-30 text-zinc-400 transition-colors"
+                                className="p-2 rounded hover:bg-surface disabled:opacity-30 text-muted transition-colors"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => handlePage(page + 1)}
                                 disabled={page === pages || loading}
-                                className="p-2 rounded hover:bg-zinc-800 disabled:opacity-30 text-zinc-400 transition-colors"
+                                className="p-2 rounded hover:bg-surface disabled:opacity-30 text-muted transition-colors"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>

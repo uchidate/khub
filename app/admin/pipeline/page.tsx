@@ -49,26 +49,26 @@ function PipelineCard({
     actions?:   React.ReactNode
 }) {
     const tagCls: Record<string, string> = {
-        draft:    'bg-zinc-700/40 text-zinc-400 border-zinc-600/30',
+        draft:    'bg-surface text-muted border-border',
         ready:    'bg-blue-500/15 text-blue-300 border-blue-500/30',
         pending:  'bg-yellow-500/15 text-yellow-300 border-yellow-500/30',
-        hidden:   'bg-zinc-700/40 text-zinc-500 border-zinc-700/30',
+        hidden:   'bg-surface text-muted border-border',
         done:     'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
     }
 
     return (
-        <div className="group bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-3 hover:border-zinc-700 hover:shadow-[0_0_0_1px_rgba(59,130,246,0.1)] transition-all">
+        <div className="group bg-surface border border-border rounded-xl p-3 hover:border-border hover:shadow-[0_0_0_1px_rgba(59,130,246,0.1)] transition-all">
             <div className="flex gap-2.5">
                 {imageUrl ? (
-                    <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
+                    <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                         <Image src={imageUrl} alt="" fill className="object-cover" unoptimized />
                     </div>
                 ) : (
-                    <div className="w-10 h-10 rounded-lg bg-zinc-800 flex-shrink-0" />
+                    <div className="w-10 h-10 rounded-lg bg-surface flex-shrink-0" />
                 )}
                 <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-medium text-zinc-200 line-clamp-2 leading-tight">{title}</p>
-                    {subtitle && <p className="text-[11px] text-zinc-600 mt-0.5 truncate">{subtitle}</p>}
+                    <p className="text-[12px] font-medium text-foreground line-clamp-2 leading-tight">{title}</p>
+                    {subtitle && <p className="text-[11px] text-muted mt-0.5 truncate">{subtitle}</p>}
                 </div>
             </div>
 
@@ -78,12 +78,12 @@ function PipelineCard({
                         {tag}
                     </span>
                 )}
-                <span className="text-[10px] text-zinc-700 ml-auto">{timeAgo(time)}</span>
+                <span className="text-[10px] text-muted ml-auto">{timeAgo(time)}</span>
                 {publicHref && (
                     <Link
                         href={publicHref}
                         target="_blank"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-600 hover:text-blue-400"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-blue-400"
                         title="Ver página pública"
                     >
                         <Globe size={11} />
@@ -91,14 +91,14 @@ function PipelineCard({
                 )}
                 <Link
                     href={href}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-600 hover:text-zinc-300"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-foreground"
                     title="Editar"
                 >
                     <ExternalLink size={11} />
                 </Link>
             </div>
 
-            {actions && <div className="mt-2 pt-2 border-t border-zinc-800/60">{actions}</div>}
+            {actions && <div className="mt-2 pt-2 border-t border-border">{actions}</div>}
         </div>
     )
 }
@@ -119,7 +119,7 @@ function PipelineColumn({
     allLink?:       string
 }) {
     const colorMap: Record<string, { dot: string; label: string; header: string }> = {
-        zinc:    { dot: 'bg-zinc-500',    label: 'text-zinc-400',    header: 'border-zinc-800/60' },
+        zinc:    { dot: 'bg-border',       label: 'text-muted',       header: 'border-border' },
         yellow:  { dot: 'bg-yellow-500',  label: 'text-yellow-400',  header: 'border-yellow-500/20' },
         emerald: { dot: 'bg-emerald-500', label: 'text-emerald-400', header: 'border-emerald-500/20' },
         red:     { dot: 'bg-red-500',     label: 'text-red-400',     header: 'border-red-500/20' },
@@ -129,15 +129,15 @@ function PipelineColumn({
     return (
         <div className="flex flex-col min-w-[260px] max-w-[300px] flex-shrink-0 lg:flex-1">
             {/* Header da coluna */}
-            <div className={`px-3 py-2.5 rounded-xl border mb-2 bg-zinc-900/40 ${c.header}`}>
+            <div className={`px-3 py-2.5 rounded-xl border mb-2 bg-surface ${c.header}`}>
                 <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c.dot}`} />
                     <Icon size={13} className={c.label} />
                     <span className={`text-xs font-bold flex-1 ${c.label}`}>{title}</span>
-                    <span className="text-[10px] font-black text-zinc-600 bg-zinc-800/60 px-2 py-0.5 rounded-full">{count}</span>
+                    <span className="text-[10px] font-black text-muted bg-surface px-2 py-0.5 rounded-full">{count}</span>
                 </div>
                 {batchAction && (
-                    <div className="mt-1.5 pt-1.5 border-t border-zinc-800/40">
+                    <div className="mt-1.5 pt-1.5 border-t border-border">
                         {batchAction}
                     </div>
                 )}
@@ -147,7 +147,7 @@ function PipelineColumn({
             <div className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-320px)]">
                 {count === 0 ? (
                     <div className="flex items-center justify-center py-12 text-center">
-                        <p className="text-[11px] text-zinc-700">{emptyMsg}</p>
+                        <p className="text-[11px] text-muted">{emptyMsg}</p>
                     </div>
                 ) : children}
             </div>
@@ -156,7 +156,7 @@ function PipelineColumn({
             {count > displayedCount && allLink && (
                 <Link
                     href={allLink}
-                    className="flex items-center justify-center gap-1 mt-2 py-1.5 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors border-t border-zinc-800/40"
+                    className="flex items-center justify-center gap-1 mt-2 py-1.5 text-[10px] text-muted hover:text-foreground transition-colors border-t border-border"
                 >
                     <ChevronRight size={10} />
                     +{count - displayedCount} mais
@@ -172,17 +172,17 @@ function PipelineHealthBar({ stats }: {
     stats: { label: string; value: number; color: string; href: string }[]
 }) {
     return (
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-zinc-900/40 border border-zinc-800/60 rounded-xl">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-surface border border-border rounded-xl">
             {stats.map((s, i) => (
                 <Link key={i} href={s.href} className="flex items-center gap-2 group">
                     <span className={`text-lg font-black ${s.color} group-hover:opacity-80 transition-opacity`}>{s.value.toLocaleString('pt-BR')}</span>
-                    <span className="text-[11px] text-zinc-600 group-hover:text-zinc-400 transition-colors">{s.label}</span>
-                    {i < stats.length - 1 && <span className="text-zinc-800 ml-1">·</span>}
+                    <span className="text-[11px] text-muted group-hover:text-foreground transition-colors">{s.label}</span>
+                    {i < stats.length - 1 && <span className="text-muted ml-1">·</span>}
                 </Link>
             ))}
             <Link
                 href="/admin/pipeline"
-                className="ml-auto flex items-center gap-1 text-[10px] text-zinc-700 hover:text-zinc-400 transition-colors"
+                className="ml-auto flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
                 title="Atualizar"
             >
                 <RefreshCw size={10} />
@@ -244,7 +244,7 @@ export default async function PipelinePage({ searchParams }: Props) {
         ])
 
         const healthStats = [
-            { label: 'rascunhos',      value: draftsCount,             color: 'text-zinc-300',    href: '/admin/pipeline?tab=news' },
+            { label: 'rascunhos',      value: draftsCount,             color: 'text-foreground',  href: '/admin/pipeline?tab=news' },
             { label: 'sem tradução',   value: withoutTranslationCount, color: 'text-yellow-400',  href: '/admin/pipeline?tab=news' },
             { label: 'publicados',     value: publishedCount,          color: 'text-emerald-400', href: '/admin/pipeline?tab=news' },
             { label: 'ocultos',        value: hiddenCount,             color: 'text-red-400',     href: '/admin/pipeline?tab=news' },
@@ -308,7 +308,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         </PipelineColumn>
 
                         <div className="flex items-start self-start mt-10 flex-shrink-0">
-                            <ArrowRight size={16} className="text-zinc-700" />
+                            <ArrowRight size={16} className="text-muted" />
                         </div>
 
                         <PipelineColumn
@@ -343,7 +343,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         </PipelineColumn>
 
                         <div className="flex items-start self-start mt-10 flex-shrink-0">
-                            <ArrowRight size={16} className="text-zinc-700" />
+                            <ArrowRight size={16} className="text-muted" />
                         </div>
 
                         <PipelineColumn
@@ -371,7 +371,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         </PipelineColumn>
 
                         <div className="flex items-start self-start mt-10 flex-shrink-0">
-                            <ArrowRight size={16} className="text-zinc-700" />
+                            <ArrowRight size={16} className="text-muted" />
                         </div>
 
                         <PipelineColumn
@@ -497,8 +497,8 @@ export default async function PipelinePage({ searchParams }: Props) {
             ].join(' · ')
 
         const healthStats = [
-            { label: 'sem conteúdo',       value: noContentCount,    color: 'text-zinc-300',    href: '/admin/pipeline?tab=artists' },
-            { label: 'incompletos',        value: partialCount,      color: 'text-zinc-400',    href: '/admin/pipeline?tab=artists' },
+            { label: 'sem conteúdo',       value: noContentCount,    color: 'text-foreground',  href: '/admin/pipeline?tab=artists' },
+            { label: 'incompletos',        value: partialCount,      color: 'text-muted',       href: '/admin/pipeline?tab=artists' },
             { label: 'aguard. curadoria',  value: enrichedCount,     color: 'text-yellow-400',  href: '/admin/pipeline?tab=artists' },
             { label: 'curados',            value: curatedCount,      color: 'text-emerald-400', href: '/admin/pipeline?tab=artists' },
         ]
@@ -560,7 +560,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         </PipelineColumn>
 
                         <div className="flex items-start self-start mt-10 flex-shrink-0">
-                            <ArrowRight size={16} className="text-zinc-700" />
+                            <ArrowRight size={16} className="text-muted" />
                         </div>
 
                         <PipelineColumn
@@ -595,7 +595,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         </PipelineColumn>
 
                         <div className="flex items-start self-start mt-10 flex-shrink-0">
-                            <ArrowRight size={16} className="text-zinc-700" />
+                            <ArrowRight size={16} className="text-muted" />
                         </div>
 
                         <PipelineColumn
@@ -622,7 +622,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                             href={`/artists/${a.id}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                                            className="flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
                                         >
                                             <ExternalLink size={9} />
                                             Ver perfil público
@@ -633,7 +633,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         </PipelineColumn>
 
                         <div className="flex items-start self-start mt-10 flex-shrink-0">
-                            <ArrowRight size={16} className="text-zinc-700" />
+                            <ArrowRight size={16} className="text-muted" />
                         </div>
 
                         <PipelineColumn
@@ -659,7 +659,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         </PipelineColumn>
 
                         <div className="flex items-start self-start mt-10 flex-shrink-0">
-                            <ArrowRight size={16} className="text-zinc-700" />
+                            <ArrowRight size={16} className="text-muted" />
                         </div>
 
                         <PipelineColumn
@@ -769,7 +769,7 @@ export default async function PipelinePage({ searchParams }: Props) {
 
     const healthStats = [
         { label: 'curadoria',      value: pendingCurationCount,        color: 'text-orange-400',  href: '/admin/pipeline?tab=productions' },
-        { label: 'sem sinopse',    value: withoutSynopsisCount,        color: 'text-zinc-300',    href: '/admin/pipeline?tab=productions' },
+        { label: 'sem sinopse',    value: withoutSynopsisCount,        color: 'text-foreground',  href: '/admin/pipeline?tab=productions' },
         { label: 'sem tradução',   value: withoutTranslationProdCount, color: 'text-yellow-400',  href: '/admin/pipeline?tab=productions' },
         { label: 'completas',      value: completeCount,               color: 'text-emerald-400', href: '/admin/pipeline?tab=productions' },
         { label: 'ocultas',        value: hiddenProdCount,             color: 'text-red-400',     href: '/admin/pipeline?tab=productions' },
@@ -833,7 +833,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                     </PipelineColumn>
 
                     <div className="flex items-start self-start mt-10 flex-shrink-0">
-                        <ArrowRight size={16} className="text-zinc-700" />
+                        <ArrowRight size={16} className="text-muted" />
                     </div>
 
                     <PipelineColumn
@@ -869,7 +869,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                     </PipelineColumn>
 
                     <div className="flex items-start self-start mt-10 flex-shrink-0">
-                        <ArrowRight size={16} className="text-zinc-700" />
+                        <ArrowRight size={16} className="text-muted" />
                     </div>
 
                     <PipelineColumn
@@ -905,7 +905,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                     </PipelineColumn>
 
                     <div className="flex items-start self-start mt-10 flex-shrink-0">
-                        <ArrowRight size={16} className="text-zinc-700" />
+                        <ArrowRight size={16} className="text-muted" />
                     </div>
 
                     <PipelineColumn
@@ -933,7 +933,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                     </PipelineColumn>
 
                     <div className="flex items-start self-start mt-10 flex-shrink-0">
-                        <ArrowRight size={16} className="text-zinc-700" />
+                        <ArrowRight size={16} className="text-muted" />
                     </div>
 
                     <PipelineColumn
@@ -978,15 +978,15 @@ function PipelineLayout({ tab, children }: { tab: EntityTab; children: React.Rea
     return (
         <div className="space-y-4">
             {/* Tabs */}
-            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 w-fit">
+            <div className="flex items-center gap-1 bg-surface border border-border rounded-xl p-1 w-fit">
                 {tabs.map(t => (
                     <Link
                         key={t.value}
                         href={`/admin/pipeline?tab=${t.value}`}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             tab === t.value
-                                ? 'bg-blue-500/15 text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.2)]'
-                                : 'text-zinc-500 hover:text-zinc-300'
+                                ? 'bg-blue-500/15 text-blue-600 dark:text-blue-300 shadow-[0_0_0_1px_rgba(59,130,246,0.2)]'
+                                : 'text-muted hover:text-foreground'
                         }`}
                     >
                         <t.icon size={12} />
@@ -996,12 +996,12 @@ function PipelineLayout({ tab, children }: { tab: EntityTab; children: React.Rea
             </div>
 
             {/* Legenda */}
-            <div className="flex items-center gap-4 text-[10px] text-zinc-700">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-zinc-500" />Pendente</span>
+            <div className="flex items-center gap-4 text-[10px] text-muted">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-border" />Pendente</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500" />Aguardando ação</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Completo / Curado</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />Oculto</span>
-                <span className="ml-auto text-zinc-800">Role horizontalmente para ver todas as colunas →</span>
+                <span className="ml-auto text-muted">Role horizontalmente para ver todas as colunas →</span>
             </div>
 
             {/* Conteúdo (health bar + kanban) */}

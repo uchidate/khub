@@ -9,6 +9,8 @@ import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { SocialBadges } from '@/components/admin/SocialBadges'
+import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { AdminIconButton } from '@/components/admin/AdminIconButton'
 import { Plus, Users, Music2, EyeOff, Pencil, Trash2, Languages } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -50,7 +52,7 @@ const MAX_MVS = 6
 // ─── Status Badge helper ───────────────────────────────────────────────────────
 
 function GroupStatusBadge({ group }: { group: MusicalGroup }) {
-  if (group.isHidden)    return <AdminStatusBadge label="Oculto"     color="bg-zinc-800 text-zinc-500"                       icon={<EyeOff size={10} />} />
+  if (group.isHidden)    return <AdminStatusBadge label="Oculto"     color="bg-surface text-muted"                       icon={<EyeOff size={10} />} />
   if (group.disbandDate) return <AdminStatusBadge label="Disbandado" color="bg-red-900/40 text-red-400 border-red-800/30" />
   return                        <AdminStatusBadge label="Ativo"      color="bg-green-900/40 text-green-400 border-green-800/30" />
 }
@@ -125,7 +127,7 @@ export default function GroupsPage() {
           className="rounded-full object-cover w-10 h-10" />
       ) : (
         <div
-          className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-black text-zinc-300"
+          className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-foreground"
           style={group.officialColor ? { backgroundColor: `${group.officialColor}30`, color: group.officialColor } : {}}>
           {group.name.charAt(0).toUpperCase()}
         </div>
@@ -136,14 +138,14 @@ export default function GroupsPage() {
       render: (group) => (
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-white">{group.name}</span>
+            <span className="font-semibold text-foreground">{group.name}</span>
             {group.officialColor && (
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-white/10"
                 style={{ backgroundColor: group.officialColor }} />
             )}
-            {group.isHidden && <EyeOff size={11} className="text-zinc-600" />}
+            {group.isHidden && <EyeOff size={11} className="text-muted" />}
           </div>
-          {group.nameHangul && <div className="text-xs text-zinc-500">{group.nameHangul}</div>}
+          {group.nameHangul && <div className="text-xs text-muted">{group.nameHangul}</div>}
         </div>
       ),
     },
@@ -161,8 +163,8 @@ export default function GroupsPage() {
       key: 'agencyName', label: 'Agência',
       className: 'hidden lg:table-cell',
       render: (group) => group.agencyName
-        ? <span className="text-zinc-300 text-sm">{group.agencyName}</span>
-        : <span className="text-zinc-600 text-xs">—</span>,
+        ? <span className="text-foreground text-sm">{group.agencyName}</span>
+        : <span className="text-muted text-xs">—</span>,
     },
     {
       key: 'socialLinks', label: 'Redes',
@@ -173,14 +175,14 @@ export default function GroupsPage() {
       key: 'debutDate', label: 'Debut', sortable: true,
       className: 'hidden md:table-cell',
       render: (group) => group.debutDate
-        ? <span className="text-zinc-400 text-sm">{new Date(group.debutDate).getUTCFullYear()}</span>
-        : <span className="text-zinc-600 text-xs">—</span>,
+        ? <span className="text-muted text-sm">{new Date(group.debutDate).getUTCFullYear()}</span>
+        : <span className="text-muted text-xs">—</span>,
     },
     {
       key: 'createdAt', label: 'Cadastro', sortable: true,
       className: 'hidden xl:table-cell',
       render: (group) => (
-        <span className="text-zinc-500 text-xs">
+        <span className="text-muted text-xs">
           {new Date(group.createdAt).toLocaleDateString('pt-BR')}
         </span>
       ),
@@ -253,11 +255,11 @@ export default function GroupsPage() {
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
             statusFilter === val
               ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
+              : 'bg-surface border-border text-muted hover:border-border hover:text-foreground'
           }`}>
           {label}
           {count != null && (
-            <span className={`font-mono tabular-nums ${statusFilter === val ? 'text-purple-300' : 'text-zinc-500'}`}>
+            <span className={`font-mono tabular-nums ${statusFilter === val ? 'text-purple-300' : 'text-muted'}`}>
               {count}
             </span>
           )}
@@ -272,18 +274,14 @@ export default function GroupsPage() {
       subtitle="Gerencie os grupos musicais da plataforma"
       actions={
         <div className="flex items-center gap-2">
-          <Link href="/admin/translations?tab=group"
-            className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2 py-1 rounded-lg transition-colors">
+          <AdminLinkButton href="/admin/translations?tab=group" size="sm">
             <Languages size={11} />
             Traduções
-          </Link>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all"
-          >
+          </AdminLinkButton>
+          <AdminButton variant="primary" onClick={handleCreate}>
             <Plus size={16} />
             Novo Grupo
-          </button>
+          </AdminButton>
         </div>
       }
     >
@@ -292,18 +290,18 @@ export default function GroupsPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { icon: Music2, label: 'Total',          value: stats?.total,     color: 'bg-zinc-700/50 text-zinc-300' },
+            { icon: Music2, label: 'Total',          value: stats?.total,     color: 'bg-surface-hover text-foreground' },
             { icon: Users,  label: 'Ativos',          value: stats?.active,    color: 'bg-green-500/10 text-green-400' },
             { icon: Users,  label: 'Disbandados',     value: stats?.disbanded, color: 'bg-red-500/10 text-red-400' },
             { icon: Users,  label: 'Sem membros',     value: stats?.noMembers, color: 'bg-amber-500/10 text-amber-400' },
           ].map(({ icon: Icon, label, value, color }) => (
-            <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-3">
+            <div key={label} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
               <div className={`p-2 rounded-lg ${color}`}>
                 <Icon size={16} />
               </div>
               <div>
-                <div className="text-xl font-bold text-white tabular-nums">{value ?? '—'}</div>
-                <div className="text-xs text-zinc-500">{label}</div>
+                <div className="text-xl font-bold text-foreground tabular-nums">{value ?? '—'}</div>
+                <div className="text-xs text-muted">{label}</div>
               </div>
             </div>
           ))}
@@ -319,16 +317,12 @@ export default function GroupsPage() {
           searchPlaceholder="Buscar por nome ou hangul..."
           actions={(group) => (
             <div className="flex items-center gap-1">
-              <button onClick={() => handleManageMembers(group)}
-                title="Gerenciar Membros"
-                className="p-1.5 text-zinc-400 hover:text-purple-400 hover:bg-purple-900/20 rounded-lg transition-colors">
+              <AdminIconButton onClick={() => handleManageMembers(group)} title="Gerenciar Membros">
                 <Users size={15} />
-              </button>
-              <button onClick={() => handleDelete([group.id])}
-                title="Excluir"
-                className="p-1.5 text-zinc-600 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors">
+              </AdminIconButton>
+              <AdminIconButton variant="danger" onClick={() => handleDelete([group.id])} title="Excluir">
                 <Trash2 size={15} />
-              </button>
+              </AdminIconButton>
             </div>
           )}
           renderMobileCard={(group) => (
@@ -338,7 +332,7 @@ export default function GroupsPage() {
                 <Image src={group.profileImageUrl} alt={group.name} width={48} height={48}
                   className="rounded-full object-cover w-12 h-12 flex-shrink-0" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-black text-zinc-300 flex-shrink-0"
+                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-sm font-black text-foreground flex-shrink-0"
                   style={group.officialColor ? { backgroundColor: `${group.officialColor}30`, color: group.officialColor } : {}}>
                   {group.name.charAt(0).toUpperCase()}
                 </div>
@@ -348,18 +342,18 @@ export default function GroupsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-semibold text-white truncate">{group.name}</span>
+                      <span className="font-semibold text-foreground truncate">{group.name}</span>
                       {group.officialColor && (
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-white/10"
                           style={{ backgroundColor: group.officialColor }} />
                       )}
                     </div>
-                    {group.nameHangul && <div className="text-xs text-zinc-500">{group.nameHangul}</div>}
+                    {group.nameHangul && <div className="text-xs text-muted">{group.nameHangul}</div>}
                   </div>
                   <GroupStatusBadge group={group} />
                 </div>
 
-                <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500 flex-wrap">
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-muted flex-wrap">
                   <span className="text-purple-400 font-bold flex items-center gap-1">
                     <Users size={10} /> {group.membersCount}
                   </span>
@@ -379,20 +373,20 @@ export default function GroupsPage() {
                 <div className="flex items-center gap-3 mt-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleManageMembers(group) }}
-                    className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
+                    className="text-xs text-muted hover:text-foreground flex items-center gap-1 transition-colors"
                   >
                     <Users size={10} /> Membros
                   </button>
                   <a
                     href={`/admin/groups/${group.id}`}
-                    className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
+                    className="text-xs text-muted hover:text-foreground flex items-center gap-1 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Pencil size={10} /> Editar
                   </a>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete([group.id]) }}
-                    className="text-xs text-zinc-600 hover:text-red-400 flex items-center gap-1 transition-colors"
+                    className="text-xs text-muted hover:text-red-400 flex items-center gap-1 transition-colors"
                   >
                     <Trash2 size={10} /> Excluir
                   </button>

@@ -124,7 +124,7 @@ function StatsBar({ stats, filter, onFilter }: {
   const isNoGroup = filter === 'no_group' || filter === 'no_group_unsynced' || filter === 'no_group_solo'
 
   const mainTabs = [
-    { label: 'Todos',     value: '' as FilterType,          count: null,                    dot: 'bg-zinc-400' },
+    { label: 'Todos',     value: '' as FilterType,          count: null,                    dot: 'bg-border' },
     { label: 'Com grupo', value: 'with_group' as FilterType, count: stats?.withGroup ?? null, dot: 'bg-purple-400' },
     { label: 'Sem grupo', value: 'no_group' as FilterType,   count: stats?.noGroup ?? null,   dot: 'bg-amber-400' },
   ]
@@ -143,8 +143,8 @@ function StatsBar({ stats, filter, onFilter }: {
       value: 'no_group_solo' as FilterType,
       count: stats?.noGroupSolo ?? null,
       title: 'Já processado — MusicBrainz não encontrou grupo',
-      color: 'text-zinc-400 border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700/60',
-      activeColor: 'text-zinc-300 border-zinc-500 bg-zinc-700/60',
+      color: 'text-muted border-border bg-surface hover:bg-surface',
+      activeColor: 'text-foreground border-border bg-surface',
     },
   ]
 
@@ -160,13 +160,13 @@ function StatsBar({ stats, filter, onFilter }: {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                 isActive
                   ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
+                  : 'bg-surface border-border text-muted hover:border-border hover:text-foreground'
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
               {tab.label}
               {tab.count != null && (
-                <span className={`font-mono tabular-nums ${isActive ? 'text-purple-300' : 'text-zinc-500'}`}>
+                <span className={`font-mono tabular-nums ${isActive ? 'text-purple-300' : 'text-muted'}`}>
                   {tab.count}
                 </span>
               )}
@@ -177,7 +177,7 @@ function StatsBar({ stats, filter, onFilter }: {
 
       {isNoGroup && (
         <div className="flex items-center gap-1.5 flex-wrap pl-1">
-          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mr-1">↳</span>
+          <span className="text-[10px] font-black text-muted uppercase tracking-widest mr-1">↳</span>
           {subTabs.map((sub) => {
             const isActive = filter === sub.value
             return (
@@ -267,35 +267,35 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
     if (type === 'error')    return 'text-red-400'
     if (type === 'warning')  return 'text-yellow-400'
     if (type === 'done')     return 'text-purple-400 font-bold'
-    if (type === 'progress') return 'text-zinc-600'
-    return 'text-zinc-300'
+    if (type === 'progress') return 'text-muted'
+    return 'text-foreground'
   }
 
   return (
-    <div className="bg-zinc-900 border border-purple-500/20 rounded-xl p-5 space-y-4">
+    <div className="bg-surface border border-purple-500/20 rounded-xl p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-3 flex-1">
           <Music2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
           <div>
-            <p className="text-sm font-bold text-white">Sync em lote via MusicBrainz</p>
-            <p className="text-xs text-zinc-500 mt-0.5">Busca relação "member of band" para múltiplos artistas</p>
+            <p className="text-sm font-bold text-foreground">Sync em lote via MusicBrainz</p>
+            <p className="text-xs text-muted mt-0.5">Busca relação "member of band" para múltiplos artistas</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
-          <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+          <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
             <input type="checkbox" checked={onlyMissing} onChange={e => setOnlyMissing(e.target.checked)}
               disabled={running} className="accent-purple-500" />
             Apenas não sincronizados
           </label>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500 font-medium">Limite:</span>
+            <span className="text-xs text-muted font-medium">Limite:</span>
             <select value={syncLimit} onChange={e => setSyncLimit(Number(e.target.value))} disabled={running}
-              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-purple-500/50 disabled:opacity-50">
+              className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-purple-500/50 disabled:opacity-50">
               {[20, 50, 100, 200].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
           <button onClick={startSync} disabled={running}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors">
             {running
               ? <><RefreshCw className="w-4 h-4 animate-spin" /> Sincronizando...</>
               : <><Users className="w-4 h-4" /> Sincronizar Lote</>
@@ -308,22 +308,22 @@ function BatchSyncPanel({ onDone }: { onDone: () => void }) {
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-black/30 rounded-lg p-3 text-center">
             <p className="text-lg font-black text-green-400">{resultStats.found}</p>
-            <p className="text-xs text-zinc-500">Com grupo</p>
+            <p className="text-xs text-muted">Com grupo</p>
           </div>
           <div className="bg-black/30 rounded-lg p-3 text-center">
             <p className="text-lg font-black text-yellow-400">{resultStats.solo}</p>
-            <p className="text-xs text-zinc-500">Solo / não encontrado</p>
+            <p className="text-xs text-muted">Solo / não encontrado</p>
           </div>
           <div className="bg-black/30 rounded-lg p-3 text-center">
             <p className="text-lg font-black text-red-400">{resultStats.errors}</p>
-            <p className="text-xs text-zinc-500">Erros</p>
+            <p className="text-xs text-muted">Erros</p>
           </div>
         </div>
       )}
 
       {open && log.length > 0 && (
         <div ref={logRef}
-          className="bg-black/40 rounded-lg p-4 max-h-52 overflow-y-auto font-mono text-xs space-y-0.5 border border-white/5">
+          className="bg-black/40 rounded-lg p-4 max-h-52 overflow-y-auto font-mono text-xs space-y-0.5 border border-border">
           {log.map((line, i) => (
             <div key={i} className={lineColor(line.type)}>{line.text}</div>
           ))}
@@ -372,14 +372,14 @@ export default function ArtistGroupsAdminPage() {
       key: 'photo', label: 'Foto',
       render: (artist) => artist.primaryImageUrl
         ? <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={36} height={36} className="rounded-full object-cover" />
-        : <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-black text-zinc-500">{artist.nameRomanized[0]}</div>,
+        : <div className="w-9 h-9 rounded-full bg-surface flex items-center justify-center text-xs font-black text-muted">{artist.nameRomanized[0]}</div>,
     },
     {
       key: 'nameRomanized', label: 'Nome', sortable: true,
       render: (artist) => (
         <div>
-          <p className="font-bold text-white text-sm">{artist.nameRomanized}</p>
-          {artist.nameHangul && <p className="text-xs text-zinc-500">{artist.nameHangul}</p>}
+          <p className="font-bold text-foreground text-sm">{artist.nameRomanized}</p>
+          {artist.nameHangul && <p className="text-xs text-muted">{artist.nameHangul}</p>}
         </div>
       ),
     },
@@ -398,7 +398,7 @@ export default function ArtistGroupsAdminPage() {
         }
         const hasSynced = override !== undefined ? true : !!artist.groupSyncAt
         if (hasSynced) {
-          return <span className="text-xs text-zinc-600">Solo / não encontrado</span>
+          return <span className="text-xs text-muted">Solo / não encontrado</span>
         }
         return <span className="text-xs text-amber-500/70 font-semibold">Não sincronizado</span>
       },
@@ -406,8 +406,8 @@ export default function ArtistGroupsAdminPage() {
     {
       key: 'groupSyncAt', label: 'Último sync',
       render: (artist) => artist.groupSyncAt
-        ? <span className="text-xs text-zinc-500">{new Date(artist.groupSyncAt).toLocaleDateString('pt-BR')}</span>
-        : <span className="text-xs text-zinc-700">—</span>,
+        ? <span className="text-xs text-muted">{new Date(artist.groupSyncAt).toLocaleDateString('pt-BR')}</span>
+        : <span className="text-xs text-muted">—</span>,
     },
   ]
 
@@ -416,7 +416,7 @@ export default function ArtistGroupsAdminPage() {
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-3">
-            <p className="text-zinc-400 text-sm">Sincronize e gerencie vínculos de artistas com grupos K-Pop via MusicBrainz</p>
+            <p className="text-muted text-sm">Sincronize e gerencie vínculos de artistas com grupos K-Pop via MusicBrainz</p>
             <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
           </div>
         </div>

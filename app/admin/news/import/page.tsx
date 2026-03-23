@@ -189,16 +189,16 @@ export default function NewsImportPage() {
             <div className="max-w-3xl space-y-6">
 
                 {/* Instructions */}
-                <p className="text-zinc-400 text-sm leading-relaxed">
+                <p className="text-muted text-sm leading-relaxed">
                     Importe artigos históricos de uma fonte externa buscando pela
-                    <strong className="text-zinc-300"> API WordPress REST</strong> da fonte. Selecione a fonte
+                    <strong className="text-foreground"> API WordPress REST</strong> da fonte. Selecione a fonte
                     e o período desejado. O sistema verificará quantos artigos estão disponíveis e quantos
                     já existem no banco.
                 </p>
 
                 {/* Source selector */}
                 <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Fonte</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted">Fonte</p>
                     <div className="flex items-center gap-2 flex-wrap">
                         {SOURCES.map(s => {
                             const c = SOURCE_COLORS[s]
@@ -211,7 +211,7 @@ export default function NewsImportPage() {
                                     className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border disabled:opacity-50 ${
                                         active && c
                                             ? `${c.bg} ${c.text} ${c.border}`
-                                            : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
+                                            : 'bg-surface border-border text-muted hover:text-foreground hover:border-border'
                                     }`}
                                 >
                                     {s}
@@ -225,7 +225,7 @@ export default function NewsImportPage() {
                     <>
                         {/* Period */}
                         <div className="space-y-3">
-                            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Período</p>
+                            <p className="text-xs font-semibold uppercase tracking-widest text-muted">Período</p>
 
                             {/* Presets */}
                             <div className="flex items-center gap-2 flex-wrap">
@@ -239,7 +239,7 @@ export default function NewsImportPage() {
                                         key={preset.label}
                                         onClick={() => { setDateFrom(preset.from); setDateTo(preset.to) }}
                                         disabled={isStreaming}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-400 border border-zinc-700 hover:border-purple-500/50 hover:text-purple-300 transition-colors disabled:opacity-50"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-foreground border border-border hover:bg-surface-hover transition-colors disabled:opacity-50"
                                     >
                                         <CalendarDays size={12} />
                                         {preset.label}
@@ -254,21 +254,21 @@ export default function NewsImportPage() {
                                     value={dateFrom}
                                     onChange={e => setDateFrom(e.target.value)}
                                     disabled={isStreaming}
-                                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                                    className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
                                 />
-                                <span className="text-zinc-600 text-sm">até</span>
+                                <span className="text-muted text-sm">até</span>
                                 <input
                                     type="date"
                                     value={dateTo}
                                     onChange={e => setDateTo(e.target.value)}
                                     disabled={isStreaming}
-                                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-300 focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                                    className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
                                 />
                                 {(dateFrom || dateTo) && (
                                     <button
                                         onClick={clearPeriod}
                                         disabled={isStreaming}
-                                        className="p-1.5 text-zinc-600 hover:text-zinc-300 disabled:opacity-50"
+                                        className="p-1.5 text-muted hover:text-foreground disabled:opacity-50"
                                     >
                                         <X size={14} />
                                     </button>
@@ -277,40 +277,40 @@ export default function NewsImportPage() {
                         </div>
 
                         {/* Counts card */}
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 flex items-center gap-6 flex-wrap">
+                        <div className="rounded-xl border border-border bg-surface p-4 flex items-center gap-6 flex-wrap">
                             <div className="text-center min-w-[80px]">
-                                <p className="text-2xl font-black text-white tabular-nums">
-                                    {dbCount === null ? <Loader2 size={20} className="animate-spin mx-auto text-zinc-600" /> : dbCount.toLocaleString('pt-BR')}
+                                <p className="text-2xl font-black text-foreground tabular-nums">
+                                    {dbCount === null ? <Loader2 size={20} className="animate-spin mx-auto text-muted" /> : dbCount.toLocaleString('pt-BR')}
                                 </p>
-                                <p className="text-[11px] text-zinc-500 mt-0.5">no banco{(dateFrom || dateTo) ? ' (período)' : ''}</p>
+                                <p className="text-[11px] text-muted mt-0.5">no banco{(dateFrom || dateTo) ? ' (período)' : ''}</p>
                             </div>
 
                             {dateFrom && (
                                 <>
-                                    <div className="h-8 w-px bg-zinc-800 hidden sm:block" />
+                                    <div className="h-8 w-px bg-surface hidden sm:block" />
                                     <div className="text-center min-w-[80px]">
                                         <p className="text-2xl font-black tabular-nums">
                                             {availableCount === null ? (
-                                                <Loader2 size={20} className="animate-spin mx-auto text-zinc-600" />
+                                                <Loader2 size={20} className="animate-spin mx-auto text-muted" />
                                             ) : availableCount === -1 ? (
-                                                <span className="text-zinc-600 text-base">N/D</span>
+                                                <span className="text-muted text-base">N/D</span>
                                             ) : (
-                                                <span className={availableCount > (dbCount ?? 0) ? 'text-emerald-400' : 'text-zinc-300'}>
+                                                <span className={availableCount > (dbCount ?? 0) ? 'text-emerald-400' : 'text-foreground'}>
                                                     {(availableCount as number).toLocaleString('pt-BR')}
                                                 </span>
                                             )}
                                         </p>
-                                        <p className="text-[11px] text-zinc-500 mt-0.5">disponíveis na fonte</p>
+                                        <p className="text-[11px] text-muted mt-0.5">disponíveis na fonte</p>
                                     </div>
 
                                     {newToImport !== null && newToImport > 0 && (
                                         <>
-                                            <div className="h-8 w-px bg-zinc-800 hidden sm:block" />
+                                            <div className="h-8 w-px bg-surface hidden sm:block" />
                                             <div className="text-center min-w-[80px]">
                                                 <p className="text-2xl font-black text-emerald-400 tabular-nums">
                                                     {newToImport.toLocaleString('pt-BR')}
                                                 </p>
-                                                <p className="text-[11px] text-zinc-500 mt-0.5">novos para importar</p>
+                                                <p className="text-[11px] text-muted mt-0.5">novos para importar</p>
                                             </div>
                                         </>
                                     )}
@@ -318,7 +318,7 @@ export default function NewsImportPage() {
                             )}
 
                             {!dateFrom && (
-                                <p className="text-xs text-zinc-600 italic">
+                                <p className="text-xs text-muted italic">
                                     Selecione um período para ver quantos estão disponíveis na fonte
                                 </p>
                             )}
@@ -329,7 +329,7 @@ export default function NewsImportPage() {
                             <button
                                 onClick={handleImport}
                                 disabled={isStreaming || !dateFrom || availableCount === -1 || availableCount === null}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors text-sm"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-foreground font-bold rounded-xl transition-colors text-sm"
                             >
                                 {isStreaming
                                     ? <Loader2 size={16} className="animate-spin" />
@@ -338,7 +338,7 @@ export default function NewsImportPage() {
                                 {isStreaming ? 'Importando...' : 'Importar novos artigos'}
                             </button>
                             {!dateFrom && (
-                                <p className="text-xs text-zinc-500">Selecione um período para importar</p>
+                                <p className="text-xs text-muted">Selecione um período para importar</p>
                             )}
                             {availableCount === -1 && (
                                 <p className="text-xs text-amber-400">API da fonte indisponível</p>

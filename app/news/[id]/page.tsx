@@ -250,7 +250,7 @@ export default async function NewsDetailPage(props: NewsDetailPageProps) {
                             id={news.id}
                             itemName={news.title}
                             itemType="notícia"
-                            className="bg-surface border border-border hover:bg-[#e8e8e8]"
+                            className="bg-surface border border-border hover:bg-surface-hover"
                         />
                     </div>
                 </div>

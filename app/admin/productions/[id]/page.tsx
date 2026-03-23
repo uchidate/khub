@@ -255,8 +255,8 @@ export default function EditProductionPage() {
         }
     }
 
-    const inputCls = "w-full px-3 py-2 bg-zinc-900 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 text-sm"
-    const labelCls = "block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5"
+    const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 text-sm"
+    const labelCls = "block text-xs font-bold text-muted uppercase tracking-widest mb-1.5"
     const synced = (key: string) => syncedFields.has(key)
 
     return (
@@ -271,7 +271,7 @@ export default function EditProductionPage() {
                         <Link
                             href={`/productions/${id}`}
                             target="_blank"
-                            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 px-3 py-1.5 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 text-xs text-foreground border border-border hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-colors"
                         >
                             Ver no site
                             <ExternalLink className="w-3 h-3" />
@@ -286,7 +286,7 @@ export default function EditProductionPage() {
                 )}
 
                 {!loading && !production && (
-                    <div className="text-center py-20 text-zinc-500">Produção não encontrada.</div>
+                    <div className="text-center py-20 text-muted">Produção não encontrada.</div>
                 )}
 
                 {production && (
@@ -319,10 +319,10 @@ export default function EditProductionPage() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Sincronizar do TMDB — botões principal */}
                         {production.tmdbId && (
-                            <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-white/10 bg-zinc-900/50">
+                            <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-border bg-surface">
                                 <div>
-                                    <p className="text-sm font-bold text-zinc-200">Sincronizar dados do TMDB</p>
-                                    <p className="text-xs text-zinc-500 mt-0.5">
+                                    <p className="text-sm font-bold text-foreground">Sincronizar dados do TMDB</p>
+                                    <p className="text-xs text-muted mt-0.5">
                                         Preencher vazios: só campos em branco · Forçar: sobrescreve tudo
                                     </p>
                                 </div>
@@ -331,7 +331,7 @@ export default function EditProductionPage() {
                                         type="button"
                                         onClick={() => handleSyncAll('empty_only')}
                                         disabled={fetchingTmdb}
-                                        className="flex items-center gap-2 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                                        className="flex items-center gap-2 px-3 py-2 bg-surface hover:bg-surface-hover disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors"
                                     >
                                         {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
                                         Preencher vazios
@@ -340,7 +340,7 @@ export default function EditProductionPage() {
                                         type="button"
                                         onClick={() => handleSyncAll('all')}
                                         disabled={fetchingTmdb}
-                                        className="flex items-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors"
+                                        className="flex items-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-foreground rounded-lg text-sm font-bold transition-colors"
                                     >
                                         {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                                         Forçar todos
@@ -362,8 +362,8 @@ export default function EditProductionPage() {
                                         className="rounded-lg object-cover w-24 h-36"
                                     />
                                 ) : (
-                                    <div className="w-24 h-36 rounded-lg bg-zinc-800 flex items-center justify-center">
-                                        <Film className="w-8 h-8 text-zinc-600" />
+                                    <div className="w-24 h-36 rounded-lg bg-surface flex items-center justify-center">
+                                        <Film className="w-8 h-8 text-muted" />
                                     </div>
                                 )}
                                 {/* Poster TMDB (se diferente) */}
@@ -381,11 +381,11 @@ export default function EditProductionPage() {
                                             onClick={() => set('imageUrl', tmdbData.imageUrl)}
                                             className="absolute inset-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
-                                            <span className="bg-black/80 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                                            <span className="bg-black/80 text-foreground text-[10px] font-bold px-2 py-0.5 rounded">
                                                 Usar TMDB
                                             </span>
                                         </button>
-                                        <span className="absolute top-1 left-1 bg-black/70 text-[8px] text-zinc-300 px-1 rounded">TMDB</span>
+                                        <span className="absolute top-1 left-1 bg-black/70 text-[8px] text-foreground px-1 rounded">TMDB</span>
                                     </div>
                                 )}
                             </div>
@@ -424,7 +424,7 @@ export default function EditProductionPage() {
                                                 }}
                                                 disabled={fetchingTmdb}
                                                 title="Buscar título do TMDB"
-                                                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface disabled:opacity-50 text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
                                             >
                                                 {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                                 TMDB
@@ -531,7 +531,7 @@ export default function EditProductionPage() {
                                             if (tagline) set('tagline', tagline)
                                         }}
                                         disabled={fetchingTmdb}
-                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface disabled:opacity-50 text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
                                     >
                                         {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                         TMDB
@@ -585,7 +585,7 @@ export default function EditProductionPage() {
                                                 if (data?.imageUrl) set('imageUrl', data.imageUrl)
                                             }}
                                             disabled={fetchingTmdb}
-                                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface disabled:opacity-50 text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
                                         >
                                             {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                             TMDB
@@ -614,7 +614,7 @@ export default function EditProductionPage() {
                                                 if (data?.backdropUrl) set('backdropUrl', data.backdropUrl)
                                             }}
                                             disabled={fetchingTmdb}
-                                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface disabled:opacity-50 text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
                                         >
                                             {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                             TMDB
@@ -652,7 +652,7 @@ export default function EditProductionPage() {
                                                     Usar
                                                 </button>
                                             </div>
-                                            <p className="text-xs text-zinc-400 bg-zinc-900 rounded-lg p-2.5 border border-white/5 leading-relaxed line-clamp-6">
+                                            <p className="text-xs text-muted bg-surface rounded-lg p-2.5 border border-border leading-relaxed line-clamp-6">
                                                 {tmdbData.synopsisPt}
                                             </p>
                                         </div>
@@ -669,7 +669,7 @@ export default function EditProductionPage() {
                                                     Usar
                                                 </button>
                                             </div>
-                                            <p className="text-xs text-zinc-400 bg-zinc-900 rounded-lg p-2.5 border border-white/5 leading-relaxed line-clamp-6">
+                                            <p className="text-xs text-muted bg-surface rounded-lg p-2.5 border border-border leading-relaxed line-clamp-6">
                                                 {tmdbData.synopsisEn}
                                             </p>
                                         </div>
@@ -711,7 +711,7 @@ export default function EditProductionPage() {
                                             }
                                         }}
                                         disabled={fetchingTmdb}
-                                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-surface disabled:opacity-50 text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
                                     >
                                         {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                         Buscar do TMDB
@@ -723,9 +723,9 @@ export default function EditProductionPage() {
                         {/* Metadados */}
                         <div>
                             <label className={labelCls}>Metadados</label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-xl border border-white/10 bg-zinc-900/30">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 rounded-xl border border-border bg-surface">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">
                                         Duração (filme, min)
                                         {synced('runtime') && <SyncedBadge />}
                                     </label>
@@ -738,7 +738,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">
                                         Episódios
                                         {synced('episodeCount') && <SyncedBadge />}
                                     </label>
@@ -751,7 +751,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">
                                         Temporadas
                                         {synced('seasonCount') && <SyncedBadge />}
                                     </label>
@@ -764,7 +764,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">
                                         Duração/ep (min)
                                         {synced('episodeRuntime') && <SyncedBadge />}
                                     </label>
@@ -777,7 +777,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">
                                         Nota TMDB
                                         {synced('voteAverage') && <SyncedBadge />}
                                     </label>
@@ -793,7 +793,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">
                                         Canal / Rede
                                         {synced('network') && <SyncedBadge />}
                                     </label>
@@ -806,7 +806,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">
                                         Status de Produção
                                         {synced('productionStatus') && <SyncedBadge />}
                                     </label>
@@ -843,7 +843,7 @@ export default function EditProductionPage() {
                                             if (data?.trailerUrl) set('trailerUrl', data.trailerUrl)
                                         }}
                                         disabled={fetchingTmdb}
-                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-300 rounded-lg text-xs font-medium transition-colors border border-white/10"
+                                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface disabled:opacity-50 text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
                                     >
                                         {fetchingTmdb ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                         TMDB
@@ -925,20 +925,20 @@ export default function EditProductionPage() {
                         </div>
 
                         {/* Visibilidade */}
-                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/50">
+                        <div className="border border-border rounded-xl p-4 bg-surface">
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <div className="relative flex-shrink-0">
                                     <input type="checkbox" className="sr-only peer"
                                         checked={form.isHidden ?? false}
                                         onChange={e => set('isHidden' as keyof Production, e.target.checked)} />
-                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
+                                    <div className="w-10 h-6 bg-border peer-checked:bg-red-600 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-zinc-200">
+                                    <p className="text-sm font-bold text-foreground">
                                         {form.isHidden ? 'Oculto do site público' : 'Visível no site público'}
                                     </p>
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-xs text-muted">
                                         {form.isHidden
                                             ? 'Esta produção não aparece em listagens públicas'
                                             : 'Esta produção aparece normalmente no site'}
@@ -948,19 +948,19 @@ export default function EditProductionPage() {
                         </div>
 
                         {/* Flags e Curadoria */}
-                        <div className="border border-white/10 rounded-xl p-4 bg-zinc-900/30 space-y-3">
-                            <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Flags e Curadoria</p>
+                        <div className="border border-border rounded-xl p-4 bg-surface space-y-3">
+                            <p className="text-xs font-bold text-muted uppercase tracking-widest">Flags e Curadoria</p>
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <div className="relative flex-shrink-0">
                                     <input type="checkbox" className="sr-only peer"
                                         checked={form.needsCuration ?? false}
                                         onChange={e => set('needsCuration' as keyof Production, e.target.checked)} />
-                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-orange-500 rounded-full transition-colors" />
+                                    <div className="w-10 h-6 bg-border peer-checked:bg-orange-500 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-zinc-200">Aguardando curadoria</p>
-                                    <p className="text-xs text-zinc-500">Aparece na fila de curadoria do pipeline</p>
+                                    <p className="text-sm font-bold text-foreground">Aguardando curadoria</p>
+                                    <p className="text-xs text-muted">Aparece na fila de curadoria do pipeline</p>
                                 </div>
                             </label>
                             <label className="flex items-center gap-3 cursor-pointer">
@@ -968,12 +968,12 @@ export default function EditProductionPage() {
                                     <input type="checkbox" className="sr-only peer"
                                         checked={form.flaggedAsNonKorean ?? false}
                                         onChange={e => set('flaggedAsNonKorean' as keyof Production, e.target.checked)} />
-                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-orange-500 rounded-full transition-colors" />
+                                    <div className="w-10 h-6 bg-border peer-checked:bg-orange-500 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-zinc-200">Não coreana</p>
-                                    <p className="text-xs text-zinc-500">Excluída das listas e pipeline de produções coreanas</p>
+                                    <p className="text-sm font-bold text-foreground">Não coreana</p>
+                                    <p className="text-xs text-muted">Excluída das listas e pipeline de produções coreanas</p>
                                 </div>
                             </label>
                             <label className="flex items-center gap-3 cursor-pointer">
@@ -981,17 +981,17 @@ export default function EditProductionPage() {
                                     <input type="checkbox" className="sr-only peer"
                                         checked={form.isAdultContent ?? false}
                                         onChange={e => set('isAdultContent' as keyof Production, e.target.checked)} />
-                                    <div className="w-10 h-6 bg-zinc-600 peer-checked:bg-red-600 rounded-full transition-colors" />
+                                    <div className="w-10 h-6 bg-border peer-checked:bg-red-600 rounded-full transition-colors" />
                                     <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-zinc-200">Conteúdo adulto</p>
-                                    <p className="text-xs text-zinc-500">Marcado como 18+ ou impróprio para menores</p>
+                                    <p className="text-sm font-bold text-foreground">Conteúdo adulto</p>
+                                    <p className="text-xs text-muted">Marcado como 18+ ou impróprio para menores</p>
                                 </div>
                             </label>
                             {form.isAdultContent && (
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Tipo de conteúdo adulto</label>
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Tipo de conteúdo adulto</label>
                                     <select
                                         value={form.adultContentType ?? ''}
                                         onChange={e => set('adultContentType' as keyof Production, e.target.value || null)}
@@ -1011,14 +1011,14 @@ export default function EditProductionPage() {
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-purple-400" />
-                                    <span className="text-sm font-semibold text-white">Review Editorial</span>
-                                    <span className="text-[10px] text-zinc-500 font-mono">DeepSeek-V3</span>
+                                    <span className="text-sm font-semibold text-foreground">Review Editorial</span>
+                                    <span className="text-[10px] text-muted font-mono">DeepSeek-V3</span>
                                 </div>
-                                <Link href="/admin/enrichment" className="text-[10px] text-zinc-600 hover:text-purple-400 transition-colors">
+                                <Link href="/admin/enrichment" className="text-[10px] text-muted hover:text-purple-400 transition-colors">
                                     Ver lote →
                                 </Link>
                             </div>
-                            <p className="text-xs text-zinc-500 mb-3">
+                            <p className="text-xs text-muted mb-3">
                                 Gera review editorial (350-450 palavras), "por que assistir" e nossa nota (0-10) em PT-BR. ~$0.0025
                             </p>
                             <button
@@ -1064,7 +1064,7 @@ export default function EditProductionPage() {
                             {/* Campos editoriais editáveis */}
                             <div className="mt-4 space-y-3">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Nossa Nota (0–10)</label>
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Nossa Nota (0–10)</label>
                                     <input
                                         type="number"
                                         step="0.1"
@@ -1077,7 +1077,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Por que assistir?</label>
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Por que assistir?</label>
                                     <textarea
                                         value={form.whyWatch ?? ''}
                                         onChange={e => set('whyWatch' as keyof Production, e.target.value || null)}
@@ -1087,7 +1087,7 @@ export default function EditProductionPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Review Editorial</label>
+                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Review Editorial</label>
                                     <textarea
                                         value={form.editorialReview ?? ''}
                                         onChange={e => set('editorialReview' as keyof Production, e.target.value || null)}
@@ -1104,14 +1104,14 @@ export default function EditProductionPage() {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:bg-purple-900 text-white rounded-lg text-sm font-bold transition-colors"
                             >
                                 {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 {saving ? 'Salvando...' : 'Salvar'}
                             </button>
                             <Link
                                 href="/admin/productions"
-                                className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-bold transition-colors"
+                                className="px-5 py-2.5 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors"
                             >
                                 Cancelar
                             </Link>

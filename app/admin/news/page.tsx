@@ -7,6 +7,9 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { AdminBadge } from '@/components/admin/AdminBadge'
+import { AdminIconButton, AdminIconLink } from '@/components/admin/AdminIconButton'
 import {
     Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink,
     Download, RotateCcw, Send, Check, X, Sparkles,
@@ -75,7 +78,7 @@ const CONTENT_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
     drama:         { bg: 'bg-blue-500/10',    text: 'text-blue-300'    },
     interview:     { bg: 'bg-violet-500/10',  text: 'text-violet-300'  },
     scandal:       { bg: 'bg-rose-500/10',    text: 'text-rose-300'    },
-    general:       { bg: 'bg-zinc-700/50',    text: 'text-zinc-400'    },
+    general:       { bg: 'bg-surface',         text: 'text-muted'       },
 }
 
 const SOURCES = ['Soompi', 'Koreaboo', 'Dramabeans', 'Asian Junkie', 'HelloKpop', 'Kpopmap'] as const
@@ -92,8 +95,8 @@ const formFields: FormField[] = [
 // ─── Small components ─────────────────────────────────────────────────────────
 
 function SourceBadge({ source }: { source: string | null }) {
-    if (!source) return <span className="text-zinc-700 text-xs">—</span>
-    const c = SOURCE_COLORS[source] ?? { bg: 'bg-zinc-800', text: 'text-zinc-400', border: 'border-zinc-700' }
+    if (!source) return <span className="text-muted text-xs">—</span>
+    const c = SOURCE_COLORS[source] ?? { bg: 'bg-surface', text: 'text-muted', border: 'border-border' }
     return (
         <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold border ${c.bg} ${c.text} ${c.border}`}>
             {source}
@@ -102,7 +105,7 @@ function SourceBadge({ source }: { source: string | null }) {
 }
 
 function ContentTypeBadge({ type }: { type: string | null }) {
-    if (!type) return <span className="text-zinc-700 text-xs">—</span>
+    if (!type) return <span className="text-muted text-xs">—</span>
     const c = CONTENT_TYPE_COLORS[type] ?? CONTENT_TYPE_COLORS.general
     return (
         <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${c.bg} ${c.text}`}>
@@ -120,13 +123,13 @@ function TranslationBadge({ status, blockCount }: { status: string | null; block
         )
     }
     if (blockCount === 0) {
-        return <span className="text-[11px] text-zinc-600">sem blocos</span>
+        return <span className="text-[11px] text-muted">sem blocos</span>
     }
-    return <span className="text-[11px] text-zinc-500">EN</span>
+    return <span className="text-[11px] text-muted">EN</span>
 }
 
 function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
-    if (artists.length === 0) return <span className="text-xs text-zinc-700 italic">nenhum</span>
+    if (artists.length === 0) return <span className="text-xs text-muted italic">nenhum</span>
     const shown = artists.slice(0, 3)
     const extra = artists.length - shown.length
     return (
@@ -146,7 +149,7 @@ function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
                     <span className="truncate max-w-[55px]">{artist.nameRomanized}</span>
                 </span>
             ))}
-            {extra > 0 && <span className="text-[10px] text-zinc-500 font-bold">+{extra}</span>}
+            {extra > 0 && <span className="text-[10px] text-muted font-bold">+{extra}</span>}
         </div>
     )
 }
@@ -199,7 +202,7 @@ function ReprocessButton({ newsId, translationStatus, onDone }: {
                 <button
                     onClick={() => setState('idle')}
                     title="Cancelar"
-                    className="p-1 rounded text-zinc-500 hover:bg-zinc-700 transition-colors"
+                    className="p-1 rounded text-muted hover:bg-surface transition-colors"
                 >
                     <X size={12} />
                 </button>
@@ -215,7 +218,7 @@ function ReprocessButton({ newsId, translationStatus, onDone }: {
             className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
                 state === 'ok'  ? 'text-emerald-400 bg-emerald-400/10' :
                 state === 'err' ? 'text-red-400 bg-red-400/10' :
-                'text-zinc-500 hover:text-purple-300 hover:bg-purple-400/10'
+                'text-muted hover:text-foreground hover:bg-surface-hover'
             }`}
         >
             <RefreshCw size={13} className={state === 'loading' ? 'animate-spin' : ''} />
@@ -256,7 +259,7 @@ function GenerateBlogButton({ newsId, onDone }: { newsId: string; onDone: () => 
             className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
                 state === 'ok'  ? 'text-emerald-400 bg-emerald-400/10' :
                 state === 'err' ? 'text-red-400 bg-red-400/10' :
-                'text-zinc-500 hover:text-purple-300 hover:bg-purple-400/10'
+                'text-muted hover:text-foreground hover:bg-surface-hover'
             }`}
         >
             {state === 'loading'
@@ -314,8 +317,8 @@ export default function NewsAdminPage() {
             render: (news) => news.imageUrl ? (
                 <Image src={news.imageUrl} alt={news.title} width={52} height={34} className="rounded-lg object-cover flex-shrink-0" />
             ) : (
-                <div className="w-[52px] h-[34px] bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-[8px] text-zinc-600 font-bold">IMG</span>
+                <div className="w-[52px] h-[34px] bg-surface rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-[8px] text-muted font-bold">IMG</span>
                 </div>
             ),
         },
@@ -325,8 +328,8 @@ export default function NewsAdminPage() {
             sortable: true,
             render: (news) => (
                 <div className="max-w-xs">
-                    <p className="font-medium text-white leading-snug line-clamp-2 text-sm">{news.title}</p>
-                    <p className="text-[10px] text-zinc-600 truncate mt-0.5">{news.sourceUrl}</p>
+                    <p className="font-medium text-foreground leading-snug line-clamp-2 text-sm">{news.title}</p>
+                    <p className="text-[10px] text-muted truncate mt-0.5">{news.sourceUrl}</p>
                 </div>
             ),
         },
@@ -369,7 +372,7 @@ export default function NewsAdminPage() {
             label: 'Publicado',
             sortable: true,
             render: (news) => (
-                <span className="text-xs text-zinc-400 whitespace-nowrap">
+                <span className="text-xs text-muted whitespace-nowrap">
                     {new Date(news.publishedAt).toLocaleDateString('pt-BR')}
                 </span>
             ),
@@ -378,10 +381,10 @@ export default function NewsAdminPage() {
             key: 'isHidden',
             label: 'Status',
             render: (news) => {
-                if (news.isHidden) return <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/15 text-red-400 rounded text-[11px] font-semibold"><EyeOff size={10} /> Oculta</span>
-                if (news.status === 'draft')  return <span className="flex items-center gap-1 px-2 py-0.5 bg-zinc-700/60 text-zinc-400 rounded text-[11px] font-semibold">Rascunho</span>
-                if (news.status === 'ready')  return <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded text-[11px] font-semibold"><CheckCircle size={10} /> Pronta</span>
-                return <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/15 text-emerald-400 rounded text-[11px] font-semibold"><Eye size={10} /> Visível</span>
+                if (news.isHidden) return <AdminBadge variant="hidden"><EyeOff size={10} /> Oculta</AdminBadge>
+                if (news.status === 'draft')  return <AdminBadge variant="draft">Rascunho</AdminBadge>
+                if (news.status === 'ready')  return <AdminBadge variant="pending"><CheckCircle size={10} /> Pronta</AdminBadge>
+                return <AdminBadge variant="published"><Eye size={10} /> Visível</AdminBadge>
             },
         },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -473,14 +476,14 @@ export default function NewsAdminPage() {
         {
             label: 'Total',
             value: stats?.total,
-            color: 'text-white',
+            color: 'text-foreground',
             filterValue: '' as const,
-            activeColor: 'border-zinc-600',
+            activeColor: 'border-border',
         },
         {
             label: 'Fila',
             value: stats?.queue,
-            color: stats?.queue ? 'text-blue-400' : 'text-zinc-600',
+            color: stats?.queue ? 'text-blue-400' : 'text-muted',
             filterValue: 'queue' as const,
             activeColor: 'border-blue-500/40 bg-blue-500/5',
             hint: 'draft + pronta',
@@ -488,14 +491,14 @@ export default function NewsAdminPage() {
         {
             label: 'Ocultas',
             value: stats?.hidden,
-            color: stats?.hidden ? 'text-amber-400' : 'text-zinc-600',
+            color: stats?.hidden ? 'text-amber-400' : 'text-muted',
             filterValue: 'hidden' as const,
             activeColor: 'border-amber-500/40 bg-amber-500/5',
         },
         {
             label: 'Hoje',
             value: stats?.today,
-            color: stats?.today ? 'text-emerald-400' : 'text-zinc-600',
+            color: stats?.today ? 'text-emerald-400' : 'text-muted',
             filterValue: 'today' as const,
             activeColor: 'border-emerald-500/40 bg-emerald-500/5',
         },
@@ -507,27 +510,9 @@ export default function NewsAdminPage() {
             subtitle="Gerencie notícias do K-Pop e K-Drama"
             actions={
                 <div className="flex items-center gap-2">
-                    <Link
-                        href="/admin/news/reprocess"
-                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-400 font-medium rounded-lg hover:border-purple-500/50 hover:text-purple-300 transition-all text-xs"
-                    >
-                        <RotateCcw size={13} />
-                        Reprocessar
-                    </Link>
-                    <Link
-                        href="/admin/news/import"
-                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-400 font-medium rounded-lg hover:border-emerald-500/50 hover:text-emerald-300 transition-all text-xs"
-                    >
-                        <Download size={13} />
-                        Importar
-                    </Link>
-                    <button
-                        onClick={() => { setEditingNews(null); setFormOpen(true) }}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all text-sm"
-                    >
-                        <Plus size={15} />
-                        Nova
-                    </button>
+                    <AdminLinkButton href="/admin/news/reprocess" size="sm"><RotateCcw size={13} />Reprocessar</AdminLinkButton>
+                    <AdminLinkButton href="/admin/news/import" size="sm"><Download size={13} />Importar</AdminLinkButton>
+                    <AdminButton variant="primary" onClick={() => { setEditingNews(null); setFormOpen(true) }} size="sm"><Plus size={15} />Nova</AdminButton>
                 </div>
             }
         >
@@ -560,19 +545,19 @@ export default function NewsAdminPage() {
                             <button
                                 key={label}
                                 onClick={() => setFilterStatus(prev => prev === filterValue ? '' : filterValue)}
-                                className={`rounded-xl border bg-zinc-900/40 px-4 py-3 text-center transition-colors hover:border-zinc-600 ${
-                                    isActive ? activeColor : 'border-zinc-800'
+                                className={`rounded-xl border bg-surface px-4 py-3 text-center transition-colors hover:border-border ${
+                                    isActive ? activeColor : 'border-border'
                                 }`}
                             >
                                 <p className={`text-2xl font-black tabular-nums ${color}`}>
                                     {value === undefined
-                                        ? <Loader2 size={18} className="animate-spin mx-auto text-zinc-600" />
+                                        ? <Loader2 size={18} className="animate-spin mx-auto text-muted" />
                                         : value.toLocaleString('pt-BR')
                                     }
                                 </p>
-                                <p className="text-[11px] text-zinc-500 mt-0.5">
+                                <p className="text-[11px] text-muted mt-0.5">
                                     {label}
-                                    {hint && <span className="text-zinc-700 ml-1">· {hint}</span>}
+                                    {hint && <span className="text-muted ml-1">· {hint}</span>}
                                 </p>
                             </button>
                         )
@@ -592,7 +577,7 @@ export default function NewsAdminPage() {
                                 className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
                                     active && c
                                         ? `${c.bg} ${c.text} ${c.border}`
-                                        : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                                        : 'bg-surface border-border text-muted hover:text-foreground hover:border-border'
                                 }`}
                             >
                                 {s}
@@ -601,7 +586,7 @@ export default function NewsAdminPage() {
                     })}
 
                     {/* Separator */}
-                    <span className="text-zinc-700 select-none">·</span>
+                    <span className="text-muted select-none">·</span>
 
                     {/* Status filter pills */}
                     {([
@@ -615,7 +600,7 @@ export default function NewsAdminPage() {
                             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
                                 filterStatus === pill.value
                                     ? pill.active
-                                    : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                                    : 'bg-surface border-border text-muted hover:text-foreground hover:border-border'
                             }`}
                         >
                             {pill.icon} {pill.label}
@@ -625,7 +610,7 @@ export default function NewsAdminPage() {
                     {hasFilters && (
                         <button
                             onClick={clearFilters}
-                            className="text-[11px] text-zinc-600 hover:text-zinc-300 px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors"
+                            className="text-[11px] text-muted hover:text-foreground px-2 py-1 rounded-lg hover:bg-surface-hover transition-colors"
                         >
                             Limpar filtros
                         </button>
@@ -651,15 +636,14 @@ export default function NewsAdminPage() {
                     )}
                     actions={(news) => (
                         <div className="flex items-center gap-0.5">
-                            <Link
+                            <AdminIconLink
                                 href={`/news/${news.id}`}
                                 target="_blank"
                                 onClick={e => e.stopPropagation()}
-                                className="p-1.5 rounded text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
                                 title="Ver no site"
                             >
                                 <ExternalLink size={13} />
-                            </Link>
+                            </AdminIconLink>
                             <ReprocessButton
                                 newsId={news.id}
                                 translationStatus={news.translationStatus}
@@ -669,25 +653,20 @@ export default function NewsAdminPage() {
                                 <GenerateBlogButton newsId={news.id} onDone={refetchTable} />
                             )}
                             {news.status !== 'published' && (
-                                <button
+                                <AdminIconButton
                                     onClick={e => { e.stopPropagation(); handlePublish(news) }}
                                     title="Publicar no site"
-                                    className="p-1.5 rounded transition-colors text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
                                 >
                                     <Send size={13} />
-                                </button>
+                                </AdminIconButton>
                             )}
-                            <button
+                            <AdminIconButton
                                 onClick={e => { e.stopPropagation(); handleToggleHidden(news) }}
                                 title={news.isHidden ? 'Tornar visível' : 'Ocultar do site'}
-                                className={`p-1.5 rounded transition-colors ${
-                                    news.isHidden
-                                        ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-400/10'
-                                        : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'
-                                }`}
+                                variant={news.isHidden ? 'warning' : 'default'}
                             >
                                 {news.isHidden ? <XCircle size={13} /> : <CheckCircle size={13} />}
-                            </button>
+                            </AdminIconButton>
                         </div>
                     )}
                 />

@@ -122,34 +122,34 @@ function ReviewHideModal({ open, onClose, onDone }: {
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-800">
+      <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
           <ShieldAlert size={18} className="text-pink-400 shrink-0" />
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-semibold">Revisar antes de ocultar por keyword</h3>
-            <p className="text-xs text-zinc-500">
+            <h3 className="text-foreground font-semibold">Revisar antes de ocultar por keyword</h3>
+            <p className="text-xs text-muted">
               {loading ? 'Carregando...' : `${items.length} produção(ões) · ${selected.size} selecionadas`}
             </p>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors shrink-0">
+          <button onClick={onClose} className="text-muted hover:text-foreground transition-colors shrink-0">
             <XCircle size={18} />
           </button>
         </div>
 
-        <div className="px-5 py-3 border-b border-zinc-800 flex items-center gap-3 flex-wrap">
+        <div className="px-5 py-3 border-b border-border flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-40">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <Search size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
             <input
               placeholder="Filtrar por título..."
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="w-full pl-8 pr-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+              className="w-full px-4 pr-10 py-1.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
             />
           </div>
-          <button onClick={() => setSelected(new Set(filtered.map(p => p.id)))} className="text-xs text-zinc-400 hover:text-white transition-colors shrink-0">
+          <button onClick={() => setSelected(new Set(filtered.map(p => p.id)))} className="text-xs text-muted hover:text-foreground transition-colors shrink-0">
             Selecionar todos ({filtered.length})
           </button>
-          <button onClick={() => setSelected(new Set())} className="text-xs text-zinc-400 hover:text-white transition-colors shrink-0">
+          <button onClick={() => setSelected(new Set())} className="text-xs text-muted hover:text-foreground transition-colors shrink-0">
             Limpar
           </button>
         </div>
@@ -160,7 +160,7 @@ function ReviewHideModal({ open, onClose, onDone }: {
               <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
             </div>
           ) : paged.length === 0 ? (
-            <p className="text-zinc-500 text-sm text-center py-10">Nenhuma produção encontrada</p>
+            <p className="text-muted text-sm text-center py-10">Nenhuma produção encontrada</p>
           ) : (
             paged.map(item => {
               const sel = selected.has(item.id)
@@ -169,22 +169,22 @@ function ReviewHideModal({ open, onClose, onDone }: {
                   key={item.id}
                   onClick={() => toggle(item.id)}
                   className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-all ${
-                    sel ? 'bg-pink-600/10 border-pink-500/30' : 'bg-zinc-800/40 border-zinc-700/40 opacity-50 hover:opacity-70'
+                    sel ? 'bg-pink-600/10 border-pink-500/30' : 'bg-surface border-border opacity-50 hover:opacity-70'
                   }`}
                 >
                   <div className="shrink-0 mt-0.5">
                     {sel
                       ? <CheckSquare size={15} className="text-pink-400" />
-                      : <Square size={15} className="text-zinc-500" />}
+                      : <Square size={15} className="text-muted" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-white">{item.titlePt}</span>
+                      <span className="text-sm font-medium text-foreground">{item.titlePt}</span>
                       {item.isAdultContent === true && (
                         <span className="text-xs px-1.5 py-0.5 bg-pink-600/20 text-pink-400 border border-pink-500/30 rounded">IA ✓</span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-500">{item.type}{item.year ? ` · ${item.year}` : ''}</p>
+                    <p className="text-xs text-muted">{item.type}{item.year ? ` · ${item.year}` : ''}</p>
                     {item.keywords.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {item.keywords.map((kw, i) => (
@@ -200,25 +200,25 @@ function ReviewHideModal({ open, onClose, onDone }: {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 px-5 py-2 border-t border-zinc-800">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="text-zinc-400 hover:text-white disabled:opacity-30 transition-colors">
+          <div className="flex items-center justify-center gap-3 px-5 py-2 border-t border-border">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="text-muted hover:text-foreground disabled:opacity-30 transition-colors">
               <ChevronLeft size={16} />
             </button>
-            <span className="text-xs text-zinc-500">{page} / {totalPages} · {filtered.length} produção(ões)</span>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="text-zinc-400 hover:text-white disabled:opacity-30 transition-colors">
+            <span className="text-xs text-muted">{page} / {totalPages} · {filtered.length} produção(ões)</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="text-muted hover:text-foreground disabled:opacity-30 transition-colors">
               <ChevronRight size={16} />
             </button>
           </div>
         )}
 
-        <div className="flex items-center gap-3 px-5 py-4 border-t border-zinc-800">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 text-sm transition-colors">
+        <div className="flex items-center gap-3 px-5 py-4 border-t border-border">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl bg-surface text-foreground hover:bg-surface text-sm transition-colors">
             Cancelar
           </button>
           <button
             onClick={doHide}
             disabled={selected.size === 0 || hiding || done}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-foreground text-sm font-medium transition-colors disabled:opacity-50"
           >
             {hiding ? <><RefreshCw size={14} className="animate-spin" /> Ocultando...</>
               : done ? <><CheckCircle size={14} /> Concluído</>
@@ -241,17 +241,17 @@ function ConfirmModal({
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onCancel}>
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-white font-bold text-lg mb-2">{title}</h3>
-        <p className="text-zinc-400 text-sm mb-6 whitespace-pre-line">{message}</p>
+      <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h3 className="text-foreground font-bold text-lg mb-2">{title}</h3>
+        <p className="text-muted text-sm mb-6 whitespace-pre-line">{message}</p>
         <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors">
+          <button onClick={onCancel} className="px-4 py-2 rounded-xl bg-surface text-foreground hover:bg-surface transition-colors">
             Cancelar
           </button>
           <button
             onClick={onConfirm}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              destructive ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-purple-600 hover:bg-purple-500 text-white'
+              destructive ? 'bg-red-600 hover:bg-red-500 text-foreground' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
             }`}
           >
             {confirmLabel}
@@ -269,7 +269,7 @@ function ScoreBar({ score }: { score: number }) {
   const label = score >= 7 ? 'text-red-400' : score >= 4 ? 'text-yellow-400' : 'text-green-400'
   return (
     <div className="flex items-center gap-2 min-w-0">
-      <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
       <span className={`text-xs font-bold tabular-nums shrink-0 ${label}`}>{score}</span>
@@ -280,7 +280,7 @@ function ScoreBar({ score }: { score: number }) {
 // ——— Age rating badge ———
 function AgeRatingBadge({ rating }: { rating: string | null }) {
   if (!rating) return null
-  const cls = AGE_RATING_COLORS[rating] ?? 'bg-zinc-700/50 text-zinc-400 border-zinc-600/40'
+  const cls = AGE_RATING_COLORS[rating] ?? 'bg-surface text-muted border-border'
   return (
     <span className={`text-xs px-1.5 py-0.5 border rounded font-bold tabular-nums ${cls}`}>
       {rating === 'L' ? 'L' : `+${rating}`}
@@ -301,17 +301,17 @@ function ProductionCard({
     : []
 
   const borderColor = prod.isHidden
-    ? 'border-zinc-700/50'
+    ? 'border-border'
     : highlightAdult
     ? 'border-pink-500/50'
     : prod.flaggedAsNonKorean
-    ? 'border-zinc-700'
+    ? 'border-border'
     : prod.suspicionScore >= 7 ? 'border-red-500/40'
     : prod.suspicionScore >= 4 ? 'border-yellow-500/30'
     : 'border-green-500/20'
 
   const bgColor = prod.isHidden
-    ? 'bg-zinc-900/40 opacity-60'
+    ? 'bg-surface opacity-60'
     : highlightAdult
     ? 'bg-pink-500/5'
     : prod.flaggedAsNonKorean
@@ -327,7 +327,7 @@ function ProductionCard({
     <div className={`border rounded-xl transition-colors ${borderColor} ${bgColor} ${selected ? 'ring-1 ring-purple-500' : ''}`}>
       <div className="flex gap-3 p-3">
         {/* Checkbox */}
-        <button onClick={onSelect} className="shrink-0 mt-1 text-zinc-500 hover:text-purple-400 transition-colors">
+        <button onClick={onSelect} className="shrink-0 mt-1 text-muted hover:text-purple-400 transition-colors">
           {selected ? <CheckSquare size={18} className="text-purple-400" /> : <Square size={18} />}
         </button>
 
@@ -336,8 +336,8 @@ function ProductionCard({
           {prod.imageUrl ? (
             <Image src={prod.imageUrl} alt={prod.titlePt} width={56} height={80} className="rounded object-cover w-14 h-20" />
           ) : (
-            <div className="w-14 h-20 bg-zinc-800 rounded flex items-center justify-center">
-              <Film size={20} className="text-zinc-600" />
+            <div className="w-14 h-20 bg-surface rounded flex items-center justify-center">
+              <Film size={20} className="text-muted" />
             </div>
           )}
         </div>
@@ -349,21 +349,21 @@ function ProductionCard({
             <SuspicionIcon size={14} className={`shrink-0 mt-0.5 ${iconColor}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-semibold text-white text-sm leading-tight">{prod.titlePt}</span>
-                <Link href={`/productions/${prod.id}`} target="_blank" className="text-zinc-500 hover:text-purple-400 transition-colors">
+                <span className="font-semibold text-foreground text-sm leading-tight">{prod.titlePt}</span>
+                <Link href={`/productions/${prod.id}`} target="_blank" className="text-muted hover:text-purple-400 transition-colors">
                   <ExternalLink size={12} />
                 </Link>
-                <Link href={`/admin/productions/${prod.id}`} className="text-zinc-500 hover:text-blue-400 transition-colors" title="Editar">
+                <Link href={`/admin/productions/${prod.id}`} className="text-muted hover:text-blue-400 transition-colors" title="Editar">
                   <Pencil size={12} />
                 </Link>
               </div>
-              {prod.titleKr && <p className="text-xs text-zinc-500 mt-0.5">{prod.titleKr}</p>}
+              {prod.titleKr && <p className="text-xs text-muted mt-0.5">{prod.titleKr}</p>}
             </div>
             {/* Status badges — top-right vertical stack */}
             <div className="shrink-0 flex flex-col items-end gap-1">
               <AgeRatingBadge rating={prod.ageRating} />
               {prod.isHidden && (
-                <span className="text-xs px-1.5 py-0.5 bg-zinc-700/60 text-zinc-400 border border-zinc-600/40 rounded flex items-center gap-1">
+                <span className="text-xs px-1.5 py-0.5 bg-surface text-muted border border-border rounded flex items-center gap-1">
                   <EyeOff size={10} /> Oculto
                 </span>
               )}
@@ -382,8 +382,8 @@ function ProductionCard({
           </div>
 
           {/* Meta */}
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-2 flex-wrap">
-            <span className="px-1.5 py-0.5 bg-zinc-800 rounded">{prod.type}</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted mb-2 flex-wrap">
+            <span className="px-1.5 py-0.5 bg-surface rounded">{prod.type}</span>
             {prod.year && <span>{prod.year}</span>}
             {prod.tmdbId && <span className="text-blue-400/80">TMDB ✓</span>}
             <span>{prod._count.artists} artistas</span>
@@ -392,7 +392,7 @@ function ProductionCard({
 
           {/* Synopsis preview */}
           {prod.synopsis && (
-            <p className="text-xs text-zinc-500 mb-2 line-clamp-1">{prod.synopsis}</p>
+            <p className="text-xs text-muted mb-2 line-clamp-1">{prod.synopsis}</p>
           )}
 
           {/* Adult keywords found */}
@@ -417,7 +417,7 @@ function ProductionCard({
           {prod.suspicionReasons.length > 0 && !prod.flaggedAsNonKorean && !prod.isHidden && (
             <div className="flex flex-wrap gap-1 mb-2">
               {prod.suspicionReasons.map((r, i) => (
-                <span key={i} className="text-xs px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-400">{r}</span>
+                <span key={i} className="text-xs px-2 py-0.5 bg-surface border border-border rounded-full text-muted">{r}</span>
               ))}
             </div>
           )}
@@ -441,8 +441,8 @@ function ProductionCard({
               disabled={actioning}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
                 prod.isHidden
-                  ? 'bg-zinc-700/40 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
-                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-yellow-400 border border-zinc-700'
+                  ? 'bg-surface text-muted hover:bg-surface border border-border'
+                  : 'bg-surface text-muted hover:bg-surface hover:text-yellow-400 border border-border'
               }`}
             >
               {prod.isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -451,7 +451,7 @@ function ProductionCard({
             <button
               onClick={onDelete}
               disabled={actioning}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-red-400 transition-colors disabled:opacity-50 border border-zinc-700"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface text-muted hover:bg-surface hover:text-red-400 transition-colors disabled:opacity-50 border border-border"
             >
               <Trash2 size={12} />
               Deletar
@@ -516,13 +516,13 @@ function AdultPipelinePanel({
   const urgentCount = (autoHideDone ? 0 : autoHideCount) + (!hideByKeywordsDone && adultCount > 0 ? 1 : 0)
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+    <div className="bg-surface border border-border rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors"
       >
-        <ShieldAlert size={16} className={urgentCount > 0 ? 'text-pink-400 shrink-0' : 'text-zinc-500 shrink-0'} />
-        <span className="text-sm font-medium text-white flex-1 text-left">Pipeline: Conteúdo Adulto</span>
+        <ShieldAlert size={16} className={urgentCount > 0 ? 'text-pink-400 shrink-0' : 'text-muted shrink-0'} />
+        <span className="text-sm font-medium text-foreground flex-1 text-left">Pipeline: Conteúdo Adulto</span>
         <div className="flex items-center gap-2 mr-1">
           {!autoHideDone && autoHideCount > 0 && (
             <span className="text-xs px-2 py-0.5 bg-pink-600/20 text-pink-400 border border-pink-500/30 rounded-full font-medium">
@@ -540,20 +540,20 @@ function AdultPipelinePanel({
             </span>
           )}
         </div>
-        {open ? <ChevronUp size={16} className="text-zinc-500 shrink-0" /> : <ChevronDown size={16} className="text-zinc-500 shrink-0" />}
+        {open ? <ChevronUp size={16} className="text-muted shrink-0" /> : <ChevronDown size={16} className="text-muted shrink-0" />}
       </button>
 
       {open && (
-        <div className="border-t border-zinc-800 divide-y divide-zinc-800/60">
+        <div className="border-t border-border divide-y divide-border">
           {/* Step 1: IA Analysis */}
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center shrink-0">
                 <span className="text-xs font-bold text-purple-300">1</span>
               </div>
-              <span className="text-sm font-medium text-white">Analisar com DeepSeek</span>
+              <span className="text-sm font-medium text-foreground">Analisar com DeepSeek</span>
               {aiStats && (
-                <span className="text-xs text-zinc-500 ml-auto">
+                <span className="text-xs text-muted ml-auto">
                   {aiStats.checked}/{aiStats.total} verificados · {aiStats.isAdult} adultos
                 </span>
               )}
@@ -561,12 +561,12 @@ function AdultPipelinePanel({
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <label className="text-xs text-zinc-400">Qtd:</label>
+                <label className="text-xs text-muted">Qtd:</label>
                 <select
                   value={aiLimit}
                   onChange={e => setAiLimit(Number(e.target.value))}
                   disabled={aiRunning}
-                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                  className="bg-background border border-border text-foreground text-xs rounded-xl px-2 py-1.5 focus:outline-none focus:border-accent/50"
                 >
                   {[5, 10, 20, 30, 50].map(n => (
                     <option key={n} value={n}>{n} produções</option>
@@ -574,24 +574,24 @@ function AdultPipelinePanel({
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs text-zinc-400">Escopo:</label>
+                <label className="text-xs text-muted">Escopo:</label>
                 <select
                   value={aiOnlyUnchecked ? 'unchecked' : 'all'}
                   onChange={e => setAiOnlyUnchecked(e.target.value === 'unchecked')}
                   disabled={aiRunning}
-                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                  className="bg-background border border-border text-foreground text-xs rounded-xl px-2 py-1.5 focus:outline-none focus:border-accent/50"
                 >
                   <option value="unchecked">Não verificadas ({aiStats?.unchecked ?? '?'})</option>
                   <option value="all">Todas (re-verificar)</option>
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs text-zinc-400">Classificação:</label>
+                <label className="text-xs text-muted">Classificação:</label>
                 <select
                   value={aiOnlyNoRating ? 'no_rating' : 'all'}
                   onChange={e => setAiOnlyNoRating(e.target.value === 'no_rating')}
                   disabled={aiRunning}
-                  className="bg-zinc-800 border border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                  className="bg-background border border-border text-foreground text-xs rounded-xl px-2 py-1.5 focus:outline-none focus:border-accent/50"
                 >
                   <option value="no_rating">Sem classificação ({aiStats?.uncheckedNoRating ?? '?'})</option>
                   <option value="all">Qualquer</option>
@@ -600,7 +600,7 @@ function AdultPipelinePanel({
               <button
                 onClick={onRunAi}
                 disabled={aiRunning}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
               >
                 {aiRunning
                   ? <><RefreshCw size={12} className="animate-spin" /> Analisando...</>
@@ -611,7 +611,7 @@ function AdultPipelinePanel({
 
             {aiStats && (
               <div className="flex gap-2 flex-wrap text-xs">
-                <span className="px-2 py-1 bg-zinc-800 rounded text-zinc-400">Total: <strong className="text-white">{aiStats.total}</strong></span>
+                <span className="px-2 py-1 bg-surface rounded text-muted">Total: <strong className="text-foreground">{aiStats.total}</strong></span>
                 <span className="px-2 py-1 bg-green-600/10 border border-green-600/20 rounded text-green-400">Verificadas: <strong>{aiStats.checked}</strong></span>
                 <span className="px-2 py-1 bg-yellow-600/10 border border-yellow-600/20 rounded text-yellow-400">Pendentes: <strong>{aiStats.uncheckedNoRating}</strong></span>
                 <span className="px-2 py-1 bg-pink-600/10 border border-pink-600/20 rounded text-pink-400">Adultos: <strong>{aiStats.isAdult}</strong></span>
@@ -619,7 +619,7 @@ function AdultPipelinePanel({
             )}
 
             {aiLog.length > 0 && (
-              <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 max-h-36 overflow-y-auto space-y-1">
+              <div className="bg-background border border-border rounded-lg p-3 max-h-36 overflow-y-auto space-y-1">
                 {aiLog.map((entry, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     {entry.error
@@ -628,7 +628,7 @@ function AdultPipelinePanel({
                       ? <ShieldAlert size={11} className="text-pink-400 shrink-0" />
                       : <CheckCircle size={11} className="text-green-400 shrink-0" />
                     }
-                    <span className={`flex-1 truncate ${entry.error ? 'text-red-400' : entry.isAdult ? 'text-pink-300' : 'text-zinc-400'}`}>
+                    <span className={`flex-1 truncate ${entry.error ? 'text-red-400' : entry.isAdult ? 'text-pink-300' : 'text-muted'}`}>
                       {entry.title}
                     </span>
                     {!entry.error && (
@@ -654,9 +654,9 @@ function AdultPipelinePanel({
                 <span className="text-xs font-bold text-pink-300">2</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white">Ocultar confirmadas pela IA</p>
+                <p className="text-sm font-medium text-foreground">Ocultar confirmadas pela IA</p>
                 {autoHidePreview ? (
-                  <p className="text-xs text-zinc-500 mt-0.5">
+                  <p className="text-xs text-muted mt-0.5">
                     {autoHideDone
                       ? `${autoHideDone.hiddenProductions} produção(ões) ocultadas`
                       : autoHidePreview.adultVisible === 0
@@ -664,7 +664,7 @@ function AdultPipelinePanel({
                       : `${autoHidePreview.adultVisible} produção(ões) adultas ainda visíveis`}
                   </p>
                 ) : (
-                  <p className="text-xs text-zinc-600 mt-0.5">Carregando...</p>
+                  <p className="text-xs text-muted mt-0.5">Carregando...</p>
                 )}
               </div>
               {autoHideDone ? (
@@ -691,8 +691,8 @@ function AdultPipelinePanel({
                 <span className="text-xs font-bold text-yellow-300">3</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white">Ocultar por palavras-chave</p>
-                <p className="text-xs text-zinc-500 mt-0.5">
+                <p className="text-sm font-medium text-foreground">Ocultar por palavras-chave</p>
+                <p className="text-xs text-muted mt-0.5">
                   {hideByKeywordsDone !== null
                     ? `${hideByKeywordsDone} produções ocultadas`
                     : adultCount > 0
@@ -708,7 +708,7 @@ function AdultPipelinePanel({
                 <button
                   onClick={onOpenReviewModal}
                   disabled={reviewModalOpen}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-yellow-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface text-yellow-400 hover:bg-surface border border-border rounded-lg transition-colors disabled:opacity-50"
                 >
                   <EyeOff size={12} /> Revisar e ocultar
                 </button>
@@ -1048,9 +1048,9 @@ function ProductionModerationContent() {
     ? [
         { label: 'Suspeitas', value: stats.suspicious, color: 'text-red-400', filterKey: 'suspicious' },
         { label: 'Recentes (7d)', value: stats.recent, color: 'text-yellow-400', filterKey: 'recent' },
-        { label: 'Marcadas', value: stats.flagged, color: 'text-zinc-400', filterKey: 'flagged' },
+        { label: 'Marcadas', value: stats.flagged, color: 'text-muted', filterKey: 'flagged' },
         { label: 'Adulto', value: stats.adult, color: 'text-pink-400', filterKey: 'adult' },
-        { label: 'Ocultas', value: stats.hidden, color: 'text-zinc-400', filterKey: 'hidden' },
+        { label: 'Ocultas', value: stats.hidden, color: 'text-muted', filterKey: 'hidden' },
         { label: 'Total ativas', value: stats.all, color: 'text-purple-400', filterKey: 'all' },
       ]
     : []
@@ -1069,7 +1069,7 @@ function ProductionModerationContent() {
       />
 
       <div className="space-y-4">
-        <p className="text-zinc-400 text-sm -mt-6">Revisar produções para relevância à cultura coreana</p>
+        <p className="text-muted text-sm -mt-6">Revisar produções para relevância à cultura coreana</p>
 
         {/* Stats bar */}
         {stats && (
@@ -1078,12 +1078,12 @@ function ProductionModerationContent() {
               <button
                 key={s.label}
                 onClick={() => handleFilterChange(s.filterKey)}
-                className={`bg-zinc-900 border rounded-xl p-3 text-center hover:border-zinc-700 transition-colors ${
-                  filter === s.filterKey ? 'border-purple-600/50 ring-1 ring-purple-600/30' : 'border-zinc-800'
+                className={`bg-surface border rounded-xl p-3 text-center hover:border-border transition-colors ${
+                  filter === s.filterKey ? 'border-purple-600/50 ring-1 ring-purple-600/30' : 'border-border'
                 }`}
               >
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString()}</div>
-                <div className="text-xs text-zinc-500 mt-0.5">{s.label}</div>
+                <div className="text-xs text-muted mt-0.5">{s.label}</div>
               </button>
             ))}
           </div>
@@ -1120,19 +1120,19 @@ function ProductionModerationContent() {
         />
 
         {/* Filters + Sort + Search */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+        <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
           <div className="flex flex-wrap gap-2">
             {filterTabs.map(f => {
               const isActive = filter === f.key
               const activeClass = f.danger
-                ? 'bg-pink-700 text-white'
-                : 'bg-purple-600 text-white'
+                ? 'bg-pink-700 text-foreground'
+                : 'bg-purple-600 text-foreground'
               const inactiveClass = f.danger
                 ? 'bg-pink-600/10 text-pink-400 border border-pink-600/30 hover:bg-pink-600/20'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                : 'bg-surface text-muted hover:bg-surface'
               const badgeClass = isActive
                 ? f.danger ? 'bg-pink-600/50' : 'bg-purple-500/50'
-                : 'bg-zinc-700'
+                : 'bg-surface'
               return (
                 <button
                   key={f.key}
@@ -1153,11 +1153,11 @@ function ProductionModerationContent() {
           {/* Sort + Search row */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <ArrowUpDown size={13} className="text-zinc-500" />
+              <ArrowUpDown size={13} className="text-muted" />
               <select
                 value={sort}
                 onChange={e => handleSortChange(e.target.value as Sort)}
-                className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                className="bg-background border border-border text-foreground text-xs rounded-xl px-2 py-1.5 focus:outline-none focus:border-accent/50"
               >
                 <option value="createdAt_desc">Mais recentes</option>
                 <option value="titlePt_asc">Título A–Z</option>
@@ -1165,18 +1165,18 @@ function ProductionModerationContent() {
               </select>
             </div>
             <div className="relative flex-1 min-w-48">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 placeholder="Buscar por título..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-8 pr-8 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 pr-10 py-2 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
               />
               {search && (
                 <button
                   onClick={() => setSearch('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -1213,13 +1213,13 @@ function ProductionModerationContent() {
             )}
             <button
               onClick={() => handleBulkHide(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-yellow-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface text-yellow-400 hover:bg-surface border border-border rounded-lg transition-colors"
             >
               <EyeOff size={12} /> Ocultar
             </button>
             <button
               onClick={() => handleBulkHide(false)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface text-muted hover:bg-surface border border-border rounded-lg transition-colors"
             >
               <Eye size={12} /> Reexibir
             </button>
@@ -1233,11 +1233,11 @@ function ProductionModerationContent() {
             )}
             <button
               onClick={() => handleBulkDelete(false)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 text-red-400 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface text-red-400 hover:bg-surface border border-border rounded-lg transition-colors"
             >
               <Trash2 size={12} /> Deletar
             </button>
-            <button onClick={() => setSelected(new Set())} className="text-zinc-500 hover:text-zinc-300 transition-colors text-xs">
+            <button onClick={() => setSelected(new Set())} className="text-muted hover:text-foreground transition-colors text-xs">
               Limpar
             </button>
           </div>
@@ -1246,14 +1246,14 @@ function ProductionModerationContent() {
         {/* Select-all + count */}
         {productions.length > 0 && !loading && (
           <div className="flex items-center gap-2 px-1">
-            <button onClick={toggleSelectAll} className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+            <button onClick={toggleSelectAll} className="flex items-center gap-2 text-xs text-muted hover:text-foreground transition-colors">
               {allSelected ? <CheckSquare size={14} className="text-purple-400" />
                 : someSelected ? <Minus size={14} className="text-purple-400" />
                 : <Square size={14} />}
               {allSelected ? 'Desmarcar todos' : 'Selecionar todos'}
             </button>
             {pagination && (
-              <span className="text-xs text-zinc-600 ml-auto">
+              <span className="text-xs text-muted ml-auto">
                 {pagination.total} produção{pagination.total !== 1 ? 'ões' : ''}
               </span>
             )}
@@ -1267,9 +1267,9 @@ function ProductionModerationContent() {
               <RefreshCw className="w-7 h-7 text-purple-500 animate-spin" />
             </div>
           ) : productions.length === 0 ? (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
-              <Film className="w-14 h-14 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhuma produção encontrada</p>
+            <div className="bg-surface border border-border rounded-2xl p-12 text-center">
+              <Film className="w-14 h-14 text-muted mx-auto mb-4" />
+              <p className="text-muted">Nenhuma produção encontrada</p>
               {search && (
                 <button onClick={() => setSearch('')} className="mt-3 text-sm text-purple-400 hover:underline">
                   Limpar busca
@@ -1299,15 +1299,15 @@ function ProductionModerationContent() {
             <button
               onClick={() => fetchProductions(pagination.page - 1)}
               disabled={pagination.page <= 1}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               <ChevronLeft size={16} /> Anterior
             </button>
-            <span className="text-sm text-zinc-500">{pagination.page} / {pagination.pages}</span>
+            <span className="text-sm text-muted">{pagination.page} / {pagination.pages}</span>
             <button
               onClick={() => fetchProductions(pagination.page + 1)}
               disabled={pagination.page >= pagination.pages}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
             >
               Próxima <ChevronRight size={16} />
             </button>

@@ -81,7 +81,7 @@ function durationColor(ms: number) {
     if (ms >= 3000) return 'text-red-400'
     if (ms >= 1000) return 'text-orange-400'
     if (ms >= 500)  return 'text-yellow-500'
-    return 'text-zinc-500'
+    return 'text-muted'
 }
 
 function formatTimeAgo(dateStr: string) {
@@ -210,15 +210,15 @@ export default function ServerLogsPage() {
             <div className="space-y-5">
 
                 {/* Tabs */}
-                <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden w-fit">
+                <div className="flex bg-surface border border-border rounded-lg overflow-hidden w-fit">
                     {TABS.map(tab => (
                         <button
                             key={tab.value}
                             onClick={() => setActiveTab(tab.value as 'app' | 'gateway')}
                             className={`px-4 py-2 text-xs font-bold transition-colors flex items-center gap-1.5 ${
                                 activeTab === tab.value
-                                    ? 'bg-purple-600 text-white'
-                                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                    ? 'bg-purple-600 text-foreground'
+                                    : 'text-muted hover:text-foreground hover:bg-surface'
                             }`}
                         >
                             {tab.value === 'gateway' && <ShieldAlert size={12} />}
@@ -232,52 +232,52 @@ export default function ServerLogsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="bg-surface border border-border rounded-xl p-4">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-zinc-500 font-medium">Total</p>
-                            <Layers size={14} className="text-zinc-600" />
+                            <p className="text-xs text-muted font-medium">Total</p>
+                            <Layers size={14} className="text-muted" />
                         </div>
-                        <p className="text-2xl font-black text-white">{counts.all.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-zinc-600 mt-0.5">registros no banco</p>
+                        <p className="text-2xl font-black text-foreground">{counts.all.toLocaleString('pt-BR')}</p>
+                        <p className="text-[11px] text-muted mt-0.5">registros no banco</p>
                     </div>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="bg-surface border border-border rounded-xl p-4">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-zinc-500 font-medium">Todos erros</p>
+                            <p className="text-xs text-muted font-medium">Todos erros</p>
                             <AlertTriangle size={14} className="text-orange-500" />
                         </div>
                         <p className="text-2xl font-black text-orange-400">{counts.errors.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-zinc-600 mt-0.5">4xx + 5xx</p>
+                        <p className="text-[11px] text-muted mt-0.5">4xx + 5xx</p>
                     </div>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="bg-surface border border-border rounded-xl p-4">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-zinc-500 font-medium">Server errors</p>
+                            <p className="text-xs text-muted font-medium">Server errors</p>
                             <ServerCrash size={14} className="text-red-500" />
                         </div>
                         <p className="text-2xl font-black text-red-400">{counts.fivexx.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-zinc-600 mt-0.5">status 5xx</p>
+                        <p className="text-[11px] text-muted mt-0.5">status 5xx</p>
                     </div>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="bg-surface border border-border rounded-xl p-4">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-zinc-500 font-medium">Bad requests</p>
+                            <p className="text-xs text-muted font-medium">Bad requests</p>
                             <AlertTriangle size={14} className="text-yellow-500" />
                         </div>
                         <p className="text-2xl font-black text-yellow-400">{counts.fourxx.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-zinc-600 mt-0.5">status 4xx</p>
+                        <p className="text-[11px] text-muted mt-0.5">status 4xx</p>
                     </div>
                 </div>
 
                 {/* Toolbar */}
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Status filter */}
-                    <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="flex bg-surface border border-border rounded-lg overflow-hidden flex-shrink-0">
                         {STATUS_FILTERS.map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => { setFilter(opt.value); setPage(1) }}
                                 className={`px-3 py-2 text-xs font-bold transition-colors ${
                                     filter === opt.value
-                                        ? 'bg-purple-600 text-white'
-                                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                        ? 'bg-purple-600 text-foreground'
+                                        : 'text-muted hover:text-foreground hover:bg-surface'
                                 }`}
                             >
                                 {opt.label}
@@ -288,15 +288,15 @@ export default function ServerLogsPage() {
                     {/* Path search */}
                     <form onSubmit={handleSearch} className="flex items-center gap-1 flex-1 min-w-[180px] max-w-xs">
                         <div className="relative flex-1">
-                            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                            <Search size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input
                                 value={searchInput}
                                 onChange={e => setSearchInput(e.target.value)}
                                 placeholder="Filtrar por path..."
-                                className="w-full pl-8 pr-8 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
+                                className="w-full px-4 pr-10 py-2 bg-background border border-border rounded-xl text-xs text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
                             />
                             {searchInput && (
-                                <button type="button" onClick={() => { setSearchInput(''); setSearch('') }} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+                                <button type="button" onClick={() => { setSearchInput(''); setSearch('') }} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
                                     <X size={12} />
                                 </button>
                             )}
@@ -309,7 +309,7 @@ export default function ServerLogsPage() {
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${
                             autoRefresh
                                 ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                                : 'bg-surface border-border text-muted hover:text-foreground'
                         }`}
                         title={autoRefresh ? 'Auto-refresh ativo (30s)' : 'Ativar auto-refresh'}
                     >
@@ -321,7 +321,7 @@ export default function ServerLogsPage() {
                     <button
                         onClick={() => fetchLogs(page)}
                         disabled={loading}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-surface border border-border text-muted hover:text-foreground rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
                     >
                         <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                         <span className="hidden sm:inline">Atualizar</span>
@@ -339,7 +339,7 @@ export default function ServerLogsPage() {
                             <ChevronDown size={12} />
                         </button>
                         {clearMenu && (
-                            <div className="absolute right-0 top-full mt-1 z-20 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden w-44">
+                            <div className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-44">
                                 {[
                                     { label: 'Mais de 7 dias', days: 7 },
                                     { label: 'Mais de 30 dias', days: 30 },
@@ -348,10 +348,10 @@ export default function ServerLogsPage() {
                                     <button
                                         key={days}
                                         onClick={() => clearLogs(days)}
-                                        className={`w-full flex items-center gap-2 px-4 py-3 text-xs font-bold transition-colors border-b border-zinc-800 last:border-0 ${
+                                        className={`w-full flex items-center gap-2 px-4 py-3 text-xs font-bold transition-colors border-b border-border last:border-0 ${
                                             days === 0
                                                 ? 'text-red-400 hover:bg-red-950/30'
-                                                : 'text-zinc-300 hover:bg-zinc-800'
+                                                : 'text-foreground hover:bg-surface'
                                         }`}
                                     >
                                         {label}
@@ -363,7 +363,7 @@ export default function ServerLogsPage() {
                 </div>
 
                 {/* Count */}
-                <p className="text-xs text-zinc-600">
+                <p className="text-xs text-muted">
                     {total.toLocaleString('pt-BR')} registro{total !== 1 ? 's' : ''}
                     {search && <span className="ml-1 text-purple-400">com &ldquo;{search}&rdquo;</span>}
                     {pages > 1 && <span> · página {page} de {pages}</span>}
@@ -371,33 +371,33 @@ export default function ServerLogsPage() {
 
                 {/* Log list */}
                 {loading ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30">
+                    <div className="rounded-xl border border-border bg-surface">
                         {Array.from({ length: 8 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800/50 last:border-0">
-                                <div className="w-10 h-5 rounded bg-zinc-800 animate-pulse" />
-                                <div className="w-10 h-4 rounded bg-zinc-800 animate-pulse" />
-                                <div className="flex-1 h-4 rounded bg-zinc-800 animate-pulse" />
-                                <div className="w-12 h-4 rounded bg-zinc-800 animate-pulse" />
+                            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
+                                <div className="w-10 h-5 rounded bg-surface animate-pulse" />
+                                <div className="w-10 h-4 rounded bg-surface animate-pulse" />
+                                <div className="flex-1 h-4 rounded bg-surface animate-pulse" />
+                                <div className="w-12 h-4 rounded bg-surface animate-pulse" />
                             </div>
                         ))}
                     </div>
                 ) : logs.length === 0 ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 text-center py-16">
+                    <div className="rounded-xl border border-border bg-surface text-center py-16">
                         <CheckCircle2 size={36} className="mx-auto mb-3 text-green-700 opacity-60" />
-                        <p className="text-zinc-500 text-sm">Nenhum log encontrado</p>
-                        {search && <p className="text-zinc-600 text-xs mt-1">para o filtro &ldquo;{search}&rdquo;</p>}
+                        <p className="text-muted text-sm">Nenhum log encontrado</p>
+                        {search && <p className="text-muted text-xs mt-1">para o filtro &ldquo;{search}&rdquo;</p>}
                     </div>
                 ) : (
-                    <div className="rounded-xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/50">
+                    <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
                         {logs.map(log => (
                             <div key={log.id} className={`border-l-2 ${leftBorder(log.status)}`}>
                                 {/* Row */}
                                 <button
                                     onClick={() => setExpanded(e => e === log.id ? null : log.id)}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-zinc-900/60 transition-colors"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-surface transition-colors"
                                 >
                                     {/* Expand indicator */}
-                                    <span className="text-zinc-700 flex-shrink-0">
+                                    <span className="text-muted flex-shrink-0">
                                         {expanded === log.id
                                             ? <ChevronDown size={12} />
                                             : <ChevronRight size={12} />
@@ -410,12 +410,12 @@ export default function ServerLogsPage() {
                                     </span>
 
                                     {/* Method */}
-                                    <span className={`flex-shrink-0 text-[10px] font-black w-10 ${METHOD_COLORS[log.method] ?? 'text-zinc-400'}`}>
+                                    <span className={`flex-shrink-0 text-[10px] font-black w-10 ${METHOD_COLORS[log.method] ?? 'text-muted'}`}>
                                         {log.method}
                                     </span>
 
                                     {/* Path */}
-                                    <span className="flex-1 text-xs text-zinc-300 font-mono truncate min-w-0">
+                                    <span className="flex-1 text-xs text-foreground font-mono truncate min-w-0">
                                         {log.path}
                                     </span>
 
@@ -425,13 +425,13 @@ export default function ServerLogsPage() {
                                     </span>
 
                                     {/* UA (desktop) */}
-                                    <span className="hidden lg:block flex-shrink-0 text-[10px] text-zinc-600 w-16 truncate text-right">
+                                    <span className="hidden lg:block flex-shrink-0 text-[10px] text-muted w-16 truncate text-right">
                                         {parseUserAgent(log.userAgent)}
                                     </span>
 
                                     {/* Time */}
                                     <span
-                                        className="flex-shrink-0 text-[10px] text-zinc-600 w-10 text-right"
+                                        className="flex-shrink-0 text-[10px] text-muted w-10 text-right"
                                         title={new Date(log.createdAt).toLocaleString('pt-BR')}
                                     >
                                         {formatTimeAgo(log.createdAt)}
@@ -440,11 +440,11 @@ export default function ServerLogsPage() {
 
                                 {/* Expanded */}
                                 {expanded === log.id && (
-                                    <div className="border-t border-zinc-800/60 px-4 py-4 bg-black/20 space-y-3">
+                                    <div className="border-t border-border px-4 py-4 bg-black/20 space-y-3">
                                         {/* Error message */}
                                         {log.error && (
                                             <div>
-                                                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1.5">Erro / Resposta</p>
+                                                <p className="text-[10px] text-muted uppercase tracking-widest font-bold mb-1.5">Erro / Resposta</p>
                                                 <pre className="text-xs text-orange-300 font-mono whitespace-pre-wrap break-all bg-orange-950/20 border border-orange-900/40 rounded-lg p-3 max-h-64 overflow-y-auto">
                                                     {log.error}
                                                 </pre>
@@ -454,23 +454,23 @@ export default function ServerLogsPage() {
                                         {/* Meta grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
                                             <div className="flex items-center gap-2">
-                                                <Globe size={11} className="text-zinc-600 flex-shrink-0" />
-                                                <span className="text-zinc-600">IP:</span>
-                                                <span className="text-zinc-300 font-mono">{log.ip ?? '—'}</span>
+                                                <Globe size={11} className="text-muted flex-shrink-0" />
+                                                <span className="text-muted">IP:</span>
+                                                <span className="text-foreground font-mono">{log.ip ?? '—'}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Clock size={11} className="text-zinc-600 flex-shrink-0" />
-                                                <span className="text-zinc-600">Data:</span>
-                                                <span className="text-zinc-300">{new Date(log.createdAt).toLocaleString('pt-BR')}</span>
+                                                <Clock size={11} className="text-muted flex-shrink-0" />
+                                                <span className="text-muted">Data:</span>
+                                                <span className="text-foreground">{new Date(log.createdAt).toLocaleString('pt-BR')}</span>
                                             </div>
                                             <div className="flex items-start gap-2 sm:col-span-2">
-                                                <span className="text-zinc-600 flex-shrink-0">UA:</span>
-                                                <span className="text-zinc-400 break-all">{log.userAgent ?? '—'}</span>
+                                                <span className="text-muted flex-shrink-0">UA:</span>
+                                                <span className="text-muted break-all">{log.userAgent ?? '—'}</span>
                                             </div>
                                             {log.body && log.body !== log.error && (
                                                 <div className="sm:col-span-2">
-                                                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Request Body</p>
-                                                    <pre className="text-xs text-zinc-400 font-mono whitespace-pre-wrap break-all bg-zinc-900 border border-zinc-800 rounded p-2">
+                                                    <p className="text-[10px] text-muted uppercase tracking-widest font-bold mb-1">Request Body</p>
+                                                    <pre className="text-xs text-muted font-mono whitespace-pre-wrap break-all bg-surface border border-border rounded p-2">
                                                         {log.body}
                                                     </pre>
                                                 </div>
@@ -489,15 +489,15 @@ export default function ServerLogsPage() {
                         <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page <= 1}
-                            className="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
+                            className="px-3 py-2 rounded-xl bg-surface border border-border text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
                         >
                             ← Anterior
                         </button>
-                        <span className="text-zinc-500">{page} / {pages}</span>
+                        <span className="text-muted">{page} / {pages}</span>
                         <button
                             onClick={() => setPage(p => Math.min(pages, p + 1))}
                             disabled={page >= pages}
-                            className="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
+                            className="px-3 py-2 rounded-xl bg-surface border border-border text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
                         >
                             Próxima →
                         </button>
@@ -523,29 +523,29 @@ export default function ServerLogsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="bg-surface border border-border rounded-xl p-4">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-zinc-500 font-medium">Total</p>
-                            <Layers size={14} className="text-zinc-600" />
+                            <p className="text-xs text-muted font-medium">Total</p>
+                            <Layers size={14} className="text-muted" />
                         </div>
-                        <p className="text-2xl font-black text-white">{gwCounts.total.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-zinc-600 mt-0.5">últimas {gwCounts.total > 0 ? gwCounts.total : '—'} entradas</p>
+                        <p className="text-2xl font-black text-foreground">{gwCounts.total.toLocaleString('pt-BR')}</p>
+                        <p className="text-[11px] text-muted mt-0.5">últimas {gwCounts.total > 0 ? gwCounts.total : '—'} entradas</p>
                     </div>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="bg-surface border border-border rounded-xl p-4">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-zinc-500 font-medium">502 Bad Gateway</p>
+                            <p className="text-xs text-muted font-medium">502 Bad Gateway</p>
                             <ServerCrash size={14} className="text-red-500" />
                         </div>
                         <p className="text-2xl font-black text-red-400">{gwCounts.s502.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-zinc-600 mt-0.5">app inacessível</p>
+                        <p className="text-[11px] text-muted mt-0.5">app inacessível</p>
                     </div>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                    <div className="bg-surface border border-border rounded-xl p-4">
                         <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-zinc-500 font-medium">504 Timeout</p>
+                            <p className="text-xs text-muted font-medium">504 Timeout</p>
                             <Clock size={14} className="text-orange-500" />
                         </div>
                         <p className="text-2xl font-black text-orange-400">{gwCounts.s504.toLocaleString('pt-BR')}</p>
-                        <p className="text-[11px] text-zinc-600 mt-0.5">resposta lenta</p>
+                        <p className="text-[11px] text-muted mt-0.5">resposta lenta</p>
                     </div>
                 </div>
 
@@ -556,7 +556,7 @@ export default function ServerLogsPage() {
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${
                             autoRefresh
                                 ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                                : 'bg-surface border-border text-muted hover:text-foreground'
                         }`}
                     >
                         <RefreshCw size={12} className={autoRefresh ? 'animate-spin' : ''} />
@@ -565,7 +565,7 @@ export default function ServerLogsPage() {
                     <button
                         onClick={fetchGwLogs}
                         disabled={gwLoading}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-surface border border-border text-muted hover:text-foreground rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
                     >
                         <RefreshCw size={12} className={gwLoading ? 'animate-spin' : ''} />
                         Atualizar
@@ -574,76 +574,76 @@ export default function ServerLogsPage() {
 
                 {/* Gateway log list */}
                 {gwAvailable === false ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 text-center py-16">
-                        <ShieldAlert size={36} className="mx-auto mb-3 text-zinc-700 opacity-60" />
-                        <p className="text-zinc-500 text-sm font-bold">Log não disponível</p>
-                        <p className="text-zinc-600 text-xs mt-1 max-w-sm mx-auto">{gwMessage ?? 'Arquivo de log nginx não encontrado. Verifique o bind mount e a configuração do nginx.'}</p>
+                    <div className="rounded-xl border border-border bg-surface text-center py-16">
+                        <ShieldAlert size={36} className="mx-auto mb-3 text-muted opacity-60" />
+                        <p className="text-muted text-sm font-bold">Log não disponível</p>
+                        <p className="text-muted text-xs mt-1 max-w-sm mx-auto">{gwMessage ?? 'Arquivo de log nginx não encontrado. Verifique o bind mount e a configuração do nginx.'}</p>
                     </div>
                 ) : gwLoading ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30">
+                    <div className="rounded-xl border border-border bg-surface">
                         {Array.from({ length: 6 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800/50 last:border-0">
-                                <div className="w-10 h-5 rounded bg-zinc-800 animate-pulse" />
-                                <div className="w-10 h-4 rounded bg-zinc-800 animate-pulse" />
-                                <div className="flex-1 h-4 rounded bg-zinc-800 animate-pulse" />
-                                <div className="w-12 h-4 rounded bg-zinc-800 animate-pulse" />
+                            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
+                                <div className="w-10 h-5 rounded bg-surface animate-pulse" />
+                                <div className="w-10 h-4 rounded bg-surface animate-pulse" />
+                                <div className="flex-1 h-4 rounded bg-surface animate-pulse" />
+                                <div className="w-12 h-4 rounded bg-surface animate-pulse" />
                             </div>
                         ))}
                     </div>
                 ) : gwLogs.length === 0 ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 text-center py-16">
+                    <div className="rounded-xl border border-border bg-surface text-center py-16">
                         <CheckCircle2 size={36} className="mx-auto mb-3 text-green-700 opacity-60" />
-                        <p className="text-zinc-500 text-sm">Nenhum erro de gateway registrado</p>
+                        <p className="text-muted text-sm">Nenhum erro de gateway registrado</p>
                     </div>
                 ) : (
-                    <div className="rounded-xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/50">
+                    <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
                         {gwLogs.map((log, idx) => (
                             <div key={idx} className="border-l-2 border-l-red-600/60">
                                 <button
                                     onClick={() => setGwExpanded(e => e === idx ? null : idx)}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-zinc-900/60 transition-colors"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-surface transition-colors"
                                 >
-                                    <span className="text-zinc-700 flex-shrink-0">
+                                    <span className="text-muted flex-shrink-0">
                                         {gwExpanded === idx ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                                     </span>
                                     <span className={`flex-shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded tabular-nums ${statusBadge(log.status)}`}>
                                         {log.status}
                                     </span>
-                                    <span className={`flex-shrink-0 text-[10px] font-black w-10 ${METHOD_COLORS[log.method] ?? 'text-zinc-400'}`}>
+                                    <span className={`flex-shrink-0 text-[10px] font-black w-10 ${METHOD_COLORS[log.method] ?? 'text-muted'}`}>
                                         {log.method}
                                     </span>
-                                    <span className="flex-1 text-xs text-zinc-300 font-mono truncate min-w-0">
+                                    <span className="flex-1 text-xs text-foreground font-mono truncate min-w-0">
                                         {log.path}
                                     </span>
                                     <span className={`flex-shrink-0 text-[10px] tabular-nums font-mono ${durationColor(Math.round(log.duration * 1000))}`}>
                                         {(log.duration * 1000).toFixed(0)}ms
                                     </span>
-                                    <span className="hidden lg:block flex-shrink-0 text-[10px] text-zinc-600 w-16 truncate text-right">
+                                    <span className="hidden lg:block flex-shrink-0 text-[10px] text-muted w-16 truncate text-right">
                                         {parseUserAgent(log.ua)}
                                     </span>
                                     <span
-                                        className="flex-shrink-0 text-[10px] text-zinc-600 w-10 text-right"
+                                        className="flex-shrink-0 text-[10px] text-muted w-10 text-right"
                                         title={new Date(log.ts).toLocaleString('pt-BR')}
                                     >
                                         {formatTimeAgo(log.ts)}
                                     </span>
                                 </button>
                                 {gwExpanded === idx && (
-                                    <div className="border-t border-zinc-800/60 px-4 py-4 bg-black/20">
+                                    <div className="border-t border-border px-4 py-4 bg-black/20">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
                                             <div className="flex items-center gap-2">
-                                                <Globe size={11} className="text-zinc-600 flex-shrink-0" />
-                                                <span className="text-zinc-600">IP:</span>
-                                                <span className="text-zinc-300 font-mono">{log.ip || '—'}</span>
+                                                <Globe size={11} className="text-muted flex-shrink-0" />
+                                                <span className="text-muted">IP:</span>
+                                                <span className="text-foreground font-mono">{log.ip || '—'}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Clock size={11} className="text-zinc-600 flex-shrink-0" />
-                                                <span className="text-zinc-600">Data:</span>
-                                                <span className="text-zinc-300">{new Date(log.ts).toLocaleString('pt-BR')}</span>
+                                                <Clock size={11} className="text-muted flex-shrink-0" />
+                                                <span className="text-muted">Data:</span>
+                                                <span className="text-foreground">{new Date(log.ts).toLocaleString('pt-BR')}</span>
                                             </div>
                                             <div className="flex items-start gap-2 sm:col-span-2">
-                                                <span className="text-zinc-600 flex-shrink-0">UA:</span>
-                                                <span className="text-zinc-400 break-all">{log.ua || '—'}</span>
+                                                <span className="text-muted flex-shrink-0">UA:</span>
+                                                <span className="text-muted break-all">{log.ua || '—'}</span>
                                             </div>
                                         </div>
                                     </div>

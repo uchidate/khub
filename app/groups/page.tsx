@@ -32,6 +32,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GroupsPage() {
+    const total = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+        ? null
+        : await prisma.musicalGroup.count().catch(() => null)
+
     return (
         <>
         <JsonLd data={{
@@ -47,6 +51,8 @@ export default async function GroupsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
             <SectionHeader
                 title="Grupos Musicais"
+                count={total}
+                countLabel="grupos"
                 backHref="/"
             />
 

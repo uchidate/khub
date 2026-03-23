@@ -49,7 +49,7 @@ function Toggle({
       onClick={onChange}
       disabled={disabled}
       className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
-        checked ? activeColor : 'bg-zinc-700'
+        checked ? activeColor : 'bg-surface'
       }`}
     >
       <div
@@ -79,10 +79,10 @@ function SettingRow({
   warning?: string
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-4 border-t border-zinc-800 first:border-t-0">
+    <div className="flex items-start justify-between gap-4 py-4 border-t border-border first:border-t-0">
       <div className="flex-1 min-w-0">
-        <p className="text-white font-medium mb-0.5">{label}</p>
-        <p className="text-sm text-zinc-400">{description}</p>
+        <p className="text-foreground font-medium mb-0.5">{label}</p>
+        <p className="text-sm text-muted">{description}</p>
         {warning && checked && (
           <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
             <AlertTriangle className="w-3 h-3 flex-shrink-0" />
@@ -91,7 +91,7 @@ function SettingRow({
         )}
       </div>
       <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-        {saving && <RefreshCw className="w-3 h-3 text-zinc-500 animate-spin" />}
+        {saving && <RefreshCw className="w-3 h-3 text-muted animate-spin" />}
         <Toggle checked={checked} onChange={onChange} color={color} disabled={saving} />
       </div>
     </div>
@@ -187,12 +187,12 @@ export default function AdminSettingsPage() {
 
         {/* Status bar */}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-zinc-500 flex items-center gap-1.5">
+          <p className="text-sm text-muted flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
             {updatedAt ? `Última alteração: ${updatedAt}` : 'Carregando…'}
           </p>
           {saveState === 'saving' && (
-            <span className="text-xs text-zinc-400 flex items-center gap-1">
+            <span className="text-xs text-muted flex items-center gap-1">
               <RefreshCw className="w-3 h-3 animate-spin" /> Salvando…
             </span>
           )}
@@ -214,16 +214,16 @@ export default function AdminSettingsPage() {
             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-bold text-red-400">Modo manutenção ATIVO</p>
-              <p className="text-xs text-zinc-400 mt-0.5">O site está exibindo o aviso de manutenção para todos os usuários.</p>
+              <p className="text-xs text-muted mt-0.5">O site está exibindo o aviso de manutenção para todos os usuários.</p>
             </div>
           </div>
         )}
 
         {/* Plataforma */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-surface border border-border rounded-xl p-6">
           <div className="flex items-center gap-2.5 mb-5">
             <Wrench className="w-5 h-5 text-amber-400" />
-            <h2 className="text-base font-bold text-white">Plataforma</h2>
+            <h2 className="text-base font-bold text-foreground">Plataforma</h2>
           </div>
 
           <SettingRow
@@ -238,10 +238,10 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Classificação Etária */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-surface border border-border rounded-xl p-6">
           <div className="flex items-center gap-2.5 mb-5">
             <Shield className="w-5 h-5 text-purple-400" />
-            <h2 className="text-base font-bold text-white">Classificação Etária</h2>
+            <h2 className="text-base font-bold text-foreground">Classificação Etária</h2>
           </div>
 
           <SettingRow
@@ -263,12 +263,12 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Cache ISR */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-surface border border-border rounded-xl p-6">
           <div className="flex items-center gap-2.5 mb-1">
             <Layers className="w-5 h-5 text-blue-400" />
-            <h2 className="text-base font-bold text-white">Cache ISR</h2>
+            <h2 className="text-base font-bold text-foreground">Cache ISR</h2>
           </div>
-          <p className="text-xs text-zinc-500 mb-5">
+          <p className="text-xs text-muted mb-5">
             Invalida o cache de renderização estática. Use após alterações em massa que não disparam revalidação automática.
           </p>
 
@@ -281,17 +281,17 @@ export default function AdminSettingsPage() {
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left ${
                   target === 'all'
                     ? 'border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 text-blue-300'
-                    : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50 text-zinc-300'
+                    : 'border-border hover:border-border hover:bg-surface text-foreground'
                 }`}
               >
                 <div>
                   <span className="text-sm font-medium">{label}</span>
-                  <span className="text-xs text-zinc-500 ml-2">{desc}</span>
+                  <span className="text-xs text-muted ml-2">{desc}</span>
                 </div>
                 {revalidating === target ? (
-                  <RotateCcw className="w-4 h-4 animate-spin text-zinc-400" />
+                  <RotateCcw className="w-4 h-4 animate-spin text-muted" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-zinc-600" />
+                  <ChevronRight className="w-4 h-4 text-muted" />
                 )}
               </button>
             ))}
@@ -304,7 +304,7 @@ export default function AdminSettingsPage() {
           )}
         </div>
 
-        <p className="text-xs text-zinc-600 pb-2">
+        <p className="text-xs text-muted pb-2">
           As alterações nas configurações de conteúdo são aplicadas imediatamente. O cache ISR das páginas públicas é invalidado automaticamente ao salvar.
         </p>
       </div>

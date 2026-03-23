@@ -100,7 +100,7 @@ export function PipelineBatchAction({ ids, type, action }: Props) {
 
     if (state === 'running') {
         return (
-            <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted">
                 <Loader2 size={10} className="animate-spin" />
                 {progress}/{ids.length}
             </div>
@@ -110,7 +110,7 @@ export function PipelineBatchAction({ ids, type, action }: Props) {
     return (
         <button
             onClick={handleBatch}
-            className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-purple-400 transition-colors font-medium"
+            className="flex items-center gap-1 text-[10px] text-muted hover:text-purple-400 transition-colors font-medium"
             title={`${BATCH_LABELS[action]} (${ids.length} itens)`}
         >
             <Zap size={10} />

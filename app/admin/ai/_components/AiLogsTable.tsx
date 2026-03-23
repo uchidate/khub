@@ -80,14 +80,14 @@ export default function AiLogsTable({ initialLogs }: Props) {
     }
 
     return (
-        <div className="bg-zinc-900 border border-white/8 rounded-xl p-4">
+        <div className="bg-surface border border-border rounded-xl p-4">
             <div className="flex flex-wrap items-center gap-2 mb-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mr-2">Logs recentes</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted mr-2">Logs recentes</p>
 
                 <select
                     value={provider}
                     onChange={e => handleFilter('provider', e.target.value)}
-                    className="text-xs bg-zinc-800 border border-white/10 rounded-lg px-2 py-1 text-zinc-300"
+                    className="text-xs bg-surface border border-border rounded-lg px-2 py-1 text-foreground"
                 >
                     <option value="">Todos os providers</option>
                     {['deepseek', 'openai', 'claude', 'ollama', 'gemini'].map(p => (
@@ -98,7 +98,7 @@ export default function AiLogsTable({ initialLogs }: Props) {
                 <select
                     value={feature}
                     onChange={e => handleFilter('feature', e.target.value)}
-                    className="text-xs bg-zinc-800 border border-white/10 rounded-lg px-2 py-1 text-zinc-300"
+                    className="text-xs bg-surface border border-border rounded-lg px-2 py-1 text-foreground"
                 >
                     <option value="">Todas as features</option>
                     {Object.entries(FEATURE_LABELS).filter(([k]) => k !== 'unknown').map(([k, v]) => (
@@ -109,7 +109,7 @@ export default function AiLogsTable({ initialLogs }: Props) {
                 <select
                     value={status}
                     onChange={e => handleFilter('status', e.target.value)}
-                    className="text-xs bg-zinc-800 border border-white/10 rounded-lg px-2 py-1 text-zinc-300"
+                    className="text-xs bg-surface border border-border rounded-lg px-2 py-1 text-foreground"
                 >
                     <option value="">Todos os status</option>
                     <option value="success">Sucesso</option>
@@ -120,7 +120,7 @@ export default function AiLogsTable({ initialLogs }: Props) {
                 <button
                     onClick={() => load()}
                     disabled={loading}
-                    className="ml-auto flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
+                    className="ml-auto flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors disabled:opacity-50"
                 >
                     {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                     Atualizar
@@ -128,12 +128,12 @@ export default function AiLogsTable({ initialLogs }: Props) {
             </div>
 
             {logs.length === 0 ? (
-                <p className="text-xs text-zinc-600 py-6 text-center">Nenhum log encontrado</p>
+                <p className="text-xs text-muted py-6 text-center">Nenhum log encontrado</p>
             ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
-                            <tr className="border-b border-white/6 text-zinc-600 text-left">
+                            <tr className="border-b border-border text-muted text-left">
                                 <th className="pb-2 font-medium pr-3">Data</th>
                                 <th className="pb-2 font-medium pr-3">Provider</th>
                                 <th className="pb-2 font-medium pr-3">Feature</th>
@@ -146,28 +146,28 @@ export default function AiLogsTable({ initialLogs }: Props) {
                         </thead>
                         <tbody className="divide-y divide-white/4">
                             {logs.map(log => {
-                                const statusCls = STATUS_COLORS[log.status] ?? 'text-zinc-400'
-                                const provBadge = PROVIDER_BADGE[log.provider] ?? 'bg-zinc-700/30 text-zinc-400 border-zinc-600/30'
+                                const statusCls = STATUS_COLORS[log.status] ?? 'text-muted'
+                                const provBadge = PROVIDER_BADGE[log.provider] ?? 'bg-surface text-muted border-border'
                                 const featLabel = FEATURE_LABELS[log.feature as AiFeature | 'unknown'] ?? log.feature
                                 return (
                                     <tr key={log.id} className="hover:bg-white/2 transition-colors">
-                                        <td className="py-2 pr-3 text-zinc-500 whitespace-nowrap tabular-nums">{fmtDate(log.createdAt)}</td>
+                                        <td className="py-2 pr-3 text-muted whitespace-nowrap tabular-nums">{fmtDate(log.createdAt)}</td>
                                         <td className="py-2 pr-3">
                                             <span className={`px-1.5 py-0.5 rounded text-[10px] border ${provBadge}`}>
                                                 {log.provider}
                                             </span>
                                         </td>
-                                        <td className="py-2 pr-3 text-zinc-400 max-w-[160px] truncate" title={featLabel}>{featLabel}</td>
+                                        <td className="py-2 pr-3 text-muted max-w-[160px] truncate" title={featLabel}>{featLabel}</td>
                                         <td className={`py-2 pr-3 font-medium ${statusCls}`}>
                                             {log.status === 'success' ? '✓' : log.status === 'error' ? '✗' : '⚡'}
                                             {log.errorMsg && (
-                                                <span className="ml-1 text-zinc-600 font-normal" title={log.errorMsg}>(?)</span>
+                                                <span className="ml-1 text-muted font-normal" title={log.errorMsg}>(?)</span>
                                             )}
                                         </td>
-                                        <td className="py-2 pr-3 text-right text-zinc-500 tabular-nums">{log.tokensIn.toLocaleString()}</td>
-                                        <td className="py-2 pr-3 text-right text-zinc-500 tabular-nums">{log.tokensOut.toLocaleString()}</td>
-                                        <td className="py-2 pr-3 text-right text-zinc-400 tabular-nums">{fmtCost(log.cost)}</td>
-                                        <td className="py-2 text-right text-zinc-600 tabular-nums">{fmtMs(log.durationMs)}</td>
+                                        <td className="py-2 pr-3 text-right text-muted tabular-nums">{log.tokensIn.toLocaleString()}</td>
+                                        <td className="py-2 pr-3 text-right text-muted tabular-nums">{log.tokensOut.toLocaleString()}</td>
+                                        <td className="py-2 pr-3 text-right text-muted tabular-nums">{fmtCost(log.cost)}</td>
+                                        <td className="py-2 text-right text-muted tabular-nums">{fmtMs(log.durationMs)}</td>
                                     </tr>
                                 )
                             })}

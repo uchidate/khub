@@ -6,6 +6,7 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus, Shield, Users, CheckCircle, UserPlus, Heart } from 'lucide-react'
+import { FilterPills } from '@/components/admin/FilterPills'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ function Avatar({ name, role }: { name: string | null; role: string }) {
     : '?'
   return (
     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-      role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-zinc-700/80 text-zinc-300'
+      role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-surface text-foreground'
     }`}>
       {letters}
     </div>
@@ -46,7 +47,7 @@ function Avatar({ name, role }: { name: string | null; role: string }) {
 function RoleBadge({ role }: { role: string }) {
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold ${
-      role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-zinc-800 text-zinc-400'
+      role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-surface text-muted'
     }`}>
       {role === 'admin' && <Shield size={10} />}
       {role === 'admin' ? 'Admin' : 'Usuário'}
@@ -102,10 +103,10 @@ export default function UsersAdminPage() {
         <div className="flex items-center gap-2.5">
           <Avatar name={user.name} role={user.role} />
           <div className="min-w-0">
-            <div className="font-medium text-white truncate">
-              {user.name ?? <span className="text-zinc-500 italic">sem nome</span>}
+            <div className="font-medium text-foreground truncate">
+              {user.name ?? <span className="text-muted italic">sem nome</span>}
             </div>
-            <div className="text-xs text-zinc-500 truncate">{user.email}</div>
+            <div className="text-xs text-muted truncate">{user.email}</div>
           </div>
         </div>
       ),
@@ -115,7 +116,7 @@ export default function UsersAdminPage() {
       label: 'Email',
       sortable: true,
       className: 'hidden xl:table-cell',
-      render: (user) => <span className="text-zinc-400 text-sm">{user.email}</span>,
+      render: (user) => <span className="text-muted text-sm">{user.email}</span>,
     },
     {
       key: 'role',
@@ -129,7 +130,7 @@ export default function UsersAdminPage() {
       className: 'hidden lg:table-cell',
       render: (user) => user.emailVerified
         ? <span className="flex items-center gap-1 text-green-400 text-xs"><CheckCircle size={12} /> Sim</span>
-        : <span className="text-zinc-600 text-xs">—</span>,
+        : <span className="text-muted text-xs">—</span>,
     },
     {
       key: 'favoritesCount',
@@ -149,7 +150,7 @@ export default function UsersAdminPage() {
       sortable: true,
       className: 'hidden xl:table-cell',
       render: (user) => (
-        <span className="text-zinc-500 text-xs">
+        <span className="text-muted text-xs">
           {new Date(user.createdAt).toLocaleDateString('pt-BR')}
         </span>
       ),
@@ -181,36 +182,22 @@ export default function UsersAdminPage() {
   }
 
   const roleFilterEl = (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {(['', 'user', 'admin'] as RoleFilter[]).map(role => (
-        <button key={role} onClick={() => setRoleFilter(role)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-            roleFilter === role
-              ? 'bg-purple-600/20 border-purple-500/40 text-purple-300'
-              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300'
-          }`}
-        >
-          {role === '' ? 'Todos' : role === 'admin' ? 'Admins' : 'Usuários'}
-          {role === '' && stats != null && (
-            <span className={`font-mono tabular-nums ${roleFilter === '' ? 'text-purple-300' : 'text-zinc-500'}`}>
-              {stats.total}
-            </span>
-          )}
-          {role === 'admin' && stats != null && (
-            <span className={`font-mono tabular-nums ${roleFilter === 'admin' ? 'text-purple-300' : 'text-zinc-500'}`}>
-              {stats.admins}
-            </span>
-          )}
-        </button>
-      ))}
-    </div>
+    <FilterPills
+      pills={[
+        { value: '' as RoleFilter, label: 'Todos', count: stats?.total ?? null },
+        { value: 'user' as RoleFilter, label: 'Usuários' },
+        { value: 'admin' as RoleFilter, label: 'Admins', count: stats?.admins ?? null },
+      ]}
+      active={roleFilter}
+      onChange={setRoleFilter}
+    />
   )
 
   return (
     <AdminLayout title="Usuários">
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <p className="text-zinc-400 text-sm -mt-4">Gerencie os usuários da plataforma</p>
+          <p className="text-muted text-sm -mt-4">Gerencie os usuários da plataforma</p>
           <button
             onClick={handleCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all flex-shrink-0"
@@ -228,13 +215,13 @@ export default function UsersAdminPage() {
             { icon: CheckCircle, label: 'Verificados',  value: stats?.verified,    color: 'bg-green-500/10 text-green-400' },
             { icon: UserPlus,    label: 'Esta semana',  value: stats?.newThisWeek, color: 'bg-pink-500/10 text-pink-400' },
           ].map(({ icon: Icon, label, value, color }) => (
-            <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-3">
+            <div key={label} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
               <div className={`p-2 rounded-lg ${color}`}>
                 <Icon size={16} />
               </div>
               <div>
-                <div className="text-xl font-bold text-white tabular-nums">{value ?? '—'}</div>
-                <div className="text-xs text-zinc-500">{label}</div>
+                <div className="text-xl font-bold text-foreground tabular-nums">{value ?? '—'}</div>
+                <div className="text-xs text-muted">{label}</div>
               </div>
             </div>
           ))}
@@ -253,20 +240,20 @@ export default function UsersAdminPage() {
               <Avatar name={user.name} role={user.role} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-white truncate">
-                    {user.name ?? <span className="text-zinc-500 italic">sem nome</span>}
+                  <span className="font-semibold text-foreground truncate">
+                    {user.name ?? <span className="text-muted italic">sem nome</span>}
                   </span>
                   <RoleBadge role={user.role} />
                 </div>
-                <div className="text-zinc-400 text-sm truncate mt-0.5">{user.email}</div>
+                <div className="text-muted text-sm truncate mt-0.5">{user.email}</div>
                 <div className="flex items-center gap-3 mt-1.5 text-xs">
-                  <span className={user.emailVerified ? 'text-green-400' : 'text-zinc-600'}>
+                  <span className={user.emailVerified ? 'text-green-400' : 'text-muted'}>
                     {user.emailVerified ? '✓ verificado' : 'não verificado'}
                   </span>
                   <span className="text-pink-400/80 flex items-center gap-0.5">
                     <Heart size={10} /> {user.favoritesCount}
                   </span>
-                  <span className="text-zinc-600">
+                  <span className="text-muted">
                     {new Date(user.createdAt).toLocaleDateString('pt-BR')}
                   </span>
                 </div>

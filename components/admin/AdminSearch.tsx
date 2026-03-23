@@ -52,11 +52,11 @@ function ResultItem({
       type="button"
       onClick={() => onSelect(result)}
       className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-        active ? 'bg-zinc-800' : 'hover:bg-zinc-800/60'
+        active ? 'bg-surface-hover' : 'hover:bg-surface-hover'
       }`}
     >
       {/* Thumbnail */}
-      <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800 flex items-center justify-center border border-zinc-700/50">
+      <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-surface flex items-center justify-center border border-border">
         {result.imageUrl ? (
           <Image
             src={result.imageUrl}
@@ -67,15 +67,15 @@ function ResultItem({
             unoptimized
           />
         ) : (
-          <Icon size={14} className="text-zinc-600" />
+          <Icon size={14} className="text-muted" />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-zinc-200 truncate">{result.title}</div>
+        <div className="text-sm font-medium text-foreground truncate">{result.title}</div>
         {result.subtitle && (
-          <div className="text-xs text-zinc-500 truncate">{result.subtitle}</div>
+          <div className="text-xs text-muted truncate">{result.subtitle}</div>
         )}
       </div>
 
@@ -84,7 +84,7 @@ function ResultItem({
         {config.label}
       </span>
 
-      <ArrowRight size={13} className="text-zinc-700 flex-shrink-0" />
+      <ArrowRight size={13} className="text-muted flex-shrink-0" />
     </button>
   )
 }
@@ -183,34 +183,34 @@ export function AdminSearch({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl mx-4 bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-xl mx-4 bg-background border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
         {/* Input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800">
-          <Search size={15} className="text-zinc-500 flex-shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <Search size={15} className="text-muted flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={handleQueryChange}
-            className="flex-1 bg-transparent text-white text-sm placeholder:text-zinc-500 outline-none"
+            className="flex-1 bg-transparent text-foreground text-sm placeholder:text-muted outline-none"
             placeholder="Buscar artistas, grupos, produções, notícias..."
           />
           {loading && (
-            <div className="w-3.5 h-3.5 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin flex-shrink-0" />
+            <div className="w-3.5 h-3.5 border-2 border-border border-t-foreground rounded-full animate-spin flex-shrink-0" />
           )}
           {query && !loading && (
             <button
               onClick={() => { setQuery(''); setResults([]) }}
-              className="text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0"
+              className="text-muted hover:text-foreground transition-colors flex-shrink-0"
             >
               <X size={14} />
             </button>
           )}
           <kbd
             onClick={onClose}
-            className="text-[10px] text-zinc-600 bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded font-mono flex-shrink-0 cursor-pointer hover:text-zinc-400 transition-colors"
+            className="text-[10px] text-muted bg-surface border border-border px-1.5 py-0.5 rounded font-mono flex-shrink-0 cursor-pointer hover:text-foreground transition-colors"
           >
             Esc
           </kbd>
@@ -220,13 +220,13 @@ export function AdminSearch({
         <div className="max-h-[60vh] overflow-y-auto">
           {showRecentsLabel && (
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted">
                 <Clock size={11} />
                 Recentes
               </div>
               <button
                 onClick={clearRecents}
-                className="text-[10px] text-zinc-700 hover:text-zinc-400 transition-colors"
+                className="text-[10px] text-muted hover:text-foreground transition-colors"
               >
                 Limpar
               </button>
@@ -245,21 +245,21 @@ export function AdminSearch({
               ))}
             </div>
           ) : query.length >= 2 && !loading ? (
-            <div className="px-4 py-8 text-center text-sm text-zinc-600">
-              Nenhum resultado para <span className="text-zinc-400">&quot;{query}&quot;</span>
+            <div className="px-4 py-8 text-center text-sm text-muted">
+              Nenhum resultado para <span className="text-foreground">&quot;{query}&quot;</span>
             </div>
           ) : query.length < 2 && recents.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-zinc-600">
+            <div className="px-4 py-8 text-center text-sm text-muted">
               Digite para buscar em todo o admin
             </div>
           ) : null}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-zinc-800 px-4 py-2 flex items-center gap-4 text-[10px] text-zinc-700">
-          <span><kbd className="font-mono bg-zinc-800 px-1 rounded">↑↓</kbd> navegar</span>
-          <span><kbd className="font-mono bg-zinc-800 px-1 rounded">↵</kbd> abrir</span>
-          <span><kbd className="font-mono bg-zinc-800 px-1 rounded">Esc</kbd> fechar</span>
+        <div className="border-t border-border px-4 py-2 flex items-center gap-4 text-[10px] text-muted">
+          <span><kbd className="font-mono bg-surface px-1 rounded">↑↓</kbd> navegar</span>
+          <span><kbd className="font-mono bg-surface px-1 rounded">↵</kbd> abrir</span>
+          <span><kbd className="font-mono bg-surface px-1 rounded">Esc</kbd> fechar</span>
         </div>
       </div>
     </div>

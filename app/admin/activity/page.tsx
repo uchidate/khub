@@ -24,20 +24,20 @@ const ACTIVITY_TYPE_CONFIG: Record<string, {
     icon: React.ElementType
 }> = {
     LOGIN:           { label: 'Login',          color: 'text-blue-400 bg-blue-400/10',    border: 'border-blue-500/40',   icon: LogIn },
-    LOGOUT:          { label: 'Logout',         color: 'text-zinc-400 bg-zinc-400/10',    border: 'border-zinc-500/30',   icon: LogOut },
+    LOGOUT:          { label: 'Logout',         color: 'text-muted bg-surface',    border: 'border-border',   icon: LogOut },
     REGISTER:        { label: 'Registro',       color: 'text-green-400 bg-green-400/10',  border: 'border-green-500/40',  icon: UserPlus },
     SEARCH:          { label: 'Busca',          color: 'text-purple-400 bg-purple-400/10',border: 'border-purple-500/40', icon: Search },
-    VIEW:            { label: 'Visualização',   color: 'text-zinc-500 bg-zinc-500/10',    border: 'border-zinc-600/30',   icon: Eye },
+    VIEW:            { label: 'Visualização',   color: 'text-muted bg-surface',    border: 'border-border',   icon: Eye },
     FAVORITE_ADD:    { label: 'Fav. Adicionado',color: 'text-pink-400 bg-pink-400/10',    border: 'border-pink-500/40',   icon: Heart },
     FAVORITE_REMOVE: { label: 'Fav. Removido',  color: 'text-orange-400 bg-orange-400/10',border: 'border-orange-500/40', icon: HeartOff },
     LIKE:            { label: 'Like',           color: 'text-rose-400 bg-rose-400/10',    border: 'border-rose-500/40',   icon: ThumbsUp },
-    UNLIKE:          { label: 'Unlike',         color: 'text-zinc-400 bg-zinc-400/10',    border: 'border-zinc-600/30',   icon: ThumbsDown },
+    UNLIKE:          { label: 'Unlike',         color: 'text-muted bg-surface',    border: 'border-border',   icon: ThumbsDown },
     COMMENT_CREATE:  { label: 'Comentário',     color: 'text-yellow-400 bg-yellow-400/10',border: 'border-yellow-500/40', icon: MessageSquare },
     PROFILE_UPDATE:  { label: 'Perfil',         color: 'text-teal-400 bg-teal-400/10',    border: 'border-teal-500/40',   icon: Settings },
 }
 
 const LEVEL_CONFIG: Record<string, { label: string; color: string; border: string }> = {
-    DEBUG: { label: 'DEBUG', color: 'text-zinc-400 bg-zinc-400/10',  border: 'border-zinc-600/30' },
+    DEBUG: { label: 'DEBUG', color: 'text-muted bg-surface',  border: 'border-border' },
     INFO:  { label: 'INFO',  color: 'text-blue-400 bg-blue-400/10',  border: 'border-blue-500/40' },
     WARN:  { label: 'WARN',  color: 'text-yellow-400 bg-yellow-400/10', border: 'border-yellow-500/40' },
     ERROR: { label: 'ERROR', color: 'text-red-400 bg-red-400/10',    border: 'border-red-500/40' },
@@ -50,7 +50,7 @@ const AUDIT_ACTION_CONFIG: Record<string, { label: string; color: string; border
     APPROVE: { label: 'Aprovado',  color: 'text-green-400 bg-green-400/10',   border: 'border-green-500/40',  icon: CheckCircle },
     REJECT:  { label: 'Rejeitado', color: 'text-orange-400 bg-orange-400/10', border: 'border-orange-500/40', icon: XCircle },
     RESEND:  { label: 'Reenvio',   color: 'text-purple-400 bg-purple-400/10', border: 'border-purple-500/40', icon: Send },
-    SEED:    { label: 'Seed',      color: 'text-zinc-400 bg-zinc-400/10',     border: 'border-zinc-600/30',   icon: Database },
+    SEED:    { label: 'Seed',      color: 'text-muted bg-surface',     border: 'border-border',   icon: Database },
 }
 
 const ENTITY_HREF: Record<string, (id: string) => string> = {
@@ -89,12 +89,12 @@ function Avatar({ name, size = 'sm' }: { name?: string | null; size?: 'sm' | 'md
     )
 }
 
-function StatCard({ label, value, sub, color = 'text-white' }: { label: string; value: number | string; sub?: string; color?: string }) {
+function StatCard({ label, value, sub, color = 'text-foreground' }: { label: string; value: number | string; sub?: string; color?: string }) {
     return (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-            <p className="text-xs text-zinc-500 font-medium mb-1">{label}</p>
+        <div className="bg-surface border border-border rounded-xl p-4">
+            <p className="text-xs text-muted font-medium mb-1">{label}</p>
             <p className={`text-2xl font-black ${color}`}>{typeof value === 'number' ? value.toLocaleString('pt-BR') : value}</p>
-            {sub && <p className="text-[11px] text-zinc-600 mt-0.5">{sub}</p>}
+            {sub && <p className="text-[11px] text-muted mt-0.5">{sub}</p>}
         </div>
     )
 }
@@ -116,7 +116,7 @@ function Pagination({ page, pages, buildUrl }: { page: number; pages: number; bu
             <Link
                 href={buildUrl({ page: String(page - 1) })}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
-                    page <= 1 ? 'text-zinc-700 pointer-events-none' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    page <= 1 ? 'text-muted pointer-events-none' : 'text-muted hover:text-foreground hover:bg-surface'
                 }`}
             >
                 <ChevronLeft size={14} /> Anterior
@@ -124,13 +124,13 @@ function Pagination({ page, pages, buildUrl }: { page: number; pages: number; bu
             <div className="flex items-center gap-1">
                 {pagesToShow.map((p, i) =>
                     p === '…' ? (
-                        <span key={`ellipsis-${i}`} className="w-8 text-center text-zinc-600 text-xs">…</span>
+                        <span key={`ellipsis-${i}`} className="w-8 text-center text-muted text-xs">…</span>
                     ) : (
                         <Link
                             key={p}
                             href={buildUrl({ page: String(p) })}
                             className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-colors ${
-                                p === page ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                                p === page ? 'bg-purple-600 text-foreground' : 'bg-surface text-muted hover:text-foreground'
                             }`}
                         >
                             {p}
@@ -141,7 +141,7 @@ function Pagination({ page, pages, buildUrl }: { page: number; pages: number; bu
             <Link
                 href={buildUrl({ page: String(page + 1) })}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
-                    page >= pages ? 'text-zinc-700 pointer-events-none' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    page >= pages ? 'text-muted pointer-events-none' : 'text-muted hover:text-foreground hover:bg-surface'
                 }`}
             >
                 Próxima <ChevronRight size={14} />
@@ -290,25 +290,25 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                         label="Erros de sistema"
                         value={systemErrors}
                         sub={`últimos ${days}d`}
-                        color={systemErrors > 0 ? 'text-red-400' : 'text-white'}
+                        color={systemErrors > 0 ? 'text-red-400' : 'text-foreground'}
                     />
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl w-fit">
+                <div className="flex items-center gap-1 bg-surface p-1 rounded-xl w-fit">
                     {TABS.map(({ key, label, icon: Icon, count }) => (
                         <Link
                             key={key}
                             href={buildUrl({ tab: key, page: '1' })}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
-                                tab === key ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-white'
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                                tab === key ? 'bg-accent text-white' : 'text-muted hover:text-foreground hover:bg-surface-hover'
                             }`}
                         >
                             <Icon size={14} />
                             {label}
                             {count > 0 && (
                                 <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                                    tab === key ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-500'
+                                    tab === key ? 'bg-white/20 text-foreground' : 'bg-surface text-muted'
                                 }`}>
                                     {count}
                                 </span>
@@ -325,10 +325,10 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                             <Link
                                 key={d}
                                 href={buildUrl({ days: String(d), page: '1' })}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                                     days === d
-                                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                                        : 'bg-zinc-800 text-zinc-400 hover:text-white border border-transparent'
+                                        ? 'bg-accent text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                 }`}
                             >
                                 {d === 1 ? 'Hoje' : `${d}d`}
@@ -339,7 +339,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                     {/* Filtros por tipo — Usuário */}
                     {tab === 'user' && (
                         <>
-                            <div className="w-px bg-zinc-700 h-5" />
+                            <div className="w-px bg-surface h-5" />
                             {Object.entries(ACTIVITY_TYPE_CONFIG).map(([type, cfg]) => {
                                 const Icon = cfg.icon
                                 const active = sp.type === type
@@ -347,10 +347,10 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                     <Link
                                         key={type}
                                         href={buildUrl({ type: active ? '' : type, page: '1' })}
-                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors border ${
+                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                                             active
-                                                ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-                                                : 'bg-zinc-800 text-zinc-500 hover:text-zinc-300 border-transparent'
+                                                ? 'bg-accent text-white'
+                                                : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                         }`}
                                     >
                                         <Icon size={11} />
@@ -364,7 +364,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                     {/* Filtros por nível — Sistema */}
                     {tab === 'system' && (
                         <>
-                            <div className="w-px bg-zinc-700 h-5" />
+                            <div className="w-px bg-surface h-5" />
                             {(['ERROR', 'WARN', 'INFO', 'DEBUG'] as const).map(l => {
                                 const cfg = LEVEL_CONFIG[l]
                                 const active = sp.level === l
@@ -372,10 +372,10 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                     <Link
                                         key={l}
                                         href={buildUrl({ level: active ? '' : l, page: '1' })}
-                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors border ${
+                                        className={`px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                                             active
-                                                ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-                                                : `${cfg.color} border-transparent hover:border-current/20`
+                                                ? 'bg-accent text-white'
+                                                : `${cfg.color} hover:opacity-80`
                                         }`}
                                     >
                                         {l}
@@ -387,31 +387,31 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                 </div>
 
                 {/* Resultado */}
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted">
                     {total.toLocaleString('pt-BR')} registro{total !== 1 ? 's' : ''}
                     {pages > 1 && ` · página ${page} de ${pages}`}
                 </p>
 
                 {/* Lista de eventos */}
-                <div className="rounded-xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/60">
+                <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
 
                     {/* ── Aba Usuário ── */}
                     {tab === 'user' && (
                         userLogs.length === 0
-                            ? <p className="text-center py-16 text-zinc-600 text-sm">Nenhuma atividade no período</p>
+                            ? <p className="text-center py-16 text-muted text-sm">Nenhuma atividade no período</p>
                             : userLogs.map((log: ActivityWithUser) => {
-                                const cfg = ACTIVITY_TYPE_CONFIG[log.type] ?? { label: log.type, color: 'text-zinc-400 bg-zinc-400/10', border: 'border-zinc-600/30', icon: Activity }
+                                const cfg = ACTIVITY_TYPE_CONFIG[log.type] ?? { label: log.type, color: 'text-muted bg-surface', border: 'border-border', icon: Activity }
                                 const TypeIcon = cfg.icon
                                 const meta = log.metadata as Record<string, string> | null
                                 const entityName = log.entityId ? (entityNameMap.get(log.entityId) ?? null) : null
                                 const entityHref = log.entityType && log.entityId ? ENTITY_HREF[log.entityType]?.(log.entityId) : null
                                 return (
-                                    <div key={log.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-zinc-900/40 transition-colors border-l-2 ${cfg.border}`}>
+                                    <div key={log.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors border-l-2 ${cfg.border}`}>
                                         <Avatar name={log.user?.name} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm font-semibold text-white">{log.user?.name ?? '—'}</span>
-                                                <span className="text-[11px] text-zinc-500 hidden sm:inline">{log.user?.email}</span>
+                                                <span className="text-sm font-semibold text-foreground">{log.user?.name ?? '—'}</span>
+                                                <span className="text-[11px] text-muted hidden sm:inline">{log.user?.email}</span>
                                             </div>
                                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide ${cfg.color}`}>
@@ -420,24 +420,24 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                                 </span>
                                                 {entityName && (
                                                     entityHref ? (
-                                                        <Link href={entityHref} className="text-xs text-zinc-300 hover:text-purple-300 hover:underline truncate max-w-[200px]">
+                                                        <Link href={entityHref} className="text-xs text-foreground hover:text-purple-300 hover:underline truncate max-w-[200px]">
                                                             {entityName}
                                                         </Link>
                                                     ) : (
-                                                        <span className="text-xs text-zinc-400 truncate max-w-[200px]">{entityName}</span>
+                                                        <span className="text-xs text-muted truncate max-w-[200px]">{entityName}</span>
                                                     )
                                                 )}
                                                 {log.entityType && (
-                                                    <span className="text-[10px] text-zinc-600 font-mono">{log.entityType}</span>
+                                                    <span className="text-[10px] text-muted font-mono">{log.entityType}</span>
                                                 )}
                                                 {(meta?.query ?? meta?.context) && (
-                                                    <span className="text-[11px] text-zinc-500 italic truncate max-w-[200px]">
+                                                    <span className="text-[11px] text-muted italic truncate max-w-[200px]">
                                                         &ldquo;{meta?.query ?? meta?.context}&rdquo;
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
-                                        <span className="text-[10px] text-zinc-600 whitespace-nowrap shrink-0 mt-0.5" title={formatFullDate(log.createdAt)}>
+                                        <span className="text-[10px] text-muted whitespace-nowrap shrink-0 mt-0.5" title={formatFullDate(log.createdAt)}>
                                             {formatTimeAgo(log.createdAt)}
                                         </span>
                                     </div>
@@ -448,42 +448,42 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                     {/* ── Aba Admin ── */}
                     {tab === 'admin' && (
                         auditLogs.length === 0
-                            ? <p className="text-center py-16 text-zinc-600 text-sm">Nenhuma ação administrativa no período</p>
+                            ? <p className="text-center py-16 text-muted text-sm">Nenhuma ação administrativa no período</p>
                             : auditLogs.map((log: AuditLogWithAdmin) => {
-                                const cfg = AUDIT_ACTION_CONFIG[log.action] ?? { label: log.action, color: 'text-zinc-400 bg-zinc-400/10', border: 'border-zinc-600/30', icon: Activity }
+                                const cfg = AUDIT_ACTION_CONFIG[log.action] ?? { label: log.action, color: 'text-muted bg-surface', border: 'border-border', icon: Activity }
                                 const ActionIcon = cfg.icon
                                 const hasDiff = log.before != null || log.after != null
                                 return (
-                                    <div key={log.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-zinc-900/40 transition-colors border-l-2 ${cfg.border}`}>
+                                    <div key={log.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors border-l-2 ${cfg.border}`}>
                                         <Avatar name={log.admin?.name} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm font-semibold text-white">{log.admin?.name ?? '—'}</span>
-                                                <span className="text-[11px] text-zinc-500 hidden sm:inline">{log.admin?.email}</span>
+                                                <span className="text-sm font-semibold text-foreground">{log.admin?.name ?? '—'}</span>
+                                                <span className="text-[11px] text-muted hidden sm:inline">{log.admin?.email}</span>
                                             </div>
                                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide ${cfg.color}`}>
                                                     <ActionIcon size={9} />
                                                     {cfg.label}
                                                 </span>
-                                                <span className="text-xs text-zinc-400 font-mono">{log.entity}</span>
+                                                <span className="text-xs text-muted font-mono">{log.entity}</span>
                                                 {log.entityId && (
-                                                    <span className="text-[10px] text-zinc-600 font-mono">#{log.entityId.slice(-8)}</span>
+                                                    <span className="text-[10px] text-muted font-mono">#{log.entityId.slice(-8)}</span>
                                                 )}
                                                 {hasDiff && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 border border-zinc-700">diff</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface text-muted border border-border">diff</span>
                                                 )}
                                                 {log.ip && (
-                                                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-zinc-600">
+                                                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-muted">
                                                         <Globe size={9} />{log.ip}
                                                     </span>
                                                 )}
                                             </div>
                                             {log.details && (
-                                                <p className="text-[11px] text-zinc-500 mt-1 truncate max-w-[400px]">{log.details}</p>
+                                                <p className="text-[11px] text-muted mt-1 truncate max-w-[400px]">{log.details}</p>
                                             )}
                                         </div>
-                                        <span className="text-[10px] text-zinc-600 whitespace-nowrap shrink-0 mt-0.5" title={formatFullDate(log.createdAt)}>
+                                        <span className="text-[10px] text-muted whitespace-nowrap shrink-0 mt-0.5" title={formatFullDate(log.createdAt)}>
                                             {formatTimeAgo(log.createdAt)}
                                         </span>
                                     </div>
@@ -494,21 +494,21 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                     {/* ── Aba Sistema ── */}
                     {tab === 'system' && (
                         systemEvents.length === 0
-                            ? <p className="text-center py-16 text-zinc-600 text-sm">Nenhum evento de sistema no período</p>
+                            ? <p className="text-center py-16 text-muted text-sm">Nenhum evento de sistema no período</p>
                             : systemEvents.map((ev: SystemEvent) => {
                                 const cfg = LEVEL_CONFIG[ev.level] ?? LEVEL_CONFIG.INFO
                                 return (
-                                    <div key={ev.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-zinc-900/40 transition-colors border-l-2 ${cfg.border}`}>
+                                    <div key={ev.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors border-l-2 ${cfg.border}`}>
                                         <div className={`mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest flex-shrink-0 ${cfg.color}`}>
                                             {ev.level}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-[11px] font-mono text-zinc-400 bg-zinc-800/60 px-1.5 py-0.5 rounded">{ev.source}</span>
+                                                <span className="text-[11px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">{ev.source}</span>
                                             </div>
-                                            <p className="text-xs text-zinc-300 line-clamp-2">{ev.message}</p>
+                                            <p className="text-xs text-foreground line-clamp-2">{ev.message}</p>
                                         </div>
-                                        <span className="text-[10px] text-zinc-600 whitespace-nowrap shrink-0 mt-0.5" title={formatFullDate(ev.createdAt)}>
+                                        <span className="text-[10px] text-muted whitespace-nowrap shrink-0 mt-0.5" title={formatFullDate(ev.createdAt)}>
                                             {formatTimeAgo(ev.createdAt)}
                                         </span>
                                     </div>

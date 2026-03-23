@@ -81,13 +81,13 @@ export function LiveUrgentPanel({ initial }: { initial: UrgentCounts }) {
           Urgente
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-zinc-700">
+          <span className="text-[10px] text-muted">
             atualizado {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
           </span>
           <button
             onClick={() => refresh(true)}
             disabled={refreshing}
-            className="text-zinc-700 hover:text-zinc-400 transition-colors"
+            className="text-muted hover:text-muted transition-colors"
             title="Atualizar agora"
           >
             <RefreshCw size={11} className={refreshing ? 'animate-spin' : ''} />
@@ -145,14 +145,14 @@ export function AiWidget() {
 
   if (loading) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+      <div className="bg-surface border border-border rounded-xl p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Bot className="w-4 h-4 text-zinc-600" />
-          <div className="h-3 w-24 bg-zinc-800 rounded animate-pulse" />
+          <Bot className="w-4 h-4 text-muted" />
+          <div className="h-3 w-24 bg-skeleton rounded animate-pulse" />
         </div>
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-3 bg-zinc-800 rounded animate-pulse" style={{ width: `${60 + i * 10}%` }} />
+            <div key={i} className="h-3 bg-skeleton rounded animate-pulse" style={{ width: `${60 + i * 10}%` }} />
           ))}
         </div>
       </div>
@@ -170,42 +170,42 @@ export function AiWidget() {
   return (
     <Link
       href="/admin/ai"
-      className="block bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl p-4 transition-colors group"
+      className="block bg-surface border border-border hover:border-border rounded-xl p-4 transition-colors group"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-purple-500/15 border border-purple-500/20 flex items-center justify-center">
             <Bot className="w-3.5 h-3.5 text-purple-400" />
           </div>
-          <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">IA</span>
+          <span className="text-xs font-black text-muted uppercase tracking-widest">IA</span>
         </div>
-        <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400 transition-colors" />
+        <ChevronRight className="w-4 h-4 text-muted group-hover:text-muted transition-colors" />
       </div>
 
       <div className="space-y-2">
         {data.totalJobsToday > 0 && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-600">Jobs hoje</span>
+            <span className="text-xs text-muted">Jobs hoje</span>
             <div className="flex items-center gap-1">
               <Zap className="w-3 h-3 text-yellow-500" />
-              <span className="text-xs font-bold text-zinc-300">{data.totalJobsToday}</span>
+              <span className="text-xs font-bold text-foreground">{data.totalJobsToday}</span>
             </div>
           </div>
         )}
 
         {data.lastJobType && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-600">Último job</span>
+            <span className="text-xs text-muted">Último job</span>
             <div className="flex items-center gap-1">
               {statusIcon}
-              <span className="text-xs text-zinc-400 truncate max-w-[120px]">{data.lastJobType}</span>
+              <span className="text-xs text-muted truncate max-w-[120px]">{data.lastJobType}</span>
             </div>
           </div>
         )}
 
         {data.activeProviders.length > 0 && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-600">Providers</span>
+            <span className="text-xs text-muted">Providers</span>
             <div className="flex gap-1">
               {data.activeProviders.slice(0, 3).map(p => (
                 <span key={p} className="text-[10px] text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1.5 py-0.5 rounded">
