@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminEmptyState } from '@/components/admin'
 import {
     RefreshCw, Trash2, AlertTriangle, CheckCircle2, ServerCrash,
     ChevronDown, ChevronRight, Search, X, Globe, Clock, Layers, Info,
@@ -382,10 +383,12 @@ export default function ServerLogsPage() {
                         ))}
                     </div>
                 ) : logs.length === 0 ? (
-                    <div className="rounded-xl border border-border bg-surface text-center py-16">
-                        <CheckCircle2 size={36} className="mx-auto mb-3 text-green-700 opacity-60" />
-                        <p className="text-muted text-sm">Nenhum log encontrado</p>
-                        {search && <p className="text-muted text-xs mt-1">para o filtro &ldquo;{search}&rdquo;</p>}
+                    <div className="rounded-xl border border-border bg-surface">
+                        <AdminEmptyState
+                            icon={<CheckCircle2 className="w-8 h-8 text-green-700 opacity-60" />}
+                            title="Nenhum log encontrado"
+                            description={search ? `para o filtro "${search}"` : undefined}
+                        />
                     </div>
                 ) : (
                     <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
@@ -574,10 +577,12 @@ export default function ServerLogsPage() {
 
                 {/* Gateway log list */}
                 {gwAvailable === false ? (
-                    <div className="rounded-xl border border-border bg-surface text-center py-16">
-                        <ShieldAlert size={36} className="mx-auto mb-3 text-muted opacity-60" />
-                        <p className="text-muted text-sm font-bold">Log não disponível</p>
-                        <p className="text-muted text-xs mt-1 max-w-sm mx-auto">{gwMessage ?? 'Arquivo de log nginx não encontrado. Verifique o bind mount e a configuração do nginx.'}</p>
+                    <div className="rounded-xl border border-border bg-surface">
+                        <AdminEmptyState
+                            icon={<ShieldAlert className="w-8 h-8 text-muted opacity-60" />}
+                            title="Log não disponível"
+                            description={gwMessage ?? 'Arquivo de log nginx não encontrado. Verifique o bind mount e a configuração do nginx.'}
+                        />
                     </div>
                 ) : gwLoading ? (
                     <div className="rounded-xl border border-border bg-surface">
@@ -591,9 +596,11 @@ export default function ServerLogsPage() {
                         ))}
                     </div>
                 ) : gwLogs.length === 0 ? (
-                    <div className="rounded-xl border border-border bg-surface text-center py-16">
-                        <CheckCircle2 size={36} className="mx-auto mb-3 text-green-700 opacity-60" />
-                        <p className="text-muted text-sm">Nenhum erro de gateway registrado</p>
+                    <div className="rounded-xl border border-border bg-surface">
+                        <AdminEmptyState
+                            icon={<CheckCircle2 className="w-8 h-8 text-green-700 opacity-60" />}
+                            title="Nenhum erro de gateway registrado"
+                        />
                     </div>
                 ) : (
                     <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">

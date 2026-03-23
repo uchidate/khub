@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
+import { AdminEmptyState } from '@/components/admin'
 import { useToast } from '@/lib/hooks/useToast'
 import Image from 'next/image'
 import {
@@ -792,35 +793,39 @@ function EnrichmentPageInner() {
                         <Loader2 className="w-6 h-6 text-muted animate-spin" />
                     </div>
                 ) : visibleItems.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-border rounded-xl">
-                        {isSearching ? (
-                            <>
-                                <Search className="w-8 h-8 text-muted mx-auto mb-3" />
-                                <p className="text-sm font-medium text-foreground">Nenhum resultado</p>
-                                <p className="text-xs text-muted mt-1">Tente outro termo de busca.</p>
-                            </>
-                        ) : fieldFilter !== 'all' ? (
-                            <>
-                                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-foreground">Nenhum item sem &ldquo;{fieldMap[fieldFilter]?.label}&rdquo;</p>
-                                <p className="text-xs text-muted mt-1">Todos os itens visíveis têm este campo preenchido.</p>
-                            </>
-                        ) : hideComplete && completeCount > 0 ? (
-                            <>
-                                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-foreground">Todos os itens carregados estão completos!</p>
-                                <button onClick={() => setHideComplete(false)} className="text-xs text-muted hover:text-foreground mt-1 transition-colors">
+                    isSearching ? (
+                        <AdminEmptyState
+                            icon={<Search className="w-8 h-8 text-muted" />}
+                            title="Nenhum resultado"
+                            description="Tente outro termo de busca."
+                            bordered
+                        />
+                    ) : fieldFilter !== 'all' ? (
+                        <AdminEmptyState
+                            icon={<CheckCircle className="w-8 h-8 text-emerald-500" />}
+                            title={`Nenhum item sem "${fieldMap[fieldFilter]?.label}"`}
+                            description="Todos os itens visíveis têm este campo preenchido."
+                            bordered
+                        />
+                    ) : hideComplete && completeCount > 0 ? (
+                        <AdminEmptyState
+                            icon={<CheckCircle className="w-8 h-8 text-emerald-500" />}
+                            title="Todos os itens carregados estão completos!"
+                            action={
+                                <button onClick={() => setHideComplete(false)} className="text-xs text-muted hover:text-foreground transition-colors">
                                     Mostrar {completeCount} itens completos
                                 </button>
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-foreground">Tudo enriquecido!</p>
-                                <p className="text-xs text-muted mt-1">Nenhum item pendente nesta categoria.</p>
-                            </>
-                        )}
-                    </div>
+                            }
+                            bordered
+                        />
+                    ) : (
+                        <AdminEmptyState
+                            icon={<CheckCircle className="w-8 h-8 text-emerald-500" />}
+                            title="Tudo enriquecido!"
+                            description="Nenhum item pendente nesta categoria."
+                            bordered
+                        />
+                    )
                 ) : (
                     <div className="space-y-2">
                         {visibleItems.map((item) => (

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
+import { AdminEmptyState } from '@/components/admin'
 
 interface Artist {
   id: string
@@ -215,7 +216,7 @@ export default function FilmographyAdminPage() {
               <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
             </div>
           ) : filteredArtists.length === 0 ? (
-            <p className="text-muted text-sm text-center py-12">Nenhum artista encontrado</p>
+            <AdminEmptyState title="Nenhum artista encontrado" size="sm" />
           ) : (
             <div className="divide-y divide-border">
               {filteredArtists.map(artist => {

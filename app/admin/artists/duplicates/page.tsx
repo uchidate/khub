@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { GitMerge, RefreshCw, CheckCircle, ChevronDown, ChevronUp, X, ExternalLink, Search, Ban, Zap, UserPlus } from 'lucide-react'
+import { AdminEmptyState } from '@/components/admin'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -352,11 +353,12 @@ export default function DuplicatesPage() {
                         ))}
                     </div>
                 ) : visible.length === 0 ? (
-                    <div className="text-center py-20 text-muted">
-                        <CheckCircle className="w-10 h-10 text-green-500/50 mx-auto mb-3" />
-                        <p className="font-bold">Nenhum par pendente</p>
-                        <p className="text-sm mt-1">para o filtro selecionado</p>
-                    </div>
+                    <AdminEmptyState
+                        icon={<CheckCircle className="w-10 h-10 text-green-500/50" />}
+                        title="Nenhum par pendente"
+                        description="para o filtro selecionado"
+                        size="lg"
+                    />
                 ) : (
                     <div className="space-y-3">
                         {visible.map(pair => {

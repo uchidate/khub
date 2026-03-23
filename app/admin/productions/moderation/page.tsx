@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 import {
   Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2,
@@ -11,6 +10,14 @@ import {
   Pencil, ArrowUpDown, X,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import {
+  AdminModalOverlay,
+  ConfirmDialog,
+  AdminEmptyState,
+  AdminButton,
+  AdminIconLink,
+  AdminIconButton,
+} from '@/components/admin'
 import { ADULT_KEYWORDS } from '@/lib/constants/moderation'
 
 type Production = {
@@ -119,23 +126,16 @@ function ReviewHideModal({ open, onClose, onDone }: {
     } finally { setHiding(false) }
   }
 
-  if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-4">
-      <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-          <ShieldAlert size={18} className="text-pink-400 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <h3 className="text-foreground font-semibold">Revisar antes de ocultar por keyword</h3>
-            <p className="text-xs text-muted">
-              {loading ? 'Carregando...' : `${items.length} produção(ões) · ${selected.size} selecionadas`}
-            </p>
-          </div>
-          <button onClick={onClose} className="text-muted hover:text-foreground transition-colors shrink-0">
-            <XCircle size={18} />
-          </button>
-        </div>
-
+    <AdminModalOverlay
+      open={open}
+      onClose={onClose}
+      title="Revisar antes de ocultar por keyword"
+      subtitle={loading ? 'Carregando...' : `${items.length} produção(ões) · ${selected.size} selecionadas`}
+      icon={<ShieldAlert size={18} className="text-pink-400" />}
+      maxWidth="2xl"
+    >
+      <div className="-mx-5 -mt-5 flex flex-col max-h-[70vh]">
         <div className="px-5 py-3 border-b border-border flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-40">
             <Search size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
@@ -160,7 +160,7 @@ function ReviewHideModal({ open, onClose, onDone }: {
               <RefreshCw className="w-6 h-6 text-purple-500 animate-spin" />
             </div>
           ) : paged.length === 0 ? (
-            <p className="text-muted text-sm text-center py-10">Nenhuma produção encontrada</p>
+            <AdminEmptyState title="Nenhuma produção encontrada" size="sm" />
           ) : (
             paged.map(item => {
               const sel = selected.has(item.id)
@@ -201,20 +201,18 @@ function ReviewHideModal({ open, onClose, onDone }: {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 px-5 py-2 border-t border-border">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="text-muted hover:text-foreground disabled:opacity-30 transition-colors">
+            <AdminIconButton onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} title="Página anterior">
               <ChevronLeft size={16} />
-            </button>
+            </AdminIconButton>
             <span className="text-xs text-muted">{page} / {totalPages} · {filtered.length} produção(ões)</span>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="text-muted hover:text-foreground disabled:opacity-30 transition-colors">
+            <AdminIconButton onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} title="Próxima página">
               <ChevronRight size={16} />
-            </button>
+            </AdminIconButton>
           </div>
         )}
 
         <div className="flex items-center gap-3 px-5 py-4 border-t border-border">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl bg-surface text-foreground hover:bg-surface text-sm transition-colors">
-            Cancelar
-          </button>
+          <AdminButton onClick={onClose}>Cancelar</AdminButton>
           <button
             onClick={doHide}
             disabled={selected.size === 0 || hiding || done}
@@ -227,40 +225,10 @@ function ReviewHideModal({ open, onClose, onDone }: {
           </button>
         </div>
       </div>
-    </div>
+    </AdminModalOverlay>
   )
 }
 
-// ——— Confirmation modal ———
-function ConfirmModal({
-  open, title, message, confirmLabel, destructive, onConfirm, onCancel,
-}: {
-  open: boolean; title: string; message: string; confirmLabel: string
-  destructive?: boolean; onConfirm: () => void; onCancel: () => void
-}) {
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onCancel}>
-      <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h3 className="text-foreground font-bold text-lg mb-2">{title}</h3>
-        <p className="text-muted text-sm mb-6 whitespace-pre-line">{message}</p>
-        <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 rounded-xl bg-surface text-foreground hover:bg-surface transition-colors">
-            Cancelar
-          </button>
-          <button
-            onClick={onConfirm}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              destructive ? 'bg-red-600 hover:bg-red-500 text-foreground' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
-            }`}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ——— Score bar ———
 function ScoreBar({ score }: { score: number }) {
@@ -327,9 +295,9 @@ function ProductionCard({
     <div className={`border rounded-xl transition-colors ${borderColor} ${bgColor} ${selected ? 'ring-1 ring-purple-500' : ''}`}>
       <div className="flex gap-3 p-3">
         {/* Checkbox */}
-        <button onClick={onSelect} className="shrink-0 mt-1 text-muted hover:text-purple-400 transition-colors">
+        <AdminIconButton onClick={onSelect} title={selected ? 'Desselecionar' : 'Selecionar'} className="shrink-0 mt-1">
           {selected ? <CheckSquare size={18} className="text-purple-400" /> : <Square size={18} />}
-        </button>
+        </AdminIconButton>
 
         {/* Poster */}
         <div className="shrink-0">
@@ -350,12 +318,12 @@ function ProductionCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-semibold text-foreground text-sm leading-tight">{prod.titlePt}</span>
-                <Link href={`/productions/${prod.id}`} target="_blank" className="text-muted hover:text-purple-400 transition-colors">
+                <AdminIconLink href={`/productions/${prod.id}`} target="_blank" title="Ver produção" size="sm">
                   <ExternalLink size={12} />
-                </Link>
-                <Link href={`/admin/productions/${prod.id}`} className="text-muted hover:text-blue-400 transition-colors" title="Editar">
+                </AdminIconLink>
+                <AdminIconLink href={`/admin/productions/${prod.id}`} title="Editar" size="sm">
                   <Pencil size={12} />
-                </Link>
+                </AdminIconLink>
               </div>
               {prod.titleKr && <p className="text-xs text-muted mt-0.5">{prod.titleKr}</p>}
             </div>
@@ -1057,8 +1025,12 @@ function ProductionModerationContent() {
 
   return (
     <AdminLayout title="Moderação de Produções">
-      <ConfirmModal
-        {...modal}
+      <ConfirmDialog
+        open={modal.open}
+        title={modal.title}
+        description={modal.message}
+        confirmLabel={modal.confirmLabel}
+        variant={modal.destructive ? 'danger' : 'default'}
         onConfirm={() => { setModal(m => ({ ...m, open: false })); modal.onConfirm() }}
         onCancel={() => setModal(m => ({ ...m, open: false }))}
       />
@@ -1267,14 +1239,14 @@ function ProductionModerationContent() {
               <RefreshCw className="w-7 h-7 text-purple-500 animate-spin" />
             </div>
           ) : productions.length === 0 ? (
-            <div className="bg-surface border border-border rounded-2xl p-12 text-center">
-              <Film className="w-14 h-14 text-muted mx-auto mb-4" />
-              <p className="text-muted">Nenhuma produção encontrada</p>
-              {search && (
-                <button onClick={() => setSearch('')} className="mt-3 text-sm text-purple-400 hover:underline">
-                  Limpar busca
-                </button>
-              )}
+            <div className="bg-surface border border-border rounded-2xl">
+              <AdminEmptyState
+                icon={<Film className="w-14 h-14" />}
+                title="Nenhuma produção encontrada"
+                action={search ? (
+                  <AdminButton variant="ghost" size="sm" onClick={() => setSearch('')}>Limpar busca</AdminButton>
+                ) : undefined}
+              />
             </div>
           ) : (
             productions.map(prod => (
@@ -1296,21 +1268,23 @@ function ProductionModerationContent() {
         {/* Pagination */}
         {pagination && pagination.pages > 1 && (
           <div className="flex items-center justify-between gap-4 pt-2">
-            <button
+            <AdminButton
               onClick={() => fetchProductions(pagination.page - 1)}
               disabled={pagination.page <= 1}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              variant="secondary"
+              size="sm"
             >
               <ChevronLeft size={16} /> Anterior
-            </button>
+            </AdminButton>
             <span className="text-sm text-muted">{pagination.page} / {pagination.pages}</span>
-            <button
+            <AdminButton
               onClick={() => fetchProductions(pagination.page + 1)}
               disabled={pagination.page >= pagination.pages}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              variant="secondary"
+              size="sm"
             >
               Próxima <ChevronRight size={16} />
-            </button>
+            </AdminButton>
           </div>
         )}
       </div>

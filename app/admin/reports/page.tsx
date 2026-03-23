@@ -8,6 +8,7 @@ import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { StatCard } from '@/components/admin/StatCard'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import { CheckCircle, Eye, XCircle, ExternalLink, RefreshCw, Flag, Search, Trash2 } from 'lucide-react'
+import { AdminEmptyState } from '@/components/admin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -463,10 +464,12 @@ export default function ReportsPage() {
         {loading ? (
           <Skeleton />
         ) : reports.length === 0 ? (
-          <div className="text-center py-16 bg-surface rounded-2xl border border-border">
-            <Flag size={40} className="text-muted mx-auto mb-4" />
-            <p className="text-muted font-medium">Nenhum reporte encontrado</p>
-            <p className="text-muted text-sm mt-1">Tente ajustar os filtros</p>
+          <div className="bg-surface rounded-2xl border border-border">
+            <AdminEmptyState
+              icon={<Flag className="w-8 h-8 text-muted" />}
+              title="Nenhum reporte encontrado"
+              description="Tente ajustar os filtros"
+            />
           </div>
         ) : (
           <>

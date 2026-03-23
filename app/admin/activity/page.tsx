@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminEmptyState } from '@/components/admin'
 import prisma from '@/lib/prisma'
 import {
     Activity, Shield, Server, User,
@@ -398,7 +399,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                     {/* ── Aba Usuário ── */}
                     {tab === 'user' && (
                         userLogs.length === 0
-                            ? <p className="text-center py-16 text-muted text-sm">Nenhuma atividade no período</p>
+                            ? <AdminEmptyState title="Nenhuma atividade no período" size="md" />
                             : userLogs.map((log: ActivityWithUser) => {
                                 const cfg = ACTIVITY_TYPE_CONFIG[log.type] ?? { label: log.type, color: 'text-muted bg-surface', border: 'border-border', icon: Activity }
                                 const TypeIcon = cfg.icon
@@ -448,7 +449,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                     {/* ── Aba Admin ── */}
                     {tab === 'admin' && (
                         auditLogs.length === 0
-                            ? <p className="text-center py-16 text-muted text-sm">Nenhuma ação administrativa no período</p>
+                            ? <AdminEmptyState title="Nenhuma ação administrativa no período" size="md" />
                             : auditLogs.map((log: AuditLogWithAdmin) => {
                                 const cfg = AUDIT_ACTION_CONFIG[log.action] ?? { label: log.action, color: 'text-muted bg-surface', border: 'border-border', icon: Activity }
                                 const ActionIcon = cfg.icon
@@ -494,7 +495,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                     {/* ── Aba Sistema ── */}
                     {tab === 'system' && (
                         systemEvents.length === 0
-                            ? <p className="text-center py-16 text-muted text-sm">Nenhum evento de sistema no período</p>
+                            ? <AdminEmptyState title="Nenhum evento de sistema no período" size="md" />
                             : systemEvents.map((ev: SystemEvent) => {
                                 const cfg = LEVEL_CONFIG[ev.level] ?? LEVEL_CONFIG.INFO
                                 return (

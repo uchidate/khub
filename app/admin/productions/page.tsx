@@ -17,6 +17,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
   Check, AlertCircle, Film, Star, Languages,
 } from 'lucide-react'
+import { AdminEmptyState } from '@/components/admin'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -253,13 +254,12 @@ function CastModal({
               <p className="text-sm">Carregando elenco...</p>
             </div>
           ) : cast.length === 0 ? (
-            <div className="text-center py-12 text-muted">
-              <Users size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm font-medium">Nenhum artista no elenco</p>
-              {production.tmdbId && (
-                <p className="text-xs mt-1 text-muted">Use &quot;Re-sync TMDB&quot; para importar</p>
-              )}
-            </div>
+            <AdminEmptyState
+              icon={<Users className="w-8 h-8 opacity-30" />}
+              title="Nenhum artista no elenco"
+              description={production.tmdbId ? 'Use "Re-sync TMDB" para importar' : undefined}
+              size="sm"
+            />
           ) : (
             cast.map((member) => (
               <div

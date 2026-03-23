@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminEmptyState } from '@/components/admin'
 import { Instagram, Twitter, Youtube, X, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
@@ -812,7 +813,7 @@ export default function SocialLinksAdminPage() {
                 ) : (
                     <div className="space-y-2">
                         {artists.length === 0 && (
-                            <div className="text-center py-16 text-muted">Nenhum artista encontrado</div>
+                            <AdminEmptyState title="Nenhum artista encontrado" size="md" />
                         )}
                         {artists.map((artist) => {
                             const linkCount = countLinks(artist.socialLinks)
