@@ -156,7 +156,7 @@ export default function GroupsPage() {
     {
       key: 'membersCount', label: 'Membros', sortable: true,
       render: (group) => (
-        <span className="text-purple-400 font-bold tabular-nums">{group.membersCount}</span>
+        <span className="text-accent font-bold tabular-nums">{group.membersCount}</span>
       ),
     },
     {
@@ -344,7 +344,7 @@ export default function GroupsPage() {
                 </div>
 
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-muted flex-wrap">
-                  <span className="text-purple-400 font-bold flex items-center gap-1">
+                  <span className="text-accent font-bold flex items-center gap-1">
                     <Users size={10} /> {group.membersCount}
                   </span>
                   {group.agencyName && <span className="truncate">{group.agencyName}</span>}

@@ -81,7 +81,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
-                            <Mail size={22} className="text-purple-400" />
+                            <Mail size={22} className="text-accent" />
                             Histórico de Emails
                         </h1>
                         <p className="text-muted text-sm mt-1">{total} emails nos últimos {days} dias</p>
@@ -155,7 +155,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                                             {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
-                                    <Link href={`/admin/emails/${log.id}`} className="text-xs text-purple-400 hover:text-purple-300 font-bold shrink-0">
+                                    <Link href={`/admin/emails/${log.id}`} className="text-xs text-accent hover:text-accent/80 font-bold shrink-0">
                                         Ver →
                                     </Link>
                                 </div>
@@ -206,7 +206,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                                             {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <Link href={`/admin/emails/${log.id}`} className="text-xs text-purple-400 hover:text-purple-300 font-bold">
+                                            <Link href={`/admin/emails/${log.id}`} className="text-xs text-accent hover:text-accent/80 font-bold">
                                                 Ver →
                                             </Link>
                                         </td>

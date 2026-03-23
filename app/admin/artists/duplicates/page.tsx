@@ -584,7 +584,7 @@ export default function DuplicatesPage() {
                                             </div>
 
                                             {/* Combined info */}
-                                            <div className="bg-black/30 rounded-lg p-3 text-xs text-muted space-y-1 border border-border">
+                                            <div className="bg-background rounded-lg p-3 text-xs text-muted space-y-1 border border-border">
                                                 <p className="font-bold text-muted mb-2">Combinados automaticamente:</p>
                                                 <p>• Produções: <span className="text-foreground">{pair.a._count.productions} (A) + {pair.b._count.productions} (B)</span></p>
                                                 <p>• Álbuns: <span className="text-foreground">{pair.a._count.albums} (A) + {pair.b._count.albums} (B)</span></p>

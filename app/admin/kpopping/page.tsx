@@ -267,7 +267,7 @@ function TMDBPanel({
   return (
     <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wide">Resultados TMDB</span>
         <AdminButton onClick={doSearch} variant="ghost" size="sm">
           <RefreshCw size={10} /> Refazer
         </AdminButton>
@@ -381,7 +381,7 @@ function TMDBGroupPanel({
   return (
     <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Resultados TMDB</span>
+        <span className="text-xs font-semibold text-accent uppercase tracking-wide">Resultados TMDB</span>
         <AdminButton onClick={doSearch} variant="ghost" size="sm">
           <RefreshCw size={10} /> Refazer
         </AdminButton>
@@ -1530,7 +1530,7 @@ export default function KpoppingCurationPage() {
               </AdminButton>
             </div>
             {backfillResult && (
-              <p className="text-xs text-purple-400">
+              <p className="text-xs text-accent">
                 {backfillResult.total} candidatos · Vínculos: {backfillResult.membershipsCreated} criados · {backfillResult.membershipsExisted} já existiam · Aprovadas: {backfillResult.suggestionsApproved} · Artistas enriquecidos: {backfillResult.artistsEnriched} · Grupos enriquecidos: {backfillResult.groupsEnriched} · {backfillResult.errors} erros
               </p>
             )}
@@ -1553,7 +1553,7 @@ export default function KpoppingCurationPage() {
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 tab === t.key
-                  ? 'border-purple-500 text-purple-400'
+                  ? 'border-accent text-accent'
                   : 'border-transparent text-muted hover:text-foreground'
               }`}
             >

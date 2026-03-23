@@ -66,7 +66,7 @@ function MergeModal({
             onClose={onClose}
             title="Mesclar tag"
             maxWidth="sm"
-            icon={<GitMerge className="w-4 h-4 text-purple-400" />}
+            icon={<GitMerge className="w-4 h-4 text-accent" />}
         >
             <div className="space-y-4">
                 <p className="text-sm text-muted">
@@ -429,7 +429,7 @@ export default function TagsAdminPage() {
                         {filtered.map(entry => (
                             <AdminTableRow
                                 key={entry.tag}
-                                backgroundBar={{ width: (entry.total / maxUsage) * 100, color: 'bg-purple-500/5' }}
+                                backgroundBar={{ width: (entry.total / maxUsage) * 100, color: 'bg-accent/5' }}
                                 actions={
                                     editingTag === entry.tag ? (
                                         <div className="flex gap-1 flex-shrink-0">
@@ -492,7 +492,7 @@ export default function TagsAdminPage() {
                                                     if (e.key === 'Escape') cancelEdit()
                                                 }}
                                                 autoFocus
-                                                className="flex-1 min-w-0 bg-background border border-purple-500/50 rounded-xl px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-accent/50"
+                                                className="flex-1 min-w-0 bg-background border border-accent/50 rounded-xl px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-accent/50"
                                             />
                                             {/* Merge conflict warning */}
                                             {mergeConflict && (
