@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 
 interface NewsItem {
     id: string
@@ -184,25 +185,27 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                             Produções em destaque
                         </div>
                         <div>
-                            {productions.slice(0, 5).map((prod, idx) => {
-                                const GRAD_STYLES = [
-                                    'linear-gradient(135deg,#27272a,#18181b)',
-                                    'linear-gradient(135deg,#1f1f22,#111114)',
-                                    'linear-gradient(135deg,#27272a,#18181b)',
-                                    'linear-gradient(135deg,#1f1f22,#111114)',
-                                    'linear-gradient(135deg,#27272a,#18181b)',
-                                ]
+                            {productions.slice(0, 5).map((prod) => {
                                 return (
                                     <Link
                                         key={prod.id}
                                         href={`/productions/${prod.id}`}
                                         className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors group min-h-[52px]"
                                     >
-                                        <div
-                                            className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold"
-                                            style={{ background: GRAD_STYLES[idx % GRAD_STYLES.length] }}
-                                        >
-                                            {getInitialsFromTitle(prod.titlePt)}
+                                        <div className="w-8 h-12 rounded-md flex-shrink-0 overflow-hidden bg-surface border border-border">
+                                            {prod.imageUrl ? (
+                                                <Image
+                                                    src={prod.imageUrl}
+                                                    alt={prod.titlePt}
+                                                    width={32}
+                                                    height={48}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-bold bg-surface">
+                                                    {getInitialsFromTitle(prod.titlePt)}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
