@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState, StatCard } from '@/components/admin'
+import { AdminEmptyState, StatCard, SectionHeader } from '@/components/admin'
 import { AdminButton } from '@/components/admin'
 import {
     RefreshCw, Trash2, CheckCircle2,
     ChevronDown, ChevronRight, Search, X, Globe, Clock, Info,
     ShieldAlert,
 } from 'lucide-react'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 interface ServerLogEntry {
     id: string
@@ -110,6 +111,7 @@ function parseUserAgent(ua: string | null): string {
 }
 
 export default function ServerLogsPage() {
+    const toast = useAdminToast()
     const [activeTab, setActiveTab] = useState<'app' | 'gateway'>('app')
 
     // App logs state
@@ -148,10 +150,12 @@ export default function ServerLogsPage() {
             setPages(json.pages ?? 1)
             setPage(json.page ?? 1)
             if (json.counts) setCounts(json.counts)
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar logs')
         } finally {
             setLoading(false)
         }
-    }, [filter, search, page])
+    }, [filter, search, page, toast])
 
     const fetchGwLogs = useCallback(async () => {
         setGwLoading(true)
@@ -162,12 +166,16 @@ export default function ServerLogsPage() {
             setGwCounts(json.counts ?? { total: 0, s502: 0, s504: 0 })
             setGwAvailable(json.available)
             setGwMessage(json.message)
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao carregar logs de gateway')
         } finally {
             setGwLoading(false)
         }
-    }, [])
+    }, [toast])
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchLogs(1) }, [filter, search])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchLogs(page) }, [page])
     useEffect(() => { if (activeTab === 'gateway') fetchGwLogs() }, [activeTab, fetchGwLogs])
 
@@ -196,9 +204,16 @@ export default function ServerLogsPage() {
         if (!confirm(days === 0 ? 'Apagar TODOS os logs?' : `Apagar logs com mais de ${days} dias?`)) return
         setClearMenu(false)
         setDeleting(true)
-        await fetch(`/api/admin/server-logs?days=${days}`, { method: 'DELETE' })
-        setDeleting(false)
-        fetchLogs(1)
+        try {
+            const res = await fetch(`/api/admin/server-logs?days=${days}`, { method: 'DELETE' })
+            if (!res.ok) { const e = await res.json(); toast.error(e.error || 'Erro ao limpar logs'); return }
+            toast.success(days === 0 ? 'Todos os logs foram apagados' : `Logs com mais de ${days} dias apagados`)
+            fetchLogs(1)
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao limpar logs')
+        } finally {
+            setDeleting(false)
+        }
     }
 
     const handleSearch = (e: React.FormEvent) => {
@@ -422,7 +437,7 @@ export default function ServerLogsPage() {
                                         {/* Error message */}
                                         {log.error && (
                                             <div>
-                                                <p className="text-[10px] text-muted uppercase tracking-widest font-bold mb-1.5">Erro / Resposta</p>
+                                                <SectionHeader title="Erro / Resposta" className="mb-1.5" />
                                                 <pre className="text-xs text-orange-300 font-mono whitespace-pre-wrap break-all bg-orange-950/20 border border-orange-900/40 rounded-lg p-3 max-h-64 overflow-y-auto">
                                                     {log.error}
                                                 </pre>
@@ -447,7 +462,7 @@ export default function ServerLogsPage() {
                                             </div>
                                             {log.body && log.body !== log.error && (
                                                 <div className="sm:col-span-2">
-                                                    <p className="text-[10px] text-muted uppercase tracking-widest font-bold mb-1">Request Body</p>
+                                                    <SectionHeader title="Request Body" className="mb-1" />
                                                     <pre className="text-xs text-muted font-mono whitespace-pre-wrap break-all bg-surface border border-border rounded p-2">
                                                         {log.body}
                                                     </pre>

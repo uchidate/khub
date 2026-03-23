@@ -69,6 +69,8 @@ export default function AiLogsTable({ initialLogs }: Props) {
             const r    = await fetch(`/api/admin/ai/logs?${p}`)
             const data = await r.json()
             setLogs(data.logs ?? [])
+        } catch (err) {
+            console.error('AiLogsTable fetch error:', err)
         } finally {
             setLoading(false)
         }

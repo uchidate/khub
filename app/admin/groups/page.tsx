@@ -238,6 +238,8 @@ export default function GroupsPage() {
       setDeleteOpen(false)
       refetchTable()
       fetchStats()
+    } catch (err) {
+      toast.error((err as Error).message || 'Erro ao carregar dados')
     } finally {
       setDeleteLoading(false)
     }

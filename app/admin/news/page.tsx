@@ -137,7 +137,7 @@ function ArtistsCell({ artists }: { artists: NewsArtistLink[] }) {
             {shown.map(({ artist }) => (
                 <span
                     key={artist.id}
-                    className="flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/10 text-purple-300 rounded text-[10px] font-medium border border-purple-500/20"
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-accent/10 text-accent rounded text-[10px] font-medium border border-accent/20"
                 >
                     {artist.primaryImageUrl ? (
                         <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={12} height={12} className="rounded-full object-cover flex-shrink-0" />

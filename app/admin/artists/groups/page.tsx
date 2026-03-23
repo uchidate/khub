@@ -390,7 +390,7 @@ export default function ArtistGroupsAdminPage() {
         const groupName = override !== undefined ? override.name : artist.musicalGroupName
         if (groupName) {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-full text-xs font-bold">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent/10 border border-accent/20 text-accent rounded-full text-xs font-bold">
               <Music2 className="w-3 h-3" />
               {groupName}
             </span>

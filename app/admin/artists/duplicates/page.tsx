@@ -463,7 +463,7 @@ export default function DuplicatesPage() {
                                                                                 onClick={() => rawId && !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne || !rawId}
                                                                                 className={`flex flex-col gap-1.5 p-3 rounded-lg border text-left transition-all ${
-                                                                                    isSelected && rawId ? 'border-purple-500 bg-purple-500/10' : 'border-border bg-surface'
+                                                                                    isSelected && rawId ? 'border-accent bg-accent/10' : 'border-border bg-surface'
                                                                                 } ${rawId && !onlyOne ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
                                                                             >
                                                                                 {rawId ? (
@@ -524,7 +524,7 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne}
-                                                                                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-purple-500' : 'border-border opacity-40'} ${!onlyOne ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                                                                                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-accent' : 'border-border opacity-40'} ${!onlyOne ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
                                                                             >
                                                                                 {artist.primaryImageUrl ? (
                                                                                     <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="64px" className="object-cover" />
@@ -545,7 +545,7 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && val && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne || !val}
-                                                                                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${isSelected && val ? 'border-purple-500 bg-purple-500/10 text-foreground' : 'border-border text-muted'} ${!onlyOne && val ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
+                                                                                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${isSelected && val ? 'border-accent bg-accent/10 text-foreground' : 'border-border text-muted'} ${!onlyOne && val ? 'cursor-pointer hover:border-border' : 'cursor-default'}`}
                                                                             >
                                                                                 {val ? <span className="line-clamp-3">{val}</span> : <span className="text-muted italic">Sem bio</span>}
                                                                             </button>
@@ -567,7 +567,7 @@ export default function DuplicatesPage() {
                                                                             <button key={artist.id}
                                                                                 onClick={() => !onlyOne && setField(pair.id, field, side)}
                                                                                 disabled={onlyOne}
-                                                                                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${isSelected ? 'border-purple-500 bg-purple-500/10 text-purple-300' : 'border-border text-muted hover:border-border'} ${!onlyOne ? 'cursor-pointer' : 'cursor-default'}`}
+                                                                                className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${isSelected ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted hover:border-border'} ${!onlyOne ? 'cursor-pointer' : 'cursor-default'}`}
                                                                             >
                                                                                 {val}
                                                                                 {onlyOne && <span className="ml-1 text-green-500 text-[10px]">✓ único</span>}

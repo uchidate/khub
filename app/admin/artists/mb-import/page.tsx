@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ArrowLeft, RefreshCw, Search, Plus, CheckCircle, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
@@ -8,6 +9,7 @@ import { AdminButton, AdminLinkButton } from '@/components/admin'
 import type { MBArtistCandidate } from '@/lib/services/musicbrainz-service'
 
 export default function MBImportPage() {
+    const toast = useAdminToast()
     const [search, setSearch] = useState('')
     const [results, setResults] = useState<MBArtistCandidate[]>([])
     const [loading, setLoading] = useState(false)
@@ -29,6 +31,8 @@ export default function MBImportPage() {
             const res = await fetch(`/api/admin/artists/mb-search?name=${encodeURIComponent(name)}`)
             const data = await res.json()
             setResults(data.artists ?? [])
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao buscar no MusicBrainz')
         } finally {
             setLoading(false)
             setSearched(true)
@@ -46,11 +50,15 @@ export default function MBImportPage() {
             const data = await res.json()
             if (res.status === 409) {
                 setExistingArtists(prev => ({ ...prev, [candidate.mbid]: data.artistId }))
+                toast.info(`"${candidate.name}" já está cadastrado`)
             } else if (res.ok) {
                 setImportedArtists(prev => ({ ...prev, [candidate.mbid]: data.artist }))
+                toast.success(`"${candidate.name}" importado com sucesso`)
             } else {
-                alert(data.error || 'Erro ao importar artista')
+                toast.error(data.error || 'Erro ao importar artista')
             }
+        } catch (err) {
+            toast.error((err as Error).message || 'Erro ao importar artista')
         } finally {
             setImportingMbid(null)
         }

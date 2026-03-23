@@ -170,7 +170,7 @@ export default function AdminCommentsPage() {
         } finally {
             setIsLoading(false)
         }
-    }, [page, search, status, sortBy])
+    }, [page, search, status, sortBy, toast])
 
     useEffect(() => { fetchComments() }, [fetchComments])
 

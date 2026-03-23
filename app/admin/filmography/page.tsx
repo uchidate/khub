@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
-import { AdminEmptyState, AdminButton } from '@/components/admin'
+import { AdminEmptyState, AdminButton, SectionHeader } from '@/components/admin'
 
 interface Artist {
   id: string
@@ -205,9 +205,7 @@ export default function FilmographyAdminPage() {
         {/* Artist list */}
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <h2 className="text-xs font-black text-muted uppercase tracking-wider">
-              Artistas
-            </h2>
+            <SectionHeader title="Artistas" />
             <span className="text-xs text-muted tabular-nums">{filteredArtists.length} resultado{filteredArtists.length !== 1 ? 's' : ''}</span>
           </div>
 

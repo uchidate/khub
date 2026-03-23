@@ -240,7 +240,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => {

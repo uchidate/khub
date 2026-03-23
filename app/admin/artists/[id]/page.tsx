@@ -512,7 +512,7 @@ export default function EditArtistPage() {
                             <div className="flex items-center gap-2 mb-1.5">
                                 <span className="text-xs font-bold text-muted uppercase tracking-widest">Análise Editorial</span>
                                 {form.analiseEditorial && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-purple-500/10 text-purple-400 border-purple-500/30">
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-accent/10 text-accent border-accent/30">
                                         {form.analiseEditorial.length} chars
                                     </span>
                                 )}
