@@ -8,6 +8,7 @@ import { BlogBlockRenderer } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
 import { Clock, Eye, ArrowLeft, Tag, Calendar, Lock, Pencil } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 
 export const dynamic = 'force-dynamic'
 
@@ -88,14 +89,10 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
 
           <div className="flex items-center gap-4 flex-wrap text-sm text-muted pt-2 border-t border-white/5">
             <div className="flex items-center gap-2">
-              {post.author?.image ? (
-                <Image src={post.author.image} alt={post.author.name ?? ''} width={28} height={28} className="rounded-full object-cover" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-[#ff2d78]/30 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
-                  {post.author?.name?.[0] ?? '?'}
-                </div>
-              )}
-              <span className="font-medium text-[#e8e8e8]">{post.author?.name}</span>
+              <div className="w-7 h-7 rounded-full bg-[#ff2d78]/30 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
+                {BLOG_AUTHOR_AVATAR_INITIAL}
+              </div>
+              <span className="font-medium text-[#e8e8e8]">{BLOG_AUTHOR_DISPLAY_NAME}</span>
             </div>
             <span className="flex items-center gap-1.5"><Calendar size={13} />{formatDate(post.publishedAt ?? post.createdAt)}</span>
             <span className="flex items-center gap-1.5"><Clock size={13} />{post.readingTimeMin} min de leitura</span>
@@ -129,15 +126,11 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
 
         {post.author?.bio && (
           <div className="mt-10 p-5 rounded-2xl border border-white/5 bg-[#080808]/50 flex gap-4">
-            {post.author.image ? (
-              <Image src={post.author.image} alt={post.author.name ?? ''} width={48} height={48} className="rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-[#ff2d78]/30 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
-                {post.author.name?.[0] ?? '?'}
-              </div>
-            )}
+            <div className="w-12 h-12 rounded-full bg-[#ff2d78]/30 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
+              {BLOG_AUTHOR_AVATAR_INITIAL}
+            </div>
             <div>
-              <p className="font-semibold text-white text-sm">{post.author.name}</p>
+              <p className="font-semibold text-white text-sm">{BLOG_AUTHOR_DISPLAY_NAME}</p>
               <p className="text-[#999] text-sm mt-1">{post.author.bio}</p>
             </div>
           </div>
