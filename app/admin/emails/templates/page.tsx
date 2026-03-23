@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminLinkButton } from '@/components/admin'
 import prisma from '@/lib/prisma'
 import { FileText, Pencil, CheckCircle, XCircle } from 'lucide-react'
 
@@ -47,13 +47,10 @@ export default async function AdminEmailTemplatesPage() {
                                     Atualizado: {new Date(tpl.updatedAt).toLocaleDateString('pt-BR')}
                                 </p>
                             </div>
-                            <Link
-                                href={`/admin/emails/templates/${tpl.slug}`}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-bold text-sm rounded-lg transition-colors border border-purple-500/20 flex-shrink-0"
-                            >
+                            <AdminLinkButton href={`/admin/emails/templates/${tpl.slug}`} variant="primary">
                                 <Pencil size={13} />
                                 Editar
-                            </Link>
+                            </AdminLinkButton>
                         </div>
                     ))}
                 </div>

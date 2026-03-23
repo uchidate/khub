@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminButton } from '@/components/admin'
 import { BatchProgressPanel, type StreamProgress, type StreamLogEntry } from '@/components/admin/news/BatchProgressPanel'
 import {
     RefreshCw, RotateCcw, Loader2,
@@ -296,17 +297,17 @@ export default function NewsReprocessPage() {
                         </p>
                     </div>
                     <div className="px-5 py-4">
-                        <button
+                        <AdminButton
                             onClick={handleBatchReprocess}
                             disabled={isStreaming}
-                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors text-sm"
+                            variant="primary"
                         >
                             {isStreaming
                                 ? <Loader2 size={15} className="animate-spin" />
                                 : <RefreshCw size={15} />
                             }
                             {isStreaming ? 'Processando...' : 'Reprocessar candidatos'}
-                        </button>
+                        </AdminButton>
                     </div>
                 </section>
 
@@ -408,31 +409,31 @@ export default function NewsReprocessPage() {
 
                                 {/* Actions */}
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <button
+                                    <AdminButton
                                         onClick={() => handleSourceReprocess(0)}
                                         disabled={isStreaming || sourceCount === null}
-                                        className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground font-semibold rounded-xl hover:bg-surface-hover transition-colors disabled:opacity-50 text-sm"
+                                        variant="secondary"
                                     >
                                         {isStreaming
                                             ? <Loader2 size={14} className="animate-spin" />
                                             : <RefreshCw size={14} />
                                         }
                                         Reprocessar {(dateFrom || dateTo) ? 'período' : selectedSource}
-                                    </button>
+                                    </AdminButton>
 
                                     {reprocessResume &&
                                      reprocessResume.source === selectedSource &&
                                      reprocessResume.dateFrom === dateFrom &&
                                      reprocessResume.dateTo === dateTo && (
-                                        <button
+                                        <AdminButton
                                             onClick={() => handleSourceReprocess(reprocessResume.offset)}
                                             disabled={isStreaming}
                                             title={`Retomar do artigo ${reprocessResume.offset + 1} de ${reprocessResume.total}`}
-                                            className="flex items-center gap-2 px-3 py-2 bg-surface border border-amber-700/60 text-amber-400 font-semibold rounded-xl hover:border-amber-500/80 hover:text-amber-300 transition-all disabled:opacity-50 text-sm"
+                                            variant="warning"
                                         >
                                             <RotateCcw size={14} />
                                             Retomar do {reprocessResume.offset + 1}
-                                        </button>
+                                        </AdminButton>
                                     )}
                                 </div>
                             </div>
@@ -460,17 +461,17 @@ export default function NewsReprocessPage() {
                         </p>
                     </div>
                     <div className="px-5 py-4 space-y-3">
-                        <button
+                        <AdminButton
                             onClick={handleDedup}
                             disabled={dedupRunning || isStreaming}
-                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground font-semibold rounded-xl hover:border-amber-500/50 hover:text-amber-300 transition-all disabled:opacity-50 text-sm"
+                            variant="secondary"
                         >
                             {dedupRunning
                                 ? <Loader2 size={14} className="animate-spin" />
                                 : <GitMerge size={14} />
                             }
                             {dedupRunning ? 'Executando...' : 'Executar deduplicação'}
-                        </button>
+                        </AdminButton>
 
                         {dedupResult && (
                             <div className="flex items-center gap-3 text-sm p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
@@ -494,17 +495,17 @@ export default function NewsReprocessPage() {
                         </p>
                     </div>
                     <div className="px-5 py-4 space-y-3">
-                        <button
+                        <AdminButton
                             onClick={handleGenerateOne}
                             disabled={generating || isStreaming}
-                            className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-foreground font-semibold rounded-xl hover:bg-surface-hover transition-colors disabled:opacity-50 text-sm"
+                            variant="secondary"
                         >
                             {generating
                                 ? <Loader2 size={14} className="animate-spin" />
                                 : <FlaskConical size={14} />
                             }
                             {generating ? 'Gerando...' : 'Gerar 1 notícia'}
-                        </button>
+                        </AdminButton>
 
                         {generateResult && (
                             <div className={`flex items-start gap-3 p-3 rounded-xl border text-sm ${

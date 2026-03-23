@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminButton } from '@/components/admin'
 import { Loader2, Save, ArrowLeft, CheckCircle } from 'lucide-react'
 import { AI_FEATURES, FEATURE_LABELS } from '@/lib/ai/ai-features'
 import type { AiFeature } from '@/lib/ai/ai-features'
@@ -105,13 +106,14 @@ export default function AiConfigPage() {
             <div className="space-y-6 max-w-3xl">
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                    <button
+                    <AdminButton
                         onClick={() => router.push('/admin/ai')}
-                        className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+                        variant="ghost"
+                        size="sm"
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />
                         Dashboard
-                    </button>
+                    </AdminButton>
                     <div>
                         <h1 className="text-xl font-bold text-foreground">Configuração de IA</h1>
                         <p className="text-xs text-muted mt-0.5">Provider preferido, limites de orçamento e habilitação por feature</p>
@@ -158,16 +160,17 @@ export default function AiConfigPage() {
                                                 <p className="text-sm font-semibold text-foreground">{FEATURE_LABELS[feat as AiFeature | 'unknown']}</p>
                                                 <p className="text-[10px] text-muted font-mono">{feat}</p>
                                             </div>
-                                            <button
+                                            <AdminButton
                                                 onClick={() => handleSave(feat)}
                                                 disabled={isSav}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white transition-colors"
+                                                variant="primary"
+                                                size="sm"
                                             >
                                                 {isSav  ? <Loader2 className="w-3 h-3 animate-spin" /> :
                                                  isDone ? <CheckCircle className="w-3 h-3 text-emerald-300" /> :
                                                           <Save className="w-3 h-3" />}
                                                 {isDone ? 'Salvo!' : 'Salvar'}
-                                            </button>
+                                            </AdminButton>
                                         </div>
 
                                         <div className="grid sm:grid-cols-2 gap-3">

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
+import { AdminButton } from '@/components/admin'
 import {
     RefreshCw, Trash2, AlertTriangle, CheckCircle2, ServerCrash,
     ChevronDown, ChevronRight, Search, X, Globe, Clock, Layers, Info,
@@ -319,26 +320,28 @@ export default function ServerLogsPage() {
                     </button>
 
                     {/* Refresh */}
-                    <button
+                    <AdminButton
                         onClick={() => fetchLogs(page)}
                         disabled={loading}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-surface border border-border text-muted hover:text-foreground rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                        variant="secondary"
+                        size="sm"
                     >
                         <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                         <span className="hidden sm:inline">Atualizar</span>
-                    </button>
+                    </AdminButton>
 
                     {/* Clear dropdown */}
                     <div className="relative ml-auto" ref={clearMenuRef}>
-                        <button
+                        <AdminButton
                             onClick={() => setClearMenu(v => !v)}
                             disabled={deleting}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-red-950/40 border border-red-800/40 text-red-400 hover:bg-red-900/40 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                            variant="danger"
+                            size="sm"
                         >
                             <Trash2 size={12} />
                             <span className="hidden sm:inline">Limpar</span>
                             <ChevronDown size={12} />
-                        </button>
+                        </AdminButton>
                         {clearMenu && (
                             <div className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-44">
                                 {[
@@ -489,21 +492,23 @@ export default function ServerLogsPage() {
                 {/* Pagination */}
                 {pages > 1 && (
                     <div className="flex items-center justify-between text-xs">
-                        <button
+                        <AdminButton
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page <= 1}
-                            className="px-3 py-2 rounded-xl bg-surface border border-border text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
+                            variant="secondary"
+                            size="sm"
                         >
                             ← Anterior
-                        </button>
+                        </AdminButton>
                         <span className="text-muted">{page} / {pages}</span>
-                        <button
+                        <AdminButton
                             onClick={() => setPage(p => Math.min(pages, p + 1))}
                             disabled={page >= pages}
-                            className="px-3 py-2 rounded-xl bg-surface border border-border text-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none font-bold transition-colors"
+                            variant="secondary"
+                            size="sm"
                         >
                             Próxima →
-                        </button>
+                        </AdminButton>
                     </div>
                 )}
                 </>)}
@@ -565,14 +570,15 @@ export default function ServerLogsPage() {
                         <RefreshCw size={12} className={autoRefresh ? 'animate-spin' : ''} />
                         {autoRefresh ? '30s' : 'Auto'}
                     </button>
-                    <button
+                    <AdminButton
                         onClick={fetchGwLogs}
                         disabled={gwLoading}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-surface border border-border text-muted hover:text-foreground rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                        variant="secondary"
+                        size="sm"
                     >
                         <RefreshCw size={12} className={gwLoading ? 'animate-spin' : ''} />
                         Atualizar
-                    </button>
+                    </AdminButton>
                 </div>
 
                 {/* Gateway log list */}

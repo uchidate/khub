@@ -8,6 +8,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { AdminModalOverlay, ConfirmDialog } from '@/components/admin'
 import { Plus, RefreshCw, Trash2, ArrowLeft, Music, CheckCircle, Pencil, X, Check, ExternalLink, Sparkles } from 'lucide-react'
 
 interface Artist {
@@ -580,42 +581,44 @@ export default function ArtistDiscographyPage() {
       </div>
 
       {/* Sync modal */}
-      {syncModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl border border-border p-6 w-full max-w-md space-y-4">
-            <h2 className="text-lg font-black text-foreground">Sincronizar via MusicBrainz</h2>
-            <p className="text-sm text-muted">
-              Busca a discografia no MusicBrainz (com fallback via IA). Pode demorar até 1 min.
-            </p>
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={syncClearFirst}
-                onChange={e => setSyncClearFirst(e.target.checked)}
-                className="w-4 h-4 rounded"
-              />
-              <div>
-                <span className="text-sm font-bold text-foreground">Limpar álbuns antes de sincronizar</span>
-                <p className="text-xs text-muted">Remove todos os álbuns atuais e re-importa do zero. Útil para corrigir vinculações erradas.</p>
-              </div>
-            </label>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => { setSyncModalOpen(false); setSyncClearFirst(false) }}
-                className="px-4 py-2 text-sm font-bold text-muted hover:text-foreground transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSync}
-                className="px-4 py-2 text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-colors"
-              >
-                {syncClearFirst ? 'Limpar e Sincronizar' : 'Sincronizar'}
-              </button>
+      <AdminModalOverlay
+        open={syncModalOpen}
+        onClose={() => { setSyncModalOpen(false); setSyncClearFirst(false) }}
+        title="Sincronizar via MusicBrainz"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted">
+            Busca a discografia no MusicBrainz (com fallback via IA). Pode demorar até 1 min.
+          </p>
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={syncClearFirst}
+              onChange={e => setSyncClearFirst(e.target.checked)}
+              className="w-4 h-4 rounded"
+            />
+            <div>
+              <span className="text-sm font-bold text-foreground">Limpar álbuns antes de sincronizar</span>
+              <p className="text-xs text-muted">Remove todos os álbuns atuais e re-importa do zero. Útil para corrigir vinculações erradas.</p>
             </div>
+          </label>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => { setSyncModalOpen(false); setSyncClearFirst(false) }}
+              className="px-4 py-2 text-sm font-bold text-muted hover:text-foreground transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSync}
+              className="px-4 py-2 text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-colors"
+            >
+              {syncClearFirst ? 'Limpar e Sincronizar' : 'Sincronizar'}
+            </button>
           </div>
         </div>
-      )}
+      </AdminModalOverlay>
 
       {/* Edit/Create form */}
       <FormModal
@@ -637,39 +640,20 @@ export default function ArtistDiscographyPage() {
       />
 
       {/* Clear all confirmation */}
-      {clearAllOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl border border-border p-6 w-full max-w-md space-y-4">
-            <h2 className="text-lg font-black text-foreground">Limpar discografia</h2>
-            <p className="text-sm text-muted">
-              Remove <strong className="text-foreground">todos</strong> os álbuns de{' '}
-              <strong className="text-foreground">{artist?.nameRomanized ?? 'este artista'}</strong>.
-              Esta ação não pode ser desfeita.
-            </p>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setClearAllOpen(false)}
-                className="px-4 py-2 text-sm font-bold text-muted hover:text-foreground transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={async () => {
-                  setClearAllOpen(false)
-                  try {
-                    await handleClearAll()
-                  } catch (err) {
-                    showToast(`❌ ${err instanceof Error ? err.message : 'Erro ao limpar'}`, false)
-                  }
-                }}
-                className="px-4 py-2 text-sm font-bold bg-red-700 hover:bg-red-600 text-foreground rounded-lg transition-colors"
-              >
-                Limpar tudo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={clearAllOpen}
+        title="Limpar discografia"
+        description={`Remove todos os álbuns de ${artist?.nameRomanized ?? 'este artista'}. Esta ação não pode ser desfeita.`}
+        confirmLabel="Limpar tudo"
+        variant="danger"
+        onConfirm={() => {
+          setClearAllOpen(false)
+          handleClearAll().catch(err => {
+            showToast(`❌ ${err instanceof Error ? err.message : 'Erro ao limpar'}`, false)
+          })
+        }}
+        onCancel={() => setClearAllOpen(false)}
+      />
     </AdminLayout>
   )
 }

@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { AdminButton } from '@/components/admin'
 import { TrendingUp, Search, Heart, Eye, Newspaper, Music2, Users, BarChart3, RefreshCw } from 'lucide-react'
 import prisma from '@/lib/prisma'
 
@@ -109,13 +110,10 @@ export default async function AdminAnalyticsPage() {
                         <p className="text-muted text-sm mt-1">Métricas de uso e performance do conteúdo</p>
                     </div>
                     <form action="/api/cron/update-trending" method="POST">
-                        <button
-                            type="submit"
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 border border-purple-500/30 rounded-lg text-sm text-purple-400 hover:bg-purple-600/30 transition-all"
-                        >
+                        <AdminButton type="submit" variant="secondary">
                             <RefreshCw className="w-4 h-4" />
                             Atualizar Trending
-                        </button>
+                        </AdminButton>
                     </form>
                 </div>
 

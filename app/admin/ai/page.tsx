@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminLinkButton } from '@/components/admin'
 import { getAiSummary, getAiCostByDay, getAiRecentLogs, getMonthlySpend } from '@/lib/services/ai-stats-service'
 import { getAllAiConfigs, FEATURE_LABELS } from '@/lib/services/ai-config-service'
 import AiProviderStatus from './_components/AiProviderStatus'
@@ -90,12 +91,9 @@ export default async function AiDashboardPage() {
                         <h1 className="text-xl font-bold text-foreground">Dashboard de IA</h1>
                         <p className="text-xs text-muted mt-0.5">Últimos 30 dias · atualizado em tempo real</p>
                     </div>
-                    <a
-                        href="/admin/ai/config"
-                        className="px-3 py-1.5 rounded-lg text-xs text-muted border border-border hover:border-border hover:text-foreground transition-colors"
-                    >
+                    <AdminLinkButton href="/admin/ai/config" variant="secondary" size="sm">
                         Configurar providers →
-                    </a>
+                    </AdminLinkButton>
                 </div>
 
                 {/* Summary cards */}

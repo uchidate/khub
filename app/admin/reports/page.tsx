@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { StatCard } from '@/components/admin/StatCard'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
+import { AdminButton, AdminIconButton } from '@/components/admin'
 import { CheckCircle, Eye, XCircle, ExternalLink, RefreshCw, Flag, Search, Trash2 } from 'lucide-react'
 import { AdminEmptyState } from '@/components/admin'
 
@@ -87,25 +88,22 @@ function ActionButtons({ report, onUpdate, updatingId }: {
   return (
     <div className="flex items-center gap-1">
       {report.status === 'PENDING' && (
-        <button onClick={() => onUpdate(report.id, 'REVIEWED')} disabled={disabled}
-          title="Marcar como em revisão"
-          className="p-1.5 rounded-lg hover:bg-blue-500/20 text-muted hover:text-blue-400 transition-colors disabled:opacity-40">
+        <AdminIconButton onClick={() => onUpdate(report.id, 'REVIEWED')} disabled={disabled}
+          title="Marcar como em revisão" variant="success">
           <Eye size={14} />
-        </button>
+        </AdminIconButton>
       )}
       {report.status !== 'RESOLVED' && report.status !== 'DISMISSED' && (
-        <button onClick={() => onUpdate(report.id, 'RESOLVED')} disabled={disabled}
-          title="Marcar como resolvido"
-          className="p-1.5 rounded-lg hover:bg-green-500/20 text-muted hover:text-green-400 transition-colors disabled:opacity-40">
+        <AdminIconButton onClick={() => onUpdate(report.id, 'RESOLVED')} disabled={disabled}
+          title="Marcar como resolvido" variant="success">
           <CheckCircle size={14} />
-        </button>
+        </AdminIconButton>
       )}
       {report.status !== 'DISMISSED' && (
-        <button onClick={() => onUpdate(report.id, 'DISMISSED')} disabled={disabled}
-          title="Descartar"
-          className="p-1.5 rounded-lg hover:bg-red-500/20 text-muted hover:text-red-400 transition-colors disabled:opacity-40">
+        <AdminIconButton onClick={() => onUpdate(report.id, 'DISMISSED')} disabled={disabled}
+          title="Descartar" variant="danger">
           <XCircle size={14} />
-        </button>
+        </AdminIconButton>
       )}
     </div>
   )
@@ -355,12 +353,13 @@ export default function ReportsPage() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4 -mt-6 flex-wrap">
           <p className="text-muted text-sm">Problemas reportados por usuários nas páginas públicas</p>
-          <button
+          <AdminButton
             onClick={() => { fetchReports(page, statusFilter, entityFilter, categoryFilter, search); fetchStats() }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface hover:bg-surface text-muted hover:text-foreground transition-colors text-sm"
+            variant="secondary"
+            size="sm"
           >
             <RefreshCw size={14} /> Atualizar
-          </button>
+          </AdminButton>
         </div>
 
         {/* Stats bar */}
@@ -435,27 +434,30 @@ export default function ReportsPage() {
               {selected.size} selecionado{selected.size !== 1 ? 's' : ''}
             </span>
             <div className="flex items-center gap-2">
-              <button
+              <AdminButton
                 onClick={() => confirmBulk('Resolver', () => bulkUpdateStatus('RESOLVED'))}
                 disabled={bulkLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 text-xs font-medium transition-colors disabled:opacity-40"
+                variant="secondary"
+                size="sm"
               >
                 <CheckCircle size={13} /> Resolver
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={() => confirmBulk('Descartar', () => bulkUpdateStatus('DISMISSED'))}
                 disabled={bulkLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface text-muted text-xs font-medium transition-colors disabled:opacity-40"
+                variant="secondary"
+                size="sm"
               >
                 <XCircle size={13} /> Descartar
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 onClick={() => confirmBulk('Deletar permanentemente', () => bulkDelete())}
                 disabled={bulkLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-medium transition-colors disabled:opacity-40"
+                variant="danger"
+                size="sm"
               >
                 <Trash2 size={13} /> Deletar
-              </button>
+              </AdminButton>
             </div>
           </div>
         )}
@@ -569,21 +571,21 @@ export default function ReportsPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between gap-4">
-            <button
+            <AdminButton
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              variant="secondary"
             >
               ← Anterior
-            </button>
+            </AdminButton>
             <span className="text-sm text-muted">{page} / {totalPages}</span>
-            <button
+            <AdminButton
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-muted hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+              variant="secondary"
             >
               Próxima →
-            </button>
+            </AdminButton>
           </div>
         )}
       </div>
