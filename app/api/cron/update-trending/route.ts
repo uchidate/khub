@@ -44,6 +44,18 @@ function verifyToken(request: NextRequest): boolean {
 }
 
 /**
+ * Persiste rank atual → rank anterior antes de recalcular.
+ * Chamado no início de cada ciclo para preservar snapshot do ciclo anterior.
+ */
+async function snapshotArtistRanks(): Promise<void> {
+    await prisma.$executeRaw`
+        UPDATE "Artist"
+        SET "trendingRankPrev" = "trendingRank"
+        WHERE "trendingRank" IS NOT NULL
+    `
+}
+
+/**
  * Batch UPDATE Artist.trendingScore — 1 query em vez de N.
  *
  * Score = normalize(
@@ -51,6 +63,8 @@ function verifyToken(request: NextRequest): boolean {
  *   + recentFavs * 0.3            (favoritos nos últimos 7 dias)
  *   + SUM(signal.score) * 200     (streaming signals não expirados)
  * )
+ *
+ * Após atualizar scores, recalcula trendingRank via ROW_NUMBER.
  */
 async function updateArtistTrending(since7d: Date): Promise<number> {
     const result = await prisma.$executeRaw`
@@ -85,6 +99,19 @@ async function updateArtistTrending(since7d: Date): Promise<number> {
         ) scores
         WHERE a.id = scores.id
     `
+
+    // Recalcula ranks baseado nos novos scores
+    await prisma.$executeRaw`
+        UPDATE "Artist" a
+        SET "trendingRank" = ranks.rn
+        FROM (
+            SELECT id,
+                ROW_NUMBER() OVER (ORDER BY "trendingScore" DESC) AS rn
+            FROM "Artist"
+        ) ranks
+        WHERE a.id = ranks.id
+    `
+
     return result
 }
 
@@ -165,6 +192,9 @@ async function updateNewsTrending(since7d: Date): Promise<number> {
 
 async function runUpdateTrending() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+
+    // Snapshot ranks antes de recalcular (preserva ciclo anterior para SUBINDO)
+    await snapshotArtistRanks()
 
     const [artistsUpdated, groupsUpdated, newsUpdated] = await Promise.all([
         updateArtistTrending(since7d),

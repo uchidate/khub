@@ -8,7 +8,7 @@ import {
   Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
-  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
+  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -48,6 +48,7 @@ const navSections: NavSection[] = [
     fixed: true,
     items: [
       { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+      { href: '/admin/trending', label: 'Trending', icon: TrendingUp },
       {
         href: '/admin/pipeline', label: 'Pipeline', icon: Workflow,
       },
@@ -164,7 +165,7 @@ const SECTION_LABELS: Record<string, string> = {
   hidden: 'Ocultos', agencies: 'Agências', instagram: 'Instagram', activity: 'Atividade',
   'bot-logs': 'Robôs', 'server-logs': 'Server Logs', cron: 'Cron Jobs', settings: 'Sistema',
   kpopping: 'Kpopping', filmography: 'Filmografias', blog: 'Blog', database: 'Database',
-  analytics: 'Analytics', 'fix-names': 'Enriq. TMDB', duplicates: 'Enriq. MB',
+  analytics: 'Analytics', trending: 'Trending', 'fix-names': 'Enriq. TMDB', duplicates: 'Enriq. MB',
   'social-links': 'Redes Sociais', moderation: 'Moderação', import: 'Importar',
   reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync',
   discography: 'Discografia', log: 'Log', pipeline: 'Pipeline', takedowns: 'Takedowns',

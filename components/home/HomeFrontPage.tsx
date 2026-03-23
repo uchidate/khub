@@ -1,5 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
+import { type ArtistForBadge } from "@/lib/trending/badges"
+import { getArtistBadgeDisplay } from "@/lib/trending/display"
 
 interface FeaturedStory {
     id: string
@@ -18,7 +20,7 @@ interface SecondaryStory {
     tags: string[]
 }
 
-interface TrendingArtist {
+interface TrendingArtist extends ArtistForBadge {
     id: string
     nameRomanized: string
     nameHangul: string | null
@@ -259,17 +261,15 @@ export function HomeFrontPage({
                                             {artist.agency?.name ? ` · ${artist.agency.name}` : ''}
                                         </p>
                                     </div>
-                                    <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
-                                        idx === 0
-                                            ? 'bg-accent-soft text-accent'
-                                            : idx <= 2
-                                            ? 'bg-green-500/10 text-green-500'
-                                            : idx <= 4
-                                            ? 'bg-surface border border-border text-muted'
-                                            : 'bg-accent-soft text-accent'
-                                    }`}>
-                                        {idx === 0 ? 'HOT' : idx <= 2 ? 'SUBINDO' : idx <= 4 ? `↑${idx + 1}` : 'NOVO'}
-                                    </span>
+                                    {(() => {
+                                        const display = getArtistBadgeDisplay(artist)
+                                        if (!display) return null
+                                        return (
+                                            <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${display.className}`}>
+                                                {display.label}
+                                            </span>
+                                        )
+                                    })()}
                                 </Link>
                             ))}
                         </div>

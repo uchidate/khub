@@ -113,10 +113,13 @@ model Artist {
   tmdbLastSync       DateTime? // Last successful sync
   tmdbLastAttempt    DateTime? // Last attempt (even if failed)
   // Trending metrics
-  viewCount          Int                @default(0)
-  favoriteCount      Int                @default(0)
-  lastTrendingUpdate DateTime?
-  trendingScore      Float              @default(0.0)
+  viewCount            Int                @default(0)
+  favoriteCount        Int                @default(0)
+  lastTrendingUpdate   DateTime?
+  trendingScore        Float              @default(0.0)
+  trendingRank         Int?               // Rank atual no ciclo (1 = #1 geral)
+  trendingRankPrev     Int?               // Rank do ciclo anterior (detecta velocidade de subida)
+  trendingBadgeOverride String?           // Override manual de badge pelo admin: 'HOT'|'SUBINDO'|'NOVO'|null
   // Translation tracking
   translationStatus  String             @default("pending") // 'pending', 'completed', 'failed'
   translatedAt       DateTime?
