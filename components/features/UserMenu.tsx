@@ -31,7 +31,7 @@ export function UserMenu() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={session.user.image} alt={session.user.name || 'User'} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#ff2d78] to-[#c084fc] flex items-center justify-center">
+          <div className="w-full h-full bg-[#ff2d78] flex items-center justify-center">
             <span className="text-white text-[11px] font-bold">{initials}</span>
           </div>
         )}

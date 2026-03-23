@@ -57,8 +57,10 @@ export function SeoChecklist({
         const excerptLower = excerpt.toLowerCase()
         const bodyLower = bodyText.toLowerCase()
 
-        // Count internal links in markdown or blocks
-        const internalLinks = (bodyText.match(/\/[a-z][a-z0-9\-/]+/g) || []).length
+        // Count internal links: markdown/text paths + artist/production card blocks
+        const mdLinks = (bodyText.match(/\/[a-z][a-z0-9\-/]+/g) || []).length
+        const cardLinks = blocks.filter(b => b.type === 'blog_artist_card' || b.type === 'blog_production_card').length
+        const internalLinks = mdLinks + cardLinks
 
         // Keyword density in body (words matching kw / total words)
         const kwCount = kw ? bodyLower.split(kw).length - 1 : 0
