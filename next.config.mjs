@@ -177,6 +177,11 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'cdn.kpopping.com',
             },
+            // Mashable — imagens de artigos
+            {
+                protocol: 'https',
+                hostname: 'helios-i.mashable.com',
+            },
             // Cover Art Archive — capas de álbuns via MusicBrainz
             // coverartarchive.org redireciona para *.archive.org
             {
