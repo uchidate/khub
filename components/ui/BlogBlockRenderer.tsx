@@ -22,9 +22,17 @@ export interface ResolvedProduction {
     imageUrl: string | null
 }
 
+export interface ResolvedGroup {
+    id: string
+    name: string
+    profileImageUrl: string | null
+    fanClubName: string | null
+}
+
 export interface ResolvedEntities {
     artists: Record<string, ResolvedArtist>
     productions: Record<string, ResolvedProduction>
+    groups: Record<string, ResolvedGroup>
 }
 
 interface BlogBlockRendererProps {
@@ -133,6 +141,9 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
         case 'blog_production_card':
             return <ProductionCardBlock productionId={block.productionId} note={block.note} data={resolvedEntities?.productions[block.productionId]} />
 
+        case 'blog_group_card':
+            return <GroupCardBlock groupId={block.groupId} note={block.note} data={resolvedEntities?.groups[block.groupId]} />
+
         case 'blog_stats_row':
             return (
                 <div className="my-6 rounded-xl border border-border overflow-hidden">
@@ -205,6 +216,31 @@ function ArtistCardBlock({ artistId, note, data }: { artistId: string; note?: st
 const TYPE_LABELS: Record<string, string> = {
     DRAMA: 'K-Drama', FILM: 'Filme', MOVIE: 'Filme', VARIETY: 'Variety',
     DOCUMENTARY: 'Documentário', WEBSERIES: 'Web Series',
+}
+
+function GroupCardBlock({ groupId, note, data }: { groupId: string; note?: string; data?: ResolvedGroup }) {
+    if (!groupId) return null
+    return (
+        <Link href={`/groups/${groupId}`}
+            className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            <div className="w-16 h-16 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-lg font-bold text-[#ff2d78]">
+                {data?.profileImageUrl ? (
+                    <Image src={data.profileImageUrl} alt={data.name} width={64} height={64} className="w-full h-full object-cover" />
+                ) : (
+                    <span>{data?.name?.[0] ?? '?'}</span>
+                )}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-0.5">Grupo</p>
+                <p className="text-base font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
+                    {data?.name ?? groupId}
+                </p>
+                {data?.fanClubName && <p className="text-xs text-muted mt-0.5">Fãs: {data.fanClubName}</p>}
+                {note && <p className="text-xs text-muted mt-1 italic leading-snug">{note}</p>}
+            </div>
+            <span className="text-muted text-xs shrink-0 group-hover:text-[#ff2d78] transition-colors">Ver grupo →</span>
+        </Link>
+    )
 }
 
 function ProductionCardBlock({ productionId, note, data }: { productionId: string; note?: string; data?: ResolvedProduction }) {
