@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 interface BlogPost {
@@ -66,6 +67,21 @@ export function HomeBlogSection({ posts }: HomeBlogSectionProps) {
                                     href={`/blog/${post.slug}`}
                                     className="group flex flex-col bg-background hover:bg-accent-soft transition-colors min-h-[44px]"
                                 >
+                                    {/* Cover image — desktop only */}
+                                    <div className="hidden md:block relative h-36 overflow-hidden shrink-0 bg-surface">
+                                        {post.coverImageUrl ? (
+                                            <Image
+                                                src={post.coverImageUrl}
+                                                alt={post.title}
+                                                fill
+                                                sizes="25vw"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, var(--color-surface) 0%, var(--color-accent-soft) 100%)' }} />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+                                    </div>
                                     <div className="p-4 pb-3 flex-1 flex flex-col">
                                         {/* Template header with line divider */}
                                         <div className="flex items-center gap-1.5 mb-3">
