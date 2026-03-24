@@ -6,6 +6,7 @@ import { ProductionsList } from "@/components/features/ProductionsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
+import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,8 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
-    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0)
+    const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
+    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}produções coreanas. De romances épicos a thrillers de tirar o fôlego.`
     return {
         title: 'Produções',
@@ -28,7 +30,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProductionsPage() {
-    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => null)
+    const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
+    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => null)
 
     return (
         <>
