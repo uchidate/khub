@@ -151,6 +151,13 @@ export type BlogProductionCardBlock = {
     note?: string
 }
 
+// Bloco de card de grupo musical
+export type BlogGroupCardBlock = {
+    type: 'blog_group_card'
+    groupId: string
+    note?: string
+}
+
 // Linha de stats biográficos (ex: data de nascimento, altura, grupo)
 export type BlogStatsRowBlock = {
     type: 'blog_stats_row'
@@ -182,6 +189,7 @@ export type BlogBlock =
     | BlogTikTokBlock
     | BlogArtistCardBlock
     | BlogProductionCardBlock
+    | BlogGroupCardBlock
     | BlogStatsRowBlock
     | BlogRatingBlock
     | BlogDividerBlock
@@ -200,6 +208,7 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_tiktok:           'TikTok',
     blog_artist_card:      'Card de Artista',
     blog_production_card:  'Card de Produção',
+    blog_group_card:       'Card de Grupo',
     blog_stats_row:        'Stats / Dados',
     blog_rating:           'Avaliação',
     blog_divider:          'Divisor',

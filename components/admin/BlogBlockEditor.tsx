@@ -23,6 +23,7 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_tiktok:          <Music2 className="w-3.5 h-3.5" />,
     blog_artist_card:     <User className="w-3.5 h-3.5" />,
     blog_production_card: <Film className="w-3.5 h-3.5" />,
+    blog_group_card:      <User className="w-3.5 h-3.5" />,
     blog_stats_row:       <BarChart2 className="w-3.5 h-3.5" />,
     blog_rating:          <Star className="w-3.5 h-3.5" />,
     blog_divider:         <Minus className="w-3.5 h-3.5" />,
@@ -40,6 +41,7 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_tiktok:          'bg-surface text-foreground border-border',
     blog_artist_card:     'bg-violet-500/20 text-violet-300 border-violet-500/30',
     blog_production_card: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    blog_group_card:      'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
     blog_stats_row:       'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
     blog_rating:          'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
     blog_divider:         'bg-surface text-muted border-border',
@@ -50,7 +52,7 @@ const COLORS: Record<BlogBlockType, string> = {
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Texto', types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_divider'] },
     { label: 'Mídia', types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok'] },
-    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_production_card', 'blog_stats_row', 'blog_rating'] },
+    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating'] },
 ]
 
 // ─── Default block factory ────────────────────────────────────────────────────
@@ -68,6 +70,7 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_tiktok':          return { type, url: '' }
         case 'blog_artist_card':     return { type, artistId: '', note: '' }
         case 'blog_production_card': return { type, productionId: '', note: '' }
+        case 'blog_group_card':      return { type, groupId: '', note: '' }
         case 'blog_stats_row':       return { type, items: [{ label: '', value: '' }] }
         case 'blog_rating':          return { type, score: 8, label: '', summary: '' }
         case 'blog_divider':         return { type }

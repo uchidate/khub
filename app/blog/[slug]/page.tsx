@@ -75,17 +75,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     : []
   const artistIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_artist_card').map(b => (b as { artistId: string }).artistId)))
   const productionIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_production_card').map(b => (b as { productionId: string }).productionId)))
-  const [artists, productions] = await Promise.all([
+  const groupIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_group_card').map(b => (b as { groupId: string }).groupId)))
+  const [artists, productions, groups] = await Promise.all([
     artistIds.length > 0
       ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
       : [],
     productionIds.length > 0
       ? prisma.production.findMany({ where: { id: { in: productionIds } }, select: { id: true, titlePt: true, type: true, year: true, imageUrl: true } })
       : [],
+    groupIds.length > 0
+      ? prisma.musicalGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true, name: true, profileImageUrl: true, fanClubName: true } })
+      : [],
   ])
   const resolvedEntities: ResolvedEntities = {
     artists: Object.fromEntries(artists.map(a => [a.id, a])),
     productions: Object.fromEntries(productions.map(p => [p.id, p])),
+    groups: Object.fromEntries(groups.map(g => [g.id, g])),
   }
 
   return (
