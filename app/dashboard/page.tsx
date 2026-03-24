@@ -12,7 +12,6 @@ import {
   ChevronRight,
   History,
   Crown,
-  Newspaper,
   Heart,
   MessageCircle,
   TrendingUp,
@@ -38,14 +37,16 @@ interface Activity {
   createdAt: string
 }
 
-interface NewsItem {
+interface BlogPostItem {
   id: string
+  slug: string
   title: string
-  imageUrl: string | null
-  publishedAt: Date | string
+  excerpt: string | null
+  coverImageUrl: string | null
+  publishedAt: Date | string | null
+  readingTimeMin: number
+  category: { name: string; slug: string } | null
   tags: string[]
-  source: string | null
-  artists?: { artist: { nameRomanized: string } }[]
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -60,7 +61,6 @@ const ACTIVITY_LABELS: Record<string, { label: string; color: string }> = {
 const ENTITY_HREF: Record<string, (id: string) => string> = {
   ARTIST:     id => `/artists/${id}`,
   PRODUCTION: id => `/productions/${id}`,
-  NEWS:       id => `/news/${id}`,
   GROUP:      id => `/groups/${id}`,
 }
 
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
   const data = await getDashboardData()
   if (!data) return null
 
-  const { activities, latestNews, personalizedNews, hasFollowing, trendingArtists, watchingEntries, stats } = data
+  const { activities, latestBlogPosts, personalizedBlogPosts, hasFollowing, trendingArtists, watchingEntries, stats } = data
 
   const isNewUser = activities.length === 0 && watchingEntries.length === 0 && stats.favoritesCount === 0
 
@@ -109,9 +109,9 @@ export default async function DashboardPage() {
     ...(session.user.role?.toLowerCase() === 'admin' ? [{ title: 'Admin', description: 'Painel admin', href: '/admin', icon: Shield, accent: 'hover:border-l-red-500' }] : []),
   ]
 
-  const newsToShow = hasFollowing && personalizedNews.length > 0 ? personalizedNews : latestNews
-  const newsTitle = hasFollowing && personalizedNews.length > 0 ? 'Para você' : 'Últimas Notícias'
-  const newsSubtitle = hasFollowing && personalizedNews.length > 0 ? 'Dos seus artistas favoritos' : undefined
+  const blogToShow = hasFollowing && personalizedBlogPosts.length > 0 ? personalizedBlogPosts : latestBlogPosts
+  const blogTitle = hasFollowing && personalizedBlogPosts.length > 0 ? 'Para você' : 'Últimos Artigos'
+  const blogSubtitle = hasFollowing && personalizedBlogPosts.length > 0 ? 'Do blog, sobre seus artistas' : undefined
 
   const daysSinceJoin = stats.joinDate
     ? Math.floor((Date.now() - new Date(stats.joinDate).getTime()) / (1000 * 60 * 60 * 24))
@@ -221,57 +221,53 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* ── 2. NOTÍCIAS ─────────────────────────────────────────────────── */}
-        {newsToShow.length > 0 && (
+        {/* ── 2. BLOG ──────────────────────────────────────────────────────── */}
+        {blogToShow.length > 0 && (
           <section>
             <SectionTitle
-              icon={<Newspaper size={15} className="text-amber-400" />}
-              title={newsTitle}
-              subtitle={newsSubtitle}
-              href="/news"
+              icon={<Compass size={15} className="text-amber-400" />}
+              title={blogTitle}
+              subtitle={blogSubtitle}
+              href="/blog"
+              linkLabel="Ver Blog"
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {(newsToShow as NewsItem[]).map((item) => {
-                const mentionedArtists = item.artists?.map((a) => a.artist.nameRomanized) ?? []
-                return (
-                  <Link
-                    key={item.id}
-                    href={`/news/${item.id}`}
-                    className="glass-card overflow-hidden group hover:border-white/15 transition-all flex sm:flex-col gap-3 sm:gap-0"
-                  >
-                    {item.imageUrl && (
-                      <div className="relative w-20 sm:w-full h-full sm:h-36 overflow-hidden flex-shrink-0">
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          sizes="(max-width: 640px) 80px, (max-width: 1024px) 50vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        {item.tags?.[0] && (
-                          <div className="absolute bottom-2 left-2 hidden sm:block">
-                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-neon-pink/80 text-white">
-                              {item.tags[0]}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div className="p-3 flex-1 min-w-0">
-                      <span className="text-[10px] text-muted block mb-1">
-                        {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
-                      </span>
-                      <h4 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-[#ff2d78] transition-colors leading-snug">
-                        {item.title}
-                      </h4>
-                      {mentionedArtists.length > 0 && (
-                        <p className="text-[10px] text-[#ff2d78]/80 mt-1.5 truncate">{mentionedArtists.join(' · ')}</p>
+              {(blogToShow as BlogPostItem[]).map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
+                  className="glass-card overflow-hidden group hover:border-white/15 transition-all flex sm:flex-col gap-3 sm:gap-0"
+                >
+                  {post.coverImageUrl && (
+                    <div className="relative w-20 sm:w-full h-full sm:h-36 overflow-hidden flex-shrink-0">
+                      <Image
+                        src={post.coverImageUrl}
+                        alt={post.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 640px) 80px, (max-width: 1024px) 50vw, 25vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      {post.category && (
+                        <div className="absolute bottom-2 left-2 hidden sm:block">
+                          <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-neon-pink/80 text-white">
+                            {post.category.name}
+                          </span>
+                        </div>
                       )}
                     </div>
-                  </Link>
-                )
-              })}
+                  )}
+                  <div className="p-3 flex-1 min-w-0">
+                    <span className="text-[10px] text-muted block mb-1">
+                      {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                      {' · '}{post.readingTimeMin} min
+                    </span>
+                    <h4 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-[#ff2d78] transition-colors leading-snug">
+                      {post.title}
+                    </h4>
+                  </div>
+                </Link>
+              ))}
             </div>
           </section>
         )}
@@ -436,7 +432,7 @@ export default async function DashboardPage() {
                     { href: '/artists', label: 'Artistas', icon: User, color: 'text-[#ff2d78]' },
                     { href: '/groups', label: 'Grupos', icon: Music, color: 'text-pink-400' },
                     { href: '/productions', label: 'Produções', icon: Film, color: 'text-cyan-400' },
-                    { href: '/news', label: 'Notícias', icon: Newspaper, color: 'text-yellow-400' },
+                    { href: '/blog', label: 'Blog', icon: Compass, color: 'text-yellow-400' },
                   ].map(({ href, label, icon: Icon, color }) => (
                     <Link key={href} href={href} className="flex items-center gap-2 px-2 py-2 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors group">
                       <Icon size={13} className={color} />
@@ -481,9 +477,9 @@ export default async function DashboardPage() {
                   <Film size={15} />
                   Ver Produções
                 </Link>
-                <Link href="/news" className="btn-secondary flex items-center gap-2">
-                  <Newspaper size={15} />
-                  Ler Notícias
+                <Link href="/blog" className="btn-secondary flex items-center gap-2">
+                  <Compass size={15} />
+                  Ler o Blog
                 </Link>
               </div>
             </div>

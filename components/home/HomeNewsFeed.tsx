@@ -4,13 +4,16 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 
-interface NewsItem {
+interface BlogFeedItem {
     id: string
+    slug: string
     title: string
-    imageUrl: string | null
-    publishedAt: string
+    excerpt: string | null
+    coverImageUrl: string | null
+    publishedAt: string | null
+    readingTimeMin: number
+    category: { name: string; slug: string } | null
     tags: string[]
-    excerpt?: string
 }
 
 interface ProductionItem {
@@ -22,95 +25,69 @@ interface ProductionItem {
     voteAverage: number | null
 }
 
-interface BlogPostItem {
-    id: string
-    slug: string
-    title: string
-    tags: string[]
-    readingTimeMin: number
-    category: { name: string; slug: string } | null
-}
-
-interface HomeNewsFeedProps {
-    news: NewsItem[]
+interface HomeBlogFeedProps {
+    blogPosts: BlogFeedItem[]
     productions: ProductionItem[]
-    blogPosts: BlogPostItem[]
 }
 
 const TABS = [
     { label: "Todos", value: "all" },
     { label: "K-pop", value: "k-pop" },
     { label: "K-drama", value: "k-drama" },
+    { label: "K-beauty", value: "k-beauty" },
     { label: "Cultura", value: "cultura" },
 ]
 
-const TAG_COLORS: Record<string, string> = {
+const CATEGORY_COLORS: Record<string, string> = {
     "k-pop": "text-[#ff2d78]",
     "k-drama": "text-[#7c3aed]",
-    "cultura": "text-[#0ea5e9]",
     "k-beauty": "text-[#f59e0b]",
-    "plataforma": "text-muted",
+    "cultura": "text-[#0ea5e9]",
 }
 
-function getTagColor(tag: string | undefined): string {
-    if (!tag) return "text-muted"
-    const key = tag.toLowerCase().replace(/\s/g, "-")
-    return TAG_COLORS[key] ?? (key.includes("k-") ? "text-[#ff2d78]" : key.includes("drama") ? "text-[#7c3aed]" : "text-muted")
+function getCategoryColor(slug: string | undefined): string {
+    if (!slug) return "text-muted"
+    return CATEGORY_COLORS[slug.toLowerCase()] ?? "text-[#ff2d78]"
 }
 
-function formatDate(iso: string) {
+function formatDate(iso: string | null) {
+    if (!iso) return ''
     try {
-        return new Date(iso).toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "short",
-        })
-    } catch {
-        return iso
-    }
+        return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+    } catch { return '' }
 }
 
 function getTypeLabel(type: string) {
     const map: Record<string, string> = {
-        DRAMA: "Drama",
-        FILM: "Filme",
-        VARIETY: "Variety",
-        DOCUMENTARY: "Doc",
-        WEBSERIES: "Web",
+        DRAMA: "Drama", FILM: "Filme", VARIETY: "Variety",
+        DOCUMENTARY: "Doc", WEBSERIES: "Web",
     }
     return map[type] ?? type
 }
 
-function getInitialsFromTitle(title: string) {
-    return title
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
+function getInitials(title: string) {
+    return title.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()
 }
 
-export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps) {
+export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
     const [activeTab, setActiveTab] = useState("all")
 
-    const filteredNews =
-        activeTab === "all"
-            ? news
-            : news.filter((n) =>
-                  n.tags?.some((t) => t.toLowerCase().includes(activeTab))
-              )
+    const filteredPosts = activeTab === "all"
+        ? blogPosts
+        : blogPosts.filter(p =>
+            p.category?.slug?.toLowerCase().includes(activeTab) ||
+            p.tags?.some(t => t.toLowerCase().includes(activeTab))
+        )
 
     return (
         <section className="border-b border-border">
             <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
-                {/* LEFT — feed */}
+                {/* LEFT — blog feed */}
                 <div className="border-b md:border-b-0 md:border-r border-border">
-                    {/* Header row */}
                     <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 sm:py-5 lg:py-6 border-b border-border">
-                        <h2 className="text-[13.5px] font-bold text-foreground">
-                            Mais notícias
-                        </h2>
+                        <h2 className="text-[13.5px] font-bold text-foreground">Do Blog</h2>
                         <div className="flex items-center gap-1">
-                            {TABS.map((tab) => (
+                            {TABS.map(tab => (
                                 <button
                                     key={tab.value}
                                     onClick={() => setActiveTab(tab.value)}
@@ -126,49 +103,48 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                         </div>
                     </div>
 
-                    {/* News rows */}
                     <div>
-                        {filteredNews.length === 0 && (
-                            <p className="text-sm text-muted p-5">Nenhuma notícia encontrada.</p>
+                        {filteredPosts.length === 0 && (
+                            <p className="text-sm text-muted p-5">Nenhum artigo encontrado.</p>
                         )}
-                        {filteredNews.map((item, idx) => (
+                        {filteredPosts.map((post, idx) => (
                             <Link
-                                key={item.id}
-                                href={`/news/${item.id}`}
+                                key={post.id}
+                                href={`/blog/${post.slug}`}
                                 className="flex items-start gap-3.5 px-4 sm:px-6 lg:px-12 py-4 sm:py-5 lg:py-[1.4rem] border-b border-border hover:bg-surface transition-colors group min-h-[68px]"
                             >
                                 <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 pt-0.5">
                                     {String(idx + 1).padStart(2, "0")}
                                 </span>
                                 <div className="flex-1 min-w-0">
-                                    {item.tags?.[0] && (
-                                        <span className={`text-[8.3px] font-bold uppercase tracking-[0.12em] mb-1 block ${getTagColor(item.tags[0])}`}>
-                                            {item.tags[0]}
+                                    {post.category && (
+                                        <span className={`text-[8.3px] font-bold uppercase tracking-[0.12em] mb-1 block ${getCategoryColor(post.category.slug)}`}>
+                                            {post.category.name}
                                         </span>
                                     )}
                                     <h3 className="text-[13.5px] font-semibold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-2">
-                                        {item.title}
+                                        {post.title}
                                     </h3>
                                     <div className="text-[9px] text-muted mt-1.5 flex items-center gap-[6px] flex-wrap">
-                                        {item.tags?.slice(1, 3).length > 0 ? (
-                                            <span>{item.tags.slice(1, 3).join(' · ')}</span>
-                                        ) : (
-                                            <span>HallyuHub</span>
-                                        )}
+                                        <span>HallyuHub</span>
                                         <span>·</span>
-                                        <span>{formatDate(item.publishedAt)}</span>
+                                        <span>{formatDate(post.publishedAt)}</span>
                                         <span>·</span>
-                                        <span>3 min</span>
+                                        <span>{post.readingTimeMin} min</span>
                                     </div>
                                 </div>
-                                {/* Thumbnail */}
                                 <div className="w-[58px] h-11 rounded-lg bg-surface flex-shrink-0 overflow-hidden flex items-center justify-center border border-border">
-                                    {item.imageUrl ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                                    {post.coverImageUrl ? (
+                                        <Image
+                                            src={post.coverImageUrl}
+                                            alt={post.title}
+                                            width={58}
+                                            height={44}
+                                            className="w-full h-full object-cover"
+                                        />
                                     ) : (
                                         <span className="text-[9px] font-bold text-muted">
-                                            {item.tags?.[0]?.slice(0, 2).toUpperCase() ?? 'HH'}
+                                            {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
                                         </span>
                                     )}
                                 </div>
@@ -185,54 +161,39 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                             Produções em destaque
                         </div>
                         <div>
-                            {productions.slice(0, 5).map((prod) => {
-                                return (
-                                    <Link
-                                        key={prod.id}
-                                        href={`/productions/${prod.id}`}
-                                        className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors group min-h-[52px]"
-                                    >
-                                        <div className="w-8 h-12 rounded-md flex-shrink-0 overflow-hidden bg-surface border border-border">
-                                            {prod.imageUrl ? (
-                                                <Image
-                                                    src={prod.imageUrl}
-                                                    alt={prod.titlePt}
-                                                    width={32}
-                                                    height={48}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-bold bg-surface">
-                                                    {getInitialsFromTitle(prod.titlePt)}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
-                                                {prod.titlePt}
-                                            </p>
-                                            <p className="text-[9px] text-muted truncate mt-0.5">
-                                                {getTypeLabel(prod.type)}{prod.year ? ` · ${prod.year}` : ''}
-                                            </p>
-                                        </div>
-                                        {prod.voteAverage != null && prod.voteAverage > 0 && (
-                                            <span className="text-[11px] font-bold text-accent flex-shrink-0">
-                                                {prod.year ?? '—'}
-                                            </span>
+                            {productions.slice(0, 5).map(prod => (
+                                <Link
+                                    key={prod.id}
+                                    href={`/productions/${prod.id}`}
+                                    className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors group min-h-[52px]"
+                                >
+                                    <div className="w-8 h-12 rounded-md flex-shrink-0 overflow-hidden bg-surface border border-border">
+                                        {prod.imageUrl ? (
+                                            <Image src={prod.imageUrl} alt={prod.titlePt} width={32} height={48} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-bold bg-surface">
+                                                {getInitials(prod.titlePt)}
+                                            </div>
                                         )}
-                                    </Link>
-                                )
-                            })}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">{prod.titlePt}</p>
+                                        <p className="text-[9px] text-muted truncate mt-0.5">
+                                            {getTypeLabel(prod.type)}{prod.year ? ` · ${prod.year}` : ''}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Widget 2: Blog */}
+                    {/* Widget 2: Featured Blog Posts */}
                     <div>
                         <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-3.5 border-b border-border">
-                            Do blog
+                            Artigos em destaque
                         </div>
                         <div>
-                            {blogPosts.slice(0, 4).map((post) => (
+                            {blogPosts.slice(0, 4).map(post => (
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
@@ -246,13 +207,7 @@ export function HomeNewsFeed({ news, productions, blogPosts }: HomeNewsFeedProps
                                     <p className="text-[13px] font-bold text-foreground group-hover:text-accent transition-colors leading-[1.35] line-clamp-2">
                                         {post.title}
                                     </p>
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                        <span className="text-[8.5px] text-muted">{post.readingTimeMin} min de leitura</span>
-                                        <span className="text-[8px] text-muted">·</span>
-                                        <span className="inline-flex items-center gap-0.5 bg-surface rounded-full px-1.5 py-0.5 text-[8px] font-semibold text-muted border border-border">
-                                            🔒 Prévia
-                                        </span>
-                                    </div>
+                                    <span className="text-[8.5px] text-muted mt-1 block">{post.readingTimeMin} min de leitura</span>
                                 </Link>
                             ))}
                         </div>

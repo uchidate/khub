@@ -3,16 +3,16 @@
 import { usePathname } from 'next/navigation'
 import { HomeTicker } from './HomeTicker'
 
-interface TickerNews {
-    id: string
+interface TickerPost {
+    slug: string
     title: string
-    tags: string[]
+    category: { name: string } | null
 }
 
 const HIDDEN_PATHS = ['/auth', '/admin', '/write']
 
-export function TickerWrapper({ news }: { news: TickerNews[] }) {
+export function TickerWrapper({ posts }: { posts: TickerPost[] }) {
     const pathname = usePathname()
     if (HIDDEN_PATHS.some(p => pathname?.startsWith(p))) return null
-    return <HomeTicker news={news} />
+    return <HomeTicker posts={posts} />
 }

@@ -30,7 +30,6 @@ const NavBar = () => {
         { label: "Artistas", href: "/artists" },
         { label: "Grupos", href: "/groups" },
         { label: "Produções", href: "/productions" },
-        { label: "Notícias", href: "/news" },
         { label: "Blog", href: "/blog" },
     ]
 
