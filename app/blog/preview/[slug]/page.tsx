@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 
 async function getPost(slug: string) {
   return prisma.blogPost.findFirst({
-    where: { slug, status: 'PUBLISHED' },
+    where: { slug, status: { in: ['PUBLISHED', 'DRAFT'] } },
     include: {
       author: { select: { id: true, name: true, image: true, bio: true } },
       category: true,
