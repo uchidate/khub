@@ -405,121 +405,28 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             <div>
                                 <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-6">Elenco</h3>
                                 {(() => {
-                                    const hasOrder = production.artists.some(a => a.castOrder !== null)
-
-                                    // Dynamic tier detection: find natural "gaps" in castOrder values
-                                    // A significant gap between consecutive cast positions marks a tier boundary
-                                    let leads: typeof production.artists
-                                    let secondary: typeof production.artists
-                                    let supporting: typeof production.artists
-
-                                    if (hasOrder) {
-                                        const ordered = [...production.artists].sort(
-                                            (a, b) => (a.castOrder ?? 999) - (b.castOrder ?? 999)
-                                        )
-                                        const n = ordered.length
-
-                                        if (n <= 2) {
-                                            leads = ordered; secondary = []; supporting = []
-                                        } else {
-                                            // Compute gaps between consecutive cast orders
-                                            const gaps = ordered.slice(1).map((a, i) => ({
-                                                boundaryAt: i + 1,
-                                                size: (a.castOrder ?? 999) - (ordered[i].castOrder ?? 999),
-                                            }))
-                                            const avgGap = gaps.reduce((s, g) => s + g.size, 0) / gaps.length
-
-                                            // A gap is "significant" if ≥ 2 AND at least 1.5× the average gap
-                                            const boundaries = gaps
-                                                .filter(g => g.size >= Math.max(2, avgGap * 1.5))
-                                                .sort((a, b) => b.size - a.size)
-                                                .slice(0, 2)
-                                                .sort((a, b) => a.boundaryAt - b.boundaryAt)
-                                                .map(g => g.boundaryAt)
-
-                                            if (boundaries.length >= 1) {
-                                                // Natural tier boundaries found — use gap-based split
-                                                const [b1, b2] = boundaries
-                                                leads = ordered.slice(0, b1)
-                                                secondary = ordered.slice(b1, b2)
-                                                supporting = b2 != null ? ordered.slice(b2) : []
-                                            } else {
-                                                // No natural gaps (continuous ordering, e.g. 0,1,2,3...)
-                                                // Fall back to billing position thresholds
-                                                leads = ordered.filter(a => (a.castOrder ?? 999) <= 1)
-                                                secondary = ordered.filter(a => { const o = a.castOrder ?? 999; return o >= 2 && o <= 5 })
-                                                supporting = ordered.filter(a => (a.castOrder ?? 999) >= 6)
-                                                // Safety: if somehow leads is empty, put first 2 in leads
-                                                if (leads.length === 0) {
-                                                    leads = ordered.slice(0, 2)
-                                                    secondary = ordered.slice(2, 6)
-                                                    supporting = ordered.slice(6)
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        // Fallback when no TMDB order: positional split
-                                        const n = production.artists.length
-                                        leads = production.artists.slice(0, Math.min(2, n))
-                                        secondary = production.artists.slice(2, Math.min(6, n))
-                                        supporting = production.artists.slice(6)
-                                    }
-
-                                    const CastCard = ({ artist, role }: { artist: typeof leads[0]['artist'], role: string | null }) => (
-                                        <Link href={`/artists/${artist.id}`} className="group">
-                                            <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
-                                                {artist.primaryImageUrl ? (
-                                                    <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
-                                                ) : (
-                                                    <div className="flex items-center justify-center h-full text-muted font-black text-sm">{artist.nameRomanized}</div>
-                                                )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                                <div className="absolute bottom-0 left-0 right-0 p-3">
-                                                    <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
-                                                    {role && <p className="text-xs font-bold truncate text-[#ff2d78]">{role}</p>}
-                                                </div>
-                                            </div>
-                                        </Link>
+                                    const ordered = [...production.artists].sort(
+                                        (a, b) => (a.castOrder ?? 999) - (b.castOrder ?? 999)
                                     )
-
                                     return (
-                                        <>
-                                            {/* Protagonistas */}
-                                            {leads.length > 0 && (
-                                                <div className="mb-8">
-                                                    <p className="text-[10px] font-black text-[#ff2d78] uppercase tracking-widest mb-3">Protagonistas</p>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        {leads.map(({ artist, role }) => (
-                                                            <CastCard key={artist.id} artist={artist} role={role} />
-                                                        ))}
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            {ordered.map(({ artist, role }) => (
+                                                <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
+                                                    <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
+                                                        {artist.primaryImageUrl ? (
+                                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
+                                                        ) : (
+                                                            <div className="flex items-center justify-center h-full text-muted font-black text-sm">{artist.nameRomanized}</div>
+                                                        )}
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                                                            <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
+                                                            {role && <p className="text-xs font-bold truncate text-[#ff2d78]">{role}</p>}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                            {/* Secundários */}
-                                            {secondary.length > 0 && (
-                                                <div className="mb-8">
-                                                    <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-3">Elenco Secundário</p>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                                        {secondary.map(({ artist, role }) => (
-                                                            <CastCard key={artist.id} artist={artist} role={role} />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {/* Coadjuvantes */}
-                                            {supporting.length > 0 && (
-                                                <div>
-                                                    {(leads.length > 0 || secondary.length > 0) && (
-                                                        <p className="text-[10px] font-black text-muted/60 uppercase tracking-widest mb-3">Coadjuvantes</p>
-                                                    )}
-                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                                        {supporting.map(({ artist, role }) => (
-                                                            <CastCard key={artist.id} artist={artist} role={role} />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     )
                                 })()}
                             </div>
