@@ -133,14 +133,18 @@ export default async function Home() {
                 blogPosts={featuredBlogPosts.slice(1)}
                 productions={latestProductions}
             />
-            {hasStreaming && (
+            {(hasStreaming || trendingGroups.length > 0) && (
                 <section className="border-b border-border bg-background">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10">
-                        <StreamingTopShows showsByPlatform={showsByPlatform} />
+                    <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
+                        {hasStreaming && (
+                            <div className="border-b md:border-b-0 md:border-r border-border">
+                                <StreamingTopShows showsByPlatform={showsByPlatform} />
+                            </div>
+                        )}
+                        <HomeTrendingGroups groups={trendingGroups} />
                     </div>
                 </section>
             )}
-            <HomeTrendingGroups groups={trendingGroups} />
             <HomeBlogSection posts={featuredBlogPosts.slice(0, 4)} />
             <ScrollToTop />
         </div>

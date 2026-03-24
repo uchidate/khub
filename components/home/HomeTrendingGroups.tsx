@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 export interface TrendingGroup {
     id: string
@@ -17,52 +16,48 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
     if (!groups.length) return null
 
     return (
-        <section className="border-b border-border bg-background">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10">
-                <SectionTitleBar
-                    title={<>Grupos em <span className="text-accent">alta</span></>}
-                    href="/groups"
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 rounded-xl overflow-hidden border border-border">
-                    {groups.slice(0, 8).map((group, idx) => {
-                        const color = group.officialColor ?? '#ff2d78'
-                        return (
-                            <Link
-                                key={group.id}
-                                href={`/groups/${group.id}`}
-                                className={`group flex items-center gap-3 px-4 py-3.5 hover:bg-surface transition-colors min-h-[60px]
-                                    ${idx % 2 === 0 ? 'sm:border-r border-border' : ''}
-                                    ${idx < groups.length - 2 ? 'border-b border-border' : ''}
-                                `}
-                            >
-                                <span className="text-[9px] font-bold text-muted w-4 flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
-                                <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2" style={{ borderColor: `${color}50` }}>
-                                    {group.profileImageUrl ? (
-                                        <Image src={group.profileImageUrl} alt={group.name} width={36} height={36} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: color }}>
-                                            {group.name[0]}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
-                                        {group.name}
-                                    </p>
-                                    <p className="text-[9px] text-muted mt-0.5 truncate">
-                                        {group.nameHangul ?? ''}{group.agency?.name ? ` · ${group.agency.name}` : ''}
-                                    </p>
-                                </div>
-                                {group.fanClubName && (
-                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ color, backgroundColor: `${color}15` }}>
-                                        {group.fanClubName}
-                                    </span>
-                                )}
-                            </Link>
-                        )
-                    })}
-                </div>
+        <div className="border-t md:border-t-0 md:border-l border-border">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-border">
+                <span className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted">Grupos em alta</span>
+                <Link href="/groups" className="text-[9px] font-bold text-muted hover:text-accent transition-colors">Ver todos →</Link>
             </div>
-        </section>
+            <div className="grid grid-cols-2">
+                {groups.slice(0, 8).map((group, idx) => {
+                    const color = group.officialColor ?? '#ff2d78'
+                    return (
+                        <Link
+                            key={group.id}
+                            href={`/groups/${group.id}`}
+                            className={`group relative flex items-center gap-2.5 pl-3 pr-3 py-2.5 transition-colors min-h-[48px]
+                                ${idx % 2 === 0 ? 'border-r border-border' : ''}
+                                ${idx < 6 ? 'border-b border-border' : ''}
+                            `}
+                        >
+                            <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-r-full opacity-50 transition-opacity group-hover:opacity-100" style={{ backgroundColor: color }} />
+                            <span className="text-[8px] font-bold w-3 flex-shrink-0 text-center" style={{ color: `${color}80` }}>{idx + 1}</span>
+                            <div className="w-7 h-7 rounded-full flex-shrink-0 overflow-hidden border-2 transition-all group-hover:scale-110" style={{ borderColor: `${color}50` }}>
+                                {group.profileImageUrl ? (
+                                    <Image src={group.profileImageUrl} alt={group.name} width={28} height={28} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: color }}>
+                                        {group.name[0]}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[12px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
+                                    {group.name}
+                                </p>
+                                {group.fanClubName && (
+                                    <p className="text-[9px] truncate mt-0.5" style={{ color: `${color}cc` }}>
+                                        {group.fanClubName}
+                                    </p>
+                                )}
+                            </div>
+                        </Link>
+                    )
+                })}
+            </div>
+        </div>
     )
 }

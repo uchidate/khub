@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
+import { getTagStyle } from '@/lib/utils/tag-colors'
 
 interface NewsItem {
     id: string
@@ -60,14 +61,18 @@ export function RelatedNews({ news }: RelatedNewsProps) {
                         {/* Conteúdo */}
                         <div className="p-5">
                             <div className="flex flex-wrap gap-2 mb-3">
-                                {item.tags?.slice(0, 2).map((tag) => (
-                                    <span
-                                        key={tag}
-                                        className="text-[10px] font-black uppercase tracking-wider px-2 py-1 bg-[#ff2d78]/20 text-[#ff2d78] rounded"
-                                    >
-                                        {tag}
-                                    </span>
-                                ))}
+                                {item.tags?.slice(0, 2).map((tag) => {
+                                    const ts = getTagStyle(tag)
+                                    return (
+                                        <span
+                                            key={tag}
+                                            className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded"
+                                            style={{ color: ts.color, backgroundColor: ts.bg }}
+                                        >
+                                            {tag}
+                                        </span>
+                                    )
+                                })}
                             </div>
 
                             <h3 className="text-base font-bold text-white group-hover:text-[#ff2d78] transition-colors line-clamp-2 mb-2">

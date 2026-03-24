@@ -46,11 +46,11 @@ export function HomeBlogSection({ posts: _ }: HomeBlogSectionProps) {
     return (
         <>
             {/* CTA Banner */}
-            <section className="bg-background py-4 pb-24 sm:pb-4 px-4 sm:px-6 lg:px-12">
+            <section className="bg-background py-4 pb-12 sm:pb-4 px-4 sm:px-6 lg:px-12">
                 <div className="max-w-7xl mx-auto">
                     <div
                         className="relative rounded-2xl overflow-hidden"
-                        style={{ padding: 'clamp(1.5rem, 4vw, 3.5rem)', backgroundColor: 'var(--color-featured-bg)' }}
+                        style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)', backgroundColor: 'var(--color-featured-bg)' }}
                     >
                         {/* Radial pink glow */}
                         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 75% 30%, rgba(255,45,120,0.30) 0%, transparent 60%)' }} />

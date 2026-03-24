@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
 
 interface BlogFeedItem {
     id: string
@@ -31,23 +32,22 @@ interface HomeBlogFeedProps {
 }
 
 const TABS = [
-    { label: "Todos", value: "all" },
-    { label: "K-pop", value: "k-pop" },
-    { label: "K-drama", value: "k-drama" },
-    { label: "K-beauty", value: "k-beauty" },
-    { label: "Cultura", value: "cultura" },
+    { label: "Todos",    value: "all",      color: '#6b7280', bg: '#f3f4f6' },
+    { label: "K-pop",   value: "k-pop",    color: '#ec4899', bg: '#fce7f3' },
+    { label: "K-drama", value: "k-drama",  color: '#8b5cf6', bg: '#ede9fe' },
+    { label: "K-beauty",value: "k-beauty", color: '#f59e0b', bg: '#fef3c7' },
+    { label: "Cultura", value: "cultura",  color: '#0ea5e9', bg: '#e0f2fe' },
 ]
 
-const CATEGORY_COLORS: Record<string, string> = {
-    "k-pop": "text-[#ff2d78]",
-    "k-drama": "text-[#7c3aed]",
-    "k-beauty": "text-[#f59e0b]",
-    "cultura": "text-[#0ea5e9]",
+function getCategoryStyle(slug: string | undefined): { color: string; bg: string } {
+    if (!slug) return { color: '#9ca3af', bg: '#f3f4f6' }
+    const cat = BLOG_CATEGORY_BY_SLUG[slug.toLowerCase()]
+    return cat ? { color: cat.color, bg: cat.bg } : { color: '#9ca3af', bg: '#f3f4f6' }
 }
 
-function getCategoryColor(slug: string | undefined): string {
-    if (!slug) return "text-muted"
-    return CATEGORY_COLORS[slug.toLowerCase()] ?? "text-[#ff2d78]"
+function getCategoryThumbBg(slug: string | undefined): string {
+    const { bg } = getCategoryStyle(slug)
+    return `linear-gradient(135deg,${bg},${bg}dd)`
 }
 
 function formatDate(iso: string | null) {
@@ -69,6 +69,14 @@ function getInitials(title: string) {
     return title.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()
 }
 
+const PROD_PLACEHOLDER_GRADIENTS = [
+    "linear-gradient(135deg,#fce7f3,#ede9fe)",
+    "linear-gradient(135deg,#ede9fe,#dbeafe)",
+    "linear-gradient(135deg,#fef3c7,#fed7aa)",
+    "linear-gradient(135deg,#e0f2fe,#dbeafe)",
+    "linear-gradient(135deg,#dcfce7,#d1fae5)",
+]
+
 export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
     const [activeTab, setActiveTab] = useState("all")
 
@@ -84,26 +92,30 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
             <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
                 {/* LEFT — blog feed */}
                 <div className="border-b md:border-b-0 md:border-r border-border">
-                    <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4 sm:py-5 lg:py-6 border-b border-border">
+                    <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border">
                         <h2 className="text-[13.5px] font-bold text-foreground">Do Blog</h2>
                         <div className="flex items-center gap-1">
-                            {TABS.map(tab => (
-                                <button
-                                    key={tab.value}
-                                    onClick={() => setActiveTab(tab.value)}
-                                    className={`text-[12.5px] font-semibold px-3.5 py-[5px] rounded-full transition-colors min-h-[32px] ${
-                                        activeTab === tab.value
-                                            ? "bg-accent text-white"
-                                            : "text-foreground/70 hover:text-foreground hover:bg-surface border border-transparent hover:border-border"
-                                    }`}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
+                            {TABS.map(tab => {
+                                const isActive = activeTab === tab.value
+                                return (
+                                    <button
+                                        key={tab.value}
+                                        onClick={() => setActiveTab(tab.value)}
+                                        className={`text-[12.5px] font-semibold px-3.5 py-[5px] rounded-full transition-all min-h-[32px] ${
+                                            isActive
+                                                ? 'font-bold'
+                                                : 'text-foreground/60 hover:text-foreground hover:bg-surface border border-transparent hover:border-border'
+                                        }`}
+                                        style={isActive ? { color: tab.color, backgroundColor: tab.bg } : undefined}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                )
+                            })}
                         </div>
                     </div>
 
-                    <div>
+                    <div className="overflow-y-auto" style={{ maxHeight: '400px', scrollbarWidth: 'thin' }}>
                         {filteredPosts.length === 0 && (
                             <p className="text-sm text-muted p-5">Nenhum artigo encontrado.</p>
                         )}
@@ -111,17 +123,23 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className="flex items-start gap-3.5 px-4 sm:px-6 lg:px-12 py-4 sm:py-5 lg:py-[1.4rem] border-b border-border hover:bg-surface transition-colors group min-h-[68px]"
+                                className="flex items-start gap-3.5 px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border hover:bg-accent-soft transition-colors group min-h-[56px]"
                             >
                                 <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 pt-0.5">
                                     {String(idx + 1).padStart(2, "0")}
                                 </span>
                                 <div className="flex-1 min-w-0">
-                                    {post.category && (
-                                        <span className={`text-[8.3px] font-bold uppercase tracking-[0.12em] mb-1 block ${getCategoryColor(post.category.slug)}`}>
-                                            {post.category.name}
-                                        </span>
-                                    )}
+                                    {post.category && (() => {
+                                        const style = getCategoryStyle(post.category.slug)
+                                        return (
+                                            <span
+                                                className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] mb-1.5 px-1.5 py-0.5 rounded"
+                                                style={{ color: style.color, backgroundColor: style.bg }}
+                                            >
+                                                {post.category.name}
+                                            </span>
+                                        )
+                                    })()}
                                     <h3 className="text-[13.5px] font-semibold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-2">
                                         {post.title}
                                     </h3>
@@ -133,7 +151,7 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
                                         <span>{post.readingTimeMin} min</span>
                                     </div>
                                 </div>
-                                <div className="w-[58px] h-11 rounded-lg bg-surface flex-shrink-0 overflow-hidden flex items-center justify-center border border-border">
+                                <div className="w-[58px] h-11 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-border/60" style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}>
                                     {post.coverImageUrl ? (
                                         <Image
                                             src={post.coverImageUrl}
@@ -143,7 +161,7 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <span className="text-[9px] font-bold text-muted">
+                                        <span className="text-[9px] font-bold text-[#ff2d78]/50">
                                             {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
                                         </span>
                                     )}
@@ -155,41 +173,9 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
 
                 {/* RIGHT SIDEBAR */}
                 <div className="flex flex-col divide-y divide-border">
-                    {/* Widget 1: Productions */}
+                    {/* Artigos em destaque */}
                     <div>
-                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-3.5 border-b border-border">
-                            Produções em destaque
-                        </div>
-                        <div>
-                            {productions.slice(0, 5).map(prod => (
-                                <Link
-                                    key={prod.id}
-                                    href={`/productions/${prod.id}`}
-                                    className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors group min-h-[52px]"
-                                >
-                                    <div className="w-8 h-12 rounded-md flex-shrink-0 overflow-hidden bg-surface border border-border">
-                                        {prod.imageUrl ? (
-                                            <Image src={prod.imageUrl} alt={prod.titlePt} width={32} height={48} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-bold bg-surface">
-                                                {getInitials(prod.titlePt)}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">{prod.titlePt}</p>
-                                        <p className="text-[9px] text-muted truncate mt-0.5">
-                                            {getTypeLabel(prod.type)}{prod.year ? ` · ${prod.year}` : ''}
-                                        </p>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Widget 2: Featured Blog Posts */}
-                    <div>
-                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-3.5 border-b border-border">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-b border-border">
                             Artigos em destaque
                         </div>
                         <div>
@@ -197,13 +183,16 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="block px-4 py-3.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors group min-h-[52px]"
+                                    className="block px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors group min-h-[44px]"
                                 >
-                                    {post.category && (
-                                        <p className="text-[8px] font-bold uppercase tracking-[0.11em] text-accent mb-1">
-                                            {post.category.name}
-                                        </p>
-                                    )}
+                                    {post.category && (() => {
+                                        const cs = getCategoryStyle(post.category.slug)
+                                        return (
+                                            <span className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] mb-1.5 px-1.5 py-0.5 rounded" style={{ color: cs.color, backgroundColor: cs.bg }}>
+                                                {post.category.name}
+                                            </span>
+                                        )
+                                    })()}
                                     <p className="text-[13px] font-bold text-foreground group-hover:text-accent transition-colors leading-[1.35] line-clamp-2">
                                         {post.title}
                                     </p>
