@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useSession } from "next-auth/react"
-import { Mic2, Users, Film, Newspaper, PenLine, Search, User } from "lucide-react"
+import { Mic2, Users, Film, PenLine, Search, User } from "lucide-react"
 import { BrandMark } from "@/components/ui/BrandMark"
 
 interface MobileMenuProps {
@@ -16,7 +16,6 @@ const LINK_ICONS: Record<string, React.ElementType> = {
   "/artists":     Mic2,
   "/groups":      Users,
   "/productions": Film,
-  "/news":        Newspaper,
   "/blog":        PenLine,
 }
 

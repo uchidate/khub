@@ -70,13 +70,12 @@ export async function getDashboardData() {
 
     const [
         activities,
-        latestNews,
-        personalizedNews,
+        latestBlogPosts,
+        personalizedBlogPosts,
         trendingArtists,
         user,
         artistCount,
         productionCount,
-        newsCount,
         groupCount,
         commentsCount,
         watchlistCount,
@@ -88,31 +87,41 @@ export async function getDashboardData() {
             orderBy: { createdAt: 'desc' },
             take: 12,
         }),
-        // Últimas notícias genéricas (fallback)
-        prisma.news.findMany({
+        // Últimos artigos do blog (fallback)
+        prisma.blogPost.findMany({
+            where: { status: 'PUBLISHED' },
             orderBy: { publishedAt: 'desc' },
             take: 4,
-            select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true, source: true },
+            select: {
+                id: true, slug: true, title: true, excerpt: true,
+                coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+                category: { select: { name: true, slug: true } },
+                tags: true,
+            },
         }),
-        // Notícias personalizadas (artistas favoritos)
+        // Artigos personalizados (artistas favoritos via tags)
         hasFollowing
-            ? prisma.news.findMany({
-                where: { artists: { some: { artistId: { in: favoriteArtistIds } } } },
-                orderBy: { publishedAt: 'desc' },
-                take: 4,
-                select: {
-                    id: true,
-                    title: true,
-                    imageUrl: true,
-                    publishedAt: true,
-                    tags: true,
-                    source: true,
-                    artists: {
-                        select: { artist: { select: { nameRomanized: true } } },
-                        take: 2,
+            ? (async () => {
+                const artistNames = await prisma.artist.findMany({
+                    where: { id: { in: favoriteArtistIds } },
+                    select: { nameRomanized: true },
+                })
+                const nameTags = artistNames.map(a => a.nameRomanized.toLowerCase())
+                return prisma.blogPost.findMany({
+                    where: {
+                        status: 'PUBLISHED',
+                        tags: { hasSome: nameTags },
                     },
-                },
-            })
+                    orderBy: { publishedAt: 'desc' },
+                    take: 4,
+                    select: {
+                        id: true, slug: true, title: true, excerpt: true,
+                        coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+                        category: { select: { name: true, slug: true } },
+                        tags: true,
+                    },
+                })
+            })()
             : Promise.resolve([]),
         // Trending artists (por trendingScore)
         prisma.artist.findMany({
@@ -127,7 +136,6 @@ export async function getDashboardData() {
         // Stats por tipo
         prisma.favorite.count({ where: { userId, artistId: { not: null } } }),
         prisma.favorite.count({ where: { userId, productionId: { not: null } } }),
-        prisma.favorite.count({ where: { userId, newsId: { not: null } } }),
         prisma.favorite.count({ where: { userId, groupId: { not: null } } }),
         prisma.comment.count({ where: { userId } }),
         prisma.watchEntry.count({ where: { userId } }),
@@ -150,25 +158,20 @@ export async function getDashboardData() {
     const entityIds = {
         ARTIST:     uniqueIds('ARTIST'),
         PRODUCTION: uniqueIds('PRODUCTION'),
-        NEWS:       uniqueIds('NEWS'),
     }
 
-    const [artistNames, productionNames, newsNames] = await Promise.all([
+    const [artistNames, productionNames] = await Promise.all([
         entityIds.ARTIST.length > 0
             ? prisma.artist.findMany({ where: { id: { in: entityIds.ARTIST as string[] } }, select: { id: true, nameRomanized: true } })
             : Promise.resolve([]),
         entityIds.PRODUCTION.length > 0
             ? prisma.production.findMany({ where: { id: { in: entityIds.PRODUCTION as string[] } }, select: { id: true, titlePt: true } })
             : Promise.resolve([]),
-        entityIds.NEWS.length > 0
-            ? prisma.news.findMany({ where: { id: { in: entityIds.NEWS as string[] } }, select: { id: true, title: true } })
-            : Promise.resolve([]),
     ])
 
     const nameMap: Record<string, string> = {}
     artistNames.forEach((a: any) => { nameMap[a.id] = a.nameRomanized })
     productionNames.forEach((p: any) => { nameMap[p.id] = p.titlePt })
-    newsNames.forEach((n: any) => { nameMap[n.id] = n.title })
 
     const activitiesWithNames = activities.map((a: any) => ({
         ...a,
@@ -176,10 +179,9 @@ export async function getDashboardData() {
     }))
 
     const stats = {
-        favoritesCount: artistCount + productionCount + newsCount + groupCount,
+        favoritesCount: artistCount + productionCount + groupCount,
         artistCount,
         productionCount,
-        newsCount,
         groupCount,
         commentsCount,
         watchlistCount,
@@ -188,8 +190,8 @@ export async function getDashboardData() {
 
     return {
         activities: activitiesWithNames,
-        latestNews,
-        personalizedNews,
+        latestBlogPosts,
+        personalizedBlogPosts,
         hasFollowing,
         trendingArtists,
         watchingEntries,

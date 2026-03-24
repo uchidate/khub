@@ -1,29 +1,29 @@
 import Link from "next/link"
 
-interface TickerNews {
-    id: string
+interface TickerPost {
+    slug: string
     title: string
-    tags: string[]
+    category: { name: string } | null
 }
 
 interface HomeTickerProps {
-    news: TickerNews[]
+    posts: TickerPost[]
 }
 
-export function HomeTicker({ news }: HomeTickerProps) {
-    if (!news || news.length === 0) return null
+export function HomeTicker({ posts }: HomeTickerProps) {
+    if (!posts || posts.length === 0) return null
 
-    const items = [...news, ...news]
+    const items = [...posts, ...posts]
 
     return (
         <div
             className="w-full overflow-hidden h-[30px] flex items-center"
             style={{ backgroundColor: 'var(--color-ticker-bg)' }}
         >
-            {/* "Últimas" label */}
+            {/* Label */}
             <div className="flex-shrink-0 flex items-center self-stretch px-3.5 bg-accent">
                 <span className="text-white text-[8.5px] font-bold uppercase tracking-[0.16em] whitespace-nowrap">
-                    Últimas
+                    Blog
                 </span>
             </div>
 
@@ -32,12 +32,12 @@ export function HomeTicker({ news }: HomeTickerProps) {
                 <div className="flex items-center animate-home-ticker whitespace-nowrap" style={{ width: 'max-content' }}>
                     {items.map((item, idx) => (
                         <Link
-                            key={`ticker-${item.id}-${idx}`}
-                            href={`/news/${item.id}`}
+                            key={`ticker-${item.slug}-${idx}`}
+                            href={`/blog/${item.slug}`}
                             className="ticker-link inline-flex items-center gap-2 px-6 text-[10.5px] whitespace-nowrap flex-shrink-0 h-[30px] transition-colors"
                         >
-                            {item.tags?.[0] && (
-                                <b className="text-accent font-semibold not-italic">{item.tags[0]}</b>
+                            {item.category && (
+                                <b className="text-accent font-semibold not-italic">{item.category.name}</b>
                             )}
                             {item.title}
                         </Link>

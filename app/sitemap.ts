@@ -17,8 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             { url: `${BASE_URL}/artists`,       lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
             { url: `${BASE_URL}/groups`,        lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
             { url: `${BASE_URL}/productions`,   lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
-            { url: `${BASE_URL}/news`,          lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
-            { url: `${BASE_URL}/agencies`,      lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
+{ url: `${BASE_URL}/agencies`,      lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
             { url: `${BASE_URL}/blog`,          lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
             { url: `${BASE_URL}/about`,         lastModified: STATIC_DATE, changeFrequency: 'monthly', priority: 0.5 },
             { url: `${BASE_URL}/faq`,           lastModified: STATIC_DATE, changeFrequency: 'monthly', priority: 0.5 },
@@ -32,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             return primaryRoutes
         }
 
-        const [artists, productions, news, groups, agencies, blogPosts] = await Promise.all([
+        const [artists, productions, groups, agencies, blogPosts] = await Promise.all([
             // Excluir thin content (sem bio E sem imagem) — essas páginas têm noindex na metadata
             // e não devem aparecer no sitemap para não confundir o Google
             prisma.artist.findMany({
@@ -60,11 +59,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 },
                 select: { id: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
-            }),
-            prisma.news.findMany({
-                where: { isHidden: false, status: 'published' },
-                select: { id: true, publishedAt: true },
-                orderBy: { publishedAt: 'desc' },
             }),
             prisma.musicalGroup.findMany({
                 where: { isHidden: false },
@@ -102,13 +96,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 changeFrequency: 'weekly' as const,
                 priority: 0.8,
             })),
-            ...news.map(n => ({
-                url: `${BASE_URL}/news/${n.id}`,
-                lastModified: n.publishedAt,
-                changeFrequency: 'never' as const,
-                priority: 0.7,
-            })),
-            ...agencies.map(a => ({
+...agencies.map(a => ({
                 url: `${BASE_URL}/agencies/${a.id}`,
                 lastModified: a.updatedAt,
                 changeFrequency: 'monthly' as const,

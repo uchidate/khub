@@ -19,22 +19,17 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
 import { BottomNav } from "@/components/ui/BottomNav"
 
-const getTickerNews = unstable_cache(
+const getTickerPosts = unstable_cache(
     async () => {
-        const news = await prisma.news.findMany({
-            where: { isHidden: false, status: 'published' },
-            take: 6,
+        const posts = await prisma.blogPost.findMany({
+            where: { status: 'PUBLISHED' },
+            take: 8,
             orderBy: { publishedAt: 'desc' },
-            select: { id: true, title: true, tags: true, publishedAt: true },
+            select: { slug: true, title: true, category: { select: { name: true } } },
         })
-        return news.map(n => ({
-            id: n.id,
-            title: n.title,
-            tags: n.tags,
-            publishedAt: n.publishedAt.toISOString(),
-        }))
+        return posts
     },
-    ['layout-ticker-news-v1'],
+    ['layout-ticker-posts-v1'],
     { revalidate: 120 }
 )
 
@@ -60,9 +55,7 @@ export const metadata: Metadata = {
     },
     alternates: {
         canonical: BASE_URL,
-        types: {
-            'application/rss+xml': `${BASE_URL}/news/rss`,
-        },
+        types: {},
     },
     openGraph: {
         title: "HallyuHub - O Portal da Onda Coreana",
@@ -103,7 +96,7 @@ export default async function RootLayout({
 }: {
     children: React.ReactNode
 }) {
-    const tickerNews = await getTickerNews().catch(() => [])
+    const tickerPosts = await getTickerPosts().catch(() => [])
 
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable} ${sora.variable}`} suppressHydrationWarning>
@@ -169,7 +162,7 @@ export default async function RootLayout({
                     <AnalyticsProvider>
                     <WebVitalsReporter />
                     <div className="min-h-screen flex flex-col">
-                        <TickerWrapper news={tickerNews} />
+                        <TickerWrapper posts={tickerPosts} />
                         <NavBar />
                         <ErrorBoundary>
                             <main className="flex-grow pb-[62px] sm:pb-0">{children}</main>
