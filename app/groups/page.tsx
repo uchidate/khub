@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return { title: 'Grupos Musicais', description: 'Explore grupos de K-Pop, suas gerações, formações e trajetórias na indústria coreana.' }
     }
-    const total = await prisma.musicalGroup.count().catch(() => 0)
+    const total = await prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0)
     const desc = `Explore ${total > 0 ? `${total} ` : ''}grupos de K-Pop, suas gerações, formações e trajetórias na indústria coreana.`
     return {
         title: 'Grupos Musicais',
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GroupsPage() {
     const total = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
         ? null
-        : await prisma.musicalGroup.count().catch(() => null)
+        : await prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => null)
 
     return (
         <>

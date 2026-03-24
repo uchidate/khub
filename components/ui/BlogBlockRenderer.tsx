@@ -7,22 +7,43 @@ import { InstagramEmbed } from '@/components/ui/InstagramEmbed'
 import { TikTokEmbed } from '@/components/ui/TikTokEmbed'
 import type { BlogBlock } from '@/lib/types/blocks'
 
+export interface ResolvedArtist {
+    id: string
+    nameRomanized: string
+    roles: string[]
+    primaryImageUrl: string | null
+}
+
+export interface ResolvedProduction {
+    id: string
+    titlePt: string
+    type: string
+    year: number | null
+    imageUrl: string | null
+}
+
+export interface ResolvedEntities {
+    artists: Record<string, ResolvedArtist>
+    productions: Record<string, ResolvedProduction>
+}
+
 interface BlogBlockRendererProps {
     blocks: BlogBlock[]
     className?: string
+    resolvedEntities?: ResolvedEntities
 }
 
-export function BlogBlockRenderer({ blocks, className }: BlogBlockRendererProps) {
+export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogBlockRendererProps) {
     return (
         <div className={className}>
             {blocks.map((block, i) => (
-                <BlogBlockItem key={i} block={block} />
+                <BlogBlockItem key={i} block={block} resolvedEntities={resolvedEntities} />
             ))}
         </div>
     )
 }
 
-function BlogBlockItem({ block }: { block: BlogBlock }) {
+function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolvedEntities?: ResolvedEntities }) {
     switch (block.type) {
 
         case 'blog_heading': {
@@ -37,7 +58,7 @@ function BlogBlockItem({ block }: { block: BlogBlock }) {
         }
 
         case 'blog_paragraph':
-            return <p className="mb-5 leading-relaxed text-foreground text-lg">{block.text}</p>
+            return <p className="mb-5 leading-relaxed text-foreground text-lg text-justify hyphens-auto">{block.text}</p>
 
         case 'blog_quote':
             return (
@@ -107,10 +128,10 @@ function BlogBlockItem({ block }: { block: BlogBlock }) {
         case 'blog_tiktok':    return <TikTokEmbed url={block.url} />
 
         case 'blog_artist_card':
-            return <ArtistCardBlock artistId={block.artistId} note={block.note} />
+            return <ArtistCardBlock artistId={block.artistId} note={block.note} data={resolvedEntities?.artists[block.artistId]} />
 
         case 'blog_production_card':
-            return <ProductionCardBlock productionId={block.productionId} note={block.note} />
+            return <ProductionCardBlock productionId={block.productionId} note={block.note} data={resolvedEntities?.productions[block.productionId]} />
 
         case 'blog_stats_row':
             return (
@@ -153,38 +174,63 @@ function BlogBlockItem({ block }: { block: BlogBlock }) {
     }
 }
 
-// ─── Dynamic blocks (fetch data from server) ──────────────────────────────────
+// ─── Embedded entity cards ─────────────────────────────────────────────────────
 
-function ArtistCardBlock({ artistId, note }: { artistId: string; note?: string }) {
+function ArtistCardBlock({ artistId, note, data }: { artistId: string; note?: string; data?: ResolvedArtist }) {
     if (!artistId) return null
+    const role = data?.roles?.[0]
     return (
         <Link href={`/artists/${artistId}`}
-            className="group flex items-center gap-4 my-6 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/30 bg-surface hover:bg-background transition-all">
-            <div className="w-16 h-16 rounded-full bg-[#e8e8e8] border border-border overflow-hidden shrink-0 flex items-center justify-center text-muted text-xs">
-                ?
+            className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            <div className="w-16 h-16 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-lg font-bold text-[#ff2d78]">
+                {data?.primaryImageUrl ? (
+                    <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={64} height={64} className="w-full h-full object-cover" />
+                ) : (
+                    <span>{data?.nameRomanized?.[0] ?? '?'}</span>
+                )}
             </div>
-            <div>
-                <p className="text-xs font-black uppercase tracking-widest text-[#ff2d78] mb-0.5">Artista</p>
-                <p className="text-sm font-semibold text-muted group-hover:text-foreground transition-colors">ID: {artistId}</p>
-                {note && <p className="text-xs text-muted mt-1 italic">{note}</p>}
+            <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-0.5">Artista</p>
+                <p className="text-base font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
+                    {data?.nameRomanized ?? artistId}
+                </p>
+                {role && <p className="text-xs text-muted mt-0.5">{role}</p>}
+                {note && <p className="text-xs text-muted mt-1 italic leading-snug">{note}</p>}
             </div>
+            <span className="text-muted text-xs shrink-0 group-hover:text-[#ff2d78] transition-colors">Ver perfil →</span>
         </Link>
     )
 }
 
-function ProductionCardBlock({ productionId, note }: { productionId: string; note?: string }) {
+const TYPE_LABELS: Record<string, string> = {
+    DRAMA: 'K-Drama', FILM: 'Filme', MOVIE: 'Filme', VARIETY: 'Variety',
+    DOCUMENTARY: 'Documentário', WEBSERIES: 'Web Series',
+}
+
+function ProductionCardBlock({ productionId, note, data }: { productionId: string; note?: string; data?: ResolvedProduction }) {
     if (!productionId) return null
+    const typeLabel = data?.type ? (TYPE_LABELS[data.type] ?? data.type) : null
     return (
         <Link href={`/productions/${productionId}`}
-            className="group flex items-center gap-4 my-6 p-4 rounded-2xl border border-border hover:border-emerald-500/30 bg-surface hover:bg-background transition-all">
-            <div className="w-12 h-16 rounded-lg bg-[#e8e8e8] border border-border overflow-hidden shrink-0 flex items-center justify-center text-muted text-xs">
-                ?
+            className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            <div className="w-12 h-[72px] rounded-lg bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-muted">
+                {data?.imageUrl ? (
+                    <Image src={data.imageUrl} alt={data.titlePt} width={48} height={72} className="w-full h-full object-cover" />
+                ) : (
+                    <span>{data?.titlePt?.slice(0, 2).toUpperCase() ?? '?'}</span>
+                )}
             </div>
-            <div>
-                <p className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-0.5">Produção</p>
-                <p className="text-sm font-semibold text-muted group-hover:text-foreground transition-colors">ID: {productionId}</p>
-                {note && <p className="text-xs text-muted mt-1 italic">{note}</p>}
+            <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-0.5">
+                    {typeLabel ?? 'Produção'}
+                </p>
+                <p className="text-base font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
+                    {data?.titlePt ?? productionId}
+                </p>
+                {data?.year && <p className="text-xs text-muted mt-0.5">{data.year}</p>}
+                {note && <p className="text-xs text-muted mt-1 italic leading-snug">{note}</p>}
             </div>
+            <span className="text-muted text-xs shrink-0 group-hover:text-[#ff2d78] transition-colors">Ver mais →</span>
         </Link>
     )
 }

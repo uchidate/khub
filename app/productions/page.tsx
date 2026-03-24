@@ -13,7 +13,7 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
-    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)
+    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}produções coreanas. De romances épicos a thrillers de tirar o fôlego.`
     return {
         title: 'Produções',
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProductionsPage() {
-    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false } }).catch(() => null)
+    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => null)
 
     return (
         <>

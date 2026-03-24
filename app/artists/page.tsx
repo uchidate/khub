@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return { title: 'Artistas', description: 'Explore perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.' }
     }
-    const total = await prisma.artist.count({ where: { flaggedAsNonKorean: false } }).catch(() => 0)
+    const total = await prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0)
     const desc = `Explore ${total > 0 ? `${total} ` : ''}perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.`
     return {
         title: 'Artistas',
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ArtistsPage() {
     const total = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
         ? null
-        : await prisma.artist.count({ where: { flaggedAsNonKorean: false } }).catch(() => null)
+        : await prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => null)
 
     return (
         <>
