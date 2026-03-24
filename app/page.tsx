@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
+import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
 import { HomeArtistsGrid } from "@/components/home/HomeArtistsGrid"
 import { HomeProductionsCarousel } from "@/components/home/HomeProductionsCarousel"
@@ -97,8 +98,13 @@ export default async function Home() {
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden">
             <HomeCategoriesBar />
+            <HomeFrontPage
+                featuredStory={featuredBlogPosts[0]}
+                secondaryStories={featuredBlogPosts.slice(1, 5)}
+                trendingArtists={trendingArtists.slice(0, 8)}
+            />
             <HomeBlogFeed
-                blogPosts={featuredBlogPosts}
+                blogPosts={featuredBlogPosts.slice(1)}
                 productions={latestProductions.slice(0, 5)}
             />
             <HomeArtistsGrid artists={trendingArtists.slice(0, 6)} />

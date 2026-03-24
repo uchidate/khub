@@ -4,19 +4,21 @@ import { type ArtistForBadge } from "@/lib/trending/badges"
 import { getArtistBadgeDisplay } from "@/lib/trending/display"
 
 interface FeaturedStory {
-    id: string
+    slug: string
     title: string
-    imageUrl: string | null
-    publishedAt: string
-    excerpt?: string
+    coverImageUrl: string | null
+    publishedAt: string | null
+    excerpt?: string | null
+    category: { name: string; slug: string } | null
     tags: string[]
 }
 
 interface SecondaryStory {
-    id: string
+    slug: string
     title: string
-    imageUrl: string | null
-    publishedAt: string
+    coverImageUrl: string | null
+    publishedAt: string | null
+    category: { name: string; slug: string } | null
     tags: string[]
 }
 
@@ -55,7 +57,8 @@ const TAG_COLORS: Record<string, string> = {
     default: "text-muted",
 }
 
-function formatDate(iso: string) {
+function formatDate(iso: string | null) {
+    if (!iso) return ''
     try {
         return new Date(iso).toLocaleDateString("pt-BR", {
             day: "2-digit",
@@ -117,12 +120,12 @@ export function HomeFrontPage({
                 {/* LEFT COLUMN */}
                 <div className="flex flex-col">
                     {/* Featured story image area */}
-                    <Link href={`/news/${featuredStory.id}`} className="block group">
+                    <Link href={`/blog/${featuredStory.slug}`} className="block group">
                         <div className="relative h-48 md:h-64 lg:h-80 overflow-hidden bg-accent-soft">
-                            {featuredStory.imageUrl ? (
+                            {featuredStory.coverImageUrl ? (
                                 <>
                                     <Image
-                                        src={featuredStory.imageUrl}
+                                        src={featuredStory.coverImageUrl}
                                         alt={featuredStory.title}
                                         fill
                                         sizes="(max-width: 1024px) 100vw, 62vw"
@@ -151,14 +154,14 @@ export function HomeFrontPage({
                             )}
                             <div className="absolute bottom-3 left-4">
                             <span className="text-[8.5px] font-bold uppercase tracking-[0.14em] text-accent">
-                                {featuredStory.tags?.[0] ?? "K-pop"} · Destaque
+                                {featuredStory.category?.name ?? featuredStory.tags?.[0] ?? "Blog"} · Destaque
                             </span>
                         </div>
                         </div>
                     </Link>
 
                     {/* Featured story body */}
-                    <Link href={`/news/${featuredStory.id}`} className="block group p-4 md:p-5 lg:p-8 border-b border-border">
+                    <Link href={`/blog/${featuredStory.slug}`} className="block group p-4 md:p-5 lg:p-8 border-b border-border">
                         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.05em] text-muted mb-2">
                             <span className="block w-3 h-px bg-muted" />
                             HallyuHub Redação
@@ -185,20 +188,20 @@ export function HomeFrontPage({
                         <div className="grid grid-cols-2 border-t border-border">
                             {safeSecondary.map((story, idx) => (
                                 <Link
-                                    key={story.id}
-                                    href={`/news/${story.id}`}
+                                    key={story.slug}
+                                    href={`/blog/${story.slug}`}
                                     className={`group p-3 sm:p-4 flex flex-col gap-1.5 hover:bg-surface transition-colors
                                         ${idx % 2 === 0 ? "border-r border-border" : ""}
                                         ${idx < 2 ? "border-b border-border" : ""}
                                     `}
                                 >
-                                    {story.imageUrl && (
+                                    {story.coverImageUrl && (
                                         <div className="relative w-full aspect-video rounded-md overflow-hidden bg-surface mb-1 sm:hidden">
-                                            <Image src={story.imageUrl} alt={story.title} fill className="object-cover" sizes="50vw" />
+                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover" sizes="50vw" />
                                         </div>
                                     )}
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${getTagColor(story.tags?.[0])}`}>
-                                        {story.tags?.[0] ?? "Notícia"}
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${getTagColor(story.category?.slug ?? story.tags?.[0])}`}>
+                                        {story.category?.name ?? story.tags?.[0] ?? "Blog"}
                                     </span>
                                     <h3 className="text-[13px] sm:text-sm font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-3">
                                         {story.title}
