@@ -174,11 +174,16 @@ export default async function RootLayout({
                         <CookieBanner />
                         <BottomNav />
                         <footer className="bg-featured py-5 px-4 sm:px-8 lg:px-12 font-sora">
-                            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <span className="text-[14px] font-extrabold tracking-[-0.04em] text-white">
-                                    Hallyu<span className="text-[#ff2d78]">Hub</span>
-                                </span>
-                                <div className="flex flex-wrap gap-x-5 gap-y-1">
+                            <div className="max-w-7xl mx-auto space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                                <div className="flex items-center justify-between sm:block">
+                                    <span className="text-[14px] font-extrabold tracking-[-0.04em] text-white">
+                                        Hallyu<span className="text-[#ff2d78]">Hub</span>
+                                    </span>
+                                    <p className="text-[10px] text-[#444] sm:hidden">
+                                        &copy; {new Date().getFullYear()} HallyuHub
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-2">
                                     {[
                                         { label: "Sobre", href: "/about" },
                                         { label: "Blog", href: "/blog" },
@@ -190,7 +195,7 @@ export default async function RootLayout({
                                         <a key={href} href={href} className="text-[11px] text-[#555] hover:text-[#aaa] font-medium transition-colors">{label}</a>
                                     ))}
                                 </div>
-                                <p className="text-[10px] text-[#444]">
+                                <p className="hidden sm:block text-[10px] text-[#444] shrink-0">
                                     &copy; {new Date().getFullYear()} HallyuHub. Todos os direitos reservados.
                                 </p>
                             </div>

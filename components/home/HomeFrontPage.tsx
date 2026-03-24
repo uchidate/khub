@@ -107,7 +107,7 @@ export function HomeFrontPage({
     if (!featuredStory) return null
 
     const safeSecondary = secondaryStories.slice(0, 4)
-    const safeArtists = trendingArtists.slice(0, 6)
+    const safeArtists = trendingArtists.slice(0, 8)
     const spotlightArtist = safeArtists[0]
 
     return (
@@ -189,16 +189,16 @@ export function HomeFrontPage({
 
                     {/* Secondary stories 2×2 grid */}
                     {safeSecondary.length > 0 && (
-                        <div className="grid grid-cols-2 border-t border-border">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 border-t border-border">
                             {safeSecondary.map((story, idx) => {
                                 const cs = getCategoryStyle(story.category?.slug ?? story.tags?.[0])
                                 return (
                                 <Link
                                     key={story.slug}
                                     href={`/blog/${story.slug}`}
-                                    className={`group p-3 flex gap-2.5 hover:bg-accent-soft transition-colors
-                                        ${idx % 2 === 0 ? "border-r border-border" : ""}
-                                        ${idx < 2 ? "border-b border-border" : ""}
+                                    className={`group p-3 flex gap-2.5 hover:bg-accent-soft transition-colors border-b border-border
+                                        ${idx % 2 === 0 ? "sm:border-r sm:border-border" : ""}
+                                        ${idx >= 2 ? "sm:border-b-0" : ""}
                                     `}
                                 >
                                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
@@ -211,7 +211,7 @@ export function HomeFrontPage({
                                         <span className="text-[9px] text-muted mt-auto">{formatDate(story.publishedAt)}</span>
                                     </div>
                                     {story.coverImageUrl && (
-                                        <div className="relative w-20 h-20 rounded-md overflow-hidden bg-surface shrink-0">
+                                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-surface shrink-0">
                                             <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="160px" />
                                         </div>
                                     )}
@@ -251,7 +251,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className={`items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[44px] ${idx >= 5 ? 'hidden lg:flex' : 'flex'}`}
+                                    className={`items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[44px] ${idx >= 6 ? 'hidden' : 'flex'}`}
                                 >
                                     <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 text-center">
                                         {String(idx + 1).padStart(2, '0')}

@@ -14,13 +14,24 @@ import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
 
 export const dynamic = 'force-dynamic'
 
+const POST_SELECT = {
+    id: true, slug: true, title: true, excerpt: true,
+    coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+    category: { select: { name: true, slug: true } },
+    tags: true,
+} as const
+
+function serializePost<T extends { publishedAt: Date | null }>(p: T) {
+    return { ...p, publishedAt: p.publishedAt?.toISOString() ?? null }
+}
+
 const getHomePublicData = unstable_cache(
     async () => {
         const [
             trendingArtists,
-            featuredBlogPostsRaw,
             streamingShowsRaw,
             trendingGroupsRaw,
+            settings,
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
@@ -34,17 +45,6 @@ const getHomePublicData = unstable_cache(
                     agency: { select: { name: true } },
                 },
             }),
-            prisma.blogPost.findMany({
-                where: { status: 'PUBLISHED' },
-                take: 10,
-                orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
-                select: {
-                    id: true, slug: true, title: true, excerpt: true,
-                    coverImageUrl: true, publishedAt: true, readingTimeMin: true,
-                    category: { select: { name: true, slug: true } },
-                    tags: true,
-                },
-            }).catch(() => [] as { id: string; slug: string; title: string; excerpt: string | null; coverImageUrl: string | null; publishedAt: Date | null; readingTimeMin: number; category: { name: string; slug: string } | null; tags: string[] }[]),
             prisma.streamingShow.findMany({
                 where: { expiresAt: { gt: new Date() } },
                 take: 100,
@@ -56,26 +56,81 @@ const getHomePublicData = unstable_cache(
                 },
                 orderBy: [{ source: 'asc' }, { rank: 'asc' }],
             }).catch(() => []),
-            // Grupos em alta
             prisma.musicalGroup.findMany({
                 where: { isHidden: false, trendingScore: { gt: 0 } },
                 take: 16,
                 orderBy: { trendingScore: 'desc' },
                 select: { id: true, name: true, nameHangul: true, profileImageUrl: true, officialColor: true, fanClubName: true, trendingScore: true, agency: { select: { name: true } } },
             }).catch(() => []),
+            prisma.systemSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null),
         ])
+
+        // ── Slots editoriais ──────────────────────────────────────────────────
+        const slottedIds = new Set<string>()
+        if (settings?.homeFeaturedPostId) slottedIds.add(settings.homeFeaturedPostId)
+        settings?.homeSecondaryPostIds?.forEach(id => slottedIds.add(id))
+        settings?.homeSidebarPostIds?.forEach(id => slottedIds.add(id))
+
+        // Busca posts dos slots configurados
+        const [slottedPostsRaw, fallbackPostsRaw] = await Promise.all([
+            slottedIds.size > 0
+                ? prisma.blogPost.findMany({
+                    where: { id: { in: Array.from(slottedIds) }, status: 'PUBLISHED' },
+                    select: POST_SELECT,
+                }).catch(() => [])
+                : [],
+            // Feed + fallback: exclui os que já estão nos slots
+            prisma.blogPost.findMany({
+                where: {
+                    status: 'PUBLISHED',
+                    ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
+                },
+                take: 12,
+                orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
+                select: POST_SELECT,
+            }).catch(() => []),
+        ])
+
+        const slottedById = Object.fromEntries(slottedPostsRaw.map(p => [p.id, p]))
+
+        // Resolve slots — fallback para os mais recentes se slot vazio
+        const fallback = fallbackPostsRaw
+        const featuredPost = settings?.homeFeaturedPostId
+            ? (slottedById[settings.homeFeaturedPostId] ?? fallback[0])
+            : fallback[0]
+
+        const secondaryPosts = settings?.homeSecondaryPostIds?.length
+            ? settings.homeSecondaryPostIds
+                .map(id => slottedById[id])
+                .filter(Boolean)
+                .slice(0, 4)
+            : fallback.slice(1, 5)
+
+        const sidebarPosts = settings?.homeSidebarPostIds?.length
+            ? settings.homeSidebarPostIds
+                .map(id => slottedById[id])
+                .filter(Boolean)
+                .slice(0, 4)
+            : fallback.slice(0, 4)
+
+        // Feed exclui tudo que aparece nos slots e no featured
+        const featuredId = featuredPost?.id
+        const secondaryIds = new Set(secondaryPosts.map(p => p.id))
+        const feedPosts = fallbackPostsRaw.filter(
+            p => p.id !== featuredId && !secondaryIds.has(p.id)
+        )
 
         return {
             trendingArtists,
-            featuredBlogPosts: featuredBlogPostsRaw.map(p => ({
-                ...p,
-                publishedAt: p.publishedAt?.toISOString() ?? null,
-            })),
+            featuredPost: featuredPost ? serializePost(featuredPost) : null,
+            secondaryPosts: secondaryPosts.map(serializePost),
+            sidebarPosts: sidebarPosts.map(serializePost),
+            feedPosts: feedPosts.map(serializePost),
             streamingShowsRaw,
             trendingGroups: trendingGroupsRaw,
         }
     },
-    ['home-page-public-data-v6'],
+    ['home-page-public-data-v7'],
     { revalidate: 120 },
 )
 
@@ -92,7 +147,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredBlogPosts, streamingShowsRaw, trendingGroups } = publicData
+    const { trendingArtists, featuredPost, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups } = publicData
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -113,7 +168,6 @@ export default async function Home() {
     }
     const hasStreaming = Object.keys(showsByPlatform).length > 0
 
-    // Productions for HomeBlogFeed sidebar (latest additions)
     const latestProductions = await prisma.production.findMany({
         where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
         take: 5,
@@ -125,12 +179,13 @@ export default async function Home() {
         <div className="min-h-screen bg-background font-sora overflow-x-hidden">
             <HomeCategoriesBar />
             <HomeFrontPage
-                featuredStory={featuredBlogPosts[0]}
-                secondaryStories={featuredBlogPosts.slice(1, 5)}
+                featuredStory={featuredPost ?? undefined}
+                secondaryStories={secondaryPosts}
                 trendingArtists={trendingArtists.slice(0, 8)}
             />
             <HomeBlogFeed
-                blogPosts={featuredBlogPosts.slice(1)}
+                blogPosts={feedPosts}
+                sidebarPosts={sidebarPosts}
                 productions={latestProductions}
             />
             {(hasStreaming || trendingGroups.length > 0) && (
@@ -145,7 +200,7 @@ export default async function Home() {
                     </div>
                 </section>
             )}
-            <HomeBlogSection posts={featuredBlogPosts.slice(0, 4)} />
+            <HomeBlogSection posts={sidebarPosts} />
             <ScrollToTop />
         </div>
     )

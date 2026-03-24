@@ -625,10 +625,10 @@ export default function NewsAdminPage() {
                     actions={(news) => (
                         <div className="flex items-center gap-0.5">
                             <AdminIconLink
-                                href={`/news/${news.id}`}
+                                href={`/admin/news/${news.id}/preview`}
                                 target="_blank"
                                 onClick={e => e.stopPropagation()}
-                                title="Ver no site"
+                                title="Preview"
                             >
                                 <ExternalLink size={13} />
                             </AdminIconLink>
