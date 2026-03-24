@@ -117,7 +117,7 @@ export function HomeFrontPage({
                 <div className="flex flex-col">
                     {/* Featured story image area */}
                     <Link href={`/blog/${featuredStory.slug}`} className="block group">
-                        <div className="relative h-40 md:h-52 lg:h-64 overflow-hidden bg-accent-soft">
+                        <div className="relative h-52 md:h-72 lg:h-96 overflow-hidden bg-accent-soft">
                             {featuredStory.coverImageUrl ? (
                                 <>
                                     <Image
@@ -251,7 +251,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className={`items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[44px] ${idx >= 6 ? 'hidden' : 'flex'}`}
+                                    className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[44px]"
                                 >
                                     <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 text-center">
                                         {String(idx + 1).padStart(2, '0')}
