@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 interface BlogPost {
@@ -41,84 +42,15 @@ function getCategoryEmoji(category: string | undefined | null): string {
     )
 }
 
-export function HomeBlogSection({ posts }: HomeBlogSectionProps) {
-    const safePosts = posts ?? []
-
+export function HomeBlogSection({ posts: _ }: HomeBlogSectionProps) {
     return (
         <>
-            {/* Part A — Blog grid */}
-            <section className="border-b border-border bg-background">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10">
-                    {/* Header */}
-                    <SectionTitleBar
-                        title={<>Do nosso <span className="text-accent">blog</span></>}
-                        href="/blog"
-                    />
-
-                    {safePosts.length > 0 ? (
-                        <div
-                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-[14px] overflow-hidden"
-                            style={{ gap: '1.5px', backgroundColor: 'var(--color-border)', border: '1.5px solid var(--color-border)' }}
-                        >
-                            {safePosts.map((post) => (
-                                <Link
-                                    key={post.id}
-                                    href={`/blog/${post.slug}`}
-                                    className="group flex flex-col bg-background hover:bg-accent-soft transition-colors min-h-[44px]"
-                                >
-                                    <div className="p-4 pb-3 flex-1 flex flex-col">
-                                        {/* Template header with line divider */}
-                                        <div className="flex items-center gap-1.5 mb-3">
-                                            <span className="text-[13px]" role="img" aria-label={post.category?.name ?? "post"}>
-                                                {getCategoryEmoji(post.category?.slug)}
-                                            </span>
-                                            <span className="text-[8px] font-bold uppercase tracking-[0.11em] text-muted">
-                                                {post.category?.name ?? "Blog"}
-                                            </span>
-                                            <div className="flex-1 h-px bg-border" />
-                                        </div>
-                                        {post.category && (
-                                            <span className="sr-only">{post.category.name}</span>
-                                        )}
-                                        <h3 className="text-sm font-bold text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2 flex-1 mb-2">
-                                            {post.title}
-                                        </h3>
-                                        {post.excerpt && (
-                                            <p className="text-xs text-muted leading-relaxed line-clamp-2 mb-3">
-                                                {post.excerpt}
-                                            </p>
-                                        )}
-                                        <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
-                                            <div className="flex flex-wrap gap-1">
-                                                {post.tags?.slice(0, 2).map((tag) => (
-                                                    <span
-                                                        key={tag}
-                                                        className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-accent-soft text-accent border border-accent/15"
-                                                    >
-                                                        {tag}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            <span className="text-[9px] text-muted font-medium whitespace-nowrap ml-2">
-                                                {post.readingTimeMin} min
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted">Nenhum post disponível no momento.</p>
-                    )}
-                </div>
-            </section>
-
-            {/* Part B — CTA Banner */}
-            <section className="bg-background py-4 pb-24 sm:pb-4 px-4 sm:px-6 lg:px-12">
+            {/* CTA Banner */}
+            <section className="bg-background py-4 pb-12 sm:pb-4 px-4 sm:px-6 lg:px-12">
                 <div className="max-w-7xl mx-auto">
                     <div
                         className="relative rounded-2xl overflow-hidden"
-                        style={{ padding: 'clamp(1.5rem, 4vw, 3.5rem)', backgroundColor: 'var(--color-featured-bg)' }}
+                        style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)', backgroundColor: 'var(--color-featured-bg)' }}
                     >
                         {/* Radial pink glow */}
                         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 75% 30%, rgba(255,45,120,0.30) 0%, transparent 60%)' }} />

@@ -17,6 +17,8 @@ export interface StreamingPlatformConfig {
     dotColor: string
     /** Tailwind class para hover da borda do card */
     hoverBorderColor: string
+    /** Cor hex da plataforma para usar em inline styles */
+    hex: string
     /** TMDB watch provider ID para filtro em /discover/tv (undefined = sem filtro) */
     tmdbProviderId?: number
 }
@@ -29,7 +31,8 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-orange-400',
         dotColor:        'bg-orange-400',
         hoverBorderColor: 'hover:border-orange-400/60',
-        tmdbProviderId:  undefined, // /trending/tv/day — sem filtro de provider
+        hex:             '#ea580c',
+        tmdbProviderId:  undefined,
     },
     netflix_br: {
         label:           'Netflix',
@@ -38,6 +41,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-red-500',
         dotColor:        'bg-red-500',
         hoverBorderColor: 'hover:border-red-500/60',
+        hex:             '#e50914',
         tmdbProviderId:  8,
     },
     disney_br: {
@@ -47,6 +51,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-blue-500',
         dotColor:        'bg-blue-500',
         hoverBorderColor: 'hover:border-blue-500/60',
+        hex:             '#1133a0',
         tmdbProviderId:  337,
     },
     prime_br: {
@@ -56,6 +61,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-sky-400',
         dotColor:        'bg-sky-400',
         hoverBorderColor: 'hover:border-sky-400/60',
+        hex:             '#00a8e1',
         tmdbProviderId:  119,
     },
     apple_br: {
@@ -65,6 +71,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-zinc-400',
         dotColor:        'bg-zinc-400',
         hoverBorderColor: 'hover:border-zinc-400/60',
+        hex:             '#555555',
         tmdbProviderId:  350,
     },
     tmdb_trending: {
@@ -74,6 +81,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-purple-400',
         dotColor:        'bg-purple-400',
         hoverBorderColor: 'hover:border-purple-400/60',
+        hex:             '#9333ea',
     },
     internal_production: {
         label:           'Em Alta',
@@ -82,6 +90,7 @@ export const STREAMING_CONFIG: Record<string, StreamingPlatformConfig> = {
         borderColor:     'border-orange-400',
         dotColor:        'bg-orange-400',
         hoverBorderColor: 'hover:border-orange-400/60',
+        hex:             '#ea580c',
     },
 }
 
@@ -102,5 +111,6 @@ export function getStreamingConfig(source: string): StreamingPlatformConfig {
         borderColor:     'border-zinc-500',
         dotColor:        'bg-zinc-500',
         hoverBorderColor: 'hover:border-zinc-500/60',
+        hex:             '#71717a',
     }
 }

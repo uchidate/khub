@@ -1,9 +1,9 @@
 "use client"
 
-import { BLOG_CATEGORY_NAMES } from '@/lib/config/categories'
+import { BLOG_CATEGORIES } from '@/lib/config/categories'
 
 export function HomeCategoriesBar() {
-    const items = [...BLOG_CATEGORY_NAMES, ...BLOG_CATEGORY_NAMES]
+    const items = [...BLOG_CATEGORIES, ...BLOG_CATEGORIES]
 
     return (
         <div className="w-full border-b border-border bg-background overflow-hidden">
@@ -13,11 +13,11 @@ export function HomeCategoriesBar() {
                     {items.map((cat, idx) => (
                         <div
                             key={idx}
-                            className="group flex items-center gap-1.5 py-2.5 px-4 border-r border-border cursor-pointer whitespace-nowrap hover:text-accent transition-colors"
+                            className="group flex items-center gap-1.5 py-2.5 px-4 border-r border-border cursor-pointer whitespace-nowrap transition-colors"
                         >
-                            <span className="w-1 h-1 rounded-full bg-accent flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <span className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-muted group-hover:text-accent transition-colors">
-                                {cat}
+                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-transform group-hover:scale-125" style={{ backgroundColor: cat.color }} />
+                            <span className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-muted transition-colors" style={{ ['--hover-color' as string]: cat.color }}>
+                                {cat.name}
                             </span>
                         </div>
                     ))}
@@ -26,14 +26,15 @@ export function HomeCategoriesBar() {
 
             {/* Desktop: estático */}
             <div className="hidden lg:flex">
-                {BLOG_CATEGORY_NAMES.map((cat, idx) => (
+                {BLOG_CATEGORIES.map((cat, idx) => (
                     <div
                         key={idx}
-                        className="group flex items-center gap-1.5 py-2.5 px-4 border-r border-border cursor-pointer whitespace-nowrap hover:text-accent transition-colors"
+                        className="group flex items-center gap-1.5 py-2.5 px-4 border-r border-border cursor-pointer whitespace-nowrap transition-colors"
+                        style={{ ['--cat-color' as string]: cat.color, ['--cat-bg' as string]: cat.bg }}
                     >
-                        <span className="w-1 h-1 rounded-full bg-accent flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <span className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-muted group-hover:text-accent transition-colors">
-                            {cat}
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-transform group-hover:scale-125" style={{ backgroundColor: cat.color }} />
+                        <span className="text-[10.5px] font-semibold uppercase tracking-[0.03em] text-muted group-hover:text-foreground transition-colors">
+                            {cat.name}
                         </span>
                     </div>
                 ))}

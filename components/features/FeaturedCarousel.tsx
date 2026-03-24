@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { getTagStyle } from '@/lib/utils/tag-colors'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 
 interface FeaturedNews {
@@ -95,14 +96,18 @@ export function FeaturedCarousel({ news }: FeaturedCarouselProps) {
                         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
                             {currentNews.tags.length > 0 && (
                                 <div className="flex gap-2 mb-4">
-                                    {currentNews.tags.slice(0, 3).map((tag) => (
-                                        <span
-                                            key={tag}
-                                            className="px-3 py-1 bg-accent/80 backdrop-blur-sm text-white text-xs font-black uppercase tracking-widest rounded-full"
-                                        >
-                                            {tag}
-                                        </span>
-                                    ))}
+                                    {currentNews.tags.slice(0, 3).map((tag) => {
+                                        const ts = getTagStyle(tag)
+                                        return (
+                                            <span
+                                                key={tag}
+                                                className="px-3 py-1 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-widest rounded-full"
+                                                style={{ backgroundColor: `${ts.color}cc` }}
+                                            >
+                                                {tag}
+                                            </span>
+                                        )
+                                    })}
                                 </div>
                             )}
 

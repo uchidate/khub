@@ -13,6 +13,7 @@ import { AdBanner } from '@/components/ui/AdBanner'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
+import { getTagStyle } from '@/lib/utils/tag-colors'
 const BASE_URL = SITE_URL
 
 export const revalidate = 3600
@@ -183,11 +184,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-border">
             <Tag size={14} className="text-muted mt-0.5 shrink-0" />
-            {post.tags.map(tag => (
-              <Link key={tag} href={`/blog?tag=${encodeURIComponent(tag)}`} className="px-2.5 py-1 rounded-full border border-border bg-surface text-muted hover:text-foreground hover:border-[#080808]/20 text-xs transition-colors">
-                {tag}
-              </Link>
-            ))}
+            {post.tags.map(tag => {
+              const ts = getTagStyle(tag)
+              return (
+                <Link
+                  key={tag}
+                  href={`/blog?tag=${encodeURIComponent(tag)}`}
+                  className="px-2.5 py-1 rounded-full text-xs font-semibold transition-all hover:brightness-95"
+                  style={{ color: ts.color, backgroundColor: ts.bg }}
+                >
+                  {tag}
+                </Link>
+              )
+            })}
           </div>
         )}
 

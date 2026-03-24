@@ -8,21 +8,19 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
-import { HomeArtistsGrid } from "@/components/home/HomeArtistsGrid"
-import { HomeProductionsCarousel } from "@/components/home/HomeProductionsCarousel"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
+import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
 
 export const dynamic = 'force-dynamic'
 
-/**
- * Dados públicos da home — independentes de usuário/sessão.
- * Cache de 2 minutos. Em cache hit: zero queries ao banco para visitantes anônimos.
- */
 const getHomePublicData = unstable_cache(
     async () => {
         const [
-            trendingArtists, featuredBlogPostsRaw, streamingShowsRaw,
+            trendingArtists,
+            featuredBlogPostsRaw,
+            streamingShowsRaw,
+            trendingGroupsRaw,
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
@@ -58,6 +56,13 @@ const getHomePublicData = unstable_cache(
                 },
                 orderBy: [{ source: 'asc' }, { rank: 'asc' }],
             }).catch(() => []),
+            // Grupos em alta
+            prisma.musicalGroup.findMany({
+                where: { isHidden: false, trendingScore: { gt: 0 } },
+                take: 16,
+                orderBy: { trendingScore: 'desc' },
+                select: { id: true, name: true, nameHangul: true, profileImageUrl: true, officialColor: true, fanClubName: true, trendingScore: true, agency: { select: { name: true } } },
+            }).catch(() => []),
         ])
 
         return {
@@ -67,9 +72,10 @@ const getHomePublicData = unstable_cache(
                 publishedAt: p.publishedAt?.toISOString() ?? null,
             })),
             streamingShowsRaw,
+            trendingGroups: trendingGroupsRaw,
         }
     },
-    ['home-page-public-data-v5'],
+    ['home-page-public-data-v6'],
     { revalidate: 120 },
 )
 
@@ -86,7 +92,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredBlogPosts, streamingShowsRaw } = publicData
+    const { trendingArtists, featuredBlogPosts, streamingShowsRaw, trendingGroups } = publicData
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -107,25 +113,13 @@ export default async function Home() {
     }
     const hasStreaming = Object.keys(showsByPlatform).length > 0
 
-    const latestProductionsRaw = await prisma.production.findMany({
-        where: {
-            isHidden: false,
-            flaggedAsNonKorean: false,
-            ...ageRatingFilter,
-        },
-        take: 10,
+    // Productions for HomeBlogFeed sidebar (latest additions)
+    const latestProductions = await prisma.production.findMany({
+        where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
+        take: 5,
         orderBy: { createdAt: 'desc' },
-        select: {
-            id: true, titlePt: true, type: true, year: true,
-            imageUrl: true, voteAverage: true, createdAt: true,
-            streamingPlatforms: true,
-        },
+        select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
     })
-
-    const latestProductions = latestProductionsRaw.map(p => ({
-        ...p,
-        createdAt: p.createdAt.toISOString(),
-    }))
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden">
@@ -137,14 +131,17 @@ export default async function Home() {
             />
             <HomeBlogFeed
                 blogPosts={featuredBlogPosts.slice(1)}
-                productions={latestProductions.slice(0, 5)}
+                productions={latestProductions}
             />
-            <HomeArtistsGrid artists={trendingArtists.slice(0, 6)} />
-            <HomeProductionsCarousel productions={latestProductions} />
-            {hasStreaming && (
+            {(hasStreaming || trendingGroups.length > 0) && (
                 <section className="border-b border-border bg-background">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10">
-                        <StreamingTopShows showsByPlatform={showsByPlatform} />
+                    <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
+                        {hasStreaming && (
+                            <div className="border-b md:border-b-0 md:border-r border-border">
+                                <StreamingTopShows showsByPlatform={showsByPlatform} />
+                            </div>
+                        )}
+                        <HomeTrendingGroups groups={trendingGroups} />
                     </div>
                 </section>
             )}
