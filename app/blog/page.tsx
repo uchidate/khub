@@ -8,6 +8,7 @@ import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { BookOpen, Clock, Eye } from 'lucide-react'
+import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import prisma from '@/lib/prisma'
 
@@ -33,13 +34,13 @@ async function getPosts() {
       where: { ...PUBLIC_WHERE, featured: true },
       orderBy: { publishedAt: 'desc' },
       take: 3,
-      include: { author: { select: { name: true, image: true } }, category: true },
+      include: { category: true },
     }),
     prisma.blogPost.findMany({
       where: PUBLIC_WHERE,
       orderBy: { publishedAt: 'desc' },
       take: 12,
-      include: { author: { select: { name: true, image: true } }, category: true },
+      include: { category: true },
     }),
     prisma.blogCategory.findMany({
       orderBy: { name: 'asc' },
@@ -91,14 +92,10 @@ function PostCard({ post, featured = false }: { post: PostWithRelations; feature
           <p className="text-sm text-muted line-clamp-2 flex-1 leading-relaxed">{post.excerpt}</p>
         )}
         <div className="flex items-center gap-3 text-xs text-muted mt-auto pt-2 border-t border-border">
-          {post.author?.image ? (
-            <Image src={post.author.image} alt={post.author.name ?? ''} width={20} height={20} className="rounded-full object-cover flex-shrink-0" />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-[9px] font-bold text-accent flex-shrink-0">
-              {post.author?.name?.[0] ?? '?'}
-            </div>
-          )}
-          <span className="truncate">{post.author?.name}</span>
+          <div className="w-5 h-5 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-[9px] font-bold text-accent flex-shrink-0">
+            {BLOG_AUTHOR_AVATAR_INITIAL}
+          </div>
+          <span className="truncate">{BLOG_AUTHOR_DISPLAY_NAME}</span>
           <span className="flex-shrink-0">·</span>
           <span className="flex-shrink-0">{formatDate(post.publishedAt ?? post.createdAt)}</span>
           <span className="flex-shrink-0">·</span>
