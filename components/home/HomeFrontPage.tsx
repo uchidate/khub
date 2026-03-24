@@ -187,15 +187,20 @@ export function HomeFrontPage({
                                 <Link
                                     key={story.id}
                                     href={`/news/${story.id}`}
-                                    className={`group p-4 flex flex-col gap-1.5 min-h-[44px] hover:bg-surface transition-colors
+                                    className={`group p-3 sm:p-4 flex flex-col gap-1.5 hover:bg-surface transition-colors
                                         ${idx % 2 === 0 ? "border-r border-border" : ""}
                                         ${idx < 2 ? "border-b border-border" : ""}
                                     `}
                                 >
+                                    {story.imageUrl && (
+                                        <div className="relative w-full aspect-video rounded-md overflow-hidden bg-surface mb-1 sm:hidden">
+                                            <Image src={story.imageUrl} alt={story.title} fill className="object-cover" sizes="50vw" />
+                                        </div>
+                                    )}
                                     <span className={`text-[10px] font-black uppercase tracking-widest ${getTagColor(story.tags?.[0])}`}>
                                         {story.tags?.[0] ?? "Notícia"}
                                     </span>
-                                    <h3 className="text-sm font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-3">
+                                    <h3 className="text-[13px] sm:text-sm font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-3">
                                         {story.title}
                                     </h3>
                                     <span className="text-[10px] text-muted mt-auto pt-1">
@@ -230,7 +235,8 @@ export function HomeFrontPage({
                             }
                         `}</style>
 
-                        <div>
+                        {/* Desktop: vertical list */}
+                        <div className="hidden sm:block">
                             {safeArtists.map((artist, idx) => (
                                 <Link
                                     key={artist.id}
@@ -240,9 +246,7 @@ export function HomeFrontPage({
                                     <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 text-center">
                                         {String(idx + 1).padStart(2, '0')}
                                     </span>
-                                    <div
-                                        className={`w-9 h-9 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center flex-shrink-0 overflow-hidden`}
-                                    >
+                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center flex-shrink-0 overflow-hidden`}>
                                         {artist.primaryImageUrl ? (
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} width={36} height={36} className="object-cover w-full h-full" />
                                         ) : (
@@ -270,6 +274,29 @@ export function HomeFrontPage({
                                             </span>
                                         )
                                     })()}
+                                </Link>
+                            ))}
+                        </div>
+                        {/* Mobile: compact 2-col avatar grid */}
+                        <div className="sm:hidden grid grid-cols-4 gap-0">
+                            {safeArtists.slice(0, 8).map((artist, idx) => (
+                                <Link
+                                    key={artist.id}
+                                    href={`/artists/${artist.id}`}
+                                    className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-accent-soft transition-colors border-b border-r border-border last:border-r-0 [&:nth-child(4n)]:border-r-0"
+                                >
+                                    <div className="relative w-11 h-11 rounded-full overflow-hidden bg-surface border border-border flex-shrink-0">
+                                        {artist.primaryImageUrl ? (
+                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} fill sizes="44px" className="object-cover" />
+                                        ) : (
+                                            <div className={`w-full h-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center`}>
+                                                <span className="text-white text-[8px] font-bold">{getInitials(artist.nameRomanized || artist.nameHangul || '?')}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] font-semibold text-foreground text-center leading-tight line-clamp-2 w-full px-0.5">
+                                        {artist.nameRomanized || artist.nameHangul || '—'}
+                                    </p>
                                 </Link>
                             ))}
                         </div>

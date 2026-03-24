@@ -114,7 +114,7 @@ export function HomeBlogSection({ posts }: HomeBlogSectionProps) {
             </section>
 
             {/* Part B — CTA Banner */}
-            <section className="bg-background py-4 px-4 sm:px-6 lg:px-12">
+            <section className="bg-background py-4 pb-24 sm:pb-4 px-4 sm:px-6 lg:px-12">
                 <div className="max-w-7xl mx-auto">
                     <div
                         className="relative rounded-2xl overflow-hidden"
@@ -143,16 +143,16 @@ export function HomeBlogSection({ posts }: HomeBlogSectionProps) {
                             </div>
 
                             {/* Right buttons */}
-                            <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
+                            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-end">
                                 <Link
                                     href="/auth/register"
-                                    className="flex-1 lg:flex-none text-center bg-accent text-white font-bold text-[13.5px] rounded-full px-6 py-3.5 hover:brightness-110 transition-all min-h-[44px] whitespace-nowrap"
+                                    className="w-full sm:w-auto lg:w-auto text-center bg-accent text-white font-bold text-[13.5px] rounded-full px-6 py-3.5 hover:brightness-110 transition-all min-h-[44px]"
                                 >
                                     Criar conta grátis
                                 </Link>
                                 <Link
                                     href="/artists"
-                                    className="cta-secondary flex-1 lg:flex-none text-center font-semibold text-[13.5px] rounded-full px-6 py-3.5 transition-all min-h-[44px] whitespace-nowrap"
+                                    className="cta-secondary w-full sm:w-auto lg:w-auto text-center font-semibold text-[13.5px] rounded-full px-6 py-3.5 transition-all min-h-[44px]"
                                 >
                                     Explorar a plataforma
                                 </Link>
