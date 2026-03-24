@@ -1,20 +1,9 @@
 "use client"
 
-const CATEGORIES = [
-    "K-pop",
-    "K-drama",
-    "K-film",
-    "K-beauty",
-    "Artistas solo",
-    "Grupos",
-    "Reality shows",
-    "Webtoons",
-    "Idol culture",
-    "Fandom",
-]
+import { BLOG_CATEGORY_NAMES } from '@/lib/config/categories'
 
 export function HomeCategoriesBar() {
-    const items = [...CATEGORIES, ...CATEGORIES]
+    const items = [...BLOG_CATEGORY_NAMES, ...BLOG_CATEGORY_NAMES]
 
     return (
         <div className="w-full border-b border-border bg-background overflow-hidden">
@@ -37,7 +26,7 @@ export function HomeCategoriesBar() {
 
             {/* Desktop: estático */}
             <div className="hidden lg:flex">
-                {CATEGORIES.map((cat, idx) => (
+                {BLOG_CATEGORY_NAMES.map((cat, idx) => (
                     <div
                         key={idx}
                         className="group flex items-center gap-1.5 py-2.5 px-4 border-r border-border cursor-pointer whitespace-nowrap hover:text-accent transition-colors"

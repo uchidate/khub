@@ -230,6 +230,8 @@ model Production {
   streamingPlatforms String[]
   sourceUrls         String[]
   tags               String[]
+  categoryId         String?
+  category           BlogCategory?      @relation(fields: [categoryId], references: [id])
   artists            ArtistProduction[]
   // TMDB metadata
   tmdbId             String? // TMDB movie/TV ID
@@ -986,11 +988,12 @@ enum BlogPostStatus {
 }
 
 model BlogCategory {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  slug      String     @unique
-  posts     BlogPost[]
-  createdAt DateTime   @default(now())
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
+  posts       BlogPost[]
+  productions Production[]
+  createdAt   DateTime     @default(now())
 
   @@index([slug])
 }

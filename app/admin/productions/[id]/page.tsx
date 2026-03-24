@@ -57,6 +57,7 @@ interface Production {
     flaggedAsNonKorean: boolean
     isAdultContent: boolean | null
     adultContentType: string | null
+    categoryId: string | null
 }
 
 interface TmdbPreview {
@@ -119,6 +120,7 @@ export default function EditProductionPage() {
     const [showTakedownModal, setShowTakedownModal] = useState(false)
     const [showRestoreModal, setShowRestoreModal] = useState(false)
     const [activeTakedown, setActiveTakedown] = useState<TakedownRecord | null>(null)
+    const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
 
     useEffect(() => {
         fetch(`/api/admin/productions/by-id?id=${id}`)
@@ -140,6 +142,13 @@ export default function EditProductionPage() {
             .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
+
+    useEffect(() => {
+        fetch('/api/blog/categories')
+            .then(r => r.json())
+            .then(data => setCategories(Array.isArray(data) ? data : []))
+            .catch(() => {})
+    }, [])
 
     const set = (key: keyof Production, value: unknown) => {
         setForm(prev => ({ ...prev, [key]: value }))
@@ -460,8 +469,8 @@ export default function EditProductionPage() {
                             </div>
                         </div>
 
-                        {/* Tipo + Ano + Data de estreia + Faixa etária */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Tipo + Ano + Data de estreia + Faixa etária + Categoria */}
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             <div>
                                 <label className={labelCls}>Tipo *</label>
                                 <input
@@ -504,6 +513,19 @@ export default function EditProductionPage() {
                                 >
                                     {AGE_RATINGS.map(r => (
                                         <option key={r.value} value={r.value}>{r.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelCls}>Categoria</label>
+                                <select
+                                    value={form.categoryId ?? ''}
+                                    onChange={e => set('categoryId', e.target.value || null)}
+                                    className={inputCls}
+                                >
+                                    <option value="">Sem categoria</option>
+                                    {categories.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
                             </div>
