@@ -10,10 +10,7 @@ import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
-import { HomeTopRated } from "@/components/home/HomeTopRated"
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
-import { HomeUpcoming } from "@/components/home/HomeUpcoming"
-import { HomeMarathon } from "@/components/home/HomeMarathon"
 
 export const dynamic = 'force-dynamic'
 
@@ -23,10 +20,7 @@ const getHomePublicData = unstable_cache(
             trendingArtists,
             featuredBlogPostsRaw,
             streamingShowsRaw,
-            topRatedRaw,
             trendingGroupsRaw,
-            upcomingRaw,
-            marathonRaw,
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
@@ -62,46 +56,12 @@ const getHomePublicData = unstable_cache(
                 },
                 orderBy: [{ source: 'asc' }, { rank: 'asc' }],
             }).catch(() => []),
-            // A — Mais bem avaliados
-            prisma.production.findMany({
-                where: { isHidden: false, flaggedAsNonKorean: false, voteAverage: { gte: 8 } },
-                take: 16,
-                orderBy: { voteAverage: 'desc' },
-                select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, backdropUrl: true, voteAverage: true },
-            }).catch(() => []),
-            // B — Grupos em alta
+            // Grupos em alta
             prisma.musicalGroup.findMany({
                 where: { isHidden: false, trendingScore: { gt: 0 } },
                 take: 16,
                 orderBy: { trendingScore: 'desc' },
                 select: { id: true, name: true, nameHangul: true, profileImageUrl: true, officialColor: true, fanClubName: true, trendingScore: true, agency: { select: { name: true } } },
-            }).catch(() => []),
-            // C — Em breve
-            prisma.production.findMany({
-                where: {
-                    isHidden: false,
-                    flaggedAsNonKorean: false,
-                    OR: [
-                        { releaseDate: { gte: new Date().toISOString(), lte: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() } },
-                        { productionStatus: { in: ['In Production', 'Post Production', 'Planned'] } },
-                    ],
-                },
-                take: 12,
-                orderBy: { releaseDate: 'asc' },
-                select: { id: true, titlePt: true, type: true, releaseDate: true, imageUrl: true, productionStatus: true, network: true },
-            }).catch(() => []),
-            // D — Para maratonar (Returning Series bem avaliadas)
-            prisma.production.findMany({
-                where: {
-                    isHidden: false,
-                    flaggedAsNonKorean: false,
-                    productionStatus: 'Returning Series',
-                    voteAverage: { gte: 7 },
-                    imageUrl: { not: null },
-                },
-                take: 32,
-                orderBy: { voteAverage: 'desc' },
-                select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true, episodeCount: true },
             }).catch(() => []),
         ])
 
@@ -112,10 +72,7 @@ const getHomePublicData = unstable_cache(
                 publishedAt: p.publishedAt?.toISOString() ?? null,
             })),
             streamingShowsRaw,
-            topRated: topRatedRaw,
             trendingGroups: trendingGroupsRaw,
-            upcoming: upcomingRaw.map(p => ({ ...p, releaseDate: p.releaseDate ? p.releaseDate.toISOString() : null })),
-            marathon: marathonRaw,
         }
     },
     ['home-page-public-data-v6'],
@@ -135,7 +92,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredBlogPosts, streamingShowsRaw, topRated, trendingGroups, upcoming, marathon } = publicData
+    const { trendingArtists, featuredBlogPosts, streamingShowsRaw, trendingGroups } = publicData
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -183,10 +140,7 @@ export default async function Home() {
                     </div>
                 </section>
             )}
-            <HomeTopRated productions={topRated} />
             <HomeTrendingGroups groups={trendingGroups} />
-            <HomeUpcoming productions={upcoming} />
-            <HomeMarathon productions={marathon} />
             <HomeBlogSection posts={featuredBlogPosts.slice(0, 4)} />
             <ScrollToTop />
         </div>
