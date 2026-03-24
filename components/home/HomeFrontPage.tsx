@@ -116,7 +116,7 @@ export function HomeFrontPage({
 
     return (
         <section className="border-b border-border">
-            <div className="max-w-7xl mx-auto grid lg:grid-cols-[1.6fr_1fr]">
+            <div className="max-w-7xl mx-auto grid lg:grid-cols-[2fr_0.65fr]">
                 {/* LEFT COLUMN */}
                 <div className="flex flex-col">
                     {/* Featured story image area */}
