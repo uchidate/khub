@@ -11,6 +11,7 @@ import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
 import { HomeArtistsGrid } from "@/components/home/HomeArtistsGrid"
 import { HomeProductionsCarousel } from "@/components/home/HomeProductionsCarousel"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
+import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export const dynamic = 'force-dynamic'
 const getHomePublicData = unstable_cache(
     async () => {
         const [
-            trendingArtists, featuredBlogPostsRaw,
+            trendingArtists, featuredBlogPostsRaw, streamingShowsRaw,
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
@@ -46,6 +47,17 @@ const getHomePublicData = unstable_cache(
                     tags: true,
                 },
             }).catch(() => [] as { id: string; slug: string; title: string; excerpt: string | null; coverImageUrl: string | null; publishedAt: Date | null; readingTimeMin: number; category: { name: string; slug: string } | null; tags: string[] }[]),
+            prisma.streamingShow.findMany({
+                where: { expiresAt: { gt: new Date() } },
+                take: 100,
+                select: {
+                    source: true, rank: true, showTitle: true, tmdbId: true,
+                    posterUrl: true, year: true, voteAverage: true, isKorean: true,
+                    productionId: true,
+                    production: { select: { titlePt: true } },
+                },
+                orderBy: [{ source: 'asc' }, { rank: 'asc' }],
+            }).catch(() => []),
         ])
 
         return {
@@ -54,9 +66,10 @@ const getHomePublicData = unstable_cache(
                 ...p,
                 publishedAt: p.publishedAt?.toISOString() ?? null,
             })),
+            streamingShowsRaw,
         }
     },
-    ['home-page-public-data-v4'],
+    ['home-page-public-data-v5'],
     { revalidate: 120 },
 )
 
@@ -73,7 +86,26 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredBlogPosts } = publicData
+    const { trendingArtists, featuredBlogPosts, streamingShowsRaw } = publicData
+
+    // Agrupa streaming shows por plataforma
+    const showsByPlatform: ShowsByPlatform = {}
+    for (const show of streamingShowsRaw) {
+        if (!showsByPlatform[show.source]) showsByPlatform[show.source] = []
+        showsByPlatform[show.source].push({
+            rank: show.rank,
+            showTitle: show.showTitle,
+            tmdbId: show.tmdbId,
+            source: show.source,
+            productionId: show.productionId ?? undefined,
+            productionTitle: show.production?.titlePt ?? undefined,
+            posterUrl: show.posterUrl,
+            year: show.year,
+            voteAverage: show.voteAverage,
+            isKorean: show.isKorean,
+        })
+    }
+    const hasStreaming = Object.keys(showsByPlatform).length > 0
 
     const latestProductionsRaw = await prisma.production.findMany({
         where: {
@@ -109,6 +141,13 @@ export default async function Home() {
             />
             <HomeArtistsGrid artists={trendingArtists.slice(0, 6)} />
             <HomeProductionsCarousel productions={latestProductions} />
+            {hasStreaming && (
+                <section className="border-b border-border bg-background">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10">
+                        <StreamingTopShows showsByPlatform={showsByPlatform} />
+                    </div>
+                </section>
+            )}
             <HomeBlogSection posts={featuredBlogPosts.slice(0, 4)} />
             <ScrollToTop />
         </div>
