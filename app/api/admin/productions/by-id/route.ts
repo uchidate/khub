@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
             flaggedAsNonKorean: true,
             isAdultContent: true,
             adultContentType: true,
+            categoryId: true,
         },
     })
 

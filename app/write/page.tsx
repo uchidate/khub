@@ -69,6 +69,8 @@ function WritePageContent() {
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [focusKeyword, setFocusKeyword] = useState('')
+  const [categoryId, setCategoryId] = useState<string | null>(null)
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
 
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -80,6 +82,14 @@ function WritePageContent() {
 
   const role = session?.user?.role?.toLowerCase()
   const canPublish = role === 'admin' || role === 'editor'
+
+  // Load categories from API
+  useEffect(() => {
+    fetch('/api/blog/categories')
+      .then(r => r.json())
+      .then(data => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
 
   // Load localStorage draft (new posts only)
   useEffect(() => {
@@ -107,6 +117,7 @@ function WritePageContent() {
         setExcerpt(post.excerpt || '')
         setCoverImageUrl(post.coverImageUrl || '')
         setTags(post.tags || [])
+        setCategoryId(post.categoryId ?? null)
         setPostStatus(post.status)
         setIsPrivate(post.isPrivate ?? false)
         if (post.template) setTemplate(post.template)
@@ -147,6 +158,7 @@ function WritePageContent() {
         contentMd: content || ' ',
         excerpt: excerpt || undefined,
         coverImageUrl: coverImageUrl || undefined,
+        categoryId: categoryId || null,
         tags,
         isPrivate,
       }
@@ -348,6 +360,21 @@ function WritePageContent() {
             <input value={coverImageUrl} onChange={e => setCoverImageUrl(e.target.value)}
               placeholder="https://..."
               className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 transition-colors" />
+          </div>
+
+          {/* Category */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted uppercase tracking-wider">Categoria</label>
+            <select
+              value={categoryId ?? ''}
+              onChange={e => setCategoryId(e.target.value || null)}
+              className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-[#ff2d78]/40 transition-colors"
+            >
+              <option value="">Sem categoria</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Tags */}

@@ -59,6 +59,7 @@ const productionSchema = z.object({
   flaggedAsNonKorean: z.boolean().optional(),
   isAdultContent: z.boolean().optional().nullable(),
   adultContentType: z.string().optional().nullable(),
+  categoryId: z.string().optional().nullable(),
 })
 
 /**
