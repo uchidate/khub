@@ -44,9 +44,9 @@ export const metadata: Metadata = {
     metadataBase: new URL(BASE_URL),
     title: {
         template: '%s | HallyuHub',
-        default: 'HallyuHub - O Portal da Onda Coreana'
+        default: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana'
     },
-    description: "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+    description: "Perfis completos de artistas K-Pop, grupos, dramas e filmes coreanos — tudo em português. O maior portal Hallyu do Brasil.",
     manifest: "/manifest.json",
     appleWebApp: {
         capable: true,
@@ -58,13 +58,13 @@ export const metadata: Metadata = {
         types: {},
     },
     openGraph: {
-        title: "HallyuHub - O Portal da Onda Coreana",
-        description: "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+        title: "HallyuHub — K-Pop, K-Drama e Cultura Coreana",
+        description: "Perfis completos de artistas K-Pop, grupos, dramas e filmes coreanos — tudo em português. O maior portal Hallyu do Brasil.",
         images: [{
             url: `${BASE_URL}/og-image.jpg`,
             width: 1200,
             height: 630,
-            alt: "HallyuHub - O Portal da Onda Coreana",
+            alt: "HallyuHub — K-Pop, K-Drama e Cultura Coreana",
         }],
         siteName: 'HallyuHub',
         locale: 'pt_BR',
@@ -73,8 +73,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: 'summary_large_image',
-        title: "HallyuHub - O Portal da Onda Coreana",
-        description: "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+        title: "HallyuHub — K-Pop, K-Drama e Cultura Coreana",
+        description: "Perfis completos de artistas K-Pop, grupos, dramas e filmes coreanos — tudo em português. O maior portal Hallyu do Brasil.",
         images: [`${BASE_URL}/og-image.jpg`],
     },
     verification: {

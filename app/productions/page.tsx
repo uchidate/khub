@@ -16,13 +16,13 @@ const BASE_URL = SITE_URL
 export async function generateMetadata(): Promise<Metadata> {
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => 0)
-    const desc = `${total > 0 ? `${total} ` : ''}produções coreanas. De romances épicos a thrillers de tirar o fôlego.`
+    const desc = `${total > 0 ? `${total} ` : ''}dramas e filmes coreanos para descobrir — de romances épicos a thrillers de tirar o fôlego, todos em português.`
     return {
-        title: 'Produções',
+        title: 'Dramas & Filmes Coreanos',
         description: desc,
         alternates: { canonical: `${BASE_URL}/productions` },
         openGraph: {
-            title: 'Produções Coreanas | HallyuHub',
+            title: 'Dramas & Filmes Coreanos | HallyuHub',
             description: desc,
             url: `${BASE_URL}/productions`,
         },

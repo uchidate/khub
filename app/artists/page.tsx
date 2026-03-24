@@ -15,12 +15,12 @@ const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
-        return { title: 'Artistas', description: 'Explore perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.' }
+        return { title: 'Artistas K-Pop & K-Drama', description: 'Perfis completos de cantores, atores e artistas coreanos — discografia, filmes, grupos e redes sociais, tudo em português.' }
     }
     const total = await prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0)
-    const desc = `Explore ${total > 0 ? `${total} ` : ''}perfis de artistas de K-Pop e K-Drama, suas carreiras, obras e novidades.`
+    const desc = `${total > 0 ? `${total} ` : ''}perfis de artistas K-Pop e K-Drama com discografia, filmografia, grupos e redes sociais — tudo em português.`
     return {
-        title: 'Artistas',
+        title: 'Artistas K-Pop & K-Drama',
         description: desc,
         alternates: { canonical: `${BASE_URL}/artists` },
         openGraph: {
