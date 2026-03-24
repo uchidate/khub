@@ -195,20 +195,43 @@ export function HomeFrontPage({
                                         ${idx < 2 ? "border-b border-border" : ""}
                                     `}
                                 >
+                                    {/* Mobile: full-width image */}
                                     {story.coverImageUrl && (
-                                        <div className="relative w-full aspect-video rounded-md overflow-hidden bg-surface mb-1">
-                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 1024px) 50vw, 30vw" />
+                                        <div className="relative w-full aspect-video rounded-md overflow-hidden bg-surface mb-1 sm:hidden">
+                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover" sizes="50vw" />
                                         </div>
                                     )}
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${getTagColor(story.category?.slug ?? story.tags?.[0])}`}>
-                                        {story.category?.name ?? story.tags?.[0] ?? "Blog"}
-                                    </span>
-                                    <h3 className="text-[13px] sm:text-sm font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-3">
-                                        {story.title}
-                                    </h3>
-                                    <span className="text-[10px] text-muted mt-auto pt-1">
-                                        {formatDate(story.publishedAt)}
-                                    </span>
+                                    {/* Desktop: text + small thumbnail side by side */}
+                                    <div className="hidden sm:flex gap-2.5 items-start">
+                                        <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${getTagColor(story.category?.slug ?? story.tags?.[0])}`}>
+                                                {story.category?.name ?? story.tags?.[0] ?? "Blog"}
+                                            </span>
+                                            <h3 className="text-[13px] font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-3">
+                                                {story.title}
+                                            </h3>
+                                            <span className="text-[10px] text-muted mt-auto pt-1">
+                                                {formatDate(story.publishedAt)}
+                                            </span>
+                                        </div>
+                                        {story.coverImageUrl && (
+                                            <div className="relative w-16 h-16 rounded-md overflow-hidden bg-surface shrink-0">
+                                                <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="64px" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Mobile-only text */}
+                                    <div className="sm:hidden flex flex-col gap-1.5">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${getTagColor(story.category?.slug ?? story.tags?.[0])}`}>
+                                            {story.category?.name ?? story.tags?.[0] ?? "Blog"}
+                                        </span>
+                                        <h3 className="text-[13px] font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-3">
+                                            {story.title}
+                                        </h3>
+                                        <span className="text-[10px] text-muted mt-auto pt-1">
+                                            {formatDate(story.publishedAt)}
+                                        </span>
+                                    </div>
                                 </Link>
                             ))}
                         </div>
