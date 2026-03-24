@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Star } from 'lucide-react'
-import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 export interface MarathonProduction {
     id: string
@@ -30,7 +28,7 @@ export function HomeMarathon({ productions }: { productions: MarathonProduction[
 
     const filtered = activeTab === 'all'
         ? productions
-        : productions.filter(p => p.type === activeTab || p.type.toUpperCase() === activeTab.toUpperCase())
+        : productions.filter(p => p.type === activeTab || p.type.toLowerCase() === activeTab.toLowerCase())
 
     return (
         <section className="border-b border-border bg-background">
@@ -56,47 +54,37 @@ export function HomeMarathon({ productions }: { productions: MarathonProduction[
                     </div>
                 </div>
 
-                <div
-                    className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-3"
-                >
-                    {filtered.slice(0, 16).map((prod) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 rounded-xl overflow-hidden border border-border">
+                    {filtered.slice(0, 10).map((prod, idx) => (
                         <Link
                             key={prod.id}
                             href={`/productions/${prod.id}`}
-                            className="group relative rounded-xl overflow-hidden border border-border hover:border-accent/40 transition-all"
-                            style={{ aspectRatio: '2/3' }}
+                            className={`group flex items-center gap-3 px-4 py-3.5 hover:bg-surface transition-colors min-h-[60px]
+                                ${idx % 2 === 0 ? 'sm:border-r border-border' : ''}
+                                ${idx < filtered.length - 2 ? 'border-b border-border' : ''}
+                            `}
                         >
-                            {prod.imageUrl ? (
-                                <Image
-                                    src={prod.imageUrl}
-                                    alt={prod.titlePt}
-                                    fill
-                                    sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 13vw"
-                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                />
-                            ) : (
-                                <div className="w-full h-full bg-surface-hover flex items-center justify-center">
-                                    <span className="text-xl font-black text-muted">{prod.titlePt[0]}</span>
-                                </div>
-                            )}
-
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-
-                            {prod.voteAverage != null && prod.voteAverage > 0 && (
-                                <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1 py-0.5 rounded bg-black/70 text-yellow-400 text-[9px] font-bold">
-                                    <Star className="w-2.5 h-2.5 fill-yellow-400" />
-                                    {prod.voteAverage.toFixed(1)}
-                                </div>
-                            )}
-
-                            <div className="absolute bottom-0 left-0 right-0 p-2">
-                                <p className="text-[10px] font-bold text-white leading-snug line-clamp-2 group-hover:text-accent transition-colors">
-                                    {prod.titlePt}
-                                </p>
-                                {prod.episodeCount != null && (
-                                    <p className="text-[9px] text-white/60 mt-0.5">{prod.episodeCount} eps</p>
+                            <span className="text-[9px] font-bold text-muted w-4 flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
+                            <div className="w-8 h-12 rounded-md flex-shrink-0 overflow-hidden bg-surface border border-border">
+                                {prod.imageUrl ? (
+                                    <Image src={prod.imageUrl} alt={prod.titlePt} width={32} height={48} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-muted">
+                                        {prod.titlePt.slice(0, 2).toUpperCase()}
+                                    </div>
                                 )}
                             </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
+                                    {prod.titlePt}
+                                </p>
+                                <p className="text-[9px] text-muted mt-0.5">
+                                    {prod.type}{prod.year ? ` · ${prod.year}` : ''}{prod.episodeCount ? ` · ${prod.episodeCount} eps` : ''}
+                                </p>
+                            </div>
+                            {prod.voteAverage != null && (
+                                <span className="text-[10px] font-bold text-yellow-500 flex-shrink-0">★ {prod.voteAverage.toFixed(1)}</span>
+                            )}
                         </Link>
                     ))}
                 </div>

@@ -23,55 +23,41 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
                     title={<>Grupos em <span className="text-accent">alta</span></>}
                     href="/groups"
                 />
-                <div
-                    className="flex gap-3 overflow-x-auto pb-2"
-                    style={{ scrollbarWidth: 'none' }}
-                >
-                    {groups.map((group) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 rounded-xl overflow-hidden border border-border">
+                    {groups.slice(0, 8).map((group, idx) => {
                         const color = group.officialColor ?? '#ff2d78'
                         return (
                             <Link
                                 key={group.id}
                                 href={`/groups/${group.id}`}
-                                className="group flex-shrink-0 flex flex-col items-center gap-2.5 p-3 rounded-2xl border border-border hover:border-accent/30 bg-surface hover:bg-surface-hover transition-all w-28 md:w-32"
+                                className={`group flex items-center gap-3 px-4 py-3.5 hover:bg-surface transition-colors min-h-[60px]
+                                    ${idx % 2 === 0 ? 'sm:border-r border-border' : ''}
+                                    ${idx < groups.length - 2 ? 'border-b border-border' : ''}
+                                `}
                             >
-                                {/* Avatar with official color ring */}
-                                <div
-                                    className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0"
-                                    style={{ boxShadow: `0 0 0 2px ${color}40, 0 0 0 4px ${color}15` }}
-                                >
+                                <span className="text-[9px] font-bold text-muted w-4 flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
+                                <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2" style={{ borderColor: `${color}50` }}>
                                     {group.profileImageUrl ? (
-                                        <Image
-                                            src={group.profileImageUrl}
-                                            alt={group.name}
-                                            fill
-                                            sizes="64px"
-                                            className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                        />
+                                        <Image src={group.profileImageUrl} alt={group.name} width={36} height={36} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div
-                                            className="w-full h-full flex items-center justify-center text-white font-black text-lg"
-                                            style={{ backgroundColor: color }}
-                                        >
+                                        <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: color }}>
                                             {group.name[0]}
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Name */}
-                                <div className="text-center">
-                                    <p className="text-[12px] font-bold text-foreground group-hover:text-accent transition-colors leading-tight line-clamp-1">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
                                         {group.name}
                                     </p>
-                                    {group.nameHangul && (
-                                        <p className="text-[10px] text-muted mt-0.5">{group.nameHangul}</p>
-                                    )}
-                                    {group.fanClubName && (
-                                        <p className="text-[9px] font-semibold mt-1" style={{ color }}>
-                                            {group.fanClubName}
-                                        </p>
-                                    )}
+                                    <p className="text-[9px] text-muted mt-0.5 truncate">
+                                        {group.nameHangul ?? ''}{group.agency?.name ? ` · ${group.agency.name}` : ''}
+                                    </p>
                                 </div>
+                                {group.fanClubName && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ color, backgroundColor: `${color}15` }}>
+                                        {group.fanClubName}
+                                    </span>
+                                )}
                             </Link>
                         )
                     })}
