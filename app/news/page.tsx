@@ -8,7 +8,7 @@ import { NewsList } from "@/components/features/NewsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
