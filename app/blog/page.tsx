@@ -16,12 +16,12 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
-  title: 'Blog',
-  description: 'Artigos, análises e reflexões sobre o universo Hallyu.',
+  title: 'Blog K-Pop & K-Drama',
+  description: 'Artigos, análises e curiosidades sobre K-Pop, K-Drama e a cultura coreana — escritos em português para fãs do universo Hallyu.',
   alternates: { canonical: `${BASE_URL}/blog` },
   openGraph: {
-    title: 'Blog | HallyuHub',
-    description: 'Artigos, análises e reflexões sobre o universo Hallyu.',
+    title: 'Blog K-Pop & K-Drama | HallyuHub',
+    description: 'Artigos, análises e curiosidades sobre K-Pop, K-Drama e a cultura coreana — escritos em português para fãs do universo Hallyu.',
     url: `${BASE_URL}/blog`,
   },
 }

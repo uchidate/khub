@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { PageTransition } from '@/components/features/PageTransition'
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso | HallyuHub',
+  title: 'Termos de Uso',
   description: 'Leia os Termos de Uso do HallyuHub — as regras que regem o acesso e uso da plataforma.',
+  alternates: { canonical: 'https://www.hallyuhub.com.br/termos' },
 }
 
 const LAST_UPDATED = '24 de fevereiro de 2026'

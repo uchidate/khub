@@ -7,16 +7,16 @@ const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
-        return { title: 'Grupos Musicais', description: 'Explore grupos musicais de K-Pop. Conheça a discografia, os membros e a história de cada grupo.' }
+        return { title: 'Grupos K-Pop', description: 'BTS, BLACKPINK, TWICE e muito mais — perfis completos de grupos K-Pop com formação, discografia e trajetória na indústria coreana.' }
     }
     const total = await prisma.musicalGroup.count().catch(() => 0)
-    const desc = `Explore ${total > 0 ? `${total} ` : ''}grupos musicais de K-Pop. Conheça a discografia, os membros e a história de cada grupo.`
+    const desc = `${total > 0 ? `${total} ` : ''}grupos K-Pop com perfis completos — formação, discografia, fandom e trajetória na indústria coreana, em português.`
     return {
-        title: 'Grupos Musicais',
+        title: 'Grupos K-Pop',
         description: desc,
         alternates: { canonical: `${BASE_URL}/groups` },
         openGraph: {
-            title: 'Grupos Musicais K-Pop | HallyuHub',
+            title: 'Grupos K-Pop | HallyuHub',
             description: desc,
             url: `${BASE_URL}/groups`,
         },

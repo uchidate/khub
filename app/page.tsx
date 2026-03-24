@@ -134,9 +134,27 @@ const getHomePublicData = unstable_cache(
     { revalidate: 120 },
 )
 
+const SITE_URL = 'https://www.hallyuhub.com.br'
+
 export const metadata: Metadata = {
-    title: 'HallyuHub - A Onda Coreana no Seu Ritmo',
-    description: 'Explore os perfis mais detalhados de artistas, agências e as melhores produções da Coreia do Sul.',
+    title: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+    description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
+    alternates: {
+        canonical: SITE_URL,
+    },
+    openGraph: {
+        title: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+        description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
+        url: SITE_URL,
+        siteName: 'HallyuHub',
+        locale: 'pt_BR',
+        type: 'website',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+        description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
+    },
 }
 
 export default async function Home() {

@@ -2,6 +2,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+    robots: { index: false, follow: false },
+}
 import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import { BlogBlockRenderer, type ResolvedEntities } from '@/components/ui/BlogBlockRenderer'

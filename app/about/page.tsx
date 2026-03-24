@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-    title: 'Sobre | HallyuHub',
-    description: 'Conheça o HallyuHub — o portal de referência da cultura coreana em português. Perfis de artistas, K-Dramas, notícias e um feed personalizado para fãs brasileiros.',
+    title: 'Sobre o HallyuHub',
+    description: 'Saiba quem somos: o maior portal de K-Pop, K-Drama e cultura coreana em português. Nossa missão, valores e tudo que estamos construindo para fãs brasileiros.',
     openGraph: {
         title: 'Sobre o HallyuHub',
-        description: 'Conheça o HallyuHub — o portal de referência da cultura coreana em português. Perfis de artistas, K-Dramas, notícias e um feed personalizado para fãs brasileiros.',
+        description: 'Saiba quem somos: o maior portal de K-Pop, K-Drama e cultura coreana em português. Nossa missão, valores e tudo que estamos construindo para fãs brasileiros.',
         url: 'https://www.hallyuhub.com.br/about',
         type: 'website',
     },
