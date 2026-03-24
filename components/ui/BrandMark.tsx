@@ -16,8 +16,9 @@ export function BrandMark({ size = 28 }: { size?: number }) {
           <animateTransform
             attributeName="transform"
             type="translate"
-            values="0,0; 18,0"
-            dur="1.5s"
+            values="0,0; 36,0; 36,0"
+            keyTimes="0; 0.3; 1"
+            dur="10s"
             repeatCount="indefinite"
             calcMode="linear"
           />
