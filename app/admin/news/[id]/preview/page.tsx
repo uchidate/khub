@@ -117,8 +117,7 @@ export default async function NewsPreviewPage({
 
                 {/* Cover image */}
                 {news.imageUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <img  /* eslint-disable-line */
                         src={news.imageUrl}
                         alt={news.title}
                         className="w-full rounded-xl object-cover max-h-80 mb-8 border border-border"

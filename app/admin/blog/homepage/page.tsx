@@ -187,7 +187,7 @@ export default function HomepageConfigPage() {
         fetch('/api/admin/settings/homepage')
             .then(r => r.json() as Promise<{ config: HomepageConfig; postsById: Record<string, PostSummary> }>)
             .then(({ config, postsById: pById }) => {
-                setPostsById(pById)
+                setPostsById(pById) // kept for potential future use
                 setFeaturedPost(config.homeFeaturedPostId ? (pById[config.homeFeaturedPostId] ?? null) : null)
                 setSecondaryPosts(config.homeSecondaryPostIds.map(id => pById[id]).filter(Boolean))
                 setSidebarPosts(config.homeSidebarPostIds.map(id => pById[id]).filter(Boolean))
