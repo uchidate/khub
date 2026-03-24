@@ -28,6 +28,7 @@ interface ProductionItem {
 
 interface HomeBlogFeedProps {
     blogPosts: BlogFeedItem[]
+    sidebarPosts: BlogFeedItem[]
     productions: ProductionItem[]
 }
 
@@ -77,7 +78,7 @@ const PROD_PLACEHOLDER_GRADIENTS = [
     "linear-gradient(135deg,#dcfce7,#d1fae5)",
 ]
 
-export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
+export function HomeBlogFeed({ blogPosts, sidebarPosts, productions }: HomeBlogFeedProps) {
     const [activeTab, setActiveTab] = useState("all")
 
     const filteredPosts = activeTab === "all"
@@ -92,19 +93,19 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
             <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
                 {/* LEFT — blog feed */}
                 <div className="border-b md:border-b-0 md:border-r border-border">
-                    <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border">
-                        <h2 className="text-[13.5px] font-bold text-foreground">Do Blog</h2>
-                        <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-2.5 border-b border-border gap-2">
+                        <h2 className="text-[13.5px] font-bold text-foreground shrink-0">Do Blog</h2>
+                        <div className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                             {TABS.map(tab => {
                                 const isActive = activeTab === tab.value
                                 return (
                                     <button
                                         key={tab.value}
                                         onClick={() => setActiveTab(tab.value)}
-                                        className={`text-[12.5px] font-semibold px-3.5 py-[5px] rounded-full transition-all min-h-[32px] ${
+                                        className={`shrink-0 text-[11px] font-semibold px-2.5 py-[4px] rounded-full transition-all ${
                                             isActive
                                                 ? 'font-bold'
-                                                : 'text-foreground/60 hover:text-foreground hover:bg-surface border border-transparent hover:border-border'
+                                                : 'text-foreground/60 hover:text-foreground hover:bg-surface'
                                         }`}
                                         style={isActive ? { color: tab.color, backgroundColor: tab.bg } : undefined}
                                     >
@@ -115,7 +116,7 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
                         </div>
                     </div>
 
-                    <div className="overflow-y-auto" style={{ maxHeight: '400px', scrollbarWidth: 'thin' }}>
+                    <div className="overflow-y-auto" style={{ maxHeight: '320px', scrollbarWidth: 'thin' }}>
                         {filteredPosts.length === 0 && (
                             <p className="text-sm text-muted p-5">Nenhum artigo encontrado.</p>
                         )}
@@ -179,7 +180,7 @@ export function HomeBlogFeed({ blogPosts, productions }: HomeBlogFeedProps) {
                             Artigos em destaque
                         </div>
                         <div>
-                            {blogPosts.slice(0, 4).map(post => (
+                            {sidebarPosts.slice(0, 4).map(post => (
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}

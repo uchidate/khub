@@ -56,8 +56,8 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
     return (
         <div>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-border">
-                <span className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted">Top 10 nos Streamings</span>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-border gap-2">
+                <span className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted shrink-0">Top 10 nos Streamings</span>
                 <div className="flex items-center gap-1">
                     {availablePlatforms.map(platform => {
                         const cfg = getStreamingConfig(platform)
@@ -73,10 +73,10 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 }
                             >
                                 <span
-                                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                    className="w-2 h-2 rounded-full flex-shrink-0"
                                     style={{ backgroundColor: cfg.hex }}
                                 />
-                                <span className={isActive ? '' : 'text-foreground/60'}>{cfg.label}</span>
+                                <span className={`hidden sm:inline ${isActive ? '' : 'text-foreground/60'}`}>{cfg.label}</span>
                             </button>
                         )
                     })}
