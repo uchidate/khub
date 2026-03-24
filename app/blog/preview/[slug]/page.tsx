@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
-import { BlogBlockRenderer } from '@/components/ui/BlogBlockRenderer'
+import { BlogBlockRenderer, type ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
 import { Clock, Eye, ArrowLeft, Tag, Calendar, Lock, Pencil } from 'lucide-react'
 import prisma from '@/lib/prisma'
@@ -36,6 +36,24 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
   const { slug } = await params
   const post = await getPost(slug)
   if (!post) notFound()
+
+  const blocks = Array.isArray((post as unknown as { blocks: unknown }).blocks)
+    ? (post as unknown as { blocks: BlogBlock[] }).blocks
+    : []
+  const artistIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_artist_card').map(b => (b as { artistId: string }).artistId)))
+  const productionIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_production_card').map(b => (b as { productionId: string }).productionId)))
+  const [artists, productions] = await Promise.all([
+    artistIds.length > 0
+      ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
+      : [],
+    productionIds.length > 0
+      ? prisma.production.findMany({ where: { id: { in: productionIds } }, select: { id: true, titlePt: true, type: true, year: true, imageUrl: true } })
+      : [],
+  ])
+  const resolvedEntities: ResolvedEntities = {
+    artists: Object.fromEntries(artists.map(a => [a.id, a])),
+    productions: Object.fromEntries(productions.map(p => [p.id, p])),
+  }
 
   return (
     <PageTransition className="py-8 md:py-12 px-4 sm:px-6">
@@ -108,7 +126,7 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
 
         <article>
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
-            ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} />
+            ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} />
             : <MarkdownRenderer content={post.contentMd} />
           }
         </article>
