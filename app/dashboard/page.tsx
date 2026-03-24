@@ -7,11 +7,9 @@ import {
   User,
   Settings,
   Shield,
-  Zap,
   Clock,
   ChevronRight,
   History,
-  Crown,
   Heart,
   MessageCircle,
   TrendingUp,
@@ -152,9 +150,6 @@ export default async function DashboardPage() {
           <div className="flex gap-2 flex-shrink-0">
             <Link href="/" className="btn-secondary text-xs uppercase tracking-widest hidden sm:flex">
               Explorar
-            </Link>
-            <Link href="/premium" className="bg-foreground text-background px-4 py-2 rounded-full font-black text-xs hover:scale-105 transition-transform uppercase tracking-widest">
-              <span className="flex items-center gap-1.5"><Crown size={12} className="text-[#ff2d78]" /> Upgrade</span>
             </Link>
           </div>
         </header>
@@ -442,14 +437,6 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              <div className="glass-card p-4 bg-[#ff2d78]/5 border-[#ff2d78]/20 relative overflow-hidden group">
-                <div className="flex items-center gap-2 mb-1.5 relative z-10">
-                  <Zap size={16} className="text-[#ff2d78]" />
-                  <span className="text-xs font-black uppercase text-[#ff2d78] tracking-widest">Power User</span>
-                </div>
-                <p className="text-[10px] text-muted leading-tight relative z-10">Desbloqueie recursos avançados.</p>
-                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-[#ff2d78]/10 blur-xl rounded-full group-hover:scale-150 transition-transform duration-700" />
-              </div>
             </div>
           </div>
         )}
