@@ -196,8 +196,8 @@ export function HomeFrontPage({
                                     `}
                                 >
                                     {story.coverImageUrl && (
-                                        <div className="relative w-full aspect-video rounded-md overflow-hidden bg-surface mb-1 sm:hidden">
-                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover" sizes="50vw" />
+                                        <div className="relative w-full aspect-video rounded-md overflow-hidden bg-surface mb-1">
+                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 1024px) 50vw, 30vw" />
                                         </div>
                                     )}
                                     <span className={`text-[10px] font-black uppercase tracking-widest ${getTagColor(story.category?.slug ?? story.tags?.[0])}`}>
