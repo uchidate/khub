@@ -13,10 +13,16 @@ export function InstagramEmbed({ url }: { url: string }) {
         if (window.instgrm) {
             window.instgrm.Embeds.process()
         } else {
-            const script = document.createElement('script')
-            script.src = 'https://www.instagram.com/embeds.js'
-            script.async = true
-            document.body.appendChild(script)
+            const existing = document.querySelector('script[src="https://www.instagram.com/embeds.js"]')
+            if (existing) {
+                existing.addEventListener('load', () => window.instgrm?.Embeds.process())
+            } else {
+                const script = document.createElement('script')
+                script.src = 'https://www.instagram.com/embeds.js'
+                script.async = true
+                script.onload = () => window.instgrm?.Embeds.process()
+                document.body.appendChild(script)
+            }
         }
     }, [url])
 
