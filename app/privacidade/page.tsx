@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { PageTransition } from '@/components/features/PageTransition'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade | HallyuHub',
+  title: 'Política de Privacidade',
   description: 'Saiba como o HallyuHub coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
+  alternates: { canonical: 'https://www.hallyuhub.com.br/privacidade' },
 }
 
 const LAST_UPDATED = '24 de fevereiro de 2026'
