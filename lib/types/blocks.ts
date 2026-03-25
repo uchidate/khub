@@ -178,6 +178,14 @@ export type BlogDividerBlock = {
     type: 'blog_divider'
 }
 
+// Caixa de destaque (fato, dado, alerta, info)
+export type BlogCalloutBlock = {
+    type: 'blog_callout'
+    variant: 'fact' | 'stat' | 'info' | 'warning'
+    title?: string
+    text: string
+}
+
 export type BlogBlock =
     | BlogHeadingBlock
     | BlogParagraphBlock
@@ -194,6 +202,7 @@ export type BlogBlock =
     | BlogStatsRowBlock
     | BlogRatingBlock
     | BlogDividerBlock
+    | BlogCalloutBlock
 
 export type BlogBlockType = BlogBlock['type']
 
@@ -213,6 +222,7 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_stats_row:        'Stats / Dados',
     blog_rating:           'Avaliação',
     blog_divider:          'Divisor',
+    blog_callout:          'Destaque',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'
