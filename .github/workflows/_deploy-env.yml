@@ -189,8 +189,8 @@ jobs:
           update_env "GOOGLE_CLIENT_SECRET"       "${{ secrets.GOOGLE_CLIENT_SECRET }}"
           update_env "RESEND_API_KEY"             "${{ secrets.RESEND_API_KEY }}"
           update_env "PROMETHEUS_TOKEN"           "${{ secrets.PROMETHEUS_TOKEN }}"
-          update_env "NEXT_PUBLIC_UMAMI_URL"      "${{ inputs.umami_url }}"
-          update_env "NEXT_PUBLIC_UMAMI_WEBSITE_ID" "${{ inputs.umami_website_id }}"
+          update_env "UMAMI_URL"                  "${{ inputs.umami_url }}"
+          update_env "UMAMI_WEBSITE_ID"            "${{ inputs.umami_website_id }}"
           chmod 600 "$ENV_FILE"
 
           # Variáveis para docker-compose variable substitution (base .env)
