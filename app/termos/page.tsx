@@ -1,22 +1,24 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageTransition } from '@/components/features/PageTransition'
+import { SITE_URL } from '@/lib/constants/site'
 
 export const metadata: Metadata = {
   title: 'Termos de Uso',
   description: 'Leia os Termos de Uso do HallyuHub — as regras que regem o acesso e uso da plataforma.',
-  alternates: { canonical: 'https://www.hallyuhub.com.br/termos' },
+  alternates: { canonical: `${SITE_URL}/termos` },
   openGraph: {
     title: 'Termos de Uso | HallyuHub',
     description: 'Leia os Termos de Uso do HallyuHub — as regras que regem o acesso e uso da plataforma.',
-    url: 'https://www.hallyuhub.com.br/termos',
+    url: `${SITE_URL}/termos`,
     type: 'website',
-    images: [{ url: 'https://www.hallyuhub.com.br/opengraph-image', width: 1200, height: 630 }],
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Termos de Uso | HallyuHub',
     description: 'Leia os Termos de Uso do HallyuHub — as regras que regem o acesso e uso da plataforma.',
+    images: [`${SITE_URL}/opengraph-image`],
   },
 }
 
