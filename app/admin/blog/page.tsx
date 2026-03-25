@@ -788,6 +788,41 @@ function DuplicateButton({ post, onDone, showError }: { post: BlogPost; onDone: 
     )
 }
 
+function DeleteButton({ post, onDone, showError }: { post: BlogPost; onDone: () => void; showError: (m: string) => void }) {
+    const [loading, setLoading] = useState(false)
+
+    const del = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!window.confirm(`Excluir "${post.title}"? Esta ação é irreversível.`)) return
+        setLoading(true)
+        try {
+            const res  = await fetch('/api/admin/blog/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [post.id], action: 'delete' }),
+            })
+            const data = await res.json()
+            if (!res.ok) { showError(data.error ?? 'Erro ao excluir'); return }
+            onDone()
+        } catch {
+            showError('Erro de rede')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <button
+            onClick={del}
+            disabled={loading}
+            title="Excluir post"
+            className="p-1.5 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:cursor-wait"
+        >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+        </button>
+    )
+}
+
 function FeaturedButton({ post, onDone }: { post: BlogPost; onDone: () => void }) {
     const [loading, setLoading] = useState(false)
 
@@ -1294,6 +1329,11 @@ export default function AdminBlogPage() {
                                             <Eye size={14} />
                                         </Link>
                                     )}
+                                    <DeleteButton
+                                        post={post}
+                                        onDone={() => { refetchTable(); refreshStats() }}
+                                        showError={showError}
+                                    />
                                 </div>
                             )}
                         />
