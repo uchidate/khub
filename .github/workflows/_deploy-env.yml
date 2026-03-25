@@ -262,6 +262,9 @@ jobs:
           echo "✅ Garantindo infraestrutura (postgres, ollama)..."
           $COMPOSE up -d ${{ inputs.db_host }} ${{ inputs.ollama_host }} 2>/dev/null || true
 
+          echo "📊 Garantindo Umami analytics..."
+          $COMPOSE up -d postgres-umami-${{ inputs.environment }} umami-${{ inputs.environment }} 2>/dev/null || echo "⚠️ Umami start warning (non-blocking)"
+
           echo "🔐 Syncing DB password..."
           PGCTR=$(docker ps --format '{{.Names}}' | grep -E '${{ inputs.pg_grep_pattern }}' | head -1)
           [ -n "$PGCTR" ] && docker exec "$PGCTR" psql -U hallyuhub -d ${{ inputs.db_name }} \
