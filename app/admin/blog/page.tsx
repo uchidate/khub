@@ -254,10 +254,10 @@ function useBlogStats() {
             fetch('/api/admin/blog?limit=1&status=PENDING_REVIEW').then(r => r.json()),
         ]).then(([all, pub, draft, review]) => {
             setStats({
-                total:     all.total     ?? 0,
-                published: pub.total     ?? 0,
-                draft:     draft.total   ?? 0,
-                review:    review.total  ?? 0,
+                total:     all.pagination?.total     ?? 0,
+                published: pub.pagination?.total     ?? 0,
+                draft:     draft.pagination?.total   ?? 0,
+                review:    review.pagination?.total  ?? 0,
             })
         }).catch(() => {})
     }, [])
