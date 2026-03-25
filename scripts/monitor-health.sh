@@ -51,15 +51,16 @@ if [ $CURL_EXIT -ne 0 ]; then
     exit 1
 fi
 
-OK=$(echo "$RESPONSE" | python3 -c "import sys,json; print('true' if json.load(sys.stdin).get('ok') else 'false')" 2>/dev/null || echo "unknown")
+OK=$(echo "$RESPONSE" | jq -r '.ok // "unknown"' 2>/dev/null || echo "unknown")
+DB_LATENCY=$(echo "$RESPONSE" | jq -r '.db.latencyMs // "N/A"' 2>/dev/null || echo "N/A")
 
 if [ "$OK" = "true" ]; then
-    log "✅ Sistema saudável"
+    log "✅ Sistema saudável (DB latency: ${DB_LATENCY}ms)"
 elif [ "$OK" = "false" ]; then
-    log "⚠️ Health check retornou ok=false"
-    notify_slack "⚠️ *[Health Monitor]* Sistema degradado — \`/api/health\` retornou \`ok: false\`"
+    log "⚠️ Health check retornou ok=false (DB latency: ${DB_LATENCY}ms)"
+    notify_slack "⚠️ *[Health Monitor]* Sistema degradado — \`/api/health\` retornou \`ok: false\` (DB latency: ${DB_LATENCY}ms)"
 else
-    log "⚠️ Resposta inesperada do health endpoint"
+    log "⚠️ Resposta inesperada do health endpoint: ${RESPONSE:0:200}"
 fi
 
 log "=========================================="

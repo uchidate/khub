@@ -18,6 +18,9 @@ set -euo pipefail
 
 TIMEOUT=10
 LOG_PREFIX="[watchdog $(date '+%Y-%m-%d %H:%M:%S')]"
+ALERT_COOLDOWN=300  # segundos entre alertas do mesmo serviço (evita spam)
+STATE_DIR="/var/run/hallyuhub-watchdog"
+mkdir -p "$STATE_DIR"
 
 # Ambientes monitorados: CONTAINER|HEALTH_URL_LOCAL|LABEL
 # URLs locais (localhost) para bypassar nginx — detecta falha real do app
@@ -42,6 +45,34 @@ notify_slack() {
     fi
 }
 
+# Envia alerta apenas se não enviou recentemente (cooldown por serviço)
+notify_slack_with_cooldown() {
+    local key="$1"
+    local msg="$2"
+    local state_file="${STATE_DIR}/alert_${key}.ts"
+    local now
+    now=$(date +%s)
+
+    if [ -f "$state_file" ]; then
+        local last
+        last=$(cat "$state_file" 2>/dev/null || echo 0)
+        local elapsed=$(( now - last ))
+        if [ "$elapsed" -lt "$ALERT_COOLDOWN" ]; then
+            echo "$LOG_PREFIX [cooldown] Alerta suprimido para '$key' (${elapsed}s < ${ALERT_COOLDOWN}s)"
+            return 0
+        fi
+    fi
+
+    echo "$now" > "$state_file"
+    notify_slack "$msg"
+}
+
+# Limpa cooldown de um serviço (chamado quando recupera)
+clear_cooldown() {
+    local key="$1"
+    rm -f "${STATE_DIR}/alert_${key}.ts"
+}
+
 # ── Monitora nginx (serviço do host, não container) ──────────────────────────
 watch_nginx() {
     if systemctl is-active --quiet nginx; then
@@ -53,23 +84,25 @@ watch_nginx() {
     # Valida config antes de tentar subir (evita loop com config inválida)
     if ! nginx -t 2>/dev/null; then
         echo "$LOG_PREFIX [Nginx] ERRO: nginx -t falhou — config inválida, NÃO reiniciando"
-        notify_slack "🚨 *[Watchdog Nginx]* nginx inativo e config inválida — intervenção manual necessária (\`nginx -t\`)"
+        notify_slack_with_cooldown "nginx_config" "🚨 *[Watchdog Nginx]* nginx inativo e config inválida — intervenção manual necessária (\`nginx -t\`)"
         return 1
     fi
 
     systemctl start nginx 2>&1 || {
         echo "$LOG_PREFIX [Nginx] ERRO: falha ao iniciar nginx"
-        notify_slack "🚨 *[Watchdog Nginx]* Falha ao iniciar nginx — intervenção manual necessária"
+        notify_slack_with_cooldown "nginx_start" "🚨 *[Watchdog Nginx]* Falha ao iniciar nginx — intervenção manual necessária"
         return 1
     }
 
     sleep 3
     if systemctl is-active --quiet nginx; then
         echo "$LOG_PREFIX [Nginx] Recuperado com sucesso"
+        clear_cooldown "nginx_config"
+        clear_cooldown "nginx_start"
         notify_slack "✅ *[Watchdog Nginx]* nginx reiniciado e ativo novamente."
     else
         echo "$LOG_PREFIX [Nginx] nginx ainda inativo após tentativa"
-        notify_slack "🚨 *[Watchdog Nginx]* nginx não subiu após tentativa — intervenção manual necessária"
+        notify_slack_with_cooldown "nginx_start" "🚨 *[Watchdog Nginx]* nginx não subiu após tentativa — intervenção manual necessária"
         return 1
     fi
 }
@@ -104,9 +137,12 @@ watch_container() {
 
     echo "$LOG_PREFIX [$LABEL] ALERTA: Health check falhou (tentativa 2) — reiniciando container"
 
+    local alert_key
+    alert_key="container_$(echo "$CONTAINER" | tr '-' '_')"
+
     docker restart --timeout 10 "$CONTAINER" 2>&1 || {
         echo "$LOG_PREFIX [$LABEL] ERRO: Falha ao reiniciar container"
-        notify_slack "🚨 *[Watchdog $LABEL]* Falha ao reiniciar \`$CONTAINER\` — intervenção manual necessária!"
+        notify_slack_with_cooldown "${alert_key}_fail" "🚨 *[Watchdog $LABEL]* Falha ao reiniciar \`$CONTAINER\` — intervenção manual necessária!"
         return 1
     }
 
@@ -116,13 +152,15 @@ watch_container() {
         sleep 5
         if check_health; then
             echo "$LOG_PREFIX [$LABEL] Recuperado após ${i}x5s"
+            clear_cooldown "${alert_key}_fail"
+            clear_cooldown "${alert_key}_timeout"
             notify_slack "✅ *[Watchdog $LABEL]* Container \`$CONTAINER\` reiniciado e respondendo normalmente."
             return 0
         fi
     done
 
     echo "$LOG_PREFIX [$LABEL] App NÃO respondeu após 60s pós-restart"
-    notify_slack "🚨 *[Watchdog $LABEL]* Container \`$CONTAINER\` reiniciado mas não respondeu em 60s — \`docker logs $CONTAINER --tail 50\`"
+    notify_slack_with_cooldown "${alert_key}_timeout" "🚨 *[Watchdog $LABEL]* Container \`$CONTAINER\` reiniciado mas não respondeu em 60s — \`docker logs $CONTAINER --tail 50\`"
     return 1
 }
 
