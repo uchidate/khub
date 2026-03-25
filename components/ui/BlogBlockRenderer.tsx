@@ -179,13 +179,13 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
         case 'blog_tiktok':    return <TikTokEmbed url={block.url} />
 
         case 'blog_artist_card':
-            return <ArtistCardBlock artistId={block.artistId} note={block.note} data={resolvedEntities?.artists[block.artistId]} />
+            return <ArtistCardBlock artistId={block.artistId} note={block.note} compact={block.compact} data={resolvedEntities?.artists[block.artistId]} />
 
         case 'blog_production_card':
             return <ProductionCardBlock productionId={block.productionId} note={block.note} data={resolvedEntities?.productions[block.productionId]} />
 
         case 'blog_group_card':
-            return <GroupCardBlock groupId={block.groupId} note={block.note} data={resolvedEntities?.groups[block.groupId]} />
+            return <GroupCardBlock groupId={block.groupId} note={block.note} compact={block.compact} data={resolvedEntities?.groups[block.groupId]} />
 
         case 'blog_stats_row':
             return (
@@ -253,9 +253,28 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
 
 // ─── Embedded entity cards ─────────────────────────────────────────────────────
 
-function ArtistCardBlock({ artistId, note, data }: { artistId: string; note?: string; data?: ResolvedArtist }) {
+function ArtistCardBlock({ artistId, note, compact, data }: { artistId: string; note?: string; compact?: boolean; data?: ResolvedArtist }) {
     if (!artistId) return null
     const role = data?.roles?.[0]
+    if (compact) {
+        return (
+            <Link href={`/artists/${artistId}`}
+                className="group flex items-center gap-2.5 my-2 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+                <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
+                    {data?.primaryImageUrl
+                        ? <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={32} height={32} className="w-full h-full object-cover" />
+                        : <span>{data?.nameRomanized?.[0] ?? '?'}</span>}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
+                        {data?.nameRomanized ?? artistId}
+                    </p>
+                    {note && <p className="text-[11px] text-muted leading-snug truncate">{note}</p>}
+                </div>
+                <span className="text-[10px] text-muted shrink-0 group-hover:text-[#ff2d78]">→</span>
+            </Link>
+        )
+    }
     return (
         <Link href={`/artists/${artistId}`}
             className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
@@ -284,8 +303,25 @@ const TYPE_LABELS: Record<string, string> = {
     DOCUMENTARY: 'Documentário', WEBSERIES: 'Web Series',
 }
 
-function GroupCardBlock({ groupId, note, data }: { groupId: string; note?: string; data?: ResolvedGroup }) {
+function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; note?: string; compact?: boolean; data?: ResolvedGroup }) {
     if (!groupId) return null
+    if (compact) {
+        return (
+            <Link href={`/groups/${groupId}`}
+                className="group flex items-center gap-2.5 my-2 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+                <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
+                    {data?.profileImageUrl
+                        ? <Image src={data.profileImageUrl} alt={data.name} width={32} height={32} className="w-full h-full object-cover" />
+                        : <span>{data?.name?.[0] ?? '?'}</span>}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">{data?.name ?? groupId}</p>
+                    {note && <p className="text-[11px] text-muted leading-snug truncate">{note}</p>}
+                </div>
+                <span className="text-[10px] text-muted shrink-0 group-hover:text-[#ff2d78]">→</span>
+            </Link>
+        )
+    }
     return (
         <Link href={`/groups/${groupId}`}
             className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
