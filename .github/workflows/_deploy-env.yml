@@ -189,16 +189,23 @@ jobs:
           update_env "GOOGLE_CLIENT_SECRET"       "${{ secrets.GOOGLE_CLIENT_SECRET }}"
           update_env "RESEND_API_KEY"             "${{ secrets.RESEND_API_KEY }}"
           update_env "PROMETHEUS_TOKEN"           "${{ secrets.PROMETHEUS_TOKEN }}"
-          update_env "UMAMI_DB_PASSWORD"          "${{ secrets.UMAMI_DB_PASSWORD }}"
-          update_env "UMAMI_APP_SECRET"           "${{ secrets.UMAMI_APP_SECRET }}"
           update_env "NEXT_PUBLIC_UMAMI_URL"      "${{ inputs.umami_url }}"
           update_env "NEXT_PUBLIC_UMAMI_WEBSITE_ID" "${{ inputs.umami_website_id }}"
           chmod 600 "$ENV_FILE"
 
+          # Variáveis para docker-compose variable substitution (base .env)
+          # Estas são lidas pelo docker-compose diretamente, não pelo app
+          upsert_base_env() {
+            local key=$1 val=$2
+            [ -z "$val" ] && return
+            grep -q "^${key}=" .env \
+              && sed -i "s|^${key}=.*|${key}=${val}|" .env \
+              || echo "${key}=${val}" >> .env
+          }
           touch .env
-          grep -q "^GF_SECURITY_ADMIN_PASSWORD=" .env \
-            && sed -i "s|^GF_SECURITY_ADMIN_PASSWORD=.*|GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}|" .env \
-            || echo "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> .env
+          upsert_base_env "GF_SECURITY_ADMIN_PASSWORD" "${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}"
+          upsert_base_env "UMAMI_DB_PASSWORD"          "${{ secrets.UMAMI_DB_PASSWORD }}"
+          upsert_base_env "UMAMI_APP_SECRET"           "${{ secrets.UMAMI_APP_SECRET }}"
 
       - name: Copy Files to Deploy Directory
         run: |
