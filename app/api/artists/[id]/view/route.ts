@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { detectBot } from '@/lib/utils/bot-detector'
 
 const log = createLogger('ARTISTS')
 
@@ -11,17 +12,28 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
   const params = await props.params;
   try {
     const { id } = params
-    const session = await getServerSession(authOptions)
+    const session  = await getServerSession(authOptions)
+    const isBot    = !!detectBot(request.headers.get('user-agent'))
+    const isAdmin  = session?.user?.role === 'ADMIN' || session?.user?.role === 'EDITOR'
 
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    await Promise.all([
-      prisma.artist.update({ where: { id }, data: { viewCount: { increment: 1 } } }),
-      prisma.viewEvent.upsert({
-        where: { entityType_entityId_date: { entityType: 'artist', entityId: id, date: today } },
-        update: { count: { increment: 1 } },
-        create: { entityType: 'artist', entityId: id, date: today, count: 1 },
-      }),
-    ])
+    if (!isBot && !isAdmin) {
+      const now = new Date()
+      const today = new Date(now); today.setUTCHours(0, 0, 0, 0)
+      const slot = Math.floor(now.getUTCHours() * 4 + now.getUTCMinutes() / 15)
+      await Promise.all([
+        prisma.artist.update({ where: { id }, data: { viewCount: { increment: 1 } } }),
+        prisma.viewEvent.upsert({
+          where: { entityType_entityId_date: { entityType: 'artist', entityId: id, date: today } },
+          update: { count: { increment: 1 } },
+          create: { entityType: 'artist', entityId: id, date: today, count: 1 },
+        }),
+        prisma.viewEventHourly.upsert({
+          where: { entityType_entityId_date_slot: { entityType: 'artist', entityId: id, date: today, slot } },
+          update: { count: { increment: 1 } },
+          create: { entityType: 'artist', entityId: id, date: today, slot, count: 1 },
+        }),
+      ])
+    }
 
     if (session?.user?.id) {
       await prisma.activity.create({

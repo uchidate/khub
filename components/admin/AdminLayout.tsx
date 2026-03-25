@@ -8,7 +8,7 @@ import {
   Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
-  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp,
+  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp, BarChart3,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -85,6 +85,7 @@ const navSections: NavSection[] = [
         ],
       },
       { href: '/admin/blog', label: 'Blog', icon: FileText },
+      { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     ],
   },
 
