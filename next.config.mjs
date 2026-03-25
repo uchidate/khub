@@ -3,10 +3,10 @@ const nextConfig = {
     output: 'standalone',
     async rewrites() {
         // Proxy Umami via Next.js para evitar mixed content (HTTPS → HTTP interno)
-        // Porta 3005 = umami-production; hardcoded pois é infra fixa
+        // Usa nome do serviço Docker (mesma rede hallyuhub_backend-production)
         return [
-            { source: '/um/script.js', destination: 'http://127.0.0.1:3005/script.js' },
-            { source: '/um/api/send',  destination: 'http://127.0.0.1:3005/api/send'  },
+            { source: '/um/script.js', destination: 'http://umami-production:3000/script.js' },
+            { source: '/um/api/send',  destination: 'http://umami-production:3000/api/send'  },
         ]
     },
     async headers() {
