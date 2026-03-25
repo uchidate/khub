@@ -1,24 +1,21 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageTransition } from '@/components/features/PageTransition'
-import { SITE_URL } from '@/lib/constants/site'
+import { SITE_URL, baseOG, baseTwitter } from '@/lib/constants/site'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidade',
   description: 'Saiba como o HallyuHub coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
   alternates: { canonical: `${SITE_URL}/privacidade` },
   openGraph: {
+    ...baseOG(`${SITE_URL}/privacidade`),
     title: 'Política de Privacidade | HallyuHub',
     description: 'Saiba como o HallyuHub coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
-    url: `${SITE_URL}/privacidade`,
-    type: 'website',
-    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
-    card: 'summary_large_image',
+    ...baseTwitter(),
     title: 'Política de Privacidade | HallyuHub',
     description: 'Saiba como o HallyuHub coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
-    images: [`${SITE_URL}/opengraph-image`],
   },
 }
 
