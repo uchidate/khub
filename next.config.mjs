@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
+    async rewrites() {
+        // Proxy Umami via Next.js para evitar mixed content (HTTPS → HTTP interno)
+        // Porta 3005 = umami-production; hardcoded pois é infra fixa
+        return [
+            { source: '/um/script.js', destination: 'http://127.0.0.1:3005/script.js' },
+            { source: '/um/api/send',  destination: 'http://127.0.0.1:3005/api/send'  },
+        ]
+    },
     async headers() {
         return [
             {
