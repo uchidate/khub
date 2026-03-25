@@ -26,8 +26,6 @@ export async function GET() {
     {
       ok: dbOk,
       ts: new Date().toISOString(),
-      env: process.env.NODE_ENV,
-      deploy_env: process.env.DEPLOY_ENV || 'unknown',
       db: { ok: dbOk, latencyMs: dbLatencyMs },
     },
     { status: dbOk ? 200 : 503 }
