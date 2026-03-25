@@ -235,7 +235,7 @@ export default function HomepageConfigPage() {
                     <div>
                         <h1 className="text-[20px] font-extrabold tracking-tight text-foreground">Homepage Editorial</h1>
                         <p className="text-[12px] text-muted mt-0.5">
-                            Controle quais artigos aparecem nos destques da página inicial.
+                            Controle quais artigos aparecem nos destaques da página inicial.
                             Posts não configurados usam os mais recentes automaticamente.
                         </p>
                     </div>
