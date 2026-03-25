@@ -14,6 +14,7 @@ import { AdBanner } from '@/components/ui/AdBanner'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
+import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
 const BASE_URL = SITE_URL
 
 export const revalidate = 3600
@@ -73,8 +74,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await getPost(slug)
   if (!post) notFound()
 
-  // Increment view count
-  void prisma.blogPost.update({ where: { id: post.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
 
   // Pre-fetch data for embedded entity cards
   const blocks = Array.isArray((post as unknown as { blocks: unknown }).blocks)
@@ -102,6 +101,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <PageTransition className="pb-20 px-4 sm:px-6">
+      <BlogViewTracker slug={slug} />
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "BlogPosting",
