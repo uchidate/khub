@@ -105,9 +105,53 @@ services:
     networks:
       - monitoring
 
+  # ============================================
+  # Umami - Analytics Self-hosted
+  # ============================================
+  postgres-umami:
+    image: postgres:15-alpine
+    container_name: hallyuhub-postgres-umami
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-umami_secret_change_me}
+    volumes:
+      - umami-db-data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: hallyuhub-umami
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-umami_secret_change_me}@postgres-umami:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET:-change_me_to_random_secret_32chars}
+    ports:
+      - "3003:3000"
+    networks:
+      - monitoring
+      - web
+    depends_on:
+      postgres-umami:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/heartbeat || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   prometheus-data:
   grafana-data:
+  umami-db-data:
 
 networks:
   monitoring:

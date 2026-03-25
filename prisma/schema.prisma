@@ -1103,3 +1103,17 @@ model AiConfig {
 
   @@map("ai_config")
 }
+
+// ─── Time-series de views por entidade/dia ────────────────────────────────────
+// Cada linha representa o total de views de uma entidade num dia específico.
+// Upsert incrementa o count a cada visualização. Permite gráficos históricos.
+model ViewEvent {
+  entityType String   // "blog" | "artist" | "news" | "group"
+  entityId   String
+  date       DateTime @db.Date
+  count      Int      @default(1)
+
+  @@id([entityType, entityId, date])
+  @@index([date])
+  @@index([entityType, date])
+}

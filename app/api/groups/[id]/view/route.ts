@@ -12,10 +12,15 @@ export async function POST(_request: NextRequest, props: { params: Promise<{ id:
   try {
     const session = await getServerSession(authOptions)
 
-    await prisma.musicalGroup.update({
-      where: { id: params.id },
-      data: { viewCount: { increment: 1 } },
-    })
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    await Promise.all([
+      prisma.musicalGroup.update({ where: { id: params.id }, data: { viewCount: { increment: 1 } } }),
+      prisma.viewEvent.upsert({
+        where: { entityType_entityId_date: { entityType: 'group', entityId: params.id, date: today } },
+        update: { count: { increment: 1 } },
+        create: { entityType: 'group', entityId: params.id, date: today, count: 1 },
+      }),
+    ])
 
     if (session?.user?.id) {
       await prisma.activity.create({

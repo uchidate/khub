@@ -17,7 +17,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Increment view count (fire and forget)
-  void prisma.blogPost.update({ where: { id: post.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  void Promise.all([
+    prisma.blogPost.update({ where: { id: post.id }, data: { viewCount: { increment: 1 } } }),
+    prisma.viewEvent.upsert({
+      where: { entityType_entityId_date: { entityType: 'blog', entityId: post.id, date: today } },
+      update: { count: { increment: 1 } },
+      create: { entityType: 'blog', entityId: post.id, date: today, count: 1 },
+    }),
+  ]).catch(() => {})
 
   return NextResponse.json(post)
 }

@@ -1,301 +1,414 @@
-import { auth } from '@/lib/auth'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
+import {
+    TrendingUp, Search, Heart, Eye, Newspaper, Music2, Users,
+    BarChart3, RefreshCw, BookOpen, UserPlus, Globe, Loader2,
+    Film, Star,
+} from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { AdminButton, SectionHeader } from '@/components/admin'
-import { TrendingUp, Search, Heart, Eye, Newspaper, Music2, Users, BarChart3, RefreshCw } from 'lucide-react'
-import prisma from '@/lib/prisma'
 
-export const dynamic = 'force-dynamic'
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-export default async function AdminAnalyticsPage() {
-    const session = await auth()
-    if (!session) redirect('/auth/login?callbackUrl=/admin/analytics')
-    if (session.user.role?.toLowerCase() !== 'admin') redirect('/dashboard')
+interface TimeseriesRow {
+    date:   string
+    blog:   number
+    artist: number
+    news:   number
+    group:  number
+    total:  number
+}
 
-    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+interface AnalyticsData {
+    timeseries: TimeseriesRow[]
+    topBlog:    { id: string; slug: string; title: string; viewCount: number; coverImageUrl: string | null; publishedAt: string | null; category: { name: string } | null }[]
+    topArtists: { id: string; nameRomanized: string; viewCount: number; trendingScore: number; primaryImageUrl: string | null }[]
+    topNews:    { id: string; title: string; viewCount: number; source: string | null; publishedAt: string }[]
+    topGroups:  { id: string; name: string; viewCount: number; trendingScore: number; profileImageUrl: string | null }[]
+    totals:     { blog: number; artist: number; news: number; group: number }
+    users:      { total: number; new7d: number; new30d: number }
+    published7d: { posts: number; news: number }
+    activityByType30d: { type: string; _count: { id: number } }[]
+    topSearchTerms:    { term: string; count: number }[]
+}
 
-    const [
-        topArtists,
-        topGroups,
-        topNews,
-        popularSearches,
-        activityByType30d,
-        totalViews,
-        totalNewsViews,
-        recentSearches,
-    ] = await Promise.all([
-        // Top artistas por trendingScore
-        prisma.artist.findMany({
-            orderBy: { trendingScore: 'desc' },
-            take: 10,
-            select: { id: true, nameRomanized: true, viewCount: true, trendingScore: true, primaryImageUrl: true },
-        }),
+type Period = '7' | '30' | '90'
 
-        // Top grupos por trendingScore
-        prisma.musicalGroup.findMany({
-            orderBy: { trendingScore: 'desc' },
-            take: 10,
-            select: { id: true, name: true, viewCount: true, trendingScore: true, profileImageUrl: true },
-        }),
+// ─── Bar Chart (CSS) ──────────────────────────────────────────────────────────
 
-        // Top notícias por viewCount (7 dias)
-        prisma.news.findMany({
-            where: { publishedAt: { gte: since7d } },
-            orderBy: { viewCount: 'desc' },
-            take: 10,
-            select: { id: true, title: true, viewCount: true, trendingScore: true, source: true, publishedAt: true },
-        }),
+function BarChart({ data, height = 120 }: { data: TimeseriesRow[]; height?: number }) {
+    const max = Math.max(...data.map(d => d.total), 1)
 
-        // Buscas mais populares (top 20 queries)
-        prisma.activity.groupBy({
-            by: ['metadata'],
-            where: {
-                type: 'SEARCH',
-                createdAt: { gte: since30d },
-            },
-            _count: { id: true },
-            orderBy: { _count: { id: 'desc' } },
-            take: 50, // pegar mais para agrupar por query
-        }),
-
-        // Engajamento: Activity por tipo nos últimos 30 dias
-        prisma.activity.groupBy({
-            by: ['type'],
-            where: { createdAt: { gte: since30d } },
-            _count: { id: true },
-            orderBy: { _count: { id: 'desc' } },
-        }),
-
-        // Total de views de artistas
-        prisma.artist.aggregate({ _sum: { viewCount: true } }),
-
-        // Total de views de notícias
-        prisma.news.aggregate({ _sum: { viewCount: true } }),
-
-        // Buscas recentes (últimas 20)
-        prisma.activity.findMany({
-            where: { type: 'SEARCH', createdAt: { gte: since7d } },
-            orderBy: { createdAt: 'desc' },
-            take: 20,
-            select: { metadata: true, createdAt: true },
-        }),
-    ])
-
-    // Agregar buscas por query
-    const searchMap = new Map<string, number>()
-    for (const act of popularSearches) {
-        const meta = act.metadata as any
-        const query = typeof meta?.query === 'string' ? meta.query.toLowerCase() : null
-        if (!query) continue
-        searchMap.set(query, (searchMap.get(query) ?? 0) + act._count.id)
-    }
-    const topSearchTerms = Array.from(searchMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 20)
-
-    const totalArtistViews = totalViews._sum.viewCount ?? 0
-    const totalNewsViewCount = totalNewsViews._sum.viewCount ?? 0
+    // Show fewer labels on small datasets
+    const labelEvery = data.length <= 7 ? 1 : data.length <= 30 ? 7 : 14
 
     return (
-        <div className="min-h-screen bg-black text-foreground">
-            <div className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-10">
-                    <div>
-                        <Link href="/admin" className="text-xs text-muted hover:text-foreground transition-colors mb-2 block">
-                            ← Admin
-                        </Link>
-                        <h1 className="text-4xl font-black tracking-tighter">Analytics</h1>
-                        <p className="text-muted text-sm mt-1">Métricas de uso e performance do conteúdo</p>
-                    </div>
-                    <form action="/api/cron/update-trending" method="POST">
-                        <AdminButton type="submit" variant="secondary">
-                            <RefreshCw className="w-4 h-4" />
-                            Atualizar Trending
-                        </AdminButton>
-                    </form>
-                </div>
+        <div className="space-y-2">
+            <div className="flex items-end gap-px" style={{ height }}>
+                {data.map((row, i) => {
+                    const pct = (row.total / max) * 100
+                    // Stacked: blog | artist | news | group
+                    const blogPct   = row.total > 0 ? (row.blog   / row.total) * pct : 0
+                    const artistPct = row.total > 0 ? (row.artist / row.total) * pct : 0
+                    const newsPct   = row.total > 0 ? (row.news   / row.total) * pct : 0
+                    const groupPct  = row.total > 0 ? (row.group  / row.total) * pct : 0
 
-                {/* Cards de resumo */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                    <div className="p-5 bg-surface border border-border rounded-xl">
-                        <Eye className="w-5 h-5 text-blue-400 mb-3" />
-                        <p className="text-2xl font-black">{totalArtistViews.toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-muted mt-1">Views de artistas</p>
-                    </div>
-                    <div className="p-5 bg-surface border border-border rounded-xl">
-                        <Newspaper className="w-5 h-5 text-green-400 mb-3" />
-                        <p className="text-2xl font-black">{totalNewsViewCount.toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-muted mt-1">Views de notícias</p>
-                    </div>
-                    <div className="p-5 bg-surface border border-border rounded-xl">
-                        <Search className="w-5 h-5 text-yellow-400 mb-3" />
-                        <p className="text-2xl font-black">{topSearchTerms.length}</p>
-                        <p className="text-xs text-muted mt-1">Termos buscados (30d)</p>
-                    </div>
-                    <div className="p-5 bg-surface border border-border rounded-xl">
-                        <BarChart3 className="w-5 h-5 text-purple-400 mb-3" />
-                        <p className="text-2xl font-black">
-                            {activityByType30d.reduce((s, a) => s + a._count.id, 0).toLocaleString('pt-BR')}
-                        </p>
-                        <p className="text-xs text-muted mt-1">Eventos (30d)</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Top Artistas Trending */}
-                    <section className="p-6 bg-surface border border-border rounded-xl">
-                        <SectionHeader icon={<Music2 size={14} />} title="Top Artistas Trending" className="mb-5" />
-                        <div className="space-y-3">
-                            {topArtists.map((artist, i) => (
-                                <div key={artist.id} className="flex items-center gap-3">
-                                    <span className="text-xs font-black text-muted w-5 text-right">{i + 1}</span>
-                                    <Link
-                                        href={`/artists/${artist.id}`}
-                                        className="flex-1 text-sm font-medium text-foreground hover:text-purple-400 transition-colors truncate"
-                                    >
-                                        {artist.nameRomanized}
-                                    </Link>
-                                    <div className="flex items-center gap-3 text-xs text-muted">
-                                        <span className="flex items-center gap-1">
-                                            <Eye className="w-3 h-3" />
-                                            {artist.viewCount.toLocaleString('pt-BR')}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-purple-400">
-                                            <TrendingUp className="w-3 h-3" />
-                                            {artist.trendingScore.toFixed(1)}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                            {topArtists.length === 0 && (
-                                <p className="text-muted text-sm">Nenhum dado ainda. Execute o cron de trending.</p>
-                            )}
-                        </div>
-                    </section>
-
-                    {/* Top Grupos Trending */}
-                    <section className="p-6 bg-surface border border-border rounded-xl">
-                        <SectionHeader icon={<Users size={14} />} title="Top Grupos Trending" className="mb-5" />
-                        <div className="space-y-3">
-                            {topGroups.map((group, i) => (
-                                <div key={group.id} className="flex items-center gap-3">
-                                    <span className="text-xs font-black text-muted w-5 text-right">{i + 1}</span>
-                                    <Link
-                                        href={`/groups/${group.id}`}
-                                        className="flex-1 text-sm font-medium text-foreground hover:text-purple-400 transition-colors truncate"
-                                    >
-                                        {group.name}
-                                    </Link>
-                                    <div className="flex items-center gap-3 text-xs text-muted">
-                                        <span className="flex items-center gap-1">
-                                            <Eye className="w-3 h-3" />
-                                            {group.viewCount.toLocaleString('pt-BR')}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-purple-400">
-                                            <TrendingUp className="w-3 h-3" />
-                                            {group.trendingScore.toFixed(1)}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                            {topGroups.length === 0 && (
-                                <p className="text-muted text-sm">Nenhum dado ainda.</p>
-                            )}
-                        </div>
-                    </section>
-
-                    {/* Top Notícias (7d) */}
-                    <section className="p-6 bg-surface border border-border rounded-xl">
-                        <SectionHeader icon={<Newspaper size={14} />} title="Top Notícias — Últimos 7 dias" className="mb-5" />
-                        <div className="space-y-3">
-                            {topNews.map((item, i) => (
-                                <div key={item.id} className="flex items-start gap-3">
-                                    <span className="text-xs font-black text-muted w-5 text-right mt-0.5">{i + 1}</span>
-                                    <div className="flex-1 min-w-0">
-                                        <Link
-                                            href={`/news/${item.id}`}
-                                            className="text-sm font-medium text-foreground hover:text-purple-400 transition-colors line-clamp-1"
-                                        >
-                                            {item.title}
-                                        </Link>
-                                        <p className="text-[10px] text-muted mt-0.5">
-                                            {item.source} · {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
-                                        </p>
-                                    </div>
-                                    <span className="flex items-center gap-1 text-xs text-muted shrink-0">
-                                        <Eye className="w-3 h-3" />
-                                        {item.viewCount.toLocaleString('pt-BR')}
-                                    </span>
-                                </div>
-                            ))}
-                            {topNews.length === 0 && (
-                                <p className="text-muted text-sm">Nenhuma notícia visualizada ainda.</p>
-                            )}
-                        </div>
-                    </section>
-
-                    {/* Buscas Populares */}
-                    <section className="p-6 bg-surface border border-border rounded-xl">
-                        <SectionHeader icon={<Search size={14} />} title="Buscas Populares — 30 dias" className="mb-5" />
-                        {topSearchTerms.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                {topSearchTerms.map(([term, count]) => (
-                                    <span
-                                        key={term}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface border border-border rounded-full text-xs text-foreground"
-                                    >
-                                        {term}
-                                        <span className="text-[10px] font-black text-purple-400">{count}x</span>
-                                    </span>
-                                ))}
+                    return (
+                        <div
+                            key={row.date}
+                            className="flex-1 flex flex-col justify-end group relative"
+                            style={{ height: '100%' }}
+                            title={`${new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR')}\nTotal: ${row.total.toLocaleString('pt-BR')}\nBlog: ${row.blog} · Artistas: ${row.artist} · Notícias: ${row.news} · Grupos: ${row.group}`}
+                        >
+                            <div className="w-full flex flex-col justify-end overflow-hidden rounded-sm" style={{ height: `${pct}%`, minHeight: row.total > 0 ? 2 : 0 }}>
+                                <div style={{ height: `${groupPct / pct * 100}%` }}  className="bg-purple-500/70" />
+                                <div style={{ height: `${newsPct  / pct * 100}%` }}  className="bg-green-500/70" />
+                                <div style={{ height: `${artistPct / pct * 100}%` }} className="bg-blue-500/70" />
+                                <div style={{ height: `${blogPct  / pct * 100}%` }}  className="bg-orange-500/70" />
                             </div>
-                        ) : (
-                            <p className="text-muted text-sm">
-                                Nenhuma busca registrada ainda (apenas usuários autenticados).
-                            </p>
+                            {/* Tooltip on hover */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 pointer-events-none">
+                                <div className="bg-background border border-border rounded-lg px-2 py-1.5 text-[10px] whitespace-nowrap shadow-xl">
+                                    <p className="font-bold text-foreground">{row.total.toLocaleString('pt-BR')} views</p>
+                                    <p className="text-muted">{new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+            {/* Date labels */}
+            <div className="flex items-center" style={{ gap: 0 }}>
+                {data.map((row, i) => (
+                    <div key={row.date} className="flex-1 text-center">
+                        {i % labelEvery === 0 && (
+                            <span className="text-[9px] text-muted">
+                                {new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                            </span>
                         )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
 
-                        {/* Buscas recentes */}
-                        {recentSearches.length > 0 && (
-                            <div className="mt-6">
-                                <SectionHeader title="Recentes (7d)" />
-                                <div className="space-y-1.5">
-                                    {recentSearches.slice(0, 8).map((act, i) => {
-                                        const meta = act.metadata as any
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+
+function StatCard({ icon: Icon, label, value, sub, color = 'text-foreground', bg = 'bg-surface' }: {
+    icon: React.ElementType
+    label: string
+    value: number | string
+    sub?: string
+    color?: string
+    bg?: string
+}) {
+    return (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border border-border ${bg}`}>
+            <Icon size={15} className={`${color} shrink-0`} />
+            <div>
+                <p className={`text-xl font-black leading-none ${color}`}>
+                    {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
+                </p>
+                <p className="text-[11px] text-muted mt-0.5">{label}</p>
+                {sub && <p className="text-[10px] text-muted/70">{sub}</p>}
+            </div>
+        </div>
+    )
+}
+
+// ─── Top List ─────────────────────────────────────────────────────────────────
+
+function TopList<T extends { id: string; viewCount: number }>({
+    items, title, icon: Icon, renderItem, emptyMsg,
+}: {
+    items: T[]
+    title: string
+    icon: React.ElementType
+    renderItem: (item: T, i: number, maxViews: number) => React.ReactNode
+    emptyMsg?: string
+}) {
+    const maxViews = Math.max(...items.map(i => i.viewCount), 1)
+    return (
+        <section className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+                <Icon size={13} className="text-muted" />
+                <h3 className="text-xs font-bold text-foreground">{title}</h3>
+            </div>
+            <div className="divide-y divide-border">
+                {items.length === 0 ? (
+                    <p className="px-4 py-6 text-sm text-muted text-center">{emptyMsg ?? 'Sem dados ainda'}</p>
+                ) : items.map((item, i) => renderItem(item, i, maxViews))}
+            </div>
+        </section>
+    )
+}
+
+function TopListRow({ rank, image, title, href, views, maxViews, sub }: {
+    rank: number; image: string | null; title: string; href: string
+    views: number; maxViews: number; sub?: string
+}) {
+    return (
+        <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-hover transition-colors group">
+            <span className="text-[11px] font-black text-muted w-4 text-right shrink-0">{rank}</span>
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-background border border-border/50 shrink-0">
+                {image
+                    ? <Image src={image} alt={title} width={32} height={32} className="w-full h-full object-cover" unoptimized />
+                    : <div className="w-full h-full flex items-center justify-center text-[9px] text-muted font-bold">{title[0]}</div>
+                }
+            </div>
+            <div className="flex-1 min-w-0">
+                <Link href={href} target="_blank" className="text-[12px] font-medium text-foreground hover:text-blue-400 transition-colors truncate block">
+                    {title}
+                </Link>
+                {sub && <p className="text-[10px] text-muted truncate">{sub}</p>}
+                {/* Mini bar */}
+                <div className="mt-1 h-1 bg-border rounded-full overflow-hidden w-full">
+                    <div className="h-full bg-blue-500/50 rounded-full" style={{ width: `${(views / maxViews) * 100}%` }} />
+                </div>
+            </div>
+            <span className="text-[11px] text-muted flex items-center gap-1 shrink-0">
+                <Eye size={10} />
+                {views.toLocaleString('pt-BR')}
+            </span>
+        </div>
+    )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function AdminAnalyticsPage() {
+    const [period,  setPeriod]  = useState<Period>('30')
+    const [data,    setData]    = useState<AnalyticsData | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    const load = useCallback(async (p: Period) => {
+        setLoading(true)
+        try {
+            const res  = await fetch(`/api/admin/analytics?days=${p}`)
+            const json = await res.json()
+            setData(json)
+        } catch {
+            // silently fail — keep old data
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { load(period) }, [period, load])
+
+    const totalAllTime = data ? Object.values(data.totals).reduce((a, b) => a + b, 0) : 0
+    const totalPeriod  = data ? data.timeseries.reduce((a, b) => a + b.total, 0) : 0
+
+    return (
+        <AdminLayout title="Analytics" subtitle="Views, usuários e performance de conteúdo">
+            <div className="space-y-6">
+
+                {/* Period selector */}
+                <div className="flex items-center gap-1.5">
+                    {(['7', '30', '90'] as Period[]).map(p => (
+                        <button
+                            key={p}
+                            onClick={() => setPeriod(p)}
+                            className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                                period === p
+                                    ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                                    : 'text-muted border-border hover:text-foreground'
+                            }`}
+                        >
+                            {p === '7' ? '7 dias' : p === '30' ? '30 dias' : '90 dias'}
+                        </button>
+                    ))}
+                    {loading && <Loader2 size={14} className="animate-spin text-muted ml-2" />}
+                    <button
+                        onClick={() => load(period)}
+                        className="ml-auto flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground transition-colors"
+                    >
+                        <RefreshCw size={12} />
+                        Atualizar
+                    </button>
+                </div>
+
+                {/* Stat cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                    <StatCard icon={Eye}      label="Views (all-time)" value={totalAllTime}            color="text-foreground" />
+                    <StatCard icon={BarChart3} label={`Views (${period}d)`} value={totalPeriod}          color="text-blue-400"   bg="bg-blue-500/5 border-blue-500/20" />
+                    <StatCard icon={BookOpen} label="Views blog"        value={data?.totals.blog   ?? 0} color="text-orange-400" />
+                    <StatCard icon={Music2}   label="Views artistas"   value={data?.totals.artist ?? 0} color="text-purple-400" />
+                    <StatCard icon={Newspaper} label="Views notícias"  value={data?.totals.news   ?? 0} color="text-green-400"  />
+                    <StatCard icon={Users}    label="Usuários"          value={data?.users.total   ?? 0} sub={data ? `+${data.users.new7d} esta semana` : undefined} color="text-cyan-400" />
+                </div>
+
+                {/* Second row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <StatCard icon={UserPlus}  label="Novos usuários (7d)"  value={data?.users.new7d  ?? 0} color="text-cyan-400" />
+                    <StatCard icon={UserPlus}  label="Novos usuários (30d)" value={data?.users.new30d ?? 0} color="text-cyan-400" />
+                    <StatCard icon={BookOpen}  label="Posts publicados (7d)" value={data?.published7d.posts ?? 0} color="text-orange-400" />
+                    <StatCard icon={Newspaper} label="Notícias publicadas (7d)" value={data?.published7d.news ?? 0} color="text-green-400" />
+                </div>
+
+                {/* Chart */}
+                <section className="bg-surface border border-border rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                        <h3 className="text-xs font-bold text-foreground">Views por dia — últimos {period} dias</h3>
+                        <div className="flex items-center gap-3 text-[10px] text-muted">
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500/70" />Blog</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70" />Artistas</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-green-500/70" />Notícias</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-500/70" />Grupos</span>
+                        </div>
+                    </div>
+                    {data && data.timeseries.length > 0 ? (
+                        <BarChart data={data.timeseries} height={140} />
+                    ) : (
+                        <div className="flex items-center justify-center h-[140px] text-muted text-sm">
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Nenhum dado de views ainda — os dados aparecem após as primeiras visitas.'}
+                        </div>
+                    )}
+                </section>
+
+                {/* Top content grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                    {/* Top Blog */}
+                    <TopList
+                        items={data?.topBlog ?? []}
+                        title="Top Blog Posts (all-time)"
+                        icon={BookOpen}
+                        emptyMsg="Nenhum post publicado ainda"
+                        renderItem={(post, i, max) => (
+                            <TopListRow
+                                key={post.id}
+                                rank={i + 1}
+                                image={post.coverImageUrl}
+                                title={post.title}
+                                href={`/blog/${post.slug}`}
+                                views={post.viewCount}
+                                maxViews={max}
+                                sub={post.category?.name ?? (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('pt-BR') : undefined)}
+                            />
+                        )}
+                    />
+
+                    {/* Top Artistas */}
+                    <TopList
+                        items={data?.topArtists ?? []}
+                        title="Top Artistas — Views"
+                        icon={Music2}
+                        renderItem={(artist, i, max) => (
+                            <TopListRow
+                                key={artist.id}
+                                rank={i + 1}
+                                image={artist.primaryImageUrl}
+                                title={artist.nameRomanized}
+                                href={`/artists/${artist.id}`}
+                                views={artist.viewCount}
+                                maxViews={max}
+                                sub={`trending ${artist.trendingScore.toFixed(1)}`}
+                            />
+                        )}
+                    />
+
+                    {/* Top Notícias */}
+                    <TopList
+                        items={data?.topNews ?? []}
+                        title="Top Notícias — Views"
+                        icon={Newspaper}
+                        renderItem={(item, i, max) => (
+                            <TopListRow
+                                key={item.id}
+                                rank={i + 1}
+                                image={null}
+                                title={item.title}
+                                href={`/news/${item.id}`}
+                                views={item.viewCount}
+                                maxViews={max}
+                                sub={item.source ?? undefined}
+                            />
+                        )}
+                    />
+
+                    {/* Top Grupos */}
+                    <TopList
+                        items={data?.topGroups ?? []}
+                        title="Top Grupos — Views"
+                        icon={Users}
+                        renderItem={(group, i, max) => (
+                            <TopListRow
+                                key={group.id}
+                                rank={i + 1}
+                                image={group.profileImageUrl}
+                                title={group.name}
+                                href={`/groups/${group.id}`}
+                                views={group.viewCount}
+                                maxViews={max}
+                                sub={`trending ${group.trendingScore.toFixed(1)}`}
+                            />
+                        )}
+                    />
+                </div>
+
+                {/* Buscas + Engajamento */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                    {/* Buscas populares */}
+                    <section className="bg-surface border border-border rounded-xl overflow-hidden">
+                        <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+                            <Search size={13} className="text-muted" />
+                            <h3 className="text-xs font-bold text-foreground">Buscas Populares — 30 dias</h3>
+                        </div>
+                        <div className="p-4">
+                            {(data?.topSearchTerms.length ?? 0) > 0 ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {data!.topSearchTerms.map(({ term, count }) => (
+                                        <span
+                                            key={term}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-border rounded-full text-[11px] text-foreground"
+                                        >
+                                            {term}
+                                            <span className="text-[10px] font-black text-blue-400">{count}×</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted">Nenhuma busca registrada (apenas usuários autenticados).</p>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Engajamento por tipo */}
+                    <section className="bg-surface border border-border rounded-xl overflow-hidden">
+                        <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+                            <Heart size={13} className="text-muted" />
+                            <h3 className="text-xs font-bold text-foreground">Engajamento por Tipo — 30 dias</h3>
+                        </div>
+                        <div className="p-4">
+                            {(data?.activityByType30d.length ?? 0) > 0 ? (
+                                <div className="space-y-2">
+                                    {data!.activityByType30d.map(act => {
+                                        const total = data!.activityByType30d.reduce((s, a) => s + a._count.id, 0)
+                                        const pct   = total > 0 ? (act._count.id / total) * 100 : 0
                                         return (
-                                            <div key={i} className="flex items-center justify-between text-xs">
-                                                <span className="text-muted">{meta?.query ?? '—'}</span>
-                                                <span className="text-muted">
-                                                    {new Date(act.createdAt).toLocaleDateString('pt-BR')}
-                                                </span>
+                                            <div key={act.type} className="flex items-center gap-3">
+                                                <span className="text-[11px] font-black uppercase tracking-wider text-muted w-24 shrink-0">{act.type}</span>
+                                                <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
+                                                    <div className="h-full bg-purple-500/60 rounded-full" style={{ width: `${pct}%` }} />
+                                                </div>
+                                                <span className="text-[11px] text-muted w-12 text-right shrink-0">{act._count.id.toLocaleString('pt-BR')}</span>
                                             </div>
                                         )
                                     })}
                                 </div>
-                            </div>
-                        )}
-                    </section>
-
-                    {/* Engajamento por tipo (30d) */}
-                    <section className="p-6 bg-surface border border-border rounded-xl lg:col-span-2">
-                        <SectionHeader icon={<Heart size={14} />} title="Engajamento por Tipo — Últimos 30 dias" className="mb-5" />
-                        {activityByType30d.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {activityByType30d.map((act) => (
-                                    <div key={act.type} className="p-4 bg-surface border border-border rounded-lg text-center">
-                                        <p className="text-2xl font-black text-foreground">{act._count.id.toLocaleString('pt-BR')}</p>
-                                        <p className="text-xs font-black uppercase tracking-widest text-muted mt-1">{act.type}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-muted text-sm">Nenhum evento registrado nos últimos 30 dias.</p>
-                        )}
+                            ) : (
+                                <p className="text-sm text-muted">Nenhum evento registrado nos últimos 30 dias.</p>
+                            )}
+                        </div>
                     </section>
                 </div>
+
             </div>
-        </div>
+        </AdminLayout>
     )
 }

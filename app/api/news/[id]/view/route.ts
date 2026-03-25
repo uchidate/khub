@@ -13,10 +13,15 @@ export async function POST(_request: NextRequest, props: { params: Promise<{ id:
         const { id } = params
         const session = await getServerSession(authOptions)
 
-        await prisma.news.update({
-            where: { id },
-            data: { viewCount: { increment: 1 } },
-        })
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        await Promise.all([
+            prisma.news.update({ where: { id }, data: { viewCount: { increment: 1 } } }),
+            prisma.viewEvent.upsert({
+                where: { entityType_entityId_date: { entityType: 'news', entityId: id, date: today } },
+                update: { count: { increment: 1 } },
+                create: { entityType: 'news', entityId: id, date: today, count: 1 },
+            }),
+        ])
 
         if (session?.user?.id) {
             await prisma.activity.create({
