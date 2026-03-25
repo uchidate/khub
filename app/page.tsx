@@ -8,6 +8,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
+import { JsonLd } from "@/components/seo/JsonLd"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
@@ -136,8 +137,12 @@ const getHomePublicData = unstable_cache(
 
 const SITE_URL = 'https://www.hallyuhub.com.br'
 
+const OG_IMAGE = `${SITE_URL}/opengraph-image`
+
 export const metadata: Metadata = {
-    title: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+    title: {
+        absolute: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+    },
     description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
     alternates: {
         canonical: SITE_URL,
@@ -149,11 +154,13 @@ export const metadata: Metadata = {
         siteName: 'HallyuHub',
         locale: 'pt_BR',
         type: 'website',
+        images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana' }],
     },
     twitter: {
         card: 'summary_large_image',
         title: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
         description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
+        images: [OG_IMAGE],
     },
 }
 
@@ -195,6 +202,22 @@ export default async function Home() {
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden">
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": "HallyuHub",
+                "url": SITE_URL,
+                "description": "Portal de cultura coreana — artistas K-Pop, grupos, dramas e filmes em português.",
+                "inLanguage": "pt-BR",
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": {
+                        "@type": "EntryPoint",
+                        "urlTemplate": `${SITE_URL}/search?q={search_term_string}`,
+                    },
+                    "query-input": "required name=search_term_string",
+                },
+            }} />
             <HomeCategoriesBar />
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
