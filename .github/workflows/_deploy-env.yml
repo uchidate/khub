@@ -112,6 +112,18 @@ on:
         type: string
         required: true
 
+      # ── Umami ─────────────────────────────────────────────────
+      umami_url:
+        description: 'URL pública do Umami: http://IP:3004 (staging) | http://IP:3005 (production)'
+        type: string
+        required: false
+        default: ''
+      umami_website_id:
+        description: 'Website ID do Umami (obter após primeiro login)'
+        type: string
+        required: false
+        default: ''
+
       # ── Slack ─────────────────────────────────────────────────
       suppress_slack_on_success:
         description: 'Suprimir notificação Slack em sucesso (staging=true, production=false)'
@@ -177,6 +189,10 @@ jobs:
           update_env "GOOGLE_CLIENT_SECRET"       "${{ secrets.GOOGLE_CLIENT_SECRET }}"
           update_env "RESEND_API_KEY"             "${{ secrets.RESEND_API_KEY }}"
           update_env "PROMETHEUS_TOKEN"           "${{ secrets.PROMETHEUS_TOKEN }}"
+          update_env "UMAMI_DB_PASSWORD"          "${{ secrets.UMAMI_DB_PASSWORD }}"
+          update_env "UMAMI_APP_SECRET"           "${{ secrets.UMAMI_APP_SECRET }}"
+          update_env "NEXT_PUBLIC_UMAMI_URL"      "${{ inputs.umami_url }}"
+          update_env "NEXT_PUBLIC_UMAMI_WEBSITE_ID" "${{ inputs.umami_website_id }}"
           chmod 600 "$ENV_FILE"
 
           touch .env
