@@ -667,6 +667,9 @@ export class SlackNotificationService {
      * Send raw message to a webhook
      */
     private async sendMessage(webhookUrl: string, payload: { blocks: SlackBlock[]; text?: string }): Promise<boolean> {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5_000);
+
         try {
             const response = await fetch(webhookUrl, {
                 method: 'POST',
@@ -675,6 +678,7 @@ export class SlackNotificationService {
                     ...payload,
                     text: payload.text || 'HallyuHub Notification',
                 }),
+                signal: controller.signal,
             });
 
             if (!response.ok) {
@@ -683,9 +687,12 @@ export class SlackNotificationService {
             }
 
             return true;
-        } catch (error) {
-            console.error('[SlackNotificationService] Error sending message:', error);
+        } catch (error: unknown) {
+            const isTimeout = error instanceof Error && error.name === 'AbortError';
+            console.error(`[SlackNotificationService] ${isTimeout ? 'Timeout' : 'Error'} sending message:`, error);
             return false;
+        } finally {
+            clearTimeout(timeout);
         }
     }
 

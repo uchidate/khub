@@ -10,3 +10,6 @@ scrape_configs:
       - targets: ['hallyuhub:3000']
     metrics_path: /api/metrics
     scheme: http
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/prometheus_token

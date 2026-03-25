@@ -8,8 +8,14 @@ const log = createLogger('METRICS');
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Metricas no formato Prometheus
-export async function GET() {
+// Metricas no formato Prometheus — protegido por bearer token (PROMETHEUS_TOKEN)
+export async function GET(request: Request) {
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '')
+    const expected = process.env.PROMETHEUS_TOKEN
+    if (!expected || token !== expected) {
+        return new NextResponse('Unauthorized', { status: 401 })
+    }
+
     const startTime = Date.now();
 
     try {

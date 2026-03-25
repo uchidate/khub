@@ -62,9 +62,10 @@ jobs:
             BODY=$(echo "$RESPONSE" | sed '$d')
 
             [ $CURL_EXIT -ne 0 ] && echo "❌ $name: connection error (curl $CURL_EXIT)" && return 1
-            [ "$HTTP_CODE" != "$expected" ] && echo "❌ $name: HTTP $HTTP_CODE" && return 1
+            [ "$HTTP_CODE" != "$expected" ] && echo "❌ $name: HTTP $HTTP_CODE (expected $expected)" && return 1
             if [ -n "$json_key" ]; then
-              local VAL=$(echo "$BODY" | jq -r ".$json_key" 2>/dev/null)
+              local VAL
+              VAL=$(echo "$BODY" | jq -r ".$json_key" 2>/dev/null)
               [ "$VAL" != "true" ] && echo "❌ $name: .$json_key = $VAL" && return 1
             fi
             echo "✅ $name: OK ($HTTP_CODE)"
@@ -97,9 +98,10 @@ jobs:
             BODY=$(echo "$RESPONSE" | sed '$d')
 
             [ $CURL_EXIT -ne 0 ] && echo "❌ $name: connection error" && return 1
-            [ "$HTTP_CODE" != "$expected" ] && echo "❌ $name: HTTP $HTTP_CODE" && return 1
+            [ "$HTTP_CODE" != "$expected" ] && echo "❌ $name: HTTP $HTTP_CODE (expected $expected)" && return 1
             if [ -n "$json_key" ]; then
-              local VAL=$(echo "$BODY" | jq -r ".$json_key" 2>/dev/null)
+              local VAL
+              VAL=$(echo "$BODY" | jq -r ".$json_key" 2>/dev/null)
               [ "$VAL" != "true" ] && echo "❌ $name: .$json_key = $VAL" && return 1
             fi
             echo "✅ $name: OK — production recuperou sozinha (falso positivo)"
