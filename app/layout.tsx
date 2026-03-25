@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Outfit, Inter, Sora } from "next/font/google"
 import Script from "next/script"
+import { UmamiScript } from "@/components/features/UmamiScript"
 import "../styles/globals.css"
 import { unstable_cache } from "next/cache"
 import prisma from "@/lib/prisma"
@@ -125,12 +126,7 @@ export default async function RootLayout({
                     />
                 )}
                 {process.env.UMAMI_WEBSITE_ID && (
-                    <Script
-                        src="/um/script.js"
-                        data-website-id={process.env.UMAMI_WEBSITE_ID}
-                        data-host-url="/um"
-                        strategy="lazyOnload"
-                    />
+                    <UmamiScript websiteId={process.env.UMAMI_WEBSITE_ID} />
                 )}
                 <JsonLd data={{
                     "@context": "https://schema.org",
