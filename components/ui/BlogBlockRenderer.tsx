@@ -77,12 +77,46 @@ interface BlogBlockRendererProps {
     resolvedEntities?: ResolvedEntities
 }
 
+function isCompactCard(block: BlogBlock): boolean {
+    return (
+        (block.type === 'blog_artist_card' && !!block.compact) ||
+        (block.type === 'blog_group_card'  && !!block.compact) ||
+        (block.type === 'blog_production_card' && !!block.compact)
+    )
+}
+
 export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogBlockRendererProps) {
+    // Group consecutive compact cards into a 2-col desktop grid
+    const rows: (BlogBlock | BlogBlock[])[] = []
+    let i = 0
+    while (i < blocks.length) {
+        const block = blocks[i]
+        if (isCompactCard(block)) {
+            const group: BlogBlock[] = [block]
+            while (i + 1 < blocks.length && isCompactCard(blocks[i + 1])) {
+                i++
+                group.push(blocks[i])
+            }
+            rows.push(group.length > 1 ? group : group[0])
+        } else {
+            rows.push(block)
+        }
+        i++
+    }
+
     return (
         <div className={className}>
-            {blocks.map((block, i) => (
-                <BlogBlockItem key={i} block={block} resolvedEntities={resolvedEntities} />
-            ))}
+            {rows.map((item, idx) =>
+                Array.isArray(item)
+                    ? (
+                        <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-1.5 my-3">
+                            {item.map((block, j) => (
+                                <BlogBlockItem key={j} block={block} resolvedEntities={resolvedEntities} />
+                            ))}
+                        </div>
+                    )
+                    : <BlogBlockItem key={idx} block={item} resolvedEntities={resolvedEntities} />
+            )}
         </div>
     )
 }
@@ -259,7 +293,7 @@ function ArtistCardBlock({ artistId, note, compact, data }: { artistId: string; 
     if (compact) {
         return (
             <Link href={`/artists/${artistId}`}
-                className="group flex items-center gap-2.5 my-2 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+                className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
                 <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
                     {data?.primaryImageUrl
                         ? <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={32} height={32} className="w-full h-full object-cover" />
@@ -308,7 +342,7 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
     if (compact) {
         return (
             <Link href={`/groups/${groupId}`}
-                className="group flex items-center gap-2.5 my-2 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+                className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
                 <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
                     {data?.profileImageUrl
                         ? <Image src={data.profileImageUrl} alt={data.name} width={32} height={32} className="w-full h-full object-cover" />
