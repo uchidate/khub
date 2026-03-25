@@ -77,21 +77,29 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                 </blockquote>
             )
 
-        case 'blog_image':
+        case 'blog_image': {
+            const sizeClass =
+                block.size === 'small'  ? 'mx-auto max-w-[260px]' :
+                block.size === 'medium' ? 'mx-auto max-w-sm' :
+                block.fullWidth         ? 'w-full' :
+                                          'w-full md:w-auto max-w-full'
             return (
                 <span className="block my-8">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={block.url}
-                        alt={block.caption || ''}
-                        referrerPolicy="no-referrer"
-                        className={`rounded-2xl border border-border shadow-xl ${block.fullWidth ? 'w-full' : 'w-full md:w-auto max-w-full'}`}
-                    />
+                    <span className={`block ${sizeClass}`}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={block.url}
+                            alt={block.caption || ''}
+                            referrerPolicy="no-referrer"
+                            className="w-full rounded-2xl border border-border shadow-xl"
+                        />
+                    </span>
                     {block.caption && (
                         <span className="block text-center text-xs text-muted mt-2 italic">{block.caption}</span>
                     )}
                 </span>
             )
+        }
 
         case 'blog_gallery':
             return (

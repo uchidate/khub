@@ -108,6 +108,7 @@ export type BlogImageBlock = {
     url: string
     caption?: string
     fullWidth?: boolean
+    size?: 'small' | 'medium' | 'full'
 }
 
 export type BlogGalleryBlock = {
