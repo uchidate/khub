@@ -12,13 +12,20 @@ export async function POST(_request: NextRequest, props: { params: Promise<{ id:
   try {
     const session = await getServerSession(authOptions)
 
-    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const now = new Date()
+    const today = new Date(now); today.setUTCHours(0, 0, 0, 0)
+    const slot = Math.floor(now.getUTCHours() * 4 + now.getUTCMinutes() / 15)
     await Promise.all([
       prisma.musicalGroup.update({ where: { id: params.id }, data: { viewCount: { increment: 1 } } }),
       prisma.viewEvent.upsert({
         where: { entityType_entityId_date: { entityType: 'group', entityId: params.id, date: today } },
         update: { count: { increment: 1 } },
         create: { entityType: 'group', entityId: params.id, date: today, count: 1 },
+      }),
+      prisma.viewEventHourly.upsert({
+        where: { entityType_entityId_date_slot: { entityType: 'group', entityId: params.id, date: today, slot } },
+        update: { count: { increment: 1 } },
+        create: { entityType: 'group', entityId: params.id, date: today, slot, count: 1 },
       }),
     ])
 

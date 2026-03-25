@@ -13,13 +13,20 @@ export async function POST(_request: NextRequest, props: { params: Promise<{ id:
         const { id } = params
         const session = await getServerSession(authOptions)
 
-        const today = new Date(); today.setHours(0, 0, 0, 0)
+        const now = new Date()
+        const today = new Date(now); today.setUTCHours(0, 0, 0, 0)
+        const slot = Math.floor(now.getUTCHours() * 4 + now.getUTCMinutes() / 15)
         await Promise.all([
             prisma.news.update({ where: { id }, data: { viewCount: { increment: 1 } } }),
             prisma.viewEvent.upsert({
                 where: { entityType_entityId_date: { entityType: 'news', entityId: id, date: today } },
                 update: { count: { increment: 1 } },
                 create: { entityType: 'news', entityId: id, date: today, count: 1 },
+            }),
+            prisma.viewEventHourly.upsert({
+                where: { entityType_entityId_date_slot: { entityType: 'news', entityId: id, date: today, slot } },
+                update: { count: { increment: 1 } },
+                create: { entityType: 'news', entityId: id, date: today, slot, count: 1 },
             }),
         ])
 

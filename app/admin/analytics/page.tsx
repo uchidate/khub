@@ -20,71 +20,85 @@ interface TimeseriesRow {
     total:  number
 }
 
+interface IntradayRow {
+    slot:   number
+    label:  string   // "HH:MM"
+    blog:   number
+    artist: number
+    news:   number
+    group:  number
+    total:  number
+}
+
 interface AnalyticsData {
-    timeseries: TimeseriesRow[]
-    topBlog:    { id: string; slug: string; title: string; viewCount: number; coverImageUrl: string | null; publishedAt: string | null; category: { name: string } | null }[]
-    topArtists: { id: string; nameRomanized: string; viewCount: number; trendingScore: number; primaryImageUrl: string | null }[]
-    topNews:    { id: string; title: string; viewCount: number; source: string | null; publishedAt: string }[]
-    topGroups:  { id: string; name: string; viewCount: number; trendingScore: number; profileImageUrl: string | null }[]
-    totals:     { blog: number; artist: number; news: number; group: number }
-    users:      { total: number; new7d: number; new30d: number }
+    timeseries:  TimeseriesRow[]
+    intraday:    IntradayRow[]
+    topBlog:     { id: string; slug: string; title: string; viewCount: number; coverImageUrl: string | null; publishedAt: string | null; category: { name: string } | null }[]
+    topArtists:  { id: string; nameRomanized: string; viewCount: number; trendingScore: number; primaryImageUrl: string | null }[]
+    topNews:     { id: string; title: string; viewCount: number; source: string | null; publishedAt: string }[]
+    topGroups:   { id: string; name: string; viewCount: number; trendingScore: number; profileImageUrl: string | null }[]
+    totals:      { blog: number; artist: number; news: number; group: number }
+    users:       { total: number; new7d: number; new30d: number }
     published7d: { posts: number; news: number }
     activityByType30d: { type: string; _count: { id: number } }[]
     topSearchTerms:    { term: string; count: number }[]
 }
 
-type Period = '7' | '30' | '90'
+type Period = '0' | '7' | '30' | '90'
 
 // ─── Bar Chart (CSS) ──────────────────────────────────────────────────────────
 
-function BarChart({ data, height = 120 }: { data: TimeseriesRow[]; height?: number }) {
-    const max = Math.max(...data.map(d => d.total), 1)
+type ChartRow = { label?: string; date?: string; slot?: number; blog: number; artist: number; news: number; group: number; total: number }
 
-    // Show fewer labels on small datasets
-    const labelEvery = data.length <= 7 ? 1 : data.length <= 30 ? 7 : 14
+function BarChart({ data, height = 120, labelEveryN }: { data: ChartRow[]; height?: number; labelEveryN?: number }) {
+    const max = Math.max(...data.map(d => d.total), 1)
+    const every = labelEveryN ?? (data.length <= 7 ? 1 : data.length <= 30 ? 7 : data.length <= 96 ? 8 : 14)
 
     return (
         <div className="space-y-2">
             <div className="flex items-end gap-px" style={{ height }}>
-                {data.map((row) => {
-                    const pct = (row.total / max) * 100
-                    // Stacked: blog | artist | news | group
+                {data.map((row, idx) => {
+                    const pct       = (row.total / max) * 100
                     const blogPct   = row.total > 0 ? (row.blog   / row.total) * pct : 0
                     const artistPct = row.total > 0 ? (row.artist / row.total) * pct : 0
                     const newsPct   = row.total > 0 ? (row.news   / row.total) * pct : 0
                     const groupPct  = row.total > 0 ? (row.group  / row.total) * pct : 0
+                    const tooltipLabel = row.label ?? (row.date ? new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR') : String(idx))
 
                     return (
                         <div
-                            key={row.date}
+                            key={row.label ?? row.date ?? idx}
                             className="flex-1 flex flex-col justify-end group relative"
                             style={{ height: '100%' }}
-                            title={`${new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR')}\nTotal: ${row.total.toLocaleString('pt-BR')}\nBlog: ${row.blog} · Artistas: ${row.artist} · Notícias: ${row.news} · Grupos: ${row.group}`}
                         >
                             <div className="w-full flex flex-col justify-end overflow-hidden rounded-sm" style={{ height: `${pct}%`, minHeight: row.total > 0 ? 2 : 0 }}>
-                                <div style={{ height: `${groupPct / pct * 100}%` }}  className="bg-purple-500/70" />
-                                <div style={{ height: `${newsPct  / pct * 100}%` }}  className="bg-green-500/70" />
+                                <div style={{ height: `${groupPct  / pct * 100}%` }} className="bg-purple-500/70" />
+                                <div style={{ height: `${newsPct   / pct * 100}%` }} className="bg-green-500/70" />
                                 <div style={{ height: `${artistPct / pct * 100}%` }} className="bg-blue-500/70" />
-                                <div style={{ height: `${blogPct  / pct * 100}%` }}  className="bg-orange-500/70" />
+                                <div style={{ height: `${blogPct   / pct * 100}%` }} className="bg-orange-500/70" />
                             </div>
-                            {/* Tooltip on hover */}
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 pointer-events-none">
                                 <div className="bg-background border border-border rounded-lg px-2 py-1.5 text-[10px] whitespace-nowrap shadow-xl">
                                     <p className="font-bold text-foreground">{row.total.toLocaleString('pt-BR')} views</p>
-                                    <p className="text-muted">{new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
+                                    <p className="text-muted">{tooltipLabel}</p>
+                                    {row.total > 0 && (
+                                        <p className="text-muted/70">
+                                            blog {row.blog} · art {row.artist} · news {row.news} · grp {row.group}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     )
                 })}
             </div>
-            {/* Date labels */}
+            {/* Labels */}
             <div className="flex items-center" style={{ gap: 0 }}>
                 {data.map((row, i) => (
-                    <div key={row.date} className="flex-1 text-center">
-                        {i % labelEvery === 0 && (
+                    <div key={row.label ?? row.date ?? i} className="flex-1 text-center">
+                        {i % every === 0 && (
                             <span className="text-[9px] text-muted">
-                                {new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                {row.label ?? (row.date ? new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '')}
                             </span>
                         )}
                     </div>
@@ -163,7 +177,6 @@ function TopListRow({ rank, image, title, href, views, maxViews, sub }: {
                     {title}
                 </Link>
                 {sub && <p className="text-[10px] text-muted truncate">{sub}</p>}
-                {/* Mini bar */}
                 <div className="mt-1 h-1 bg-border rounded-full overflow-hidden w-full">
                     <div className="h-full bg-blue-500/50 rounded-full" style={{ width: `${(views / maxViews) * 100}%` }} />
                 </div>
@@ -178,6 +191,13 @@ function TopListRow({ rank, image, title, href, views, maxViews, sub }: {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+const PERIOD_LABELS: Record<Period, string> = {
+    '0':  'Hoje',
+    '7':  '7 dias',
+    '30': '30 dias',
+    '90': '90 dias',
+}
+
 export default function AdminAnalyticsPage() {
     const [period,  setPeriod]  = useState<Period>('30')
     const [data,    setData]    = useState<AnalyticsData | null>(null)
@@ -190,7 +210,7 @@ export default function AdminAnalyticsPage() {
             const json = await res.json()
             setData(json)
         } catch {
-            // silently fail — keep old data
+            // keep old data on error
         } finally {
             setLoading(false)
         }
@@ -198,16 +218,31 @@ export default function AdminAnalyticsPage() {
 
     useEffect(() => { load(period) }, [period, load])
 
+    // Auto-refresh every 60s when "Hoje" is active
+    useEffect(() => {
+        if (period !== '0') return
+        const id = setInterval(() => load('0'), 60_000)
+        return () => clearInterval(id)
+    }, [period, load])
+
+    const isToday      = period === '0'
+    const chartData    = isToday ? (data?.intraday ?? []) : (data?.timeseries ?? [])
     const totalAllTime = data ? Object.values(data.totals).reduce((a, b) => a + b, 0) : 0
-    const totalPeriod  = data ? data.timeseries.reduce((a, b) => a + b.total, 0) : 0
+    const totalPeriod  = isToday
+        ? (data?.intraday ?? []).reduce((a, b) => a + b.total, 0)
+        : (data?.timeseries ?? []).reduce((a, b) => a + b.total, 0)
+
+    const chartTitle = isToday
+        ? `Views hoje — por slot de 15min (${chartData.length} slots registrados)`
+        : `Views por dia — últimos ${period} dias`
 
     return (
         <AdminLayout title="Analytics" subtitle="Views, usuários e performance de conteúdo">
             <div className="space-y-6">
 
                 {/* Period selector */}
-                <div className="flex items-center gap-1.5">
-                    {(['7', '30', '90'] as Period[]).map(p => (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    {(['0', '7', '30', '90'] as Period[]).map(p => (
                         <button
                             key={p}
                             onClick={() => setPeriod(p)}
@@ -217,10 +252,13 @@ export default function AdminAnalyticsPage() {
                                     : 'text-muted border-border hover:text-foreground'
                             }`}
                         >
-                            {p === '7' ? '7 dias' : p === '30' ? '30 dias' : '90 dias'}
+                            {PERIOD_LABELS[p]}
                         </button>
                     ))}
-                    {loading && <Loader2 size={14} className="animate-spin text-muted ml-2" />}
+                    {loading && <Loader2 size={14} className="animate-spin text-muted ml-1" />}
+                    {isToday && !loading && (
+                        <span className="text-[10px] text-muted/60 ml-1">atualiza a cada 60s</span>
+                    )}
                     <button
                         onClick={() => load(period)}
                         className="ml-auto flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground transition-colors"
@@ -232,26 +270,26 @@ export default function AdminAnalyticsPage() {
 
                 {/* Stat cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                    <StatCard icon={Eye}      label="Views (all-time)" value={totalAllTime}            color="text-foreground" />
-                    <StatCard icon={BarChart3} label={`Views (${period}d)`} value={totalPeriod}          color="text-blue-400"   bg="bg-blue-500/5 border-blue-500/20" />
-                    <StatCard icon={BookOpen} label="Views blog"        value={data?.totals.blog   ?? 0} color="text-orange-400" />
-                    <StatCard icon={Music2}   label="Views artistas"   value={data?.totals.artist ?? 0} color="text-purple-400" />
-                    <StatCard icon={Newspaper} label="Views notícias"  value={data?.totals.news   ?? 0} color="text-green-400"  />
-                    <StatCard icon={Users}    label="Usuários"          value={data?.users.total   ?? 0} sub={data ? `+${data.users.new7d} esta semana` : undefined} color="text-cyan-400" />
+                    <StatCard icon={Eye}      label="Views (all-time)"        value={totalAllTime}              color="text-foreground" />
+                    <StatCard icon={BarChart3} label={`Views (${PERIOD_LABELS[period]})`} value={totalPeriod}  color="text-blue-400"   bg="bg-blue-500/5 border-blue-500/20" />
+                    <StatCard icon={BookOpen} label="Views blog"               value={data?.totals.blog   ?? 0} color="text-orange-400" />
+                    <StatCard icon={Music2}   label="Views artistas"           value={data?.totals.artist ?? 0} color="text-purple-400" />
+                    <StatCard icon={Newspaper} label="Views notícias"          value={data?.totals.news   ?? 0} color="text-green-400"  />
+                    <StatCard icon={Users}    label="Usuários"                 value={data?.users.total   ?? 0} sub={data ? `+${data.users.new7d} esta semana` : undefined} color="text-cyan-400" />
                 </div>
 
                 {/* Second row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <StatCard icon={UserPlus}  label="Novos usuários (7d)"  value={data?.users.new7d  ?? 0} color="text-cyan-400" />
-                    <StatCard icon={UserPlus}  label="Novos usuários (30d)" value={data?.users.new30d ?? 0} color="text-cyan-400" />
-                    <StatCard icon={BookOpen}  label="Posts publicados (7d)" value={data?.published7d.posts ?? 0} color="text-orange-400" />
-                    <StatCard icon={Newspaper} label="Notícias publicadas (7d)" value={data?.published7d.news ?? 0} color="text-green-400" />
+                    <StatCard icon={UserPlus}  label="Novos usuários (7d)"       value={data?.users.new7d       ?? 0} color="text-cyan-400"   />
+                    <StatCard icon={UserPlus}  label="Novos usuários (30d)"      value={data?.users.new30d      ?? 0} color="text-cyan-400"   />
+                    <StatCard icon={BookOpen}  label="Posts publicados (7d)"     value={data?.published7d.posts ?? 0} color="text-orange-400" />
+                    <StatCard icon={Newspaper} label="Notícias publicadas (7d)"  value={data?.published7d.news  ?? 0} color="text-green-400"  />
                 </div>
 
                 {/* Chart */}
                 <section className="bg-surface border border-border rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
-                        <h3 className="text-xs font-bold text-foreground">Views por dia — últimos {period} dias</h3>
+                        <h3 className="text-xs font-bold text-foreground">{chartTitle}</h3>
                         <div className="flex items-center gap-3 text-[10px] text-muted">
                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500/70" />Blog</span>
                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70" />Artistas</span>
@@ -259,11 +297,19 @@ export default function AdminAnalyticsPage() {
                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-500/70" />Grupos</span>
                         </div>
                     </div>
-                    {data && data.timeseries.length > 0 ? (
-                        <BarChart data={data.timeseries} height={140} />
+                    {chartData.length > 0 ? (
+                        <BarChart
+                            data={chartData}
+                            height={140}
+                            labelEveryN={isToday ? 4 : undefined}
+                        />
                     ) : (
                         <div className="flex items-center justify-center h-[140px] text-muted text-sm">
-                            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Nenhum dado de views ainda — os dados aparecem após as primeiras visitas.'}
+                            {loading
+                                ? <Loader2 className="animate-spin" size={20} />
+                                : isToday
+                                    ? 'Nenhuma view registrada hoje ainda — acesse páginas para ver dados aparecerem.'
+                                    : 'Nenhum dado de views ainda — os dados aparecem após as primeiras visitas.'}
                         </div>
                     )}
                 </section>
@@ -271,7 +317,6 @@ export default function AdminAnalyticsPage() {
                 {/* Top content grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                    {/* Top Blog */}
                     <TopList
                         items={data?.topBlog ?? []}
                         title="Top Blog Posts (all-time)"
@@ -291,7 +336,6 @@ export default function AdminAnalyticsPage() {
                         )}
                     />
 
-                    {/* Top Artistas */}
                     <TopList
                         items={data?.topArtists ?? []}
                         title="Top Artistas — Views"
@@ -310,7 +354,6 @@ export default function AdminAnalyticsPage() {
                         )}
                     />
 
-                    {/* Top Notícias */}
                     <TopList
                         items={data?.topNews ?? []}
                         title="Top Notícias — Views"
@@ -329,7 +372,6 @@ export default function AdminAnalyticsPage() {
                         )}
                     />
 
-                    {/* Top Grupos */}
                     <TopList
                         items={data?.topGroups ?? []}
                         title="Top Grupos — Views"
@@ -352,7 +394,6 @@ export default function AdminAnalyticsPage() {
                 {/* Buscas + Engajamento */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                    {/* Buscas populares */}
                     <section className="bg-surface border border-border rounded-xl overflow-hidden">
                         <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
                             <Search size={13} className="text-muted" />
@@ -377,7 +418,6 @@ export default function AdminAnalyticsPage() {
                         </div>
                     </section>
 
-                    {/* Engajamento por tipo */}
                     <section className="bg-surface border border-border rounded-xl overflow-hidden">
                         <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
                             <Heart size={13} className="text-muted" />

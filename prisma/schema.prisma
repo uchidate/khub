@@ -1117,3 +1117,19 @@ model ViewEvent {
   @@index([date])
   @@index([entityType, date])
 }
+
+// ─── Time-series de views por entidade/slot de 15min ─────────────────────────
+// slot = 0-95: cada slot representa 15 minutos (slot 0 = 00:00, slot 95 = 23:45).
+// Cálculo: slot = Math.floor(horaUTC * 4 + minutoUTC / 15)
+// Permite visualização "Hoje" com intervalos de 15min no painel de analytics.
+model ViewEventHourly {
+  entityType String   // "blog" | "artist" | "news" | "group"
+  entityId   String
+  date       DateTime @db.Date
+  slot       Int      // 0-95 (15-min bucket)
+  count      Int      @default(1)
+
+  @@id([entityType, entityId, date, slot])
+  @@index([date, slot])
+  @@index([entityType, date])
+}
