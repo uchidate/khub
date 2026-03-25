@@ -9,7 +9,7 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
-    title: 'Contato | HallyuHub',
+    title: 'Contato',
     description: 'Entre em contato com o HallyuHub. Tire dúvidas, envie sugestões, reporte erros ou proponha parcerias. Estamos prontos para te ouvir!',
     alternates: { canonical: `${BASE_URL}/contato` },
     openGraph: {
@@ -17,11 +17,13 @@ export const metadata: Metadata = {
         description: 'Entre em contato com o HallyuHub. Tire dúvidas, envie sugestões ou reporte um problema.',
         url: `${BASE_URL}/contato`,
         type: 'website',
+        images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
     },
     twitter: {
-        card: 'summary',
+        card: 'summary_large_image',
         title: 'Fale com o HallyuHub',
         description: 'Entre em contato com o HallyuHub. Tire dúvidas, envie sugestões ou reporte um problema.',
+        images: [`${BASE_URL}/opengraph-image`],
     },
 }
 

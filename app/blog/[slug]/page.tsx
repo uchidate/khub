@@ -55,6 +55,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       publishedTime: post.publishedAt?.toISOString(),
       authors: [BLOG_AUTHOR_DISPLAY_NAME],
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt ?? undefined,
+      images: post.coverImageUrl ? [post.coverImageUrl] : [],
+    },
   }
 }
 

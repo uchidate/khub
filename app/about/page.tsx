@@ -4,11 +4,19 @@ import Link from 'next/link'
 export const metadata: Metadata = {
     title: 'Sobre o HallyuHub',
     description: 'Saiba quem somos: o maior portal de K-Pop, K-Drama e cultura coreana em português. Nossa missão, valores e tudo que estamos construindo para fãs brasileiros.',
+    alternates: { canonical: 'https://www.hallyuhub.com.br/about' },
     openGraph: {
         title: 'Sobre o HallyuHub',
         description: 'Saiba quem somos: o maior portal de K-Pop, K-Drama e cultura coreana em português. Nossa missão, valores e tudo que estamos construindo para fãs brasileiros.',
         url: 'https://www.hallyuhub.com.br/about',
         type: 'website',
+        images: [{ url: 'https://www.hallyuhub.com.br/opengraph-image', width: 1200, height: 630 }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Sobre o HallyuHub',
+        description: 'Saiba quem somos: o maior portal de K-Pop, K-Drama e cultura coreana em português.',
+        images: ['https://www.hallyuhub.com.br/opengraph-image'],
     },
 }
 

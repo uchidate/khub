@@ -2,13 +2,21 @@ import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Perguntas Frequentes (FAQ) | HallyuHub',
+  title: 'Perguntas Frequentes (FAQ)',
   description: 'Tire suas dúvidas sobre o HallyuHub — a maior plataforma de cultura coreana em português. Saiba sobre conta, favoritos, notícias, premium e muito mais.',
+  alternates: { canonical: 'https://www.hallyuhub.com.br/faq' },
   openGraph: {
     title: 'Perguntas Frequentes | HallyuHub',
     description: 'Tire suas dúvidas sobre o HallyuHub — a maior plataforma de cultura coreana em português.',
     url: 'https://www.hallyuhub.com.br/faq',
     type: 'website',
+    images: [{ url: 'https://www.hallyuhub.com.br/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Perguntas Frequentes | HallyuHub',
+    description: 'Tire suas dúvidas sobre o HallyuHub — a maior plataforma de cultura coreana em português.',
+    images: ['https://www.hallyuhub.com.br/opengraph-image'],
   },
 }
 
@@ -74,10 +82,10 @@ const FAQ_SCHEMA = {
     },
     {
       '@type': 'Question',
-      name: 'O HallyuHub está em beta?',
+      name: 'Como reporto erros ou sugiro melhorias?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Sim, estamos em fase beta pública. Isso significa que novas funcionalidades são lançadas frequentemente e você pode encontrar pequenas instabilidades. Seu feedback é muito valioso.',
+        text: 'Use o ícone de flag (⚑) nas páginas de artistas, produções e grupos para reportar informações incorretas. Para sugestões gerais, entre em contato pelo e-mail contato@hallyuhub.com.br.',
       },
     },
   ],

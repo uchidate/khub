@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: 'Política de Privacidade',
   description: 'Saiba como o HallyuHub coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
   alternates: { canonical: 'https://www.hallyuhub.com.br/privacidade' },
+  openGraph: {
+    title: 'Política de Privacidade | HallyuHub',
+    description: 'Saiba como o HallyuHub coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
+    url: 'https://www.hallyuhub.com.br/privacidade',
+    type: 'website',
+    images: [{ url: 'https://www.hallyuhub.com.br/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Política de Privacidade | HallyuHub',
+    description: 'Saiba como o HallyuHub coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
+  },
 }
 
 const LAST_UPDATED = '24 de fevereiro de 2026'

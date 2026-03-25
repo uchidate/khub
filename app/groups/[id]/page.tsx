@@ -63,17 +63,17 @@ const getGroup = cache(async (id: string) => {
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const params = await props.params;
     const group = await getGroup(params.id)
-    if (!group) return { title: 'Grupo não encontrado - HallyuHub' }
-    if (group.isHidden) return { title: 'Grupo não encontrado - HallyuHub', robots: { index: false, follow: false } }
+    if (!group) return { title: 'Grupo não encontrado' }
+    if (group.isHidden) return { title: 'Grupo não encontrado', robots: { index: false, follow: false } }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
     const isThinContent = !group.profileImageUrl && !group.bio
     return {
-        title: `${group.name} - HallyuHub`,
+        title: `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''}`,
         description: description.slice(0, 160),
         alternates: { canonical: `${BASE_URL}/groups/${params.id}` },
         ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
-            title: `${group.name} - HallyuHub`,
+            title: `${group.name} | HallyuHub`,
             description: description.slice(0, 160),
             images: group.profileImageUrl ? [{ url: group.profileImageUrl, width: 1200, height: 630, alt: group.name }] : [],
             type: 'website',
@@ -81,7 +81,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${group.name} - HallyuHub`,
+            title: `${group.name} | HallyuHub`,
             description: description.slice(0, 160),
             images: group.profileImageUrl ? [group.profileImageUrl] : [],
         },
@@ -192,6 +192,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                 ...(disbandYear ? { "dissolutionDate": String(disbandYear) } : {}),
                 ...(group.agency ? { "memberOf": { "@type": "Organization", "name": group.agency.name } } : {}),
                 ...(memberPersons.length ? { "member": memberPersons } : {}),
+                ...(() => {
+                    const links = (group.socialLinks as Record<string, string> | null) ?? {}
+                    const sameAs = Object.values(links).filter(Boolean)
+                    return sameAs.length > 0 ? { "sameAs": sameAs } : {}
+                })(),
             }} />
             <JsonLd data={{
                 "@context": "https://schema.org",
