@@ -40,6 +40,11 @@ export async function GET(req: NextRequest) {
         topNews,
         topGroups,
 
+        topBlogToday,
+        topArtistsToday,
+        topNewsToday,
+        topGroupsToday,
+
         totalBlogViews,
         totalArtistViews,
         totalNewsViews,
@@ -100,6 +105,47 @@ export async function GET(req: NextRequest) {
             take: 10,
             select: { id: true, name: true, viewCount: true, trendingScore: true, profileImageUrl: true },
         }),
+
+        // Top hoje (via ViewEventHourly, só consultado quando days=0)
+        isToday
+            ? prisma.viewEventHourly.groupBy({
+                by: ['entityId', 'entityType'],
+                where: { date: { gte: todayStart }, entityType: 'blog' },
+                _sum: { count: true },
+                orderBy: { _sum: { count: 'desc' } },
+                take: 10,
+              })
+            : Promise.resolve([]),
+
+        isToday
+            ? prisma.viewEventHourly.groupBy({
+                by: ['entityId', 'entityType'],
+                where: { date: { gte: todayStart }, entityType: 'artist' },
+                _sum: { count: true },
+                orderBy: { _sum: { count: 'desc' } },
+                take: 10,
+              })
+            : Promise.resolve([]),
+
+        isToday
+            ? prisma.viewEventHourly.groupBy({
+                by: ['entityId', 'entityType'],
+                where: { date: { gte: todayStart }, entityType: 'news' },
+                _sum: { count: true },
+                orderBy: { _sum: { count: 'desc' } },
+                take: 10,
+              })
+            : Promise.resolve([]),
+
+        isToday
+            ? prisma.viewEventHourly.groupBy({
+                by: ['entityId', 'entityType'],
+                where: { date: { gte: todayStart }, entityType: 'group' },
+                _sum: { count: true },
+                orderBy: { _sum: { count: 'desc' } },
+                take: 10,
+              })
+            : Promise.resolve([]),
 
         prisma.blogPost.aggregate({ _sum: { viewCount: true } }),
         prisma.artist.aggregate({ _sum: { viewCount: true } }),
@@ -175,6 +221,48 @@ export async function GET(req: NextRequest) {
         })
     }
 
+    // ── Top hoje: enriquecer IDs com dados das entidades ─────────────────────
+    type TodayRankRow = { entityId: string; _sum: { count: number | null } }
+
+    const enrichTopToday = async <T extends { id: string }>(
+        rows: TodayRankRow[],
+        fetcher: (ids: string[]) => Promise<T[]>,
+        viewsKey: (item: T) => number,
+    ) => {
+        if (!rows.length) return []
+        const ids     = rows.map(r => r.entityId)
+        const items   = await fetcher(ids)
+        const idMap   = new Map(items.map(i => [i.id, i]))
+        const countMap = new Map(rows.map(r => [r.entityId, r._sum.count ?? 0]))
+        return ids
+            .map(id => ({ item: idMap.get(id), todayViews: countMap.get(id) ?? 0 }))
+            .filter(x => x.item !== undefined)
+            .map(({ item, todayViews }) => ({ ...item!, viewCount: viewsKey(item!), todayViews }))
+    }
+
+    const [topBlogToday_, topArtistsToday_, topNewsToday_, topGroupsToday_] = await Promise.all([
+        enrichTopToday(
+            topBlogToday as TodayRankRow[],
+            ids => prisma.blogPost.findMany({ where: { id: { in: ids } }, select: { id: true, slug: true, title: true, viewCount: true, coverImageUrl: true, publishedAt: true, category: { select: { name: true } } } }),
+            i => i.viewCount,
+        ),
+        enrichTopToday(
+            topArtistsToday as TodayRankRow[],
+            ids => prisma.artist.findMany({ where: { id: { in: ids } }, select: { id: true, nameRomanized: true, viewCount: true, trendingScore: true, primaryImageUrl: true } }),
+            i => i.viewCount,
+        ),
+        enrichTopToday(
+            topNewsToday as TodayRankRow[],
+            ids => prisma.news.findMany({ where: { id: { in: ids } }, select: { id: true, title: true, viewCount: true, source: true, publishedAt: true } }),
+            i => i.viewCount,
+        ),
+        enrichTopToday(
+            topGroupsToday as TodayRankRow[],
+            ids => prisma.musicalGroup.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, viewCount: true, trendingScore: true, profileImageUrl: true } }),
+            i => i.viewCount,
+        ),
+    ])
+
     // ── Buscas populares ─────────────────────────────────────────────────────
     const searchMap = new Map<string, number>()
     for (const act of popularSearches) {
@@ -195,6 +283,10 @@ export async function GET(req: NextRequest) {
         topArtists,
         topNews,
         topGroups,
+        topBlogToday:    topBlogToday_,
+        topArtistsToday: topArtistsToday_,
+        topNewsToday:    topNewsToday_,
+        topGroupsToday:  topGroupsToday_,
         totals: {
             blog:   totalBlogViews._sum.viewCount   ?? 0,
             artist: totalArtistViews._sum.viewCount ?? 0,

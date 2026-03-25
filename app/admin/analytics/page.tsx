@@ -30,13 +30,22 @@ interface IntradayRow {
     total:  number
 }
 
+type BlogItem    = { id: string; slug: string; title: string; viewCount: number; coverImageUrl: string | null; publishedAt: string | null; category: { name: string } | null; todayViews?: number }
+type ArtistItem  = { id: string; nameRomanized: string; viewCount: number; trendingScore: number; primaryImageUrl: string | null; todayViews?: number }
+type NewsItem    = { id: string; title: string; viewCount: number; source: string | null; publishedAt: string; todayViews?: number }
+type GroupItem   = { id: string; name: string; viewCount: number; trendingScore: number; profileImageUrl: string | null; todayViews?: number }
+
 interface AnalyticsData {
     timeseries:  TimeseriesRow[]
     intraday:    IntradayRow[]
-    topBlog:     { id: string; slug: string; title: string; viewCount: number; coverImageUrl: string | null; publishedAt: string | null; category: { name: string } | null }[]
-    topArtists:  { id: string; nameRomanized: string; viewCount: number; trendingScore: number; primaryImageUrl: string | null }[]
-    topNews:     { id: string; title: string; viewCount: number; source: string | null; publishedAt: string }[]
-    topGroups:   { id: string; name: string; viewCount: number; trendingScore: number; profileImageUrl: string | null }[]
+    topBlog:     BlogItem[]
+    topArtists:  ArtistItem[]
+    topNews:     NewsItem[]
+    topGroups:   GroupItem[]
+    topBlogToday:    BlogItem[]
+    topArtistsToday: ArtistItem[]
+    topNewsToday:    NewsItem[]
+    topGroupsToday:  GroupItem[]
     totals:      { blog: number; artist: number; news: number; group: number }
     users:       { total: number; new7d: number; new30d: number }
     published7d: { posts: number; news: number }
@@ -159,9 +168,9 @@ function TopList<T extends { id: string; viewCount: number }>({
     )
 }
 
-function TopListRow({ rank, image, title, href, views, maxViews, sub }: {
+function TopListRow({ rank, image, title, href, views, maxViews, sub, todayViews }: {
     rank: number; image: string | null; title: string; href: string
-    views: number; maxViews: number; sub?: string
+    views: number; maxViews: number; sub?: string; todayViews?: number
 }) {
     return (
         <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-hover transition-colors group">
@@ -181,10 +190,15 @@ function TopListRow({ rank, image, title, href, views, maxViews, sub }: {
                     <div className="h-full bg-blue-500/50 rounded-full" style={{ width: `${(views / maxViews) * 100}%` }} />
                 </div>
             </div>
-            <span className="text-[11px] text-muted flex items-center gap-1 shrink-0">
-                <Eye size={10} />
-                {views.toLocaleString('pt-BR')}
-            </span>
+            <div className="flex flex-col items-end gap-0.5 shrink-0">
+                <span className="text-[11px] text-muted flex items-center gap-1">
+                    <Eye size={10} />
+                    {views.toLocaleString('pt-BR')}
+                </span>
+                {todayViews !== undefined && (
+                    <span className="text-[10px] text-blue-400 font-bold">+{todayViews} hoje</span>
+                )}
+            </div>
         </div>
     )
 }
@@ -318,10 +332,10 @@ export default function AdminAnalyticsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                     <TopList
-                        items={data?.topBlog ?? []}
-                        title="Top Blog Posts (all-time)"
+                        items={isToday ? (data?.topBlogToday ?? []) : (data?.topBlog ?? [])}
+                        title={isToday ? 'Top Blog Posts — Hoje' : 'Top Blog Posts (all-time)'}
                         icon={BookOpen}
-                        emptyMsg="Nenhum post publicado ainda"
+                        emptyMsg={isToday ? 'Nenhuma view de blog hoje ainda' : 'Nenhum post publicado ainda'}
                         renderItem={(post, i, max) => (
                             <TopListRow
                                 key={post.id}
@@ -332,14 +346,16 @@ export default function AdminAnalyticsPage() {
                                 views={post.viewCount}
                                 maxViews={max}
                                 sub={post.category?.name ?? (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('pt-BR') : undefined)}
+                                todayViews={isToday ? post.todayViews : undefined}
                             />
                         )}
                     />
 
                     <TopList
-                        items={data?.topArtists ?? []}
-                        title="Top Artistas — Views"
+                        items={isToday ? (data?.topArtistsToday ?? []) : (data?.topArtists ?? [])}
+                        title={isToday ? 'Top Artistas — Hoje' : 'Top Artistas — Views'}
                         icon={Music2}
+                        emptyMsg={isToday ? 'Nenhuma view de artista hoje ainda' : 'Sem dados'}
                         renderItem={(artist, i, max) => (
                             <TopListRow
                                 key={artist.id}
@@ -350,14 +366,16 @@ export default function AdminAnalyticsPage() {
                                 views={artist.viewCount}
                                 maxViews={max}
                                 sub={`trending ${artist.trendingScore.toFixed(1)}`}
+                                todayViews={isToday ? artist.todayViews : undefined}
                             />
                         )}
                     />
 
                     <TopList
-                        items={data?.topNews ?? []}
-                        title="Top Notícias — Views"
+                        items={isToday ? (data?.topNewsToday ?? []) : (data?.topNews ?? [])}
+                        title={isToday ? 'Top Notícias — Hoje' : 'Top Notícias — Views'}
                         icon={Newspaper}
+                        emptyMsg={isToday ? 'Nenhuma view de notícia hoje ainda' : 'Sem dados'}
                         renderItem={(item, i, max) => (
                             <TopListRow
                                 key={item.id}
@@ -368,14 +386,16 @@ export default function AdminAnalyticsPage() {
                                 views={item.viewCount}
                                 maxViews={max}
                                 sub={item.source ?? undefined}
+                                todayViews={isToday ? item.todayViews : undefined}
                             />
                         )}
                     />
 
                     <TopList
-                        items={data?.topGroups ?? []}
-                        title="Top Grupos — Views"
+                        items={isToday ? (data?.topGroupsToday ?? []) : (data?.topGroups ?? [])}
+                        title={isToday ? 'Top Grupos — Hoje' : 'Top Grupos — Views'}
                         icon={Users}
+                        emptyMsg={isToday ? 'Nenhuma view de grupo hoje ainda' : 'Sem dados'}
                         renderItem={(group, i, max) => (
                             <TopListRow
                                 key={group.id}
@@ -386,6 +406,7 @@ export default function AdminAnalyticsPage() {
                                 views={group.viewCount}
                                 maxViews={max}
                                 sub={`trending ${group.trendingScore.toFixed(1)}`}
+                                todayViews={isToday ? group.todayViews : undefined}
                             />
                         )}
                     />
