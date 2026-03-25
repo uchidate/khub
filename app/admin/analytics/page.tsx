@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
-    TrendingUp, Search, Heart, Eye, Newspaper, Music2, Users,
-    BarChart3, RefreshCw, BookOpen, UserPlus, Globe, Loader2,
-    Film, Star,
+    Search, Eye, Newspaper, Music2, Users,
+    BarChart3, RefreshCw, BookOpen, UserPlus, Loader2, Heart,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -47,7 +46,7 @@ function BarChart({ data, height = 120 }: { data: TimeseriesRow[]; height?: numb
     return (
         <div className="space-y-2">
             <div className="flex items-end gap-px" style={{ height }}>
-                {data.map((row, i) => {
+                {data.map((row) => {
                     const pct = (row.total / max) * 100
                     // Stacked: blog | artist | news | group
                     const blogPct   = row.total > 0 ? (row.blog   / row.total) * pct : 0
