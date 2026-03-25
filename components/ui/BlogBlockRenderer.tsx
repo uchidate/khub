@@ -7,6 +7,42 @@ import { InstagramEmbed } from '@/components/ui/InstagramEmbed'
 import { TikTokEmbed } from '@/components/ui/TikTokEmbed'
 import type { BlogBlock } from '@/lib/types/blocks'
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Proxy Wikimedia images through our own route to avoid 429/hotlink issues */
+function proxied(url: string): string {
+    if (url.includes('upload.wikimedia.org') || url.includes('commons.wikimedia.org')) {
+        return `/api/image-proxy?url=${encodeURIComponent(url)}`
+    }
+    return url
+}
+
+/** Render inline markdown: **bold** and [link](url) */
+function renderInline(text: string): React.ReactNode {
+    const pattern = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
+    const parts: React.ReactNode[] = []
+    let last = 0
+    let key = 0
+    let match: RegExpExecArray | null
+
+    while ((match = pattern.exec(text)) !== null) {
+        if (match.index > last) parts.push(text.slice(last, match.index))
+        if (match[1]) {
+            parts.push(<strong key={key++} className="font-semibold text-foreground">{match[1]}</strong>)
+        } else if (match[2] && match[3]) {
+            const href = match[3]
+            const cls = "text-[#ff2d78] underline underline-offset-4 hover:brightness-110 transition-all"
+            parts.push(href.startsWith('/')
+                ? <Link key={key++} href={href} className={cls}>{match[2]}</Link>
+                : <a key={key++} href={href} target="_blank" rel="noopener noreferrer" className={cls}>{match[2]}</a>
+            )
+        }
+        last = match.index + match[0].length
+    }
+    if (last < text.length) parts.push(text.slice(last))
+    return parts.length === 1 && typeof parts[0] === 'string' ? parts[0] : <>{parts}</>
+}
+
 export interface ResolvedArtist {
     id: string
     nameRomanized: string
@@ -66,7 +102,7 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
         }
 
         case 'blog_paragraph':
-            return <p className="mb-5 leading-relaxed text-foreground text-lg text-justify hyphens-auto">{block.text}</p>
+            return <p className="mb-5 leading-relaxed text-foreground text-lg text-justify hyphens-auto">{renderInline(block.text)}</p>
 
         case 'blog_quote':
             return (
@@ -88,9 +124,8 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                     <span className={`block ${sizeClass}`}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                            src={block.url}
+                            src={proxied(block.url)}
                             alt={block.caption || ''}
-                            referrerPolicy="no-referrer"
                             className="w-full rounded-2xl border border-border shadow-xl"
                         />
                     </span>
@@ -108,7 +143,7 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                         {block.urls.filter(u => u).map((url, i) => (
                             <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-border">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={url} alt={`Imagem ${i + 1}`} referrerPolicy="no-referrer"
+                                <img src={proxied(url)} alt={`Imagem ${i + 1}`}
                                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
                             </div>
                         ))}
@@ -184,6 +219,29 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                     {block.summary && <p className="text-sm text-muted leading-relaxed italic">{block.summary}</p>}
                 </div>
             )
+
+        case 'blog_callout': {
+            const variants = {
+                fact:    { border: '#ff2d78', bg: 'rgba(255,45,120,0.06)',  label: 'FATO',   dot: 'bg-[#ff2d78]' },
+                stat:    { border: '#f59e0b', bg: 'rgba(245,158,11,0.06)', label: 'DADOS',  dot: 'bg-amber-400' },
+                info:    { border: '#3b82f6', bg: 'rgba(59,130,246,0.06)', label: 'INFO',   dot: 'bg-blue-400'  },
+                warning: { border: '#f97316', bg: 'rgba(249,115,22,0.06)', label: 'ATENÇÃO',dot: 'bg-orange-400'},
+            }
+            const v = variants[block.variant] ?? variants.info
+            return (
+                <div className="my-7 rounded-xl px-5 py-4"
+                    style={{ borderLeft: `3px solid ${v.border}`, background: v.bg }}>
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${v.dot}`} />
+                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: v.border }}>
+                            {v.label}
+                        </span>
+                    </div>
+                    {block.title && <p className="text-sm font-bold text-foreground mb-1">{block.title}</p>}
+                    <p className="text-sm leading-relaxed text-foreground">{renderInline(block.text)}</p>
+                </div>
+            )
+        }
 
         case 'blog_divider':
             return <hr className="my-10 border-t border-border" />

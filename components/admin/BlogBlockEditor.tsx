@@ -27,6 +27,7 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_stats_row:       <BarChart2 className="w-3.5 h-3.5" />,
     blog_rating:          <Star className="w-3.5 h-3.5" />,
     blog_divider:         <Minus className="w-3.5 h-3.5" />,
+    blog_callout:         <AlignLeft className="w-3.5 h-3.5" />,
 }
 
 const COLORS: Record<BlogBlockType, string> = {
@@ -45,12 +46,13 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_stats_row:       'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
     blog_rating:          'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
     blog_divider:         'bg-surface text-muted border-border',
+    blog_callout:         'bg-rose-500/20 text-rose-300 border-rose-500/30',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
 
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
-    { label: 'Texto', types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_divider'] },
+    { label: 'Texto', types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_callout', 'blog_divider'] },
     { label: 'Mídia', types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok'] },
     { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating'] },
 ]
@@ -74,6 +76,7 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_stats_row':       return { type, items: [{ label: '', value: '' }] }
         case 'blog_rating':          return { type, score: 8, label: '', summary: '' }
         case 'blog_divider':         return { type }
+        case 'blog_callout':         return { type, variant: 'fact', title: '', text: '' }
     }
 }
 
@@ -287,6 +290,27 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
 
         case 'blog_divider':
             return <div className="h-px bg-border my-1 rounded" />
+
+        case 'blog_callout':
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <label className={labelCls + ' mb-0'}>Tipo</label>
+                        <select value={block.variant}
+                            onChange={e => onChange({ ...block, variant: e.target.value as 'fact' | 'stat' | 'info' | 'warning' })}
+                            className="bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none">
+                            <option value="fact">Fato</option>
+                            <option value="stat">Dado / Stat</option>
+                            <option value="info">Info</option>
+                            <option value="warning">Atenção</option>
+                        </select>
+                    </div>
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título (opcional)..." className={inputCls} />
+                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
+                        rows={2} placeholder="Texto do destaque..." className={inputCls} />
+                </div>
+            )
     }
 }
 
