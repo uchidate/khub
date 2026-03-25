@@ -192,6 +192,9 @@ jobs:
       ollama_host:       ollama-staging
       ollama_model:      gemma:2b
 
+      umami_url:         http://31.97.255.107:3004
+      umami_website_id:  ${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
+
       post_deploy_command: "echo '✅ Staging deployed'"
       suppress_slack_on_success: true
 
@@ -232,6 +235,9 @@ jobs:
 
       ollama_host:       ollama-production
       ollama_model:      phi3:mini
+
+      umami_url:         http://31.97.255.107:3005
+      umami_website_id:  ${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
 
       post_deploy_command: "./scripts/verify-production.sh"
       suppress_slack_on_success: false

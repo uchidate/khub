@@ -153,6 +153,51 @@ services:
       - postgres-production
       - prometheus
 
+  postgres-umami-production:
+    image: postgres:15-alpine
+    container_name: hallyuhub-postgres-umami-production
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - postgres-umami-production-data:/var/lib/postgresql/data
+    networks:
+      - backend-production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  umami-production:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: hallyuhub-umami-production
+    ports:
+      - "3005:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@postgres-umami-production:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    networks:
+      - web
+      - backend-production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 512M
+    depends_on:
+      postgres-umami-production:
+        condition: service_healthy
+
 networks:
   web:
     external: true
@@ -169,3 +214,4 @@ volumes:
   instagram-images-production:
   prometheus-production-data:
   grafana-production-data:
+  postgres-umami-production-data:

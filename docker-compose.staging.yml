@@ -151,6 +151,51 @@ services:
       - postgres-staging
       - prometheus-staging
 
+  postgres-umami-staging:
+    image: postgres:15-alpine
+    container_name: hallyuhub-postgres-umami-staging
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - postgres-umami-staging-data:/var/lib/postgresql/data
+    networks:
+      - backend-staging
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  umami-staging:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: hallyuhub-umami-staging
+    ports:
+      - "3004:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@postgres-umami-staging:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    networks:
+      - web
+      - backend-staging
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+    depends_on:
+      postgres-umami-staging:
+        condition: service_healthy
+
 networks:
   web:
     external: true
@@ -167,3 +212,4 @@ volumes:
   instagram-images-staging:
   prometheus-staging-data:
   grafana-staging-data:
+  postgres-umami-staging-data:
