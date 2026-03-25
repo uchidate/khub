@@ -124,10 +124,10 @@ export default async function RootLayout({
                         strategy="lazyOnload"
                     />
                 )}
-                {process.env.NEXT_PUBLIC_UMAMI_URL && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+                {process.env.UMAMI_URL && process.env.UMAMI_WEBSITE_ID && (
                     <Script
-                        src={`${process.env.NEXT_PUBLIC_UMAMI_URL}/script.js`}
-                        data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+                        src={`${process.env.UMAMI_URL}/script.js`}
+                        data-website-id={process.env.UMAMI_WEBSITE_ID}
                         strategy="lazyOnload"
                     />
                 )}
