@@ -13,7 +13,7 @@ import { AdminEmptyState } from '@/components/admin'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
-    CalendarDays, ChevronLeft, ChevronRight, Star,
+    CalendarDays, ChevronLeft, ChevronRight, Star, Clock, TrendingUp,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -239,6 +239,56 @@ function CalendarView() {
     )
 }
 
+// ─── Blog stats ───────────────────────────────────────────────────────────────
+
+interface BlogStats { published: number; draft: number; review: number; total: number }
+
+function useBlogStats() {
+    const [stats, setStats] = useState<BlogStats | null>(null)
+
+    useEffect(() => {
+        Promise.all([
+            fetch('/api/admin/blog?limit=1').then(r => r.json()),
+            fetch('/api/admin/blog?limit=1&status=PUBLISHED').then(r => r.json()),
+            fetch('/api/admin/blog?limit=1&status=DRAFT').then(r => r.json()),
+            fetch('/api/admin/blog?limit=1&status=PENDING_REVIEW').then(r => r.json()),
+        ]).then(([all, pub, draft, review]) => {
+            setStats({
+                total:     all.total     ?? 0,
+                published: pub.total     ?? 0,
+                draft:     draft.total   ?? 0,
+                review:    review.total  ?? 0,
+            })
+        }).catch(() => {})
+    }, [])
+
+    return stats
+}
+
+function BlogStatsBar({ stats }: { stats: BlogStats | null }) {
+    const items = [
+        { label: 'Total',       value: stats?.total,     color: 'text-foreground',  icon: FileText,    bg: 'bg-surface' },
+        { label: 'Publicados',  value: stats?.published, color: 'text-emerald-400', icon: Eye,         bg: 'bg-emerald-500/5 border-emerald-500/20' },
+        { label: 'Rascunhos',   value: stats?.draft,     color: 'text-muted',       icon: BookOpen,    bg: 'bg-surface' },
+        { label: 'Em revisão',  value: stats?.review,    color: 'text-yellow-400',  icon: TrendingUp,  bg: 'bg-yellow-500/5 border-yellow-500/20' },
+    ]
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {items.map(({ label, value, color, icon: Icon, bg }) => (
+                <div key={label} className={`flex items-center gap-3 px-4 py-3 rounded-xl border border-border ${bg}`}>
+                    <Icon size={15} className={`${color} shrink-0`} />
+                    <div>
+                        <p className={`text-lg font-black leading-none ${color}`}>
+                            {value == null ? <span className="text-muted text-sm">—</span> : value.toLocaleString('pt-BR')}
+                        </p>
+                        <p className="text-[11px] text-muted mt-0.5">{label}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
 // ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -431,11 +481,14 @@ export default function AdminBlogPage() {
     const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
     const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
 
+    const blogStats = useBlogStats()
+
     const [activeTab,     setActiveTab]    = useState<Tab>('suggestions')
     const [suggestions,   setSuggestions]  = useState<NewsSuggestion[]>([])
     const [loading,       setLoading]      = useState(false)
     const [hiddenIds,     setHiddenIds]    = useState<Set<string>>(new Set())
     const [generatingAll, setGeneratingAll] = useState(false)
+    const [statusFilter,  setStatusFilter] = useState<string>('')
 
     const fetchSuggestions = useCallback(async () => {
         setLoading(true)
@@ -527,7 +580,17 @@ export default function AdminBlogPage() {
             key: 'viewCount',
             label: 'Views',
             sortable: true,
-            render: (post) => <span className="text-sm text-muted flex items-center gap-1"><Eye size={11} />{post.viewCount}</span>,
+            render: (post) => <span className="text-sm text-muted flex items-center gap-1"><Eye size={11} />{post.viewCount.toLocaleString('pt-BR')}</span>,
+        },
+        {
+            key: 'readingTimeMin',
+            label: 'Leitura',
+            render: (post) => (
+                <span className="text-sm text-muted flex items-center gap-1">
+                    <Clock size={11} />
+                    {post.readingTimeMin > 0 ? `${post.readingTimeMin}min` : '—'}
+                </span>
+            ),
         },
         {
             key: 'publishedAt',
@@ -546,6 +609,8 @@ export default function AdminBlogPage() {
     return (
         <AdminLayout title="Blog Pipeline">
             <div className="space-y-5">
+
+                <BlogStatsBar stats={blogStats} />
 
                 <PageGuide
                     storageKey="blog"
@@ -669,10 +734,35 @@ export default function AdminBlogPage() {
 
                 {/* Posts tab */}
                 {activeTab === 'posts' && (
+                    <div className="space-y-3">
+                        {/* Status filter chips */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {[
+                                { value: '',               label: 'Todos' },
+                                { value: 'PUBLISHED',      label: 'Publicado' },
+                                { value: 'DRAFT',          label: 'Rascunho' },
+                                { value: 'PENDING_REVIEW', label: 'Em revisão' },
+                                { value: 'ARCHIVED',       label: 'Arquivado' },
+                            ].map(opt => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setStatusFilter(opt.value)}
+                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
+                                        statusFilter === opt.value
+                                            ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                                            : 'text-muted border-border hover:text-foreground hover:border-border'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
                     <DataTable<BlogPost>
                         columns={columns}
                         apiUrl="/api/admin/blog"
                         searchPlaceholder="Buscar por título..."
+                        extraParams={statusFilter ? { status: statusFilter } : {}}
                         actions={(post) => (
                             <div className="flex items-center gap-1">
                                 <AdminIconLink
@@ -684,13 +774,19 @@ export default function AdminBlogPage() {
                                 </AdminIconLink>
                                 <FeaturedButton post={post} onDone={refetchTable} />
                                 <PublishButton post={post} onDone={refetchTable} />
-                                {post.status === 'PUBLISHED' && (
+                                {(post.status === 'PUBLISHED' || post.status === 'DRAFT' || post.status === 'PENDING_REVIEW') && (
                                     <Link
-                                        href={(post as unknown as { isPrivate?: boolean }).isPrivate ? `/blog/preview/${post.slug}` : `/blog/${post.slug}`}
+                                        href={post.status === 'PUBLISHED'
+                                            ? `/blog/${post.slug}`
+                                            : `/blog/preview/${post.slug}`}
                                         target="_blank"
                                         onClick={(e) => e.stopPropagation()}
-                                        className="p-1.5 rounded text-muted hover:text-green-300 hover:bg-green-400/10 transition-colors"
-                                        title={(post as unknown as { isPrivate?: boolean }).isPrivate ? 'Ver prévia privada' : 'Ver publicado'}
+                                        className={`p-1.5 rounded transition-colors ${
+                                            post.status === 'PUBLISHED'
+                                                ? 'text-muted hover:text-green-300 hover:bg-green-400/10'
+                                                : 'text-muted hover:text-blue-300 hover:bg-blue-400/10'
+                                        }`}
+                                        title={post.status === 'PUBLISHED' ? 'Ver publicado' : 'Ver prévia'}
                                     >
                                         <Eye size={14} />
                                     </Link>
@@ -698,6 +794,7 @@ export default function AdminBlogPage() {
                             </div>
                         )}
                     />
+                    </div>
                 )}
             </div>
         </AdminLayout>
