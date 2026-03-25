@@ -120,24 +120,12 @@ const SECTIONS = [
   },
   {
     icon: Zap,
-    label: 'Premium e Beta',
+    label: 'Outros',
     color: 'text-yellow-400',
     bg: 'bg-yellow-500/10',
     items: [
       {
-        q: 'O que é o plano Premium?',
-        a: 'Estamos desenvolvendo planos pagos com funcionalidades avançadas como notificações personalizadas, download de conteúdo, acesso antecipado a novos recursos e muito mais. Veja detalhes em /premium.',
-      },
-      {
-        q: 'Como registro interesse no Premium?',
-        a: 'Acesse /premium e clique em "Quero ser VIP". Você receberá 40% de desconto vitalício quando o plano for lançado. O registro de interesse não gera cobrança imediata.',
-      },
-      {
-        q: 'O HallyuHub está em beta?',
-        a: 'Sim, estamos em fase beta pública. Isso significa que novas funcionalidades são lançadas frequentemente e você pode encontrar pequenas instabilidades. Seu feedback é muito valioso — use o botão de reportar problema em qualquer página.',
-      },
-      {
-        q: 'Como reporto bugs ou sugiro melhorias?',
+        q: 'Como reporto erros ou sugiro melhorias?',
         a: 'Use o ícone de flag (⚑) disponível nas páginas de artistas, produções e grupos para reportar informações incorretas. Para sugestões gerais, entre em contato pelo e-mail contato@hallyuhub.com.br.',
       },
     ],
