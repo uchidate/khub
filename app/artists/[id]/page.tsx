@@ -111,23 +111,23 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
 
     if (!artist) {
         return {
-            title: 'Artista não encontrado - HallyuHub',
+            title: 'Artista não encontrado',
             description: 'Este artista não foi encontrado em nossa base de dados.'
         }
     }
-    if (artist.isHidden) return { title: 'Artista não encontrado - HallyuHub', robots: { index: false, follow: false } }
+    if (artist.isHidden) return { title: 'Artista não encontrado', robots: { index: false, follow: false } }
 
     const roles = artist.roles || []
     const description = artist.bio || `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''} - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
     const isThinContent = !artist.primaryImageUrl && !artist.bio
 
     return {
-        title: `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''} - HallyuHub`,
+        title: `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}`,
         description: description.slice(0, 160),
         alternates: { canonical: `${BASE_URL}/artists/${params.id}` },
         ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
-            title: `${artist.nameRomanized} - HallyuHub`,
+            title: `${artist.nameRomanized} | HallyuHub`,
             description: description.slice(0, 160),
             images: artist.primaryImageUrl ? [{ url: artist.primaryImageUrl, width: 1200, height: 630, alt: artist.nameRomanized }] : [],
             type: 'profile',
@@ -135,7 +135,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${artist.nameRomanized} - HallyuHub`,
+            title: `${artist.nameRomanized} | HallyuHub`,
             description: description.slice(0, 160),
             images: artist.primaryImageUrl ? [artist.primaryImageUrl] : []
         }
@@ -239,6 +239,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 "jobTitle": artist.roles?.[0] ?? undefined,
                 ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name } } : {}),
                 ...(artist.agency ? { "worksFor": { "@type": "Organization", "name": artist.agency.name } } : {}),
+                ...(() => {
+                    const links = (artist.socialLinks as Record<string, string> | null) ?? {}
+                    const sameAs = Object.values(links).filter(Boolean)
+                    return sameAs.length > 0 ? { "sameAs": sameAs } : {}
+                })(),
             }} />
             <JsonLd data={{
                 "@context": "https://schema.org",

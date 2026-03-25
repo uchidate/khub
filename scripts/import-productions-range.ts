@@ -119,6 +119,7 @@ async function main() {
                 runtime:          prod.tmdbType === 'movie' ? prod.runtime : null,
                 episodeRuntime:   prod.tmdbType === 'tv' ? (prod.episodeRuntime ?? prod.runtime) : null,
                 voteAverage:      prod.voteAverage,
+                voteCount:        prod.voteCount,
                 trailerUrl:       prod.trailerUrl,
                 tags:             prod.tags,
                 ageRating:        prod.ageRating,

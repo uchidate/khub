@@ -55,11 +55,11 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
 
     if (!production) {
         return {
-            title: 'Produção não encontrada - HallyuHub',
+            title: 'Produção não encontrada',
             description: 'Esta produção não foi encontrada em nossa base de dados.'
         }
     }
-    if (production.isHidden) return { title: 'Produção não encontrada - HallyuHub', robots: { index: false, follow: false } }
+    if (production.isHidden) return { title: 'Produção não encontrada', robots: { index: false, follow: false } }
 
     // Conteúdo adulto não deve ser indexado: ageRating='18' ou flagrado pela IA como adulto
     if (production.ageRating === '18' || production.isAdultContent === true) {
@@ -77,13 +77,15 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         : description
 
     return {
-        title: `${production.titlePt} (${production.titleKr}) - HallyuHub`,
+        title: production.titleKr
+            ? `${production.titlePt} (${production.titleKr})`
+            : production.titlePt,
         description: fullDescription.slice(0, 160),
         alternates: {
             canonical: `${BASE_URL}/productions/${params.id}`,
         },
         openGraph: {
-            title: `${production.titlePt} - HallyuHub`,
+            title: `${production.titlePt} | HallyuHub`,
             description: fullDescription.slice(0, 160),
             images: production.imageUrl ? [{
                 url: production.imageUrl,
@@ -96,7 +98,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${production.titlePt} - HallyuHub`,
+            title: `${production.titlePt} | HallyuHub`,
             description: fullDescription.slice(0, 160),
             images: production.imageUrl ? [production.imageUrl] : []
         }
@@ -212,6 +214,15 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 ...(production.year ? { "datePublished": String(production.year) } : {}),
                 ...(castActors.length ? { "actor": castActors } : {}),
                 ...(production.tags?.length ? { "genre": production.tags } : {}),
+                ...(production.voteAverage && production.voteAverage > 0 && production.voteCount && production.voteCount > 0 ? {
+                    "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": production.voteAverage.toFixed(1),
+                        "bestRating": "10",
+                        "worstRating": "0",
+                        "ratingCount": production.voteCount,
+                    }
+                } : {}),
             }} />
             <JsonLd data={{
                 "@context": "https://schema.org",

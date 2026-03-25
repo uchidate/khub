@@ -239,6 +239,7 @@ model Production {
   releaseDate        DateTime? // Precise release date
   runtime            Int? // Minutes
   voteAverage        Float? // TMDB rating
+  voteCount          Int?   // TMDB vote count (usado no aggregateRating JSON-LD)
   trailerUrl         String? // YouTube trailer URL
   tagline            String? // Slogan/frase de impacto do TMDB
   // Conteúdo editorial original
