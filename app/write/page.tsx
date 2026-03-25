@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -225,6 +225,19 @@ function WritePageContent() {
   }
 
   const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
+
+  // Cmd+S / Ctrl+S to save
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        if (title && hasContent && !saving) handleSave()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, hasContent, saving])
 
   if (status === 'loading') return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>
   if (!session) return <div className="min-h-screen flex items-center justify-center text-muted">Faça login para escrever.</div>
