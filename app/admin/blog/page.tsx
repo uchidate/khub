@@ -864,7 +864,7 @@ export default function AdminBlogPage() {
     const [statsKey,      setStatsKey]     = useState(0)
     const blogStats = useBlogStats(statsKey)
 
-    const [activeTab,     setActiveTab]    = useState<Tab>('suggestions')
+    const [activeTab,     setActiveTab]    = useState<Tab>('posts')
     const [suggestions,   setSuggestions]  = useState<NewsSuggestion[]>([])
     const [loading,       setLoading]      = useState(false)
     const [hiddenIds,     setHiddenIds]    = useState<Set<string>>(new Set())
@@ -1132,11 +1132,11 @@ export default function AdminBlogPage() {
                 {/* Tabs */}
                 <AdminTabGroup
                     tabs={[
-                        { key: 'suggestions', label: 'Sugestões IA', icon: <Sparkles className="w-3.5 h-3.5" />, badge: visibleSuggestions.length },
                         { key: 'posts',       label: 'Posts',        icon: <FileText className="w-3.5 h-3.5" /> },
                         { key: 'top',         label: 'Top Posts',    icon: <TrendingUp className="w-3.5 h-3.5" /> },
                         { key: 'calendar',    label: 'Calendário',   icon: <CalendarDays className="w-3.5 h-3.5" /> },
                         { key: 'categories',  label: 'Categorias',   icon: <Tag className="w-3.5 h-3.5" /> },
+                        { key: 'suggestions', label: 'Sugestões IA', icon: <Sparkles className="w-3.5 h-3.5" />, badge: visibleSuggestions.length },
                     ]}
                     active={activeTab}
                     onChange={v => { setActiveTab(v as Tab); setSelectedIds([]) }}
