@@ -143,6 +143,7 @@ export type BlogArtistCardBlock = {
     type: 'blog_artist_card'
     artistId: string
     note?: string          // anotação editorial opcional
+    compact?: boolean
 }
 
 // Bloco de card de produção
@@ -150,6 +151,7 @@ export type BlogProductionCardBlock = {
     type: 'blog_production_card'
     productionId: string
     note?: string
+    compact?: boolean
 }
 
 // Bloco de card de grupo musical
@@ -157,6 +159,7 @@ export type BlogGroupCardBlock = {
     type: 'blog_group_card'
     groupId: string
     note?: string
+    compact?: boolean
 }
 
 // Linha de stats biográficos (ex: data de nascimento, altura, grupo)
