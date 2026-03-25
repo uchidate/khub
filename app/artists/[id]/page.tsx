@@ -163,13 +163,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     // Step 2: queries secundárias todas em paralelo (incluindo relatedArtists)
     const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
     const productionIds = artist.productions.map(ap => ap.production.id)
-    const [artistNews, instagramPosts, newsCount, bioPt, productionTranslations, relatedArtists] = await Promise.all([
-        prisma.news.findMany({
-            where: { isHidden: false, status: 'published', artists: { some: { artistId: params.id } } },
-            select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true },
-            orderBy: { publishedAt: 'desc' },
-            take: 6,
-        }).catch(() => []),
+    const [instagramPosts, newsCount, bioPt, productionTranslations, relatedArtists] = await Promise.all([
         prisma.instagramPost.findMany({
             where: { artistId: params.id },
             orderBy: { postedAt: 'desc' },
@@ -582,54 +576,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 </div>
                             )}
                         </section>
-
-                        {/* Notícias */}
-                        {artistNews.length > 0 && (
-                            <section>
-                                <div className="flex items-center gap-3 mb-5">
-                                    <div className="flex items-center gap-2">
-                                        <Newspaper className="w-4 h-4 text-amber-500" />
-                                        <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Notícias</h3>
-                                    </div>
-                                    <div className="flex-1 h-px bg-[#e8e8e8]" />
-                                    <Link href={`/news?artistId=${artist.id}`} className="text-xs font-bold text-[#ff2d78] hover:underline transition-colors flex-shrink-0">
-                                        Ver todas →
-                                    </Link>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {artistNews.map((item) => (
-                                        <Link key={item.id} href={`/news/${item.id}`}
-                                            className="group flex gap-4 p-4 rounded-2xl bg-background border border-border hover:border-[#ff2d78]/30 hover:shadow-sm transition-all">
-                                            <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-surface">
-                                                {item.imageUrl ? (
-                                                    <Image src={item.imageUrl} alt={item.title} fill sizes="80px"
-                                                        className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <Newspaper className="w-5 h-5 text-muted/40" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col justify-between min-w-0 flex-1">
-                                                <h4 className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-snug">
-                                                    {item.title}
-                                                </h4>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <span className="text-[10px] font-bold text-muted">
-                                                        {new Date(item.publishedAt).toLocaleDateString('pt-BR')}
-                                                    </span>
-                                                    {item.tags?.[0] && (
-                                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-surface text-muted rounded-sm border border-border">
-                                                            {item.tags[0]}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
 
                         {/* Discography */}
                         {artist.albums.length > 0 && (
