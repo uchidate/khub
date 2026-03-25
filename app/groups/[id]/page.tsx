@@ -10,7 +10,7 @@ import { ReportButton } from '@/components/ui/ReportButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
-import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Newspaper, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
+import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
@@ -120,7 +120,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
     const websiteUrl = socialLinks.website ?? socialLinks.Website ?? socialLinks.official ?? null
 
     // Step 2: queries secundárias todas em paralelo
-    const [bioPt, themeColorFetched, relatedGroups, relatedNews, recentAlbums] = await Promise.all([
+    const [bioPt, themeColorFetched, relatedGroups, recentAlbums] = await Promise.all([
         getTranslation('group', params.id, 'bio', 'pt-BR').catch(() => null),
         !officialColorRaw && websiteUrl ? fetchGroupThemeColor(websiteUrl) : Promise.resolve(null),
         prisma.musicalGroup.findMany({
@@ -138,14 +138,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
             orderBy: { trendingScore: 'desc' },
             select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
         }).catch(() => []),
-        memberArtistIds.length > 0
-            ? prisma.news.findMany({
-                where: { isHidden: false, status: 'published', artists: { some: { artistId: { in: memberArtistIds } } } },
-                take: 6,
-                orderBy: { publishedAt: 'desc' },
-                select: { id: true, title: true, imageUrl: true, publishedAt: true, tags: true, contentMd: true },
-            }).catch(() => [])
-            : Promise.resolve([]),
         memberArtistIds.length > 0
             ? prisma.album.findMany({
                 where: { artistId: { in: memberArtistIds } },
@@ -499,52 +491,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                         )}
 
                         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_GROUP!} format="horizontal" className="my-8" />
-
-                        {/* Notícias recentes */}
-                        {relatedNews.length > 0 && (
-                            <section>
-                                <SectionHeader icon={<Newspaper className="w-5 h-5" />} title="Notícias Recentes" accent={accent} />
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    {relatedNews.map(news => (
-                                        <Link key={news.id} href={`/news/${news.id}`}
-                                            className="news-card group flex gap-4 p-4 rounded-2xl bg-background border border-border hover:bg-surface transition-all">
-                                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-surface flex-shrink-0">
-                                                {news.imageUrl ? (
-                                                    <Image src={news.imageUrl} alt={news.title} fill sizes="80px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <Newspaper className="w-6 h-6 text-[#444]" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] text-[#ff2d78] font-black uppercase tracking-widest mb-1">
-                                                    {new Date(news.publishedAt).toLocaleDateString('pt-BR')}
-                                                </p>
-                                                <h3 className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-snug">
-                                                    {news.title}
-                                                </h3>
-                                                <p className="text-xs text-muted mt-1 line-clamp-1">
-                                                    {news.contentMd
-                                                        .replace(/#{1,6}\s+/g, '')
-                                                        .replace(/\*\*([^*]+)\*\*/g, '$1')
-                                                        .replace(/\n+/g, ' ')
-                                                        .trim()
-                                                        .slice(0, 80)}
-                                                </p>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                                <div className="mt-4 text-center">
-                                    <Link href={`/news?groupId=${group.id}`}
-                                        className="inline-flex items-center gap-2 text-sm font-bold transition-colors"
-                                        style={{ color: accent }}>
-                                        Ver todas as notícias →
-                                    </Link>
-                                </div>
-                            </section>
-                        )}
 
                         {/* Grupos Relacionados */}
                         {relatedGroups.length > 0 && (
