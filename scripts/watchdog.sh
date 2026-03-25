@@ -3,8 +3,12 @@
 # Watchdog — HallyuHub Auto-Recovery (Production + Staging)
 # ============================================================
 # Monitora os containers hallyuhub e hallyuhub-staging a cada minuto.
+# Monitora também o nginx (reverse proxy HTTPS).
 # Se não responderem ao health check, aguarda 15s e tenta novamente.
 # Se ainda falhar, reinicia o container e notifica via Slack.
+#
+# IMPORTANTE: health check via localhost (não via domínio) para não
+# depender do nginx — evita reiniciar container quando é o nginx que caiu.
 #
 # Cron entry (instalado pelo deploy.yml):
 #   * * * * * /var/www/hallyuhub/scripts/watchdog.sh >> /var/log/hallyuhub-watchdog.log 2>&1
@@ -15,9 +19,10 @@ set -euo pipefail
 TIMEOUT=10
 LOG_PREFIX="[watchdog $(date '+%Y-%m-%d %H:%M:%S')]"
 
-# Ambientes monitorados: CONTAINER|HEALTH_URL|LABEL
+# Ambientes monitorados: CONTAINER|HEALTH_URL_LOCAL|LABEL
+# URLs locais (localhost) para bypassar nginx — detecta falha real do app
 ENVS=(
-  "hallyuhub|https://www.hallyuhub.com.br/api/health|Production"
+  "hallyuhub|http://127.0.0.1:3000/api/health|Production"
   "hallyuhub-staging|http://127.0.0.1:3001/api/health|Staging"
 )
 
@@ -37,6 +42,39 @@ notify_slack() {
     fi
 }
 
+# ── Monitora nginx (serviço do host, não container) ──────────────────────────
+watch_nginx() {
+    if systemctl is-active --quiet nginx; then
+        return 0
+    fi
+
+    echo "$LOG_PREFIX [Nginx] ALERTA: nginx inativo — tentando recuperar"
+
+    # Valida config antes de tentar subir (evita loop com config inválida)
+    if ! nginx -t 2>/dev/null; then
+        echo "$LOG_PREFIX [Nginx] ERRO: nginx -t falhou — config inválida, NÃO reiniciando"
+        notify_slack "🚨 *[Watchdog Nginx]* nginx inativo e config inválida — intervenção manual necessária (\`nginx -t\`)"
+        return 1
+    fi
+
+    systemctl start nginx 2>&1 || {
+        echo "$LOG_PREFIX [Nginx] ERRO: falha ao iniciar nginx"
+        notify_slack "🚨 *[Watchdog Nginx]* Falha ao iniciar nginx — intervenção manual necessária"
+        return 1
+    }
+
+    sleep 3
+    if systemctl is-active --quiet nginx; then
+        echo "$LOG_PREFIX [Nginx] Recuperado com sucesso"
+        notify_slack "✅ *[Watchdog Nginx]* nginx reiniciado e ativo novamente."
+    else
+        echo "$LOG_PREFIX [Nginx] nginx ainda inativo após tentativa"
+        notify_slack "🚨 *[Watchdog Nginx]* nginx não subiu após tentativa — intervenção manual necessária"
+        return 1
+    fi
+}
+
+# ── Monitora container da aplicação ──────────────────────────────────────────
 watch_container() {
     local CONTAINER="$1"
     local HEALTH_URL="$2"
@@ -55,7 +93,7 @@ watch_container() {
     # Container parado intencionalmente → não interferir
     [ "$STATE" = "exited" ]     && return 0
 
-    # Verifica health check HTTP
+    # Verifica health check HTTP via localhost (bypassa nginx)
     check_health && return 0
 
     echo "$LOG_PREFIX [$LABEL] ALERTA: Health check falhou (tentativa 1)"
@@ -66,7 +104,7 @@ watch_container() {
 
     echo "$LOG_PREFIX [$LABEL] ALERTA: Health check falhou (tentativa 2) — reiniciando container"
 
-    docker restart --time 10 "$CONTAINER" 2>&1 || {
+    docker restart --timeout 10 "$CONTAINER" 2>&1 || {
         echo "$LOG_PREFIX [$LABEL] ERRO: Falha ao reiniciar container"
         notify_slack "🚨 *[Watchdog $LABEL]* Falha ao reiniciar \`$CONTAINER\` — intervenção manual necessária!"
         return 1
@@ -88,7 +126,12 @@ watch_container() {
     return 1
 }
 
-# Monitora cada ambiente (falhas individuais não interrompem o loop)
+# ── Execução ─────────────────────────────────────────────────────────────────
+
+# 1. Nginx primeiro — se estiver down, containers podem parecer mortos via HTTPS
+watch_nginx || true
+
+# 2. Containers da aplicação (via localhost, independente do nginx)
 for env_entry in "${ENVS[@]}"; do
     CONTAINER=$(echo "$env_entry" | cut -d'|' -f1)
     HEALTH_URL=$(echo "$env_entry" | cut -d'|' -f2)
