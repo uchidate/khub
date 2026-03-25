@@ -1,22 +1,20 @@
 import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { SITE_URL, baseOG, baseTwitter } from '@/lib/constants/site'
 
 export const metadata: Metadata = {
   title: 'Perguntas Frequentes (FAQ)',
-  description: 'Tire suas dúvidas sobre o HallyuHub — a maior plataforma de cultura coreana em português. Saiba sobre conta, favoritos, notícias, premium e muito mais.',
-  alternates: { canonical: 'https://www.hallyuhub.com.br/faq' },
+  description: 'Tire suas dúvidas sobre o HallyuHub — a maior plataforma de cultura coreana em português. Saiba sobre conta, favoritos, notícias e muito mais.',
+  alternates: { canonical: `${SITE_URL}/faq` },
   openGraph: {
+    ...baseOG(`${SITE_URL}/faq`),
     title: 'Perguntas Frequentes | HallyuHub',
     description: 'Tire suas dúvidas sobre o HallyuHub — a maior plataforma de cultura coreana em português.',
-    url: 'https://www.hallyuhub.com.br/faq',
-    type: 'website',
-    images: [{ url: 'https://www.hallyuhub.com.br/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
-    card: 'summary_large_image',
+    ...baseTwitter(),
     title: 'Perguntas Frequentes | HallyuHub',
     description: 'Tire suas dúvidas sobre o HallyuHub — a maior plataforma de cultura coreana em português.',
-    images: ['https://www.hallyuhub.com.br/opengraph-image'],
   },
 }
 

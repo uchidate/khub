@@ -5,25 +5,21 @@ import { AdBanner } from '@/components/ui/AdBanner'
 import { Mail, Instagram, HelpCircle, FileText, Handshake } from 'lucide-react'
 import Link from 'next/link'
 
-import { SITE_URL } from '@/lib/constants/site'
-const BASE_URL = SITE_URL
+import { SITE_URL, baseOG, baseTwitter } from '@/lib/constants/site'
 
 export const metadata: Metadata = {
     title: 'Contato',
     description: 'Entre em contato com o HallyuHub. Tire dúvidas, envie sugestões, reporte erros ou proponha parcerias. Estamos prontos para te ouvir!',
-    alternates: { canonical: `${BASE_URL}/contato` },
+    alternates: { canonical: `${SITE_URL}/contato` },
     openGraph: {
+        ...baseOG(`${SITE_URL}/contato`),
         title: 'Fale com o HallyuHub',
         description: 'Entre em contato com o HallyuHub. Tire dúvidas, envie sugestões ou reporte um problema.',
-        url: `${BASE_URL}/contato`,
-        type: 'website',
-        images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
     },
     twitter: {
-        card: 'summary_large_image',
+        ...baseTwitter(),
         title: 'Fale com o HallyuHub',
         description: 'Entre em contato com o HallyuHub. Tire dúvidas, envie sugestões ou reporte um problema.',
-        images: [`${BASE_URL}/opengraph-image`],
     },
 }
 
@@ -72,14 +68,14 @@ export default function ContatoPage() {
             <JsonLd data={{
                 '@context': 'https://schema.org',
                 '@type': 'ContactPage',
-                'url': `${BASE_URL}/contato`,
+                'url': `${SITE_URL}/contato`,
                 'name': 'Contato — HallyuHub',
                 'description': 'Página de contato do HallyuHub, o maior portal de cultura coreana em português.',
                 'publisher': {
                     '@type': 'Organization',
                     'name': 'HallyuHub',
-                    'url': BASE_URL,
-                    'logo': `${BASE_URL}/og-image.jpg`,
+                    'url': SITE_URL,
+                    'logo': `${SITE_URL}/og-image.jpg`,
                     'email': 'contato@hallyuhub.com.br',
                     'sameAs': ['https://www.instagram.com/hallyuhub_br/'],
                     'contactPoint': {
