@@ -56,8 +56,13 @@ function PipelineCard({
         done:     'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
     }
 
+    const exactDate = new Date(time).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+    })
+
     return (
-        <div className="group bg-surface border border-border rounded-xl p-3 hover:border-border hover:shadow-[0_0_0_1px_rgba(59,130,246,0.1)] transition-all">
+        <div className="group bg-surface border border-border rounded-xl p-3 hover:border-blue-500/20 hover:shadow-[0_0_0_1px_rgba(59,130,246,0.1)] transition-all">
             <div className="flex gap-2.5">
                 {imageUrl ? (
                     <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
@@ -67,7 +72,12 @@ function PipelineCard({
                     <div className="w-10 h-10 rounded-lg bg-surface flex-shrink-0" />
                 )}
                 <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-medium text-foreground line-clamp-2 leading-tight">{title}</p>
+                    <Link
+                        href={href}
+                        className="text-[12px] font-medium text-foreground hover:text-blue-400 line-clamp-2 leading-tight transition-colors"
+                    >
+                        {title}
+                    </Link>
                     {subtitle && <p className="text-[11px] text-muted mt-0.5 truncate">{subtitle}</p>}
                 </div>
             </div>
@@ -78,7 +88,7 @@ function PipelineCard({
                         {tag}
                     </span>
                 )}
-                <span className="text-[10px] text-muted ml-auto">{timeAgo(time)}</span>
+                <span className="text-[10px] text-muted ml-auto" title={exactDate}>{timeAgo(time)}</span>
                 {publicHref && (
                     <Link
                         href={publicHref}
@@ -92,13 +102,13 @@ function PipelineCard({
                 <Link
                     href={href}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-foreground"
-                    title="Editar"
+                    title="Abrir editor"
                 >
                     <ExternalLink size={11} />
                 </Link>
             </div>
 
-            {actions && <div className="mt-2 pt-2 border-t border-border">{actions}</div>}
+            {actions && <div className="mt-2 pt-2 border-t border-border flex flex-wrap gap-1">{actions}</div>}
         </div>
     )
 }
@@ -128,13 +138,13 @@ function PipelineColumn({
 
     return (
         <div className="flex flex-col min-w-[260px] max-w-[300px] flex-shrink-0 lg:flex-1">
-            {/* Header da coluna */}
-            <div className={`px-3 py-2.5 rounded-xl border mb-2 bg-surface ${c.header}`}>
+            {/* Header da coluna — sticky */}
+            <div className={`sticky top-0 z-10 px-3 py-2.5 rounded-xl border mb-2 bg-surface ${c.header}`}>
                 <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c.dot}`} />
                     <Icon size={13} className={c.label} />
                     <span className={`text-xs font-bold flex-1 ${c.label}`}>{title}</span>
-                    <span className="text-[10px] font-black text-muted bg-surface px-2 py-0.5 rounded-full">{count}</span>
+                    <span className="text-[10px] font-black text-muted bg-surface px-2 py-0.5 rounded-full">{count.toLocaleString('pt-BR')}</span>
                 </div>
                 {batchAction && (
                     <div className="mt-1.5 pt-1.5 border-t border-border">
@@ -169,25 +179,41 @@ function PipelineColumn({
 // ─── Barra de saúde do pipeline ───────────────────────────────────────────────
 
 function PipelineHealthBar({ stats }: {
-    stats: { label: string; value: number; color: string; href: string }[]
+    stats: { label: string; value: number; color: string; href: string; barColor?: string }[]
 }) {
+    const total = stats.reduce((s, a) => s + a.value, 0)
+
     return (
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-surface border border-border rounded-xl">
-            {stats.map((s, i) => (
-                <Link key={i} href={s.href} className="flex items-center gap-2 group">
-                    <span className={`text-lg font-black ${s.color} group-hover:opacity-80 transition-opacity`}>{s.value.toLocaleString('pt-BR')}</span>
-                    <span className="text-[11px] text-muted group-hover:text-foreground transition-colors">{s.label}</span>
-                    {i < stats.length - 1 && <span className="text-muted ml-1">·</span>}
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            {/* Barra de progresso proporcional */}
+            {total > 0 && (
+                <div className="flex h-1">
+                    {stats.map((s, i) => (
+                        <div
+                            key={i}
+                            style={{ width: `${(s.value / total) * 100}%` }}
+                            className={`${s.barColor ?? 'bg-border'} transition-all`}
+                        />
+                    ))}
+                </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                {stats.map((s, i) => (
+                    <Link key={i} href={s.href} className="flex items-center gap-2 group">
+                        <span className={`text-lg font-black ${s.color} group-hover:opacity-80 transition-opacity`}>{s.value.toLocaleString('pt-BR')}</span>
+                        <span className="text-[11px] text-muted group-hover:text-foreground transition-colors">{s.label}</span>
+                        {i < stats.length - 1 && <span className="text-muted ml-1">·</span>}
+                    </Link>
+                ))}
+                <Link
+                    href="/admin/pipeline"
+                    className="ml-auto flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
+                    title="Atualizar"
+                >
+                    <RefreshCw size={10} />
+                    Atualizar
                 </Link>
-            ))}
-            <Link
-                href="/admin/pipeline"
-                className="ml-auto flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
-                title="Atualizar"
-            >
-                <RefreshCw size={10} />
-                Atualizar
-            </Link>
+            </div>
         </div>
     )
 }
@@ -244,10 +270,10 @@ export default async function PipelinePage({ searchParams }: Props) {
         ])
 
         const healthStats = [
-            { label: 'rascunhos',      value: draftsCount,             color: 'text-foreground',  href: '/admin/pipeline?tab=news' },
-            { label: 'sem tradução',   value: withoutTranslationCount, color: 'text-yellow-400',  href: '/admin/pipeline?tab=news' },
-            { label: 'publicados',     value: publishedCount,          color: 'text-emerald-400', href: '/admin/pipeline?tab=news' },
-            { label: 'ocultos',        value: hiddenCount,             color: 'text-red-400',     href: '/admin/pipeline?tab=news' },
+            { label: 'rascunhos',    value: draftsCount,             color: 'text-foreground',  href: '/admin/pipeline?tab=news', barColor: 'bg-zinc-600' },
+            { label: 'sem tradução', value: withoutTranslationCount, color: 'text-yellow-400',  href: '/admin/pipeline?tab=news', barColor: 'bg-yellow-500' },
+            { label: 'publicados',   value: publishedCount,          color: 'text-emerald-400', href: '/admin/pipeline?tab=news', barColor: 'bg-emerald-500' },
+            { label: 'ocultos',      value: hiddenCount,             color: 'text-red-400',     href: '/admin/pipeline?tab=news', barColor: 'bg-red-500' },
         ]
 
         return (
@@ -497,10 +523,10 @@ export default async function PipelinePage({ searchParams }: Props) {
             ].join(' · ')
 
         const healthStats = [
-            { label: 'sem conteúdo',       value: noContentCount,    color: 'text-foreground',  href: '/admin/pipeline?tab=artists' },
-            { label: 'incompletos',        value: partialCount,      color: 'text-muted',       href: '/admin/pipeline?tab=artists' },
-            { label: 'aguard. curadoria',  value: enrichedCount,     color: 'text-yellow-400',  href: '/admin/pipeline?tab=artists' },
-            { label: 'curados',            value: curatedCount,      color: 'text-emerald-400', href: '/admin/pipeline?tab=artists' },
+            { label: 'sem conteúdo',      value: noContentCount,  color: 'text-foreground',  href: '/admin/pipeline?tab=artists', barColor: 'bg-zinc-600' },
+            { label: 'incompletos',       value: partialCount,    color: 'text-muted',       href: '/admin/pipeline?tab=artists', barColor: 'bg-zinc-500' },
+            { label: 'aguard. curadoria', value: enrichedCount,   color: 'text-yellow-400',  href: '/admin/pipeline?tab=artists', barColor: 'bg-yellow-500' },
+            { label: 'curados',           value: curatedCount,    color: 'text-emerald-400', href: '/admin/pipeline?tab=artists', barColor: 'bg-emerald-500' },
         ]
 
         return (
@@ -768,11 +794,11 @@ export default async function PipelinePage({ searchParams }: Props) {
     ])
 
     const healthStats = [
-        { label: 'curadoria',      value: pendingCurationCount,        color: 'text-orange-400',  href: '/admin/pipeline?tab=productions' },
-        { label: 'sem sinopse',    value: withoutSynopsisCount,        color: 'text-foreground',  href: '/admin/pipeline?tab=productions' },
-        { label: 'sem tradução',   value: withoutTranslationProdCount, color: 'text-yellow-400',  href: '/admin/pipeline?tab=productions' },
-        { label: 'completas',      value: completeCount,               color: 'text-emerald-400', href: '/admin/pipeline?tab=productions' },
-        { label: 'ocultas',        value: hiddenProdCount,             color: 'text-red-400',     href: '/admin/pipeline?tab=productions' },
+        { label: 'curadoria',    value: pendingCurationCount,        color: 'text-orange-400',  href: '/admin/pipeline?tab=productions', barColor: 'bg-orange-500' },
+        { label: 'sem sinopse',  value: withoutSynopsisCount,        color: 'text-foreground',  href: '/admin/pipeline?tab=productions', barColor: 'bg-zinc-600' },
+        { label: 'sem tradução', value: withoutTranslationProdCount, color: 'text-yellow-400',  href: '/admin/pipeline?tab=productions', barColor: 'bg-yellow-500' },
+        { label: 'completas',    value: completeCount,               color: 'text-emerald-400', href: '/admin/pipeline?tab=productions', barColor: 'bg-emerald-500' },
+        { label: 'ocultas',      value: hiddenProdCount,             color: 'text-red-400',     href: '/admin/pipeline?tab=productions', barColor: 'bg-red-500' },
     ]
 
     return (

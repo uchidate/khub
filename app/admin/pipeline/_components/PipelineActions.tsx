@@ -60,9 +60,14 @@ export function PipelineActions({ id, type, action }: Props) {
                 method = 'PATCH'
                 body   = { isHidden: action === 'hide' }
             } else if (action === 'translate') {
-                const entityType = type === 'artist' ? 'artist' : type === 'production' ? 'production' : 'news'
-                url  = '/api/admin/translations/single'
-                body = { entityType, id }
+                if (type === 'news') {
+                    url    = `/api/admin/news/${id}/translate`
+                    method = 'POST'
+                } else {
+                    const entityType = type === 'artist' ? 'artist' : 'production'
+                    url  = '/api/admin/translations/single'
+                    body = { entityType, id }
+                }
             } else if (action === 'enrich') {
                 if (type === 'artist') {
                     url  = `/api/admin/artists/${id}/generate-editorial`

@@ -22,11 +22,17 @@ async function processItem(id: string, type: EntityType, action: BatchActionType
         })
     }
     if (action === 'translate') {
-        const entityType = type === 'artist' ? 'artist' : type === 'production' ? 'production' : 'news'
+        if (type === 'news') {
+            return fetch(`/api/admin/news/${id}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            })
+        }
+        const entityType = type === 'artist' ? 'artist' : 'production'
         return fetch('/api/admin/translations/single', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ entityType, entityId: id }),
+            body: JSON.stringify({ entityType, id }),
         })
     }
     if (action === 'enrich' && type === 'artist') {
@@ -62,6 +68,7 @@ export function PipelineBatchAction({ ids, type, action }: Props) {
 
     async function handleBatch() {
         if (state === 'running') return
+        if (ids.length > 20 && !window.confirm(`Processar ${ids.length} itens em lote? Isso pode levar alguns minutos.`)) return
         setState('running')
         setProgress(0)
         setErrors(0)
