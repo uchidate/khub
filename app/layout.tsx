@@ -124,10 +124,11 @@ export default async function RootLayout({
                         strategy="lazyOnload"
                     />
                 )}
-                {process.env.UMAMI_URL && process.env.UMAMI_WEBSITE_ID && (
+                {process.env.UMAMI_WEBSITE_ID && (
                     <Script
-                        src={`${process.env.UMAMI_URL}/script.js`}
+                        src="/um/script.js"
                         data-website-id={process.env.UMAMI_WEBSITE_ID}
+                        data-host-url="/um"
                         strategy="lazyOnload"
                     />
                 )}
