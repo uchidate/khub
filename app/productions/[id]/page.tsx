@@ -277,7 +277,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                 </div>
 
                 {/* Hero content */}
-                <div className="relative z-10 px-4 sm:px-12 md:px-20 pb-10 md:pb-16">
+                <div className="relative z-10 px-4 sm:px-12 md:px-20 pb-10 md:pb-16 mt-auto">
                     <div className="flex items-end gap-6 md:gap-10">
                         {/* Main info — fills remaining space */}
                         <div className="flex-1 min-w-0">
