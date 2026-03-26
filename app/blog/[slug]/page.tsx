@@ -155,7 +155,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <PageTransition className="pb-20 px-4 sm:px-6">
+    <PageTransition className="pt-6 pb-20 px-4 sm:px-6">
       <BlogViewTracker slug={slug} />
       <JsonLd data={{
         "@context": "https://schema.org",
