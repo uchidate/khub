@@ -69,6 +69,59 @@ function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+async function getRelatedPosts(postId: string, tags: string[], limit = 3) {
+  if (tags.length === 0) return []
+  return prisma.blogPost.findMany({
+    where: {
+      id: { not: postId },
+      status: 'PUBLISHED',
+      isPrivate: false,
+      tags: { hasSome: tags },
+    },
+    select: {
+      slug: true,
+      title: true,
+      excerpt: true,
+      coverImageUrl: true,
+      readingTimeMin: true,
+      publishedAt: true,
+      tags: true,
+    },
+    orderBy: { publishedAt: 'desc' },
+    take: limit,
+  })
+}
+
+type RelatedPost = Awaited<ReturnType<typeof getRelatedPosts>>[number]
+
+function RelatedPostCard({ post }: { post: RelatedPost }) {
+  return (
+    <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface hover:border-[#ff2d78]/30 transition-all">
+      {post.coverImageUrl ? (
+        <div className="relative aspect-video rounded-t-2xl overflow-hidden">
+          <Image src={post.coverImageUrl} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+        </div>
+      ) : (
+        <div className="aspect-video rounded-t-2xl bg-[#ff2d78]/5 flex items-center justify-center">
+          <span className="text-3xl opacity-30">✦</span>
+        </div>
+      )}
+      <div className="px-4 pb-4 flex flex-col gap-2">
+        <h3 className="font-bold text-foreground text-sm leading-snug group-hover:text-[#ff2d78] transition-colors line-clamp-2">
+          {post.title}
+        </h3>
+        {post.excerpt && (
+          <p className="text-muted text-xs leading-relaxed line-clamp-2">{post.excerpt}</p>
+        )}
+        <div className="flex items-center gap-3 text-xs text-muted mt-1">
+          <span className="flex items-center gap-1"><Clock size={11} />{post.readingTimeMin} min</span>
+          {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const post = await getPost(slug)
@@ -82,7 +135,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const artistIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_artist_card').map(b => (b as { artistId: string }).artistId)))
   const productionIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_production_card').map(b => (b as { productionId: string }).productionId)))
   const groupIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_group_card').map(b => (b as { groupId: string }).groupId)))
-  const [artists, productions, groups] = await Promise.all([
+  const [artists, productions, groups, relatedPosts] = await Promise.all([
     artistIds.length > 0
       ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
       : [],
@@ -92,6 +145,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     groupIds.length > 0
       ? prisma.musicalGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true, name: true, profileImageUrl: true, fanClubName: true } })
       : [],
+    getRelatedPosts(post.id, post.tags),
   ])
   const resolvedEntities: ResolvedEntities = {
     artists: Object.fromEntries(artists.map(a => [a.id, a])),
@@ -215,6 +269,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <div>
               <p className="font-semibold text-foreground text-sm">{BLOG_AUTHOR_DISPLAY_NAME}</p>
               <p className="text-muted text-sm mt-1">{post.author.bio}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Related posts */}
+        {relatedPosts.length > 0 && (
+          <div className="mt-14 pt-10 border-t border-border">
+            <h2 className="text-lg font-bold text-foreground mb-6">Artigos relacionados</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {relatedPosts.map(related => (
+                <RelatedPostCard key={related.slug} post={related} />
+              ))}
             </div>
           </div>
         )}
