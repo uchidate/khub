@@ -9,12 +9,17 @@ interface Notification {
     id: string
     createdAt: string
     readAt: string | null
-    news: {
-        id: string
-        title: string
-        imageUrl: string | null
-    }
+    news: { id: string; title: string; imageUrl: string | null } | null
+    blogPost: { id: string; slug: string; title: string; coverImageUrl: string | null } | null
 }
+
+function notifHref(n: Notification) {
+    if (n.blogPost) return `/blog/${n.blogPost.slug}`
+    if (n.news) return `/news/${n.news.id}`
+    return '#'
+}
+function notifTitle(n: Notification) { return n.blogPost?.title ?? n.news?.title ?? '' }
+function notifImage(n: Notification) { return n.blogPost?.coverImageUrl ?? n.news?.imageUrl ?? null }
 
 function relativeTime(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime()
@@ -148,16 +153,20 @@ export function NotificationBell() {
                                 </Link>
                             </div>
                         ) : (
-                            notifications.map(n => (
+                            notifications.map(n => {
+                                const title = notifTitle(n)
+                                const image = notifImage(n)
+                                const href  = notifHref(n)
+                                return (
                                 <div
                                     key={n.id}
                                     className={`flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors border-b border-border last:border-0 ${!n.readAt ? 'bg-[#ff2d78]/5' : ''}`}
                                 >
                                     {/* Thumbnail */}
-                                    {n.news.imageUrl ? (
+                                    {image ? (
                                         <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                                             <Image
-                                                src={n.news.imageUrl}
+                                                src={image}
                                                 alt=""
                                                 width={48}
                                                 height={48}
@@ -173,11 +182,11 @@ export function NotificationBell() {
                                     {/* Content */}
                                     <div className="flex-1 min-w-0" onClick={() => !n.readAt && markRead(n.id)}>
                                         <Link
-                                            href={`/news/${n.news.id}`}
+                                            href={href}
                                             onClick={() => { setOpen(false); if (!n.readAt) markRead(n.id) }}
                                             className="text-xs text-muted hover:text-foreground line-clamp-2 leading-relaxed"
                                         >
-                                            {n.news.title}
+                                            {title}
                                         </Link>
                                         <p className="text-[10px] text-muted mt-1">
                                             {relativeTime(n.createdAt)}
@@ -189,7 +198,8 @@ export function NotificationBell() {
                                         <div className="w-1.5 h-1.5 bg-[#ff2d78] rounded-full mt-1.5 flex-shrink-0" />
                                     )}
                                 </div>
-                            ))
+                                )
+                            })
                         )}
                     </div>
                 </div>

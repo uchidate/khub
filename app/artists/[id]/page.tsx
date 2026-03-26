@@ -163,7 +163,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     // Step 2: queries secundárias todas em paralelo (incluindo relatedArtists)
     const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
     const productionIds = artist.productions.map(ap => ap.production.id)
-    const [instagramPosts, newsCount, bioPt, productionTranslations, relatedArtists] = await Promise.all([
+    const [instagramPosts, newsCount, bioPt, productionTranslations, relatedArtists, blogArticles] = await Promise.all([
         prisma.instagramPost.findMany({
             where: { artistId: params.id },
             orderBy: { postedAt: 'desc' },
@@ -186,6 +186,16 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 orderBy: { trendingScore: 'desc' },
             }).catch(() => [])
             : Promise.resolve([]),
+        prisma.blogPost.findMany({
+            where: {
+                status: 'PUBLISHED',
+                isPrivate: false,
+                relatedArtists: { some: { artistId: params.id } },
+            },
+            select: { slug: true, title: true, excerpt: true, coverImageUrl: true, publishedAt: true, readingTimeMin: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 6,
+        }).catch(() => []),
     ])
 
     // Mapa de tmdbId → sinal de streaming (melhor rank por produção)
@@ -613,6 +623,37 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-xs font-bold text-foreground truncate group-hover/ra:text-[#ff2d78] transition-colors">{ra.nameRomanized}</p>
                                                 {ra.nameHangul && <p className="text-[9px] text-muted leading-none mt-0.5 truncate">{ra.nameHangul}</p>}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Blog articles */}
+                        {blogArticles.length > 0 && (
+                            <section>
+                                <h2 className="text-sm font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <Film className="w-4 h-4 text-[#ff2d78]" />
+                                    Artigos
+                                </h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {blogArticles.map(article => (
+                                        <Link
+                                            key={article.slug}
+                                            href={`/blog/${article.slug}`}
+                                            className="group flex gap-3 p-3 rounded-xl border border-border hover:border-[#ff2d78]/30 bg-surface transition-all"
+                                        >
+                                            {article.coverImageUrl && (
+                                                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-background">
+                                                    <img src={article.coverImageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-foreground line-clamp-2 group-hover:text-[#ff2d78] transition-colors leading-snug">
+                                                    {article.title}
+                                                </p>
+                                                <p className="text-[10px] text-muted mt-1">{article.readingTimeMin} min de leitura</p>
                                             </div>
                                         </Link>
                                     ))}

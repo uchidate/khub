@@ -462,25 +462,27 @@ model UserNotificationSettings {
 }
 
 model NotificationHistory {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  newsId       String
-  news         News      @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  type         String    // 'EMAIL_INSTANT', 'EMAIL_DIGEST', 'PUSH', 'IN_APP'
-  status       String    @default("PENDING") // 'PENDING', 'SENT', 'FAILED'
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newsId       String?
+  news         News?      @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  blogPostId   String?
+  blogPost     BlogPost?  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  type         String     // 'EMAIL_INSTANT', 'EMAIL_DIGEST', 'PUSH', 'IN_APP'
+  status       String     @default("PENDING") // 'PENDING', 'SENT', 'FAILED'
   sentAt       DateTime?
-  readAt       DateTime?                    // null = não lida (IN_APP only)
+  readAt       DateTime?                      // null = não lida (IN_APP only)
   errorMessage String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([userId])
   @@index([newsId])
+  @@index([blogPostId])
   @@index([type])
   @@index([status])
   @@index([createdAt])
-  @@index([userId, newsId, type])
   @@index([userId, type, readAt])
 }
 
@@ -1029,6 +1031,7 @@ model BlogPost {
   relatedArtists     BlogPostArtist[]
   relatedGroups      BlogPostGroup[]
   relatedProductions BlogPostProduction[]
+  notifications      NotificationHistory[]
 
   @@index([status, publishedAt])
   @@index([authorId])

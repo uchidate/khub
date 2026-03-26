@@ -24,7 +24,8 @@ export async function GET() {
             prisma.notificationHistory.findMany({
                 where: { userId: session.user.id, type: 'IN_APP' },
                 include: {
-                    news: { select: { id: true, title: true, imageUrl: true } },
+                    news:     { select: { id: true, title: true, imageUrl: true } },
+                    blogPost: { select: { id: true, slug: true, title: true, coverImageUrl: true } },
                 },
                 orderBy: { createdAt: 'desc' },
                 take: 20,
