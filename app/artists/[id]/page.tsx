@@ -375,7 +375,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                 <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 max-w-[1600px] mx-auto">
 
                     {/* ── SIDEBAR ── */}
-                    <div className="space-y-4 lg:space-y-6 lg:col-span-1">
+                    <div className="space-y-4 lg:space-y-6 lg:col-span-1 lg:sticky lg:top-24 lg:self-start">
 
 
                         {/* Informações */}
@@ -531,7 +531,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 </div>
                             </div>
                             {artist.productions.length > 0 ? (
-                                <div className="space-y-4">
+                                <>
+                                {/* Mobile: lista horizontal compacta */}
+                                <div className="lg:hidden space-y-3">
                                     {artist.productions.map(({ production }) => {
                                         const streamSignalRaw = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
                                         const streamSignal = streamSignalRaw?.source !== 'internal_production' ? streamSignalRaw : null
@@ -539,9 +541,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                         <div key={production.id} className="relative group/card">
                                             <Link href={`/productions/${production.id}`}
                                                 className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-[#ff2d78]/30 hover:shadow-sm transition-all">
-                                                <div className="w-20 md:w-28 flex-shrink-0 relative bg-[#e8e8e8]">
+                                                <div className="w-20 flex-shrink-0 relative bg-[#e8e8e8]">
                                                     {production.imageUrl ? (
-                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="112px"
+                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="80px"
                                                             className="object-cover brightness-75 group-hover:brightness-90 transition-all" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center">
@@ -552,32 +554,76 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                         <div className="absolute bottom-0 left-0 right-0 p-1">
                                                             <span className="flex items-center gap-1 px-1.5 py-1 rounded text-[9px] font-black text-white leading-none w-full bg-red-600">
                                                                 <span className="shrink-0">TOP {streamSignal.rank}</span>
-                                                                <span className="opacity-60">·</span>
-                                                                <span className="truncate">{getStreamingConfig(streamSignal.source).label}</span>
                                                             </span>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex-1 p-3 md:p-5">
-                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                        <h4 className="text-sm md:text-base font-black text-foreground group-hover:text-[#ff2d78] transition-colors leading-tight">{production.titlePt}</h4>
-                                                        <ExternalLink className="w-3 h-3 text-muted group-hover:text-[#ff2d78] transition-colors ml-auto flex-shrink-0" />
-                                                    </div>
-                                                    <div className="flex items-center gap-2 mb-1.5">
+                                                <div className="flex-1 p-3">
+                                                    <h4 className="text-sm font-black text-foreground group-hover:text-[#ff2d78] transition-colors leading-tight line-clamp-2">{production.titlePt}</h4>
+                                                    <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface text-muted">{production.type}</span>
                                                         {production.year && <span className="text-[10px] font-bold text-[#ff2d78]">{production.year}</span>}
-                                                        {production.titleKr && <span className="text-[10px] text-muted font-medium truncate">{production.titleKr}</span>}
                                                     </div>
-                                                    {(() => { const syn = productionTranslations.get(production.id)?.get('synopsis') ?? production.synopsis; return syn ? <p className="text-muted text-xs md:text-sm leading-relaxed line-clamp-2">{syn}</p> : null })()}
                                                 </div>
                                             </Link>
-                                            <div className="absolute top-2.5 right-2.5">
-                                                <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
-                                            </div>
                                         </div>
                                         )
                                     })}
                                 </div>
+
+                                {/* Desktop: grid de posters */}
+                                <div className="hidden lg:grid grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {artist.productions.map(({ production }) => {
+                                        const streamSignalRaw = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
+                                        const streamSignal = streamSignalRaw?.source !== 'internal_production' ? streamSignalRaw : null
+                                        const syn = productionTranslations.get(production.id)?.get('synopsis') ?? production.synopsis
+                                        return (
+                                        <div key={production.id} className="relative group/card">
+                                            <Link href={`/productions/${production.id}`} className="group block">
+                                                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border group-hover:border-[#ff2d78]/40 group-hover:shadow-lg transition-all duration-300">
+                                                    {production.imageUrl ? (
+                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="(max-width: 1280px) 33vw, 25vw"
+                                                            className="object-cover brightness-90 group-hover:brightness-100 group-hover:scale-105 transition-all duration-500" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
+                                                            <Film className="w-8 h-8 text-muted/30" />
+                                                            <span className="text-xs font-black text-muted uppercase text-center leading-tight">{production.type}</span>
+                                                        </div>
+                                                    )}
+                                                    {/* Gradient overlay on hover */}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                    {/* Synopsis on hover */}
+                                                    {syn && (
+                                                        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                                                            <p className="text-white text-[10px] leading-relaxed line-clamp-3">{syn}</p>
+                                                        </div>
+                                                    )}
+                                                    {/* Streaming badge */}
+                                                    {streamSignal && (
+                                                        <div className="absolute top-2 left-2">
+                                                            <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-black text-white bg-red-600 shadow">
+                                                                TOP {streamSignal.rank} · {getStreamingConfig(streamSignal.source).label}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-2 px-0.5">
+                                                    <p className="text-xs font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2">{production.titlePt}</p>
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface border border-border text-muted">{production.type}</span>
+                                                        {production.year && <span className="text-[10px] font-bold text-[#ff2d78]">{production.year}</span>}
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        </div>
+                                        )
+                                    })}
+                                </div>
+                                </>
+
                             ) : (
                                 <div className="bg-surface rounded-2xl border border-border p-12 text-center">
                                     <Users className="w-12 h-12 text-muted/40 mx-auto mb-4" />
@@ -607,20 +653,20 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                     </div>
                                     <div className="flex-1 h-px bg-[#e8e8e8]" />
                                 </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3">
                                     {relatedArtists.map(ra => (
                                         <Link key={ra.id} href={`/artists/${ra.id}`}
-                                            className="flex items-center gap-2 p-2 rounded-lg bg-background border border-border hover:border-[#ff2d78]/30 hover:shadow-sm transition-all group/ra">
-                                            <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-surface">
+                                            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background border border-border hover:border-[#ff2d78]/30 hover:shadow-sm transition-all group/ra text-center">
+                                            <div className="relative w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden flex-shrink-0 bg-surface border-2 border-border group-hover/ra:border-[#ff2d78]/40 transition-colors">
                                                 {ra.primaryImageUrl ? (
-                                                    <Image src={ra.primaryImageUrl} alt={ra.nameRomanized} fill sizes="32px" className="object-cover group-hover/ra:scale-105 transition-transform" />
+                                                    <Image src={ra.primaryImageUrl} alt={ra.nameRomanized} fill sizes="64px" className="object-cover object-top group-hover/ra:scale-110 transition-transform duration-300" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center">
-                                                        <span className="text-xs font-black text-muted">{ra.nameRomanized[0]}</span>
+                                                        <span className="text-sm font-black text-muted">{ra.nameRomanized[0]}</span>
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
+                                            <div className="min-w-0 w-full">
                                                 <p className="text-xs font-bold text-foreground truncate group-hover/ra:text-[#ff2d78] transition-colors">{ra.nameRomanized}</p>
                                                 {ra.nameHangul && <p className="text-[9px] text-muted leading-none mt-0.5 truncate">{ra.nameHangul}</p>}
                                             </div>
@@ -637,23 +683,26 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                     <Film className="w-4 h-4 text-[#ff2d78]" />
                                     Artigos
                                 </h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {blogArticles.map(article => (
                                         <Link
                                             key={article.slug}
                                             href={`/blog/${article.slug}`}
-                                            className="group flex gap-3 p-3 rounded-xl border border-border hover:border-[#ff2d78]/30 bg-surface transition-all"
+                                            className="group flex flex-col rounded-xl border border-border hover:border-[#ff2d78]/30 bg-surface overflow-hidden transition-all hover:shadow-md"
                                         >
                                             {article.coverImageUrl && (
-                                                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-background">
+                                                <div className="relative aspect-video overflow-hidden bg-background">
                                                     <img src={article.coverImageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                                 </div>
                                             )}
-                                            <div className="flex-1 min-w-0">
+                                            <div className="flex-1 p-3">
                                                 <p className="text-xs font-bold text-foreground line-clamp-2 group-hover:text-[#ff2d78] transition-colors leading-snug">
                                                     {article.title}
                                                 </p>
-                                                <p className="text-[10px] text-muted mt-1">{article.readingTimeMin} min de leitura</p>
+                                                {article.excerpt && (
+                                                    <p className="text-[10px] text-muted mt-1 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+                                                )}
+                                                <p className="text-[10px] text-muted mt-2">{article.readingTimeMin} min de leitura</p>
                                             </div>
                                         </Link>
                                     ))}
