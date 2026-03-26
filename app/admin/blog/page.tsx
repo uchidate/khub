@@ -788,6 +788,41 @@ function DuplicateButton({ post, onDone, showError }: { post: BlogPost; onDone: 
     )
 }
 
+function DeleteButton({ post, onDone, showError }: { post: BlogPost; onDone: () => void; showError: (m: string) => void }) {
+    const [loading, setLoading] = useState(false)
+
+    const del = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!window.confirm(`Excluir "${post.title}"? Esta ação é irreversível.`)) return
+        setLoading(true)
+        try {
+            const res  = await fetch('/api/admin/blog/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [post.id], action: 'delete' }),
+            })
+            const data = await res.json()
+            if (!res.ok) { showError(data.error ?? 'Erro ao excluir'); return }
+            onDone()
+        } catch {
+            showError('Erro de rede')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <button
+            onClick={del}
+            disabled={loading}
+            title="Excluir post"
+            className="p-1.5 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:cursor-wait"
+        >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+        </button>
+    )
+}
+
 function FeaturedButton({ post, onDone }: { post: BlogPost; onDone: () => void }) {
     const [loading, setLoading] = useState(false)
 
@@ -829,7 +864,7 @@ export default function AdminBlogPage() {
     const [statsKey,      setStatsKey]     = useState(0)
     const blogStats = useBlogStats(statsKey)
 
-    const [activeTab,     setActiveTab]    = useState<Tab>('suggestions')
+    const [activeTab,     setActiveTab]    = useState<Tab>('posts')
     const [suggestions,   setSuggestions]  = useState<NewsSuggestion[]>([])
     const [loading,       setLoading]      = useState(false)
     const [hiddenIds,     setHiddenIds]    = useState<Set<string>>(new Set())
@@ -1097,11 +1132,11 @@ export default function AdminBlogPage() {
                 {/* Tabs */}
                 <AdminTabGroup
                     tabs={[
-                        { key: 'suggestions', label: 'Sugestões IA', icon: <Sparkles className="w-3.5 h-3.5" />, badge: visibleSuggestions.length },
                         { key: 'posts',       label: 'Posts',        icon: <FileText className="w-3.5 h-3.5" /> },
                         { key: 'top',         label: 'Top Posts',    icon: <TrendingUp className="w-3.5 h-3.5" /> },
                         { key: 'calendar',    label: 'Calendário',   icon: <CalendarDays className="w-3.5 h-3.5" /> },
                         { key: 'categories',  label: 'Categorias',   icon: <Tag className="w-3.5 h-3.5" /> },
+                        { key: 'suggestions', label: 'Sugestões IA', icon: <Sparkles className="w-3.5 h-3.5" />, badge: visibleSuggestions.length },
                     ]}
                     active={activeTab}
                     onChange={v => { setActiveTab(v as Tab); setSelectedIds([]) }}
@@ -1294,6 +1329,11 @@ export default function AdminBlogPage() {
                                             <Eye size={14} />
                                         </Link>
                                     )}
+                                    <DeleteButton
+                                        post={post}
+                                        onDone={() => { refetchTable(); refreshStats() }}
+                                        showError={showError}
+                                    />
                                 </div>
                             )}
                         />
