@@ -6,9 +6,9 @@ import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import { BlogBlockRenderer, type ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
-import { Clock, Eye, ArrowLeft, Tag, Calendar, Pencil } from 'lucide-react'
+import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
-import { auth } from '@/lib/auth'
+import { BlogEditButton } from '@/components/blog/BlogEditButton'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { AdBanner } from '@/components/ui/AdBanner'
 
@@ -125,9 +125,8 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const [post, session] = await Promise.all([getPost(slug), auth()])
+  const post = await getPost(slug)
   if (!post) notFound()
-  const isEditor = session?.user?.role === 'admin' || session?.user?.role === 'editor'
 
 
   // Pre-fetch data for embedded entity cards
@@ -190,15 +189,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <ArrowLeft size={14} />
             Voltar ao Blog
           </Link>
-          {isEditor && (
-            <Link
-              href={`/write?edit=${post.id}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#ff2d78]/10 text-[#ff2d78] hover:bg-[#ff2d78]/20 transition-colors"
-            >
-              <Pencil size={12} />
-              Editar
-            </Link>
-          )}
+          <BlogEditButton postId={post.id} />
         </div>
 
         {/* Header */}
@@ -238,8 +229,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Cover image */}
         {post.coverImageUrl && (
-          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 border border-border">
-            <Image src={post.coverImageUrl} alt={post.title} fill className="object-cover object-top" priority />
+          <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border">
+            <Image src={post.coverImageUrl} alt={post.title} fill className="object-cover" priority />
           </div>
         )}
 
