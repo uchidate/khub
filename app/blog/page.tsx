@@ -6,10 +6,10 @@ import Image from 'next/image'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { SectionHeader } from '@/components/ui/SectionHeader'
-import { BookOpen, Clock, Eye } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
+import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
 
 import { SITE_URL } from '@/lib/constants/site'
@@ -28,92 +28,128 @@ export const metadata: Metadata = {
 
 const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
 
-async function getPosts() {
-  const [featured, recent, categories] = await Promise.all([
-    prisma.blogPost.findMany({
-      where: { ...PUBLIC_WHERE, featured: true },
-      orderBy: { publishedAt: 'desc' },
-      take: 3,
-      include: { category: true },
-    }),
-    prisma.blogPost.findMany({
+async function getPosts(category?: string, tag?: string) {
+  const where = {
+    ...PUBLIC_WHERE,
+    ...(category ? { category: { slug: category } } : {}),
+    ...(tag ? { tags: { has: tag } } : {}),
+  }
+
+  const [hero, posts, mostRead, categories, popularTags] = await Promise.all([
+    // Hero: most recent post (no filter)
+    prisma.blogPost.findFirst({
       where: PUBLIC_WHERE,
       orderBy: { publishedAt: 'desc' },
-      take: 12,
       include: { category: true },
     }),
+    // Filtered posts
+    prisma.blogPost.findMany({
+      where,
+      orderBy: { publishedAt: 'desc' },
+      take: 18,
+      include: { category: true },
+    }),
+    // Most read (no filter)
+    !category && !tag ? prisma.blogPost.findMany({
+      where: PUBLIC_WHERE,
+      orderBy: { viewCount: 'desc' },
+      take: 5,
+      select: { slug: true, title: true, readingTimeMin: true, viewCount: true, coverImageUrl: true, publishedAt: true, category: true },
+    }) : Promise.resolve([]),
+    // Categories
     prisma.blogCategory.findMany({
       orderBy: { name: 'asc' },
       include: { _count: { select: { posts: { where: PUBLIC_WHERE } } } },
     }),
+    // Popular tags from raw query
+    prisma.$queryRaw<{ tag: string; count: bigint }[]>`
+      SELECT unnest(tags) as tag, count(*) as count
+      FROM "BlogPost"
+      WHERE status = 'PUBLISHED' AND "isPrivate" = false
+      GROUP BY tag
+      ORDER BY count DESC
+      LIMIT 12
+    `,
   ])
-  return { featured, recent, categories }
+
+  return { hero, posts, mostRead, categories, popularTags }
 }
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-type PostWithRelations = Awaited<ReturnType<typeof getPosts>>['recent'][0]
+type PostWithCategory = Awaited<ReturnType<typeof getPosts>>['posts'][0]
 
-function PostCard({ post, featured = false }: { post: PostWithRelations; featured?: boolean }) {
+function PostCard({ post }: { post: PostWithCategory }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className={`group flex flex-col rounded-xl overflow-hidden border border-border bg-background hover:border-accent/30 hover:bg-surface transition-all ${featured ? 'lg:flex-row' : ''}`}
+      className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/30 hover:shadow-lg transition-all duration-300"
     >
-      {post.coverImageUrl && (
-        <div className={`relative overflow-hidden bg-surface ${featured ? 'lg:w-2/5 aspect-video lg:aspect-auto' : 'aspect-video'}`}>
+      <div className="relative aspect-video overflow-hidden bg-surface-hover">
+        {post.coverImageUrl ? (
           <Image
             src={post.coverImageUrl}
             alt={post.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
-        </div>
-      )}
-      <div className="flex flex-col gap-3 p-5 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          {post.category && (
-            <span className="px-2 py-0.5 bg-accent/10 text-accent rounded text-xs font-semibold uppercase tracking-wider">
-              {post.category.name}
-            </span>
-          )}
-          {post.featured && (
-            <span className="px-2 py-0.5 bg-[#f59e0b]/10 text-[#d97706] rounded text-xs font-semibold uppercase tracking-wider">
-              Destaque
-            </span>
-          )}
-        </div>
-        <h2 className={`font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug ${featured ? 'text-xl' : 'text-base'}`}>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-4xl opacity-10">✦</span>
+          </div>
+        )}
+        {post.category && (
+          <span className="absolute top-3 left-3 px-2.5 py-1 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider shadow">
+            {post.category.name}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-2 p-4 flex-1">
+        <h2 className="font-bold text-foreground text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
           {post.title}
         </h2>
         {post.excerpt && (
-          <p className="text-sm text-muted line-clamp-2 flex-1 leading-relaxed">{post.excerpt}</p>
+          <p className="text-xs text-muted line-clamp-2 leading-relaxed flex-1">{post.excerpt}</p>
         )}
-        <div className="flex items-center gap-3 text-xs text-muted mt-auto pt-2 border-t border-border">
-          <div className="w-5 h-5 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-[9px] font-bold text-accent flex-shrink-0">
+        {post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {post.tags.slice(0, 2).map(tag => {
+              const ts = getTagStyle(tag)
+              return (
+                <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: ts.color, backgroundColor: ts.bg }}>
+                  {tag}
+                </span>
+              )
+            })}
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-[11px] text-muted mt-auto pt-3 border-t border-border">
+          <div className="w-4 h-4 rounded-full bg-accent/10 flex items-center justify-center text-[8px] font-bold text-accent flex-shrink-0">
             {BLOG_AUTHOR_AVATAR_INITIAL}
           </div>
           <span className="truncate">{BLOG_AUTHOR_DISPLAY_NAME}</span>
-          <span className="flex-shrink-0">·</span>
-          <span className="flex-shrink-0">{formatDate(post.publishedAt ?? post.createdAt)}</span>
-          <span className="flex-shrink-0">·</span>
-          <span className="flex items-center gap-1 flex-shrink-0"><Clock size={11} />{post.readingTimeMin} min</span>
-          <span className="flex items-center gap-1 ml-auto flex-shrink-0"><Eye size={11} />{post.viewCount}</span>
+          <span className="ml-auto flex items-center gap-2 flex-shrink-0">
+            <span className="flex items-center gap-1"><Clock size={10} />{post.readingTimeMin} min</span>
+            <span className="flex items-center gap-1"><Eye size={10} />{post.viewCount}</span>
+          </span>
         </div>
       </div>
     </Link>
   )
 }
 
-export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
-  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
-    return null
-  }
-  const { category: activeCategory } = await searchParams
-  const { featured, recent, categories } = await getPosts()
-  const total = await prisma.blogPost.count({ where: { ...PUBLIC_WHERE } }).catch(() => null)
+export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string }> }) {
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return null
+
+  const { category: activeCategory, tag: activeTag } = await searchParams
+  const { hero, posts, mostRead, categories, popularTags } = await getPosts(activeCategory, activeTag)
+  const total = await prisma.blogPost.count({ where: PUBLIC_WHERE }).catch(() => null)
+  const isFiltered = !!activeCategory || !!activeTag
+
+  // Don't show hero as duplicate in the grid
+  const gridPosts = isFiltered ? posts : posts.filter(p => p.id !== hero?.id)
 
   return (
     <>
@@ -124,74 +160,172 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         url: `${BASE_URL}/blog`,
         inLanguage: 'pt-BR',
       }} />
-      <PageTransition className="py-8 md:py-12">
+      <PageTransition className="pb-16">
+
+        {/* Hero — latest post, only without filter */}
+        {!isFiltered && hero && (
+          <div className="w-full mb-10 border-b border-border">
+            <Link href={`/blog/${hero.slug}`} className="group block relative">
+              <div className="relative w-full h-[340px] md:h-[480px] overflow-hidden">
+                {hero.coverImageUrl ? (
+                  <Image src={hero.coverImageUrl} alt={hero.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" priority />
+                ) : (
+                  <div className="w-full h-full bg-surface" />
+                )}
+                {/* gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 max-w-4xl">
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    {hero.category && (
+                      <span className="px-2.5 py-1 bg-accent text-white rounded-full text-[11px] font-bold uppercase tracking-wider">
+                        {hero.category.name}
+                      </span>
+                    )}
+                    {hero.featured && (
+                      <span className="px-2.5 py-1 bg-yellow-500/90 text-black rounded-full text-[11px] font-bold uppercase tracking-wider">
+                        Destaque
+                      </span>
+                    )}
+                    <span className="text-white/60 text-xs">{formatDate(hero.publishedAt ?? hero.createdAt)}</span>
+                  </div>
+                  <h1 className="text-2xl md:text-4xl font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-2">
+                    {hero.title}
+                  </h1>
+                  {hero.excerpt && (
+                    <p className="text-white/70 text-sm md:text-base line-clamp-2 leading-relaxed hidden sm:block">{hero.excerpt}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-3 text-white/60 text-xs">
+                    <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[9px] font-bold text-white/80">
+                      {BLOG_AUTHOR_AVATAR_INITIAL}
+                    </div>
+                    <span>{BLOG_AUTHOR_DISPLAY_NAME}</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1"><Clock size={11} />{hero.readingTimeMin} min</span>
+                    <span className="flex items-center gap-1"><Eye size={11} />{hero.viewCount} views</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
-          {/* Header */}
-          <SectionHeader
-            title="Blog"
-            count={total}
-            countLabel="artigos"
-            backHref="/"
-          />
-
-          {/* Categories */}
-          {categories.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap mb-8">
+          {/* Filter bar */}
+          <div className="mb-8 space-y-3">
+            {/* Categories */}
+            <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href="/blog"
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  !activeCategory ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${!isFiltered ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}
               >
-                Todas
+                Todos {total ? <span className="opacity-70">({total})</span> : null}
               </Link>
               {categories.filter(c => c._count.posts > 0).map(c => (
                 <Link
                   key={c.id}
                   href={`/blog?category=${c.slug}`}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    activeCategory === c.slug ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
-                  }`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === c.slug ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}
                 >
-                  {c.name}
-                  <span className="ml-1.5 opacity-50">{c._count.posts}</span>
+                  {c.name} <span className="opacity-50">{c._count.posts}</span>
                 </Link>
               ))}
             </div>
-          )}
-
-          {/* Featured posts */}
-          {featured.length > 0 && (
-            <section className="mb-10">
-              <h2 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-                <BookOpen size={16} className="text-accent" /> Em destaque
-              </h2>
-              <div className="grid gap-4">
-                {featured.map(p => <PostCard key={p.id} post={p} featured />)}
+            {/* Tags */}
+            {popularTags.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Tag size={11} className="text-muted shrink-0" />
+                {popularTags.map(({ tag }) => {
+                  const ts = getTagStyle(tag)
+                  return (
+                    <Link
+                      key={tag}
+                      href={activeTag === tag ? '/blog' : `/blog?tag=${encodeURIComponent(tag)}`}
+                      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all hover:brightness-90"
+                      style={{
+                        color: ts.color,
+                        backgroundColor: activeTag === tag ? ts.color : ts.bg,
+                        ...(activeTag === tag ? { color: '#fff' } : {}),
+                      }}
+                    >
+                      {tag}
+                    </Link>
+                  )
+                })}
               </div>
-            </section>
-          )}
+            )}
+          </div>
 
-          {/* Recent posts */}
-          {recent.length > 0 && (
-            <section>
-              <h2 className="text-sm font-bold text-foreground mb-4">Publicações recentes</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {recent.map(p => <PostCard key={p.id} post={p} />)}
-              </div>
-            </section>
-          )}
-
-          {recent.length === 0 && (
-            <div className="text-center py-20 text-muted">
-              <BookOpen size={40} className="mx-auto mb-4 opacity-30" />
-              <p>Nenhum artigo publicado ainda.</p>
+          {/* Active filter label */}
+          {isFiltered && (
+            <div className="flex items-center gap-2 mb-6">
+              <p className="text-sm text-muted">
+                {posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}
+                {activeCategory && ` em "${categories.find(c => c.slug === activeCategory)?.name ?? activeCategory}"`}
+                {activeTag && ` com a tag "${activeTag}"`}
+              </p>
+              <Link href="/blog" className="text-xs text-accent hover:underline">Limpar filtro</Link>
             </div>
           )}
 
-          <ScrollToTop />
+          {/* Main content */}
+          <div className={`${!isFiltered && mostRead.length > 0 ? 'grid lg:grid-cols-[1fr_300px] gap-10' : ''}`}>
+
+            {/* Posts grid */}
+            <div>
+              {!isFiltered && (
+                <h2 className="text-sm font-bold text-muted uppercase tracking-wider mb-4">Publicações recentes</h2>
+              )}
+              {gridPosts.length > 0 ? (
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {gridPosts.map(p => <PostCard key={p.id} post={p} />)}
+                </div>
+              ) : (
+                <div className="text-center py-20 text-muted">
+                  <p className="text-sm">Nenhum artigo encontrado.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar: most read */}
+            {!isFiltered && mostRead.length > 0 && (
+              <aside className="space-y-4">
+                <h2 className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                  <TrendingUp size={13} className="text-accent" /> Mais lidos
+                </h2>
+                <div className="space-y-3">
+                  {mostRead.map((p, i) => (
+                    <Link
+                      key={p.slug}
+                      href={`/blog/${p.slug}`}
+                      className="group flex items-start gap-3 p-3 rounded-xl border border-border bg-surface hover:border-accent/30 hover:bg-surface-hover transition-all"
+                    >
+                      <span className="text-2xl font-black text-accent/20 leading-none w-6 shrink-0 group-hover:text-accent/40 transition-colors">
+                        {i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                          {p.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted">
+                          <span className="flex items-center gap-1"><Eye size={9} />{p.viewCount}</span>
+                          <span className="flex items-center gap-1"><Clock size={9} />{p.readingTimeMin} min</span>
+                        </div>
+                      </div>
+                      {p.coverImageUrl && (
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
+                          <Image src={p.coverImageUrl} alt={p.title} fill className="object-cover" />
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </aside>
+            )}
+          </div>
         </div>
+
+        <ScrollToTop />
       </PageTransition>
     </>
   )
