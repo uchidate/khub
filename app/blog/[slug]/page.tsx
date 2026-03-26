@@ -6,8 +6,9 @@ import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import { BlogBlockRenderer, type ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
-import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
+import { Clock, Eye, ArrowLeft, Tag, Calendar, Pencil } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { AdBanner } from '@/components/ui/AdBanner'
 
@@ -124,8 +125,9 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await getPost(slug)
+  const [post, session] = await Promise.all([getPost(slug), auth()])
   if (!post) notFound()
+  const isEditor = session?.user?.role === 'admin' || session?.user?.role === 'editor'
 
 
   // Pre-fetch data for embedded entity cards
@@ -183,10 +185,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         ],
       }} />
       <div className="max-w-3xl mx-auto">
-        <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors mb-8">
-          <ArrowLeft size={14} />
-          Voltar ao Blog
-        </Link>
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
+            <ArrowLeft size={14} />
+            Voltar ao Blog
+          </Link>
+          {isEditor && (
+            <Link
+              href={`/write?edit=${post.id}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#ff2d78]/10 text-[#ff2d78] hover:bg-[#ff2d78]/20 transition-colors"
+            >
+              <Pencil size={12} />
+              Editar
+            </Link>
+          )}
+        </div>
 
         {/* Header */}
         <header className="mb-8 space-y-4">
