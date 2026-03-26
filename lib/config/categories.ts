@@ -11,21 +11,30 @@ export interface BlogCategoryConfig {
 
 /**
  * Canonical list of blog categories — única fonte de verdade.
- * A ordem define a exibição na HomeCategoriesBar e nos filtros do blog.
+ * A ordem define a exibição nos filtros do blog e na HomeBlogFeed.
  * Os slugs devem corresponder aos registros de BlogCategory no banco de dados.
+ *
+ * Taxonomia em 2 camadas:
+ *   Camada 1 → estas 9 categorias (uma por artigo, drive navegação)
+ *   Camada 2 → tags de lib/config/tags.ts (2–4 por artigo, vocabulário controlado)
  */
 export const BLOG_CATEGORIES: BlogCategoryConfig[] = [
     { name: 'K-pop',         slug: 'k-pop',          color: '#ec4899', bg: '#fce7f3' },
     { name: 'K-drama',       slug: 'k-drama',         color: '#8b5cf6', bg: '#ede9fe' },
     { name: 'K-film',        slug: 'k-film',          color: '#0ea5e9', bg: '#e0f2fe' },
     { name: 'K-beauty',      slug: 'k-beauty',        color: '#f59e0b', bg: '#fef3c7' },
-    { name: 'Artistas solo', slug: 'artistas-solo',   color: '#f43f5e', bg: '#ffe4e6' },
-    { name: 'Grupos',        slug: 'grupos',          color: '#a855f7', bg: '#f3e8ff' },
-    { name: 'Reality shows', slug: 'reality-shows',   color: '#f97316', bg: '#ffedd5' },
+    { name: 'Reality Shows', slug: 'reality-shows',   color: '#f97316', bg: '#ffedd5' },
     { name: 'Webtoons',      slug: 'webtoons',        color: '#10b981', bg: '#d1fae5' },
-    { name: 'Idol culture',  slug: 'idol-culture',    color: '#d946ef', bg: '#fae8ff' },
-    { name: 'Fandom',        slug: 'fandom',          color: '#6366f1', bg: '#e0e7ff' },
+    { name: 'Grupos',        slug: 'grupos',          color: '#a855f7', bg: '#f3e8ff' },
+    { name: 'Artistas',      slug: 'artistas',        color: '#f43f5e', bg: '#ffe4e6' },
+    { name: 'Cultura',       slug: 'cultura',         color: '#06b6d4', bg: '#cffafe' },
 ]
+
+/**
+ * Subset exibido nos tabs da HomeBlogFeed.
+ * Mantém a home limpa — todas as 9 categorias ficam disponíveis no /blog.
+ */
+export const HOME_FEED_CATEGORIES = ['k-pop', 'k-drama', 'grupos', 'reality-shows', 'cultura']
 
 /** Lookup por slug — acesso O(1) para filtros de blog */
 export const BLOG_CATEGORY_BY_SLUG = Object.fromEntries(
