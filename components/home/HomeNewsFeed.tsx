@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
+import { BLOG_CATEGORY_BY_SLUG, BLOG_CATEGORIES, HOME_FEED_CATEGORIES } from "@/lib/config/categories"
 
 interface BlogFeedItem {
     id: string
@@ -32,12 +32,13 @@ interface HomeBlogFeedProps {
     productions: ProductionItem[]
 }
 
+const ALL_TAB = { label: "Todos", value: "all", color: '#6b7280', bg: '#f3f4f6' }
 const TABS = [
-    { label: "Todos",    value: "all",      color: '#6b7280', bg: '#f3f4f6' },
-    { label: "K-pop",   value: "k-pop",    color: '#ec4899', bg: '#fce7f3' },
-    { label: "K-drama", value: "k-drama",  color: '#8b5cf6', bg: '#ede9fe' },
-    { label: "K-beauty",value: "k-beauty", color: '#f59e0b', bg: '#fef3c7' },
-    { label: "Cultura", value: "cultura",  color: '#0ea5e9', bg: '#e0f2fe' },
+    ALL_TAB,
+    ...BLOG_CATEGORIES
+        .filter(c => HOME_FEED_CATEGORIES.includes(c.slug))
+        .sort((a, b) => HOME_FEED_CATEGORIES.indexOf(a.slug) - HOME_FEED_CATEGORIES.indexOf(b.slug))
+        .map(c => ({ label: c.name, value: c.slug, color: c.color, bg: c.bg })),
 ]
 
 function getCategoryStyle(slug: string | undefined): { color: string; bg: string } {
