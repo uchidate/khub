@@ -89,13 +89,18 @@ async function handler(request: NextRequest) {
         })
 
         // Score: produções no streaming dominam; dentro de cada grupo, voteAverage desempata
-        // Boost: rank 1 → +1000, rank 10 → +100; base: voteAverage * 10 (máx 100)
+        // Tier 1 (com sinal de streaming): 10000 + (11-rank)*100 + voteAverage*10
+        // Tier 0 (sem sinal ativo):         voteAverage*10
+        // O offset de 10000 garante que qualquer produção no streaming (rank 1-10)
+        // sempre ficará acima de qualquer produção sem presença ativa.
         const scored = allForScoring
             .map(p => {
                 const bestRank = p.tmdbId ? streamingBoost.get(p.tmdbId) : undefined
-                const streamScore = bestRank !== undefined ? (11 - bestRank) * 100 : 0
                 const baseScore = (p.voteAverage ?? 0) * 10
-                return { id: p.id, score: streamScore + baseScore }
+                const score = bestRank !== undefined
+                    ? 10000 + (11 - bestRank) * 100 + baseScore
+                    : baseScore
+                return { id: p.id, score }
             })
             .sort((a, b) => b.score - a.score)
 
