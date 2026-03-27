@@ -128,52 +128,10 @@ export class NewsNotificationService {
     }
 
     /**
-     * Cria notificações IN_APP para todos os usuários que favoritaram artistas da notícia
+     * @deprecated Notificações IN_APP agora são disparadas apenas ao publicar artigos do blog.
      */
-    async notifyInAppForNews(newsId: string): Promise<void> {
-        try {
-            const news = await this.prisma.news.findUnique({
-                where: { id: newsId },
-                include: { artists: { include: { artist: { select: { id: true } } } } },
-            });
-
-            if (!news || news.artists.length === 0) return;
-
-            const artistIds = news.artists.map((a) => a.artist.id);
-
-            const users = await this.prisma.user.findMany({
-                where: { favorites: { some: { artistId: { in: artistIds } } } },
-                select: { id: true },
-            });
-
-            if (users.length === 0) return;
-
-            // Find users already notified to skip them
-            const alreadyNotified = await this.prisma.notificationHistory.findMany({
-                where: { newsId, type: 'IN_APP', userId: { in: users.map(u => u.id) } },
-                select: { userId: true },
-            });
-            const alreadyNotifiedIds = new Set(alreadyNotified.map(n => n.userId));
-            const newUsers = users.filter(u => !alreadyNotifiedIds.has(u.id));
-            if (newUsers.length === 0) return;
-
-            await this.prisma.notificationHistory.createMany({
-                data: newUsers.map(u => ({
-                    userId: u.id,
-                    newsId,
-                    type: 'IN_APP',
-                    status: 'SENT',
-                    sentAt: new Date(),
-                })),
-                skipDuplicates: true,
-            });
-
-            console.log(`  🔔 IN_APP notifications created for ${users.length} user(s) about: ${news.title}`);
-        } catch (error: unknown) {
-            const safeId  = String(newsId).replace(/[\r\n]/g, ' ')
-            const safeErr = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]/g, ' ')
-            console.error(`❌ Error creating IN_APP notifications for news ${safeId}: ${safeErr}`);
-        }
+    async notifyInAppForNews(_newsId: string): Promise<void> {
+        // desativado — sininho usa apenas blogPostId (disparado em /api/blog/posts/[id]/publish)
     }
 
     /**
