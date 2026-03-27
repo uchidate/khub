@@ -214,7 +214,7 @@ export function HomeFrontPage({
                                     </div>
                                     {story.coverImageUrl && (
                                         <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0">
-                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" />
+                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" priority={idx < 2} />
                                         </div>
                                     )}
                                 </Link>
@@ -260,7 +260,7 @@ export function HomeFrontPage({
                                     </span>
                                     <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center flex-shrink-0 overflow-hidden`}>
                                         {artist.primaryImageUrl ? (
-                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} width={36} height={36} className="object-cover w-full h-full" />
+                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} width={36} height={36} className="object-cover w-full h-full" priority={idx < 5} />
                                         ) : (
                                             <span className="text-white text-[8.5px] font-bold">{getInitials(artist.nameRomanized || artist.nameHangul || '?')}</span>
                                         )}

@@ -142,6 +142,16 @@ const getHomePublicData = unstable_cache(
             categoryCounts.map(c => [c.slug, c._count.posts])
         )
 
+        // spotlightProduction — query cached junto com os dados públicos
+        const spotlightArtistId = trendingArtists[0]?.id
+        const spotlightProduction = spotlightArtistId
+            ? await prisma.production.findFirst({
+                where: { isHidden: false, year: { not: null }, artists: { some: { artistId: spotlightArtistId } } },
+                orderBy: { year: 'desc' },
+                select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+            }).catch(() => null)
+            : null
+
         return {
             trendingArtists,
             featuredPost: featuredPost ? serializePost(featuredPost) : null,
@@ -153,6 +163,7 @@ const getHomePublicData = unstable_cache(
             trendingGroups: trendingGroupsRaw,
             categoryCountMap,
             siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
+            spotlightProduction,
         }
     },
     ['home-page-public-data-v10'],
@@ -196,7 +207,15 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats } = publicData
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightProduction } = publicData
+
+    // latestProductions depende do ageRatingFilter (por sessão) — roda em paralelo com session
+    const latestProductions = await prisma.production.findMany({
+        where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+    })
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -216,26 +235,6 @@ export default async function Home() {
         })
     }
     const hasStreaming = Object.keys(showsByPlatform).length > 0
-
-    const latestProductions = await prisma.production.findMany({
-        where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
-    })
-
-    const spotlightArtistId = trendingArtists[0]?.id
-    const spotlightProduction = spotlightArtistId
-        ? await prisma.production.findFirst({
-            where: {
-                isHidden: false,
-                year: { not: null },
-                artists: { some: { artistId: spotlightArtistId } },
-            },
-            orderBy: { year: 'desc' },
-            select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
-        }).catch(() => null)
-        : null
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden" suppressHydrationWarning>
