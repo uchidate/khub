@@ -130,7 +130,6 @@ export class NewsNotificationService {
     /**
      * @deprecated Notificações IN_APP agora são disparadas apenas ao publicar artigos do blog.
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async notifyInAppForNews(_newsId: string): Promise<void> {
         // desativado — sininho usa apenas blogPostId (disparado em /api/blog/posts/[id]/publish)
     }
