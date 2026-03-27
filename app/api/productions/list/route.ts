@@ -93,7 +93,9 @@ async function handler(request: NextRequest) {
         for (const s of activeShows) {
             const platformScore = PLATFORM_SCORE[s.source] ?? 0
             if (!platformScore) continue
-            const rankScore = (11 - Math.min(s.rank, 10)) * 100
+            // Curva quadrática: rank 1 = 5000, rank 5 = 1800, rank 10 = 50
+            const r = 11 - Math.min(s.rank, 10)
+            const rankScore = r * r * 50
             const total = platformScore + rankScore
             const update = (map: Map<string, BoostEntry>, key: string) => {
                 const cur = map.get(key)
