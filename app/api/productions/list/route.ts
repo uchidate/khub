@@ -85,18 +85,22 @@ async function handler(request: NextRequest) {
         // Buscar IDs e campos de score de todas as produções que passam nos filtros
         const allForScoring = await prisma.production.findMany({
             where,
-            select: { id: true, tmdbId: true, voteAverage: true },
+            select: { id: true, tmdbId: true, voteAverage: true, voteCount: true, year: true },
         })
 
-        // Score: produções no streaming dominam; dentro de cada grupo, voteAverage desempata
-        // Tier 1 (com sinal de streaming): 10000 + (11-rank)*100 + voteAverage*10
-        // Tier 0 (sem sinal ativo):         voteAverage*10
+        // Score: produções no streaming dominam; dentro de cada grupo, múltiplos sinais desempatam
+        // Tier 1 (com sinal de streaming): 10000 + (11-rank)*100 + baseScore
+        // Tier 0 (sem sinal ativo):         baseScore
+        // baseScore = voteAverage*10 + log(voteCount+1)*5 + max(0, year-2000)*0.1
         // O offset de 10000 garante que qualquer produção no streaming (rank 1-10)
         // sempre ficará acima de qualquer produção sem presença ativa.
         const scored = allForScoring
             .map(p => {
                 const bestRank = p.tmdbId ? streamingBoost.get(p.tmdbId) : undefined
-                const baseScore = (p.voteAverage ?? 0) * 10
+                const voteScore = (p.voteAverage ?? 0) * 10
+                const voteCountScore = Math.log10((p.voteCount ?? 0) + 1) * 5
+                const yearScore = p.year ? Math.max(0, p.year - 2000) * 0.1 : 0
+                const baseScore = voteScore + voteCountScore + yearScore
                 const score = bestRank !== undefined
                     ? 10000 + (11 - bestRank) * 100 + baseScore
                     : baseScore
