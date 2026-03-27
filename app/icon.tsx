@@ -17,17 +17,14 @@ export default function Icon() {
       }}
     >
       <svg viewBox="0 0 38 38" width={26} height={26} fill="none">
-        {/* Barra esquerda */}
         <rect x="4" y="7" width="6" height="24" rx="3" fill="white" />
-        {/* Barra direita */}
         <rect x="28" y="7" width="6" height="24" rx="3" fill="white" />
-        {/* Onda rosa no centro */}
         <path
           d="M10 19 C13 14, 17 14, 19 19 C21 24, 25 24, 28 19"
           stroke="#ff2d78"
-          stroke-width="3"
+          strokeWidth="3"
           fill="none"
-          stroke-linecap="round"
+          strokeLinecap="round"
         />
       </svg>
     </div>,
