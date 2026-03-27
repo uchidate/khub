@@ -100,8 +100,8 @@ function SlotPicker({
     const selectedIds = new Set(selected.map(p => p.id))
 
     return (
-        <div className="rounded-xl border border-border bg-background overflow-hidden">
-            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-surface">
+        <div className="rounded-xl border border-border bg-background">
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-surface rounded-t-xl">
                 <span className="text-accent">{icon}</span>
                 <div>
                     <p className="text-[13px] font-bold text-foreground">{label}</p>
