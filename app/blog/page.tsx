@@ -13,6 +13,7 @@ import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
 
 import { SITE_URL } from '@/lib/constants/site'
+import { BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
@@ -100,11 +101,17 @@ function PostCard({ post }: { post: PostWithCategory }) {
             <span className="text-4xl opacity-10">✦</span>
           </div>
         )}
-        {post.category && (
-          <span className="absolute top-3 left-3 px-2.5 py-1 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider shadow">
-            {post.category.name}
-          </span>
-        )}
+        {post.category && (() => {
+          const config = BLOG_CATEGORY_BY_SLUG[post.category.slug]
+          return (
+            <span
+              className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow"
+              style={{ backgroundColor: config?.bg ?? '#f3f4f6', color: config?.color ?? '#374151' }}
+            >
+              {post.category.name}
+            </span>
+          )
+        })()}
       </div>
       <div className="flex flex-col gap-2 p-4 flex-1">
         <h2 className="font-bold text-foreground text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
@@ -148,8 +155,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const total = await prisma.blogPost.count({ where: PUBLIC_WHERE }).catch(() => null)
   const isFiltered = !!activeCategory || !!activeTag
 
-  // Don't show hero as duplicate in the grid
-  const gridPosts = isFiltered ? posts : posts.filter(p => p.id !== hero?.id)
+  // Não duplicar o post que aparece no hero/banner
+  const heroId = isFiltered ? posts[0]?.id : hero?.id
+  const gridPosts = posts.filter(p => p.id !== heroId)
 
   return (
     <>
@@ -162,52 +170,84 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <PageTransition className="pb-16">
 
-        {/* Hero — latest post, only without filter */}
-        {!isFiltered && hero && (
-          <div className="w-full mb-10 border-b border-border">
-            <Link href={`/blog/${hero.slug}`} className="group block relative">
-              <div className="relative w-full h-[340px] md:h-[480px] overflow-hidden">
-                {hero.coverImageUrl ? (
-                  <Image src={hero.coverImageUrl} alt={hero.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" priority />
+        {/* Topo — hero sem filtro, banner de categoria com filtro */}
+        <div className="w-full border-b border-border mb-10">
+          {(() => {
+            const activeCat = activeCategory ? BLOG_CATEGORY_BY_SLUG[activeCategory] : null
+            const featPost = activeCat ? posts[0] : activeTag ? posts[0] : hero
+            const coverImage = featPost?.coverImageUrl ?? null
+            const badge = activeCat ? activeCat.name : activeTag ? `#${activeTag}` : featPost?.category?.name
+            const badgeColor = activeCat?.color ?? (featPost?.category ? BLOG_CATEGORY_BY_SLUG[featPost.category.slug]?.color : undefined) ?? '#ec4899'
+
+            return (
+              <Link
+                href={featPost ? `/blog/${featPost.slug}` : '/blog'}
+                className="group block relative w-full h-[340px] md:h-[480px] overflow-hidden"
+              >
+                {coverImage ? (
+                  <Image
+                    src={coverImage}
+                    alt={featPost?.title ?? ''}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    priority
+                  />
                 ) : (
-                  <div className="w-full h-full bg-surface" />
+                  <div className="w-full h-full" style={{ background: activeCat ? `linear-gradient(135deg, ${activeCat.bg}, ${activeCat.color}44)` : '#f3f4f6' }} />
                 )}
-                {/* gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 max-w-4xl">
                   <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    {hero.category && (
-                      <span className="px-2.5 py-1 bg-accent text-white rounded-full text-[11px] font-bold uppercase tracking-wider">
-                        {hero.category.name}
+                    {badge && (
+                      <span
+                        className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                        style={{ backgroundColor: badgeColor, color: '#fff' }}
+                      >
+                        {badge}
                       </span>
                     )}
-                    {hero.featured && (
+                    {!activeCat && !activeTag && featPost?.featured && (
                       <span className="px-2.5 py-1 bg-yellow-500/90 text-black rounded-full text-[11px] font-bold uppercase tracking-wider">
                         Destaque
                       </span>
                     )}
-                    <span className="text-white/60 text-xs">{formatDate(hero.publishedAt ?? hero.createdAt)}</span>
+                    {featPost && (
+                      <span className="text-white/60 text-xs">
+                        {formatDate(featPost.publishedAt ?? featPost.createdAt)}
+                      </span>
+                    )}
                   </div>
                   <h1 className="text-2xl md:text-4xl font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-2">
-                    {hero.title}
+                    {featPost?.title ?? (activeCat ? `Artigos de ${activeCat.name}` : 'Blog')}
                   </h1>
-                  {hero.excerpt && (
-                    <p className="text-white/70 text-sm md:text-base line-clamp-2 leading-relaxed hidden sm:block">{hero.excerpt}</p>
+                  {featPost?.excerpt && (
+                    <p className="text-white/70 text-sm md:text-base line-clamp-2 leading-relaxed hidden sm:block">
+                      {featPost.excerpt}
+                    </p>
                   )}
                   <div className="flex items-center gap-3 mt-3 text-white/60 text-xs">
                     <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[9px] font-bold text-white/80">
                       {BLOG_AUTHOR_AVATAR_INITIAL}
                     </div>
                     <span>{BLOG_AUTHOR_DISPLAY_NAME}</span>
-                    <span>·</span>
-                    <span className="flex items-center gap-1"><Clock size={11} />{hero.readingTimeMin} min</span>
-                    <span className="flex items-center gap-1"><Eye size={11} />{hero.viewCount} views</span>
+                    {featPost && (
+                      <>
+                        <span>·</span>
+                        <span className="flex items-center gap-1"><Clock size={11} />{featPost.readingTimeMin} min</span>
+                        <span className="flex items-center gap-1"><Eye size={11} />{featPost.viewCount} views</span>
+                      </>
+                    )}
+                    {(activeCat || activeTag) && (
+                      <span className="ml-auto text-white/40">
+                        {posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
-            </Link>
-          </div>
-        )}
+              </Link>
+            )
+          })()}
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
@@ -217,19 +257,33 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href="/blog"
+                scroll={false}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${!isFiltered ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}
               >
                 Todos {total ? <span className="opacity-70">({total})</span> : null}
               </Link>
-              {categories.filter(c => c._count.posts > 0).map(c => (
-                <Link
-                  key={c.id}
-                  href={`/blog?category=${c.slug}`}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === c.slug ? 'bg-accent text-white' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}
-                >
-                  {c.name} <span className="opacity-50">{c._count.posts}</span>
-                </Link>
-              ))}
+              {categories.filter(c => c._count.posts > 0).map(c => {
+                const isActive = activeCategory === c.slug
+                const config = BLOG_CATEGORY_BY_SLUG[c.slug]
+                return (
+                  <Link
+                    key={c.id}
+                    href={`/blog?category=${c.slug}`}
+                    scroll={false}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                    style={isActive
+                      ? { backgroundColor: config?.bg ?? '#f3f4f6', color: config?.color ?? '#374151', outline: `1.5px solid ${config?.color ?? '#374151'}33` }
+                      : undefined
+                    }
+                  >
+                    {config && (
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: config.color }} />
+                    )}
+                    <span className={isActive ? '' : 'text-muted'}>{c.name}</span>
+                    <span className="opacity-40 text-[10px]">{c._count.posts}</span>
+                  </Link>
+                )
+              })}
             </div>
             {/* Tags */}
             {popularTags.length > 0 && (
@@ -241,6 +295,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     <Link
                       key={tag}
                       href={activeTag === tag ? '/blog' : `/blog?tag=${encodeURIComponent(tag)}`}
+                      scroll={false}
                       className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all hover:brightness-90"
                       style={{
                         color: ts.color,
@@ -256,14 +311,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             )}
           </div>
 
-          {/* Active filter label */}
-          {isFiltered && (
+          {/* Limpar filtro de tag (categoria já tem banner próprio) */}
+          {activeTag && (
             <div className="flex items-center gap-2 mb-6">
-              <p className="text-sm text-muted">
-                {posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}
-                {activeCategory && ` em "${categories.find(c => c.slug === activeCategory)?.name ?? activeCategory}"`}
-                {activeTag && ` com a tag "${activeTag}"`}
-              </p>
+              <p className="text-sm text-muted">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'} com a tag &ldquo;{activeTag}&rdquo;</p>
               <Link href="/blog" className="text-xs text-accent hover:underline">Limpar filtro</Link>
             </div>
           )}

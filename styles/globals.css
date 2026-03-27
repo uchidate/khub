@@ -28,6 +28,8 @@
     --color-ticker-fg:       rgba(255, 255, 255, 0.65);
     --color-ticker-fg-hover: rgba(255, 255, 255, 0.95);
     --color-ticker-divider:  rgba(255, 255, 255, 0.08);
+    /* Navbar translucida */
+    --color-navbar-scrolled: rgba(255, 255, 255, 0.85);
   }
 
   /* ── Dark theme ── */
@@ -55,6 +57,8 @@
     --color-ticker-fg:       rgba(200, 200, 200, 0.70);
     --color-ticker-fg-hover: #f0f0f0;
     --color-ticker-divider:  rgba(255, 255, 255, 0.06);
+    /* Navbar translucida */
+    --color-navbar-scrolled: rgba(13, 13, 13, 0.85);
   }
 }
 

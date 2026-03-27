@@ -34,12 +34,15 @@ const NavBar = () => {
     ]
 
     const navBg = isScrolled
-        ? 'bg-background/95 backdrop-blur-xl border-b border-border shadow-sm'
+        ? 'backdrop-blur-xl border-b border-border shadow-[0_4px_24px_rgba(0,0,0,0.08)]'
         : 'bg-background border-b border-border'
 
     return (
         <>
-            <nav className={`w-full z-[100] sticky top-0 transition-[background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}>
+            <nav
+                className={`w-full z-[100] sticky top-0 transition-[background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
+                style={isScrolled ? { background: 'linear-gradient(to right, var(--color-bg) 0%, var(--color-bg) 200px, transparent 300px)' } : undefined}
+            >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between gap-3 h-[52px] sm:h-[60px] lg:h-[64px]">
 
@@ -57,15 +60,15 @@ const NavBar = () => {
                         </div>
 
                         {/* Center: desktop nav links */}
-                        <div className="hidden lg:flex items-center gap-0.5">
+                        <div className="hidden lg:flex items-center gap-1">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`text-[13px] font-medium px-3 py-1.5 rounded-full transition-colors whitespace-nowrap ${
+                                    className={`text-[13px] font-semibold px-3.5 py-1.5 rounded-full border transition-all whitespace-nowrap ${
                                         pathname === link.href
-                                            ? 'text-[#ff2d78] font-semibold'
-                                            : 'text-muted hover:text-foreground hover:bg-surface'
+                                            ? 'text-accent border-accent/30 bg-accent/8'
+                                            : 'text-foreground border-border bg-background hover:border-border-strong hover:bg-surface'
                                     }`}
                                 >
                                     {link.label}
