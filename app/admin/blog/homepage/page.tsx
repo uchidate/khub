@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminButton } from '@/components/admin/AdminButton'
-import { Save, Search, X, Star, LayoutGrid, BookMarked, Loader2 } from 'lucide-react'
+import { Save, Search, X, Star, LayoutGrid, BookMarked, Loader2, Layers } from 'lucide-react'
 import Image from 'next/image'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,6 +22,7 @@ interface HomepageConfig {
     homeFeaturedPostId: string | null
     homeSecondaryPostIds: string[]
     homeSidebarPostIds: string[]
+    homeCarouselPostIds: string[]
 }
 
 // ─── Post Search ──────────────────────────────────────────────────────────────
@@ -179,6 +180,7 @@ export default function HomepageConfigPage() {
     const [postsById, setPostsById] = useState<Record<string, PostSummary>>({})
 
     const [featuredPost, setFeaturedPost] = useState<PostSummary | null>(null)
+    const [carouselPosts, setCarouselPosts] = useState<PostSummary[]>([])
     const [secondaryPosts, setSecondaryPosts] = useState<PostSummary[]>([])
     const [sidebarPosts, setSidebarPosts] = useState<PostSummary[]>([])
 
@@ -189,6 +191,7 @@ export default function HomepageConfigPage() {
             .then(({ config, postsById: pById }) => {
                 setPostsById(pById) // kept for potential future use
                 setFeaturedPost(config.homeFeaturedPostId ? (pById[config.homeFeaturedPostId] ?? null) : null)
+                setCarouselPosts((config.homeCarouselPostIds ?? []).map(id => pById[id]).filter(Boolean))
                 setSecondaryPosts(config.homeSecondaryPostIds.map(id => pById[id]).filter(Boolean))
                 setSidebarPosts(config.homeSidebarPostIds.map(id => pById[id]).filter(Boolean))
             })
@@ -204,6 +207,7 @@ export default function HomepageConfigPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     homeFeaturedPostId: featuredPost?.id ?? null,
+                    homeCarouselPostIds: carouselPosts.map(p => p.id),
                     homeSecondaryPostIds: secondaryPosts.map(p => p.id),
                     homeSidebarPostIds: sidebarPosts.map(p => p.id),
                 }),
@@ -215,7 +219,7 @@ export default function HomepageConfigPage() {
         } finally {
             setSaving(false)
         }
-    }, [featuredPost, secondaryPosts, sidebarPosts, toast])
+    }, [featuredPost, carouselPosts, secondaryPosts, sidebarPosts, toast])
 
     if (loading) {
         return (
@@ -245,11 +249,22 @@ export default function HomepageConfigPage() {
                     </AdminButton>
                 </div>
 
+                {/* Carrossel do Hero */}
+                <SlotPicker
+                    label="Carrossel do Hero"
+                    icon={<Layers size={15} />}
+                    description="Até 5 artigos que rotacionam automaticamente no hero da homepage (substitui o Card principal quando preenchido)"
+                    selected={carouselPosts}
+                    onSelect={p => setCarouselPosts(prev => [...prev, p])}
+                    onRemove={id => setCarouselPosts(prev => prev.filter(p => p.id !== id))}
+                    max={5}
+                />
+
                 {/* Card principal */}
                 <SlotPicker
-                    label="Card principal"
+                    label="Card principal (fallback)"
                     icon={<Star size={15} />}
-                    description="O artigo em destaque maior no topo da página"
+                    description="Usado quando o Carrossel está vazio — artigo em destaque maior no topo"
                     selected={featuredPost ? [featuredPost] : []}
                     onSelect={p => setFeaturedPost(p)}
                     onRemove={() => setFeaturedPost(null)}

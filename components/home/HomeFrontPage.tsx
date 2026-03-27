@@ -3,6 +3,7 @@ import Image from "next/image"
 import { type ArtistForBadge } from "@/lib/trending/badges"
 import { getArtistBadgeDisplay } from "@/lib/trending/display"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
+import { FeaturedCarousel } from "@/components/home/FeaturedCarousel"
 
 interface FeaturedStory {
     slug: string
@@ -46,6 +47,7 @@ interface SpotlightProduction {
 
 interface HomeFrontPageProps {
     featuredStory: FeaturedStory | undefined
+    carouselPosts?: FeaturedStory[]
     secondaryStories: SecondaryStory[]
     trendingArtists: TrendingArtist[]
     spotlightProduction: SpotlightProduction | null
@@ -111,11 +113,13 @@ function getInitials(name: string) {
 
 export function HomeFrontPage({
     featuredStory,
+    carouselPosts,
     secondaryStories,
     trendingArtists,
     spotlightProduction,
 }: HomeFrontPageProps) {
-    if (!featuredStory) return null
+    const hasCarousel = carouselPosts && carouselPosts.length > 0
+    if (!hasCarousel && !featuredStory) return null
 
     const safeSecondary = secondaryStories.slice(0, 4)
     const safeArtists = trendingArtists.slice(0, 8)
@@ -126,58 +130,64 @@ export function HomeFrontPage({
             <div className="max-w-7xl mx-auto grid lg:grid-cols-[2fr_0.65fr]">
                 {/* LEFT COLUMN */}
                 <div className="flex flex-col">
-                    {/* Featured story — full-bleed hero */}
-                    <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[340px] md:h-[480px] overflow-hidden bg-accent-soft border-b border-border">
-                        {featuredStory.coverImageUrl ? (
-                            <Image
-                                src={featuredStory.coverImageUrl}
-                                alt={featuredStory.title}
-                                fill
-                                sizes="(max-width: 1024px) 100vw, 62vw"
-                                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                priority
-                            />
-                        ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft">
-                                <span
-                                    className="absolute text-[7rem] font-black text-accent select-none pointer-events-none"
-                                    style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.05 }}
-                                >
-                                    블랙핑크
-                                </span>
-                                <OrbitalDecoration />
-                            </div>
-                        )}
-                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%)' }} />
-                        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-10">
-                            <div className="flex items-center gap-1.5 mb-3">
-                                {(() => {
-                                    const cs = getCategoryStyle(featuredStory.category?.slug ?? featuredStory.tags?.[0])
-                                    return (
-                                        <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded" style={{ color: cs.color, backgroundColor: `${cs.bg}dd` }}>
-                                            {featuredStory.category?.name ?? featuredStory.tags?.[0] ?? "Blog"}
+                    {/* Hero: carousel or static featured */}
+                    <div className="border-b border-border">
+                        {hasCarousel ? (
+                            <FeaturedCarousel posts={carouselPosts} />
+                        ) : featuredStory ? (
+                            <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[340px] md:h-[480px] overflow-hidden bg-accent-soft">
+                                {featuredStory.coverImageUrl ? (
+                                    <Image
+                                        src={featuredStory.coverImageUrl}
+                                        alt={featuredStory.title}
+                                        fill
+                                        sizes="(max-width: 1024px) 100vw, 62vw"
+                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                        priority
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft">
+                                        <span
+                                            className="absolute text-[7rem] font-black text-accent select-none pointer-events-none"
+                                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.05 }}
+                                        >
+                                            블랙핑크
                                         </span>
-                                    )
-                                })()}
-                                <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-white/20 text-white backdrop-blur-sm">
-                                    Destaque
-                                </span>
-                            </div>
-                            <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
-                                {featuredStory.title}
-                            </h1>
-                            {featuredStory.excerpt && (
-                                <p className="text-[12.5px] text-white/70 leading-relaxed line-clamp-2 mb-2">
-                                    {featuredStory.excerpt}
-                                </p>
-                            )}
-                            <div className="flex items-center gap-2 text-[9.5px] text-white/50 flex-wrap">
-                                <span>HallyuHub Redação</span>
-                                <span className="w-[3px] h-[3px] rounded-full bg-white/40" />
-                                <span>{formatDate(featuredStory.publishedAt)}</span>
-                            </div>
-                        </div>
-                    </Link>
+                                        <OrbitalDecoration />
+                                    </div>
+                                )}
+                                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%)' }} />
+                                <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-10">
+                                    <div className="flex items-center gap-1.5 mb-3">
+                                        {(() => {
+                                            const cs = getCategoryStyle(featuredStory.category?.slug ?? featuredStory.tags?.[0])
+                                            return (
+                                                <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded" style={{ color: cs.color, backgroundColor: `${cs.bg}dd` }}>
+                                                    {featuredStory.category?.name ?? featuredStory.tags?.[0] ?? "Blog"}
+                                                </span>
+                                            )
+                                        })()}
+                                        <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-white/20 text-white backdrop-blur-sm">
+                                            Destaque
+                                        </span>
+                                    </div>
+                                    <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
+                                        {featuredStory.title}
+                                    </h1>
+                                    {featuredStory.excerpt && (
+                                        <p className="text-[12.5px] text-white/70 leading-relaxed line-clamp-2 mb-2">
+                                            {featuredStory.excerpt}
+                                        </p>
+                                    )}
+                                    <div className="flex items-center gap-2 text-[9.5px] text-white/50 flex-wrap">
+                                        <span>HallyuHub Redação</span>
+                                        <span className="w-[3px] h-[3px] rounded-full bg-white/40" />
+                                        <span>{formatDate(featuredStory.publishedAt)}</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ) : null}
+                    </div>
 
                     {/* Secondary stories 2×2 grid */}
                     {safeSecondary.length > 0 && (

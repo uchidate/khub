@@ -19,6 +19,7 @@ export async function GET() {
             homeFeaturedPostId: true,
             homeSecondaryPostIds: true,
             homeSidebarPostIds: true,
+            homeCarouselPostIds: true,
         },
     })
 
@@ -26,6 +27,7 @@ export async function GET() {
         homeFeaturedPostId: null,
         homeSecondaryPostIds: [],
         homeSidebarPostIds: [],
+        homeCarouselPostIds: [],
     }
 
     // Busca os posts dos slots para exibir no admin
@@ -33,6 +35,7 @@ export async function GET() {
         ...(config.homeFeaturedPostId ? [config.homeFeaturedPostId] : []),
         ...config.homeSecondaryPostIds,
         ...config.homeSidebarPostIds,
+        ...config.homeCarouselPostIds,
     ]
 
     const posts = allIds.length > 0
@@ -64,17 +67,20 @@ export async function PUT(req: NextRequest) {
             homeFeaturedPostId?: string | null
             homeSecondaryPostIds?: string[]
             homeSidebarPostIds?: string[]
+            homeCarouselPostIds?: string[]
         }
 
         const data: {
             homeFeaturedPostId?: string | null
             homeSecondaryPostIds?: string[]
             homeSidebarPostIds?: string[]
+            homeCarouselPostIds?: string[]
         } = {}
 
         if ('homeFeaturedPostId' in body) data.homeFeaturedPostId = body.homeFeaturedPostId ?? null
         if (Array.isArray(body.homeSecondaryPostIds)) data.homeSecondaryPostIds = body.homeSecondaryPostIds.slice(0, 4)
         if (Array.isArray(body.homeSidebarPostIds)) data.homeSidebarPostIds = body.homeSidebarPostIds.slice(0, 4)
+        if (Array.isArray(body.homeCarouselPostIds)) data.homeCarouselPostIds = body.homeCarouselPostIds.slice(0, 5)
 
         await prisma.systemSettings.upsert({
             where: { id: 'singleton' },
@@ -87,6 +93,7 @@ export async function PUT(req: NextRequest) {
                 homeFeaturedPostId: null,
                 homeSecondaryPostIds: [],
                 homeSidebarPostIds: [],
+                homeCarouselPostIds: [],
                 ...data,
             },
         })

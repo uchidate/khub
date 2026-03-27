@@ -80,6 +80,7 @@ const getHomePublicData = unstable_cache(
         if (settings?.homeFeaturedPostId) slottedIds.add(settings.homeFeaturedPostId)
         settings?.homeSecondaryPostIds?.forEach(id => slottedIds.add(id))
         settings?.homeSidebarPostIds?.forEach(id => slottedIds.add(id))
+        settings?.homeCarouselPostIds?.forEach(id => slottedIds.add(id))
 
         // Busca posts dos slots configurados
         const [slottedPostsRaw, fallbackPostsRaw] = await Promise.all([
@@ -123,6 +124,13 @@ const getHomePublicData = unstable_cache(
                 .slice(0, 4)
             : fallback.slice(0, 4)
 
+        const carouselPosts = settings?.homeCarouselPostIds?.length
+            ? settings.homeCarouselPostIds
+                .map(id => slottedById[id])
+                .filter(Boolean)
+                .slice(0, 5)
+            : []
+
         // Feed exclui tudo que aparece nos slots e no featured
         const featuredId = featuredPost?.id
         const secondaryIds = new Set(secondaryPosts.map(p => p.id))
@@ -137,6 +145,7 @@ const getHomePublicData = unstable_cache(
         return {
             trendingArtists,
             featuredPost: featuredPost ? serializePost(featuredPost) : null,
+            carouselPosts: carouselPosts.map(serializePost),
             secondaryPosts: secondaryPosts.map(serializePost),
             sidebarPosts: sidebarPosts.map(serializePost),
             feedPosts: feedPosts.map(serializePost),
@@ -146,7 +155,7 @@ const getHomePublicData = unstable_cache(
             siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
         }
     },
-    ['home-page-public-data-v9'],
+    ['home-page-public-data-v10'],
     { revalidate: 120 },
 )
 
@@ -187,7 +196,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredPost, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats } = publicData
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats } = publicData
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -248,6 +257,7 @@ export default async function Home() {
             }} />
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
+                carouselPosts={carouselPosts}
                 secondaryStories={secondaryPosts}
                 trendingArtists={trendingArtists.slice(0, 8)}
                 spotlightProduction={spotlightProduction}

@@ -703,6 +703,7 @@ model SystemSettings {
   homeFeaturedPostId        String?  // card principal (1 post)
   homeSecondaryPostIds      String[] // 4 cards menores (ordenados)
   homeSidebarPostIds        String[] // "Artigos em destaque" sidebar (até 4)
+  homeCarouselPostIds       String[] // carrossel hero (até 5 posts)
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
