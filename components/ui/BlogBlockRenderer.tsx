@@ -311,7 +311,7 @@ function ArtistCardBlock({ artistId, note, compact, data }: { artistId: string; 
     }
     return (
         <Link href={`/artists/${artistId}`}
-            className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            className="group flex items-center gap-4 my-3 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
             <div className="w-16 h-16 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-lg font-bold text-[#ff2d78]">
                 {data?.primaryImageUrl ? (
                     <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={64} height={64} className="w-full h-full object-cover" />
@@ -358,7 +358,7 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
     }
     return (
         <Link href={`/groups/${groupId}`}
-            className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            className="group flex items-center gap-4 my-3 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
             <div className="w-16 h-16 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-lg font-bold text-[#ff2d78]">
                 {data?.profileImageUrl ? (
                     <Image src={data.profileImageUrl} alt={data.name} width={64} height={64} className="w-full h-full object-cover" />
@@ -384,7 +384,7 @@ function ProductionCardBlock({ productionId, note, data }: { productionId: strin
     const typeLabel = data?.type ? (TYPE_LABELS[data.type] ?? data.type) : null
     return (
         <Link href={`/productions/${productionId}`}
-            className="group flex items-center gap-4 my-7 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            className="group flex items-center gap-4 my-3 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
             <div className="w-12 h-[72px] rounded-lg bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-muted">
                 {data?.imageUrl ? (
                     <Image src={data.imageUrl} alt={data.titlePt} width={48} height={72} className="w-full h-full object-cover" />
