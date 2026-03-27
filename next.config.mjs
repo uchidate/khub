@@ -201,7 +201,7 @@ const nextConfig = {
                 hostname: '*.archive.org',
             },
         ],
-        imageSizes: [16, 32, 48, 64, 96, 128, 160, 256, 384],
+        imageSizes: [16, 32, 48, 64, 96, 128, 160, 256, 384, 512],
         formats: ['image/webp'],
         minimumCacheTTL: 60 * 60 * 24 * 30,
     },
