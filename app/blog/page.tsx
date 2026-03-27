@@ -94,6 +94,7 @@ function PostCard({ post }: { post: PostWithCategory }) {
             src={post.coverImageUrl}
             alt={post.title}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
@@ -189,6 +190,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     src={coverImage}
                     alt={featPost?.title ?? ''}
                     fill
+                    sizes="100vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                     priority
                   />
@@ -365,7 +367,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                       </div>
                       {p.coverImageUrl && (
                         <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                          <Image src={p.coverImageUrl} alt={p.title} fill className="object-cover" />
+                          <Image src={p.coverImageUrl} alt={p.title} fill sizes="48px" className="object-cover" />
                         </div>
                       )}
                     </Link>

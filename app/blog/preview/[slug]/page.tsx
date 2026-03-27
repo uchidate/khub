@@ -130,7 +130,7 @@ export default async function BlogPreviewPage({ params }: { params: Promise<{ sl
 
         {post.coverImageUrl && (
           <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-white/5">
-            <Image src={post.coverImageUrl} alt={post.title} fill className="object-cover" priority />
+            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
           </div>
         )}
 
