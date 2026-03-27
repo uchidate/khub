@@ -64,22 +64,22 @@ async function handler(request: NextRequest) {
 
     // Sort "popular": boost produções presentes no Top 10 dos streamings
     if (sortBy === 'popular') {
-        // Buscar sinais ativos de streaming (plataformas reais, excluindo interno)
-        const activeSignals = await prisma.streamingTrendSignal.findMany({
-            where: {
-                expiresAt: { gt: new Date() },
-                source: { not: 'internal_production' },
-            },
-            select: { showTmdbId: true, rank: true },
+        // Buscar shows ativos das plataformas de streaming (Netflix, Disney+, etc.)
+        const activeShows = await prisma.streamingShow.findMany({
+            where: { expiresAt: { gt: new Date() } },
+            select: { productionId: true, tmdbId: true, rank: true },
         })
 
-        // Melhor rank por showTmdbId (rank menor = posição mais alta)
-        const streamingBoost = new Map<string, number>()
-        for (const s of activeSignals) {
-            const existing = streamingBoost.get(s.showTmdbId)
-            if (existing === undefined || s.rank < existing) {
-                streamingBoost.set(s.showTmdbId, s.rank)
+        // Melhor rank por productionId (match direto) e por tmdbId (fallback)
+        const boostByProductionId = new Map<string, number>()
+        const boostByTmdbId = new Map<string, number>()
+        for (const s of activeShows) {
+            if (s.productionId) {
+                const cur = boostByProductionId.get(s.productionId)
+                if (cur === undefined || s.rank < cur) boostByProductionId.set(s.productionId, s.rank)
             }
+            const cur = boostByTmdbId.get(s.tmdbId)
+            if (cur === undefined || s.rank < cur) boostByTmdbId.set(s.tmdbId, s.rank)
         }
 
         // Buscar IDs e campos de score de todas as produções que passam nos filtros
@@ -92,11 +92,10 @@ async function handler(request: NextRequest) {
         // Tier 1 (com sinal de streaming): 10000 + (11-rank)*100 + baseScore
         // Tier 0 (sem sinal ativo):         baseScore
         // baseScore = voteAverage*10 + log(voteCount+1)*5 + max(0, year-2000)*0.1
-        // O offset de 10000 garante que qualquer produção no streaming (rank 1-10)
-        // sempre ficará acima de qualquer produção sem presença ativa.
         const scored = allForScoring
             .map(p => {
-                const bestRank = p.tmdbId ? streamingBoost.get(p.tmdbId) : undefined
+                const bestRank = boostByProductionId.get(p.id)
+                    ?? (p.tmdbId ? boostByTmdbId.get(p.tmdbId) : undefined)
                 const voteScore = (p.voteAverage ?? 0) * 10
                 const voteCountScore = Math.log10((p.voteCount ?? 0) + 1) * 5
                 const yearScore = p.year ? Math.max(0, p.year - 2000) * 0.1 : 0
