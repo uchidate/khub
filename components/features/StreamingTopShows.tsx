@@ -39,6 +39,7 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
     const [activeTab, setActiveTab] = useState<string>(availablePlatforms[0] ?? '')
 
     const activeShows = showsByPlatform[activeTab] ?? []
+    const activeCfg = getStreamingConfig(activeTab)
 
     if (availablePlatforms.length === 0) return null
 
@@ -46,7 +47,12 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
         <div>
             {/* Header */}
             <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-border gap-2">
-                <span className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted shrink-0">Top 10 nos Streamings</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted shrink-0">
+                    Top 10 nos Streamings
+                    <span className="sm:hidden normal-case tracking-normal font-semibold ml-1.5" style={{ color: activeCfg.hex }}>
+                        · {activeCfg.label}
+                    </span>
+                </span>
                 <div className="flex items-center gap-1">
                     {availablePlatforms.map(platform => {
                         const cfg = getStreamingConfig(platform)

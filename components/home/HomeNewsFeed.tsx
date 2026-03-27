@@ -135,9 +135,9 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="flex items-start gap-3.5 px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border hover:bg-accent-soft transition-colors group min-h-[56px]"
+                                    className="flex items-center gap-3.5 px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border hover:bg-accent-soft transition-colors group min-h-[56px]"
                                 >
-                                    <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 pt-0.5">
+                                    <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0">
                                         {String(idx + 1).padStart(2, "0")}
                                     </span>
                                     <div className="flex-1 min-w-0">
@@ -211,26 +211,8 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors group"
+                                    className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors group"
                                 >
-                                    <div
-                                        className="w-12 h-12 rounded-md flex-shrink-0 overflow-hidden border border-border/60 flex items-center justify-center"
-                                        style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
-                                    >
-                                        {post.coverImageUrl ? (
-                                            <Image
-                                                src={post.coverImageUrl}
-                                                alt={post.title}
-                                                width={48}
-                                                height={48}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <span className="text-[9px] font-bold" style={{ color: getCategoryStyle(post.category?.slug).color }}>
-                                                {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
-                                            </span>
-                                        )}
-                                    </div>
                                     <div className="flex-1 min-w-0">
                                         {post.category && (() => {
                                             const cs = getCategoryStyle(post.category.slug)
@@ -247,6 +229,24 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                             {post.title}
                                         </p>
                                         <span className="text-[8.5px] text-muted mt-1 block">{post.readingTimeMin} min de leitura</span>
+                                    </div>
+                                    <div
+                                        className="w-[58px] h-11 rounded-lg flex-shrink-0 overflow-hidden border border-border/60 flex items-center justify-center"
+                                        style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
+                                    >
+                                        {post.coverImageUrl ? (
+                                            <Image
+                                                src={post.coverImageUrl}
+                                                alt={post.title}
+                                                width={58}
+                                                height={44}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-[9px] font-bold" style={{ color: getCategoryStyle(post.category?.slug).color }}>
+                                                {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
+                                            </span>
+                                        )}
                                     </div>
                                 </Link>
                             ))}
