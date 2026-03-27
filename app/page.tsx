@@ -146,7 +146,7 @@ const getHomePublicData = unstable_cache(
             siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
         }
     },
-    ['home-page-public-data-v8'],
+    ['home-page-public-data-v9'],
     { revalidate: 120 },
 )
 
@@ -215,6 +215,19 @@ export default async function Home() {
         select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
     })
 
+    const spotlightArtistId = trendingArtists[0]?.id
+    const spotlightProduction = spotlightArtistId
+        ? await prisma.production.findFirst({
+            where: {
+                isHidden: false,
+                year: { not: null },
+                artists: { some: { artistId: spotlightArtistId } },
+            },
+            orderBy: { year: 'desc' },
+            select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+        }).catch(() => null)
+        : null
+
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden" suppressHydrationWarning>
             <JsonLd data={{
@@ -237,6 +250,7 @@ export default async function Home() {
                 featuredStory={featuredPost ?? undefined}
                 secondaryStories={secondaryPosts}
                 trendingArtists={trendingArtists.slice(0, 8)}
+                spotlightProduction={spotlightProduction}
             />
             <HomeBlogFeed
                 blogPosts={feedPosts}

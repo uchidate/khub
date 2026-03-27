@@ -35,10 +35,20 @@ interface TrendingArtist extends ArtistForBadge {
     gender?: string | number | null
 }
 
+interface SpotlightProduction {
+    id: string
+    titlePt: string
+    type: string
+    year: number | null
+    imageUrl: string | null
+    voteAverage: number | null
+}
+
 interface HomeFrontPageProps {
     featuredStory: FeaturedStory | undefined
     secondaryStories: SecondaryStory[]
     trendingArtists: TrendingArtist[]
+    spotlightProduction: SpotlightProduction | null
 }
 
 const AVATAR_GRADIENTS = [
@@ -103,6 +113,7 @@ export function HomeFrontPage({
     featuredStory,
     secondaryStories,
     trendingArtists,
+    spotlightProduction,
 }: HomeFrontPageProps) {
     if (!featuredStory) return null
 
@@ -226,9 +237,9 @@ export function HomeFrontPage({
                             }
                         `}</style>
 
-                        {/* Desktop: vertical list */}
+                        {/* Desktop: vertical list — 7 artistas para não ultrapassar altura da coluna esquerda */}
                         <div className="hidden sm:block">
-                            {safeArtists.map((artist, idx) => (
+                            {safeArtists.slice(0, 7).map((artist, idx) => (
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
@@ -343,26 +354,33 @@ export function HomeFrontPage({
                                 </div>
                             </div>
 
-                            {/* Métricas */}
-                            <div className="flex gap-4 border-t border-border/60 pt-2.5">
-                                {spotlightArtist.trendingScore != null && spotlightArtist.trendingScore > 0 && (
-                                    <div>
-                                        <p className="text-[14px] font-extrabold tracking-[-0.04em] text-foreground leading-none">
-                                            {Math.round(spotlightArtist.trendingScore)}<span className="text-accent text-[9px] ml-0.5">pts</span>
-                                        </p>
-                                        <p className="text-[8px] text-muted mt-0.5">Trending</p>
+                            {/* Última produção */}
+                            {spotlightProduction && (
+                                <Link
+                                    href={`/productions/${spotlightProduction.id}`}
+                                    className="flex items-center gap-2.5 border-t border-border/60 pt-2.5 group/prod"
+                                >
+                                    <div className="w-9 h-[52px] rounded overflow-hidden flex-shrink-0 bg-surface border border-border/60">
+                                        {spotlightProduction.imageUrl ? (
+                                            <Image src={spotlightProduction.imageUrl} alt={spotlightProduction.titlePt} width={36} height={52} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[8px] text-muted font-bold">
+                                                {spotlightProduction.type[0]}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                {spotlightArtist.viewCount != null && spotlightArtist.viewCount > 0 && (
-                                    <div>
-                                        <p className="text-[14px] font-extrabold tracking-[-0.04em] text-foreground leading-none">
-                                            {spotlightArtist.viewCount > 999 ? `${(spotlightArtist.viewCount / 1000).toFixed(1)}k` : spotlightArtist.viewCount}
-                                            <span className="text-accent text-[9px] ml-0.5">views</span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted mb-0.5">Última produção</p>
+                                        <p className="text-[12px] font-bold text-foreground group-hover/prod:text-accent transition-colors line-clamp-2 leading-tight">
+                                            {spotlightProduction.titlePt}
                                         </p>
-                                        <p className="text-[8px] text-muted mt-0.5">Visualizações</p>
+                                        <p className="text-[9px] text-muted mt-0.5">
+                                            {spotlightProduction.type}{spotlightProduction.year ? ` · ${spotlightProduction.year}` : ''}
+                                            {spotlightProduction.voteAverage ? ` · ★ ${spotlightProduction.voteAverage.toFixed(1)}` : ''}
+                                        </p>
                                     </div>
-                                )}
-                            </div>
+                                </Link>
+                            )}
 
                             <Link
                                 href={`/artists/${spotlightArtist.id}`}

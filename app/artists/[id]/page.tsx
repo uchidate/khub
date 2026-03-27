@@ -533,37 +533,42 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             {artist.productions.length > 0 ? (
                                 <>
                                 {/* Mobile: lista horizontal compacta */}
-                                <div className="lg:hidden space-y-3">
+                                <div className="lg:hidden flex flex-col gap-2">
                                     {artist.productions.map(({ production }) => {
                                         const streamSignalRaw = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
                                         const streamSignal = streamSignalRaw?.source !== 'internal_production' ? streamSignalRaw : null
+                                        const syn = productionTranslations.get(production.id)?.get('synopsis') ?? production.synopsis
                                         return (
                                         <div key={production.id} className="relative group/card">
                                             <Link href={`/productions/${production.id}`}
                                                 className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-[#ff2d78]/30 hover:shadow-sm transition-all">
-                                                <div className="w-20 flex-shrink-0 relative bg-[#e8e8e8]">
+                                                {/* Poster — proporção 2:3 fixa */}
+                                                <div className="w-24 aspect-[2/3] flex-shrink-0 relative bg-surface self-start">
                                                     {production.imageUrl ? (
-                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="80px"
-                                                            className="object-cover brightness-75 group-hover:brightness-90 transition-all" />
+                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="96px"
+                                                            className="object-cover object-center group-hover:brightness-110 transition-all duration-300" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center">
-                                                            <span className="text-xs font-black text-muted uppercase text-center px-2 leading-tight">{production.type}</span>
-                                                        </div>
-                                                    )}
-                                                    {streamSignal && (
-                                                        <div className="absolute bottom-0 left-0 right-0 p-1">
-                                                            <span className="flex items-center gap-1 px-1.5 py-1 rounded text-[9px] font-black text-white leading-none w-full bg-red-600">
-                                                                <span className="shrink-0">TOP {streamSignal.rank}</span>
-                                                            </span>
+                                                            <Film className="w-5 h-5 text-muted/30" />
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex-1 p-3">
-                                                    <h4 className="text-sm font-black text-foreground group-hover:text-[#ff2d78] transition-colors leading-tight line-clamp-2">{production.titlePt}</h4>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface text-muted">{production.type}</span>
+                                                {/* Detalhes */}
+                                                <div className="flex-1 min-w-0 p-3">
+                                                    <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                                                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface border border-border text-muted">{production.type}</span>
                                                         {production.year && <span className="text-[10px] font-bold text-[#ff2d78]">{production.year}</span>}
+                                                        {production.voteAverage != null && production.voteAverage > 0 && (
+                                                            <span className="text-[10px] text-muted">★ {production.voteAverage.toFixed(1)}</span>
+                                                        )}
+                                                        {streamSignal && (
+                                                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-white bg-red-600">
+                                                                TOP {streamSignal.rank} · {getStreamingConfig(streamSignal.source).label}
+                                                            </span>
+                                                        )}
                                                     </div>
+                                                    <p className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2 mb-1.5">{production.titlePt}</p>
+                                                    {syn && <p className="text-[11px] text-muted leading-relaxed line-clamp-2">{syn}</p>}
                                                 </div>
                                             </Link>
                                         </div>
@@ -571,51 +576,46 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                     })}
                                 </div>
 
-                                {/* Desktop: grid de posters */}
-                                <div className="hidden lg:grid grid-cols-3 xl:grid-cols-4 gap-4">
+                                {/* Desktop: lista horizontal com poster + detalhes */}
+                                <div className="hidden lg:flex flex-col gap-2">
                                     {artist.productions.map(({ production }) => {
                                         const streamSignalRaw = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
                                         const streamSignal = streamSignalRaw?.source !== 'internal_production' ? streamSignalRaw : null
                                         const syn = productionTranslations.get(production.id)?.get('synopsis') ?? production.synopsis
                                         return (
                                         <div key={production.id} className="relative group/card">
-                                            <Link href={`/productions/${production.id}`} className="group block">
-                                                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border group-hover:border-[#ff2d78]/40 group-hover:shadow-lg transition-all duration-300">
+                                            <Link href={`/productions/${production.id}`}
+                                                className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-[#ff2d78]/30 hover:shadow-sm transition-all">
+                                                {/* Poster — proporção 2:3 fixa, corte lateral se necessário */}
+                                                <div className="w-28 aspect-[2/3] flex-shrink-0 relative bg-surface self-start">
                                                     {production.imageUrl ? (
-                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="(max-width: 1280px) 33vw, 25vw"
-                                                            className="object-cover brightness-90 group-hover:brightness-100 group-hover:scale-105 transition-all duration-500" />
+                                                        <Image src={production.imageUrl} alt={production.titlePt} fill sizes="112px"
+                                                            className="object-cover object-center group-hover:brightness-110 transition-all duration-300" />
                                                     ) : (
-                                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
-                                                            <Film className="w-8 h-8 text-muted/30" />
-                                                            <span className="text-xs font-black text-muted uppercase text-center leading-tight">{production.type}</span>
+                                                        <div className="w-full h-full flex items-center justify-center">
+                                                            <Film className="w-6 h-6 text-muted/30" />
                                                         </div>
                                                     )}
-                                                    {/* Gradient overlay on hover */}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                                    {/* Synopsis on hover */}
-                                                    {syn && (
-                                                        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                                                            <p className="text-white text-[10px] leading-relaxed line-clamp-3">{syn}</p>
-                                                        </div>
-                                                    )}
-                                                    {/* Streaming badge */}
-                                                    {streamSignal && (
-                                                        <div className="absolute top-2 left-2">
-                                                            <span className="flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-black text-white bg-red-600 shadow">
-                                                                TOP {streamSignal.rank} · {getStreamingConfig(streamSignal.source).label}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
-                                                    </div>
                                                 </div>
-                                                <div className="mt-2 px-0.5">
-                                                    <p className="text-xs font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2">{production.titlePt}</p>
-                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                {/* Detalhes */}
+                                                <div className="flex-1 min-w-0 p-4">
+                                                    <div className="flex items-center gap-2 flex-wrap mb-1.5">
                                                         <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface border border-border text-muted">{production.type}</span>
                                                         {production.year && <span className="text-[10px] font-bold text-[#ff2d78]">{production.year}</span>}
+                                                        {production.voteAverage != null && production.voteAverage > 0 && (
+                                                            <span className="text-[10px] text-muted">★ {production.voteAverage.toFixed(1)}</span>
+                                                        )}
+                                                        {streamSignal && (
+                                                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-white bg-red-600">
+                                                                TOP {streamSignal.rank} · {getStreamingConfig(streamSignal.source).label}
+                                                            </span>
+                                                        )}
                                                     </div>
+                                                    <p className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2 mb-1.5">{production.titlePt}</p>
+                                                    {syn && <p className="text-[11px] text-muted leading-relaxed line-clamp-3">{syn}</p>}
+                                                </div>
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity p-2 flex-shrink-0 self-start">
+                                                    <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
                                                 </div>
                                             </Link>
                                         </div>
