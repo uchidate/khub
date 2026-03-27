@@ -64,45 +64,72 @@ async function handler(request: NextRequest) {
 
     // Sort "popular": boost produções presentes no Top 10 dos streamings
     if (sortBy === 'popular') {
-        // Buscar shows ativos das plataformas de streaming (Netflix, Disney+, etc.)
+        // Prioridade de plataforma: Netflix > Disney+ > Amazon > Apple
+        const PLATFORM_SCORE: Record<string, number> = {
+            'netflix_br':  30000,
+            'disney_br':   20000,
+            'prime_br':    10000,
+            'apple_br':     5000,
+        }
+        // Faixas de score:
+        //   Live-action em streaming: 100000 + platformScore + rankScore + yearBonus
+        //   Animações em streaming:    50000 + platformScore + rankScore + yearBonus
+        //   Fora do streaming:              0-200 (voteScore + voteCountScore + yearScore)
+        const LIVE_ACTION_BASE = 100000
+        const ANIMATION_BASE   =  50000
+        const ANIMATION_TAGS   = new Set(['animação', 'animation', 'animated', 'cartoon', 'animado'])
+
+        // Buscar shows ativos das plataformas de streaming
         const activeShows = await prisma.streamingShow.findMany({
             where: { expiresAt: { gt: new Date() } },
-            select: { productionId: true, tmdbId: true, rank: true },
+            select: { productionId: true, tmdbId: true, rank: true, source: true },
         })
 
-        // Melhor rank por productionId (match direto) e por tmdbId (fallback)
-        const boostByProductionId = new Map<string, number>()
-        const boostByTmdbId = new Map<string, number>()
+        // Melhor boost por productionId e tmdbId (platformScore + rankScore maior vence)
+        type BoostEntry = { platformScore: number; rankScore: number }
+        const boostByProductionId = new Map<string, BoostEntry>()
+        const boostByTmdbId = new Map<string, BoostEntry>()
+
         for (const s of activeShows) {
-            if (s.productionId) {
-                const cur = boostByProductionId.get(s.productionId)
-                if (cur === undefined || s.rank < cur) boostByProductionId.set(s.productionId, s.rank)
+            const platformScore = PLATFORM_SCORE[s.source] ?? 0
+            if (!platformScore) continue
+            const rankScore = (11 - Math.min(s.rank, 10)) * 100
+            const total = platformScore + rankScore
+            const update = (map: Map<string, BoostEntry>, key: string) => {
+                const cur = map.get(key)
+                if (!cur || total > cur.platformScore + cur.rankScore)
+                    map.set(key, { platformScore, rankScore })
             }
-            const cur = boostByTmdbId.get(s.tmdbId)
-            if (cur === undefined || s.rank < cur) boostByTmdbId.set(s.tmdbId, s.rank)
+            if (s.productionId) update(boostByProductionId, s.productionId)
+            update(boostByTmdbId, s.tmdbId)
         }
 
         // Buscar IDs e campos de score de todas as produções que passam nos filtros
         const allForScoring = await prisma.production.findMany({
             where,
-            select: { id: true, tmdbId: true, voteAverage: true, voteCount: true, year: true },
+            select: { id: true, tmdbId: true, voteAverage: true, voteCount: true, year: true, tags: true },
         })
 
-        // Score: produções no streaming dominam; dentro de cada grupo, múltiplos sinais desempatam
-        // Tier 1 (com sinal de streaming): 10000 + (11-rank)*100 + baseScore
-        // Tier 0 (sem sinal ativo):         baseScore
-        // baseScore = voteAverage*10 + log(voteCount+1)*5 + max(0, year-2000)*0.1
+        // Score final:
+        //   Streaming live-action: LIVE_ACTION_BASE + platformScore + rankScore + yearBonus*0.5
+        //   Streaming animação:    ANIMATION_BASE   + platformScore + rankScore + yearBonus*0.5
+        //   Fora do streaming:     voteScore + voteCountScore + yearBonus*0.1  (max ~200)
         const scored = allForScoring
             .map(p => {
-                const bestRank = boostByProductionId.get(p.id)
+                const boost = boostByProductionId.get(p.id)
                     ?? (p.tmdbId ? boostByTmdbId.get(p.tmdbId) : undefined)
-                const voteScore = (p.voteAverage ?? 0) * 10
-                const voteCountScore = Math.log10((p.voteCount ?? 0) + 1) * 5
-                const yearScore = p.year ? Math.max(0, p.year - 2000) * 0.1 : 0
-                const baseScore = voteScore + voteCountScore + yearScore
-                const score = bestRank !== undefined
-                    ? 10000 + (11 - bestRank) * 100 + baseScore
-                    : baseScore
+                const yearBonus = p.year ? Math.max(0, p.year - 2000) : 0
+
+                let score: number
+                if (boost) {
+                    const isAnimated = p.tags.some(t => ANIMATION_TAGS.has(t.toLowerCase()))
+                    const base = isAnimated ? ANIMATION_BASE : LIVE_ACTION_BASE
+                    score = base + boost.platformScore + boost.rankScore + yearBonus * 0.5
+                } else {
+                    const voteScore      = (p.voteAverage ?? 0) * 10
+                    const voteCountScore = Math.log10((p.voteCount ?? 0) + 1) * 5
+                    score = voteScore + voteCountScore + yearBonus * 0.1
+                }
                 return { id: p.id, score }
             })
             .sort((a, b) => b.score - a.score)
