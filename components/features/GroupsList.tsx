@@ -25,9 +25,9 @@ type Group = {
 const GENERATIONS: { label: string; from: number; to: number }[] = [
     { label: '1ª Geração', from: 1990, to: 2002 },
     { label: '2ª Geração', from: 2003, to: 2011 },
-    { label: '3ª Geração', from: 2012, to: 2019 },
-    { label: '4ª Geração', from: 2020, to: 2024 },
-    { label: '5ª Geração', from: 2025, to: 9999 },
+    { label: '3ª Geração', from: 2012, to: 2017 },
+    { label: '4ª Geração', from: 2018, to: 2022 },
+    { label: '5ª Geração', from: 2023, to: 9999 },
 ]
 
 function getGeneration(debutDate: string | null): string | null {
@@ -209,7 +209,7 @@ export function GroupsList() {
                                                 src={group.profileImageUrl}
                                                 alt={group.name}
                                                 fill
-                                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                                                 className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-90 group-hover:brightness-100"
                                                 priority={index < 4}
                                             />
