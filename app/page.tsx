@@ -80,6 +80,7 @@ const getHomePublicData = unstable_cache(
         if (settings?.homeFeaturedPostId) slottedIds.add(settings.homeFeaturedPostId)
         settings?.homeSecondaryPostIds?.forEach(id => slottedIds.add(id))
         settings?.homeSidebarPostIds?.forEach(id => slottedIds.add(id))
+        settings?.homeCarouselPostIds?.forEach(id => slottedIds.add(id))
 
         // Busca posts dos slots configurados
         const [slottedPostsRaw, fallbackPostsRaw] = await Promise.all([
@@ -123,6 +124,13 @@ const getHomePublicData = unstable_cache(
                 .slice(0, 4)
             : fallback.slice(0, 4)
 
+        const carouselPosts = settings?.homeCarouselPostIds?.length
+            ? settings.homeCarouselPostIds
+                .map(id => slottedById[id])
+                .filter(Boolean)
+                .slice(0, 5)
+            : []
+
         // Feed exclui tudo que aparece nos slots e no featured
         const featuredId = featuredPost?.id
         const secondaryIds = new Set(secondaryPosts.map(p => p.id))
@@ -134,9 +142,20 @@ const getHomePublicData = unstable_cache(
             categoryCounts.map(c => [c.slug, c._count.posts])
         )
 
+        // spotlightProduction — query cached junto com os dados públicos
+        const spotlightArtistId = trendingArtists[0]?.id
+        const spotlightProduction = spotlightArtistId
+            ? await prisma.production.findFirst({
+                where: { isHidden: false, year: { not: null }, artists: { some: { artistId: spotlightArtistId } } },
+                orderBy: { year: 'desc' },
+                select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+            }).catch(() => null)
+            : null
+
         return {
             trendingArtists,
             featuredPost: featuredPost ? serializePost(featuredPost) : null,
+            carouselPosts: carouselPosts.map(serializePost),
             secondaryPosts: secondaryPosts.map(serializePost),
             sidebarPosts: sidebarPosts.map(serializePost),
             feedPosts: feedPosts.map(serializePost),
@@ -144,9 +163,10 @@ const getHomePublicData = unstable_cache(
             trendingGroups: trendingGroupsRaw,
             categoryCountMap,
             siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
+            spotlightProduction,
         }
     },
-    ['home-page-public-data-v9'],
+    ['home-page-public-data-v10'],
     { revalidate: 120 },
 )
 
@@ -187,7 +207,15 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredPost, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats } = publicData
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightProduction } = publicData
+
+    // latestProductions depende do ageRatingFilter (por sessão) — roda em paralelo com session
+    const latestProductions = await prisma.production.findMany({
+        where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+    })
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -207,26 +235,6 @@ export default async function Home() {
         })
     }
     const hasStreaming = Object.keys(showsByPlatform).length > 0
-
-    const latestProductions = await prisma.production.findMany({
-        where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
-    })
-
-    const spotlightArtistId = trendingArtists[0]?.id
-    const spotlightProduction = spotlightArtistId
-        ? await prisma.production.findFirst({
-            where: {
-                isHidden: false,
-                year: { not: null },
-                artists: { some: { artistId: spotlightArtistId } },
-            },
-            orderBy: { year: 'desc' },
-            select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
-        }).catch(() => null)
-        : null
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden" suppressHydrationWarning>
@@ -248,6 +256,7 @@ export default async function Home() {
             }} />
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
+                carouselPosts={carouselPosts}
                 secondaryStories={secondaryPosts}
                 trendingArtists={trendingArtists.slice(0, 8)}
                 spotlightProduction={spotlightProduction}

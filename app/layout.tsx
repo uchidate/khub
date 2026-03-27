@@ -107,6 +107,12 @@ export default async function RootLayout({
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
                 <link rel="preconnect" href="https://images.unsplash.com" />
                 <link rel="dns-prefetch" href="https://images.unsplash.com" />
+                <link rel="preconnect" href="https://image.tmdb.org" />
+                <link rel="dns-prefetch" href="https://image.tmdb.org" />
+                <link rel="preconnect" href="https://img.youtube.com" />
+                <link rel="dns-prefetch" href="https://img.youtube.com" />
+                <link rel="preconnect" href="https://upload.wikimedia.org" />
+                <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
