@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -33,6 +32,10 @@ const getHomePublicData = unstable_cache(
             streamingShowsRaw,
             trendingGroupsRaw,
             settings,
+            categoryCounts,
+            artistCount,
+            groupCount,
+            productionCount,
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
@@ -64,6 +67,12 @@ const getHomePublicData = unstable_cache(
                 select: { id: true, name: true, nameHangul: true, profileImageUrl: true, officialColor: true, fanClubName: true, trendingScore: true, agency: { select: { name: true } } },
             }).catch(() => []),
             prisma.systemSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null),
+            prisma.blogCategory.findMany({
+                include: { _count: { select: { posts: { where: { status: 'PUBLISHED', isPrivate: false } } } } },
+            }).catch(() => []),
+            prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0),
+            prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
+            prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }).catch(() => 0),
         ])
 
         // ── Slots editoriais ──────────────────────────────────────────────────
@@ -121,6 +130,10 @@ const getHomePublicData = unstable_cache(
             p => p.id !== featuredId && !secondaryIds.has(p.id)
         )
 
+        const categoryCountMap = Object.fromEntries(
+            categoryCounts.map(c => [c.slug, c._count.posts])
+        )
+
         return {
             trendingArtists,
             featuredPost: featuredPost ? serializePost(featuredPost) : null,
@@ -129,9 +142,11 @@ const getHomePublicData = unstable_cache(
             feedPosts: feedPosts.map(serializePost),
             streamingShowsRaw,
             trendingGroups: trendingGroupsRaw,
+            categoryCountMap,
+            siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
         }
     },
-    ['home-page-public-data-v7'],
+    ['home-page-public-data-v8'],
     { revalidate: 120 },
 )
 
@@ -172,7 +187,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredPost, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups } = publicData
+    const { trendingArtists, featuredPost, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats } = publicData
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -201,7 +216,7 @@ export default async function Home() {
     })
 
     return (
-        <div className="min-h-screen bg-background font-sora overflow-x-hidden">
+        <div className="min-h-screen bg-background font-sora overflow-x-hidden" suppressHydrationWarning>
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -218,7 +233,6 @@ export default async function Home() {
                     "query-input": "required name=search_term_string",
                 },
             }} />
-            <HomeCategoriesBar />
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
                 secondaryStories={secondaryPosts}
@@ -228,6 +242,7 @@ export default async function Home() {
                 blogPosts={feedPosts}
                 sidebarPosts={sidebarPosts}
                 productions={latestProductions}
+                categoryCounts={categoryCountMap}
             />
             {(hasStreaming || trendingGroups.length > 0) && (
                 <section className="border-b border-border bg-background">
@@ -241,7 +256,7 @@ export default async function Home() {
                     </div>
                 </section>
             )}
-            <HomeBlogSection posts={sidebarPosts} />
+            <HomeBlogSection siteStats={siteStats} />
             <ScrollToTop />
         </div>
     )

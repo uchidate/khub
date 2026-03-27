@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -37,19 +37,8 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
     )
 
     const [activeTab, setActiveTab] = useState<string>(availablePlatforms[0] ?? '')
-    const [featuredIndex, setFeaturedIndex] = useState(0)
 
     const activeShows = showsByPlatform[activeTab] ?? []
-    const totalShows = Math.min(activeShows.length, 10)
-
-    useEffect(() => {
-        if (totalShows === 0) return
-        setFeaturedIndex(0)
-        const timer = setInterval(() => {
-            setFeaturedIndex(i => (i + 1) % totalShows)
-        }, 2500)
-        return () => clearInterval(timer)
-    }, [totalShows, activeTab])
 
     if (availablePlatforms.length === 0) return null
 
@@ -98,6 +87,11 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 <span className="absolute top-1 left-1 text-[8px] font-bold leading-none bg-black/60 text-white rounded px-1 py-0.5">
                                     {show.rank}
                                 </span>
+                                {show.voteAverage != null && show.voteAverage > 0 && (
+                                    <span className="absolute bottom-1 right-1 text-[8px] font-bold leading-none bg-black/70 text-yellow-400 rounded px-1 py-0.5">
+                                        ★ {show.voteAverage.toFixed(1)}
+                                    </span>
+                                )}
                             </div>
                             <p className="text-[9px] font-semibold text-foreground group-hover:text-accent transition-colors text-center line-clamp-2 leading-tight w-full">
                                 {title}

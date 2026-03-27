@@ -115,40 +115,31 @@ export function HomeFrontPage({
             <div className="max-w-7xl mx-auto grid lg:grid-cols-[2fr_0.65fr]">
                 {/* LEFT COLUMN */}
                 <div className="flex flex-col">
-                    {/* Featured story image area */}
-                    <Link href={`/blog/${featuredStory.slug}`} className="block group">
-                        <div className="relative h-52 md:h-72 lg:h-96 overflow-hidden bg-accent-soft">
-                            {featuredStory.coverImageUrl ? (
-                                <>
-                                    <Image
-                                        src={featuredStory.coverImageUrl}
-                                        alt={featuredStory.title}
-                                        fill
-                                        sizes="(max-width: 1024px) 100vw, 62vw"
-                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                        priority
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                                </>
-                            ) : (
-                                <>
-                                    <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft">
-                                        <span
-                                            className="absolute text-[7rem] font-black text-accent select-none pointer-events-none"
-                                            style={{
-                                                top: "50%",
-                                                left: "50%",
-                                                transform: "translate(-50%, -50%)",
-                                                opacity: 0.05,
-                                            }}
-                                        >
-                                            블랙핑크
-                                        </span>
-                                        <OrbitalDecoration />
-                                    </div>
-                                </>
-                            )}
-                            <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
+                    {/* Featured story — full-bleed hero */}
+                    <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[340px] md:h-[480px] overflow-hidden bg-accent-soft border-b border-border">
+                        {featuredStory.coverImageUrl ? (
+                            <Image
+                                src={featuredStory.coverImageUrl}
+                                alt={featuredStory.title}
+                                fill
+                                sizes="(max-width: 1024px) 100vw, 62vw"
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                priority
+                            />
+                        ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft">
+                                <span
+                                    className="absolute text-[7rem] font-black text-accent select-none pointer-events-none"
+                                    style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.05 }}
+                                >
+                                    블랙핑크
+                                </span>
+                                <OrbitalDecoration />
+                            </div>
+                        )}
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%)' }} />
+                        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-10">
+                            <div className="flex items-center gap-1.5 mb-3">
                                 {(() => {
                                     const cs = getCategoryStyle(featuredStory.category?.slug ?? featuredStory.tags?.[0])
                                     return (
@@ -161,30 +152,20 @@ export function HomeFrontPage({
                                     Destaque
                                 </span>
                             </div>
+                            <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
+                                {featuredStory.title}
+                            </h1>
+                            {featuredStory.excerpt && (
+                                <p className="text-[12.5px] text-white/70 leading-relaxed line-clamp-2 mb-2">
+                                    {featuredStory.excerpt}
+                                </p>
+                            )}
+                            <div className="flex items-center gap-2 text-[9.5px] text-white/50 flex-wrap">
+                                <span>HallyuHub Redação</span>
+                                <span className="w-[3px] h-[3px] rounded-full bg-white/40" />
+                                <span>{formatDate(featuredStory.publishedAt)}</span>
+                            </div>
                         </div>
-                    </Link>
-
-                    {/* Featured story body */}
-                    <Link href={`/blog/${featuredStory.slug}`} className="block group p-4 md:p-5 lg:p-6 border-b border-border">
-                        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.05em] text-muted mb-1.5">
-                            <span className="block w-3 h-px bg-muted" />
-                            HallyuHub Redação
-                        </div>
-                        <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-foreground leading-[1.15] mb-2 group-hover:text-accent transition-colors line-clamp-3">
-                            {featuredStory.title}
-                        </h1>
-                        <div className="flex items-center gap-2 text-[9.5px] text-muted mb-2 flex-wrap">
-                            <span>HallyuHub Redação</span>
-                            <span className="w-[3px] h-[3px] rounded-full bg-muted" />
-                            <span>{formatDate(featuredStory.publishedAt)}</span>
-                            <span className="w-[3px] h-[3px] rounded-full bg-muted" />
-                            <span>3 min</span>
-                        </div>
-                        {featuredStory.excerpt && (
-                            <p className="text-[13px] text-muted leading-relaxed line-clamp-3">
-                                {featuredStory.excerpt}
-                            </p>
-                        )}
                     </Link>
 
                     {/* Secondary stories 2×2 grid */}
@@ -196,7 +177,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={story.slug}
                                     href={`/blog/${story.slug}`}
-                                    className={`group p-3 flex gap-2.5 hover:bg-accent-soft transition-colors border-b border-border
+                                    className={`group p-3 flex gap-3 hover:bg-accent-soft transition-colors border-b border-border
                                         ${idx % 2 === 0 ? "sm:border-r sm:border-border" : ""}
                                         ${idx >= 2 ? "sm:border-b-0" : ""}
                                     `}
@@ -205,14 +186,14 @@ export function HomeFrontPage({
                                         <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded self-start" style={{ color: cs.color, backgroundColor: cs.bg }}>
                                             {story.category?.name ?? story.tags?.[0] ?? 'Blog'}
                                         </span>
-                                        <h3 className="text-[12px] font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-2">
+                                        <h3 className="text-[13.5px] font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-2">
                                             {story.title}
                                         </h3>
                                         <span className="text-[9px] text-muted mt-auto">{formatDate(story.publishedAt)}</span>
                                     </div>
                                     {story.coverImageUrl && (
-                                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-surface shrink-0">
-                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="160px" />
+                                        <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0">
+                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" />
                                         </div>
                                     )}
                                 </Link>

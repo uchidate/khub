@@ -35,11 +35,11 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
                         >
                             <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-r-full opacity-50 transition-opacity group-hover:opacity-100" style={{ backgroundColor: color }} />
                             <span className="text-[8px] font-bold w-3 flex-shrink-0 text-center" style={{ color: `${color}80` }}>{idx + 1}</span>
-                            <div className="w-7 h-7 rounded-full flex-shrink-0 overflow-hidden border-2 transition-all group-hover:scale-110" style={{ borderColor: `${color}50` }}>
+                            <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden border-2 transition-all group-hover:scale-110" style={{ borderColor: `${color}50` }}>
                                 {group.profileImageUrl ? (
-                                    <Image src={group.profileImageUrl} alt={group.name} width={28} height={28} className="w-full h-full object-cover" />
+                                    <Image src={group.profileImageUrl} alt={group.name} width={40} height={40} className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: color }}>
+                                    <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: color }}>
                                         {group.name[0]}
                                     </div>
                                 )}
@@ -48,9 +48,13 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
                                 <p className="text-[12px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
                                     {group.name}
                                 </p>
-                                {group.fanClubName && (
+                                {group.fanClubName ? (
                                     <p className="text-[9px] truncate mt-0.5" style={{ color: `${color}cc` }}>
                                         {group.fanClubName}
+                                    </p>
+                                ) : group.trendingScore > 0 && (
+                                    <p className="text-[9px] text-muted mt-0.5">
+                                        {Math.round(group.trendingScore)} pts
                                     </p>
                                 )}
                             </div>
