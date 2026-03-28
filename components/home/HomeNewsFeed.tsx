@@ -135,19 +135,19 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="flex items-center gap-3.5 px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border hover:bg-accent-soft transition-colors group min-h-[56px]"
+                                    className="flex items-start gap-4 px-4 sm:px-6 lg:px-12 py-4 border-b border-border hover:bg-accent-soft transition-colors group"
                                 >
                                     <div
-                                        className="w-[58px] h-11 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-border/60"
+                                        className="w-24 h-[68px] rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-border/60"
                                         style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
                                     >
                                         {post.coverImageUrl ? (
                                             <Image
                                                 src={post.coverImageUrl}
                                                 alt={post.title}
-                                                width={58}
-                                                height={44}
-                                                className="w-full h-full object-cover"
+                                                width={96}
+                                                height={68}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
                                             <span className="text-[9px] font-bold text-[#ff2d78]/50">
@@ -155,12 +155,12 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                             </span>
                                         )}
                                     </div>
-                                    <div className="flex-1 min-w-0">
+                                    <div className="flex-1 min-w-0 flex flex-col gap-1">
                                         {post.category && (() => {
                                             const style = getCategoryStyle(post.category.slug)
                                             return (
                                                 <span
-                                                    className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] mb-1.5 px-1.5 py-0.5 rounded"
+                                                    className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded self-start"
                                                     style={{ color: style.color, backgroundColor: style.bg }}
                                                 >
                                                     {post.category.name}
@@ -170,9 +170,12 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                         <h3 className="text-[13.5px] font-semibold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-2">
                                             {post.title}
                                         </h3>
-                                        <div className="text-[9px] text-muted mt-1.5 flex items-center gap-[6px] flex-wrap">
-                                            <span>HallyuHub</span>
-                                            <span>·</span>
+                                        {post.excerpt && (
+                                            <p className="text-[11.5px] text-muted leading-snug line-clamp-2 hidden sm:block">
+                                                {post.excerpt}
+                                            </p>
+                                        )}
+                                        <div className="text-[9px] text-muted mt-auto flex items-center gap-[6px] flex-wrap pt-1">
                                             <span>{formatDate(post.publishedAt)}</span>
                                             <span>·</span>
                                             <span>{post.readingTimeMin} min</span>
