@@ -242,12 +242,12 @@ export default function AdminAnalyticsPage() {
     const isToday      = period === '0'
     const chartData    = isToday ? (data?.intraday ?? []) : (data?.timeseries ?? [])
     const totalAllTime = data ? Object.values(data.totals).reduce((a, b) => a + b, 0) : 0
-    const totalPeriod  = isToday
-        ? (data?.intraday ?? []).reduce((a, b) => a + b.total, 0)
-        : (data?.timeseries ?? []).reduce((a, b) => a + b.total, 0)
+    // Para "hoje": usa o timeseries (ViewEvent diário) que é a mesma fonte dos top lists
+    const totalPeriod  = (data?.timeseries ?? []).reduce((a, b) => a + b.total, 0)
 
+    const intradayHasData = (data?.intraday ?? []).some(s => s.total > 0)
     const chartTitle = isToday
-        ? `Views hoje — por slot de 15min (${chartData.length} slots registrados)`
+        ? `Views hoje — por slot de 15min`
         : `Views por dia — últimos ${period} dias`
 
     return (
@@ -311,7 +311,15 @@ export default function AdminAnalyticsPage() {
                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-500/70" />Grupos</span>
                         </div>
                     </div>
-                    {chartData.length > 0 ? (
+                    {loading ? (
+                        <div className="flex items-center justify-center h-[140px]">
+                            <Loader2 className="animate-spin text-muted" size={20} />
+                        </div>
+                    ) : isToday && !intradayHasData ? (
+                        <div className="flex items-center justify-center h-[140px] text-muted text-sm text-center px-4">
+                            Gráfico intraday disponível após as primeiras views do dia
+                        </div>
+                    ) : chartData.length > 0 ? (
                         <BarChart
                             data={chartData}
                             height={140}
@@ -319,11 +327,7 @@ export default function AdminAnalyticsPage() {
                         />
                     ) : (
                         <div className="flex items-center justify-center h-[140px] text-muted text-sm">
-                            {loading
-                                ? <Loader2 className="animate-spin" size={20} />
-                                : isToday
-                                    ? 'Nenhuma view registrada hoje ainda — acesse páginas para ver dados aparecerem.'
-                                    : 'Nenhum dado de views ainda — os dados aparecem após as primeiras visitas.'}
+                            Nenhum dado de views ainda
                         </div>
                     )}
                 </section>

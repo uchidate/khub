@@ -1026,6 +1026,7 @@ model BlogPost {
   category       BlogCategory?  @relation(fields: [categoryId], references: [id])
   tags           String[]
   publishedAt    DateTime?
+  scheduledAt    DateTime?      // se definido com status DRAFT = publicação agendada
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   // Relações com entidades do site para cross-linking
@@ -1035,6 +1036,7 @@ model BlogPost {
   notifications      NotificationHistory[]
 
   @@index([status, publishedAt])
+  @@index([status, scheduledAt])
   @@index([authorId])
   @@index([slug])
   @@index([featured, status])
@@ -1069,6 +1071,28 @@ model BlogPostProduction {
 
   @@id([blogPostId, productionId])
   @@index([productionId])
+}
+
+// ─── SEO ─────────────────────────────────────────────────────────────────────
+
+/// Override de meta tags SEO por entidade (artista, produção, grupo, post)
+model SeoMeta {
+  id           String   @id @default(cuid())
+  entityType   String   // 'artist' | 'production' | 'group' | 'blog_post'
+  entityId     String
+  metaTitle    String?  @db.VarChar(70)
+  metaDesc     String?  @db.VarChar(160)
+  ogTitle      String?  @db.VarChar(70)
+  ogDesc       String?  @db.VarChar(200)
+  ogImageUrl   String?
+  canonicalUrl String?
+  noIndex      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([entityType, entityId])
+  @@index([entityType, entityId])
+  @@map("seo_meta")
 }
 
 // ─── IA ──────────────────────────────────────────────────────────────────────

@@ -131,21 +131,36 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                             {filteredPosts.length === 0 && (
                                 <p className="text-sm text-muted p-5">Nenhum artigo encontrado.</p>
                             )}
-                            {filteredPosts.map((post, idx) => (
+                            {filteredPosts.map((post) => (
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="flex items-center gap-3.5 px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border hover:bg-accent-soft transition-colors group min-h-[56px]"
+                                    className="flex items-start gap-4 px-4 sm:px-6 lg:px-12 py-4 border-b border-border hover:bg-accent-soft transition-colors group"
                                 >
-                                    <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0">
-                                        {String(idx + 1).padStart(2, "0")}
-                                    </span>
-                                    <div className="flex-1 min-w-0">
+                                    <div
+                                        className="w-24 h-[68px] rounded-lg flex-shrink-0 self-center overflow-hidden flex items-center justify-center border border-border/60"
+                                        style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
+                                    >
+                                        {post.coverImageUrl ? (
+                                            <Image
+                                                src={post.coverImageUrl}
+                                                alt={post.title}
+                                                width={96}
+                                                height={68}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        ) : (
+                                            <span className="text-[9px] font-bold text-[#ff2d78]/50">
+                                                {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0 flex flex-col gap-1">
                                         {post.category && (() => {
                                             const style = getCategoryStyle(post.category.slug)
                                             return (
                                                 <span
-                                                    className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] mb-1.5 px-1.5 py-0.5 rounded"
+                                                    className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded self-start"
                                                     style={{ color: style.color, backgroundColor: style.bg }}
                                                 >
                                                     {post.category.name}
@@ -155,31 +170,16 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                         <h3 className="text-[13.5px] font-semibold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-2">
                                             {post.title}
                                         </h3>
-                                        <div className="text-[9px] text-muted mt-1.5 flex items-center gap-[6px] flex-wrap">
-                                            <span>HallyuHub</span>
-                                            <span>·</span>
+                                        {post.excerpt && (
+                                            <p className="text-[11.5px] text-muted leading-snug line-clamp-2 hidden sm:block">
+                                                {post.excerpt}
+                                            </p>
+                                        )}
+                                        <div className="text-[9px] text-muted mt-auto flex items-center gap-[6px] flex-wrap pt-1">
                                             <span>{formatDate(post.publishedAt)}</span>
                                             <span>·</span>
                                             <span>{post.readingTimeMin} min</span>
                                         </div>
-                                    </div>
-                                    <div
-                                        className="w-[58px] h-11 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-border/60"
-                                        style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
-                                    >
-                                        {post.coverImageUrl ? (
-                                            <Image
-                                                src={post.coverImageUrl}
-                                                alt={post.title}
-                                                width={58}
-                                                height={44}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <span className="text-[9px] font-bold text-[#ff2d78]/50">
-                                                {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
-                                            </span>
-                                        )}
                                     </div>
                                 </Link>
                             ))}
@@ -213,23 +213,6 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                     href={`/blog/${post.slug}`}
                                     className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors group"
                                 >
-                                    <div className="flex-1 min-w-0">
-                                        {post.category && (() => {
-                                            const cs = getCategoryStyle(post.category.slug)
-                                            return (
-                                                <span
-                                                    className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] mb-1 px-1.5 py-0.5 rounded"
-                                                    style={{ color: cs.color, backgroundColor: cs.bg }}
-                                                >
-                                                    {post.category.name}
-                                                </span>
-                                            )
-                                        })()}
-                                        <p className="text-[12.5px] font-bold text-foreground group-hover:text-accent transition-colors leading-[1.35] line-clamp-2">
-                                            {post.title}
-                                        </p>
-                                        <span className="text-[8.5px] text-muted mt-1 block">{post.readingTimeMin} min de leitura</span>
-                                    </div>
                                     <div
                                         className="w-[58px] h-11 rounded-lg flex-shrink-0 overflow-hidden border border-border/60 flex items-center justify-center"
                                         style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
@@ -247,6 +230,23 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                                 {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
                                             </span>
                                         )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        {post.category && (() => {
+                                            const cs = getCategoryStyle(post.category.slug)
+                                            return (
+                                                <span
+                                                    className="inline-block text-[8px] font-bold uppercase tracking-[0.1em] mb-1 px-1.5 py-0.5 rounded"
+                                                    style={{ color: cs.color, backgroundColor: cs.bg }}
+                                                >
+                                                    {post.category.name}
+                                                </span>
+                                            )
+                                        })()}
+                                        <p className="text-[12.5px] font-bold text-foreground group-hover:text-accent transition-colors leading-[1.35] line-clamp-2">
+                                            {post.title}
+                                        </p>
+                                        <span className="text-[8.5px] text-muted mt-1 block">{post.readingTimeMin} min de leitura</span>
                                     </div>
                                 </Link>
                             ))}

@@ -203,6 +203,11 @@ export function HomeFrontPage({
                                         ${idx >= 2 ? "sm:border-b-0" : ""}
                                     `}
                                 >
+                                    {story.coverImageUrl && (
+                                        <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0">
+                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" priority={idx < 2} />
+                                        </div>
+                                    )}
                                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                                         <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded self-start" style={{ color: cs.color, backgroundColor: cs.bg }}>
                                             {story.category?.name ?? story.tags?.[0] ?? 'Blog'}
@@ -212,11 +217,6 @@ export function HomeFrontPage({
                                         </h3>
                                         <span className="text-[9px] text-muted mt-auto">{formatDate(story.publishedAt)}</span>
                                     </div>
-                                    {story.coverImageUrl && (
-                                        <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0">
-                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" priority={idx < 2} />
-                                        </div>
-                                    )}
                                 </Link>
                                 )
                             })}
