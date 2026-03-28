@@ -79,6 +79,7 @@ function WritePageContent() {
   const [postId, setPostId] = useState<string | null>(editId)
   const [postStatus, setPostStatus] = useState<string>('DRAFT')
   const [isPrivate, setIsPrivate] = useState(false)
+  const [scheduledAt, setScheduledAt] = useState<string>('')
 
   const role = session?.user?.role?.toLowerCase()
   const canPublish = role === 'admin' || role === 'editor'
@@ -120,6 +121,10 @@ function WritePageContent() {
         setCategoryId(post.categoryId ?? null)
         setPostStatus(post.status)
         setIsPrivate(post.isPrivate ?? false)
+        if (post.scheduledAt) {
+          const d = new Date(post.scheduledAt)
+          setScheduledAt(d.toISOString().slice(0, 16))
+        }
         if (post.template) setTemplate(post.template)
         if (Array.isArray(post.blocks) && post.blocks.length > 0) {
           setBlocks(post.blocks)
@@ -161,6 +166,7 @@ function WritePageContent() {
         categoryId: categoryId || null,
         tags,
         isPrivate,
+        scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       }
       if (editorMode === 'blocks') {
         body.blocks = blocks
@@ -415,6 +421,28 @@ function WritePageContent() {
               </div>
             )}
           </div>
+
+          {/* Agendamento */}
+          {canPublish && postStatus === 'DRAFT' && (
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Agendar publicação</label>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={e => setScheduledAt(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-[#ff2d78]/40 transition-colors"
+              />
+              {scheduledAt && (
+                <div className="flex items-center justify-between text-[11px] text-amber-500">
+                  <span>Publicação agendada</span>
+                  <button onClick={() => setScheduledAt('')} className="text-muted hover:text-red-400 transition-colors">
+                    <X size={11} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Visibility */}
           {canPublish && (

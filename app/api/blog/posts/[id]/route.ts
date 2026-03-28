@@ -17,6 +17,7 @@ const updateSchema = z.object({
   template: z.string().optional().nullable(),
   isPrivate: z.boolean().optional(),
   featured: z.boolean().optional(),
+  scheduledAt: z.string().datetime().optional().nullable(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

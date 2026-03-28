@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Shield, Users, Music2, Building2, Film, Newspaper, Disc3, Tag, Activity,
-  Settings, ChevronLeft, ChevronDown, Share2, GitMerge, Instagram, AlertTriangle, Link2,
+  Shield, Users, Building2, Film, Newspaper, Disc3, Tag, Activity,
+  Settings, ChevronLeft, Share2, GitMerge, Instagram, AlertTriangle, Link2,
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
-  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp, BarChart3, Layers,
+  PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
+  TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -42,31 +43,54 @@ type NavSection = {
 // ─── Definição da nav (3 grupos) ──────────────────────────────────────────────
 
 const navSections: NavSection[] = [
-  // ── TRABALHO ──
+  // ── CENTRO ──
   {
-    label: 'Trabalho',
+    label: 'Centro',
     fixed: true,
     items: [
-      { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-      { href: '/admin/trending', label: 'Trending', icon: TrendingUp },
+      { href: '/admin',          label: 'Dashboard', icon: LayoutDashboard, exact: true },
+      { href: '/admin/pipeline', label: 'Pipeline',  icon: Workflow },
+      { href: '/admin/trending', label: 'Trending',  icon: TrendingUp },
+      { href: '/admin/analytics',label: 'Analytics', icon: BarChart3 },
+    ],
+  },
+
+  // ── CONTEÚDO ──
+  {
+    label: 'Conteúdo',
+    fixed: true,
+    items: [
       {
-        href: '/admin/pipeline', label: 'Pipeline', icon: Workflow,
+        href: '/admin/blog', label: 'Blog', icon: FileText, exact: true,
+        subItems: [
+          { href: '/admin/blog/homepage',   label: 'Homepage Editorial', icon: Layers },
+          { href: '/admin/blog/categories', label: 'Categorias',         icon: Tag },
+          { href: '/admin/seo',             label: 'SEO',                icon: Globe },
+        ],
       },
       {
         href: '/admin/news', label: 'Notícias', icon: Newspaper,
         subItems: [
-          { href: '/admin/news/import',     label: 'Importar',    icon: Download },
-          { href: '/admin/news/reprocess',  label: 'Reprocessar', icon: RotateCcw },
+          { href: '/admin/news/import',    label: 'Importar',    icon: Download },
+          { href: '/admin/news/reprocess', label: 'Reprocessar', icon: RotateCcw },
         ],
       },
+    ],
+  },
+
+  // ── CATÁLOGO ──
+  {
+    label: 'Catálogo',
+    fixed: true,
+    items: [
       {
         href: '/admin/artists', label: 'Artistas', icon: Mic2, exact: true,
         subItems: [
-          { href: '/admin/artists/fix-names',    label: 'Enriq. TMDB',  icon: Sparkles },
-          { href: '/admin/artists/duplicates',   label: 'Enriq. MB',    icon: GitMerge },
+          { href: '/admin/artists/fix-names',    label: 'Enriq. TMDB',   icon: Sparkles },
+          { href: '/admin/artists/duplicates',   label: 'Enriq. MB',     icon: GitMerge },
           { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
-          { href: '/admin/artists/moderation',   label: 'Moderação',    icon: AlertTriangle },
-          { href: '/admin/artists/visibility',   label: 'Visibilidade', icon: EyeOff },
+          { href: '/admin/artists/moderation',   label: 'Moderação',     icon: AlertTriangle },
+          { href: '/admin/artists/visibility',   label: 'Visibilidade',  icon: EyeOff },
         ],
       },
       {
@@ -79,18 +103,13 @@ const navSections: NavSection[] = [
       {
         href: '/admin/productions', label: 'Produções', icon: Film, exact: true,
         subItems: [
-          { href: '/admin/filmography',                    label: 'Filmografias', icon: Clapperboard },
-          { href: '/admin/productions/moderation',         label: 'Moderação',    icon: AlertTriangle },
-          { href: '/admin/productions/takedowns',          label: 'Takedowns',    icon: ShieldAlert },
+          { href: '/admin/filmography',             label: 'Filmografias', icon: Clapperboard },
+          { href: '/admin/productions/sync',        label: 'Sync TMDB',    icon: RefreshCw },
+          { href: '/admin/productions/moderation',  label: 'Moderação',    icon: AlertTriangle },
+          { href: '/admin/productions/takedowns',   label: 'Takedowns',    icon: ShieldAlert },
         ],
       },
-      {
-        href: '/admin/blog', label: 'Blog', icon: FileText, exact: true,
-        subItems: [
-          { href: '/admin/blog/homepage', label: 'Homepage Editorial', icon: Layers },
-        ],
-      },
-      { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/admin/streaming', label: 'Streaming', icon: Tv, isNew: true },
     ],
   },
 
@@ -99,8 +118,8 @@ const navSections: NavSection[] = [
     label: 'Automação',
     fixed: true,
     items: [
-      { href: '/admin/translations',  label: 'Traduções',      icon: Languages },
-      { href: '/admin/enrichment',    label: 'Enriquecimento', icon: Sparkles },
+      { href: '/admin/translations', label: 'Traduções',      icon: Languages },
+      { href: '/admin/enrichment',   label: 'Enriquecimento', icon: Sparkles },
       {
         href: '/admin/ai', label: 'IA', icon: Bot, exact: true,
         subItems: [
@@ -115,26 +134,28 @@ const navSections: NavSection[] = [
     label: 'Plataforma',
     fixed: true,
     items: [
-      { href: '/admin/users', label: 'Usuários', icon: Users },
+      { href: '/admin/users',    label: 'Usuários',    icon: Users },
+      { href: '/admin/reports',  label: 'Reportes',    icon: Flag,          badgeKey: 'reports' },
+      { href: '/admin/comments', label: 'Comentários', icon: MessageSquare, badgeKey: 'comments' },
       {
-        href: '/admin/reports', label: 'Reportes', icon: Flag, badgeKey: 'reports',
-      },
-      {
-        href: '/admin/comments', label: 'Comentários', icon: MessageSquare, badgeKey: 'comments',
+        href: '/admin/emails', label: 'Emails', icon: Mail,
+        subItems: [
+          { href: '/admin/emails/templates', label: 'Templates', icon: FolderOpen },
+        ],
       },
       {
         href: '/admin/settings', label: 'Sistema', icon: Settings,
         subItems: [
-          { href: '/admin/albums',      label: 'Álbuns',       icon: Disc3 },
-          { href: '/admin/tags',        label: 'Tags',         icon: Tag },
-          { href: '/admin/agencies',    label: 'Agências',     icon: Building2 },
-          { href: '/admin/hidden',      label: 'Ocultos',      icon: EyeOff },
-          { href: '/admin/instagram',   label: 'Instagram',    icon: Instagram },
-          { href: '/admin/activity',    label: 'Atividade',    icon: Activity },
-          { href: '/admin/bot-logs',    label: 'Robôs',        icon: Bot },
-          { href: '/admin/server-logs', label: 'Server Logs',  icon: AlertTriangle },
-          { href: '/admin/cron',        label: 'Cron Jobs',    icon: RefreshCw },
-          { href: '/admin/emails',      label: 'Emails',       icon: Mail },
+          { href: '/admin/albums',      label: 'Álbuns',      icon: Disc3 },
+          { href: '/admin/tags',        label: 'Tags',        icon: Tag },
+          { href: '/admin/agencies',    label: 'Agências',    icon: Building2 },
+          { href: '/admin/hidden',      label: 'Ocultos',     icon: EyeOff },
+          { href: '/admin/instagram',   label: 'Instagram',   icon: Instagram },
+          { href: '/admin/activity',    label: 'Atividade',   icon: Activity },
+          { href: '/admin/bot-logs',    label: 'Robôs',       icon: Bot },
+          { href: '/admin/server-logs', label: 'Server Logs', icon: AlertTriangle },
+          { href: '/admin/cron',        label: 'Cron Jobs',   icon: RefreshCw },
+          { href: '/admin/database',    label: 'Database',    icon: Database },
         ],
       },
     ],
@@ -173,8 +194,10 @@ const SECTION_LABELS: Record<string, string> = {
   kpopping: 'Kpopping', filmography: 'Filmografias', blog: 'Blog', database: 'Database',
   analytics: 'Analytics', trending: 'Trending', 'fix-names': 'Enriq. TMDB', duplicates: 'Enriq. MB',
   'social-links': 'Redes Sociais', moderation: 'Moderação', import: 'Importar',
-  reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync',
+  reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync TMDB',
   discography: 'Discografia', log: 'Log', pipeline: 'Pipeline', takedowns: 'Takedowns',
+  streaming: 'Streaming', seo: 'SEO', categories: 'Categorias', homepage: 'Homepage Editorial',
+  visibility: 'Visibilidade', 'mb-import': 'Import MB',
 }
 
 function isIdSegment(s: string) {
