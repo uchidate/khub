@@ -138,7 +138,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                     className="flex items-start gap-4 px-4 sm:px-6 lg:px-12 py-4 border-b border-border hover:bg-accent-soft transition-colors group"
                                 >
                                     <div
-                                        className="w-24 h-[68px] rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-border/60"
+                                        className="w-24 h-[68px] rounded-lg flex-shrink-0 self-center overflow-hidden flex items-center justify-center border border-border/60"
                                         style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
                                     >
                                         {post.coverImageUrl ? (
