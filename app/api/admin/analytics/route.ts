@@ -106,9 +106,9 @@ export async function GET(req: NextRequest) {
             select: { id: true, name: true, viewCount: true, trendingScore: true, profileImageUrl: true },
         }),
 
-        // Top hoje (via ViewEventHourly, só consultado quando days=0)
+        // Top hoje (via ViewEvent diário — mesma fonte do gráfico, mais confiável que ViewEventHourly)
         isToday
-            ? prisma.viewEventHourly.groupBy({
+            ? prisma.viewEvent.groupBy({
                 by: ['entityId', 'entityType'],
                 where: { date: { gte: todayStart }, entityType: 'blog' },
                 _sum: { count: true },
@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
             : Promise.resolve([]),
 
         isToday
-            ? prisma.viewEventHourly.groupBy({
+            ? prisma.viewEvent.groupBy({
                 by: ['entityId', 'entityType'],
                 where: { date: { gte: todayStart }, entityType: 'artist' },
                 _sum: { count: true },
@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
             : Promise.resolve([]),
 
         isToday
-            ? prisma.viewEventHourly.groupBy({
+            ? prisma.viewEvent.groupBy({
                 by: ['entityId', 'entityType'],
                 where: { date: { gte: todayStart }, entityType: 'news' },
                 _sum: { count: true },
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
             : Promise.resolve([]),
 
         isToday
-            ? prisma.viewEventHourly.groupBy({
+            ? prisma.viewEvent.groupBy({
                 by: ['entityId', 'entityType'],
                 where: { date: { gte: todayStart }, entityType: 'group' },
                 _sum: { count: true },
