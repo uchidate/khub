@@ -184,21 +184,20 @@ export default async function RootLayout({
                         <CookieBanner />
                         <BottomNav />
                         <footer className="bg-featured pt-4 pb-[calc(62px+1rem+env(safe-area-inset-bottom,0px))] sm:py-5 px-4 sm:px-8 lg:px-12 font-sora">
-                            <div className="max-w-7xl mx-auto flex items-center gap-3">
-                                <span className="text-[13px] font-extrabold tracking-[-0.04em] text-white shrink-0">
+                            <div className="max-w-7xl mx-auto relative flex items-center">
+                                <span className="text-[13px] font-extrabold tracking-[-0.04em] text-white shrink-0 z-10">
                                     Hallyu<span className="text-[#ff2d78]">Hub</span>
                                 </span>
-                                <div className="flex-1 flex items-center justify-center gap-3 sm:gap-5">
+                                <div className="absolute inset-0 flex items-center justify-center gap-3 sm:gap-5 pointer-events-none">
                                     {[
                                         { label: "Sobre", href: "/about" },
-                                        { label: "Blog", href: "/blog" },
                                         { label: "Contato", href: "/contato" },
                                         { label: "Privacidade", href: "/privacidade" },
                                     ].map(({ label, href }) => (
-                                        <a key={href} href={href} className="text-[11px] text-[#555] hover:text-[#aaa] font-medium transition-colors whitespace-nowrap">{label}</a>
+                                        <a key={href} href={href} className="text-[11px] text-[#555] hover:text-[#aaa] font-medium transition-colors whitespace-nowrap pointer-events-auto">{label}</a>
                                     ))}
                                 </div>
-                                <span className="hidden sm:inline text-[10px] text-[#444] shrink-0">
+                                <span className="hidden sm:inline text-[10px] text-[#444] shrink-0 ml-auto z-10">
                                     &copy; {new Date().getFullYear()} HallyuHub
                                 </span>
                             </div>
