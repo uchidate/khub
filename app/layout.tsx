@@ -175,7 +175,7 @@ export default async function RootLayout({
                         <TickerWrapper posts={tickerPosts} />
                         <NavBar />
                         <ErrorBoundary>
-                            <main className="flex-grow pb-[62px] sm:pb-0">{children}</main>
+                            <main className="flex-grow">{children}</main>
                         </ErrorBoundary>
                         <QuickSearch />
                         <ToastContainer />
@@ -183,31 +183,24 @@ export default async function RootLayout({
                         <PWAInstaller />
                         <CookieBanner />
                         <BottomNav />
-                        <footer className="bg-featured py-5 px-4 sm:px-8 lg:px-12 font-sora">
-                            <div className="max-w-7xl mx-auto space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
-                                <div className="flex items-center justify-between sm:block">
-                                    <span className="text-[14px] font-extrabold tracking-[-0.04em] text-white">
-                                        Hallyu<span className="text-[#ff2d78]">Hub</span>
-                                    </span>
-                                    <p className="text-[10px] text-[#444] sm:hidden">
-                                        &copy; {new Date().getFullYear()} HallyuHub
-                                    </p>
-                                </div>
-                                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                        <footer className="bg-featured pt-4 pb-[calc(62px+1rem+env(safe-area-inset-bottom,0px))] sm:py-5 px-4 sm:px-8 lg:px-12 font-sora">
+                            <div className="max-w-7xl mx-auto flex items-center gap-3">
+                                <span className="text-[13px] font-extrabold tracking-[-0.04em] text-white shrink-0">
+                                    Hallyu<span className="text-[#ff2d78]">Hub</span>
+                                </span>
+                                <div className="flex-1 flex items-center justify-center gap-3 sm:gap-5">
                                     {[
                                         { label: "Sobre", href: "/about" },
                                         { label: "Blog", href: "/blog" },
-                                        { label: "Artistas", href: "/artists" },
-                                        { label: "Produções", href: "/productions" },
                                         { label: "Contato", href: "/contato" },
                                         { label: "Privacidade", href: "/privacidade" },
                                     ].map(({ label, href }) => (
-                                        <a key={href} href={href} className="text-[11px] text-[#555] hover:text-[#aaa] font-medium transition-colors">{label}</a>
+                                        <a key={href} href={href} className="text-[11px] text-[#555] hover:text-[#aaa] font-medium transition-colors whitespace-nowrap">{label}</a>
                                     ))}
                                 </div>
-                                <p className="hidden sm:block text-[10px] text-[#444] shrink-0">
-                                    &copy; {new Date().getFullYear()} HallyuHub. Todos os direitos reservados.
-                                </p>
+                                <span className="hidden sm:inline text-[10px] text-[#444] shrink-0">
+                                    &copy; {new Date().getFullYear()} HallyuHub
+                                </span>
                             </div>
                         </footer>
                     </div>
