@@ -85,8 +85,8 @@ export default async function AgenciesPage({
     if (otherAgencies.length > 0)
         sections.push({ title: 'Outros', description: '', items: otherAgencies })
 
-    const totalAgencies = await prisma.agency.count()
-    const verifiedCount = await prisma.agency.count({ where: { isVerified: true } })
+    const totalAgencies = await prisma.agency.count().catch(() => 0)
+    const verifiedCount = await prisma.agency.count({ where: { isVerified: true } }).catch(() => 0)
 
     return (
         <>
