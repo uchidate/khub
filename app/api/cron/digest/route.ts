@@ -1,7 +1,7 @@
 /**
  * Cron Job: Email Digest (Diário/Semanal)
  *
- * Envia resumo de notícias para usuários que têm digest ativado
+ * Envia resumo de artigos do blog para usuários que têm digest ativado
  *
  * Execução:
  * - Diário: 09:00 (horário configurável por usuário)
@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getNewsNotificationService } from '@/lib/services/news-notification-service';
+import { sendBlogDigest } from '@/lib/services/blog-notification-service';
 import { createLogger } from '@/lib/utils/logger'
 import { logSystemEvent } from '@/lib/services/system-event-service';
 import { getErrorMessage } from '@/lib/utils/error';
@@ -105,12 +105,10 @@ export async function GET(request: NextRequest) {
         }
 
         // Enviar digest para cada usuário
-        const notificationService = getNewsNotificationService();
-
         for (const user of users) {
             try {
                 log.info('Sending digest email', { frequency, email: user.email });
-                const success = await notificationService.sendDigestEmail(user.id, frequency);
+                const success = await sendBlogDigest(user.id, frequency);
 
                 if (success) {
                     result.sent++;

@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
+import { notifyUsersAboutBlogPost } from '@/lib/services/blog-notification-service'
 
 export const maxDuration = 30
 
@@ -65,6 +66,10 @@ export async function POST(request: NextRequest) {
             })
             published.push(post.id)
             log.info('Post publicado via agendamento', { id: post.id, slug: post.slug, title: post.title })
+            // Email para assinantes (fire-and-forget)
+            notifyUsersAboutBlogPost(post.id).catch(err =>
+                log.error('Blog notification error (scheduled publish)', { id: post.id, error: String(err) })
+            )
         } catch (err) {
             errors.push(post.id)
             log.error('Erro ao publicar post agendado', { id: post.id, error: String(err) })

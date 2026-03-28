@@ -161,6 +161,43 @@ export async function sendNewsDigestEmail(
     })
 }
 
+export async function sendBlogInstantEmail(
+    to: string,
+    userName: string,
+    postTitle: string,
+    postId: string,
+    excerpt: string,
+    category: string,
+    userId?: string
+): Promise<boolean> {
+    const postUrl = `${SITE_URL}/blog/${postId}`
+    return send({
+        to,
+        type: 'BLOG_INSTANT',
+        templateSlug: 'blog-instant',
+        vars: { name: userName, postTitle, postUrl, excerpt, category },
+        userId,
+        metadata: { postId, postTitle },
+    })
+}
+
+export async function sendBlogDigestEmail(
+    to: string,
+    userName: string,
+    period: string,
+    postsListHtml: string,
+    userId?: string
+): Promise<boolean> {
+    return send({
+        to,
+        type: 'BLOG_DIGEST',
+        templateSlug: 'blog-digest',
+        vars: { name: userName, period, postsListHtml },
+        userId,
+        metadata: { period },
+    })
+}
+
 export async function sendManualEmail(
     to: string,
     templateSlug: string,

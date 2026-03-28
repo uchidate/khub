@@ -31,20 +31,7 @@ async function NotificationSettingsContent() {
     // Buscar usuário com configurações
     const user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        include: {
-            notificationSettings: true,
-            favorites: {
-                where: { artistId: { not: null } },
-                select: {
-                    artist: {
-                        select: {
-                            id: true,
-                            nameRomanized: true,
-                        },
-                    },
-                },
-            },
-        },
+        include: { notificationSettings: true },
     })
 
     if (!user) {
@@ -58,26 +45,16 @@ async function NotificationSettingsContent() {
         settings = await prisma.userNotificationSettings.create({
             data: {
                 userId: user.id,
-                emailOnNewNews: true,
+                emailOnNewBlog: true,
                 emailDigestEnabled: true,
                 emailDigestFrequency: 'DAILY',
                 emailDigestTime: '09:00',
-                onlyFavoriteArtists: true,
-                minNewsImportance: 'ALL',
             },
         })
     }
 
-    const favoriteArtists = user.favorites
-        .filter(f => f.artist)
-        .map(f => f.artist!.nameRomanized)
-
     return (
-        <NotificationSettings
-            settings={settings}
-            favoriteArtistsCount={favoriteArtists.length}
-            favoriteArtists={favoriteArtists.slice(0, 5)}
-        />
+        <NotificationSettings settings={settings} />
     )
 }
 
@@ -86,7 +63,7 @@ export default async function NotificationSettingsPage() {
         <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 max-w-4xl mx-auto">
             <SectionHeader
                 title="Configurações de Notificações"
-                subtitle="Gerencie como e quando você quer receber notícias sobre seus artistas favoritos"
+                subtitle="Gerencie como e quando você quer receber notificações de novos artigos do blog"
             />
 
             <Suspense fallback={<LoadingSkeleton />}>

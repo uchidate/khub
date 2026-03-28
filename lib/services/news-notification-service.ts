@@ -30,10 +30,9 @@ interface UserSettings {
     email: string;
     name: string | null;
     notificationSettings: {
-        emailOnNewNews: boolean;
+        emailOnNewBlog: boolean;
         emailDigestEnabled: boolean;
         emailDigestFrequency: string;
-        onlyFavoriteArtists: boolean;
     } | null;
     favorites: Array<{
         artist: {
@@ -139,8 +138,8 @@ export class NewsNotificationService {
      */
     private async sendNewsNotificationToUser(user: UserSettings, news: NewsItem): Promise<void> {
         try {
-            // Verificar se usuário tem notificações ativadas
-            if (!user.notificationSettings?.emailOnNewNews) {
+            // Verificar se usuário tem notificações ativadas (usando emailOnNewBlog como gate unificado)
+            if (!user.notificationSettings?.emailOnNewBlog) {
                 console.log(`  ⏭️  User ${user.email} has instant notifications disabled`);
                 return;
             }
