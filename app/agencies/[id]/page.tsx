@@ -50,6 +50,11 @@ const getAgency = cache(async (id: string) =>
                 select: {
                     id: true, name: true, accentColor: true, type: true,
                     _count: { select: { artists: true, musicalGroups: true } },
+                    musicalGroups: {
+                        select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
+                        orderBy: { trendingScore: 'desc' },
+                        take: 4,
+                    },
                 },
                 orderBy: { name: 'asc' },
             },
@@ -98,6 +103,11 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
     const accent      = agency.accentColor ?? '#6b7280'
     const activeGroups    = agency.musicalGroups.filter(g => !g.disbandDate)
     const disbandedGroups = agency.musicalGroups.filter(g => !!g.disbandDate)
+
+    // Aggregate counts from subsidiaries (for parent agencies like HYBE)
+    const subArtistsTotal  = agency.subsidiaries.reduce((s, sub) => s + sub._count.artists, 0)
+    const subGroupsTotal   = agency.subsidiaries.reduce((s, sub) => s + sub._count.musicalGroups, 0)
+    const showSubTotals    = agency.subsidiaries.length > 0 && agency.artists.length === 0
 
     return (
         <div className="min-h-screen bg-background pb-20">
@@ -203,22 +213,22 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                             )}
                         </div>
 
-                        {/* Parent / subsidiary context */}
+                        {/* Parent company banner */}
                         {agency.parent && (
-                            <div className="mt-4 flex items-center gap-2 text-sm">
-                                <span className="text-muted">Parte de</span>
-                                <Link
-                                    href={`/agencies/${agency.parent.id}`}
-                                    className="flex items-center gap-1.5 font-semibold text-foreground hover:opacity-70 transition-opacity"
-                                >
-                                    <span
-                                        className="w-2 h-2 rounded-full flex-shrink-0"
-                                        style={{ backgroundColor: agency.parent.accentColor ?? '#6b7280' }}
-                                    />
-                                    {agency.parent.name}
-                                    <ChevronRight size={13} />
-                                </Link>
-                            </div>
+                            <Link
+                                href={`/agencies/${agency.parent.id}`}
+                                className="mt-5 inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border bg-surface hover:border-foreground/20 transition-all group w-fit"
+                            >
+                                <span
+                                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: agency.parent.accentColor ?? '#6b7280' }}
+                                />
+                                <div className="flex flex-col leading-none">
+                                    <span className="text-[9px] font-bold text-muted uppercase tracking-widest mb-0.5">Parte de</span>
+                                    <span className="text-sm font-bold text-foreground group-hover:text-accent transition-colors">{agency.parent.name}</span>
+                                </div>
+                                <ChevronRight size={14} className="text-muted group-hover:text-foreground ml-1 transition-colors" />
+                            </Link>
                         )}
                     </div>
 
@@ -226,17 +236,27 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                     <div className="flex flex-wrap gap-3 lg:shrink-0">
                         <div className="text-center px-5 py-4 rounded-xl bg-surface border border-border min-w-[90px]">
                             <Users className="w-4 h-4 text-muted mx-auto mb-1.5" />
-                            <p className="text-3xl font-black text-foreground">{agency.artists.length}</p>
+                            <p className="text-3xl font-black text-foreground">
+                                {showSubTotals ? subArtistsTotal : agency.artists.length}
+                            </p>
                             <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Artistas</p>
+                            {showSubTotals && subArtistsTotal > 0 && (
+                                <p className="text-[9px] text-muted/60 mt-0.5">via sub-labels</p>
+                            )}
                         </div>
-                        {agency.musicalGroups.length > 0 && (
+                        {(agency.musicalGroups.length > 0 || (showSubTotals && subGroupsTotal > 0)) && (
                             <div
                                 className="text-center px-5 py-4 rounded-xl border min-w-[90px]"
                                 style={{ backgroundColor: `${accent}12`, borderColor: `${accent}25` }}
                             >
                                 <Music2 className="w-4 h-4 mx-auto mb-1.5" style={{ color: accent }} />
-                                <p className="text-3xl font-black" style={{ color: accent }}>{agency.musicalGroups.length}</p>
+                                <p className="text-3xl font-black" style={{ color: accent }}>
+                                    {showSubTotals ? subGroupsTotal : agency.musicalGroups.length}
+                                </p>
                                 <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Grupos</p>
+                                {showSubTotals && subGroupsTotal > 0 && (
+                                    <p className="text-[9px] text-muted/60 mt-0.5">via sub-labels</p>
+                                )}
                             </div>
                         )}
                         {agency.subsidiaries.length > 0 && (
@@ -255,27 +275,64 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                         <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-5 flex items-center gap-2">
                             <Building2 size={13} />
                             Sub-labels & Divisões
+                            <span className="font-normal text-muted/60">({agency.subsidiaries.length})</span>
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {agency.subsidiaries.map(sub => (
-                                <Link
-                                    key={sub.id}
-                                    href={`/agencies/${sub.id}`}
-                                    className="flex items-center gap-3 p-4 rounded-xl border border-border bg-surface hover:border-foreground/20 transition-all group"
-                                >
-                                    <span
-                                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                                        style={{ backgroundColor: sub.accentColor ?? '#6b7280' }}
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate">{sub.name}</p>
-                                        <p className="text-[11px] text-muted">
-                                            {sub._count.artists} artistas · {sub._count.musicalGroups} grupos
-                                        </p>
-                                    </div>
-                                    <ChevronRight size={14} className="text-muted group-hover:text-foreground transition-colors shrink-0" />
-                                </Link>
-                            ))}
+                            {agency.subsidiaries.map(sub => {
+                                const subAccent = sub.accentColor ?? '#6b7280'
+                                return (
+                                    <Link
+                                        key={sub.id}
+                                        href={`/agencies/${sub.id}`}
+                                        className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-surface hover:border-foreground/20 transition-all group"
+                                        style={{ borderLeftColor: subAccent, borderLeftWidth: 3 }}
+                                    >
+                                        {/* Header row */}
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors truncate">{sub.name}</p>
+                                                <p className="text-[10px] text-muted mt-0.5">
+                                                    {sub._count.artists > 0 && `${sub._count.artists} artista${sub._count.artists !== 1 ? 's' : ''}`}
+                                                    {sub._count.artists > 0 && sub._count.musicalGroups > 0 && ' · '}
+                                                    {sub._count.musicalGroups > 0 && `${sub._count.musicalGroups} grupo${sub._count.musicalGroups !== 1 ? 's' : ''}`}
+                                                    {sub._count.artists === 0 && sub._count.musicalGroups === 0 && 'Sem artistas'}
+                                                </p>
+                                            </div>
+                                            <ChevronRight size={14} className="text-muted group-hover:text-foreground transition-colors shrink-0" />
+                                        </div>
+
+                                        {/* Groups pill list */}
+                                        {sub.musicalGroups.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {sub.musicalGroups.map(g => (
+                                                    <span
+                                                        key={g.id}
+                                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                                        style={{
+                                                            backgroundColor: `${subAccent}18`,
+                                                            color: subAccent,
+                                                            border: `1px solid ${subAccent}30`,
+                                                            opacity: g.disbandDate ? 0.5 : 1,
+                                                        }}
+                                                    >
+                                                        {g.profileImageUrl && (
+                                                            <span className="relative w-3.5 h-3.5 rounded-full overflow-hidden flex-shrink-0 inline-block">
+                                                                <Image src={g.profileImageUrl} alt={g.name} fill sizes="14px" className="object-cover" />
+                                                            </span>
+                                                        )}
+                                                        {g.name}
+                                                    </span>
+                                                ))}
+                                                {sub._count.musicalGroups > 4 && (
+                                                    <span className="text-[10px] text-muted px-1.5 py-0.5">
+                                                        +{sub._count.musicalGroups - 4} mais
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </Link>
+                                )
+                            })}
                         </div>
                     </section>
                 )}

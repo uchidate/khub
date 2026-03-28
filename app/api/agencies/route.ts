@@ -31,6 +31,10 @@ export async function GET(request: NextRequest) {
         ]
     }
 
+    // Para relevância, buscamos tudo e ordenamos em JS
+    // (Prisma não suporta CASE WHEN em orderBy)
+    const TYPE_ORDER: Record<string, number> = { MAJOR: 0, SUBSIDIARY: 1, INDIE: 2 }
+
     let orderBy: any
     switch (sortBy) {
         case 'name':
@@ -42,7 +46,6 @@ export async function GET(request: NextRequest) {
         case 'relevance':
         default:
             orderBy = [
-                { type: 'asc' },
                 { musicalGroups: { _count: 'desc' } },
                 { artists: { _count: 'desc' } },
             ]
@@ -52,8 +55,8 @@ export async function GET(request: NextRequest) {
         const [agencies, total] = await Promise.all([
             prisma.agency.findMany({
                 where,
-                take: limit,
-                skip,
+                take: sortBy === 'relevance' ? undefined : limit,
+                skip: sortBy === 'relevance' ? undefined : skip,
                 orderBy,
                 select: {
                     id: true,
@@ -82,8 +85,20 @@ export async function GET(request: NextRequest) {
             prisma.agency.count({ where }),
         ])
 
+        // Ordenação por importância: MAJOR → SUBSIDIARY → INDIE, depois por volume
+        const sorted = sortBy === 'relevance'
+            ? [...agencies].sort((a, b) => {
+                const ta = TYPE_ORDER[a.type] ?? 3
+                const tb = TYPE_ORDER[b.type] ?? 3
+                if (ta !== tb) return ta - tb
+                const sa = a._count.musicalGroups * 2 + a._count.artists
+                const sb = b._count.musicalGroups * 2 + b._count.artists
+                return sb - sa
+            }).slice(skip, skip + limit)
+            : agencies
+
         return NextResponse.json({
-            agencies,
+            agencies: sorted,
             pagination: {
                 page,
                 limit,
