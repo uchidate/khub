@@ -8,6 +8,7 @@ interface SiteStats {
 
 interface HomeBlogSectionProps {
     siteStats: SiteStats
+    isLoggedIn?: boolean
 }
 
 function formatCount(n: number): string {
@@ -22,7 +23,7 @@ const STATS = (stats: SiteStats) => [
     { label: 'produções', value: formatCount(stats.productions) },
 ]
 
-export function HomeBlogSection({ siteStats }: HomeBlogSectionProps) {
+export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps) {
     return (
         <section className="bg-background py-4 pb-12 sm:pb-4 px-4 sm:px-6 lg:px-12">
             <div className="max-w-7xl mx-auto">
@@ -45,10 +46,16 @@ export function HomeBlogSection({ siteStats }: HomeBlogSectionProps) {
                                 className="text-[1.5rem] sm:text-[1.875rem] lg:text-[2.2rem] font-extrabold tracking-[-0.05em] leading-[1.1] mb-2.5"
                                 style={{ color: 'var(--color-featured-fg)' }}
                             >
-                                Junte-se ao site<br />de <span className="text-accent">cultura coreana</span> no Brasil
+                                {isLoggedIn ? (
+                                    <>Obrigado por fazer parte<br />da comunidade <span className="text-accent">HallyuHub</span></>
+                                ) : (
+                                    <>Junte-se ao site<br />de <span className="text-accent">cultura coreana</span> no Brasil</>
+                                )}
                             </h2>
                             <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: 'var(--color-featured-muted)' }}>
-                                Favorite artistas, acompanhe K-dramas e conecte-se com fãs de todo o Brasil.
+                                {isLoggedIn
+                                    ? 'Explore artistas, acompanhe K-dramas e descubra novos conteúdos todos os dias.'
+                                    : 'Favorite artistas, acompanhe K-dramas e conecte-se com fãs de todo o Brasil.'}
                             </p>
                             {/* Stats pills */}
                             <div className="flex flex-wrap gap-2">
@@ -67,17 +74,19 @@ export function HomeBlogSection({ siteStats }: HomeBlogSectionProps) {
 
                         {/* Right buttons */}
                         <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-end">
+                            {!isLoggedIn && (
+                                <Link
+                                    href="/auth/register"
+                                    className="w-full sm:w-auto lg:w-auto text-center bg-accent text-white font-bold text-[13.5px] rounded-full px-6 py-3.5 hover:brightness-110 transition-all min-h-[44px]"
+                                >
+                                    Criar conta grátis
+                                </Link>
+                            )}
                             <Link
-                                href="/auth/register"
-                                className="w-full sm:w-auto lg:w-auto text-center bg-accent text-white font-bold text-[13.5px] rounded-full px-6 py-3.5 hover:brightness-110 transition-all min-h-[44px]"
-                            >
-                                Criar conta grátis
-                            </Link>
-                            <Link
-                                href="/artists"
+                                href="/blog"
                                 className="cta-secondary w-full sm:w-auto lg:w-auto text-center font-semibold text-[13.5px] rounded-full px-6 py-3.5 transition-all min-h-[44px]"
                             >
-                                Explorar a plataforma
+                                Explorar artigos
                             </Link>
                         </div>
                     </div>
