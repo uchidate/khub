@@ -7,13 +7,24 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { AdminButton, AdminIconButton } from '@/components/admin'
-import { Plus, Users, Loader2, ExternalLink, User, X } from 'lucide-react'
+import { Plus, Users, Loader2, ExternalLink, User, X, CheckCircle2 } from 'lucide-react'
 
 interface Agency {
   id: string
   name: string
+  type: string
+  isVerified: boolean
+  foundedYear: number | null
+  country: string
+  ceoName: string | null
+  description: string | null
   website: string | null
+  accentColor: string | null
+  logoUrl: string | null
+  parentId: string | null
+  parent: { id: string; name: string } | null
   artistsCount: number
+  _count: { artists: number; musicalGroups: number; subsidiaries: number }
   createdAt: string
 }
 
@@ -23,6 +34,18 @@ interface Artist {
   nameHangul: string | null
   primaryImageUrl: string | null
   roles: string[]
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  MAJOR: 'Grande',
+  INDIE: 'Independente',
+  SUBSIDIARY: 'Sub-label',
+}
+
+const TYPE_STYLE: Record<string, string> = {
+  MAJOR: 'bg-amber-400/10 text-amber-500 border-amber-400/30',
+  INDIE: 'bg-blue-400/10 text-blue-400 border-blue-400/30',
+  SUBSIDIARY: 'bg-violet-400/10 text-violet-400 border-violet-400/30',
 }
 
 // ─── Artists Panel ────────────────────────────────────────────────────────────
@@ -47,10 +70,7 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
     }
   }, [agencyId])
 
-  // Load on mount
-  if (artists === null && loading) {
-    load()
-  }
+  if (artists === null && loading) load()
 
   return (
     <div className="bg-surface border border-border rounded-xl overflow-hidden">
@@ -87,17 +107,11 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
                 href={`/artists/${artist.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 p-2 rounded-lg bg-surface hover:bg-surface border border-transparent hover:border-border transition-all group"
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface border border-transparent hover:border-border transition-all group"
               >
                 <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-surface">
                   {artist.primaryImageUrl ? (
-                    <Image
-                      src={artist.primaryImageUrl}
-                      alt={artist.nameRomanized}
-                      fill
-                      sizes="32px"
-                      className="object-cover"
-                    />
+                    <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="32px" className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <User className="w-4 h-4 text-muted" />
@@ -105,14 +119,10 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate group-hover:text-foreground transition-colors">
-                    {artist.nameRomanized}
-                  </p>
-                  {artist.nameHangul && (
-                    <p className="text-[10px] text-muted truncate">{artist.nameHangul}</p>
-                  )}
+                  <p className="text-xs font-bold text-foreground truncate">{artist.nameRomanized}</p>
+                  {artist.nameHangul && <p className="text-[10px] text-muted truncate">{artist.nameHangul}</p>}
                 </div>
-                <ExternalLink className="w-3 h-3 text-muted opacity-0 group-hover:opacity-100 flex-shrink-0 shrink-0" />
+                <ExternalLink className="w-3 h-3 text-muted opacity-0 group-hover:opacity-100 shrink-0" />
               </a>
             ))}
           </div>
@@ -122,47 +132,84 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Type Filter ──────────────────────────────────────────────────────────────
+
+function TypeFilter({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const opts = [
+    { value: '', label: 'Todos' },
+    { value: 'MAJOR', label: 'Grandes' },
+    { value: 'INDIE', label: 'Independentes' },
+    { value: 'SUBSIDIARY', label: 'Sub-labels' },
+  ]
+  return (
+    <div className="flex gap-1">
+      {opts.map(o => (
+        <button
+          key={o.value}
+          onClick={() => onChange(o.value)}
+          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+            value === o.value
+              ? 'bg-foreground text-background border-foreground'
+              : 'text-muted border-border hover:border-foreground/30 hover:text-foreground'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─── Form fields ──────────────────────────────────────────────────────────────
 
 const formFields: FormField[] = [
-  { key: 'name', label: 'Nome da Agência', type: 'text', placeholder: 'Ex: HYBE Labels', required: true },
-  { key: 'website', label: 'Website', type: 'text', placeholder: 'https://www.exemplo.com' },
+  { key: 'name',        label: 'Nome da Agência',     type: 'text',     placeholder: 'Ex: HYBE Labels',          required: true },
+  {
+    key: 'type', label: 'Tipo', type: 'select',
+    options: [
+      { value: 'MAJOR',      label: 'Grande Agência' },
+      { value: 'INDIE',      label: 'Independente' },
+      { value: 'SUBSIDIARY', label: 'Sub-label' },
+    ],
+  },
+  { key: 'isVerified',  label: 'Verificada',          type: 'toggle' },
+  { key: 'description', label: 'Descrição',           type: 'textarea', placeholder: 'Breve descrição...' },
+  { key: 'website',     label: 'Website',             type: 'text',     placeholder: 'https://www.exemplo.com' },
+  { key: 'accentColor', label: 'Cor de destaque (hex)', type: 'text',   placeholder: '#0f172a' },
+  { key: 'foundedYear', label: 'Ano de fundação',     type: 'number',   placeholder: '1989' },
+  { key: 'country',     label: 'País (ISO 2)',         type: 'text',     placeholder: 'KR' },
+  { key: 'ceoName',     label: 'CEO',                 type: 'text',     placeholder: 'Park Jin-young' },
+  { key: 'logoUrl',     label: 'URL do Logo',         type: 'text',     placeholder: 'https://...' },
 ]
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AgenciesPage() {
-  const [formOpen, setFormOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [editingAgency, setEditingAgency] = useState<Agency | null>(null)
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [expanded, setExpanded] = useState<{ id: string; name: string } | null>(null)
+  const [formOpen,       setFormOpen]       = useState(false)
+  const [deleteOpen,     setDeleteOpen]     = useState(false)
+  const [editingAgency,  setEditingAgency]  = useState<Agency | null>(null)
+  const [selectedIds,    setSelectedIds]    = useState<string[]>([])
+  const [expanded,       setExpanded]       = useState<{ id: string; name: string } | null>(null)
+  const [typeFilter,     setTypeFilter]     = useState('')
 
-  const handleCreate = () => {
-    setEditingAgency(null)
-    setFormOpen(true)
-  }
+  const extraParams: Record<string, string> = {}
+  if (typeFilter) extraParams.type = typeFilter
 
-  const handleEdit = (agency: Agency) => {
-    setEditingAgency(agency)
-    setFormOpen(true)
-  }
-
-  const handleDelete = (ids: string[]) => {
-    setSelectedIds(ids)
-    setDeleteOpen(true)
-  }
+  const handleCreate = () => { setEditingAgency(null); setFormOpen(true) }
+  const handleEdit   = (agency: Agency) => { setEditingAgency(agency); setFormOpen(true) }
+  const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
-    const url = editingAgency ? `/api/admin/agencies?id=${editingAgency.id}` : '/api/admin/agencies'
-    const method = editingAgency ? 'PATCH' : 'POST'
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.error || 'Erro ao salvar agência')
+    if (data.foundedYear !== undefined && data.foundedYear !== '' && data.foundedYear !== null) {
+      data.foundedYear = parseInt(String(data.foundedYear))
+    } else if (data.foundedYear === '') {
+      data.foundedYear = null
     }
+
+    const url    = editingAgency ? `/api/admin/agencies?id=${editingAgency.id}` : '/api/admin/agencies'
+    const method = editingAgency ? 'PATCH' : 'POST'
+    const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao salvar agência') }
     refetchTable()
   }
 
@@ -172,22 +219,58 @@ export default function AgenciesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: selectedIds }),
     })
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.error || 'Erro ao deletar agências')
-    }
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao deletar agências') }
     refetchTable()
     setExpanded(null)
   }
 
   const columns: Column<Agency>[] = [
-    { key: 'name', label: 'Nome', sortable: true },
+    {
+      key: 'name',
+      label: 'Agência',
+      sortable: true,
+      render: (agency) => (
+        <div className="flex items-center gap-2.5">
+          {agency.accentColor ? (
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-black/10" style={{ backgroundColor: agency.accentColor }} />
+          ) : (
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-border" />
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-sm text-foreground truncate">{agency.name}</span>
+              {agency.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+            </div>
+            {agency.parent && (
+              <p className="text-[10px] text-muted truncate">via {agency.parent.name}</p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'type',
+      label: 'Tipo',
+      render: (agency) => (
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${TYPE_STYLE[agency.type] ?? 'text-muted border-border'}`}>
+          {TYPE_LABEL[agency.type] ?? agency.type}
+        </span>
+      ),
+    },
+    {
+      key: 'foundedYear',
+      label: 'Fund.',
+      sortable: true,
+      className: 'hidden xl:table-cell',
+      render: (agency) => <span className="text-sm text-muted tabular-nums">{agency.foundedYear ?? '—'}</span>,
+    },
     {
       key: 'website',
       label: 'Website',
+      className: 'hidden lg:table-cell',
       render: (agency) =>
         agency.website ? (
-          <a href={agency.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline text-xs truncate max-w-[180px] block">
+          <a href={agency.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline text-xs truncate max-w-[150px] block">
             {agency.website.replace(/^https?:\/\//, '')}
           </a>
         ) : (
@@ -198,27 +281,17 @@ export default function AgenciesPage() {
       key: 'artistsCount',
       label: 'Artistas',
       sortable: true,
-      render: (agency) => (
-        <span className="text-muted font-mono text-sm">{agency.artistsCount}</span>
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Cadastro',
-      sortable: true,
-      render: (agency) => (
-        <span className="text-xs text-muted">{new Date(agency.createdAt).toLocaleDateString('pt-BR')}</span>
-      ),
+      render: (agency) => <span className="text-muted font-mono text-sm">{agency.artistsCount}</span>,
     },
   ]
 
   return (
     <AdminLayout title="Agências">
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-muted">Gerencie as agências de entretenimento da plataforma</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TypeFilter value={typeFilter} onChange={v => { setTypeFilter(v); setExpanded(null) }} />
           <AdminButton onClick={handleCreate} variant="primary">
-            <Plus size={18} />
+            <Plus size={16} />
             Nova Agência
           </AdminButton>
         </div>
@@ -226,6 +299,7 @@ export default function AgenciesPage() {
         <DataTable<Agency>
           columns={columns}
           apiUrl="/api/admin/agencies"
+          extraParams={extraParams}
           onEdit={handleEdit}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por nome..."
@@ -240,7 +314,6 @@ export default function AgenciesPage() {
           )}
         />
 
-        {/* Artists panel — shown below table when an agency is expanded */}
         {expanded && (
           <ArtistsPanel
             key={expanded.id}

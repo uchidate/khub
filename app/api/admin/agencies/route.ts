@@ -14,6 +14,15 @@ export const dynamic = 'force-dynamic'
 const agencySchema = z.object({
   name: z.string().min(1),
   website: z.string().url().optional().nullable(),
+  description: z.string().optional().nullable(),
+  logoUrl: z.string().url().optional().nullable(),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional().nullable(),
+  type: z.enum(['MAJOR', 'INDIE', 'SUBSIDIARY']).optional(),
+  foundedYear: z.number().int().min(1900).max(2100).optional().nullable(),
+  country: z.string().length(2).optional(),
+  ceoName: z.string().optional().nullable(),
+  isVerified: z.boolean().optional(),
+  parentId: z.string().optional().nullable(),
   socials: z.record(z.string(), z.unknown()).optional().nullable(),
 })
 
@@ -41,14 +50,15 @@ export async function GET(request: NextRequest) {
     }
 
     const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+    const typeFilter = searchParams.get('type') || undefined
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {}
+    const where: any = {}
+    if (search) {
+      where.OR = [{ name: { contains: search, mode: 'insensitive' as const } }]
+    }
+    if (typeFilter && ['MAJOR', 'INDIE', 'SUBSIDIARY'].includes(typeFilter)) {
+      where.type = typeFilter
+    }
 
     const [agencies, total] = await Promise.all([
       prisma.agency.findMany({
@@ -57,11 +67,8 @@ export async function GET(request: NextRequest) {
         take,
         orderBy,
         include: {
-          _count: {
-            select: {
-              artists: true,
-            },
-          },
+          parent: { select: { id: true, name: true } },
+          _count: { select: { artists: true, musicalGroups: true, subsidiaries: true } },
         },
       }),
       prisma.agency.count({ where }),
