@@ -131,15 +131,12 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                             {filteredPosts.length === 0 && (
                                 <p className="text-sm text-muted p-5">Nenhum artigo encontrado.</p>
                             )}
-                            {filteredPosts.map((post, idx) => (
+                            {filteredPosts.map((post) => (
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
                                     className="flex items-center gap-3.5 px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 border-b border-border hover:bg-accent-soft transition-colors group min-h-[56px]"
                                 >
-                                    <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0">
-                                        {String(idx + 1).padStart(2, "0")}
-                                    </span>
                                     <div
                                         className="w-[58px] h-11 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border border-border/60"
                                         style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
