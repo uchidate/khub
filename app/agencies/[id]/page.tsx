@@ -3,16 +3,16 @@ import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { getRoleLabel } from "@/lib/utils/role-labels"
-import { ExternalLink, Users, Music2 } from "lucide-react"
+import { ExternalLink, Users, Music2, Building2, Calendar, ArrowLeft, ChevronRight } from "lucide-react"
 import { cache } from "react"
 import type { Metadata } from "next"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import { SITE_URL } from '@/lib/constants/site'
 
-// ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
 
-import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 export async function generateStaticParams() {
@@ -30,60 +30,84 @@ const getAgency = cache(async (id: string) =>
         include: {
             artists: {
                 where: { isHidden: false, flaggedAsNonKorean: false },
-                select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
+                select: {
+                    id: true, nameRomanized: true, nameHangul: true,
+                    primaryImageUrl: true, roles: true, gender: true,
+                    trendingScore: true, trendingRank: true,
+                },
                 orderBy: { trendingScore: 'desc' },
             },
             musicalGroups: {
-                select: { id: true, name: true, nameHangul: true, profileImageUrl: true, debutDate: true, disbandDate: true, _count: { select: { members: true } } },
+                select: {
+                    id: true, name: true, nameHangul: true, profileImageUrl: true,
+                    debutDate: true, disbandDate: true, officialColor: true,
+                    _count: { select: { members: true } },
+                },
                 orderBy: { trendingScore: 'desc' },
+            },
+            parent: { select: { id: true, name: true, accentColor: true } },
+            subsidiaries: {
+                select: {
+                    id: true, name: true, accentColor: true, type: true,
+                    _count: { select: { artists: true, musicalGroups: true } },
+                },
+                orderBy: { name: 'asc' },
             },
         },
     }).catch(() => null)
 )
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
-    const params = await props.params
-    const agency = await getAgency(params.id)
+    const { id } = await props.params
+    const agency = await getAgency(id)
     if (!agency) return {}
 
     const artistNames = agency.artists.slice(0, 5).map(a => a.nameRomanized).join(', ')
-    const groupNames = agency.musicalGroups.slice(0, 3).map(g => g.name).join(', ')
-    const description = [
+    const groupNames  = agency.musicalGroups.slice(0, 3).map(g => g.name).join(', ')
+    const description = agency.description ?? [
         `${agency.name} é uma agência de entretenimento K-pop.`,
-        agency.artists.length > 0 && `Artistas: ${artistNames}${agency.artists.length > 5 ? ' e mais' : ''}.`,
-        agency.musicalGroups.length > 0 && `Grupos: ${groupNames}.`,
+        artistNames && `Artistas: ${artistNames}${agency.artists.length > 5 ? ' e mais' : ''}.`,
+        groupNames && `Grupos: ${groupNames}.`,
     ].filter(Boolean).join(' ')
 
     return {
         title: agency.name,
         description,
-        alternates: { canonical: `${BASE_URL}/agencies/${params.id}` },
+        alternates: { canonical: `${BASE_URL}/agencies/${id}` },
         openGraph: {
             title: `${agency.name} | HallyuHub`,
             description,
-            url: `${BASE_URL}/agencies/${params.id}`,
+            url: `${BASE_URL}/agencies/${id}`,
             type: 'website',
         },
     }
 }
 
-export default async function AgencyDetailPage(props: { params: Promise<{ id: string }> }) {
-    const params = await props.params;
-    const agency = await getAgency(params.id)
+const TYPE_LABEL: Record<string, string> = {
+    MAJOR: 'Grande Agência',
+    INDIE: 'Independente',
+    SUBSIDIARY: 'Sub-label',
+}
 
+export default async function AgencyDetailPage(props: { params: Promise<{ id: string }> }) {
+    const { id } = await props.params
+    const agency = await getAgency(id)
     if (!agency) notFound()
 
-    const socials = (agency.socials as Record<string, string>) || {}
-    const activeGroups = agency.musicalGroups.filter(g => !g.disbandDate)
+    const socials     = (agency.socials as Record<string, string>) ?? {}
+    const accent      = agency.accentColor ?? '#6b7280'
+    const activeGroups    = agency.musicalGroups.filter(g => !g.disbandDate)
     const disbandedGroups = agency.musicalGroups.filter(g => !!g.disbandDate)
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background pb-20">
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "name": agency.name,
                 "url": agency.website ?? `${BASE_URL}/agencies/${agency.id}`,
+                "description": agency.description ?? undefined,
+                "foundingDate": agency.foundedYear ? String(agency.foundedYear) : undefined,
                 "sameAs": agency.website ? [agency.website] : undefined,
                 ...(agency.musicalGroups.length > 0 ? {
                     "subOrganization": agency.musicalGroups.map(g => ({
@@ -100,143 +124,245 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                     })),
                 } : {}),
             }} />
-            <JsonLd data={{
-                "@context": "https://schema.org",
-                "@type": "BreadcrumbList",
-                "itemListElement": [
-                    { "@type": "ListItem", "position": 1, "name": "Agências", "item": `${BASE_URL}/agencies` },
-                    { "@type": "ListItem", "position": 2, "name": agency.name, "item": `${BASE_URL}/agencies/${agency.id}` },
-                ],
-            }} />
-            <div className="py-8 md:py-12 pb-20 px-4 sm:px-12 md:px-20 max-w-[1600px] mx-auto">
-                {/* Back */}
-                <Link href="/agencies" className="text-muted hover:text-foreground transition-colors text-sm font-bold flex items-center gap-1.5 w-fit mb-10">
-                    ← Agências
-                </Link>
 
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 pb-12 border-b border-border">
-                    <div>
-                        <h1 className="text-5xl md:text-7xl font-black hallyu-gradient-text uppercase tracking-tighter italic">{agency.name}</h1>
-                        {agency.website && (
-                            <a href={agency.website} target="_blank" rel="noopener noreferrer"
-                                className="text-[#ff2d78] hover:opacity-80 transition-opacity text-sm font-bold mt-2 inline-flex items-center gap-1.5">
-                                {agency.website.replace('https://', '').replace('http://', '')}
-                                <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
+            {/* Hero accent band */}
+            <div className="h-1 w-full" style={{ backgroundColor: accent }} />
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8">
+
+                {/* Breadcrumb + back */}
+                <Breadcrumbs items={[
+                    { label: 'Agências', href: '/agencies' },
+                    { label: agency.name },
+                ]} className="mb-8" />
+
+                {/* ── Agency Header ──────────────────────────────────────────── */}
+                <div className="flex flex-col lg:flex-row lg:items-start gap-8 mb-12 pb-12 border-b border-border">
+
+                    {/* Left: identity */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap mb-2">
+                            {agency.type && (
+                                <span
+                                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
+                                    style={{ color: accent, backgroundColor: `${accent}15`, borderColor: `${accent}30` }}
+                                >
+                                    {TYPE_LABEL[agency.type] ?? agency.type}
+                                </span>
+                            )}
+                            {agency.foundedYear && (
+                                <span className="text-[11px] text-muted flex items-center gap-1">
+                                    <Calendar size={11} />
+                                    Fundada em {agency.foundedYear}
+                                </span>
+                            )}
+                            {agency.country && agency.country !== 'KR' && (
+                                <span className="text-[11px] text-muted">{agency.country}</span>
+                            )}
+                        </div>
+
+                        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-3">
+                            {agency.name}
+                        </h1>
+
+                        {agency.description && (
+                            <p className="text-base text-muted leading-relaxed max-w-2xl mb-4">
+                                {agency.description}
+                            </p>
+                        )}
+
+                        {/* Links & CEO */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            {agency.website && (
+                                <a
+                                    href={agency.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-sm font-semibold hover:opacity-70 transition-opacity"
+                                    style={{ color: accent }}
+                                >
+                                    {agency.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                    <ExternalLink size={12} />
+                                </a>
+                            )}
+                            {Object.entries(socials).map(([name, url]) => (
+                                <a
+                                    key={name}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-semibold text-muted px-2.5 py-1 rounded-lg border border-border hover:border-foreground/30 hover:text-foreground transition-all"
+                                >
+                                    {name}
+                                </a>
+                            ))}
+                            {agency.ceoName && (
+                                <span className="text-sm text-muted">
+                                    CEO: <strong className="text-foreground font-semibold">{agency.ceoName}</strong>
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Parent / subsidiary context */}
+                        {agency.parent && (
+                            <div className="mt-4 flex items-center gap-2 text-sm">
+                                <span className="text-muted">Parte de</span>
+                                <Link
+                                    href={`/agencies/${agency.parent.id}`}
+                                    className="flex items-center gap-1.5 font-semibold text-foreground hover:opacity-70 transition-opacity"
+                                >
+                                    <span
+                                        className="w-2 h-2 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: agency.parent.accentColor ?? '#6b7280' }}
+                                    />
+                                    {agency.parent.name}
+                                    <ChevronRight size={13} />
+                                </Link>
+                            </div>
                         )}
                     </div>
 
-                    <div className="flex items-end gap-4">
-                        <div className="bg-surface border border-border rounded-2xl px-6 py-4 text-center">
-                            <Users className="w-4 h-4 text-muted mx-auto mb-1" />
+                    {/* Right: stats */}
+                    <div className="flex flex-wrap gap-3 lg:shrink-0">
+                        <div className="text-center px-5 py-4 rounded-xl bg-surface border border-border min-w-[90px]">
+                            <Users className="w-4 h-4 text-muted mx-auto mb-1.5" />
                             <p className="text-3xl font-black text-foreground">{agency.artists.length}</p>
-                            <p className="text-xs font-black text-muted uppercase tracking-widest mt-1">Artistas</p>
+                            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Artistas</p>
                         </div>
                         {agency.musicalGroups.length > 0 && (
-                            <div className="bg-[#ff2d78]/10 border border-[#ff2d78]/20 rounded-2xl px-6 py-4 text-center">
-                                <Music2 className="w-4 h-4 text-[#ff2d78] mx-auto mb-1" />
-                                <p className="text-3xl font-black text-[#ff2d78]">{agency.musicalGroups.length}</p>
-                                <p className="text-xs font-black text-muted uppercase tracking-widest mt-1">Grupos</p>
+                            <div
+                                className="text-center px-5 py-4 rounded-xl border min-w-[90px]"
+                                style={{ backgroundColor: `${accent}12`, borderColor: `${accent}25` }}
+                            >
+                                <Music2 className="w-4 h-4 mx-auto mb-1.5" style={{ color: accent }} />
+                                <p className="text-3xl font-black" style={{ color: accent }}>{agency.musicalGroups.length}</p>
+                                <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Grupos</p>
                             </div>
                         )}
-                        {Object.keys(socials).length > 0 && (
-                            <div className="flex gap-2">
-                                {Object.entries(socials).map(([name, url]) => (
-                                    <a key={name} href={url} target="_blank" rel="noopener noreferrer"
-                                        className="text-xs font-bold text-foreground bg-surface px-3 py-1.5 rounded-sm border border-border hover:border-[#ff2d78] transition-colors">
-                                        {name}
-                                    </a>
-                                ))}
+                        {agency.subsidiaries.length > 0 && (
+                            <div className="text-center px-5 py-4 rounded-xl bg-surface border border-border min-w-[90px]">
+                                <Building2 className="w-4 h-4 text-muted mx-auto mb-1.5" />
+                                <p className="text-3xl font-black text-foreground">{agency.subsidiaries.length}</p>
+                                <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Sub-labels</p>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Grupos */}
-                {agency.musicalGroups.length > 0 && (
-                    <section className="mb-16">
-                        <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
-                            <Music2 className="w-4 h-4" />
-                            Grupos Musicais
+                {/* ── Sub-labels ──────────────────────────────────────────────── */}
+                {agency.subsidiaries.length > 0 && (
+                    <section className="mb-12">
+                        <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-5 flex items-center gap-2">
+                            <Building2 size={13} />
+                            Sub-labels & Divisões
                         </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {[...activeGroups, ...disbandedGroups].map((group) => (
-                                <Link key={group.id} href={`/groups/${group.id}`}
-                                    className={`group block ${group.disbandDate ? 'opacity-50 hover:opacity-80 transition-opacity' : ''}`}>
-                                    <div className="aspect-square relative rounded-2xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all mb-2">
-                                        {group.profileImageUrl ? (
-                                            <Image src={group.profileImageUrl} alt={group.name} fill
-                                                sizes="(max-width: 640px) 50vw, 20vw"
-                                                className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <span className="text-2xl font-black text-muted group-hover:text-[#ff2d78] transition-colors">
-                                                    {group.name[0]}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {group.disbandDate && (
-                                            <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#080808]/70 backdrop-blur-sm rounded text-[9px] font-black text-white uppercase">
-                                                Disbandado
-                                            </div>
-                                        )}
-                                        {group._count.members > 0 && (
-                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-[#080808]/60 backdrop-blur-sm rounded text-[9px] font-bold text-white">
-                                                <Users className="w-2.5 h-2.5" />
-                                                {group._count.members}
-                                            </div>
-                                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {agency.subsidiaries.map(sub => (
+                                <Link
+                                    key={sub.id}
+                                    href={`/agencies/${sub.id}`}
+                                    className="flex items-center gap-3 p-4 rounded-xl border border-border bg-surface hover:border-foreground/20 transition-all group"
+                                >
+                                    <span
+                                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: sub.accentColor ?? '#6b7280' }}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate">{sub.name}</p>
+                                        <p className="text-[11px] text-muted">
+                                            {sub._count.artists} artistas · {sub._count.musicalGroups} grupos
+                                        </p>
                                     </div>
-                                    <div>
-                                        <p className="font-black text-foreground text-sm group-hover:text-[#ff2d78] transition-colors">{group.name}</p>
-                                        {group.nameHangul && <p className="text-xs text-muted mt-0.5">{group.nameHangul}</p>}
-                                        {group.debutDate && (
-                                            <p className="text-[10px] text-muted font-bold mt-0.5">
-                                                {new Date(group.debutDate).getUTCFullYear()}
-                                                {group.disbandDate ? ` – ${new Date(group.disbandDate).getUTCFullYear()}` : ''}
-                                            </p>
-                                        )}
-                                    </div>
+                                    <ChevronRight size={14} className="text-muted group-hover:text-foreground transition-colors shrink-0" />
                                 </Link>
                             ))}
                         </div>
                     </section>
                 )}
 
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AGENCY!} format="horizontal" className="mb-16" />
+                {/* ── Grupos ──────────────────────────────────────────────────── */}
+                {agency.musicalGroups.length > 0 && (
+                    <section className="mb-12">
+                        <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <Music2 size={13} />
+                            Grupos Musicais
+                            <span className="font-normal text-muted/60">({agency.musicalGroups.length})</span>
+                        </h2>
 
-                {/* Artist Roster */}
+                        {activeGroups.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
+                                {activeGroups.map(group => (
+                                    <GroupCard key={group.id} group={group} accent={accent} />
+                                ))}
+                            </div>
+                        )}
+
+                        {disbandedGroups.length > 0 && (
+                            <>
+                                <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <span className="w-4 h-px bg-border inline-block" />
+                                    Dissolvidos
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                                    {disbandedGroups.map(group => (
+                                        <GroupCard key={group.id} group={group} accent={accent} disbanded />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </section>
+                )}
+
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AGENCY!} format="horizontal" className="mb-12" />
+
+                {/* ── Elenco ──────────────────────────────────────────────────── */}
                 <section>
                     <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <Users className="w-4 h-4" />
+                        <Users size={13} />
                         Elenco
+                        <span className="font-normal text-muted/60">({agency.artists.length})</span>
                     </h2>
+
                     {agency.artists.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
                             {agency.artists.map((artist) => (
-                                <Link key={artist.id} href={`/artists/${artist.id}`} className="group cursor-pointer block">
-                                    <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all shadow-sm mb-3">
+                                <Link key={artist.id} href={`/artists/${artist.id}`} className="group block">
+                                    <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[var(--a)]/40 transition-all mb-2.5"
+                                        style={{ '--a': accent } as React.CSSProperties}>
                                         {artist.primaryImageUrl ? (
                                             <Image
                                                 src={artist.primaryImageUrl}
                                                 alt={artist.nameRomanized}
                                                 fill
-                                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 17vw"
                                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
-                                            <div className="flex items-center justify-center h-full text-muted italic font-black uppercase tracking-tighter text-xl">
+                                            <div className="flex items-center justify-center h-full text-muted font-black uppercase tracking-tighter text-xl">
                                                 {artist.nameRomanized[0]}
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        {artist.trendingRank && artist.trendingRank <= 10 && (
+                                            <div
+                                                className="absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+                                                style={{ backgroundColor: accent }}
+                                            >
+                                                {artist.trendingRank}
+                                            </div>
+                                        )}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm text-foreground group-hover:text-[#ff2d78] transition-colors">{artist.nameRomanized}</h4>
-                                        {artist.nameHangul && <p className="text-xs text-muted mt-0.5">{artist.nameHangul}</p>}
+                                        <p className="font-bold text-[13px] text-foreground group-hover:text-accent transition-colors leading-tight">
+                                            {artist.nameRomanized}
+                                        </p>
+                                        {artist.nameHangul && (
+                                            <p className="text-[11px] text-muted mt-0.5">{artist.nameHangul}</p>
+                                        )}
                                         {artist.roles && artist.roles.length > 0 && (
-                                            <p className="text-[10px] text-muted font-bold mt-0.5">{artist.roles.slice(0, 2).map(r => getRoleLabel(r, artist.gender)).join(' · ')}</p>
+                                            <p className="text-[10px] text-muted/70 mt-0.5">
+                                                {artist.roles.slice(0, 2).map(r => getRoleLabel(r, artist.gender)).join(' · ')}
+                                            </p>
                                         )}
                                     </div>
                                 </Link>
@@ -244,11 +370,81 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                         </div>
                     ) : (
                         <div className="bg-surface rounded-2xl border border-border p-12 text-center">
-                            <p className="text-muted font-medium">Nenhum artista registrado nesta agência.</p>
+                            <p className="text-muted text-sm">Nenhum artista registrado nesta agência.</p>
                         </div>
                     )}
                 </section>
+
             </div>
         </div>
+    )
+}
+
+function GroupCard({
+    group,
+    accent,
+    disbanded = false,
+}: {
+    group: {
+        id: string
+        name: string
+        nameHangul: string | null
+        profileImageUrl: string | null
+        debutDate: Date | null
+        disbandDate: Date | null
+        officialColor: string | null
+        _count: { members: number }
+    }
+    accent: string
+    disbanded?: boolean
+}) {
+    const color = group.officialColor ?? accent
+    return (
+        <Link
+            href={`/groups/${group.id}`}
+            className={`group block ${disbanded ? 'opacity-50 hover:opacity-80 transition-opacity' : ''}`}
+        >
+            <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[var(--c)]/40 transition-all mb-2"
+                style={{ '--c': color } as React.CSSProperties}>
+                {group.profileImageUrl ? (
+                    <Image
+                        src={group.profileImageUrl}
+                        alt={group.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, 20vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-xl font-black text-muted group-hover:text-accent transition-colors">
+                            {group.name[0]}
+                        </span>
+                    </div>
+                )}
+                {disbanded && (
+                    <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[8px] font-bold text-white uppercase">
+                        Dissolvido
+                    </div>
+                )}
+                {!disbanded && group._count.members > 0 && (
+                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[9px] font-bold text-white">
+                        <Users size={9} />
+                        {group._count.members}
+                    </div>
+                )}
+            </div>
+            <p className="font-bold text-[12px] text-foreground group-hover:text-accent transition-colors leading-tight">
+                {group.name}
+            </p>
+            {group.nameHangul && (
+                <p className="text-[10px] text-muted mt-0.5">{group.nameHangul}</p>
+            )}
+            {group.debutDate && (
+                <p className="text-[10px] text-muted/60 mt-0.5">
+                    {new Date(group.debutDate).getUTCFullYear()}
+                    {group.disbandDate ? ` – ${new Date(group.disbandDate).getUTCFullYear()}` : ''}
+                </p>
+            )}
+        </Link>
     )
 }

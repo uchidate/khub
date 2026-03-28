@@ -14,6 +14,20 @@ model Agency {
   name          String         @unique
   website       String?
   socials       Json?
+  // Campos editoriais
+  logoUrl       String?
+  description   String?
+  foundedYear   Int?
+  country       String         @default("KR")
+  ceoName       String?
+  isVerified    Boolean        @default(false)
+  accentColor   String?        // hex, ex: "#7c3aed"
+  type          String         @default("INDIE") // MAJOR | INDIE | SUBSIDIARY
+  // Relação parent/subsidiary
+  parentId      String?
+  parent        Agency?        @relation("AgencySubsidiaries", fields: [parentId], references: [id], onDelete: SetNull)
+  subsidiaries  Agency[]       @relation("AgencySubsidiaries")
+
   artists       Artist[]
   musicalGroups MusicalGroup[]
   createdAt     DateTime       @default(now())
@@ -21,6 +35,8 @@ model Agency {
 
   @@index([createdAt])
   @@index([name])
+  @@index([isVerified])
+  @@index([parentId])
 }
 
 model MusicalGroup {
