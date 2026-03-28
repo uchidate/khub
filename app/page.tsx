@@ -237,7 +237,7 @@ export default async function Home() {
     const hasStreaming = Object.keys(showsByPlatform).length > 0
 
     return (
-        <div className="min-h-screen bg-background font-sora overflow-x-hidden" suppressHydrationWarning>
+        <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -279,7 +279,7 @@ export default async function Home() {
                     </div>
                 </section>
             )}
-            <HomeBlogSection siteStats={siteStats} />
+            <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
             <ScrollToTop />
         </div>
     )
