@@ -79,6 +79,21 @@ export async function GET(request: NextRequest) {
                         take: 5,
                         orderBy: { trendingScore: 'desc' },
                     },
+                    subsidiaries: {
+                        select: {
+                            id: true,
+                            name: true,
+                            accentColor: true,
+                            _count: { select: { artists: true, musicalGroups: true } },
+                            musicalGroups: {
+                                select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
+                                orderBy: { trendingScore: 'desc' },
+                                take: 3,
+                                where: { disbandDate: null },
+                            },
+                        },
+                        orderBy: { name: 'asc' },
+                    },
                     _count: { select: { artists: true, musicalGroups: true, subsidiaries: true } },
                 },
             }),
@@ -97,8 +112,15 @@ export async function GET(request: NextRequest) {
             }).slice(skip, skip + limit)
             : agencies
 
+        // Add aggregated totals for parent agencies (e.g. HYBE has 0 direct artists but many via sub-labels)
+        const withTotals = sorted.map(a => ({
+            ...a,
+            _totalArtists: a._count.artists + a.subsidiaries.reduce((s, sub) => s + sub._count.artists, 0),
+            _totalGroups:  a._count.musicalGroups + a.subsidiaries.reduce((s, sub) => s + sub._count.musicalGroups, 0),
+        }))
+
         return NextResponse.json({
-            agencies: sorted,
+            agencies: withTotals,
             pagination: {
                 page,
                 limit,
