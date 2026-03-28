@@ -27,10 +27,10 @@ const NavBar = () => {
     if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
 
     const navLinks = [
+        { label: "Blog", href: "/blog" },
         { label: "Artistas", href: "/artists" },
         { label: "Grupos", href: "/groups" },
         { label: "Produções", href: "/productions" },
-        { label: "Blog", href: "/blog" },
     ]
 
     const navBg = isScrolled
