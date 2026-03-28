@@ -109,7 +109,8 @@ const navSections: NavSection[] = [
           { href: '/admin/productions/takedowns',   label: 'Takedowns',    icon: ShieldAlert },
         ],
       },
-      { href: '/admin/streaming', label: 'Streaming', icon: Tv, isNew: true },
+      { href: '/admin/agencies',  label: 'Agências',  icon: Building2 },
+      { href: '/admin/streaming', label: 'Streaming', icon: Tv },
     ],
   },
 
@@ -148,7 +149,6 @@ const navSections: NavSection[] = [
         subItems: [
           { href: '/admin/albums',      label: 'Álbuns',      icon: Disc3 },
           { href: '/admin/tags',        label: 'Tags',        icon: Tag },
-          { href: '/admin/agencies',    label: 'Agências',    icon: Building2 },
           { href: '/admin/hidden',      label: 'Ocultos',     icon: EyeOff },
           { href: '/admin/instagram',   label: 'Instagram',   icon: Instagram },
           { href: '/admin/activity',    label: 'Atividade',   icon: Activity },
