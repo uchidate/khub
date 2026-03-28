@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireEditorOrAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { notifyUsersAboutBlogPost } from '@/lib/services/blog-notification-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // Vincula artistas e dispara notificações apenas na primeira publicação
   if (publish && !post.publishedAt) {
     await linkArtistsAndNotify(updated.id, post.blocks as { type: string; artistId?: string }[] | null)
+    // Email para assinantes (fire-and-forget)
+    notifyUsersAboutBlogPost(updated.id).catch(err =>
+      console.error('[publish] blog notification error:', err)
+    )
   }
 
   return NextResponse.json(updated)

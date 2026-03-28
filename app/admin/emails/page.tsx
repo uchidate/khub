@@ -9,8 +9,10 @@ import { AdminEmptyState, AdminLinkButton } from '@/components/admin'
 const TYPE_LABELS: Record<string, string> = {
     WELCOME: 'Boas-vindas',
     PASSWORD_RESET: 'Reset de Senha',
-    NEWS_INSTANT: 'Notícia',
-    NEWS_DIGEST: 'Digest',
+    NEWS_INSTANT: 'Notícia (legado)',
+    NEWS_DIGEST: 'Digest (legado)',
+    BLOG_INSTANT: 'Artigo do Blog',
+    BLOG_DIGEST: 'Digest do Blog',
     MANUAL: 'Manual',
     TEST: 'Teste',
 }

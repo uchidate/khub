@@ -6,7 +6,6 @@ import { getRoleLabels } from "@/lib/utils/role-labels"
 import { getStreamingConfig } from "@/lib/config/streaming-platforms"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { ViewTracker } from "@/components/features/ViewTracker"
-import { InstagramFeed } from "@/components/features/InstagramFeed"
 import { DiscographySection } from "@/components/features/DiscographySection"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
@@ -163,13 +162,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     // Step 2: queries secundárias todas em paralelo (incluindo relatedArtists)
     const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
     const productionIds = artist.productions.map(ap => ap.production.id)
-    const [instagramPosts, newsCount, bioPt, productionTranslations, relatedArtists, blogArticles] = await Promise.all([
-        prisma.instagramPost.findMany({
-            where: { artistId: params.id },
-            orderBy: { postedAt: 'desc' },
-            take: 12,
-            select: { id: true, imageUrl: true, caption: true, permalink: true, postedAt: true },
-        }).catch(() => []),
+    const [newsCount, bioPt, productionTranslations, relatedArtists, blogArticles] = await Promise.all([
         prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: params.id } } } }).catch(() => 0),
         getTranslation('artist', params.id, 'bio', 'pt-BR').catch(() => null),
         getTranslations('production', productionIds, ['synopsis']).catch(() => new Map<string, Map<string, string>>()),
@@ -710,13 +703,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             </section>
                         )}
 
-                        {/* Instagram Feed */}
-                        {instagramPosts.length > 0 && (
-                            <InstagramFeed
-                                posts={instagramPosts}
-                                instagramUrl={(artist.socialLinks as Record<string, string> | null)?.instagram ?? null}
-                            />
-                        )}
+                        {/* Instagram Feed — temporariamente oculto */}
                     </div>
                 </div>
             </div>

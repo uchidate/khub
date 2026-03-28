@@ -48,18 +48,16 @@ export async function PUT(request: NextRequest) {
         const body = await request.json();
 
         const {
-            emailOnNewNews,
+            emailOnNewBlog,
             emailDigestEnabled,
             emailDigestFrequency,
             emailDigestTime,
-            onlyFavoriteArtists,
-            minNewsImportance,
         } = body;
 
         // Validações
-        if (typeof emailOnNewNews !== 'boolean') {
+        if (typeof emailOnNewBlog !== 'boolean') {
             return NextResponse.json(
-                { error: 'emailOnNewNews must be boolean' },
+                { error: 'emailOnNewBlog must be boolean' },
                 { status: 400 }
             );
         }
@@ -90,21 +88,17 @@ export async function PUT(request: NextRequest) {
         const settings = await prisma.userNotificationSettings.upsert({
             where: { userId: user.id },
             update: {
-                emailOnNewNews,
+                emailOnNewBlog,
                 emailDigestEnabled,
                 emailDigestFrequency,
                 emailDigestTime,
-                onlyFavoriteArtists: onlyFavoriteArtists ?? true,
-                minNewsImportance: minNewsImportance || 'ALL',
             },
             create: {
                 userId: user.id,
-                emailOnNewNews,
+                emailOnNewBlog,
                 emailDigestEnabled,
                 emailDigestFrequency,
                 emailDigestTime,
-                onlyFavoriteArtists: onlyFavoriteArtists ?? true,
-                minNewsImportance: minNewsImportance || 'ALL',
             },
         });
 

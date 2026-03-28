@@ -193,4 +193,45 @@ ${ctaButton('https://hallyuhub.com.br/news', 'Ver todas as notícias')}
 ${FOOTER_INNER}
 ${SHELL_CLOSE}`,
     },
+
+    {
+        slug: 'blog-instant',
+        name: 'Artigo do Blog',
+        subject: '{{postTitle}} — HallyuHub',
+        variables: ['name', 'postTitle', 'postUrl', 'excerpt', 'category'],
+        htmlContent: `${HEAD}${SHELL_OPEN}
+<p style="margin:0 0 28px;font-size:12px;font-weight:600;letter-spacing:1.5px;color:#7c3aed;text-transform:uppercase;">{{category}}</p>
+${heading('{{postTitle}}')}
+${paragraph('Olá, <strong style="color:#18181b;">{{name}}</strong>,')}
+${paragraph('Publicamos um novo artigo no blog do HallyuHub.')}
+<div style="margin:28px 0;padding:24px;background:#fafafa;border-radius:10px;border:1px solid #f0f0f0;">
+  <p style="margin:0;font-size:15px;color:#52525b;line-height:1.75;">{{excerpt}}</p>
+</div>
+${ctaButton('{{postUrl}}', 'Ler artigo completo')}
+${paragraph('<span style="font-size:13px;color:#a1a1aa;">Você recebe este email porque tem notificações de novos artigos ativadas no HallyuHub.</span>')}
+${FOOTER_INNER}
+${SHELL_CLOSE}`,
+    },
+
+    {
+        slug: 'blog-digest',
+        name: 'Digest do Blog',
+        subject: 'Artigos recentes {{period}} — HallyuHub',
+        variables: ['name', 'period', 'postsListHtml'],
+        htmlContent: `${HEAD}${SHELL_OPEN}
+<p style="margin:0 0 28px;font-size:12px;font-weight:600;letter-spacing:1.5px;color:#7c3aed;text-transform:uppercase;">Digest {{period}}</p>
+${heading('O melhor do HallyuHub')}
+${paragraph('Olá, <strong style="color:#18181b;">{{name}}</strong>,')}
+${paragraph('Confira os artigos mais recentes publicados no blog do HallyuHub.')}
+<div style="margin:28px 0;">
+  {{postsListHtml}}
+</div>
+${ctaButton('https://hallyuhub.com.br/blog', 'Ver todos os artigos')}
+<p style="margin:0;font-size:12px;color:#a1a1aa;line-height:1.7;">
+  Você recebe este resumo porque tem notificações ativadas no HallyuHub.<br>
+  <a href="https://hallyuhub.com.br/settings/notifications" style="color:#7c3aed;text-decoration:none;">Alterar frequência ou cancelar</a>
+</p>
+${FOOTER_INNER}
+${SHELL_CLOSE}`,
+    },
 ]

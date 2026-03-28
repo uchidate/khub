@@ -446,14 +446,10 @@ model UserNotificationSettings {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Tipos de notificação
-  emailOnNewNews       Boolean  @default(true)
+  emailOnNewBlog       Boolean  @default(true)
   emailDigestEnabled   Boolean  @default(true)
   emailDigestFrequency String   @default("DAILY") // 'DAILY', 'WEEKLY', 'NEVER'
   emailDigestTime      String   @default("09:00") // HH:mm format
-
-  // Filtros
-  onlyFavoriteArtists  Boolean  @default(true)
-  minNewsImportance    String   @default("ALL") // 'ALL', 'HIGH', 'CRITICAL'
 
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
