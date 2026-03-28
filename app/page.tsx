@@ -11,7 +11,6 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
-import { HomeTopRated } from "@/components/home/HomeTopRated"
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +36,6 @@ const getHomePublicData = unstable_cache(
             artistCount,
             groupCount,
             productionCount,
-            topRatedProductions,
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
@@ -75,12 +73,6 @@ const getHomePublicData = unstable_cache(
             prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0),
             prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
             prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }).catch(() => 0),
-            prisma.production.findMany({
-                where: { isHidden: false, flaggedAsNonKorean: false, voteAverage: { not: null } },
-                orderBy: { voteAverage: 'desc' },
-                take: 9,
-                select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, backdropUrl: true, voteAverage: true },
-            }).catch(() => []),
         ])
 
         // ── Slots editoriais ──────────────────────────────────────────────────
@@ -172,10 +164,9 @@ const getHomePublicData = unstable_cache(
             categoryCountMap,
             siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
             spotlightProduction,
-            topRatedProductions,
         }
     },
-    ['home-page-public-data-v11'],
+    ['home-page-public-data-v10'],
     { revalidate: 120 },
 )
 
@@ -216,7 +207,7 @@ export default async function Home() {
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightProduction, topRatedProductions } = publicData
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightProduction } = publicData
 
     // latestProductions depende do ageRatingFilter (por sessão) — roda em paralelo com session
     const latestProductions = await prisma.production.findMany({
@@ -276,7 +267,6 @@ export default async function Home() {
                 productions={latestProductions}
                 categoryCounts={categoryCountMap}
             />
-            <HomeTopRated productions={topRatedProductions} />
             {(hasStreaming || trendingGroups.length > 0) && (
                 <section className="border-b border-border bg-background">
                     <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
