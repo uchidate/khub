@@ -22,13 +22,17 @@ import { BottomNav } from "@/components/ui/BottomNav"
 
 const getTickerPosts = unstable_cache(
     async () => {
-        const posts = await prisma.blogPost.findMany({
-            where: { status: 'PUBLISHED' },
-            take: 8,
-            orderBy: { publishedAt: 'desc' },
-            select: { slug: true, title: true, category: { select: { name: true } } },
-        })
-        return posts
+        try {
+            const posts = await prisma.blogPost.findMany({
+                where: { status: 'PUBLISHED' },
+                take: 8,
+                orderBy: { publishedAt: 'desc' },
+                select: { slug: true, title: true, category: { select: { name: true } } },
+            })
+            return posts
+        } catch {
+            return []
+        }
     },
     ['layout-ticker-posts-v1'],
     { revalidate: 120 }

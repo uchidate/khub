@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
 // Cache sitemap 1h — evita 6 queries massivas a cada crawl do Google/Bing
 export const revalidate = 3600
 
