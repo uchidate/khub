@@ -2,14 +2,14 @@
 # BUILD & DEPLOY — HallyuHub (Coolify)
 # ═══════════════════════════════════════════════════════════════════
 # Fluxo:
-#   push staging → validate → trigger deploy staging no Coolify
-#   push main    → validate → trigger deploy production no Coolify
+#   push staging → validate → build image (GHA) → push ghcr.io → trigger Coolify
+#   push main    → validate → build image (GHA) → push ghcr.io → trigger Coolify
 #
-# O Coolify faz o build Docker e o deploy — o GitHub Actions só valida
-# o código e dispara o webhook de deploy via API do Coolify.
+# Build acontece no GitHub Actions (máquina potente, gratuita).
+# Coolify recebe o trigger, faz pull da imagem pronta e sobe o container.
 # ═══════════════════════════════════════════════════════════════════
 
-name: 🚀 Validate and Deploy (Coolify)
+name: 🚀 Validate, Build and Deploy (Coolify)
 
 on:
   push:
@@ -19,6 +19,10 @@ on:
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # ════════════════════════════════════════════════════════════════
@@ -63,7 +67,6 @@ jobs:
           echo "::group::ESLint"
           npx eslint app/ lib/ --max-warnings 10
           echo "::endgroup::"
-
           echo "::group::TypeScript"
           npx tsc --noEmit
           echo "::endgroup::"
@@ -75,15 +78,73 @@ jobs:
         run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar"
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2a: Deploy STAGING via Coolify API
+  # FASE 2: Build da imagem Docker no GitHub Actions
+  # ════════════════════════════════════════════════════════════════
+
+  build-image:
+    name: 🐳 Build Docker Image
+    needs: validate-code
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/staging' }}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and Push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/uchidate/khub:staging,enable=${{ github.ref == 'refs/heads/staging' }}
+            type=registry,ref=ghcr.io/uchidate/khub:latest,enable=${{ github.ref == 'refs/heads/main' }}
+          cache-to: type=gha,mode=max
+
+      - name: 📊 Summary
+        run: |
+          echo "### 🐳 Imagem buildada e enviada para ghcr.io" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ════════════════════════════════════════════════════════════════
+  # FASE 3a: Deploy STAGING — Coolify faz pull da imagem pronta
   # ════════════════════════════════════════════════════════════════
 
   deploy-staging:
     name: 🟡 Deploy to Staging (Coolify)
-    needs: validate-code
+    needs: build-image
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     environment:
       name: staging
@@ -105,23 +166,24 @@ jobs:
             echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
             exit 1
           fi
-          echo "✅ Deploy triggered successfully (HTTP $HTTP_CODE)"
+          echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
 
       - name: 📊 Summary
         run: |
           echo "### 🟡 Deploy Staging Disparado" >> $GITHUB_STEP_SUMMARY
-          echo "O Coolify está buildando e deployando. [Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
+          echo "Coolify está fazendo pull da imagem e subindo o container." >> $GITHUB_STEP_SUMMARY
+          echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2b: Deploy PRODUCTION via Coolify API
+  # FASE 3b: Deploy PRODUCTION — Coolify faz pull da imagem pronta
   # ════════════════════════════════════════════════════════════════
 
   deploy-production:
     name: 🟢 Deploy to Production (Coolify)
-    needs: validate-code
+    needs: build-image
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     environment:
       name: production
@@ -143,9 +205,10 @@ jobs:
             echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
             exit 1
           fi
-          echo "✅ Deploy triggered successfully (HTTP $HTTP_CODE)"
+          echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
 
       - name: 📊 Summary
         run: |
           echo "### 🟢 Deploy Production Disparado" >> $GITHUB_STEP_SUMMARY
-          echo "O Coolify está buildando e deployando. [Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
+          echo "Coolify está fazendo pull da imagem e subindo o container." >> $GITHUB_STEP_SUMMARY
+          echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
