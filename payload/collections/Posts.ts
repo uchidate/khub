@@ -1,9 +1,26 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, CollectionBeforeChangeHook } from 'payload'
 import { ALL_BLOG_BLOCKS } from '../blocks'
+
+// Auto-set publishedAt when status changes to PUBLISHED; clear scheduledAt
+const beforePublish: CollectionBeforeChangeHook = ({ data, originalDoc }) => {
+    const wasPublished = originalDoc?.status === 'PUBLISHED'
+    const isPublishing = data.status === 'PUBLISHED'
+    if (isPublishing && !wasPublished && !data.publishedAt) {
+        data.publishedAt = new Date().toISOString()
+    }
+    // Clear scheduledAt when manually publishing
+    if (isPublishing && data.scheduledAt) {
+        data.scheduledAt = null
+    }
+    return data
+}
 
 export const Posts: CollectionConfig = {
     slug: 'posts',
     labels: { singular: 'Post', plural: 'Posts' },
+    hooks: {
+        beforeChange: [beforePublish],
+    },
     admin: {
         useAsTitle: 'title',
         defaultColumns: ['title', 'status', 'category', 'publishedAt', 'updatedAt'],
