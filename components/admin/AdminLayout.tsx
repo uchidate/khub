@@ -9,7 +9,7 @@ import {
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
   PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
-  TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen,
+  TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen, ServerIcon,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -154,8 +154,9 @@ const navSections: NavSection[] = [
           { href: '/admin/activity',    label: 'Atividade',   icon: Activity },
           { href: '/admin/bot-logs',    label: 'Robôs',       icon: Bot },
           { href: '/admin/server-logs', label: 'Server Logs', icon: AlertTriangle },
-          { href: '/admin/cron',        label: 'Cron Jobs',   icon: RefreshCw },
-          { href: '/admin/database',    label: 'Database',    icon: Database },
+          { href: '/admin/cron',           label: 'Cron Jobs',      icon: RefreshCw },
+          { href: '/admin/infrastructure', label: 'Infraestrutura', icon: ServerIcon },
+          { href: '/admin/database',       label: 'Database',       icon: Database },
         ],
       },
     ],
@@ -190,7 +191,7 @@ const SECTION_LABELS: Record<string, string> = {
   translations: 'Traduções', enrichment: 'Enriquecimento', albums: 'Álbuns', tags: 'Tags',
   comments: 'Comentários', reports: 'Reportes', emails: 'Emails', ai: 'IA', users: 'Usuários',
   hidden: 'Ocultos', agencies: 'Agências', instagram: 'Instagram', activity: 'Atividade',
-  'bot-logs': 'Robôs', 'server-logs': 'Server Logs', cron: 'Cron Jobs', settings: 'Sistema',
+  'bot-logs': 'Robôs', 'server-logs': 'Server Logs', cron: 'Cron Jobs', infrastructure: 'Infraestrutura', settings: 'Sistema',
   kpopping: 'Kpopping', filmography: 'Filmografias', blog: 'Blog', database: 'Database',
   analytics: 'Analytics', trending: 'Trending', 'fix-names': 'Enriq. TMDB', duplicates: 'Enriq. MB',
   'social-links': 'Redes Sociais', moderation: 'Moderação', import: 'Importar',
