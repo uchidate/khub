@@ -30,7 +30,16 @@ interface Agency {
     parent: { id: string; name: string } | null
     musicalGroups: { id: string; name: string; profileImageUrl: string | null; disbandDate: string | null }[]
     artists: { id: string; nameRomanized: string; primaryImageUrl: string | null }[]
+    subsidiaries: {
+        id: string
+        name: string
+        accentColor: string | null
+        _count: { artists: number; musicalGroups: number }
+        musicalGroups: { id: string; name: string; profileImageUrl: string | null; disbandDate: string | null }[]
+    }[]
     _count: { artists: number; musicalGroups: number; subsidiaries: number }
+    _totalArtists: number
+    _totalGroups: number
 }
 
 interface AgenciesResponse {
@@ -58,18 +67,23 @@ function AgenciesSkeleton() {
     )
 }
 
-// ─── Card ────────────────────────────────────────────────────────────────────
+// ─── Agency Card ─────────────────────────────────────────────────────────────
 
 function AgencyCard({ agency }: { agency: Agency }) {
     const accent = agency.accentColor ?? '#6b7280'
     const isMajor = agency.type === 'MAJOR'
+    const isParent = agency._count.artists === 0 && agency._count.subsidiaries > 0
     const activeGroups = agency.musicalGroups.filter(g => !g.disbandDate)
 
-    // Portrait lineup: artists first, then group images as fallback
-    const portraits = [
-        ...agency.artists.filter(a => a.primaryImageUrl).map(a => a.primaryImageUrl!),
-        ...agency.musicalGroups.filter(g => g.profileImageUrl).map(g => g.profileImageUrl!),
-    ].slice(0, isMajor ? 7 : 5)
+    // Portrait strip: direct artists → direct groups → subsidiary groups (for HYBE-type)
+    const portraits = agency.artists.length > 0 || agency.musicalGroups.length > 0
+        ? [
+            ...agency.artists.filter(a => a.primaryImageUrl).map(a => a.primaryImageUrl!),
+            ...agency.musicalGroups.filter(g => g.profileImageUrl).map(g => g.profileImageUrl!),
+          ].slice(0, isMajor ? 7 : 5)
+        : agency.subsidiaries
+            .flatMap(s => s.musicalGroups.filter(g => g.profileImageUrl).map(g => g.profileImageUrl!))
+            .slice(0, isMajor ? 7 : 5)
 
     const headerH = isMajor ? 'h-44' : 'h-36'
 
@@ -134,15 +148,12 @@ function AgencyCard({ agency }: { agency: Agency }) {
                         <CheckCircle2 size={14} className="text-white/90 drop-shadow" />
                     )}
                     {agency.website && (
-                        <a
-                            href={agency.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
+                        <button
+                            onClick={e => { e.preventDefault(); window.open(agency.website!, '_blank', 'noopener,noreferrer') }}
                             className="text-white/60 hover:text-white transition-colors"
                         >
                             <ExternalLink size={12} />
-                        </a>
+                        </button>
                     )}
                 </div>
 
@@ -160,14 +171,14 @@ function AgencyCard({ agency }: { agency: Agency }) {
                             )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                            {agency._count.artists > 0 && (
+                            {agency._totalArtists > 0 && (
                                 <span className="flex items-center gap-1 text-[10px] font-bold text-white/80">
-                                    <Users size={10} /> {agency._count.artists}
+                                    <Users size={10} /> {agency._totalArtists}
                                 </span>
                             )}
-                            {agency._count.musicalGroups > 0 && (
+                            {agency._totalGroups > 0 && (
                                 <span className="flex items-center gap-1 text-[10px] font-bold text-white/80">
-                                    <Music2 size={10} /> {agency._count.musicalGroups}
+                                    <Music2 size={10} /> {agency._totalGroups}
                                 </span>
                             )}
                             {agency._count.subsidiaries > 0 && (
@@ -190,8 +201,23 @@ function AgencyCard({ agency }: { agency: Agency }) {
                     </p>
                 )}
 
-                {/* Active groups */}
-                {activeGroups.length > 0 && (
+                {/* For parent agencies: show sub-label pills */}
+                {isParent && agency.subsidiaries.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {agency.subsidiaries.map(sub => (
+                            <span
+                                key={sub.id}
+                                className="text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+                                style={{ color: sub.accentColor ?? accent, backgroundColor: `${sub.accentColor ?? accent}15`, borderColor: `${sub.accentColor ?? accent}30` }}
+                            >
+                                {sub.name}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                {/* For regular agencies: show active groups */}
+                {!isParent && activeGroups.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                         {activeGroups.slice(0, 4).map(g => (
                             <span
@@ -213,13 +239,6 @@ function AgencyCard({ agency }: { agency: Agency }) {
                             </span>
                         )}
                     </div>
-                )}
-
-                {/* Sub-labels note (for parent agencies like HYBE) */}
-                {agency.artists.length === 0 && agency._count.subsidiaries > 0 && (
-                    <p className="text-[10px] text-muted mt-auto">
-                        {agency._count.subsidiaries} sub-label{agency._count.subsidiaries !== 1 ? 's' : ''} · artistas via subsidiárias
-                    </p>
                 )}
             </div>
         </Link>
