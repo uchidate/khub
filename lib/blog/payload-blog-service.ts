@@ -47,7 +47,6 @@ function getPayloadInstance() {
 }
 
 /** Converte bloco Payload (blockType) → BlogBlock (type) para o renderer */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeBlock(block: Record<string, any>): BlogBlock {
     const { blockType, id: _id, ...rest } = block
     const type = blockType as string
@@ -67,7 +66,6 @@ function normalizeBlock(block: Record<string, any>): BlogBlock {
     return { type, ...rest } as BlogBlock
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizePost(doc: Record<string, any>): NormalizedPost {
     const cat = doc.category
     return {
@@ -99,7 +97,6 @@ function normalizePost(doc: Record<string, any>): NormalizedPost {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeCategory(doc: Record<string, any>): NormalizedCategory & { postCount?: number } {
     return {
         id:        String(doc.id),
@@ -221,7 +218,6 @@ export async function getPublishedSlugs() {
         limit: 1000,
         select: { slug: true },
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (result.docs as any[]).map((d) => d.slug as string)
 }
 
@@ -245,7 +241,6 @@ export async function getPopularTags(limit = 12) {
         select: { tags: true },
     })
     const counts = new Map<string, number>()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const doc of result.docs as any[]) {
         const tags: string[] = (doc.tags ?? []).map((t: { tag: string } | string) =>
             typeof t === 'string' ? t : t.tag
