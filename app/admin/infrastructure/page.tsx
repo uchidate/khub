@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import {
-    RefreshCw, Play, Power, Server, Clock, CheckCircle2,
-    XCircle, AlertCircle, Loader2, Zap, ToggleLeft, ToggleRight,
+    RefreshCw, Server, Clock, Loader2, Zap, ToggleLeft, ToggleRight,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 
