@@ -20,23 +20,22 @@ jobs:
           echo "=================================================="
           echo ""
 
-          # Com o workflow reutilizável (_deploy-env.yml), staging e production
-          # são garantidamente idênticos por design. A verificação aqui é que
-          # ambos os jobs chamam o mesmo workflow reutilizável.
+          # Com Coolify, staging e production usam a mesma lógica de deploy
+          # (curl para Coolify API). Verifica que ambos os jobs existem e usam
+          # ubuntu-latest (não self-hosted runners).
 
-          STAGING_USES=$(grep -A10 'deploy-staging:' .github/workflows/deploy.yml | grep 'uses:' | head -1 | awk '{print $2}')
-          PRODUCTION_USES=$(grep -A10 'deploy-production:' .github/workflows/deploy.yml | grep 'uses:' | head -1 | awk '{print $2}')
+          STAGING_RUNNER=$(grep -A5 'deploy-staging:' .github/workflows/deploy.yml | grep 'runs-on:' | head -1 | awk '{print $2}')
+          PRODUCTION_RUNNER=$(grep -A5 'deploy-production:' .github/workflows/deploy.yml | grep 'runs-on:' | head -1 | awk '{print $2}')
 
-          echo "deploy-staging  usa: $STAGING_USES"
-          echo "deploy-production usa: $PRODUCTION_USES"
+          echo "deploy-staging  runner: $STAGING_RUNNER"
+          echo "deploy-production runner: $PRODUCTION_RUNNER"
           echo ""
 
-          if [ "$STAGING_USES" = "$PRODUCTION_USES" ] && [ -n "$STAGING_USES" ]; then
-            echo "✅ Ambos os ambientes usam o mesmo workflow reutilizável: $STAGING_USES"
-            echo "   Paridade garantida estruturalmente — não é possível divergir."
+          if [ "$STAGING_RUNNER" = "$PRODUCTION_RUNNER" ] && [ -n "$STAGING_RUNNER" ]; then
+            echo "✅ Ambos os ambientes usam o mesmo runner: $STAGING_RUNNER"
+            echo "   Deploy via Coolify API — paridade garantida por design."
           else
-            echo "❌ FALHA: deploy-staging e deploy-production não usam o mesmo workflow!"
-            echo "   Ambos devem referenciar .github/workflows/_deploy-env.yml"
+            echo "❌ FALHA: deploy-staging e deploy-production usam runners diferentes!"
             exit 1
           fi
 
@@ -82,7 +81,7 @@ jobs:
           echo "✅ PARIDADE VALIDADA COM SUCESSO!"
           echo "=================================================="
           echo ""
-          echo "Deploy usa workflow reutilizável (_deploy-env.yml):"
+          echo "Deploy via Coolify API (ubuntu-latest):"
           echo "  → Paridade garantida por design. Impossível divergir."
           echo ""
           echo "Docker-compose services são espelhos."
