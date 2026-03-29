@@ -16,10 +16,10 @@ import type { BlogBlock } from '@/lib/types/blocks'
 export const maxDuration = 300
 
 export async function POST(request: NextRequest) {
-    // Aceita sessão admin OU Bearer CRON_SECRET (para chamadas server-side)
+    // Aceita sessão admin OU Bearer PAYLOAD_SECRET (para chamadas server-side)
     const bearer = request.headers.get('authorization')?.replace('Bearer ', '')
-    const cronSecret = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET
-    const isCronAuth = bearer && cronSecret && bearer === cronSecret
+    const payloadSecret = process.env.PAYLOAD_SECRET
+    const isCronAuth = bearer && payloadSecret && bearer === payloadSecret
 
     if (!isCronAuth) {
         const session = await auth()
