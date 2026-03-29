@@ -21,6 +21,11 @@ const adminRoutes = [
   '/admin',
 ]
 
+// Rotas do Payload CMS — requer role admin
+const cmsRoutes = [
+  '/cms',
+]
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -60,6 +65,14 @@ export async function proxy(request: NextRequest) {
   // Check admin routes
   if (isAdminRoute && !isAdmin) {
     return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // Check CMS routes (Payload) — admin only, redirect to login if not authenticated
+  const isCmsRoute = cmsRoutes.some((route) => pathname.startsWith(route))
+  if (isCmsRoute && !isAdmin) {
+    const loginUrl = new URL('/auth/login', request.url)
+    loginUrl.searchParams.set('callbackUrl', request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   // Detectar e logar robôs de busca (fire-and-forget, não bloqueia o request)

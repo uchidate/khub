@@ -14,7 +14,8 @@ export default buildConfig({
     // ── Admin UI ──────────────────────────────────────────────────────────
     admin: {
         // Payload admin lives at /cms — not /admin (taken by custom admin)
-        // Auth is handled by Next.js middleware (Phase 1) — no Payload-native login
+        // Auth is fully handled by Next.js middleware (NextAuth JWT check).
+        // Payload-native login UI is disabled: users arrive here already authenticated.
         meta: {
             titleSuffix: '— HallyuHub CMS',
             description:  'HallyuHub Content Management',
