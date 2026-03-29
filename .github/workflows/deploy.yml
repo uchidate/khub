@@ -115,6 +115,21 @@ jobs:
             type=raw,value=staging,enable=${{ github.ref == 'refs/heads/staging' }}
             type=sha,prefix={{branch}}-
 
+      - name: Save Rollback Image
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            SOURCE_TAG="ghcr.io/${{ env.IMAGE_NAME }}:latest"
+            ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-latest"
+          else
+            SOURCE_TAG="ghcr.io/${{ env.IMAGE_NAME }}:staging"
+            ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-staging"
+          fi
+          docker pull "$SOURCE_TAG" 2>/dev/null && \
+            docker tag "$SOURCE_TAG" "$ROLLBACK_TAG" && \
+            docker push "$ROLLBACK_TAG" && \
+            echo "✅ Rollback image saved: $ROLLBACK_TAG" || \
+            echo "⚠️ No previous image to save (first deploy)"
+
       - name: Build and Push
         id: build
         uses: docker/build-push-action@v5
@@ -168,6 +183,21 @@ jobs:
           fi
           echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
 
+      - name: 🔍 Smoke Test
+        run: |
+          echo "Aguardando container subir..."
+          for i in $(seq 1 12); do
+            sleep 10
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" https://staging.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ Staging health check OK após $((i * 10))s"
+              exit 0
+            fi
+            echo "⏳ Tentativa $i/12: HTTP $HTTP"
+          done
+          echo "❌ Staging não respondeu após 120s"
+          exit 1
+
       - name: 📊 Summary
         run: |
           echo "### 🟡 Deploy Staging Disparado" >> $GITHUB_STEP_SUMMARY
@@ -206,6 +236,21 @@ jobs:
             exit 1
           fi
           echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
+
+      - name: 🔍 Smoke Test
+        run: |
+          echo "Aguardando container subir..."
+          for i in $(seq 1 12); do
+            sleep 10
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" https://www.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ Production health check OK após $((i * 10))s"
+              exit 0
+            fi
+            echo "⏳ Tentativa $i/12: HTTP $HTTP"
+          done
+          echo "❌ Production não respondeu após 120s"
+          exit 1
 
       - name: 📊 Summary
         run: |
