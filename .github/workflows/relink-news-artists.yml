@@ -56,7 +56,7 @@ jobs:
             echo "📋 Request ID: $REQUEST_ID"
             echo ""
             echo "📝 Para verificar resultados:"
-            echo "   ssh root@31.97.255.107 \"docker logs hallyuhub | grep $REQUEST_ID\""
+            echo "   Acesse http://31.97.255.107:8000 → hallyuhub-production → Logs e filtre por $REQUEST_ID"
             echo ""
             echo "📌 Para processar a próxima página:"
             echo "   Execute este workflow novamente com offset=$NEXT_OFFSET"
