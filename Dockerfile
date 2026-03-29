@@ -95,9 +95,10 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/prisma-kpopping ./prisma-kpopping
 
-# Scripts + Libs de AI
+# Scripts + Libs de AI + Entrypoint
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
+RUN chmod +x ./scripts/docker-entrypoint.sh
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/package.json ./package.json
 
@@ -111,4 +112,4 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=20s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-CMD ["node", "server.js"]
+CMD ["./scripts/docker-entrypoint.sh"]
