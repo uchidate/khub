@@ -13,5 +13,9 @@ echo "[entrypoint] Running Prisma migrations..."
 npx prisma migrate deploy
 echo "[entrypoint] Migrations OK"
 
+echo "[entrypoint] Running Payload migrations..."
+npx payload migrate || echo "[entrypoint] Payload migrate warning (may already be up to date)"
+echo "[entrypoint] Payload OK"
+
 echo "[entrypoint] Starting server..."
 exec node server.js
