@@ -33,6 +33,20 @@ export async function POST(request: NextRequest) {
 
     const payload = await getPayload({ config })
 
+    // Push Drizzle schema if tables don't exist yet (bypassa NODE_ENV check do connect.js)
+    // Dynamic import previne tree-shaking no build de produção
+    if (!dryRun) {
+        try {
+            const { pushDevSchema } = await import('@payloadcms/drizzle')
+            const prevEnv = process.env.NODE_ENV
+            ;(process.env as Record<string, string>).NODE_ENV = 'development'
+            await pushDevSchema(payload.db as Parameters<typeof pushDevSchema>[0])
+            ;(process.env as Record<string, string>).NODE_ENV = prevEnv ?? 'production'
+        } catch (pushErr) {
+            console.warn('[migrate] pushDevSchema skipped:', String(pushErr).slice(0, 200))
+        }
+    }
+
     const results = {
         categories: { created: 0, skipped: 0 },
         posts:      { created: 0, skipped: 0, errors: 0 },
