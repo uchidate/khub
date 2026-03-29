@@ -53,6 +53,7 @@ COPY --from=deps /app/package.json ./package.json
 # Copiar código fonte
 COPY . .
 
+ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_BUILD_STATIC_GENERATION=1
 ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/hallyuhub_build"
