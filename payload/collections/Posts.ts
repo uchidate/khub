@@ -152,6 +152,22 @@ export const Posts: CollectionConfig = {
             admin: { position: 'sidebar' },
         },
 
+        // ── Métricas ──────────────────────────────────────────────────────────
+        {
+            name: 'viewCount',
+            type: 'number',
+            label: 'Views',
+            defaultValue: 0,
+            admin: { position: 'sidebar', readOnly: true },
+        },
+        {
+            name: 'readingTimeMin',
+            type: 'number',
+            label: 'Tempo de leitura (min)',
+            defaultValue: 1,
+            admin: { position: 'sidebar' },
+        },
+
         // ── Author (string ID para compatibilidade com Prisma) ────────────────
         {
             name: 'authorId',
