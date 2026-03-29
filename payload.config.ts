@@ -3,12 +3,11 @@ import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { Categories } from './payload/collections/Categories'
+import { Posts } from './payload/collections/Posts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname  = path.dirname(filename)
-
-// Collections will be added in Phase 2
-const collections: Parameters<typeof buildConfig>[0]['collections'] = []
 
 export default buildConfig({
     // ── Admin UI ──────────────────────────────────────────────────────────
@@ -26,7 +25,7 @@ export default buildConfig({
     },
 
     // ── Collections ───────────────────────────────────────────────────────
-    collections,
+    collections: [Categories, Posts],
 
     // ── Database — PostgreSQL, isolated in 'payload' schema ──────────────
     // Uses a separate PostgreSQL schema so Payload (Drizzle) and the existing
