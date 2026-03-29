@@ -16,6 +16,14 @@ on:
   push:
     branches: [main, staging]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch alvo (apenas staging permitido via dispatch)'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
 
 concurrency:
   group: deploy-${{ github.ref }}
