@@ -18,6 +18,7 @@ import { getTagStyle } from '@/lib/utils/tag-colors'
 import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
 const BASE_URL = SITE_URL
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export async function generateStaticParams() {

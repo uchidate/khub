@@ -8,6 +8,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 import { SITE_URL } from '@/lib/constants/site'

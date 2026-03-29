@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { SITE_URL } from "@/lib/constants/site"
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
