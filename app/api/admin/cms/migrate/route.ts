@@ -16,9 +16,16 @@ import type { BlogBlock } from '@/lib/types/blocks'
 export const maxDuration = 300
 
 export async function POST(request: NextRequest) {
-    const session = await auth()
-    if (!session || session.user.role?.toLowerCase() !== 'admin') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Aceita sessão admin OU Bearer CRON_SECRET (para chamadas server-side)
+    const bearer = request.headers.get('authorization')?.replace('Bearer ', '')
+    const cronSecret = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET
+    const isCronAuth = bearer && cronSecret && bearer === cronSecret
+
+    if (!isCronAuth) {
+        const session = await auth()
+        if (!session || session.user.role?.toLowerCase() !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
     }
 
     const body = await request.json().catch(() => ({}))
