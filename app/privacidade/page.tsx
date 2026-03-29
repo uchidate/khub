@@ -160,7 +160,7 @@ export default function PrivacidadePage() {
                 </div>
                 <div className="p-4 bg-surface border border-border rounded-xl">
                   <p className="font-bold text-foreground mb-1">Publicitários (Google AdSense)</p>
-                  <p>Usados para exibir anúncios relevantes. Somente ativados se você consentir. Você pode gerenciar preferências em <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">adssettings.google.com</a>.</p>
+                  <p>Usados para exibir anúncios relevantes. O Google AdSense utiliza cookies de terceiros (incluindo o cookie <code className="text-xs bg-surface-hover px-1 py-0.5 rounded">_ga</code> e cookies <code className="text-xs bg-surface-hover px-1 py-0.5 rounded">IDE</code>) para personalizar anúncios com base em visitas anteriores a este e outros sites. Somente ativados se você consentir. Você pode gerenciar preferências em <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">adssettings.google.com</a> ou optar por não participar da publicidade personalizada em <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">aboutads.info</a>.</p>
                 </div>
               </div>
             </Section>
