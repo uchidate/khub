@@ -16,6 +16,10 @@ WORKDIR /app
 # OTIMIZAÇÃO: Copiar package files primeiro para cache de layers
 COPY package.json package-lock.json ./
 
+# NODE_ENV=development garante que devDependencies (tailwindcss, etc.) sejam
+# instaladas mesmo que o CI/Coolify passe NODE_ENV=production como build arg
+ENV NODE_ENV=development
+
 # Instalar todas as deps (prisma.config.ts precisa de dotenv)
 RUN npm ci --ignore-scripts --legacy-peer-deps
 
@@ -53,7 +57,10 @@ COPY --from=deps /app/package.json ./package.json
 # Copiar código fonte
 COPY . .
 
-ENV NODE_ENV=development
+# NODE_ENV=production para o next build:
+# - React production mode: key prop warnings não viram erros fatais
+# - node_modules já tem devDeps (copiado do stage deps com NODE_ENV=development)
+ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_BUILD_STATIC_GENERATION=1
 ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/hallyuhub_build"

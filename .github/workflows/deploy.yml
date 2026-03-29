@@ -1,14 +1,15 @@
 # ═══════════════════════════════════════════════════════════════════
-# BUILD & DEPLOY — HallyuHub
+# BUILD & DEPLOY — HallyuHub (Coolify)
 # ═══════════════════════════════════════════════════════════════════
-# Fluxo: validate → build → deploy-staging | deploy-production
+# Fluxo:
+#   push staging → validate → trigger deploy staging no Coolify
+#   push main    → validate → trigger deploy production no Coolify
 #
-# Deploy de staging e production são idênticos por design —
-# ambos chamam o mesmo workflow reutilizável (_deploy-env.yml)
-# com parâmetros diferentes. Paridade garantida estruturalmente.
+# O Coolify faz o build Docker e o deploy — o GitHub Actions só valida
+# o código e dispara o webhook de deploy via API do Coolify.
 # ═══════════════════════════════════════════════════════════════════
 
-name: 🚀 Build and Deploy (Optimized)
+name: 🚀 Validate and Deploy (Coolify)
 
 on:
   push:
@@ -18,10 +19,6 @@ on:
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # ════════════════════════════════════════════════════════════════
@@ -75,169 +72,80 @@ jobs:
         run: npx vitest run
 
       - name: 🔒 Security Audit
-        run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar antes do próximo deploy"
-
-      - name: 📊 Summary
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "push" ]]; then
-            echo "::warning::⚠️ Push direto para main detectado! Processo recomendado: staging → PR → main"
-          fi
-          echo "### ✅ Validação Concluída" >> $GITHUB_STEP_SUMMARY
-          echo "- ✓ ESLint, TypeScript, Vitest passaram" >> $GITHUB_STEP_SUMMARY
-          echo "- ℹ️  Build via Docker (único artefato)" >> $GITHUB_STEP_SUMMARY
+        run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar"
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2: Build da Imagem Docker
-  # ════════════════════════════════════════════════════════════════
-
-  build-image:
-    name: 🐳 Build Docker Image
-    needs: validate-code
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: github.event_name != 'pull_request'
-
-    permissions:
-      contents: read
-      packages: write
-
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/staging' }}
-            type=sha,prefix={{branch}}-
-          labels: |
-            org.opencontainers.image.title=HallyuHub
-            org.opencontainers.image.description=K-pop content platform
-
-      - name: Build and Push
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          # GHA cache (primário) + registry cache (fallback quando GHA expira)
-          cache-from: |
-            type=gha
-            type=registry,ref=ghcr.io/uchidate/khub:staging,enable=${{ github.ref == 'refs/heads/staging' }}
-            type=registry,ref=ghcr.io/uchidate/khub:latest,enable=${{ github.ref == 'refs/heads/main' }}
-          cache-to: type=gha,mode=max
-
-      - name: 📊 Summary
-        run: |
-          echo "### 🐳 Imagem Docker Buildada" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-
-  # ════════════════════════════════════════════════════════════════
-  # FASE 3a: Deploy STAGING
+  # FASE 2a: Deploy STAGING via Coolify API
   # ════════════════════════════════════════════════════════════════
 
   deploy-staging:
-    name: 🟡 Deploy to Staging
-    needs: build-image
+    name: 🟡 Deploy to Staging (Coolify)
+    needs: validate-code
     if: github.ref == 'refs/heads/staging'
-    uses: ./.github/workflows/_deploy-env.yml
-    secrets: inherit
-    with:
-      environment:       staging
-      deploy_label:      STAGING
-      label_emoji:       "🟡"
-      runner:            '["self-hosted", "staging"]'
-      environment_url:   http://31.97.255.107:3001
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
 
-      env_file:          .env.staging
-      compose_file:      docker-compose.staging.yml
-      nginx_conf:        docker/nginx/nginx.staging.conf
-      nginx_site:        hallyuhub-staging
+    environment:
+      name: staging
+      url: http://31.97.255.107:3001
 
-      container_name:    hallyuhub-staging
-      migrate_name:      migrate-staging
-      image_tag:         staging
+    steps:
+      - name: 🚀 Trigger Coolify Deploy
+        run: |
+          UUID=$(echo "${{ vars.COOLIFY_STAGING_UUID }}" | tr -d '[:space:]')
+          echo "Triggering Coolify deploy for staging (uuid: $UUID)..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
+            "http://31.97.255.107:8000/api/v1/deploy?uuid=${UUID}&force=false" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            -H "Content-Type: application/json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+          echo "Response: $BODY"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Deploy triggered successfully (HTTP $HTTP_CODE)"
 
-      health_url:        http://31.97.255.107:3001/api/health
-      base_url:          http://31.97.255.107:3001
-      site_url:          http://31.97.255.107:3001
-
-      db_host:           postgres-staging
-      db_name:           hallyuhub_staging
-      connection_limit:  "8"
-      pg_grep_pattern:   postgres.staging|staging.postgres
-
-      ollama_host:       ollama-staging
-      ollama_model:      gemma:2b
-
-      umami_url:         http://31.97.255.107:3004
-      umami_website_id:  ${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
-
-      post_deploy_command: "echo '✅ Staging deployed'"
-      suppress_slack_on_success: true
+      - name: 📊 Summary
+        run: |
+          echo "### 🟡 Deploy Staging Disparado" >> $GITHUB_STEP_SUMMARY
+          echo "O Coolify está buildando e deployando. [Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 3b: Deploy PRODUCTION
+  # FASE 2b: Deploy PRODUCTION via Coolify API
   # ════════════════════════════════════════════════════════════════
 
   deploy-production:
-    name: 🟢 Deploy to Production
-    needs: build-image
+    name: 🟢 Deploy to Production (Coolify)
+    needs: validate-code
     if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/_deploy-env.yml
-    secrets: inherit
-    with:
-      environment:       production
-      deploy_label:      PRODUCTION
-      label_emoji:       "🟢"
-      runner:            '["self-hosted", "production"]'
-      environment_url:   https://www.hallyuhub.com.br
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
 
-      env_file:          .env.production
-      compose_file:      docker-compose.prod.yml
-      nginx_conf:        docker/nginx/nginx.prod.conf
-      nginx_site:        hallyuhub
+    environment:
+      name: production
+      url: https://www.hallyuhub.com.br
 
-      container_name:    hallyuhub
-      migrate_name:      migrate-production
-      image_tag:         latest
+    steps:
+      - name: 🚀 Trigger Coolify Deploy
+        run: |
+          UUID=$(echo "${{ vars.COOLIFY_PRODUCTION_UUID }}" | tr -d '[:space:]')
+          echo "Triggering Coolify deploy for production (uuid: $UUID)..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
+            "http://31.97.255.107:8000/api/v1/deploy?uuid=${UUID}&force=false" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            -H "Content-Type: application/json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+          echo "Response: $BODY"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Deploy triggered successfully (HTTP $HTTP_CODE)"
 
-      health_url:        https://www.hallyuhub.com.br/api/health
-      base_url:          https://www.hallyuhub.com.br
-      site_url:          https://www.hallyuhub.com.br
-
-      db_host:           postgres-production
-      db_name:           hallyuhub_production
-      connection_limit:  "10"
-      pg_grep_pattern:   postgres.production|production.postgres
-
-      ollama_host:       ollama-production
-      ollama_model:      phi3:mini
-
-      umami_url:         http://31.97.255.107:3005
-      umami_website_id:  ${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
-
-      post_deploy_command: "./scripts/verify-production.sh"
-      suppress_slack_on_success: false
+      - name: 📊 Summary
+        run: |
+          echo "### 🟢 Deploy Production Disparado" >> $GITHUB_STEP_SUMMARY
+          echo "O Coolify está buildando e deployando. [Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY

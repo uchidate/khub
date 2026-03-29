@@ -23,6 +23,7 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
+export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 // Pré-gera os top artistas no build → first-paint rápido, melhor SEO e Core Web Vitals

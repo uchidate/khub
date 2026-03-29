@@ -22,13 +22,17 @@ import { BottomNav } from "@/components/ui/BottomNav"
 
 const getTickerPosts = unstable_cache(
     async () => {
-        const posts = await prisma.blogPost.findMany({
-            where: { status: 'PUBLISHED' },
-            take: 8,
-            orderBy: { publishedAt: 'desc' },
-            select: { slug: true, title: true, category: { select: { name: true } } },
-        })
-        return posts
+        try {
+            const posts = await prisma.blogPost.findMany({
+                where: { status: 'PUBLISHED' },
+                take: 8,
+                orderBy: { publishedAt: 'desc' },
+                select: { slug: true, title: true, category: { select: { name: true } } },
+            })
+            return posts
+        } catch {
+            return []
+        }
     },
     ['layout-ticker-posts-v1'],
     { revalidate: 120 }
@@ -86,11 +90,9 @@ export const metadata: Metadata = {
     },
 }
 
-export const viewport = {
-    themeColor: "#bc13fe",
-    width: 'device-width',
-    initialScale: 1,
-}
+// viewport export removido — Next.js 16 + React 19 renderiza os metas gerados
+// pelo viewport export como array sem key, causando erro de build.
+// Meta viewport adicionada manualmente no <head> com key prop.
 
 export default async function RootLayout({
     children,
@@ -103,16 +105,19 @@ export default async function RootLayout({
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable} ${sora.variable}`} suppressHydrationWarning>
             <head>
                 {/* Anti-FOUC: aplica tema dark/light ANTES do primeiro paint para evitar flash branco */}
-                <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
+                <script key="anti-fouc" dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
+                {/* Meta viewport manual — evita <__next_viewport_boundary__> do Next.js 16 que gera array sem key */}
+                <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
+                <meta key="theme-color" name="theme-color" content="#bc13fe" />
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
-                <link rel="preconnect" href="https://images.unsplash.com" />
-                <link rel="dns-prefetch" href="https://images.unsplash.com" />
-                <link rel="preconnect" href="https://image.tmdb.org" />
-                <link rel="dns-prefetch" href="https://image.tmdb.org" />
-                <link rel="preconnect" href="https://img.youtube.com" />
-                <link rel="dns-prefetch" href="https://img.youtube.com" />
-                <link rel="preconnect" href="https://upload.wikimedia.org" />
-                <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
+                <link key="preconnect-unsplash" rel="preconnect" href="https://images.unsplash.com" />
+                <link key="dns-unsplash" rel="dns-prefetch" href="https://images.unsplash.com" />
+                <link key="preconnect-tmdb" rel="preconnect" href="https://image.tmdb.org" />
+                <link key="dns-tmdb" rel="dns-prefetch" href="https://image.tmdb.org" />
+                <link key="preconnect-youtube" rel="preconnect" href="https://img.youtube.com" />
+                <link key="dns-youtube" rel="dns-prefetch" href="https://img.youtube.com" />
+                <link key="preconnect-wikimedia" rel="preconnect" href="https://upload.wikimedia.org" />
+                <link key="dns-wikimedia" rel="dns-prefetch" href="https://upload.wikimedia.org" />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
