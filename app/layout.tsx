@@ -91,7 +91,6 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-    themeColor: "#bc13fe",
     width: 'device-width',
     initialScale: 1,
 }
@@ -108,15 +107,17 @@ export default async function RootLayout({
             <head>
                 {/* Anti-FOUC: aplica tema dark/light ANTES do primeiro paint para evitar flash branco */}
                 <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
+                {/* theme-color fora do viewport export — Next.js 16 renderiza múltiplos viewport metas como array sem key */}
+                <meta key="theme-color" name="theme-color" content="#bc13fe" />
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
-                <link rel="preconnect" href="https://images.unsplash.com" />
-                <link rel="dns-prefetch" href="https://images.unsplash.com" />
-                <link rel="preconnect" href="https://image.tmdb.org" />
-                <link rel="dns-prefetch" href="https://image.tmdb.org" />
-                <link rel="preconnect" href="https://img.youtube.com" />
-                <link rel="dns-prefetch" href="https://img.youtube.com" />
-                <link rel="preconnect" href="https://upload.wikimedia.org" />
-                <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
+                <link key="preconnect-unsplash" rel="preconnect" href="https://images.unsplash.com" />
+                <link key="dns-unsplash" rel="dns-prefetch" href="https://images.unsplash.com" />
+                <link key="preconnect-tmdb" rel="preconnect" href="https://image.tmdb.org" />
+                <link key="dns-tmdb" rel="dns-prefetch" href="https://image.tmdb.org" />
+                <link key="preconnect-youtube" rel="preconnect" href="https://img.youtube.com" />
+                <link key="dns-youtube" rel="dns-prefetch" href="https://img.youtube.com" />
+                <link key="preconnect-wikimedia" rel="preconnect" href="https://upload.wikimedia.org" />
+                <link key="dns-wikimedia" rel="dns-prefetch" href="https://upload.wikimedia.org" />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
