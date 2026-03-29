@@ -1,0 +1,115 @@
+# ═══════════════════════════════════════════════════════════════════
+# ROLLBACK — Restaura a imagem anterior de staging ou production
+# ═══════════════════════════════════════════════════════════════════
+# Acionado manualmente via GitHub Actions → Run workflow
+# Promove rollback-latest → latest (ou rollback-staging → staging)
+# e dispara redeploy no Coolify.
+# ═══════════════════════════════════════════════════════════════════
+
+name: ⏪ Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente para reverter'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  rollback:
+    name: ⏪ Rollback ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      url: ${{ github.event.inputs.environment == 'production' && 'https://www.hallyuhub.com.br' || 'https://staging.hallyuhub.com.br' }}
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⏪ Promote Rollback Image
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-latest"
+            TARGET_TAG="ghcr.io/${{ env.IMAGE_NAME }}:latest"
+            COOLIFY_UUID="${{ vars.COOLIFY_PRODUCTION_UUID }}"
+          else
+            ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-staging"
+            TARGET_TAG="ghcr.io/${{ env.IMAGE_NAME }}:staging"
+            COOLIFY_UUID="${{ vars.COOLIFY_STAGING_UUID }}"
+          fi
+
+          echo "Pulling rollback image: $ROLLBACK_TAG"
+          docker pull "$ROLLBACK_TAG" || { echo "❌ Rollback image não encontrada — nenhum deploy anterior disponível"; exit 1; }
+
+          echo "Promoting $ROLLBACK_TAG → $TARGET_TAG"
+          docker tag "$ROLLBACK_TAG" "$TARGET_TAG"
+          docker push "$TARGET_TAG"
+          echo "✅ Imagem promovida"
+
+      - name: 🚀 Trigger Coolify Deploy
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            COOLIFY_UUID="${{ vars.COOLIFY_PRODUCTION_UUID }}"
+          else
+            COOLIFY_UUID="${{ vars.COOLIFY_STAGING_UUID }}"
+          fi
+
+          UUID=$(echo "$COOLIFY_UUID" | tr -d '[:space:]')
+          echo "Triggering Coolify rollback deploy (uuid: $UUID)..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
+            "http://31.97.255.107:8000/api/v1/deploy?uuid=${UUID}&force=false" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            -H "Content-Type: application/json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+          echo "Response: $BODY"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "❌ Coolify rollback trigger failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Rollback deploy triggered (HTTP $HTTP_CODE)"
+
+      - name: 🔍 Smoke Test
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            HEALTH_URL="https://www.hallyuhub.com.br/api/health"
+          else
+            HEALTH_URL="https://staging.hallyuhub.com.br/api/health"
+          fi
+          echo "Aguardando container subir..."
+          for i in $(seq 1 12); do
+            sleep 10
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ Health check OK após $((i * 10))s — rollback bem-sucedido"
+              exit 0
+            fi
+            echo "⏳ Tentativa $i/12: HTTP $HTTP"
+          done
+          echo "❌ App não respondeu após 120s — intervenção manual necessária"
+          exit 1
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "### ⏪ Rollback ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "Imagem \`rollback-${{ github.event.inputs.environment == 'production' && 'latest' || 'staging' }}\` promovida e Coolify notificado." >> $GITHUB_STEP_SUMMARY

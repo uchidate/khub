@@ -2,23 +2,36 @@
 # BUILD & DEPLOY — HallyuHub (Coolify)
 # ═══════════════════════════════════════════════════════════════════
 # Fluxo:
-#   push staging → validate → trigger deploy staging no Coolify
-#   push main    → validate → trigger deploy production no Coolify
+#   push staging → validate → build image (GHA) → push ghcr.io:staging → trigger Coolify staging
+#   push main    → validate → promote staging→latest (sem rebuild!) → trigger Coolify production
 #
-# O Coolify faz o build Docker e o deploy — o GitHub Actions só valida
-# o código e dispara o webhook de deploy via API do Coolify.
+# A mesma imagem testada no staging vai para production — sem segundo build.
+# Build acontece no GitHub Actions (máquina potente, gratuita).
+# Coolify recebe o trigger, faz pull da imagem pronta e sobe o container.
 # ═══════════════════════════════════════════════════════════════════
 
-name: 🚀 Validate and Deploy (Coolify)
+name: 🚀 Validate, Build and Deploy (Coolify)
 
 on:
   push:
     branches: [main, staging]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch alvo (apenas staging permitido via dispatch)'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # ════════════════════════════════════════════════════════════════
@@ -63,7 +76,6 @@ jobs:
           echo "::group::ESLint"
           npx eslint app/ lib/ --max-warnings 10
           echo "::endgroup::"
-
           echo "::group::TypeScript"
           npx tsc --noEmit
           echo "::endgroup::"
@@ -75,19 +87,141 @@ jobs:
         run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar"
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2a: Deploy STAGING via Coolify API
+  # FASE 2a: Build da imagem Docker (apenas staging)
+  # ════════════════════════════════════════════════════════════════
+
+  build-image:
+    name: 🐳 Build Docker Image
+    needs: validate-code
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save Rollback Image
+        run: |
+          SOURCE_TAG="ghcr.io/${{ env.IMAGE_NAME }}:staging"
+          ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-staging"
+          docker pull "$SOURCE_TAG" 2>/dev/null && \
+            docker tag "$SOURCE_TAG" "$ROLLBACK_TAG" && \
+            docker push "$ROLLBACK_TAG" && \
+            echo "✅ Rollback image saved: $ROLLBACK_TAG" || \
+            echo "⚠️ No previous image to save (first deploy)"
+
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging
+            type=sha,prefix=staging-
+
+      - name: Build and Push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/uchidate/khub:staging
+          cache-to: type=gha,mode=max
+
+      - name: 📊 Summary
+        run: |
+          echo "### 🐳 Imagem buildada e enviada para ghcr.io" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ════════════════════════════════════════════════════════════════
+  # FASE 2b: Promote staging → production (apenas main, sem rebuild)
+  # ════════════════════════════════════════════════════════════════
+
+  promote-image:
+    name: 🏷️ Promote Image to Production
+    needs: validate-code
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save Rollback Image
+        run: |
+          SOURCE_TAG="ghcr.io/${{ env.IMAGE_NAME }}:latest"
+          ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-latest"
+          docker pull "$SOURCE_TAG" 2>/dev/null && \
+            docker tag "$SOURCE_TAG" "$ROLLBACK_TAG" && \
+            docker push "$ROLLBACK_TAG" && \
+            echo "✅ Rollback image saved: $ROLLBACK_TAG" || \
+            echo "⚠️ No previous image to save (first deploy)"
+
+      - name: Promote staging → latest
+        run: |
+          STAGING_TAG="ghcr.io/${{ env.IMAGE_NAME }}:staging"
+          LATEST_TAG="ghcr.io/${{ env.IMAGE_NAME }}:latest"
+          SHA_TAG="ghcr.io/${{ env.IMAGE_NAME }}:main-${{ github.sha }}"
+
+          echo "Pulling staging image..."
+          docker pull "$STAGING_TAG" || { echo "❌ Imagem staging não encontrada — faça push para staging primeiro"; exit 1; }
+
+          echo "Promoting $STAGING_TAG → $LATEST_TAG"
+          docker tag "$STAGING_TAG" "$LATEST_TAG"
+          docker tag "$STAGING_TAG" "$SHA_TAG"
+          docker push "$LATEST_TAG"
+          docker push "$SHA_TAG"
+          echo "✅ Imagem promovida para production (sem rebuild)"
+
+      - name: 📊 Summary
+        run: |
+          echo "### 🏷️ Imagem promovida staging → production" >> $GITHUB_STEP_SUMMARY
+          echo "A mesma imagem testada em staging foi para production — sem rebuild." >> $GITHUB_STEP_SUMMARY
+          echo "**SHA tag:** \`main-${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ════════════════════════════════════════════════════════════════
+  # FASE 3a: Deploy STAGING — Coolify faz pull da imagem pronta
   # ════════════════════════════════════════════════════════════════
 
   deploy-staging:
     name: 🟡 Deploy to Staging (Coolify)
-    needs: validate-code
+    needs: build-image
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     environment:
       name: staging
-      url: http://31.97.255.107:3001
+      url: https://staging.hallyuhub.com.br
 
     steps:
       - name: 🚀 Trigger Coolify Deploy
@@ -105,23 +239,39 @@ jobs:
             echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
             exit 1
           fi
-          echo "✅ Deploy triggered successfully (HTTP $HTTP_CODE)"
+          echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
+
+      - name: 🔍 Smoke Test
+        run: |
+          echo "Aguardando container subir..."
+          for i in $(seq 1 12); do
+            sleep 10
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" https://staging.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ Staging health check OK após $((i * 10))s"
+              exit 0
+            fi
+            echo "⏳ Tentativa $i/12: HTTP $HTTP"
+          done
+          echo "❌ Staging não respondeu após 120s"
+          exit 1
 
       - name: 📊 Summary
         run: |
-          echo "### 🟡 Deploy Staging Disparado" >> $GITHUB_STEP_SUMMARY
-          echo "O Coolify está buildando e deployando. [Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
+          echo "### 🟡 Deploy Staging Concluído" >> $GITHUB_STEP_SUMMARY
+          echo "Coolify fez pull da imagem e o container está respondendo." >> $GITHUB_STEP_SUMMARY
+          echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2b: Deploy PRODUCTION via Coolify API
+  # FASE 3b: Deploy PRODUCTION — Coolify faz pull da imagem pronta
   # ════════════════════════════════════════════════════════════════
 
   deploy-production:
     name: 🟢 Deploy to Production (Coolify)
-    needs: validate-code
+    needs: promote-image
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     environment:
       name: production
@@ -143,9 +293,25 @@ jobs:
             echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
             exit 1
           fi
-          echo "✅ Deploy triggered successfully (HTTP $HTTP_CODE)"
+          echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
+
+      - name: 🔍 Smoke Test
+        run: |
+          echo "Aguardando container subir..."
+          for i in $(seq 1 12); do
+            sleep 10
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" https://www.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ Production health check OK após $((i * 10))s"
+              exit 0
+            fi
+            echo "⏳ Tentativa $i/12: HTTP $HTTP"
+          done
+          echo "❌ Production não respondeu após 120s"
+          exit 1
 
       - name: 📊 Summary
         run: |
-          echo "### 🟢 Deploy Production Disparado" >> $GITHUB_STEP_SUMMARY
-          echo "O Coolify está buildando e deployando. [Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
+          echo "### 🟢 Deploy Production Concluído" >> $GITHUB_STEP_SUMMARY
+          echo "Coolify fez pull da imagem e o container está respondendo." >> $GITHUB_STEP_SUMMARY
+          echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY

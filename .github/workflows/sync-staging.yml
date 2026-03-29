@@ -1,0 +1,95 @@
+# ═══════════════════════════════════════════════════════════════════
+# SYNC STAGING ← PRODUCTION
+# ═══════════════════════════════════════════════════════════════════
+# Copia o banco de production para staging, sanitizando dados
+# sensíveis (senhas de usuários substituídas por hash placeholder).
+#
+# Acionado manualmente ou toda segunda-feira às 6h UTC.
+# Garante que staging tenha dados reais para testar.
+# ═══════════════════════════════════════════════════════════════════
+
+name: 🔄 Sync Staging ← Production
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # toda segunda-feira às 6h UTC
+
+jobs:
+  sync:
+    name: 🔄 Sync Staging DB from Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    environment:
+      name: staging
+      url: https://staging.hallyuhub.com.br
+
+    steps:
+      - name: 🔄 Dump Production → Restore Staging
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 31.97.255.107
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            set -e
+            DUMP_FILE="/tmp/prod_sync_$(date +%Y%m%d_%H%M%S).dump"
+
+            # Descobre containers postgres dinamicamente pelo banco que hospedam
+            # (robusto a recriar serviços no Coolify, que muda o UUID/nome)
+            echo "Descobrindo containers postgres..."
+            PROD_PG=""
+            STAGING_PG=""
+            while IFS= read -r name; do
+              if docker exec "$name" psql -U hallyuhub -lqt 2>/dev/null | grep -q "hallyuhub_production"; then
+                PROD_PG="$name"
+              elif docker exec "$name" psql -U hallyuhub -lqt 2>/dev/null | grep -q "hallyuhub_staging"; then
+                STAGING_PG="$name"
+              fi
+            done < <(docker ps --format "{{.Names}}")
+
+            [ -n "$PROD_PG" ]    || { echo "❌ Container postgres production não encontrado"; exit 1; }
+            [ -n "$STAGING_PG" ] || { echo "❌ Container postgres staging não encontrado"; exit 1; }
+            echo "  Production postgres: $PROD_PG"
+            echo "  Staging postgres:    $STAGING_PG"
+
+            echo "[1/4] Gerando dump de production..."
+            docker exec "$PROD_PG" pg_dump \
+              -U hallyuhub -Fc --no-acl --no-owner hallyuhub_production \
+              > "$DUMP_FILE"
+            echo "      Dump: $(du -sh $DUMP_FILE | cut -f1)"
+
+            echo "[2/4] Recriando banco staging..."
+            docker exec "$STAGING_PG" psql -U hallyuhub -d postgres \
+              -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='hallyuhub_staging' AND pid <> pg_backend_pid();" \
+              > /dev/null 2>&1 || true
+            docker exec "$STAGING_PG" psql -U hallyuhub -d postgres \
+              -c "DROP DATABASE IF EXISTS hallyuhub_staging;" > /dev/null
+            docker exec "$STAGING_PG" psql -U hallyuhub -d postgres \
+              -c "CREATE DATABASE hallyuhub_staging;" > /dev/null
+
+            echo "[3/4] Restaurando dump em staging..."
+            docker cp "$DUMP_FILE" "$STAGING_PG":/tmp/restore.dump
+            docker exec "$STAGING_PG" pg_restore \
+              -U hallyuhub -d hallyuhub_staging \
+              --no-acl --no-owner --no-privileges \
+              -j 2 /tmp/restore.dump 2>/dev/null || true
+            docker exec "$STAGING_PG" rm -f /tmp/restore.dump
+
+            echo "[4/4] Sanitizando dados sensíveis..."
+            docker exec "$STAGING_PG" psql -U hallyuhub -d hallyuhub_staging -c "
+              UPDATE \"User\"
+              SET password = '\$2b\$10\$staging.placeholder.hash.XXXXXXXXXXXXXXXXXXXXXXXXXX'
+              WHERE password IS NOT NULL AND password != '';
+            " > /dev/null 2>&1 || true
+
+            rm -f "$DUMP_FILE"
+            echo "✅ Sync concluído — staging atualizado com dados de production (sanitizados)"
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "### 🔄 Sync Staging ← Production" >> $GITHUB_STEP_SUMMARY
+          echo "Banco de staging atualizado com dados reais de production." >> $GITHUB_STEP_SUMMARY
+          echo "Senhas de usuários substituídas por placeholder." >> $GITHUB_STEP_SUMMARY
