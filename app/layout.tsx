@@ -90,10 +90,9 @@ export const metadata: Metadata = {
     },
 }
 
-export const viewport = {
-    width: 'device-width',
-    initialScale: 1,
-}
+// viewport export removido — Next.js 16 + React 19 renderiza os metas gerados
+// pelo viewport export como array sem key, causando erro de build.
+// Meta viewport adicionada manualmente no <head> com key prop.
 
 export default async function RootLayout({
     children,
@@ -106,8 +105,9 @@ export default async function RootLayout({
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable} ${sora.variable}`} suppressHydrationWarning>
             <head>
                 {/* Anti-FOUC: aplica tema dark/light ANTES do primeiro paint para evitar flash branco */}
-                <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
-                {/* theme-color fora do viewport export — Next.js 16 renderiza múltiplos viewport metas como array sem key */}
+                <script key="anti-fouc" dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
+                {/* Meta viewport manual — evita <__next_viewport_boundary__> do Next.js 16 que gera array sem key */}
+                <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
                 <meta key="theme-color" name="theme-color" content="#bc13fe" />
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
                 <link key="preconnect-unsplash" rel="preconnect" href="https://images.unsplash.com" />
