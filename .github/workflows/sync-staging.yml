@@ -36,13 +36,23 @@ jobs:
             set -e
             DUMP_FILE="/tmp/prod_sync_$(date +%Y%m%d_%H%M%S).dump"
 
-            # Nomes dos containers (Coolify usa UUID)
-            PROD_CONTAINER=$(docker ps --filter "name=e6h2xvvpu8i2jmzcb3tpzmxo" --format "{{.Names}}" | head -1)
-            STAGING_CONTAINER=$(docker ps --filter "name=lssyh30tgd0qf2ba38p2f7ex" --format "{{.Names}}" | head -1)
+            # Descobre containers postgres dinamicamente pelo banco que hospedam
+            # (robusto a recriar serviços no Coolify, que muda o UUID/nome)
+            echo "Descobrindo containers postgres..."
+            PROD_PG=""
+            STAGING_PG=""
+            while IFS= read -r name; do
+              if docker exec "$name" psql -U hallyuhub -lqt 2>/dev/null | grep -q "hallyuhub_production"; then
+                PROD_PG="$name"
+              elif docker exec "$name" psql -U hallyuhub -lqt 2>/dev/null | grep -q "hallyuhub_staging"; then
+                STAGING_PG="$name"
+              fi
+            done < <(docker ps --format "{{.Names}}")
 
-            # Containers postgres (nomes fixos do docker-compose)
-            PROD_PG=$(docker ps --filter "name=xhja77fygkk15upqztd3la1t" --format "{{.Names}}" | head -1)
-            STAGING_PG=$(docker ps --filter "name=nv2l757xetlkuyg65k7zib9h" --format "{{.Names}}" | head -1)
+            [ -n "$PROD_PG" ]    || { echo "❌ Container postgres production não encontrado"; exit 1; }
+            [ -n "$STAGING_PG" ] || { echo "❌ Container postgres staging não encontrado"; exit 1; }
+            echo "  Production postgres: $PROD_PG"
+            echo "  Staging postgres:    $STAGING_PG"
 
             echo "[1/4] Gerando dump de production..."
             docker exec "$PROD_PG" pg_dump \
