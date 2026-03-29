@@ -92,9 +92,10 @@ jobs:
     steps:
       - name: 🚀 Trigger Coolify Deploy
         run: |
-          echo "Triggering Coolify deploy for staging (uuid: ${{ vars.COOLIFY_STAGING_UUID }})..."
+          UUID=$(echo "${{ vars.COOLIFY_STAGING_UUID }}" | tr -d '[:space:]')
+          echo "Triggering Coolify deploy for staging (uuid: $UUID)..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            "http://31.97.255.107:8000/api/v1/deploy?uuid=${{ vars.COOLIFY_STAGING_UUID }}&force=false" \
+            "http://31.97.255.107:8000/api/v1/deploy?uuid=${UUID}&force=false" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             -H "Content-Type: application/json")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
@@ -129,9 +130,10 @@ jobs:
     steps:
       - name: 🚀 Trigger Coolify Deploy
         run: |
-          echo "Triggering Coolify deploy for production (uuid: ${{ vars.COOLIFY_PRODUCTION_UUID }})..."
+          UUID=$(echo "${{ vars.COOLIFY_PRODUCTION_UUID }}" | tr -d '[:space:]')
+          echo "Triggering Coolify deploy for production (uuid: $UUID)..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            "http://31.97.255.107:8000/api/v1/deploy?uuid=${{ vars.COOLIFY_PRODUCTION_UUID }}&force=false" \
+            "http://31.97.255.107:8000/api/v1/deploy?uuid=${UUID}&force=false" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             -H "Content-Type: application/json")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
