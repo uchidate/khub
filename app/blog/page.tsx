@@ -35,6 +35,9 @@ const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
 const EMPTY_POSTS = { hero: null, posts: [], mostRead: [], categories: [], popularTags: [] }
 
 async function getPosts(category?: string, tag?: string) {
+  // Durante next build não há DB disponível
+  if (process.env.SKIP_BUILD_STATIC_GENERATION) return EMPTY_POSTS
+
   // Usa Payload se já migrado, Prisma como fallback
   const usePayload = await payloadHasPosts().catch(() => false)
 

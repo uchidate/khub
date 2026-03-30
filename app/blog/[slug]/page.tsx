@@ -41,6 +41,7 @@ export async function generateStaticParams() {
 }
 
 async function getPost(slug: string) {
+  if (process.env.SKIP_BUILD_STATIC_GENERATION) return null
   const usePayload = await payloadHasPosts().catch(() => false)
   if (usePayload) return getPostBySlug(slug)
   return prisma.blogPost.findFirst({
