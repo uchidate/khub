@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createRequire } from 'module'
+import { join } from 'path'
 import { auth } from '@/lib/auth'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
     if (!dryRun) {
         try {
             const db = payload.db as any
-            // createRequire faz require() síncrono — não gera chunk no Turbopack
-            // (ao contrário de await import(), que cria [externals]_drizzle-kit_api_*.js
-            //  que não é copiado para o standalone output)
-            const localRequire = createRequire(import.meta.url)
-            const { pushSchema } = localRequire('drizzle-kit/api') as { pushSchema: (...args: unknown[]) => Promise<{ apply: () => Promise<void>, warnings: string[] }> }
+            // webpackIgnore: true → webpack ignora este import; Node.js carrega
+            // nativamente pelo caminho absoluto, sem passar pelo __webpack_require__
+            // que remapearia 'drizzle-kit' para o hash interno do Payload.
+            const apiPath = join(process.cwd(), 'node_modules', 'drizzle-kit', 'api.mjs')
+            const { pushSchema } = await import(/* webpackIgnore: true */ apiPath) as { pushSchema: (...args: unknown[]) => Promise<{ apply: () => Promise<void>, warnings: string[] }> }
             const { apply, warnings } = await pushSchema(
                 db.schema,
                 db.drizzle,
