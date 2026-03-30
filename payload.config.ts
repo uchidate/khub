@@ -5,6 +5,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { Categories } from './payload/collections/Categories'
 import { Posts } from './payload/collections/Posts'
+import { Users } from './payload/collections/Users'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname  = path.dirname(filename)
@@ -25,7 +26,7 @@ export default buildConfig({
     },
 
     // ── Collections ───────────────────────────────────────────────────────
-    collections: [Categories, Posts],
+    collections: [Users, Categories, Posts],
 
     // ── Database — PostgreSQL, isolated in 'payload' schema ──────────────
     // Uses a separate PostgreSQL schema so Payload (Drizzle) and the existing
