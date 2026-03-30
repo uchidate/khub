@@ -157,7 +157,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     groupIds.length > 0
       ? prisma.musicalGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true, name: true, profileImageUrl: true, fanClubName: true } })
       : [],
-    fetchRelatedPosts(post.id, post.tags),
+    fetchRelatedPosts(post.id, post.tags).catch(() => []),
   ])
   const resolvedEntities: ResolvedEntities = {
     artists: Object.fromEntries(artists.map(a => [a.id, a])),
