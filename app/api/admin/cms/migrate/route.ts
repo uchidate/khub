@@ -175,6 +175,10 @@ function buildPayloadBlocks(blocks: BlogBlock[] | null | undefined): object[] {
         if (blockType === 'blog_heading' && typeof rest.level === 'number') {
             rest.level = String(rest.level)
         }
+        if (blockType === 'blog_callout') {
+            const VALID_VARIANTS = ['fact', 'stat', 'info', 'warning']
+            if (!VALID_VARIANTS.includes(rest.variant as string)) rest.variant = 'info'
+        }
 
         result.push({ blockType, ...rest })
     }
