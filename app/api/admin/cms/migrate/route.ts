@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createRequire } from 'module'
 import { auth } from '@/lib/auth'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -39,7 +40,11 @@ export async function POST(request: NextRequest) {
     if (!dryRun) {
         try {
             const db = payload.db as any
-            const { pushSchema } = await import('drizzle-kit/api')
+            // createRequire faz require() síncrono — não gera chunk no Turbopack
+            // (ao contrário de await import(), que cria [externals]_drizzle-kit_api_*.js
+            //  que não é copiado para o standalone output)
+            const localRequire = createRequire(import.meta.url)
+            const { pushSchema } = localRequire('drizzle-kit/api') as { pushSchema: Function } // eslint-disable-line @typescript-eslint/ban-types
             const { apply, warnings } = await pushSchema(
                 db.schema,
                 db.drizzle,
