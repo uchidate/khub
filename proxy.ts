@@ -111,7 +111,11 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  // Passar pathname como header para que app/layout.tsx possa detectar rotas CMS
+  // e renderizar layout mínimo (evitar NavBar/footer dentro do Payload admin)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-pathname', pathname)
+  return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
 // Configure which routes to run middleware on
