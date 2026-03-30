@@ -3,6 +3,10 @@ import { withPayload } from '@payloadcms/next/withPayload'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
+    // drizzle-kit é usado via dynamic import no endpoint de migração Payload.
+    // serverExternalPackages evita que o Turbopack crie um chunk separado que
+    // não é copiado para o standalone — carrega direto do node_modules em runtime.
+    serverExternalPackages: ['drizzle-kit'],
     async rewrites() {
         // Proxy Umami via Next.js para evitar mixed content (HTTPS → HTTP interno)
         // Container gerenciado pelo Coolify: umami-xkcma2bp6ww04w0ydx1m0qwf
