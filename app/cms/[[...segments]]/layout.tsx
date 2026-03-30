@@ -12,12 +12,8 @@ type Args = {
 
 export default function Layout({ children }: Args) {
     return (
-        <html lang="pt-BR" suppressHydrationWarning>
-            <body>
-                <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
-                    {children}
-                </RootLayout>
-            </body>
-        </html>
+        <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
+            {children}
+        </RootLayout>
     )
 }
