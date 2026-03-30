@@ -30,8 +30,7 @@ export async function PATCH(
             return NextResponse.json({ error: 'blocks must be an array' }, { status: 400 })
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const news = await (prisma.news as any).update({
+        const news = await (prisma.news as any).update({ // eslint-disable-line
             where: { id },
             data: { blocks: body.blocks },
             select: { id: true, blocks: true },

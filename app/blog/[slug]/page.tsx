@@ -24,16 +24,20 @@ export const revalidate = 3600
 
 export async function generateStaticParams() {
   if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
-  const usePayload = await payloadHasPosts().catch(() => false)
-  if (usePayload) {
-    const slugs = await getPublishedSlugs()
-    return slugs.map(slug => ({ slug }))
+  try {
+    const usePayload = await payloadHasPosts().catch(() => false)
+    if (usePayload) {
+      const slugs = await getPublishedSlugs().catch(() => [] as string[])
+      return slugs.map(slug => ({ slug }))
+    }
+    const posts = await prisma.blogPost.findMany({
+      where: { status: 'PUBLISHED' },
+      select: { slug: true },
+    })
+    return posts.map(p => ({ slug: p.slug }))
+  } catch {
+    return []
   }
-  const posts = await prisma.blogPost.findMany({
-    where: { status: 'PUBLISHED' },
-    select: { slug: true },
-  })
-  return posts.map(p => ({ slug: p.slug }))
 }
 
 async function getPost(slug: string) {

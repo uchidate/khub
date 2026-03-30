@@ -8,7 +8,6 @@ import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { Clock, Eye, TrendingUp, Tag } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
-import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
 
@@ -33,61 +32,67 @@ export const metadata: Metadata = {
 
 const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
 
+const EMPTY_POSTS = { hero: null, posts: [], mostRead: [], categories: [], popularTags: [] }
+
 async function getPosts(category?: string, tag?: string) {
   // Usa Payload se já migrado, Prisma como fallback
   const usePayload = await payloadHasPosts().catch(() => false)
 
   if (usePayload) {
-    const [hero, posts, mostRead, categories, popularTags] = await Promise.all([
-      getHeroPost(),
-      getPublishedPosts({ category, tag, limit: 18 }),
-      !category && !tag ? getMostReadPosts(5) : Promise.resolve([]),
-      getCategories(),
-      getPopularTags(12),
-    ])
-    return { hero, posts, mostRead, categories: categories.map(c => ({
-      ...c, _count: { posts: 0 },
-    })), popularTags }
+    try {
+      const [hero, posts, mostRead, categories, popularTags] = await Promise.all([
+        getHeroPost(),
+        getPublishedPosts({ category, tag, limit: 18 }),
+        !category && !tag ? getMostReadPosts(5) : Promise.resolve([]),
+        getCategories(),
+        getPopularTags(12),
+      ])
+      return { hero, posts, mostRead, categories: categories.map(c => ({
+        ...c, _count: { posts: 0 },
+      })), popularTags }
+    } catch { return EMPTY_POSTS }
   }
 
   // Fallback: Prisma (pré-migração)
-  const where = {
-    ...PUBLIC_WHERE,
-    ...(category ? { category: { slug: category } } : {}),
-    ...(tag ? { tags: { has: tag } } : {}),
-  }
-  const [hero, posts, mostRead, categories, popularTags] = await Promise.all([
-    prisma.blogPost.findFirst({
-      where: PUBLIC_WHERE,
-      orderBy: { publishedAt: 'desc' },
-      include: { category: true },
-    }),
-    prisma.blogPost.findMany({
-      where,
-      orderBy: { publishedAt: 'desc' },
-      take: 18,
-      include: { category: true },
-    }),
-    !category && !tag ? prisma.blogPost.findMany({
-      where: PUBLIC_WHERE,
-      orderBy: { viewCount: 'desc' },
-      take: 5,
-      select: { slug: true, title: true, readingTimeMin: true, viewCount: true, coverImageUrl: true, publishedAt: true, category: true },
-    }) : Promise.resolve([]),
-    prisma.blogCategory.findMany({
-      orderBy: { name: 'asc' },
-      include: { _count: { select: { posts: { where: PUBLIC_WHERE } } } },
-    }),
-    prisma.$queryRaw<{ tag: string; count: bigint }[]>`
-      SELECT unnest(tags) as tag, count(*) as count
-      FROM "BlogPost"
-      WHERE status = 'PUBLISHED' AND "isPrivate" = false
-      GROUP BY tag
-      ORDER BY count DESC
-      LIMIT 12
-    `,
-  ])
-  return { hero, posts, mostRead, categories, popularTags }
+  try {
+    const where = {
+      ...PUBLIC_WHERE,
+      ...(category ? { category: { slug: category } } : {}),
+      ...(tag ? { tags: { has: tag } } : {}),
+    }
+    const [hero, posts, mostRead, categories, popularTags] = await Promise.all([
+      prisma.blogPost.findFirst({
+        where: PUBLIC_WHERE,
+        orderBy: { publishedAt: 'desc' },
+        include: { category: true },
+      }),
+      prisma.blogPost.findMany({
+        where,
+        orderBy: { publishedAt: 'desc' },
+        take: 18,
+        include: { category: true },
+      }),
+      !category && !tag ? prisma.blogPost.findMany({
+        where: PUBLIC_WHERE,
+        orderBy: { viewCount: 'desc' },
+        take: 5,
+        select: { slug: true, title: true, readingTimeMin: true, viewCount: true, coverImageUrl: true, publishedAt: true, category: true },
+      }) : Promise.resolve([]),
+      prisma.blogCategory.findMany({
+        orderBy: { name: 'asc' },
+        include: { _count: { select: { posts: { where: PUBLIC_WHERE } } } },
+      }),
+      prisma.$queryRaw<{ tag: string; count: bigint }[]>`
+        SELECT unnest(tags) as tag, count(*) as count
+        FROM "BlogPost"
+        WHERE status = 'PUBLISHED' AND "isPrivate" = false
+        GROUP BY tag
+        ORDER BY count DESC
+        LIMIT 12
+      `,
+    ])
+    return { hero, posts, mostRead, categories, popularTags }
+  } catch { return EMPTY_POSTS }
 }
 
 function formatDate(date: Date | string) {
@@ -163,7 +168,6 @@ function PostCard({ post }: { post: PostWithCategory }) {
 }
 
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string }> }) {
-  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return null
 
   const { category: activeCategory, tag: activeTag } = await searchParams
   const { hero, posts, mostRead, categories, popularTags } = await getPosts(activeCategory, activeTag)

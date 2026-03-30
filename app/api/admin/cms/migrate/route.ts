@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
     // então chamamos drizzle-kit/api diretamente com o schema já inicializado.
     if (!dryRun) {
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const db = payload.db as any
             const { pushSchema } = await import('drizzle-kit/api')
             const { apply, warnings } = await pushSchema(
