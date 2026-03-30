@@ -22,6 +22,7 @@ import { BottomNav } from "@/components/ui/BottomNav"
 
 const getTickerPosts = unstable_cache(
     async () => {
+        if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
         try {
             const posts = await prisma.blogPost.findMany({
                 where: { status: 'PUBLISHED' },
