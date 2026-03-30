@@ -16,6 +16,7 @@ import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
+import { getPostBySlug, getRelatedPosts, getPublishedSlugs, payloadHasPosts } from '@/lib/blog/payload-blog-service'
 const BASE_URL = SITE_URL
 
 export const dynamic = 'force-dynamic'
@@ -23,14 +24,26 @@ export const revalidate = 3600
 
 export async function generateStaticParams() {
   if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
-  const posts = await prisma.blogPost.findMany({
-    where: { status: 'PUBLISHED' },
-    select: { slug: true },
-  })
-  return posts.map(p => ({ slug: p.slug }))
+  try {
+    const usePayload = await payloadHasPosts().catch(() => false)
+    if (usePayload) {
+      const slugs = await getPublishedSlugs().catch(() => [] as string[])
+      return slugs.map(slug => ({ slug }))
+    }
+    const posts = await prisma.blogPost.findMany({
+      where: { status: 'PUBLISHED' },
+      select: { slug: true },
+    })
+    return posts.map(p => ({ slug: p.slug }))
+  } catch {
+    return []
+  }
 }
 
 async function getPost(slug: string) {
+  if (process.env.SKIP_BUILD_STATIC_GENERATION) return null
+  const usePayload = await payloadHasPosts().catch(() => false)
+  if (usePayload) return getPostBySlug(slug)
   return prisma.blogPost.findFirst({
     where: { slug, status: 'PUBLISHED', isPrivate: false },
     include: {
@@ -71,8 +84,10 @@ function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-async function getRelatedPosts(postId: string, tags: string[], limit = 3) {
+async function fetchRelatedPosts(postId: string, tags: string[], limit = 3) {
   if (tags.length === 0) return []
+  const usePayload = await payloadHasPosts().catch(() => false)
+  if (usePayload) return getRelatedPosts({ excludeId: postId, tags, limit })
   return prisma.blogPost.findMany({
     where: {
       id: { not: postId },
@@ -81,20 +96,15 @@ async function getRelatedPosts(postId: string, tags: string[], limit = 3) {
       tags: { hasSome: tags },
     },
     select: {
-      slug: true,
-      title: true,
-      excerpt: true,
-      coverImageUrl: true,
-      readingTimeMin: true,
-      publishedAt: true,
-      tags: true,
+      slug: true, title: true, excerpt: true,
+      coverImageUrl: true, readingTimeMin: true, publishedAt: true, tags: true,
     },
     orderBy: { publishedAt: 'desc' },
     take: limit,
   })
 }
 
-type RelatedPost = Awaited<ReturnType<typeof getRelatedPosts>>[number]
+type RelatedPost = Awaited<ReturnType<typeof fetchRelatedPosts>>[number]
 
 function RelatedPostCard({ post }: { post: RelatedPost }) {
   return (
@@ -147,7 +157,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     groupIds.length > 0
       ? prisma.musicalGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true, name: true, profileImageUrl: true, fanClubName: true } })
       : [],
-    getRelatedPosts(post.id, post.tags),
+    fetchRelatedPosts(post.id, post.tags),
   ])
   const resolvedEntities: ResolvedEntities = {
     artists: Object.fromEntries(artists.map(a => [a.id, a])),
@@ -241,7 +251,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <article>
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
             ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} />
-            : <MarkdownRenderer content={post.contentMd} />
+            : <MarkdownRenderer content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
           }
         </article>
 
@@ -266,14 +276,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* Author bio */}
-        {post.author?.bio && (
+        {(post as unknown as { author?: { bio?: string } }).author?.bio && (
           <div className="mt-10 p-5 rounded-2xl border border-border bg-surface flex gap-4">
             <div className="w-12 h-12 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
               {BLOG_AUTHOR_AVATAR_INITIAL}
             </div>
             <div>
               <p className="font-semibold text-foreground text-sm">{BLOG_AUTHOR_DISPLAY_NAME}</p>
-              <p className="text-muted text-sm mt-1">{post.author.bio}</p>
+              <p className="text-muted text-sm mt-1">{(post as unknown as { author?: { bio?: string } }).author?.bio}</p>
             </div>
           </div>
         )}

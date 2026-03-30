@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 

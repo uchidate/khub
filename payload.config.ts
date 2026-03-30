@@ -35,6 +35,9 @@ export default buildConfig({
             connectionString: process.env.DATABASE_URL,
         },
         schemaName: 'payload',
+        // push: true makes Drizzle push schema on startup without needing migration files.
+        // Controlled via PAYLOAD_PUSH_SCHEMA=true (set in Coolify env vars).
+        push: process.env.PAYLOAD_PUSH_SCHEMA === 'true',
     }),
 
     // ── Default editor ────────────────────────────────────────────────────
