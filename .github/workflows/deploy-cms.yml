@@ -30,10 +30,10 @@ jobs:
           context: ./cms-app
           file: ./cms-app/Dockerfile
           push: true
-          tags: ghcr.io/uchidate/khub-cms:latest
+          tags: ghcr.io/uchidate/khub-cms:staging
 
       - name: Deploy CMS to Coolify
         run: |
           curl --silent --show-error --fail \
-            -X GET "${{ secrets.COOLIFY_URL }}/api/v1/deploy?uuid=${{ secrets.COOLIFY_CMS_SERVICE_UUID }}&force=false" \
+            -X GET "${{ secrets.COOLIFY_URL }}/api/v1/deploy?uuid=${{ secrets.COOLIFY_CMS_STAGING_UUID }}&force=false" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
