@@ -11,15 +11,12 @@ const filename = fileURLToPath(import.meta.url)
 const dirname  = path.dirname(filename)
 
 export default buildConfig({
-    // ── Admin UI ──────────────────────────────────────────────────────────
+    // ── Admin UI — desabilitado ───────────────────────────────────────────
+    // O admin UI do Payload tem incompatibilidade com Next.js standalone +
+    // Turbopack (Server Action IDs divergem). Usando apenas a Local API.
+    // Gestão de conteúdo via /admin/blog (interface customizada).
     admin: {
-        // Payload admin lives at /cms — not /admin (taken by custom admin)
-        // Auth is fully handled by Next.js middleware (NextAuth JWT check).
-        // Payload-native login UI is disabled: users arrive here already authenticated.
-        meta: {
-            titleSuffix: '— HallyuHub CMS',
-            description:  'HallyuHub Content Management',
-        },
+        disable: true,
         importMap: {
             baseDir: path.resolve(dirname),
         },
