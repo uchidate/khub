@@ -68,10 +68,14 @@ export async function proxy(request: NextRequest) {
   }
 
   // Check CMS routes (Payload) — admin only, redirect to login if not authenticated
+  // Rotas públicas do Payload (login, create-first-user) ficam acessíveis sem auth
+  const cmsPublicPaths = ['/cms/login', '/cms/create-first-user', '/cms/forgot', '/cms/reset', '/cms/logout']
   const isCmsRoute = cmsRoutes.some((route) => pathname.startsWith(route))
-  if (isCmsRoute && !isAdmin) {
+  const isCmsPublicRoute = cmsPublicPaths.some((p) => pathname.startsWith(p))
+  if (isCmsRoute && !isCmsPublicRoute && !isAdmin) {
     const loginUrl = new URL('/auth/login', request.url)
-    loginUrl.searchParams.set('callbackUrl', request.url)
+    // Usar pathname relativo para evitar URL interna do Docker (0.0.0.0:3000) no callbackUrl
+    loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
