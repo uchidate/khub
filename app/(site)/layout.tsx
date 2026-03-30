@@ -1,9 +1,8 @@
-import { headers } from "next/headers"
 import type { Metadata } from "next"
 import { Outfit, Inter, Sora } from "next/font/google"
 import Script from "next/script"
 import { UmamiScript } from "@/components/features/UmamiScript"
-import "../styles/globals.css"
+import "../../styles/globals.css"
 import { unstable_cache } from "next/cache"
 import prisma from "@/lib/prisma"
 import { PublicAnalytics } from "@/components/features/PublicAnalytics"
@@ -101,17 +100,6 @@ export default async function RootLayout({
 }: {
     children: React.ReactNode
 }) {
-    const pathname = (await headers()).get('x-pathname') ?? ''
-
-    // Rotas do Payload CMS têm layout próprio — evitar NavBar/footer/providers
-    if (pathname.startsWith('/cms')) {
-        return (
-            <html lang="pt-BR" suppressHydrationWarning>
-                <body>{children}</body>
-            </html>
-        )
-    }
-
     const tickerPosts = await getTickerPosts().catch(() => [])
 
     return (
