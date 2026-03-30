@@ -33,17 +33,24 @@ export async function POST(request: NextRequest) {
 
     const payload = await getPayload({ config })
 
-    // Push Drizzle schema if tables don't exist yet (bypassa NODE_ENV check do connect.js)
-    // Dynamic import previne tree-shaking no build de produção
+    // Push Drizzle schema se tabelas não existem ainda.
+    // requireDrizzleKit() no connect.js usa um hash mangled que não existe em prod,
+    // então chamamos drizzle-kit/api diretamente com o schema já inicializado.
     if (!dryRun) {
         try {
-            const { pushDevSchema } = await import('@payloadcms/drizzle')
-            const prevEnv = process.env.NODE_ENV
-            ;(process.env as Record<string, string>).NODE_ENV = 'development'
-            await pushDevSchema(payload.db as Parameters<typeof pushDevSchema>[0])
-            ;(process.env as Record<string, string>).NODE_ENV = prevEnv ?? 'production'
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const db = payload.db as any
+            const { pushSchema } = await import('drizzle-kit/api')
+            const { apply, warnings } = await pushSchema(
+                db.schema,
+                db.drizzle,
+                db.schemaName ? [db.schemaName] : undefined,
+            )
+            if (warnings.length) console.warn('[migrate] drizzle push warnings:', warnings)
+            await apply()
+            console.log('[migrate] Drizzle schema pushed OK')
         } catch (pushErr) {
-            console.warn('[migrate] pushDevSchema skipped:', String(pushErr).slice(0, 200))
+            console.warn('[migrate] pushSchema skipped:', String(pushErr).slice(0, 300))
         }
     }
 
