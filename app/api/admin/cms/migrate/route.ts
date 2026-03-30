@@ -151,11 +151,23 @@ export async function POST(request: NextRequest) {
     })
 }
 
+// Tipos de bloco definidos no Payload (payload/blocks/index.ts)
+const VALID_BLOCK_TYPES = new Set([
+    'blog_heading', 'blog_paragraph', 'blog_quote', 'blog_image', 'blog_gallery',
+    'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok',
+    'blog_artist_card', 'blog_production_card', 'blog_group_card',
+    'blog_stats_row', 'blog_rating', 'blog_divider', 'blog_callout',
+])
+
 function buildPayloadBlocks(blocks: BlogBlock[] | null | undefined): object[] {
     if (!blocks || !Array.isArray(blocks)) return []
-    return blocks.map((block) => {
-        const { type, ...rest } = block as { type: string } & Record<string, unknown>
+    const result: object[] = []
+    for (const block of blocks) {
+        const { type, id: _id, ...rest } = block as { type: string; id?: unknown } & Record<string, unknown>
         const blockType = type
+
+        // Pular tipos não registrados no Payload
+        if (!VALID_BLOCK_TYPES.has(blockType)) continue
 
         if (blockType === 'blog_gallery' && Array.isArray(rest.urls)) {
             rest.urls = (rest.urls as string[]).map((u) => ({ url: u }))
@@ -164,6 +176,7 @@ function buildPayloadBlocks(blocks: BlogBlock[] | null | undefined): object[] {
             rest.level = String(rest.level)
         }
 
-        return { blockType, ...rest }
-    })
+        result.push({ blockType, ...rest })
+    }
+    return result
 }
