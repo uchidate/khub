@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
             // (ao contrário de await import(), que cria [externals]_drizzle-kit_api_*.js
             //  que não é copiado para o standalone output)
             const localRequire = createRequire(import.meta.url)
-            const { pushSchema } = localRequire('drizzle-kit/api') as { pushSchema: Function } // eslint-disable-line @typescript-eslint/ban-types
+            const { pushSchema } = localRequire('drizzle-kit/api') as { pushSchema: (...args: unknown[]) => Promise<{ apply: () => Promise<void>, warnings: string[] }> }
             const { apply, warnings } = await pushSchema(
                 db.schema,
                 db.drizzle,
