@@ -122,7 +122,7 @@ export async function getPublishedPosts(opts: {
     const where: Parameters<typeof payload.find>[0]['where'] = {
         ...PUBLIC_WHERE,
         ...(opts.category ? { 'category.slug': { equals: opts.category } } : {}),
-        ...(opts.tag ? { tags: { contains: opts.tag } } : {}),
+        ...(opts.tag ? { 'tags.tag': { equals: opts.tag } } : {}),
     }
     const result = await payload.find({
         collection: 'posts',
@@ -196,8 +196,8 @@ export async function getRelatedPosts(opts: {
         collection: 'posts',
         where: {
             ...PUBLIC_WHERE,
-            id:   { not_equals: opts.excludeId },
-            tags: { in: opts.tags },
+            id:          { not_equals: opts.excludeId },
+            'tags.tag':  { in: opts.tags },
         },
         sort:  '-publishedAt',
         limit: opts.limit ?? 3,
