@@ -1,229 +1,101 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
-import { z } from 'zod'
+import { AgencyRepository } from '@/lib/repositories/AgencyRepository'
+import { toHttpError } from '@/lib/repositories/base'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 
 const log = createLogger('ADMIN-AGENCIES')
 
-// Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
 
+function getIp(req: NextRequest) {
+    return req.headers.get('x-forwarded-for') ?? undefined
+}
 
-const agencySchema = z.object({
-  name: z.string().min(1),
-  website: z.string().url().optional().nullable(),
-  description: z.string().optional().nullable(),
-  logoUrl: z.string().url().optional().nullable(),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional().nullable(),
-  type: z.enum(['MAJOR', 'INDIE', 'SUBSIDIARY']).optional(),
-  foundedYear: z.number().int().min(1900).max(2100).optional().nullable(),
-  country: z.string().length(2).optional(),
-  ceoName: z.string().optional().nullable(),
-  isVerified: z.boolean().optional(),
-  parentId: z.string().optional().nullable(),
-  socials: z.record(z.string(), z.unknown()).optional().nullable(),
-})
-
-/**
- * GET /api/admin/agencies
- * List agencies with pagination, search, and sorting
- */
+/** GET /api/admin/agencies */
 export async function GET(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
+        const { searchParams } = new URL(request.url)
 
-    // Return artists for a specific agency
-    const artistsFor = searchParams.get('artists')
-    if (artistsFor) {
-      const artists = await prisma.artist.findMany({
-        where: { agencyId: artistsFor },
-        select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
-        orderBy: { nameRomanized: 'asc' },
-        take: 50,
-      })
-      return NextResponse.json({ artists })
+        // Subquery: artistas de uma agência específica
+        const artistsFor = searchParams.get('artists')
+        if (artistsFor) {
+            const agency = await AgencyRepository.findById(artistsFor)
+            return NextResponse.json({ agency })
+        }
+
+        const { page, limit, search, sortBy, sortOrder } = buildQueryOptions(searchParams)
+
+        const result = await AgencyRepository.findMany({
+            search,
+            type: searchParams.get('type') ?? undefined,
+            verifiedOnly: searchParams.get('verified') === '1',
+            page, limit, sortBy, sortOrder,
+        })
+
+        return paginatedResponse(result.data, result.total, result.page, result.limit)
+    } catch (error) {
+        log.error('GET agencies error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
-    const typeFilter = searchParams.get('type') || undefined
-
-    const where: any = {}
-    if (search) {
-      where.OR = [{ name: { contains: search, mode: 'insensitive' as const } }]
-    }
-    if (typeFilter && ['MAJOR', 'INDIE', 'SUBSIDIARY'].includes(typeFilter)) {
-      where.type = typeFilter
-    }
-
-    const [agencies, total] = await Promise.all([
-      prisma.agency.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        include: {
-          parent: { select: { id: true, name: true } },
-          _count: { select: { artists: true, musicalGroups: true, subsidiaries: true } },
-        },
-      }),
-      prisma.agency.count({ where }),
-    ])
-
-    const formattedAgencies = agencies.map((agency) => ({
-      ...agency,
-      artistsCount: agency._count.artists,
-    }))
-
-    return paginatedResponse(
-      formattedAgencies,
-      total,
-      parseInt(searchParams.get('page') || '1'),
-      parseInt(searchParams.get('limit') || '20')
-    )
-  } catch (error) {
-    log.error('Get agencies error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * POST /api/admin/agencies
- * Create a new agency
- */
+/** POST /api/admin/agencies */
 export async function POST(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const validated = agencySchema.parse(body)
-
-    // Check if agency name already exists
-    const existing = await prisma.agency.findUnique({
-      where: { name: validated.name },
-    })
-
-    if (existing) {
-      return NextResponse.json({ error: 'Agência já cadastrada' }, { status: 400 })
+        const agency = await AgencyRepository.create(
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(agency, { status: 201 })
+    } catch (error) {
+        log.error('POST agency error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const agency = await prisma.agency.create({
-      data: validated as Parameters<typeof prisma.agency.create>[0]['data'],
-    })
-
-    return NextResponse.json(agency, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Create agency error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * PATCH /api/admin/agencies?id=<agencyId>
- * Update an agency
- */
+/** PATCH /api/admin/agencies?id=<id> */
 export async function PATCH(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const agencyId = searchParams.get('id')
+        const id = new URL(request.url).searchParams.get('id')
+        if (!id) return NextResponse.json({ error: 'Agency ID required' }, { status: 400 })
 
-    if (!agencyId) {
-      return NextResponse.json({ error: 'Agency ID required' }, { status: 400 })
+        const agency = await AgencyRepository.update(
+            id,
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(agency)
+    } catch (error) {
+        log.error('PATCH agency error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const body = await request.json()
-    const validated = agencySchema.partial().parse(body)
-
-    // Check if agency exists
-    const existing = await prisma.agency.findUnique({
-      where: { id: agencyId },
-    })
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Agência não encontrada' }, { status: 404 })
-    }
-
-    // If name is being updated, check for duplicates
-    if (validated.name && validated.name !== existing.name) {
-      const nameExists = await prisma.agency.findUnique({
-        where: { name: validated.name },
-      })
-
-      if (nameExists) {
-        return NextResponse.json({ error: 'Nome de agência já cadastrado' }, { status: 400 })
-      }
-    }
-
-    const agency = await prisma.agency.update({
-      where: { id: agencyId },
-      data: validated as Parameters<typeof prisma.agency.update>[0]['data'],
-    })
-
-    return NextResponse.json(agency)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Update agency error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * DELETE /api/admin/agencies
- * Delete agencies
- */
+/** DELETE /api/admin/agencies */
 export async function DELETE(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(body)
-
-    // Check if any agency has artists
-    const agenciesWithArtists = await prisma.agency.findMany({
-      where: { id: { in: ids } },
-      include: {
-        _count: {
-          select: { artists: true },
-        },
-      },
-    })
-
-    const hasArtists = agenciesWithArtists.some((agency) => agency._count.artists > 0)
-
-    if (hasArtists) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar agências que possuem artistas vinculados' },
-        { status: 400 }
-      )
+        const { ids } = await request.json()
+        const result = await AgencyRepository.delete(
+            ids,
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json({ message: `${result.count} agência(s) deletada(s)` })
+    } catch (error) {
+        log.error('DELETE agency error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const result = await prisma.agency.deleteMany({
-      where: { id: { in: ids } },
-    })
-
-    return NextResponse.json({ message: `${result.count} agência(s) deletada(s)` })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Delete agencies error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
