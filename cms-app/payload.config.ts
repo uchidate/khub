@@ -5,6 +5,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { Categories } from './payload/collections/Categories'
+import { Media } from './payload/collections/Media'
 import { Posts } from './payload/collections/Posts'
 import { Users } from './payload/collections/Users'
 
@@ -28,8 +29,18 @@ export default buildConfig({
         importMap: {
             baseDir: path.resolve(dirname),
         },
+        livePreview: {
+            url: ({ data, collectionConfig }) => {
+                const siteUrl = process.env.SITE_URL || 'https://www.hallyuhub.com.br'
+                if (collectionConfig?.slug === 'posts' && data?.slug) {
+                    return `${siteUrl}/blog/${data.slug}`
+                }
+                return siteUrl
+            },
+            collections: ['posts'],
+        },
     },
-    collections: [Users, Categories, Posts],
+    collections: [Users, Categories, Posts, Media],
     db: postgresAdapter({
         pool: {
             connectionString: process.env.DATABASE_URL,
