@@ -94,7 +94,6 @@ export const MusicalGroups: CollectionConfig = {
             name: 'bio',
             type: 'textarea',
             label: 'Bio curta',
-            maxLength: 600,
         },
         {
             name: 'analiseEditorial',
