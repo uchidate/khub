@@ -18,6 +18,7 @@ import {
   Check, AlertCircle, Film, Star, Languages,
 } from 'lucide-react'
 import { AdminEmptyState, AdminModalOverlay } from '@/components/admin'
+import { adminApi, ApiError } from '@/lib/admin-api'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -569,9 +570,8 @@ export default function ProductionsPage() {
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
 
-  const fetchStats = useCallback(async () => {
-    const res = await fetch('/api/admin/productions/stats')
-    if (res.ok) setStats(await res.json())
+  const fetchStats = useCallback(() => {
+    adminApi.productions.stats().then(s => setStats(s as unknown as Stats)).catch(() => {})
   }, [])
 
   useEffect(() => { fetchStats() }, [fetchStats])
@@ -880,29 +880,28 @@ export default function ProductionsPage() {
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
     if (data.year && typeof data.year === 'string') data.year = parseInt(data.year)
-    const url = editingProduction ? `/api/admin/productions?id=${editingProduction.id}` : '/api/admin/productions'
-    const res = await fetch(url, {
-      method: editingProduction ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) { const err = await res.json(); toast.error(err.error || 'Erro ao salvar'); return }
-    toast.saved()
-    refetchTable(); fetchStats()
+    try {
+      if (editingProduction) {
+        await adminApi.productions.update(editingProduction.id, data)
+      } else {
+        await adminApi.productions.create(data)
+      }
+      toast.saved()
+      refetchTable(); fetchStats()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar')
+    }
   }
 
   const handleDeleteConfirm = async () => {
     setDeleteLoading(true)
     try {
-      const res = await fetch('/api/admin/productions', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedIds }),
-      })
-      if (!res.ok) { const err = await res.json(); toast.error(err.error || 'Erro ao deletar'); return }
+      await adminApi.productions.delete(selectedIds)
       toast.deleted(`${selectedIds.length} produção${selectedIds.length > 1 ? 'ões' : ''}`)
       setDeleteOpen(false)
       refetchTable(); fetchStats()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao deletar')
     } finally {
       setDeleteLoading(false)
     }

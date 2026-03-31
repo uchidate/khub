@@ -6,6 +6,7 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus } from 'lucide-react'
+import { adminApi } from '@/lib/admin-api'
 
 interface Album {
   id: string
@@ -100,17 +101,9 @@ export default function AlbumsPage() {
   ]
 
   useEffect(() => {
-    const fetchArtists = async () => {
-      try {
-        const response = await fetch('/api/admin/artists?limit=1000')
-        if (!response.ok) throw new Error('Failed to fetch artists')
-        const data = await response.json()
-        setArtists(data.data)
-      } catch (error) {
-        console.error('Fetch artists error:', error)
-      }
-    }
-    fetchArtists()
+    adminApi.artists.list({ limit: 1000 })
+      .then(data => setArtists((data as unknown as { data: Artist[] }).data))
+      .catch(() => {})
   }, [])
 
   const handleCreate = () => {
@@ -129,35 +122,16 @@ export default function AlbumsPage() {
   }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
-    const url = editingAlbum ? `/api/admin/albums?id=${editingAlbum.id}` : '/api/admin/albums'
-    const method = editingAlbum ? 'PATCH' : 'POST'
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.error || 'Erro ao salvar álbum')
+    if (editingAlbum) {
+      await adminApi.albums.update(editingAlbum.id, data)
+    } else {
+      await adminApi.albums.create(data)
     }
-
     refetchTable()
   }
 
   const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/albums', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
-
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.error || 'Erro ao deletar álbuns')
-    }
-
+    await adminApi.albums.delete(selectedIds)
     refetchTable()
   }
 

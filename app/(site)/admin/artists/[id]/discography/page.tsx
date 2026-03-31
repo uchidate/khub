@@ -10,6 +10,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { AdminModalOverlay, ConfirmDialog, AdminButton } from '@/components/admin'
 import { Plus, RefreshCw, Trash2, ArrowLeft, Music, CheckCircle, Pencil, X, Check, ExternalLink, Sparkles } from 'lucide-react'
+import { adminApi, ApiError } from '@/lib/admin-api'
 
 interface Artist {
   id: string
@@ -232,36 +233,26 @@ export default function ArtistDiscographyPage() {
   const handleSaveId = async (field: 'tmdbId' | 'mbid') => {
     setSavingId(true)
     try {
-      const res = await fetch(`/api/admin/artists?id=${artistId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: editingValue.trim() }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string }
-        showToast(`❌ ${err.error ?? 'Erro ao salvar'}`, false)
+      const data = await adminApi.artists.update(artistId, { [field]: editingValue.trim() }) as { clearedAlbumsCount?: number }
+      const newVal = editingValue.trim() || null
+      setArtist(a => a ? {
+        ...a,
+        [field]: newVal,
+        ...(field === 'mbid' && !newVal ? { discographySyncAt: null } : {}),
+      } : a)
+      setEditingField(null)
+      if (data.clearedAlbumsCount) {
+        refetchTable()
+        showToast(`✅ MusicBrainz ID removido · ${data.clearedAlbumsCount} álbum(ns) limpos automaticamente`)
+      } else if (field === 'mbid' && newVal) {
+        // New MBID set — auto-sync discography
+        showToast('✅ MusicBrainz ID salvo · Sincronizando discografia…')
+        performSync(false)
       } else {
-        const data = await res.json() as { clearedAlbumsCount?: number }
-        const newVal = editingValue.trim() || null
-        setArtist(a => a ? {
-          ...a,
-          [field]: newVal,
-          ...(field === 'mbid' && !newVal ? { discographySyncAt: null } : {}),
-        } : a)
-        setEditingField(null)
-        if (data.clearedAlbumsCount) {
-          refetchTable()
-          showToast(`✅ MusicBrainz ID removido · ${data.clearedAlbumsCount} álbum(ns) limpos automaticamente`)
-        } else if (field === 'mbid' && newVal) {
-          // New MBID set — auto-sync discography
-          showToast('✅ MusicBrainz ID salvo · Sincronizando discografia…')
-          performSync(false)
-        } else {
-          showToast('✅ ID atualizado')
-        }
+        showToast('✅ ID atualizado')
       }
-    } catch {
-      showToast('❌ Erro de rede', false)
+    } catch (err) {
+      showToast(`❌ ${err instanceof ApiError ? err.message : 'Erro de rede'}`, false)
     } finally {
       setSavingId(false)
     }
@@ -270,11 +261,8 @@ export default function ArtistDiscographyPage() {
   // Fetch artist info
   useEffect(() => {
     setArtistLoading(true)
-    fetch(`/api/admin/artists?id=${artistId}`)
-      .then(r => r.json())
-      .then((data) => {
-        if (data?.id) setArtist(data)
-      })
+    adminApi.artists.get(artistId)
+      .then((data) => { if ((data as Record<string, unknown>)?.id) setArtist(data as unknown as typeof artist) })
       .catch(() => {})
       .finally(() => setArtistLoading(false))
   }, [artistId])
@@ -317,40 +305,18 @@ export default function ArtistDiscographyPage() {
   }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
-    const url = editingAlbum
-      ? `/api/admin/albums?id=${editingAlbum.id}`
-      : '/api/admin/albums'
-    const method = editingAlbum ? 'PATCH' : 'POST'
-
     const payload = { ...data, artistId }
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error((err as { error?: string }).error || 'Erro ao salvar álbum')
+    if (editingAlbum) {
+      await adminApi.albums.update(editingAlbum.id, payload)
+    } else {
+      await adminApi.albums.create(payload)
     }
-
     refetchTable()
     showToast(editingAlbum ? '✅ Álbum atualizado' : '✅ Álbum adicionado')
   }
 
   const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/albums', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error((err as { error?: string }).error || 'Erro ao deletar')
-    }
-
+    await adminApi.albums.delete(selectedIds)
     refetchTable()
     showToast(`✅ ${selectedIds.length} álbum(ns) deletado(s)`)
     setSelectedIds([])
@@ -358,38 +324,22 @@ export default function ArtistDiscographyPage() {
 
   const handleClearAll = async () => {
     // Fetch all album IDs for this artist, then delete
-    const res = await fetch(`/api/admin/albums?artistId=${artistId}&limit=100&page=1`)
-    if (!res.ok) throw new Error('Falha ao buscar álbuns')
-    const data = await res.json() as { data: Album[]; total: number }
-
-    let allIds = data.data.map(a => a.id)
+    const first = await adminApi.albums.list({ artistId, limit: 100, page: 1 }) as unknown as { data: Album[]; pagination: { total: number } }
+    let allIds = first.data.map(a => a.id)
 
     // Paginate if more than 100
-    const total = data.total
+    const total = first.pagination.total
     if (total > 100) {
       const pages = Math.ceil(total / 100)
       for (let p = 2; p <= pages; p++) {
-        const r = await fetch(`/api/admin/albums?artistId=${artistId}&limit=100&page=${p}`)
-        if (r.ok) {
-          const d = await r.json() as { data: Album[] }
-          allIds = allIds.concat(d.data.map(a => a.id))
-        }
+        const page = await adminApi.albums.list({ artistId, limit: 100, page: p }) as unknown as { data: Album[] }
+        allIds = allIds.concat(page.data.map(a => a.id))
       }
     }
 
     if (allIds.length === 0) return
 
-    const del = await fetch('/api/admin/albums', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: allIds }),
-    })
-
-    if (!del.ok) {
-      const err = await del.json().catch(() => ({}))
-      throw new Error((err as { error?: string }).error || 'Erro ao limpar discografia')
-    }
-
+    await adminApi.albums.delete(allIds)
     refetchTable()
     showToast(`✅ ${allIds.length} álbum(ns) removido(s)`)
   }

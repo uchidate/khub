@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { X, Plus, Trash2, UserCheck, UserMinus, Search } from 'lucide-react'
 import Image from 'next/image'
+import { adminApi } from '@/lib/admin-api'
 
 interface Artist {
     id: string
@@ -44,9 +45,8 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
     const fetchMembers = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await fetch(`/api/admin/groups/${groupId}/members`)
-            const data = await res.json()
-            setMembers(data.members ?? [])
+            const data = await adminApi.groups.members.list(groupId)
+            setMembers((data.members as unknown as Membership[]) ?? [])
         } catch {
             setMembers([])
         } finally {
@@ -90,11 +90,7 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
     const addMember = async (artist: Artist) => {
         setSaving(artist.id)
         try {
-            await fetch(`/api/admin/groups/${groupId}/members`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ artistId: artist.id, role: addRole || undefined, isActive: true }),
-            })
+            await adminApi.groups.members.add(groupId, { artistId: artist.id, role: addRole || undefined, isActive: true })
             setSearchQuery('')
             setAddRole('')
             setSearchResults([])
@@ -107,14 +103,10 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
     const toggleActive = async (m: Membership) => {
         setSaving(m.artistId)
         try {
-            await fetch(`/api/admin/groups/${groupId}/members`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    artistId: m.artistId,
-                    isActive: !m.isActive,
-                    leaveDate: !m.isActive ? null : new Date().toISOString().split('T')[0],
-                }),
+            await adminApi.groups.members.update(groupId, {
+                artistId: m.artistId,
+                isActive: !m.isActive,
+                leaveDate: !m.isActive ? null : new Date().toISOString().split('T')[0],
             })
             await fetchMembers()
         } finally {
@@ -126,7 +118,7 @@ export function GroupMembersModal({ groupId, groupName, open, onClose }: Props) 
         if (!confirm('Remover este membro permanentemente?')) return
         setSaving(artistId)
         try {
-            await fetch(`/api/admin/groups/${groupId}/members?artistId=${artistId}`, { method: 'DELETE' })
+            await adminApi.groups.members.remove(groupId, artistId)
             await fetchMembers()
         } finally {
             setSaving(null)

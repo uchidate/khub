@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { toHttpError } from '@/lib/repositories/base'
+import { logAudit } from '@/lib/services/audit-service'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
@@ -57,7 +59,7 @@ export async function GET(_request: NextRequest, props: { params: Promise<{ id: 
 /** POST /api/admin/groups/[id]/members — adiciona membro ao grupo */
 export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     try {
@@ -87,20 +89,18 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         })
 
         log.info('Member added to group', { groupId: params.id, artistId })
+        await logAudit({ adminId: session!.user.id, action: 'CREATE', entity: 'ArtistGroupMembership', entityId: artistId, details: `Adicionou "${membership.artist.nameRomanized}" ao grupo ${params.id}` })
         return NextResponse.json({ membership })
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-        }
         log.error('Add group member error', { error: getErrorMessage(error) })
-        return NextResponse.json({ error: 'Erro ao adicionar membro' }, { status: 500 })
+        return toHttpError(error)
     }
 }
 
 /** PATCH /api/admin/groups/[id]/members — atualiza membro (ex: marcar como ex-membro) */
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     try {
@@ -118,20 +118,18 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
         })
 
         log.info('Group member updated', { groupId: params.id, artistId })
+        await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'ArtistGroupMembership', entityId: artistId, details: `Atualizou membro ${artistId} no grupo ${params.id} — isActive: ${membership.isActive}` })
         return NextResponse.json({ membership })
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-        }
         log.error('Update group member error', { error: getErrorMessage(error) })
-        return NextResponse.json({ error: 'Erro ao atualizar membro' }, { status: 500 })
+        return toHttpError(error)
     }
 }
 
 /** DELETE /api/admin/groups/[id]/members?artistId=xxx — remove membro do grupo */
 export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const { error } = await requireAdmin()
+    const { error, session } = await requireAdmin()
     if (error) return error
 
     try {
@@ -145,9 +143,10 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ id
         })
 
         log.info('Member removed from group', { groupId: params.id, artistId })
+        await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'ArtistGroupMembership', entityId: artistId, details: `Removeu membro ${artistId} do grupo ${params.id}` })
         return NextResponse.json({ success: true })
     } catch (error) {
         log.error('Remove group member error', { error: getErrorMessage(error) })
-        return NextResponse.json({ error: 'Erro ao remover membro' }, { status: 500 })
+        return toHttpError(error)
     }
 }

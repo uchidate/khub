@@ -5,16 +5,14 @@
  * streaming signals e stats gerais para o painel admin.
  */
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-    const session = await auth()
-    if (!session || session.user.role?.toLowerCase() !== 'admin') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const { error } = await requireAdmin()
+    if (error) return error
 
     const [artists, statsRaw] = await Promise.all([
         prisma.artist.findMany({

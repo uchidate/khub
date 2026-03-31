@@ -1,22 +1,14 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
+import { AgencyRepository } from '@/lib/repositories/AgencyRepository'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * GET /api/admin/agencies/all
- * Returns all agencies as a simple list for use in select dropdowns.
- * Response: { data: { id, name }[] }
- */
+/** GET /api/admin/agencies/all — lista para selects/dropdowns */
 export async function GET() {
     const { error } = await requireAdmin()
     if (error) return error
 
-    const agencies = await prisma.agency.findMany({
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-    })
-
-    return NextResponse.json({ data: agencies })
+    const data = await AgencyRepository.findAllSimple()
+    return NextResponse.json({ data })
 }

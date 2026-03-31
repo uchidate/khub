@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { requireAdmin } from '@/lib/admin-helpers'
 import { getCoolifyService } from '@/lib/services/coolify-service'
 
 /** GET /api/admin/infrastructure — status de apps + scheduled tasks */
 export async function GET(request: NextRequest) {
-    const session = await auth()
-    if (!session || session.user.role?.toLowerCase() !== 'admin') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const { error } = await requireAdmin()
+    if (error) return error
 
     try {
         const coolify = getCoolifyService()
@@ -27,10 +25,8 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/admin/infrastructure — ações: deploy, toggle-task */
 export async function POST(request: NextRequest) {
-    const session = await auth()
-    if (!session || session.user.role?.toLowerCase() !== 'admin') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const { error } = await requireAdmin()
+    if (error) return error
 
     try {
         const body = await request.json()

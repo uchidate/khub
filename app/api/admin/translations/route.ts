@@ -3,7 +3,6 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
 import { z } from 'zod'
-import { auth } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
@@ -45,11 +44,10 @@ export async function GET(req: NextRequest) {
 
 // PUT /api/admin/translations — upsert + log
 export async function PUT(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { error, session } = await requireAdmin()
   if (error) return error
 
-  const session = await auth()
-  const changedBy = session?.user?.email ?? 'admin'
+  const changedBy = session!.user?.email ?? 'admin'
 
   try {
     const body = await req.json()

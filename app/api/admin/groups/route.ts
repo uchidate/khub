@@ -1,333 +1,108 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
-import { z } from 'zod'
+import { MusicalGroupRepository } from '@/lib/repositories/MusicalGroupRepository'
+import { toHttpError } from '@/lib/repositories/base'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { revalidatePath } from 'next/cache'
-import { detectLanguage } from '@/lib/services/language-detection-service'
+import { z } from 'zod'
 
 const log = createLogger('ADMIN-GROUPS')
 
-// Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
 
-const socialLinksSchema = z.record(z.string(), z.string()).optional().nullable()
-const videoSchema = z.array(z.object({ title: z.string(), url: z.string().min(1) })).optional().nullable()
+function getIp(req: NextRequest) {
+    return req.headers.get('x-forwarded-for') ?? undefined
+}
 
-const groupSchema = z.object({
-  name: z.string().min(1).max(100),
-  nameHangul: z.string().optional().nullable(),
-  mbid: z.string().optional().nullable(),
-  bio: z.string().optional().nullable(),
-  profileImageUrl: z.string().optional().nullable(),
-  debutDate: z.string().optional().nullable(),
-  disbandDate: z.string().optional().nullable(),
-  agencyId: z.string().optional().nullable(),
-  socialLinks: socialLinksSchema,
-  fanClubName: z.string().optional().nullable(),
-  officialColor: z.string().optional().nullable(),
-  videos: videoSchema,
-  isHidden: z.boolean().optional(),
-})
-
-/**
- * GET /api/admin/groups
- * List musical groups with pagination, search, and sorting
- */
+/** GET /api/admin/groups */
 export async function GET(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
+        const { searchParams } = new URL(request.url)
 
-    // Single-group lookup: GET /api/admin/groups?id=<groupId>
-    const idLookup = searchParams.get('id')
-    if (idLookup) {
-      const group = await prisma.musicalGroup.findUnique({
-        where: { id: idLookup },
-        include: { agency: { select: { id: true, name: true } } },
-      })
-      if (!group) return NextResponse.json({ error: 'Grupo não encontrado' }, { status: 404 })
-      return NextResponse.json(group)
+        const idLookup = searchParams.get('id')
+        if (idLookup) {
+            const group = await MusicalGroupRepository.findById(idLookup)
+            return NextResponse.json(group)
+        }
+
+        if (searchParams.get('stats') === '1') {
+            const stats = await MusicalGroupRepository.stats()
+            return NextResponse.json(stats)
+        }
+
+        const { page, limit, search, sortBy, sortOrder } = buildQueryOptions(searchParams)
+        const result = await MusicalGroupRepository.findMany({
+            search,
+            status: searchParams.get('status') ?? undefined,
+            page, limit, sortBy, sortOrder,
+        })
+
+        return paginatedResponse(result.data, result.total, result.page, result.limit)
+    } catch (error) {
+        log.error('GET groups error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    // Stats endpoint
-    if (searchParams.get('stats') === '1') {
-      const [total, active, disbanded, noMembers, hidden] = await Promise.all([
-        prisma.musicalGroup.count(),
-        prisma.musicalGroup.count({ where: { disbandDate: null, isHidden: false } }),
-        prisma.musicalGroup.count({ where: { disbandDate: { not: null } } }),
-        prisma.musicalGroup.count({ where: { members: { none: {} } } }),
-        prisma.musicalGroup.count({ where: { isHidden: true } }),
-      ])
-      return NextResponse.json({ total, active, disbanded, noMembers, hidden })
-    }
-
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
-    const status = searchParams.get('status') ?? ''
-
-    const statusWhere =
-      status === 'active'    ? { disbandDate: null, isHidden: false } :
-      status === 'disbanded' ? { disbandDate: { not: null } } :
-      status === 'hidden'    ? { isHidden: true } :
-      {}
-
-    const where = {
-      ...statusWhere,
-      ...(search ? {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' as const } },
-          { nameHangul: { contains: search, mode: 'insensitive' as const } },
-        ],
-      } : {}),
-    }
-
-    const [groups, total] = await Promise.all([
-      prisma.musicalGroup.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        include: {
-          agency: {
-            select: { name: true },
-          },
-          _count: {
-            select: { members: true },
-          },
-        },
-      }),
-      prisma.musicalGroup.count({ where }),
-    ])
-
-    const formattedGroups = groups.map((group) => ({
-      id: group.id,
-      name: group.name,
-      nameHangul: group.nameHangul,
-      mbid: group.mbid,
-      profileImageUrl: group.profileImageUrl,
-      debutDate: group.debutDate,
-      disbandDate: group.disbandDate,
-      agencyId: group.agencyId,
-      agencyName: group.agency?.name ?? null,
-      socialLinks: group.socialLinks,
-      fanClubName: group.fanClubName,
-      officialColor: group.officialColor,
-      videos: group.videos,
-      membersCount: group._count.members,
-      createdAt: group.createdAt,
-      isHidden: group.isHidden,
-    }))
-
-    return paginatedResponse(
-      formattedGroups,
-      total,
-      parseInt(searchParams.get('page') || '1'),
-      parseInt(searchParams.get('limit') || '20')
-    )
-  } catch (error) {
-    log.error('Get groups error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * POST /api/admin/groups
- * Create a new musical group
- */
+/** POST /api/admin/groups */
 export async function POST(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const validated = groupSchema.parse(body)
-
-    // Check if group name already exists
-    const existing = await prisma.musicalGroup.findUnique({
-      where: { name: validated.name },
-    })
-
-    if (existing) {
-      return NextResponse.json({ error: 'Grupo musical já cadastrado' }, { status: 400 })
+        const group = await MusicalGroupRepository.create(
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(group, { status: 201 })
+    } catch (error) {
+        log.error('POST group error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, videos, ...rest } = validated
-
-    const cleanedLinks = socialLinks
-      ? Object.fromEntries(Object.entries(socialLinks).filter(([, v]) => v !== ''))
-      : null
-
-    const group = await prisma.musicalGroup.create({
-      data: {
-        ...rest,
-        profileImageUrl: profileImageUrl === '' ? null : profileImageUrl,
-        debutDate: debutDate ? new Date(debutDate) : null,
-        disbandDate: disbandDate ? new Date(disbandDate) : null,
-        agencyId: agencyId === '' ? null : agencyId,
-        socialLinks: cleanedLinks && Object.keys(cleanedLinks).length > 0 ? cleanedLinks : Prisma.JsonNull,
-        videos: videos && videos.length > 0 ? videos : Prisma.JsonNull,
-      },
-    })
-
-    return NextResponse.json(group, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Create group error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * PATCH /api/admin/groups?id=<groupId>
- * Update a musical group
- */
+/** PATCH /api/admin/groups?id=<id> */
 export async function PATCH(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const groupId = searchParams.get('id')
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: 'Group ID required' }, { status: 400 })
 
-    if (!groupId) {
-      return NextResponse.json({ error: 'Group ID required' }, { status: 400 })
+        const group = await MusicalGroupRepository.update(
+            id,
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+
+        revalidatePath(`/groups/${id}`)
+        revalidatePath('/groups')
+        return NextResponse.json(group)
+    } catch (error) {
+        log.error('PATCH group error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const body = await request.json()
-    const validated = groupSchema.partial().parse(body)
-
-    // Check if group exists
-    const existing = await prisma.musicalGroup.findUnique({
-      where: { id: groupId },
-    })
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Grupo musical não encontrado' }, { status: 404 })
-    }
-
-    // If name is being updated, check for duplicates
-    if (validated.name && validated.name !== existing.name) {
-      const nameExists = await prisma.musicalGroup.findUnique({
-        where: { name: validated.name },
-      })
-
-      if (nameExists) {
-        return NextResponse.json({ error: 'Nome de grupo musical já cadastrado' }, { status: 400 })
-      }
-    }
-
-    const { debutDate, disbandDate, agencyId, profileImageUrl, socialLinks, videos, ...rest } = validated
-
-    const updateData: Record<string, unknown> = { ...rest }
-
-    if (profileImageUrl !== undefined) {
-      updateData.profileImageUrl = profileImageUrl === '' ? null : profileImageUrl
-    }
-
-    if (debutDate !== undefined) {
-      updateData.debutDate = debutDate ? new Date(debutDate) : null
-    }
-
-    if (disbandDate !== undefined) {
-      updateData.disbandDate = disbandDate ? new Date(disbandDate) : null
-    }
-
-    if (agencyId !== undefined) {
-      updateData.agencyId = agencyId === '' ? null : agencyId
-    }
-
-    if (socialLinks !== undefined) {
-      const cleaned = socialLinks
-        ? Object.fromEntries(Object.entries(socialLinks).filter(([, v]) => v !== ''))
-        : null
-      updateData.socialLinks = cleaned && Object.keys(cleaned).length > 0 ? cleaned : Prisma.JsonNull
-    }
-
-    if (videos !== undefined) {
-      updateData.videos = videos && videos.length > 0 ? videos : Prisma.JsonNull
-    }
-
-    const group = await prisma.musicalGroup.update({
-      where: { id: groupId },
-      data: updateData as Parameters<typeof prisma.musicalGroup.update>[0]['data'],
-    })
-
-    // Auto-tradução: se bio foi salva em português, criar/atualizar ContentTranslation automaticamente
-    const savedBio = (updateData as Record<string, unknown>).bio as string | null | undefined
-    if (savedBio && typeof savedBio === 'string') {
-      const lang = detectLanguage(savedBio)
-      if (lang === 'pt') {
-        await prisma.contentTranslation.upsert({
-          where: { entityType_entityId_field_locale: { entityType: 'group', entityId: groupId, field: 'bio', locale: 'pt-BR' } },
-          create: { entityType: 'group', entityId: groupId, field: 'bio', locale: 'pt-BR', value: savedBio, status: 'approved', sourceLang: 'pt' },
-          update: { value: savedBio, status: 'approved', sourceLang: 'pt' },
-        }).catch(() => {})
-      }
-    }
-
-    revalidatePath(`/groups/${groupId}`)
-    revalidatePath('/groups')
-    return NextResponse.json(group)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Update group error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * DELETE /api/admin/groups
- * Delete musical groups
- */
+/** DELETE /api/admin/groups */
 export async function DELETE(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(body)
+        const { ids } = z.object({ ids: z.array(z.string()) }).parse(await request.json())
+        const result = await MusicalGroupRepository.delete(ids, { adminId: session!.user.id, ip: getIp(request) })
 
-    // Check if any group has members
-    const groupsWithMembers = await prisma.musicalGroup.findMany({
-      where: { id: { in: ids } },
-      include: {
-        _count: {
-          select: { members: true },
-        },
-      },
-    })
-
-    const hasMembers = groupsWithMembers.some((group) => group._count.members > 0)
-
-    if (hasMembers) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar grupos que possuem membros vinculados' },
-        { status: 400 }
-      )
+        revalidatePath('/groups')
+        return NextResponse.json({ message: `${result.count} grupo(s) deletado(s)` })
+    } catch (error) {
+        log.error('DELETE groups error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const result = await prisma.musicalGroup.deleteMany({
-      where: { id: { in: ids } },
-    })
-
-    revalidatePath('/groups')
-    return NextResponse.json({ message: `${result.count} grupo(s) deletado(s)` })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Delete groups error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }

@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ExternalLink, Save, RefreshCw, Users, Trash2 } from 'lucide-react'
+import { adminApi, ApiError } from '@/lib/admin-api'
 import { AdminEmptyState } from '@/components/admin'
 
 interface MusicalGroup {
@@ -146,19 +147,12 @@ export default function EditGroupPage() {
     const handleDelete = async () => {
         setDeleting(true)
         try {
-            const res = await fetch('/api/admin/groups', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: [id] }),
-            })
-            if (!res.ok) {
-                const err = await res.json()
-                toast.error(err.error || 'Erro ao excluir')
-                setConfirmDelete(false)
-                return
-            }
+            await adminApi.groups.delete([id])
             toast.deleted('Grupo')
             router.push('/admin/groups')
+        } catch (err) {
+            toast.error(err instanceof ApiError ? err.message : 'Erro ao excluir')
+            setConfirmDelete(false)
         } finally {
             setDeleting(false)
         }
@@ -199,16 +193,7 @@ export default function EditGroupPage() {
                 videos: videos.length > 0 ? videos : null,
             }
 
-            const res = await fetch(`/api/admin/groups?id=${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            })
-            if (!res.ok) {
-                const err = await res.json()
-                toast.error(err.error || 'Erro ao salvar')
-                return
-            }
+            await adminApi.groups.update(id, payload)
             toast.saved()
             if (returnToRef.current) {
                 router.push(returnToRef.current!)

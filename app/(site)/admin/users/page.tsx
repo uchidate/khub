@@ -6,6 +6,7 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus, Shield, Users, CheckCircle, UserPlus, Heart } from 'lucide-react'
+import { adminApi } from '@/lib/admin-api'
 import { FilterPills } from '@/components/admin/FilterPills'
 import { AdminButton } from '@/components/admin'
 
@@ -83,9 +84,8 @@ export default function UsersAdminPage() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('')
   const [stats, setStats] = useState<UserStats | null>(null)
 
-  const fetchStats = useCallback(async () => {
-    const res = await fetch('/api/admin/users?stats=1')
-    if (res.ok) setStats(await res.json())
+  const fetchStats = useCallback(() => {
+    adminApi.users.stats().then(s => setStats(s as unknown as UserStats)).catch(() => {})
   }, [])
 
   useEffect(() => { fetchStats() }, [fetchStats])
@@ -163,21 +163,17 @@ export default function UsersAdminPage() {
   const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
-    const url = editingUser ? `/api/admin/users?id=${editingUser.id}` : '/api/admin/users'
-    const method = editingUser ? 'PATCH' : 'POST'
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao salvar') }
+    if (editingUser) {
+      await adminApi.users.update(editingUser.id, data)
+    } else {
+      await adminApi.users.create(data)
+    }
     refetchTable()
     fetchStats()
   }
 
   const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/users', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao deletar') }
+    await adminApi.users.delete(selectedIds)
     refetchTable()
     fetchStats()
   }

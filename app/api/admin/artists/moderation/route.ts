@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { ArtistRepository } from '@/lib/repositories/ArtistRepository'
+import { toHttpError } from '@/lib/repositories/base'
 import { z } from 'zod'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
-import { logAudit } from '@/lib/services/audit-service'
 
 const log = createLogger('ARTIST_MODERATION')
 
@@ -258,32 +259,15 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Atualizar artista
-    const artist = await prisma.artist.update({
-      where: { id: artistId },
-      data: {
-        flaggedAsNonKorean,
-        flaggedAt: flaggedAsNonKorean ? new Date() : null,
-      },
-      select: {
-        id: true,
-        nameRomanized: true,
-        flaggedAsNonKorean: true,
-      },
-    })
-
-    log.info(`Artist ${flaggedAsNonKorean ? 'flagged' : 'unflagged'}`, { artistId, name: artist.nameRomanized })
-    await logAudit({ adminId: session!.user.id, action: flaggedAsNonKorean ? 'REJECT' : 'APPROVE', entity: 'Artist', entityId: artistId, details: `${flaggedAsNonKorean ? 'Flagged' : 'Unflagged'} artista "${artist.nameRomanized}"` })
-    return NextResponse.json({
-      success: true,
-      artist,
-    })
+    const artist = await ArtistRepository.flag(
+      artistId,
+      flaggedAsNonKorean,
+      { adminId: session!.user.id }
+    )
+    return NextResponse.json({ success: true, artist })
   } catch (err) {
     log.error('Failed to update artist flag', { error: getErrorMessage(err) })
-    return NextResponse.json(
-      { error: 'Failed to update artist' },
-      { status: 500 }
-    )
+    return toHttpError(err)
   }
 }
 
@@ -312,23 +296,10 @@ export async function DELETE(request: NextRequest) {
       ids = bulkDeleteSchema.parse(body).ids
     }
 
-    const result = await prisma.artist.deleteMany({ where: { id: { in: ids } } })
-
-    log.info(`${result.count} artist(s) permanently deleted`, { ids })
-    await logAudit({
-      adminId: session!.user.id,
-      action: 'DELETE',
-      entity: 'Artist',
-      entityId: ids[0],
-      details: `Deletou ${result.count} artista(s) (moderação bulk)`,
-    })
-
+    const result = await ArtistRepository.delete(ids, { adminId: session!.user.id })
     return NextResponse.json({ success: true, deleted: result.count })
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
-    }
     log.error('Failed to delete artist', { error: getErrorMessage(err) })
-    return NextResponse.json({ error: 'Failed to delete artist' }, { status: 500 })
+    return toHttpError(err)
   }
 }

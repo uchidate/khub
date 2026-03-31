@@ -7,6 +7,7 @@ import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
+import { adminApi, ApiError } from '@/lib/admin-api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -500,22 +501,16 @@ function IdolCard({
   const createArtist = async () => {
     setPending(true)
     try {
-      const res = await fetch('/api/admin/artists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nameRomanized: idol.idolName,
-          nameHangul: idol.idolNameHangul ?? undefined,
-          birthDate: idol.idolBirthday ?? undefined,
-          primaryImageUrl: idol.idolImageUrl ?? undefined,
-          roles: ['IDOL'],
-        }),
+      const data = await adminApi.artists.create({
+        nameRomanized: idol.idolName,
+        nameHangul: idol.idolNameHangul ?? undefined,
+        birthDate: idol.idolBirthday ?? undefined,
+        primaryImageUrl: idol.idolImageUrl ?? undefined,
+        roles: ['IDOL'],
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao criar cantor')
-      await doAction('confirm', data.id)
+      await doAction('confirm', (data as Record<string, unknown>).id as string)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar cantor')
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao criar cantor')
       setPending(false)
     }
   }
@@ -753,22 +748,16 @@ function GroupCard({ group }: { group: GroupItem }) {
   const createGroup = async () => {
     setPending(true)
     try {
-      const res = await fetch('/api/admin/groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: group.groupName,
-          nameHangul: group.groupNameHangul ?? undefined,
-          profileImageUrl: group.groupImageUrl ?? undefined,
-          debutDate: group.groupDebutDate ?? undefined,
-        }),
+      const data = await adminApi.groups.create({
+        name: group.groupName,
+        nameHangul: group.groupNameHangul ?? undefined,
+        profileImageUrl: group.groupImageUrl ?? undefined,
+        debutDate: group.groupDebutDate ?? undefined,
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao criar grupo')
       // Auto-confirm the match with the newly created group
-      await doAction('confirm', data.id)
+      await doAction('confirm', (data as Record<string, unknown>).id as string)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar grupo')
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao criar grupo')
       setPending(false)
     }
   }
