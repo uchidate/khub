@@ -316,23 +316,23 @@ function ArtistCardBlock({ artistId, note, compact, data }: { artistId: string; 
     }
     return (
         <Link href={`/artists/${artistId}`}
-            className="group flex items-center gap-4 my-3 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
-            <div className="w-16 h-16 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-lg font-bold text-[#ff2d78]">
+            className="group flex items-center gap-5 my-4 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            <div className="w-24 h-24 rounded-xl bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-2xl font-bold text-[#ff2d78]">
                 {data?.primaryImageUrl ? (
-                    <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={64} height={64} className="w-full h-full object-cover" />
+                    <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={96} height={96} className="w-full h-full object-cover object-top" />
                 ) : (
                     <span>{data?.nameRomanized?.[0] ?? '?'}</span>
                 )}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-0.5">Artista</p>
-                <p className="text-base font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-1">Artista</p>
+                <p className="text-lg font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
                     {data?.nameRomanized ?? artistId}
                 </p>
-                {role && <p className="text-xs text-muted mt-0.5">{role}</p>}
-                {note && <p className="text-xs text-muted mt-1 italic leading-snug">{note}</p>}
+                {role && <p className="text-sm text-muted mt-0.5">{role}</p>}
+                {note && <p className="text-sm text-muted mt-1.5 leading-snug">{note}</p>}
+                <p className="text-xs text-[#ff2d78] mt-2 font-semibold group-hover:underline">Ver perfil completo →</p>
             </div>
-            <span className="text-muted text-xs shrink-0 group-hover:text-[#ff2d78] transition-colors">Ver perfil →</span>
         </Link>
     )
 }
