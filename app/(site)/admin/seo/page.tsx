@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
 import { useToast } from '@/lib/hooks/useToast'
 import {
     Globe, Plus, Trash2, Loader2, Pencil, X, Check,
-    AlertCircle, ExternalLink, EyeOff, ChevronDown, ChevronUp,
+    AlertCircle, ExternalLink, EyeOff, ChevronDown, ChevronUp, Search,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -24,6 +24,17 @@ interface SeoMeta {
     canonicalUrl: string | null
     noIndex: boolean
     updatedAt: string
+}
+
+interface EntitySuggestion {
+    id: string          // CUID ou slug (blog_post usa slug)
+    label: string       // nome para exibir
+    imageUrl?: string   // thumbnail opcional
+    suggested: {        // valores para pré-preencher o formulário
+        metaTitle: string
+        metaDesc: string
+        ogImageUrl: string
+    }
 }
 
 const ENTITY_LABELS: Record<EntityType, string> = {
@@ -50,6 +61,7 @@ const ENTITY_LINKS: Record<EntityType, (id: string) => string> = {
 interface FormState {
     entityType: EntityType
     entityId: string
+    entityLabel: string   // apenas para exibição
     metaTitle: string
     metaDesc: string
     ogTitle: string
@@ -62,6 +74,7 @@ interface FormState {
 const EMPTY_FORM: FormState = {
     entityType: 'artist',
     entityId: '',
+    entityLabel: '',
     metaTitle: '',
     metaDesc: '',
     ogTitle: '',
@@ -70,6 +83,73 @@ const EMPTY_FORM: FormState = {
     canonicalUrl: '',
     noIndex: false,
 }
+
+// ── Busca de entidades por tipo ───────────────────────────────────────────────
+
+async function searchEntities(type: EntityType, query: string): Promise<EntitySuggestion[]> {
+    if (!query.trim()) return []
+    try {
+        if (type === 'artist') {
+            const res = await fetch(`/api/admin/artists?search=${encodeURIComponent(query)}&limit=8`)
+            const data = await res.json()
+            return (data.data ?? []).map((a: { id: string; nameRomanized: string; primaryImageUrl?: string }) => ({
+                id: a.id,
+                label: a.nameRomanized,
+                imageUrl: a.primaryImageUrl,
+                suggested: {
+                    metaTitle: `${a.nameRomanized} | HallyuHub`,
+                    metaDesc: `Discografia, trajetória e informações sobre ${a.nameRomanized} no HallyuHub.`,
+                    ogImageUrl: a.primaryImageUrl ?? '',
+                },
+            }))
+        }
+        if (type === 'group') {
+            const res = await fetch(`/api/admin/groups?search=${encodeURIComponent(query)}&limit=8`)
+            const data = await res.json()
+            return (data.data ?? []).map((g: { id: string; name: string; profileImageUrl?: string }) => ({
+                id: g.id,
+                label: g.name,
+                imageUrl: g.profileImageUrl,
+                suggested: {
+                    metaTitle: `${g.name} | HallyuHub`,
+                    metaDesc: `Trajetória, discografia e membros do grupo ${g.name} no HallyuHub.`,
+                    ogImageUrl: g.profileImageUrl ?? '',
+                },
+            }))
+        }
+        if (type === 'production') {
+            const res = await fetch(`/api/admin/productions?search=${encodeURIComponent(query)}&limit=8`)
+            const data = await res.json()
+            return (data.data ?? []).map((p: { id: string; titlePt?: string; titleKr?: string; imageUrl?: string }) => ({
+                id: p.id,
+                label: p.titlePt || p.titleKr || p.id,
+                imageUrl: p.imageUrl,
+                suggested: {
+                    metaTitle: `${p.titlePt || p.titleKr} | HallyuHub`,
+                    metaDesc: `Informações, elenco e avaliação de ${p.titlePt || p.titleKr} no HallyuHub.`,
+                    ogImageUrl: p.imageUrl ?? '',
+                },
+            }))
+        }
+        if (type === 'blog_post') {
+            const res = await fetch(`/api/blog/posts?search=${encodeURIComponent(query)}&limit=8`)
+            const data = await res.json()
+            return (data.data ?? []).map((p: { slug: string; title: string; coverImageUrl?: string; excerpt?: string }) => ({
+                id: p.slug,   // blog_post usa slug como entityId
+                label: p.title,
+                imageUrl: p.coverImageUrl,
+                suggested: {
+                    metaTitle: p.title.length <= 60 ? p.title : p.title.slice(0, 57) + '...',
+                    metaDesc: p.excerpt ?? '',
+                    ogImageUrl: p.coverImageUrl ?? '',
+                },
+            }))
+        }
+        return []
+    } catch { return [] }
+}
+
+// ── Componente principal ──────────────────────────────────────────────────────
 
 export default function SeoAdminPage() {
     const { addToast } = useToast()
@@ -83,6 +163,14 @@ export default function SeoAdminPage() {
     const [saving,       setSaving]       = useState(false)
     const [deletingId,   setDeletingId]   = useState<string | null>(null)
     const [expandedId,   setExpandedId]   = useState<string | null>(null)
+
+    // busca de entidade
+    const [entityQuery,     setEntityQuery]     = useState('')
+    const [suggestions,     setSuggestions]     = useState<EntitySuggestion[]>([])
+    const [searchLoading,   setSearchLoading]   = useState(false)
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const searchBoxRef = useRef<HTMLDivElement>(null)
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -102,10 +190,57 @@ export default function SeoAdminPage() {
 
     useEffect(() => { load() }, [load])
 
+    // fechar dropdown ao clicar fora
+    useEffect(() => {
+        function handleClick(e: MouseEvent) {
+            if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+                setShowSuggestions(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClick)
+        return () => document.removeEventListener('mousedown', handleClick)
+    }, [])
+
+    // debounce da busca
+    useEffect(() => {
+        if (!entityQuery.trim()) { setSuggestions([]); setShowSuggestions(false); return }
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        debounceRef.current = setTimeout(async () => {
+            setSearchLoading(true)
+            const results = await searchEntities(form.entityType, entityQuery)
+            setSuggestions(results)
+            setShowSuggestions(true)
+            setSearchLoading(false)
+        }, 300)
+    }, [entityQuery, form.entityType])
+
+    function selectSuggestion(s: EntitySuggestion) {
+        setForm(f => ({
+            ...f,
+            entityId:    s.id,
+            entityLabel: s.label,
+            // pré-preencher apenas se o campo ainda estiver vazio
+            metaTitle:   f.metaTitle  || s.suggested.metaTitle,
+            metaDesc:    f.metaDesc   || s.suggested.metaDesc,
+            ogTitle:     f.ogTitle    || s.suggested.metaTitle,
+            ogDesc:      f.ogDesc     || s.suggested.metaDesc,
+            ogImageUrl:  f.ogImageUrl || s.suggested.ogImageUrl,
+        }))
+        setEntityQuery(s.label)
+        setShowSuggestions(false)
+    }
+
+    function handleEntityTypeChange(type: EntityType) {
+        setForm(f => ({ ...f, entityType: type, entityId: '', entityLabel: '' }))
+        setEntityQuery('')
+        setSuggestions([])
+    }
+
     function startEdit(meta: SeoMeta) {
         setForm({
             entityType:   meta.entityType,
             entityId:     meta.entityId,
+            entityLabel:  meta.metaTitle ?? meta.entityId,
             metaTitle:    meta.metaTitle ?? '',
             metaDesc:     meta.metaDesc ?? '',
             ogTitle:      meta.ogTitle ?? '',
@@ -114,6 +249,7 @@ export default function SeoAdminPage() {
             canonicalUrl: meta.canonicalUrl ?? '',
             noIndex:      meta.noIndex,
         })
+        setEntityQuery(meta.metaTitle ?? meta.entityId)
         setEditId(meta.id)
         setShowForm(true)
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -123,19 +259,27 @@ export default function SeoAdminPage() {
         setShowForm(false)
         setEditId(null)
         setForm(EMPTY_FORM)
+        setEntityQuery('')
+        setSuggestions([])
     }
 
     async function handleSave() {
-        if (!form.entityId.trim()) { addToast({ type: 'error', message: 'ID da entidade obrigatório' }); return }
+        if (!form.entityId.trim()) { addToast({ type: 'error', message: 'Selecione uma entidade' }); return }
         setSaving(true)
         try {
             const res = await fetch('/api/admin/seo', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...form,
-                    ogImageUrl:   form.ogImageUrl   || null,
+                    entityType:   form.entityType,
+                    entityId:     form.entityId,
+                    metaTitle:    form.metaTitle   || null,
+                    metaDesc:     form.metaDesc    || null,
+                    ogTitle:      form.ogTitle     || null,
+                    ogDesc:       form.ogDesc      || null,
+                    ogImageUrl:   form.ogImageUrl  || null,
                     canonicalUrl: form.canonicalUrl || null,
+                    noIndex:      form.noIndex,
                 }),
             })
             if (!res.ok) { addToast({ type: 'error', message: 'Erro ao salvar' }); return }
@@ -160,6 +304,9 @@ export default function SeoAdminPage() {
     const hasIssues = (meta: SeoMeta) =>
         !meta.metaTitle || !meta.metaDesc || meta.metaTitle.length > 60 || meta.metaDesc.length > 155
 
+    const titleLen = form.metaTitle.length
+    const descLen  = form.metaDesc.length
+
     return (
         <AdminLayout
             title="SEO"
@@ -182,12 +329,13 @@ export default function SeoAdminPage() {
                         <button onClick={cancelForm} className="text-muted hover:text-foreground transition-colors"><X size={16} /></button>
                     </div>
 
+                    {/* Seleção de entidade */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">Tipo de entidade</label>
+                            <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">Tipo</label>
                             <select
                                 value={form.entityType}
-                                onChange={e => setForm(f => ({ ...f, entityType: e.target.value as EntityType }))}
+                                onChange={e => handleEntityTypeChange(e.target.value as EntityType)}
                                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
                             >
                                 {(Object.keys(ENTITY_LABELS) as EntityType[]).map(t => (
@@ -195,21 +343,58 @@ export default function SeoAdminPage() {
                                 ))}
                             </select>
                         </div>
-                        <div>
-                            <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">ID da entidade</label>
-                            <input
-                                value={form.entityId}
-                                onChange={e => setForm(f => ({ ...f, entityId: e.target.value }))}
-                                placeholder="cuid da entidade..."
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
-                            />
+
+                        {/* Busca por nome */}
+                        <div ref={searchBoxRef} className="relative">
+                            <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">
+                                {ENTITY_LABELS[form.entityType]}
+                                {form.entityId && <span className="ml-1 font-mono text-accent normal-case">✓ selecionado</span>}
+                            </label>
+                            <div className="relative">
+                                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+                                <input
+                                    value={entityQuery}
+                                    onChange={e => { setEntityQuery(e.target.value); if (form.entityId) setForm(f => ({ ...f, entityId: '', entityLabel: '' })) }}
+                                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                                    placeholder={`Buscar ${ENTITY_LABELS[form.entityType].toLowerCase()}...`}
+                                    className="w-full bg-background border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent"
+                                />
+                                {searchLoading && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted animate-spin" />}
+                            </div>
+                            {showSuggestions && suggestions.length > 0 && (
+                                <div className="absolute z-50 top-full mt-1 w-full bg-surface border border-border rounded-xl shadow-lg overflow-hidden">
+                                    {suggestions.map(s => (
+                                        <button
+                                            key={s.id}
+                                            type="button"
+                                            onClick={() => selectSuggestion(s)}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-surface-hover text-left transition-colors"
+                                        >
+                                            {s.imageUrl && (
+                                                <img src={s.imageUrl} alt="" className="w-7 h-7 rounded object-cover flex-shrink-0" />
+                                            )}
+                                            <span className="text-sm text-foreground truncate">{s.label}</span>
+                                            <span className="ml-auto text-[10px] text-muted font-mono shrink-0 truncate max-w-[80px]">{s.id.slice(0, 8)}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            {showSuggestions && suggestions.length === 0 && !searchLoading && entityQuery.trim() && (
+                                <div className="absolute z-50 top-full mt-1 w-full bg-surface border border-border rounded-xl shadow-lg px-3 py-2.5">
+                                    <span className="text-sm text-muted">Nenhum resultado para &ldquo;{entityQuery}&rdquo;</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
+                    {/* Campos SEO */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">
-                                Meta Title <span className="text-muted font-normal">({form.metaTitle.length}/70)</span>
+                                Meta Title
+                                <span className={`ml-1 font-normal ${titleLen > 60 ? 'text-amber-400' : titleLen > 50 ? 'text-yellow-500' : ''}`}>
+                                    ({titleLen}/60)
+                                </span>
                             </label>
                             <input
                                 value={form.metaTitle}
@@ -221,7 +406,8 @@ export default function SeoAdminPage() {
                         </div>
                         <div>
                             <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">
-                                OG Title <span className="text-muted font-normal">({form.ogTitle.length}/70)</span>
+                                OG Title
+                                <span className="ml-1 font-normal text-muted">({form.ogTitle.length}/70)</span>
                             </label>
                             <input
                                 value={form.ogTitle}
@@ -233,7 +419,10 @@ export default function SeoAdminPage() {
                         </div>
                         <div>
                             <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">
-                                Meta Description <span className="text-muted font-normal">({form.metaDesc.length}/160)</span>
+                                Meta Description
+                                <span className={`ml-1 font-normal ${descLen > 155 ? 'text-amber-400' : descLen > 130 ? 'text-yellow-500' : ''}`}>
+                                    ({descLen}/155)
+                                </span>
                             </label>
                             <textarea
                                 value={form.metaDesc}
@@ -246,7 +435,8 @@ export default function SeoAdminPage() {
                         </div>
                         <div>
                             <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block mb-1">
-                                OG Description <span className="text-muted font-normal">({form.ogDesc.length}/200)</span>
+                                OG Description
+                                <span className="ml-1 font-normal text-muted">({form.ogDesc.length}/200)</span>
                             </label>
                             <textarea
                                 value={form.ogDesc}
@@ -277,6 +467,15 @@ export default function SeoAdminPage() {
                         </div>
                     </div>
 
+                    {/* Preview rápido */}
+                    {form.metaTitle && (
+                        <div className="p-3 rounded-lg bg-background border border-border space-y-0.5">
+                            <p className="text-[11px] text-muted font-semibold uppercase tracking-wider mb-1">Preview Google</p>
+                            <p className="text-blue-400 text-sm font-medium leading-tight truncate">{form.metaTitle}</p>
+                            {form.metaDesc && <p className="text-xs text-muted leading-relaxed line-clamp-2">{form.metaDesc}</p>}
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -294,7 +493,7 @@ export default function SeoAdminPage() {
                             <button onClick={cancelForm} className="px-3 py-1.5 text-sm text-muted hover:text-foreground transition-colors">Cancelar</button>
                             <button
                                 onClick={handleSave}
-                                disabled={saving}
+                                disabled={saving || !form.entityId}
                                 className="flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-all"
                             >
                                 {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
@@ -312,7 +511,7 @@ export default function SeoAdminPage() {
                     <span><strong className="text-foreground">{total}</strong> override{total !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex gap-1.5 ml-auto flex-wrap">
-                    {['', 'artist', 'production', 'group', 'blog_post'].map(t => (
+                    {(['', 'artist', 'production', 'group', 'blog_post'] as const).map(t => (
                         <button
                             key={t}
                             onClick={() => setTypeFilter(t)}
@@ -322,7 +521,7 @@ export default function SeoAdminPage() {
                                     : 'text-muted hover:text-foreground hover:bg-surface border border-transparent'
                             }`}
                         >
-                            {t ? ENTITY_LABELS[t as EntityType] : 'Todos'}
+                            {t ? ENTITY_LABELS[t] : 'Todos'}
                         </button>
                     ))}
                 </div>

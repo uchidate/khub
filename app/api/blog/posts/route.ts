@@ -64,14 +64,19 @@ export async function GET(request: NextRequest) {
   if (error) return error
 
   const { searchParams } = new URL(request.url)
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-  const limit = 20
-  const role = session!.user.role?.toLowerCase()
+  const page   = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit  = 20
+  const search = searchParams.get('search')?.trim() ?? ''
+  const role   = session!.user.role?.toLowerCase()
 
   // Admins/editors see all; contributors see only their own
-  const where = role === 'admin' || role === 'editor'
+  const baseWhere = role === 'admin' || role === 'editor'
     ? {}
     : { authorId: session!.user.id }
+
+  const where = search
+    ? { ...baseWhere, title: { contains: search, mode: 'insensitive' as const } }
+    : baseWhere
 
   const [posts, total] = await Promise.all([
     prisma.blogPost.findMany({
