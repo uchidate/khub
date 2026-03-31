@@ -5,21 +5,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { getRoleLabel } from '@/lib/utils/role-labels'
-import { Search, User, Newspaper, Film, Users, ArrowLeft } from 'lucide-react'
+import { Search, User, Film, Users, ArrowLeft } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 
-function stripMarkdown(text: string): string {
-    return text
-        .replace(/#{1,6}\s+/g, '')
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-        .replace(/`[^`]+`/g, '')
-        .replace(/^[-*+]\s+/gm, '')
-        .replace(/\n+/g, ' ')
-        .trim()
-}
 
 interface Artist {
     id: string
@@ -37,15 +25,6 @@ interface Group {
     profileImageUrl: string | null
 }
 
-interface NewsItem {
-    id: string
-    title: string
-    imageUrl: string | null
-    publishedAt: string
-    tags: string[]
-    contentMd: string
-}
-
 interface Production {
     id: string
     titlePt: string
@@ -59,11 +38,10 @@ interface Production {
 interface SearchData {
     artists: Artist[]
     groups: Group[]
-    news: NewsItem[]
     productions: Production[]
 }
 
-type FilterType = 'all' | 'artists' | 'groups' | 'news' | 'productions'
+type FilterType = 'all' | 'artists' | 'groups' | 'productions'
 
 function SearchContent() {
     const searchParams = useSearchParams()
@@ -106,21 +84,18 @@ function SearchContent() {
 
     const artists = deferredData?.artists ?? []
     const groups = deferredData?.groups ?? []
-    const news = deferredData?.news ?? []
     const productions = deferredData?.productions ?? []
-    const total = artists.length + groups.length + news.length + productions.length
+    const total = artists.length + groups.length + productions.length
 
     const tabs: { key: FilterType; label: string; count: number; icon: React.ReactNode; color: string }[] = [
         { key: 'all', label: 'Todos', count: total, icon: <Search className="w-4 h-4" />, color: 'purple' },
         { key: 'artists', label: 'Artistas', count: artists.length, icon: <User className="w-4 h-4" />, color: 'purple' },
         { key: 'groups', label: 'Grupos', count: groups.length, icon: <Users className="w-4 h-4" />, color: 'pink' },
         { key: 'productions', label: 'Produções', count: productions.length, icon: <Film className="w-4 h-4" />, color: 'cyan' },
-        { key: 'news', label: 'Notícias', count: news.length, icon: <Newspaper className="w-4 h-4" />, color: 'pink' },
     ]
 
     const showArtists = activeFilter === 'all' || activeFilter === 'artists'
     const showGroups = activeFilter === 'all' || activeFilter === 'groups'
-    const showNews = activeFilter === 'all' || activeFilter === 'news'
     const showProductions = activeFilter === 'all' || activeFilter === 'productions'
 
     return (
@@ -312,59 +287,6 @@ function SearchContent() {
                         </section>
                     )}
 
-                    {/* News */}
-                    {showNews && news.length > 0 && (
-                        <section>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-[#fff0f5] rounded-lg">
-                                    <Newspaper className="w-5 h-5 text-[#ff2d78]" />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-black text-foreground">Notícias</h2>
-                                    <p className="text-sm text-muted">{news.length} encontrada{news.length > 1 ? 's' : ''}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {news.map((newsItem) => (
-                                    <Link
-                                        key={newsItem.id}
-                                        href={`/news/${newsItem.id}`}
-                                        className="group rounded-xl overflow-hidden border border-border hover:border-[#ff2d78]/30 transition-all"
-                                    >
-                                        {newsItem.imageUrl && (
-                                            <div className="relative aspect-video overflow-hidden bg-[#080808]">
-                                                <Image
-                                                    src={newsItem.imageUrl}
-                                                    alt={newsItem.title}
-                                                    fill
-                                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                                />
-                                            </div>
-                                        )}
-                                        <div className="p-5">
-                                            {newsItem.tags.length > 0 && (
-                                                <div className="flex gap-2 mb-2">
-                                                    {newsItem.tags.slice(0, 2).map(tag => (
-                                                        <span key={tag} className="px-2 py-0.5 bg-[#fff0f5] text-[#ff2d78] text-xs font-bold rounded-full">
-                                                            {tag}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            <h3 className="font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors line-clamp-2 mb-2">
-                                                {newsItem.title}
-                                            </h3>
-                                            <p className="text-sm text-muted line-clamp-2">{stripMarkdown(newsItem.contentMd).slice(0, 180)}</p>
-                                            <p className="text-xs text-[#444] mt-2">
-                                                {new Date(newsItem.publishedAt).toLocaleDateString('pt-BR')}
-                                            </p>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </section>
-                    )}
                 </div>
             ) : null}
         </>
