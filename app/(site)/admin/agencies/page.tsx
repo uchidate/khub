@@ -8,7 +8,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { AdminButton, AdminIconButton } from '@/components/admin'
 import { Plus, Users, Loader2, ExternalLink, User, X, CheckCircle2 } from 'lucide-react'
-import { adminApi, ApiError } from '@/lib/admin-api'
+import { adminApi } from '@/lib/admin-api'
 
 interface Agency {
   id: string

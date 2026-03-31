@@ -11,7 +11,7 @@ import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles, 
 import { AdminEmptyState } from '@/components/admin'
 import { TakedownModal } from '@/components/admin/TakedownModal'
 import { RestoreModal } from '@/components/admin/RestoreModal'
-import { adminApi, ApiError } from '@/lib/admin-api'
+import { adminApi } from '@/lib/admin-api'
 
 interface TakedownRecord {
     id: string

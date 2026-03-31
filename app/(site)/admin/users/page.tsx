@@ -6,7 +6,7 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { Plus, Shield, Users, CheckCircle, UserPlus, Heart } from 'lucide-react'
-import { adminApi, ApiError } from '@/lib/admin-api'
+import { adminApi } from '@/lib/admin-api'
 import { FilterPills } from '@/components/admin/FilterPills'
 import { AdminButton } from '@/components/admin'
 

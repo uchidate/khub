@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ConfirmDialog, AdminButton } from '@/components/admin'
-import { adminApi, ApiError } from '@/lib/admin-api'
+import { adminApi } from '@/lib/admin-api'
 
 type Artist = {
   id: string
