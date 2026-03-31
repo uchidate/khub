@@ -7,6 +7,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { adminApi, ApiError } from '@/lib/admin-api'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 import { SocialBadges } from '@/components/admin/SocialBadges'
 import { StatCard } from '@/components/admin'
@@ -107,8 +108,7 @@ export default function GroupsPage() {
   const [stats, setStats] = useState<GroupStats | null>(null)
 
   const fetchStats = useCallback(async () => {
-    const res = await fetch('/api/admin/groups?stats=1')
-    if (res.ok) setStats(await res.json())
+    adminApi.groups.stats().then(s => setStats(s as unknown as GroupStats)).catch(() => {})
   }, [])
 
   useEffect(() => { fetchStats() }, [fetchStats])
@@ -214,32 +214,26 @@ export default function GroupsPage() {
       videos: videos.length > 0 ? videos : null,
     }
 
-    const res = await fetch('/api/admin/groups', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    if (!res.ok) { const e = await res.json(); toast.error(e.error || 'Erro ao salvar'); return }
-    toast.saved()
-    refetchTable()
-    fetchStats()
+    try {
+      await adminApi.groups.create(payload)
+      toast.saved()
+      refetchTable()
+      fetchStats()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar')
+    }
   }
 
   const handleDeleteConfirm = async () => {
     setDeleteLoading(true)
     try {
-      const res = await fetch('/api/admin/groups', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedIds }),
-      })
-      if (!res.ok) { const e = await res.json(); toast.error(e.error || 'Erro ao deletar'); return }
+      await adminApi.groups.delete(selectedIds)
       toast.deleted(`${selectedIds.length} grupo${selectedIds.length > 1 ? 's' : ''}`)
       setDeleteOpen(false)
       refetchTable()
       fetchStats()
     } catch (err) {
-      toast.error((err as Error).message || 'Erro ao carregar dados')
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao deletar')
     } finally {
       setDeleteLoading(false)
     }
