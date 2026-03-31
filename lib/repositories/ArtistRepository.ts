@@ -359,6 +359,81 @@ export const ArtistRepository = {
         return { updated: validated.length }
     },
 
+    async stats() {
+        const active = { flaggedAsNonKorean: false } as const
+
+        const [
+            total, flagged, withTmdb, noTmdb,
+            noHangul, noHangulPending, noHangulAttempted, noHangulNoTmdb,
+            noPhoto, noPhotoPending, noPhotoAttempted, noPhotoNoTmdb,
+            noSocialPending, noSocialAttempted, noSocialNoTmdb,
+            withGroup, noGroupUnsynced, noGroupSolo,
+            noProductions, autoHidden,
+            koreanNoTmdbRaw, noRomanizedRaw, noRomanizedPendingRaw, noRomanizedAttemptedRaw,
+        ] = await Promise.all([
+            prisma.artist.count(),
+            prisma.artist.count({ where: { flaggedAsNonKorean: true } }),
+            prisma.artist.count({ where: { ...active, tmdbId: { not: null } } }),
+            prisma.artist.count({ where: { ...active, tmdbId: null } }),
+            prisma.artist.count({ where: { ...active, nameHangul: null } }),
+            prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: null } }),
+            prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: { not: null } } }),
+            prisma.artist.count({ where: { ...active, nameHangul: null, tmdbId: null } }),
+            prisma.artist.count({ where: { ...active, primaryImageUrl: null } }),
+            prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: null } }),
+            prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: { not: null } } }),
+            prisma.artist.count({ where: { ...active, primaryImageUrl: null, tmdbId: null } }),
+            prisma.artist.count({ where: { ...active, socialLinksUpdatedAt: null } }),
+            prisma.artist.count({ where: { ...active, socialLinksUpdatedAt: { not: null }, socialLinks: { equals: Prisma.DbNull } } }),
+            prisma.artist.count({ where: { ...active, socialLinksUpdatedAt: null, tmdbId: null } }),
+            prisma.artist.count({ where: { ...active, memberships: { some: { isActive: true } } } }),
+            prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null } }),
+            prisma.artist.count({ where: { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } } }),
+            prisma.artist.count({ where: { ...active, productions: { none: {} } } }),
+            prisma.artist.count({ where: { isHidden: true, autoHidden: true } }),
+            prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) FROM "Artist" WHERE "flaggedAsNonKorean" = false AND "tmdbId" IS NULL AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'`,
+            prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) FROM "Artist" WHERE "flaggedAsNonKorean" = false AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'`,
+            prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) FROM "Artist" WHERE "flaggedAsNonKorean" = false AND "tmdbId" IS NOT NULL AND "nameSyncAt" IS NULL AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'`,
+            prisma.$queryRaw<[{ count: bigint }]>`SELECT COUNT(*) FROM "Artist" WHERE "flaggedAsNonKorean" = false AND "tmdbId" IS NOT NULL AND "nameSyncAt" IS NOT NULL AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'`,
+        ])
+
+        const koreanNoTmdb = Number(koreanNoTmdbRaw[0].count)
+        const noRomanized = Number(noRomanizedRaw[0].count)
+        const noRomanizedPending = Number(noRomanizedPendingRaw[0].count)
+        const noRomanizedAttempted = Number(noRomanizedAttemptedRaw[0].count)
+
+        return {
+            total, flagged, withTmdb, noTmdb,
+            noHangul, noHangulPending, noHangulAttempted, noHangulNoTmdb,
+            noPhoto, noPhotoPending, noPhotoAttempted, noPhotoNoTmdb,
+            noSocialTotal: noSocialPending + noSocialAttempted,
+            noSocialPending, noSocialAttempted, noSocialNoTmdb,
+            withGroup, noGroup: noGroupUnsynced + noGroupSolo, noGroupUnsynced, noGroupSolo,
+            noProductions, autoHidden,
+            koreanNoTmdb, noRomanized, noRomanizedPending, noRomanizedAttempted,
+            noRomanizedNoTmdb: koreanNoTmdb,
+        }
+    },
+
+    async flag(id: string, flaggedAsNonKorean: boolean, ctx: WriteContext) {
+        const artist = await prisma.artist.update({
+            where: { id },
+            data: { flaggedAsNonKorean, flaggedAt: flaggedAsNonKorean ? new Date() : null },
+            select: { id: true, nameRomanized: true, flaggedAsNonKorean: true },
+        })
+
+        await logAudit({
+            adminId: ctx.adminId,
+            action: flaggedAsNonKorean ? 'REJECT' : 'APPROVE',
+            entity: 'Artist',
+            entityId: id,
+            details: `${flaggedAsNonKorean ? 'Flagged' : 'Unflagged'} artista "${artist.nameRomanized}"`,
+            ip: ctx.ip,
+        })
+        log.info(`Artist ${flaggedAsNonKorean ? 'flagged' : 'unflagged'}`, { id, name: artist.nameRomanized })
+        return artist
+    },
+
     async delete(ids: string[], ctx: WriteContext) {
         const { ids: validated } = z.object({ ids: z.array(z.string().min(1)).min(1) }).parse({ ids })
         const result = await prisma.artist.deleteMany({ where: { id: { in: validated } } })
