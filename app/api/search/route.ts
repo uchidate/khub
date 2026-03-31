@@ -66,20 +66,6 @@ export async function GET(request: NextRequest) {
       take: 5,
     })
 
-    // Search news
-    const news = await prisma.news.findMany({
-      where: {
-        title: { contains: query, mode: 'insensitive' },
-      },
-      select: {
-        id: true,
-        title: true,
-        imageUrl: true,
-        publishedAt: true,
-      },
-      take: 5,
-    })
-
     // Search groups
     const groups = await prisma.musicalGroup.findMany({
       where: {
@@ -119,13 +105,6 @@ export async function GET(request: NextRequest) {
         title: p.titlePt,
         subtitle: `${p.type} • ${p.year}`,
         imageUrl: p.imageUrl,
-      })),
-      ...news.map(n => ({
-        id: n.id,
-        type: 'news' as const,
-        title: n.title,
-        subtitle: new Date(n.publishedAt).toLocaleDateString('pt-BR'),
-        imageUrl: n.imageUrl,
       })),
     ]
 

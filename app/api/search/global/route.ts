@@ -16,7 +16,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')
-    const types = searchParams.get('types')?.split(',') || ['artists', 'news', 'productions']
+    const types = searchParams.get('types')?.split(',') || ['artists', 'productions']
     const limit = Math.min(10, Math.max(1, parseInt(searchParams.get('limit') || '5')))
 
     if (!query || query.trim().length < 2) {
@@ -37,7 +37,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
         const ageRatingFilter = await applyAgeRatingFilter()
 
         // Buscar em paralelo nos 4 modelos
-        const [artists, news, productions, groups] = await Promise.all([
+        const [artists, productions, groups] = await Promise.all([
             // Buscar artistas
             types.includes('artists') ? prisma.artist.findMany({
                 where: {
@@ -59,26 +59,6 @@ export const GET = withLogging(async function GET(request: NextRequest) {
                     trendingScore: true
                 },
                 orderBy: { trendingScore: 'desc' }
-            }) : [],
-
-            // Buscar notícias
-            types.includes('news') ? prisma.news.findMany({
-                where: {
-                    OR: [
-                        { title: { contains: searchTerm, mode: 'insensitive' } },
-                        { contentMd: { contains: searchTerm, mode: 'insensitive' } },
-                        { tags: { has: searchTerm } }
-                    ]
-                },
-                take: limit,
-                select: {
-                    id: true,
-                    title: true,
-                    imageUrl: true,
-                    publishedAt: true,
-                    tags: true
-                },
-                orderBy: { publishedAt: 'desc' }
             }) : [],
 
             // Buscar produções
@@ -128,12 +108,12 @@ export const GET = withLogging(async function GET(request: NextRequest) {
             }) : []
         ])
 
-        const total = artists.length + news.length + productions.length + groups.length
+        const total = artists.length + productions.length + groups.length
 
         return NextResponse.json({
             artists,
             groups,
-            news,
+            news: [],
             productions,
             total,
             query: searchTerm

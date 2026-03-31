@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     try {
         const ageRatingFilter = await applyAgeRatingFilter()
 
-        const [artists, groups, news, productions] = await Promise.all([
+        const [artists, groups, productions] = await Promise.all([
             prisma.artist.findMany({
                 where: {
                     flaggedAsNonKorean: false,
@@ -65,25 +65,6 @@ export async function GET(request: NextRequest) {
                 take: 20,
             }),
 
-            prisma.news.findMany({
-                where: {
-                    OR: [
-                        { title: { contains: searchTerm, mode: 'insensitive' } },
-                        { tags: { has: searchTerm } },
-                    ],
-                },
-                select: {
-                    id: true,
-                    title: true,
-                    imageUrl: true,
-                    publishedAt: true,
-                    tags: true,
-                    contentMd: true,
-                },
-                orderBy: { publishedAt: 'desc' },
-                take: 20,
-            }),
-
             prisma.production.findMany({
                 where: {
                     flaggedAsNonKorean: false,
@@ -108,7 +89,7 @@ export async function GET(request: NextRequest) {
             }),
         ])
 
-        return NextResponse.json({ artists, groups, news, productions })
+        return NextResponse.json({ artists, groups, news: [], productions })
     } catch (error: unknown) {
         log.error('Full search error', { error: getErrorMessage(error) })
         return NextResponse.json({ error: 'Search failed' }, { status: 500 })
