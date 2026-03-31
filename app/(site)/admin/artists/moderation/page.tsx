@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ConfirmDialog, AdminButton } from '@/components/admin'
+import { adminApi, ApiError } from '@/lib/admin-api'
 
 type Artist = {
   id: string
@@ -114,13 +115,9 @@ export default function ArtistModerationPage() {
   async function doHide(ids: string[]) {
     addActioning(ids)
     try {
-      const res = await fetch('/api/admin/artists?bulk=hide', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids }),
-      })
-      if (res.ok) { await fetchArtists(page); await fetchStats() }
-    } finally { removeActioning(ids) }
+      await adminApi.artists.bulkHide(ids, true)
+      await fetchArtists(page); await fetchStats()
+    } catch { /* ignore */ } finally { removeActioning(ids) }
   }
 
   function handleHide(artist: Artist) {

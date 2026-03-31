@@ -141,6 +141,8 @@ export const adminApi = {
             apiFetch<PaginatedResponse<Record<string, unknown>>>(`/api/admin/productions${qs(p)}`),
         get: (id: string) =>
             apiFetch<Record<string, unknown>>(`/api/admin/productions${qs({ id })}`),
+        stats: () =>
+            apiFetch<Record<string, number>>('/api/admin/productions/stats'),
         create: (data: Record<string, unknown>) =>
             post<Record<string, unknown>>('/api/admin/productions', data),
         update: (id: string, data: Record<string, unknown>) =>

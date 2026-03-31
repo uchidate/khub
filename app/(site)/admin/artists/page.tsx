@@ -14,6 +14,7 @@ import { Plus, RefreshCw, Type, ImagePlus, EyeOff, Languages, ExternalLink } fro
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { adminApi, ApiError } from '@/lib/admin-api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -415,9 +416,8 @@ export default function ArtistsAdminPage() {
   const [nameOverrides, setNameOverrides] = useState<Record<string, { nameRomanized: string; nameHangul: string | null }>>({})
   const [photoOverrides, setPhotoOverrides] = useState<Record<string, string>>({})
 
-  const fetchStats = useCallback(async () => {
-    const res = await fetch('/api/admin/artists/stats')
-    if (res.ok) setStats(await res.json())
+  const fetchStats = useCallback(() => {
+    adminApi.artists.stats().then(s => setStats(s as unknown as ArtistStats)).catch(() => {})
   }, [])
 
   useEffect(() => { fetchStats() }, [fetchStats])
@@ -543,16 +543,15 @@ export default function ArtistsAdminPage() {
   const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
 
   const handleBulkHide = async (ids: string[], clearSelection: () => void) => {
-    const res = await fetch('/api/admin/artists?bulk=hide', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids }),
-    })
-    if (!res.ok) { toast.error('Erro ao ocultar artistas'); return }
-    toast.success(`${ids.length} artista${ids.length > 1 ? 's' : ''} ocultado${ids.length > 1 ? 's' : ''}`)
-    clearSelection()
-    refetchTable()
-    fetchStats()
+    try {
+      await adminApi.artists.bulkHide(ids, true)
+      toast.success(`${ids.length} artista${ids.length > 1 ? 's' : ''} ocultado${ids.length > 1 ? 's' : ''}`)
+      clearSelection()
+      refetchTable()
+      fetchStats()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao ocultar artistas')
+    }
   }
 
   const handleFormSubmit = async (data: Record<string, unknown>) => {
@@ -563,44 +562,25 @@ export default function ArtistsAdminPage() {
     }
     if (data.primaryImageUrl === '') data.primaryImageUrl = null
 
-    const res = await fetch('/api/admin/artists', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error || 'Erro ao criar artista')
-    }
-
-    const created = await res.json()
+    const created = await adminApi.artists.create(data)
     toast.saved()
     refetchTable()
     fetchStats()
     // Navigate to full edit page after creation
-    if (created.id) router.push(`/admin/artists/${created.id}`)
+    const id = (created as Record<string, unknown>).id
+    if (id) router.push(`/admin/artists/${id}`)
   }
 
   const handleDeleteConfirm = async () => {
     setDeleteLoading(true)
     try {
-      const res = await fetch('/api/admin/artists', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedIds }),
-      })
-
-      if (!res.ok) {
-        const err = await res.json()
-        toast.error(err.error || 'Erro ao deletar artistas')
-        return
-      }
-
+      await adminApi.artists.delete(selectedIds)
       toast.deleted(`${selectedIds.length} artista${selectedIds.length > 1 ? 's' : ''}`)
       setDeleteOpen(false)
       refetchTable()
       fetchStats()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao deletar artistas')
     } finally {
       setDeleteLoading(false)
     }

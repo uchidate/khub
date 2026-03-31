@@ -8,6 +8,7 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { AdminButton, AdminIconButton } from '@/components/admin'
 import { Plus, Users, Loader2, ExternalLink, User, X, CheckCircle2 } from 'lucide-react'
+import { adminApi, ApiError } from '@/lib/admin-api'
 
 interface Agency {
   id: string
@@ -206,20 +207,16 @@ export default function AgenciesPage() {
       data.foundedYear = null
     }
 
-    const url    = editingAgency ? `/api/admin/agencies?id=${editingAgency.id}` : '/api/admin/agencies'
-    const method = editingAgency ? 'PATCH' : 'POST'
-    const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao salvar agência') }
+    if (editingAgency) {
+      await adminApi.agencies.update(editingAgency.id, data)
+    } else {
+      await adminApi.agencies.create(data)
+    }
     refetchTable()
   }
 
   const handleDeleteConfirm = async () => {
-    const res = await fetch('/api/admin/agencies', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    })
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro ao deletar agências') }
+    await adminApi.agencies.delete(selectedIds)
     refetchTable()
     setExpanded(null)
   }

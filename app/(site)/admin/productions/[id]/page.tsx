@@ -11,6 +11,7 @@ import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles, 
 import { AdminEmptyState } from '@/components/admin'
 import { TakedownModal } from '@/components/admin/TakedownModal'
 import { RestoreModal } from '@/components/admin/RestoreModal'
+import { adminApi, ApiError } from '@/lib/admin-api'
 
 interface TakedownRecord {
     id: string
@@ -244,16 +245,7 @@ export default function EditProductionPage() {
             for (const key of ['imageUrl', 'backdropUrl', 'trailerUrl', 'releaseDate'] as const) {
                 if (body[key] === '') body[key] = null
             }
-            const res = await fetch(`/api/admin/productions?id=${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            })
-            if (!res.ok) {
-                const err = await res.json()
-                toast.error(err.error || 'Erro ao salvar')
-                return
-            }
+            await adminApi.productions.update(id, body)
             toast.saved()
             if (returnToRef.current) {
                 router.push(returnToRef.current!)
