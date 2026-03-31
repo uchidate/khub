@@ -27,7 +27,8 @@ export const Posts: CollectionConfig = {
         group: 'Blog',
         preview: (doc) => {
             const slug = doc?.slug as string | undefined
-            return slug ? `/blog/${slug}` : null
+            const siteUrl = process.env.SITE_URL || 'https://www.hallyuhub.com.br'
+            return slug ? `${siteUrl}/blog/${slug}` : null
         },
     },
     // Access: middleware already ensures only admins reach /cms
