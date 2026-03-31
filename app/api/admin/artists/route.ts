@@ -1,504 +1,110 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
-import { z } from 'zod'
+import { ArtistRepository } from '@/lib/repositories/ArtistRepository'
+import { toHttpError } from '@/lib/repositories/base'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
-import { logAudit } from '@/lib/services/audit-service'
 import { revalidatePath } from 'next/cache'
-import { detectLanguage } from '@/lib/services/language-detection-service'
-
-function handlePrismaError(error: unknown) {
-  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-    const field = (error.meta?.target as string[] | undefined)?.[0] ?? 'campo'
-    return NextResponse.json({ error: `Já existe um artista com este ${field === 'nameRomanized' ? 'nome romanizado' : field}` }, { status: 409 })
-  }
-  return null
-}
+import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
+import { z } from 'zod'
 
 const log = createLogger('ADMIN-ARTISTS')
 
-// Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
 
+function getIp(req: NextRequest) {
+    return req.headers.get('x-forwarded-for') ?? undefined
+}
 
-const artistSchema = z.object({
-  nameRomanized: z.string().min(1),
-  nameHangul: z.string().optional(),
-  birthDate: z.string().optional(),              // ISO date string, camelCase
-  birthName: z.string().optional(),
-  placeOfBirth: z.string().optional(),
-  gender: z.number().int().nullable().optional(), // TMDB convention: 1=female, 2=male, null=não informado
-  stageNames: z.array(z.string()).optional(),    // array de nomes artísticos
-  roles: z.array(z.string()).optional(),         // ex: ['IDOL', 'ACTOR']
-  height: z.string().optional(),
-  bloodType: z.string().optional(),
-  zodiacSign: z.string().optional(),
-  bio: z.string().optional(),
-  primaryImageUrl: z.string().nullable().optional(), // aceita qualquer string ou null — admin-only
-  socialLinks: z.record(z.string(), z.string()).optional(),  // JSON: { instagram: "...", etc }
-  analiseEditorial: z.string().optional(),
-  curiosidades: z.array(z.string()).optional(),
-  flaggedAsNonKorean: z.boolean().optional(),
-  tmdbId: z.string().optional(),
-  mbid: z.string().optional(),                  // MusicBrainz artist ID
-  agencyId: z.string().optional(),
-  musicalGroupId: z.string().optional(),         // '' = remove from group, id = add/update membership
-  isHidden: z.boolean().optional(),             // Ocultar/restaurar visibilidade pública
-  tmdbSyncedFields: z.array(z.string()).optional(), // campos aplicados do TMDB (não marcar como manuais)
-})
-
-/**
- * GET /api/admin/artists
- * List artists with pagination, search, and sorting
- */
+/** GET /api/admin/artists */
 export async function GET(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
+        const { searchParams } = new URL(request.url)
 
-    // Single-artist lookup: GET /api/admin/artists?id=<artistId>
-    const idLookup = searchParams.get('id')
-    if (idLookup) {
-      const artist = await prisma.artist.findUnique({
-        where: { id: idLookup },
-        select: {
-          id: true,
-          nameRomanized: true,
-          nameHangul: true,
-          stageNames: true,
-          primaryImageUrl: true,
-          birthDate: true,
-          placeOfBirth: true,
-          gender: true,
-          roles: true,
-          bio: true,
-          birthName: true,
-          height: true,
-          zodiacSign: true,
-          socialLinks: true,
-          analiseEditorial: true,
-          curiosidades: true,
-          flaggedAsNonKorean: true,
-          discographySyncAt: true,
-          tmdbId: true,
-          mbid: true,
-          isHidden: true,
-          fieldSources: true,
-        },
-      })
-      if (!artist) return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
-      return NextResponse.json(artist)
-    }
-
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
-
-    const filter = searchParams.get('filter')
-    // Supported filters (all exclude flaggedAsNonKorean unless the filter IS flagged):
-    //   no_hangul              — nameHangul null
-    //   no_hangul_pending      — nameHangul null + tmdbId set + hangulSyncAt null (never tried)
-    //   no_hangul_attempted    — nameHangul null + tmdbId set + hangulSyncAt set (tried, not found)
-    //   no_hangul_no_tmdb      — nameHangul null + tmdbId null
-    //   no_photo               — primaryImageUrl null
-    //   no_photo_pending       — primaryImageUrl null + tmdbId set + photoSyncAt null (never tried)
-    //   no_photo_attempted     — primaryImageUrl null + tmdbId set + photoSyncAt set (tried, not found)
-    //   no_photo_no_tmdb       — primaryImageUrl null + tmdbId null
-    //   no_social              — never synced (socialLinksUpdatedAt null)
-    //   no_social_pending      — same as no_social
-    //   no_social_attempted    — tried but nothing found (updatedAt set, socialLinks null)
-    //   flagged                — flaggedAsNonKorean true
-    //   korean_no_tmdb         — nameRomanized contém Hangul E sem tmdbId (via raw regex)
-    //   no_romanized           — nameRomanized contém Hangul (todos — via raw regex)
-    //   no_romanized_pending   — nameRomanized contém Hangul + tmdbId set + nameSyncAt null (nunca tentado)
-    //   no_romanized_attempted — nameRomanized contém Hangul + tmdbId set + nameSyncAt set (tentado)
-    //   no_romanized_no_tmdb   — nameRomanized contém Hangul + tmdbId null (= korean_no_tmdb)
-
-    const active = { flaggedAsNonKorean: false } as const
-
-    // Filtros com regex Korean requerem raw SQL — busca IDs e usa como filtro IN
-    const koreanRegexFilters = ['korean_no_tmdb', 'no_romanized', 'no_romanized_pending', 'no_romanized_attempted', 'no_romanized_no_tmdb']
-    let rawKoreanIds: string[] | null = null
-    if (koreanRegexFilters.includes(filter ?? '')) {
-      let raw: { id: string }[]
-      if (filter === 'no_romanized') {
-        raw = await prisma.$queryRaw<{ id: string }[]>`
-          SELECT id FROM "Artist"
-          WHERE "flaggedAsNonKorean" = false
-            AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
-          ORDER BY "trendingScore" DESC
-        `
-      } else if (filter === 'no_romanized_pending') {
-        raw = await prisma.$queryRaw<{ id: string }[]>`
-          SELECT id FROM "Artist"
-          WHERE "flaggedAsNonKorean" = false
-            AND "tmdbId" IS NOT NULL
-            AND "nameSyncAt" IS NULL
-            AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
-          ORDER BY "trendingScore" DESC
-        `
-      } else if (filter === 'no_romanized_attempted') {
-        raw = await prisma.$queryRaw<{ id: string }[]>`
-          SELECT id FROM "Artist"
-          WHERE "flaggedAsNonKorean" = false
-            AND "tmdbId" IS NOT NULL
-            AND "nameSyncAt" IS NOT NULL
-            AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
-          ORDER BY "trendingScore" DESC
-        `
-      } else {
-        // korean_no_tmdb e no_romanized_no_tmdb — mesma condição
-        raw = await prisma.$queryRaw<{ id: string }[]>`
-          SELECT id FROM "Artist"
-          WHERE "flaggedAsNonKorean" = false
-            AND "tmdbId" IS NULL
-            AND "nameRomanized" ~ E'[\\uAC00-\\uD7AF\\u3131-\\u314E\\u314F-\\u3163]'
-          ORDER BY "trendingScore" DESC
-        `
-      }
-      rawKoreanIds = raw.map(r => r.id)
-    }
-
-    const filterWhere = rawKoreanIds !== null
-      ? { id: { in: rawKoreanIds } }
-      : filter === 'with_tmdb'           ? { ...active, tmdbId: { not: null } }
-      : filter === 'no_tmdb'             ? { ...active, tmdbId: null }
-      : filter === 'no_hangul'           ? { ...active, nameHangul: null }
-      : filter === 'no_hangul_pending'   ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: null }
-      : filter === 'no_hangul_attempted' ? { ...active, nameHangul: null, tmdbId: { not: null }, hangulSyncAt: { not: null } }
-      : filter === 'no_hangul_no_tmdb'   ? { ...active, nameHangul: null, tmdbId: null }
-      : filter === 'no_photo'            ? { ...active, primaryImageUrl: null }
-      : filter === 'no_photo_pending'    ? { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: null }
-      : filter === 'no_photo_attempted'  ? { ...active, primaryImageUrl: null, tmdbId: { not: null }, photoSyncAt: { not: null } }
-      : filter === 'no_photo_no_tmdb'    ? { ...active, primaryImageUrl: null, tmdbId: null }
-      : filter === 'no_social' || filter === 'no_social_pending'
-                                         ? { ...active, socialLinksUpdatedAt: null }
-      : filter === 'no_social_attempted' ? { ...active, socialLinksUpdatedAt: { not: null }, socialLinks: { equals: Prisma.DbNull } }
-      : filter === 'no_social_no_tmdb'   ? { ...active, socialLinksUpdatedAt: null, tmdbId: null }
-      : filter === 'flagged'             ? { flaggedAsNonKorean: true }
-      : filter === 'with_group'          ? { ...active, memberships: { some: { isActive: true } } }
-      : filter === 'no_group'            ? { ...active, memberships: { none: { isActive: true } } }
-      : filter === 'no_group_unsynced'   ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: null }
-      : filter === 'no_group_solo'       ? { ...active, memberships: { none: { isActive: true } }, groupSyncAt: { not: null } }
-      : filter === 'no_productions'      ? { ...active, productions: { none: {} } }
-      : filter === 'auto_hidden'         ? { isHidden: true, autoHidden: true }
-      : {}
-
-    const searchWhere = search
-      ? {
-          OR: [
-            { nameRomanized: { contains: search, mode: 'insensitive' as const } },
-            { nameHangul: { contains: search, mode: 'insensitive' as const } },
-          ],
+        const idLookup = searchParams.get('id')
+        if (idLookup) {
+            const artist = await ArtistRepository.findById(idLookup)
+            return NextResponse.json(artist)
         }
-      : {}
 
-    const where = search
-      ? { AND: [filterWhere, searchWhere] }
-      : filterWhere
+        const { page, limit, search, sortBy, sortOrder } = buildQueryOptions(searchParams)
+        const result = await ArtistRepository.findMany({
+            search,
+            filter: searchParams.get('filter') ?? undefined,
+            page, limit, sortBy, sortOrder,
+        })
 
-    const [artists, total] = await Promise.all([
-      prisma.artist.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        include: {
-          agency: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          _count: {
-            select: {
-              productions: true,
-              albums: true,
-            },
-          },
-          memberships: {
-            where: { isActive: true },
-            include: { group: { select: { id: true, name: true } } },
-            take: 1,
-          },
-        },
-      }),
-      prisma.artist.count({ where }),
-    ])
-
-    const formattedArtists = artists.map((artist: {
-      _count: { productions: number; albums: number }
-      agency: { id: string; name: string } | null
-      memberships: { group: { id: string; name: string } }[]
-      [key: string]: unknown
-    }) => ({
-      ...artist,
-      productionsCount: artist._count.productions,
-      albumsCount: artist._count.albums,
-      agencyName: artist.agency?.name,
-      musicalGroupName: artist.memberships?.[0]?.group.name ?? null,
-      musicalGroupId: artist.memberships?.[0]?.group.id ?? null,
-    }))
-
-    return paginatedResponse(
-      formattedArtists,
-      total,
-      parseInt(searchParams.get('page') || '1'),
-      parseInt(searchParams.get('limit') || '20')
-    )
-  } catch (error) {
-    log.error('Get artists error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+        return paginatedResponse(result.data, result.total, result.page, result.limit)
+    } catch (error) {
+        log.error('GET artists error', { error: getErrorMessage(error) })
+        return toHttpError(error)
+    }
 }
 
-/**
- * POST /api/admin/artists
- * Create a new artist
- */
+/** POST /api/admin/artists */
 export async function POST(request: NextRequest) {
-  try {
-    const { error, session } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const validated = artistSchema.parse(body)
-
-    // Convert date strings to Date objects; empty string → null for nullable fields
-    const data: Record<string, unknown> = { ...validated }
-    if (validated.birthDate === '' || validated.birthDate === undefined) {
-      data.birthDate = null
-    } else {
-      data.birthDate = new Date(validated.birthDate)
+        const artist = await ArtistRepository.create(
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(artist, { status: 201 })
+    } catch (error) {
+        log.error('POST artist error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-    if (validated.primaryImageUrl === '' || validated.primaryImageUrl === null) {
-      data.primaryImageUrl = null
-    }
-    if (validated.nameHangul === '') data.nameHangul = null
-
-    const artist = await prisma.artist.create({
-      data: data as any,
-      include: {
-        agency: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    })
-
-    await logAudit({ adminId: session!.user.id, action: 'CREATE', entity: 'Artist', entityId: artist.id, details: `Criou artista "${artist.nameRomanized}"` })
-    return NextResponse.json(artist, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-    const prismaError = handlePrismaError(error)
-    if (prismaError) return prismaError
-    log.error('Create artist error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * PATCH /api/admin/artists?id=<artistId>
- * Update an artist
- */
+/** PATCH /api/admin/artists?id=<id> | ?bulk=hide|show */
 export async function PATCH(request: NextRequest) {
-  try {
-    const { error, session } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const bulk = searchParams.get('bulk')
+        const { searchParams } = new URL(request.url)
+        const ctx = { adminId: session!.user.id, ip: getIp(request) }
 
-    // ── Bulk hide/show: PATCH ?bulk=hide  { ids: [...] } ──────────────────────
-    if (bulk === 'hide' || bulk === 'show') {
-      const body = await request.json()
-      const { ids } = z.object({ ids: z.array(z.string()).min(1) }).parse(body)
-      const isHidden = bulk === 'hide'
-      await prisma.artist.updateMany({ where: { id: { in: ids } }, data: { isHidden } })
-      await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'Artist', details: `Bulk ${isHidden ? 'ocultou' : 'restaurou'} ${ids.length} artista(s) — IDs: ${ids.join(', ')}` })
-      revalidatePath('/artists')
-      return NextResponse.json({ updated: ids.length })
-    }
-
-    const artistId = searchParams.get('id')
-
-    if (!artistId) {
-      return NextResponse.json({ error: 'Artist ID required' }, { status: 400 })
-    }
-
-    const body = await request.json()
-    const validated = artistSchema.partial().parse(body)
-
-    // Extract non-Prisma fields before passing to artist update
-    const { musicalGroupId, tmdbSyncedFields, ...artistFields } = validated
-
-    // Convert date strings to Date objects; empty string → null for nullable fields
-    const data: Record<string, unknown> = { ...artistFields }
-    if (validated.birthDate === '' || validated.birthDate === undefined) {
-      data.birthDate = null
-    } else {
-      data.birthDate = new Date(validated.birthDate)
-    }
-    if (validated.primaryImageUrl === '' || validated.primaryImageUrl === null) {
-      data.primaryImageUrl = null
-    }
-    if (validated.nameHangul === '') data.nameHangul = null
-    if (validated.placeOfBirth === '') data.placeOfBirth = null
-    if (validated.birthName === '') data.birthName = null
-    if (validated.height === '') data.height = null
-    if (validated.zodiacSign === '') data.zodiacSign = null
-    if (validated.analiseEditorial === '') data.analiseEditorial = null
-    if (validated.tmdbId === '') data.tmdbId = null
-    if (validated.mbid === '') {
-      data.mbid = null
-      // Reset sync timestamp so artist is re-queued for discography sync
-      data.discographySyncAt = null
-    }
-
-    // ── fieldSources: rastrear origem de campos sincronizáveis ──────────────────
-    // Carrega estado atual para detectar quais campos mudaram
-    const TRACKABLE_FIELDS = ['primaryImageUrl', 'bio', 'birthDate', 'placeOfBirth', 'nameHangul', 'stageNames', 'gender'] as const
-    const current = await prisma.artist.findUnique({
-      where: { id: artistId },
-      select: { primaryImageUrl: true, bio: true, birthDate: true, placeOfBirth: true, nameHangul: true, stageNames: true, gender: true, fieldSources: true },
-    })
-    if (current) {
-      const tmdbSynced = new Set(tmdbSyncedFields ?? [])
-      const sources = (current.fieldSources as Record<string, unknown> | null) ?? {}
-      const now = new Date().toISOString()
-      const byAdmin = session!.user.id
-      // Compare normalized values to detect real changes
-      const newBirthDate = data.birthDate instanceof Date ? data.birthDate.toISOString().split('T')[0] : null
-      const oldBirthDate = current.birthDate ? (current.birthDate as Date).toISOString().split('T')[0] : null
-      const fieldNewVals: Record<string, unknown> = {
-        primaryImageUrl: (data.primaryImageUrl as string | null) ?? null,
-        bio: validated.bio || null,
-        birthDate: newBirthDate,
-        placeOfBirth: validated.placeOfBirth || null,
-        nameHangul: validated.nameHangul || null,
-        stageNames: JSON.stringify(validated.stageNames ?? current.stageNames ?? []),
-        gender: validated.gender ?? null,
-      }
-      const fieldOldVals: Record<string, unknown> = {
-        primaryImageUrl: current.primaryImageUrl,
-        bio: current.bio,
-        birthDate: oldBirthDate,
-        placeOfBirth: current.placeOfBirth,
-        nameHangul: current.nameHangul,
-        stageNames: JSON.stringify(current.stageNames ?? []),
-        gender: current.gender,
-      }
-      const updatedSources = { ...sources }
-      for (const field of TRACKABLE_FIELDS) {
-        if (tmdbSynced.has(field)) {
-          // Campo vem do TMDB — marcar como tmdb e remover lock manual
-          updatedSources[field] = { source: 'tmdb', at: now }
-        } else if (String(fieldNewVals[field]) !== String(fieldOldVals[field])) {
-          // Campo mudou manualmente — marcar como manual
-          updatedSources[field] = { source: 'manual', at: now, by: byAdmin }
+        const bulk = searchParams.get('bulk')
+        if (bulk === 'hide' || bulk === 'show') {
+            const { ids } = await request.json()
+            const result = await ArtistRepository.bulkHide(ids, bulk === 'hide', ctx)
+            revalidatePath('/artists')
+            return NextResponse.json(result)
         }
-      }
-      data.fieldSources = updatedSources
-    }
-    // ────────────────────────────────────────────────────────────────────────────
 
-    // If mbid is being cleared, also delete all albums (they may be orphaned)
-    let clearedAlbumsCount = 0
-    if (validated.mbid === '') {
-      const deleted = await prisma.album.deleteMany({ where: { artistId } })
-      clearedAlbumsCount = deleted.count
-    }
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: 'Artist ID required' }, { status: 400 })
 
-    const artist = await prisma.artist.update({
-      where: { id: artistId },
-      data: data as any,
-      include: {
-        agency: { select: { id: true, name: true } },
-      },
-    })
+        const { artist, clearedAlbumsCount } = await ArtistRepository.update(id, await request.json(), ctx)
 
-    // Handle group membership separately (not part of Artist model)
-    if (musicalGroupId !== undefined) {
-      if (musicalGroupId === '' || musicalGroupId === null) {
-        // Remove from all groups
-        await prisma.artistGroupMembership.deleteMany({ where: { artistId } })
-      } else {
-        // Upsert membership — set isActive, clear leaveDate
-        await prisma.artistGroupMembership.upsert({
-          where: { artistId_groupId: { artistId, groupId: musicalGroupId } },
-          create: { artistId, groupId: musicalGroupId, isActive: true },
-          update: { isActive: true, leaveDate: null },
-        })
-        // Deactivate any other group membership (artist can be in multiple groups but we simplify to 1 active)
-        await prisma.artistGroupMembership.updateMany({
-          where: { artistId, groupId: { not: musicalGroupId } },
-          data: { isActive: false },
-        })
-      }
+        revalidatePath(`/artists/${id}`)
+        revalidatePath('/artists')
+        return NextResponse.json({ ...artist, clearedAlbumsCount: clearedAlbumsCount || undefined })
+    } catch (error) {
+        log.error('PATCH artist error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    // Auto-tradução: se bio foi salva em português, criar/atualizar ContentTranslation automaticamente
-    if (validated.bio) {
-      const lang = detectLanguage(validated.bio)
-      if (lang === 'pt') {
-        await prisma.contentTranslation.upsert({
-          where: { entityType_entityId_field_locale: { entityType: 'artist', entityId: artistId, field: 'bio', locale: 'pt-BR' } },
-          create: { entityType: 'artist', entityId: artistId, field: 'bio', locale: 'pt-BR', value: validated.bio, status: 'approved', sourceLang: 'pt' },
-          update: { value: validated.bio, status: 'approved', sourceLang: 'pt' },
-        }).catch(() => {})
-        await prisma.artist.update({
-          where: { id: artistId },
-          data: { translationStatus: 'completed', translatedAt: new Date() },
-        }).catch(() => {})
-      }
-    }
-
-    await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'Artist', entityId: artistId, details: `Editou artista "${artist.nameRomanized}"` })
-    revalidatePath(`/artists/${artistId}`)
-    revalidatePath('/artists')
-    return NextResponse.json({ ...artist, clearedAlbumsCount: clearedAlbumsCount || undefined })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-    const prismaError = handlePrismaError(error)
-    if (prismaError) return prismaError
-    log.error('Update artist error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * DELETE /api/admin/artists
- * Delete artists
- */
+/** DELETE /api/admin/artists */
 export async function DELETE(request: NextRequest) {
-  try {
-    const { error, session } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(body)
+        const { ids } = z.object({ ids: z.array(z.string()) }).parse(await request.json())
+        const result = await ArtistRepository.delete(ids, { adminId: session!.user.id, ip: getIp(request) })
 
-    const result = await prisma.artist.deleteMany({
-      where: { id: { in: ids } },
-    })
-
-    await logAudit({ adminId: session!.user.id, action: 'DELETE', entity: 'Artist', details: `Deletou ${result.count} artista(s) — IDs: ${ids.join(', ')}` })
-    revalidatePath('/artists')
-    return NextResponse.json({ message: `${result.count} artista(s) deletado(s)` })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
+        revalidatePath('/artists')
+        return NextResponse.json({ message: `${result.count} artista(s) deletado(s)` })
+    } catch (error) {
+        log.error('DELETE artist error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    log.error('Delete artists error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
