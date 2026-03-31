@@ -85,9 +85,6 @@ RUN useradd --system --uid 1001 -m nextjs
 # Economiza ~200-300MB e acelera push/pull do registry
 COPY --from=deps-production --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# drizzle-kit é devDependency mas necessário em runtime para Payload pushSchema
-# Copiar apenas este pacote do stage completo (não polui com todos os devDeps)
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
 
 # Next.js standalone
 COPY --from=builder /app/public ./public
