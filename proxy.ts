@@ -21,10 +21,6 @@ const adminRoutes = [
   '/admin',
 ]
 
-// Rotas do Payload CMS — requer role admin
-const cmsRoutes = [
-  '/cms',
-]
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -65,18 +61,6 @@ export async function proxy(request: NextRequest) {
   // Check admin routes
   if (isAdminRoute && !isAdmin) {
     return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  // Check CMS routes (Payload) — admin only, redirect to login if not authenticated
-  // Rotas públicas do Payload (login, create-first-user) ficam acessíveis sem auth
-  const cmsPublicPaths = ['/cms/login', '/cms/create-first-user', '/cms/forgot', '/cms/reset', '/cms/logout']
-  const isCmsRoute = cmsRoutes.some((route) => pathname.startsWith(route))
-  const isCmsPublicRoute = cmsPublicPaths.some((p) => pathname.startsWith(p))
-  if (isCmsRoute && !isCmsPublicRoute && !isAdmin) {
-    const loginUrl = new URL('/auth/login', request.url)
-    // Usar pathname relativo para evitar URL interna do Docker (0.0.0.0:3000) no callbackUrl
-    loginUrl.searchParams.set('callbackUrl', pathname)
-    return NextResponse.redirect(loginUrl)
   }
 
   // Detectar e logar robôs de busca (fire-and-forget, não bloqueia o request)
