@@ -16,7 +16,6 @@ import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
-import { getPostBySlug, getRelatedPosts, getPublishedSlugs, payloadHasPosts } from '@/lib/blog/payload-blog-service'
 const BASE_URL = SITE_URL
 
 export const dynamic = 'force-dynamic'
@@ -25,11 +24,6 @@ export const revalidate = 3600
 export async function generateStaticParams() {
   if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
   try {
-    const usePayload = await payloadHasPosts().catch(() => false)
-    if (usePayload) {
-      const slugs = await getPublishedSlugs().catch(() => [] as string[])
-      return slugs.map(slug => ({ slug }))
-    }
     const posts = await prisma.blogPost.findMany({
       where: { status: 'PUBLISHED' },
       select: { slug: true },
@@ -42,8 +36,6 @@ export async function generateStaticParams() {
 
 async function getPost(slug: string) {
   if (process.env.SKIP_BUILD_STATIC_GENERATION) return null
-  const usePayload = await payloadHasPosts().catch(() => false)
-  if (usePayload) return getPostBySlug(slug)
   return prisma.blogPost.findFirst({
     where: { slug, status: 'PUBLISHED', isPrivate: false },
     include: {
@@ -86,8 +78,6 @@ function formatDate(date: Date | string) {
 
 async function fetchRelatedPosts(postId: string, tags: string[], limit = 3) {
   if (tags.length === 0) return []
-  const usePayload = await payloadHasPosts().catch(() => false)
-  if (usePayload) return getRelatedPosts({ excludeId: postId, tags, limit })
   return prisma.blogPost.findMany({
     where: {
       id: { not: postId },

@@ -13,10 +13,6 @@ import prisma from '@/lib/prisma'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
-import {
-  getHeroPost, getPublishedPosts, getMostReadPosts, getCategories, getPopularTags,
-  getPostCount, payloadHasPosts,
-} from '@/lib/blog/payload-blog-service'
 const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
@@ -38,25 +34,6 @@ async function getPosts(category?: string, tag?: string) {
   // Durante next build não há DB disponível
   if (process.env.SKIP_BUILD_STATIC_GENERATION) return EMPTY_POSTS
 
-  // Usa Payload se já migrado, Prisma como fallback
-  const usePayload = await payloadHasPosts().catch(() => false)
-
-  if (usePayload) {
-    try {
-      const [hero, posts, mostRead, categories, popularTags] = await Promise.all([
-        getHeroPost(),
-        getPublishedPosts({ category, tag, limit: 18 }),
-        !category && !tag ? getMostReadPosts(5) : Promise.resolve([]),
-        getCategories(),
-        getPopularTags(12),
-      ])
-      return { hero, posts, mostRead, categories: categories.map(c => ({
-        ...c, _count: { posts: 0 },
-      })), popularTags }
-    } catch { return EMPTY_POSTS }
-  }
-
-  // Fallback: Prisma (pré-migração)
   try {
     const where = {
       ...PUBLIC_WHERE,
@@ -174,10 +151,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
   const { category: activeCategory, tag: activeTag } = await searchParams
   const { hero, posts, mostRead, categories, popularTags } = await getPosts(activeCategory, activeTag)
-  const usePayload = await payloadHasPosts().catch(() => false)
-  const total = usePayload
-    ? await getPostCount().catch(() => null)
-    : await prisma.blogPost.count({ where: PUBLIC_WHERE }).catch(() => null)
+  const total = await prisma.blogPost.count({ where: PUBLIC_WHERE }).catch(() => null)
   const isFiltered = !!activeCategory || !!activeTag
 
   // Não duplicar o post que aparece no hero/banner
