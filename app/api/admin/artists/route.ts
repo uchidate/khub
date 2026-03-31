@@ -5,7 +5,6 @@ import { toHttpError } from '@/lib/repositories/base'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { revalidatePath } from 'next/cache'
-import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
 import { z } from 'zod'
 
 const log = createLogger('ADMIN-ARTISTS')
