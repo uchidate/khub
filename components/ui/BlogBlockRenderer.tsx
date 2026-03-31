@@ -17,9 +17,9 @@ function proxied(url: string): string {
     return url
 }
 
-/** Render inline markdown: **bold** and [link](url) */
+/** Render inline markdown: **bold**, [link](url), and **[bold link](url)** */
 function renderInline(text: string): React.ReactNode {
-    const pattern = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
+    const pattern = /\*\*\[([^\]]+)\]\(([^)]+)\)\*\*|\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
     const parts: React.ReactNode[] = []
     let last = 0
     let key = 0
@@ -27,14 +27,19 @@ function renderInline(text: string): React.ReactNode {
 
     while ((match = pattern.exec(text)) !== null) {
         if (match.index > last) parts.push(text.slice(last, match.index))
-        if (match[1]) {
-            parts.push(<strong key={key++} className="font-semibold text-foreground">{match[1]}</strong>)
-        } else if (match[2] && match[3]) {
-            const href = match[3]
-            const cls = "text-[#ff2d78] underline underline-offset-4 hover:brightness-110 transition-all"
-            parts.push(href.startsWith('/')
-                ? <Link key={key++} href={href} className={cls}>{match[2]}</Link>
-                : <a key={key++} href={href} target="_blank" rel="noopener noreferrer" className={cls}>{match[2]}</a>
+        const cls = "text-[#ff2d78] underline underline-offset-4 hover:brightness-110 transition-all"
+        if (match[1] && match[2]) {
+            // **[bold link](url)**
+            parts.push(match[2].startsWith('/')
+                ? <Link key={key++} href={match[2]} className={`font-semibold ${cls}`}>{match[1]}</Link>
+                : <a key={key++} href={match[2]} target="_blank" rel="noopener noreferrer" className={`font-semibold ${cls}`}>{match[1]}</a>
+            )
+        } else if (match[3]) {
+            parts.push(<strong key={key++} className="font-semibold text-foreground">{match[3]}</strong>)
+        } else if (match[4] && match[5]) {
+            parts.push(match[5].startsWith('/')
+                ? <Link key={key++} href={match[5]} className={cls}>{match[4]}</Link>
+                : <a key={key++} href={match[5]} target="_blank" rel="noopener noreferrer" className={cls}>{match[4]}</a>
             )
         }
         last = match.index + match[0].length
