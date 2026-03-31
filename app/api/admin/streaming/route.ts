@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { requireAdmin, requireEditorOrAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
-
-async function requireAdmin() {
-    const session = await auth()
-    if (!session || !['admin', 'editor'].includes(session.user.role?.toLowerCase() ?? '')) {
-        return null
-    }
-    return session
-}
 
 // GET /api/admin/streaming?source=netflix_br&page=1
 export async function GET(request: NextRequest) {
-    if (!await requireAdmin()) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { error } = await requireEditorOrAdmin()
+    if (error) return error
 
     const { searchParams } = request.nextUrl
     const source = searchParams.get('source') ?? undefined
@@ -40,9 +31,8 @@ export async function GET(request: NextRequest) {
 
 // DELETE /api/admin/streaming?id=xxx
 export async function DELETE(request: NextRequest) {
-    if (!await requireAdmin()) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { error } = await requireEditorOrAdmin()
+    if (error) return error
 
     const id = request.nextUrl.searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
@@ -53,10 +43,8 @@ export async function DELETE(request: NextRequest) {
 
 // POST /api/admin/streaming/refresh — dispara o cron
 export async function POST(request: NextRequest) {
-    const session = await auth()
-    if (!session || session.user.role?.toLowerCase() !== 'admin') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { error } = await requireAdmin()
+    if (error) return error
 
     const body = await request.json().catch(() => ({})) as { action?: string }
     if (body.action !== 'refresh') {

@@ -8,7 +8,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { requireAdmin } from '@/lib/admin-helpers'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 
@@ -28,10 +28,8 @@ interface NginxGatewayEntry {
 }
 
 export async function GET() {
-    const session = await auth()
-    if (!session || session.user.role?.toLowerCase() !== 'admin') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { error } = await requireAdmin()
+    if (error) return error
 
     if (!existsSync(LOG_PATH)) {
         return NextResponse.json({

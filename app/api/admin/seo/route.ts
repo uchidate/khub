@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { requireEditorOrAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
-
-async function requireAdmin() {
-    const session = await auth()
-    if (!session || !['admin', 'editor'].includes(session.user.role?.toLowerCase() ?? '')) {
-        return null
-    }
-    return session
-}
 
 const upsertSchema = z.object({
     entityType:   z.enum(['artist', 'production', 'group', 'blog_post']),
@@ -26,9 +18,8 @@ const upsertSchema = z.object({
 // GET /api/admin/seo?entityType=artist&entityId=xxx  → busca um override
 // GET /api/admin/seo?page=1                          → lista todos
 export async function GET(request: NextRequest) {
-    if (!await requireAdmin()) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { error } = await requireEditorOrAdmin()
+    if (error) return error
 
     const { searchParams } = request.nextUrl
     const entityType = searchParams.get('entityType')
@@ -61,9 +52,8 @@ export async function GET(request: NextRequest) {
 
 // PUT /api/admin/seo — cria ou atualiza (upsert)
 export async function PUT(request: NextRequest) {
-    if (!await requireAdmin()) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { error } = await requireEditorOrAdmin()
+    if (error) return error
 
     const body = await request.json()
     const validated = upsertSchema.parse(body)
@@ -97,9 +87,8 @@ export async function PUT(request: NextRequest) {
 
 // DELETE /api/admin/seo?entityType=artist&entityId=xxx
 export async function DELETE(request: NextRequest) {
-    if (!await requireAdmin()) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { error } = await requireEditorOrAdmin()
+    if (error) return error
 
     const { searchParams } = request.nextUrl
     const entityType = searchParams.get('entityType')
