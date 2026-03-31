@@ -147,6 +147,16 @@ export const MusicalGroups: CollectionConfig = {
             defaultValue: false,
             admin: { position: 'sidebar' },
         },
+
+        // ── Relações ──────────────────────────────────────────────────────────
+        {
+            name: 'members',
+            type: 'relationship',
+            relationTo: 'artists',
+            hasMany: true,
+            label: 'Membros',
+            admin: { description: 'Artistas que fazem ou fizeram parte deste grupo' },
+        },
     ],
     timestamps: true,
 }

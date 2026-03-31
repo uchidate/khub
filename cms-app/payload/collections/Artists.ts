@@ -136,6 +136,16 @@ export const Artists: CollectionConfig = {
                 { label: '✨ Novo',    value: 'NOVO' },
             ],
         },
+
+        // ── Relações ──────────────────────────────────────────────────────────
+        {
+            name: 'groups',
+            type: 'relationship',
+            relationTo: 'musical-groups',
+            hasMany: true,
+            label: 'Grupos',
+            admin: { description: 'Grupos dos quais o artista faz ou fez parte' },
+        },
     ],
     timestamps: true,
 }
