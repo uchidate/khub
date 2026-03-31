@@ -7,6 +7,13 @@ export default function robots(): MetadataRoute.Robots {
                 // AdsBot crawlers não são cobertos pelo wildcard (*) — devem ser explícitos
                 userAgent: ['Mediapartners-Google', 'AdsBot-Google'],
                 allow: '/',
+                disallow: [
+                    '/admin/',
+                    '/api/',
+                    '/um/',
+                    '/auth/',
+                    '/_next/',
+                ],
             },
             {
                 userAgent: '*',
