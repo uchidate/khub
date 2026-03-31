@@ -17,9 +17,9 @@ function proxied(url: string): string {
     return url
 }
 
-/** Render inline markdown: **bold** and [link](url) */
+/** Render inline markdown: **bold**, [link](url), and **[bold link](url)** */
 function renderInline(text: string): React.ReactNode {
-    const pattern = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
+    const pattern = /\*\*\[([^\]]+)\]\(([^)]+)\)\*\*|\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
     const parts: React.ReactNode[] = []
     let last = 0
     let key = 0
@@ -27,14 +27,19 @@ function renderInline(text: string): React.ReactNode {
 
     while ((match = pattern.exec(text)) !== null) {
         if (match.index > last) parts.push(text.slice(last, match.index))
-        if (match[1]) {
-            parts.push(<strong key={key++} className="font-semibold text-foreground">{match[1]}</strong>)
-        } else if (match[2] && match[3]) {
-            const href = match[3]
-            const cls = "text-[#ff2d78] underline underline-offset-4 hover:brightness-110 transition-all"
-            parts.push(href.startsWith('/')
-                ? <Link key={key++} href={href} className={cls}>{match[2]}</Link>
-                : <a key={key++} href={href} target="_blank" rel="noopener noreferrer" className={cls}>{match[2]}</a>
+        const cls = "text-[#ff2d78] underline underline-offset-4 hover:brightness-110 transition-all"
+        if (match[1] && match[2]) {
+            // **[bold link](url)**
+            parts.push(match[2].startsWith('/')
+                ? <Link key={key++} href={match[2]} className={`font-semibold ${cls}`}>{match[1]}</Link>
+                : <a key={key++} href={match[2]} target="_blank" rel="noopener noreferrer" className={`font-semibold ${cls}`}>{match[1]}</a>
+            )
+        } else if (match[3]) {
+            parts.push(<strong key={key++} className="font-semibold text-foreground">{match[3]}</strong>)
+        } else if (match[4] && match[5]) {
+            parts.push(match[5].startsWith('/')
+                ? <Link key={key++} href={match[5]} className={cls}>{match[4]}</Link>
+                : <a key={key++} href={match[5]} target="_blank" rel="noopener noreferrer" className={cls}>{match[4]}</a>
             )
         }
         last = match.index + match[0].length
@@ -311,23 +316,23 @@ function ArtistCardBlock({ artistId, note, compact, data }: { artistId: string; 
     }
     return (
         <Link href={`/artists/${artistId}`}
-            className="group flex items-center gap-4 my-3 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
-            <div className="w-16 h-16 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-lg font-bold text-[#ff2d78]">
+            className="group flex items-center gap-5 my-4 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
+            <div className="w-24 h-24 rounded-xl bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-2xl font-bold text-[#ff2d78]">
                 {data?.primaryImageUrl ? (
-                    <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={64} height={64} className="w-full h-full object-cover" />
+                    <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={96} height={96} className="w-full h-full object-cover object-top" />
                 ) : (
                     <span>{data?.nameRomanized?.[0] ?? '?'}</span>
                 )}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-0.5">Artista</p>
-                <p className="text-base font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-1">Artista</p>
+                <p className="text-lg font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
                     {data?.nameRomanized ?? artistId}
                 </p>
-                {role && <p className="text-xs text-muted mt-0.5">{role}</p>}
-                {note && <p className="text-xs text-muted mt-1 italic leading-snug">{note}</p>}
+                {role && <p className="text-sm text-muted mt-0.5">{role}</p>}
+                {note && <p className="text-sm text-muted mt-1.5 leading-snug">{note}</p>}
+                <p className="text-xs text-[#ff2d78] mt-2 font-semibold group-hover:underline">Ver perfil completo →</p>
             </div>
-            <span className="text-muted text-xs shrink-0 group-hover:text-[#ff2d78] transition-colors">Ver perfil →</span>
         </Link>
     )
 }
