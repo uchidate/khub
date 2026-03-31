@@ -30,11 +30,22 @@ jobs:
           context: ./cms-app
           file: ./cms-app/Dockerfile
           push: true
-          tags: ghcr.io/uchidate/khub-cms:staging
+          tags: |
+            ghcr.io/uchidate/khub-cms:staging
+            ghcr.io/uchidate/khub-cms:latest
 
-      - name: Deploy CMS to Coolify
+      - name: Deploy CMS Staging to Coolify
         run: |
           curl --silent --show-error --fail \
             --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 5 \
             -X GET "http://31.97.255.107:8000/api/v1/deploy?uuid=${{ secrets.COOLIFY_CMS_STAGING_UUID }}&force=false" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
+
+      - name: Deploy CMS Production to Coolify
+        continue-on-error: true
+        run: |
+          [ -z "${{ secrets.COOLIFY_CMS_PRODUCTION_UUID }}" ] && echo "COOLIFY_CMS_PRODUCTION_UUID not set, skipping" && exit 0
+          curl --silent --show-error --fail \
+            --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 5 \
+            -X GET "http://31.97.255.107:8000/api/v1/deploy?uuid=${{ secrets.COOLIFY_CMS_PRODUCTION_UUID }}&force=false" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
