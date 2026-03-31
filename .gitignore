@@ -99,3 +99,6 @@ pre-upgrade-state.md
 
 # Instagram downloaded images (runtime, persisted via Docker volume)
 public/instagram/
+
+# Payload CMS local app (não faz parte do deploy)
+/cms-app/
