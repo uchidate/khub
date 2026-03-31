@@ -1,271 +1,97 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
-import { z } from 'zod'
+import { UserRepository } from '@/lib/repositories/UserRepository'
+import { toHttpError } from '@/lib/repositories/base'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
-import { logAudit } from '@/lib/services/audit-service'
+import { z } from 'zod'
 
 const log = createLogger('ADMIN-USERS')
 
-// Force dynamic rendering (uses auth/headers)
 export const dynamic = 'force-dynamic'
 
-const userSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-  role: z.enum(['user', 'admin']).optional().default('user'),
-})
+function getIp(req: NextRequest) {
+    return req.headers.get('x-forwarded-for') ?? undefined
+}
 
-/**
- * GET /api/admin/users
- * List users with pagination, search, and sorting
- *
- * Query params:
- * - page: number (default: 1)
- * - limit: number (default: 20)
- * - search: string (search by name or email)
- * - sortBy: string (default: createdAt)
- * - sortOrder: 'asc' | 'desc' (default: desc)
- *
- * Auth: Admin only
- */
+/** GET /api/admin/users */
 export async function GET(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
+        const { searchParams } = new URL(request.url)
 
-    // Aggregate stats endpoint
-    if (searchParams.get('stats') === '1') {
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      const [total, admins, verified, newThisWeek] = await Promise.all([
-        prisma.user.count(),
-        prisma.user.count({ where: { role: 'admin' } }),
-        prisma.user.count({ where: { emailVerified: { not: null } } }),
-        prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
-      ])
-      return NextResponse.json({ total, admins, verified, newThisWeek })
+        if (searchParams.get('stats') === '1') {
+            const stats = await UserRepository.stats()
+            return NextResponse.json(stats)
+        }
+
+        const { page, limit, search, sortBy, sortOrder } = buildQueryOptions(searchParams)
+        const result = await UserRepository.findMany({
+            search,
+            role: searchParams.get('role') ?? undefined,
+            page, limit, sortBy, sortOrder,
+        })
+
+        return paginatedResponse(result.data, result.total, result.page, result.limit)
+    } catch (error) {
+        log.error('GET users error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
-    const role = searchParams.get('role') ?? ''
-
-    // Build where clause for search + role filter
-    const where = {
-      ...(role ? { role } : {}),
-      ...(search ? {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' as const } },
-          { email: { contains: search, mode: 'insensitive' as const } },
-        ],
-      } : {}),
-    }
-
-    // Fetch users and total count
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          emailVerified: true,
-          createdAt: true,
-          updatedAt: true,
-          _count: {
-            select: {
-              favorites: true,
-            },
-          },
-        },
-      }),
-      prisma.user.count({ where }),
-    ])
-
-    // Format response
-    const formattedUsers = users.map((user) => ({
-      ...user,
-      favoritesCount: user._count.favorites,
-    }))
-
-    return paginatedResponse(
-      formattedUsers,
-      total,
-      parseInt(searchParams.get('page') || '1'),
-      parseInt(searchParams.get('limit') || '20')
-    )
-  } catch (error) {
-    log.error('Get users error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * POST /api/admin/users
- * Create a new user
- *
- * Body:
- * - name: string
- * - email: string
- * - role?: 'user' | 'admin'
- *
- * Auth: Admin only
- */
+/** POST /api/admin/users */
 export async function POST(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const validated = userSchema.parse(body)
-
-    // Check if email already exists
-    const existing = await prisma.user.findUnique({
-      where: { email: validated.email },
-    })
-
-    if (existing) {
-      return NextResponse.json({ error: 'Email já cadastrado' }, { status: 400 })
+        const user = await UserRepository.create(
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(user, { status: 201 })
+    } catch (error) {
+        log.error('POST user error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name: validated.name,
-        email: validated.email,
-        role: validated.role,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-    })
-
-    return NextResponse.json(user, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Create user error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * PATCH /api/admin/users?id=<userId>
- * Update a user
- *
- * Body:
- * - name?: string
- * - email?: string
- * - role?: 'user' | 'admin'
- *
- * Auth: Admin only
- */
+/** PATCH /api/admin/users?id=<id> */
 export async function PATCH(request: NextRequest) {
-  try {
-    const { error, session } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('id')
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: 'User ID required' }, { status: 400 })
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+        const user = await UserRepository.update(
+            id,
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(user)
+    } catch (error) {
+        log.error('PATCH user error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const body = await request.json()
-    const validated = userSchema.partial().parse(body)
-
-    // Check if user exists
-    const existing = await prisma.user.findUnique({
-      where: { id: userId },
-    })
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 })
-    }
-
-    // If email is being updated, check for duplicates
-    if (validated.email && validated.email !== existing.email) {
-      const emailExists = await prisma.user.findUnique({
-        where: { email: validated.email },
-      })
-
-      if (emailExists) {
-        return NextResponse.json({ error: 'Email já cadastrado' }, { status: 400 })
-      }
-    }
-
-    // Update user
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: validated,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        updatedAt: true,
-      },
-    })
-
-    await logAudit({ adminId: session!.user.id, action: 'UPDATE', entity: 'User', entityId: userId, details: `Atualizou usuário "${user.name}" — papel: ${user.role}` })
-    return NextResponse.json(user)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Update user error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * DELETE /api/admin/users
- * Delete users
- *
- * Body:
- * - ids: string[]
- *
- * Auth: Admin only
- */
+/** DELETE /api/admin/users */
 export async function DELETE(request: NextRequest) {
-  try {
-    const { error, session } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(body)
+        const { ids } = z.object({ ids: z.array(z.string()) }).parse(await request.json())
+        const result = await UserRepository.delete(ids, session!.user.id, { adminId: session!.user.id, ip: getIp(request) })
 
-    // Prevent self-deletion
-    if (ids.includes(session!.user.id)) {
-      return NextResponse.json({ error: 'Você não pode deletar sua própria conta' }, { status: 400 })
+        return NextResponse.json({ message: `${result.count} usuário(s) deletado(s)` })
+    } catch (error) {
+        log.error('DELETE users error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    // Delete users
-    const result = await prisma.user.deleteMany({
-      where: { id: { in: ids } },
-    })
-
-    return NextResponse.json({ message: `${result.count} usuário(s) deletado(s)` })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    log.error('Delete users error', { error: getErrorMessage(error) })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }

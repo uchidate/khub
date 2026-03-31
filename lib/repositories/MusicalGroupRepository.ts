@@ -157,6 +157,13 @@ export const MusicalGroupRepository = {
         return listResult(data, total, page, limit)
     },
 
+    async findAllSimple() {
+        return prisma.musicalGroup.findMany({
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' },
+        })
+    },
+
     async stats() {
         const [total, active, disbanded, noMembers, hidden] = await Promise.all([
             prisma.musicalGroup.count(),
