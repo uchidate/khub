@@ -4,8 +4,10 @@ import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { Artists } from './payload/collections/Artists'
 import { Categories } from './payload/collections/Categories'
 import { Media } from './payload/collections/Media'
+import { MusicalGroups } from './payload/collections/MusicalGroups'
 import { Posts } from './payload/collections/Posts'
 import { Users } from './payload/collections/Users'
 
@@ -40,7 +42,7 @@ export default buildConfig({
             collections: ['posts'],
         },
     },
-    collections: [Users, Categories, Posts, Media],
+    collections: [Users, Categories, Posts, Media, Artists, MusicalGroups],
     db: postgresAdapter({
         pool: {
             connectionString: process.env.DATABASE_URL,
