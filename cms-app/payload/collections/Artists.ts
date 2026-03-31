@@ -139,6 +139,13 @@ export const Artists: CollectionConfig = {
 
         // ── Relações ──────────────────────────────────────────────────────────
         {
+            name: 'agency',
+            type: 'relationship',
+            relationTo: 'agencies',
+            label: 'Agência',
+            admin: { position: 'sidebar' },
+        },
+        {
             name: 'groups',
             type: 'relationship',
             relationTo: 'musical-groups',
