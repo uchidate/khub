@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { applySeoOverride } from '@/lib/seo/apply-override'
 import { cache } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -68,7 +69,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     if (group.isHidden) return { title: 'Grupo não encontrado', robots: { index: false, follow: false } }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
     const isThinContent = !group.profileImageUrl && !group.bio
-    return {
+    return applySeoOverride({
         title: `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''}`,
         description: description.slice(0, 160),
         alternates: { canonical: `${BASE_URL}/groups/${params.id}` },
@@ -86,7 +87,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: description.slice(0, 160),
             images: group.profileImageUrl ? [group.profileImageUrl] : [],
         },
-    }
+    }, 'group', params.id)
 }
 
 export default async function GroupDetailPage(props: { params: Promise<{ id: string }> }) {

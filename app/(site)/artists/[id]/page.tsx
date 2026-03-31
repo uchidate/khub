@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { applySeoOverride } from '@/lib/seo/apply-override'
 import { cache } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -121,7 +122,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     const description = artist.bio || `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''} - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
     const isThinContent = !artist.primaryImageUrl && !artist.bio
 
-    return {
+    return applySeoOverride({
         title: `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}`,
         description: description.slice(0, 160),
         alternates: { canonical: `${BASE_URL}/artists/${params.id}` },
@@ -139,7 +140,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: description.slice(0, 160),
             images: artist.primaryImageUrl ? [artist.primaryImageUrl] : []
         }
-    }
+    }, 'artist', params.id)
 }
 
 export default async function ArtistDetailPage(props: { params: Promise<{ id: string }> }) {

@@ -16,6 +16,7 @@ import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
+import { applySeoOverride } from '@/lib/seo/apply-override'
 const BASE_URL = SITE_URL
 
 export const dynamic = 'force-dynamic'
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPost(slug)
   if (!post) return {}
 
-  return {
+  return applySeoOverride({
     title: post.title,
     description: post.excerpt ?? undefined,
     alternates: { canonical: `${BASE_URL}/blog/${slug}` },
@@ -69,7 +70,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: post.excerpt ?? undefined,
       images: post.coverImageUrl ? [post.coverImageUrl] : [],
     },
-  }
+  }, 'blog_post', slug)
 }
 
 function formatDate(date: Date | string) {

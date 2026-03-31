@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { applySeoOverride } from '@/lib/seo/apply-override'
 import { getTranslation } from "@/lib/translations"
 import Link from "next/link"
 import Image from "next/image"
@@ -77,7 +78,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         ? `${synopsisMeta.slice(0, 120)}...${castNames ? ` Elenco: ${castNames}` : ''}`
         : description
 
-    return {
+    return applySeoOverride({
         title: production.titleKr
             ? `${production.titlePt} (${production.titleKr})`
             : production.titlePt,
@@ -103,7 +104,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: fullDescription.slice(0, 160),
             images: production.imageUrl ? [production.imageUrl] : []
         }
-    }
+    }, 'production', params.id)
 }
 
 export default async function ProductionDetailPage(props: { params: Promise<{ id: string }> }) {
