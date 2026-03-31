@@ -2,6 +2,7 @@ import { buildConfig } from 'payload'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import sharp from 'sharp'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { Artists } from './payload/collections/Artists'
@@ -51,6 +52,7 @@ export default buildConfig({
         push: process.env.PAYLOAD_PUSH_SCHEMA === 'true',
     }),
     editor: lexicalEditor(),
+    sharp,
     secret: process.env.PAYLOAD_SECRET || 'dev-secret-change-in-prod',
     typescript: {
         outputFile: path.resolve(dirname, 'payload-types.ts'),
