@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     const source = searchParams.get('source') ?? undefined
     const page   = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
-    const limit  = 20
+    const limit  = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20')))
     const skip   = (page - 1) * limit
 
     const where = source ? { source } : {}

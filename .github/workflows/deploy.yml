@@ -312,6 +312,22 @@ jobs:
           echo "❌ Production não respondeu após 120s"
           exit 1
 
+      - name: 🔧 Atualizar container nas Scheduled Tasks
+        run: |
+          # Após deploy, o container recebe um novo nome — atualizar todas as tasks
+          APP_UUID="e6h2xvvpu8i2jmzcb3tpzmxo"
+          CONTAINER=$(curl -s "http://31.97.255.107:8000/api/v1/applications/${APP_UUID}/containers" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" | jq -r '.[0].Names // .[0].name // empty' | head -1 | tr -d '/')
+          if [ -z "$CONTAINER" ]; then
+            echo "⚠️ Não foi possível detectar o container name — tasks não atualizadas"
+            exit 0
+          fi
+          echo "Container detectado: $CONTAINER"
+          SSH_CMD="docker exec coolify-db psql -U coolify coolify -c \"UPDATE scheduled_tasks SET container = '${CONTAINER}' WHERE application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');\""
+          sshpass -p '${{ secrets.SSH_PASSWORD }}' ssh -o StrictHostKeyChecking=no root@31.97.255.107 "$SSH_CMD" 2>/dev/null \
+            && echo "✅ Scheduled tasks atualizadas com container: $CONTAINER" \
+            || echo "⚠️ Falha ao atualizar scheduled tasks (não crítico)"
+
       - name: 📊 Summary
         run: |
           echo "### 🟢 Deploy Production Concluído" >> $GITHUB_STEP_SUMMARY
