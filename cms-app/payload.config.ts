@@ -5,6 +5,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import sharp from 'sharp'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { Agencies } from './payload/collections/Agencies'
 import { Albums } from './payload/collections/Albums'
 import { Artists } from './payload/collections/Artists'
 import { Categories } from './payload/collections/Categories'
@@ -12,6 +13,7 @@ import { Media } from './payload/collections/Media'
 import { MusicalGroups } from './payload/collections/MusicalGroups'
 import { Posts } from './payload/collections/Posts'
 import { Productions } from './payload/collections/Productions'
+import { Tags } from './payload/collections/Tags'
 import { Users } from './payload/collections/Users'
 
 const filename = fileURLToPath(import.meta.url)
@@ -45,7 +47,7 @@ export default buildConfig({
             collections: ['posts'],
         },
     },
-    collections: [Users, Categories, Posts, Media, Artists, MusicalGroups, Productions, Albums],
+    collections: [Users, Categories, Posts, Media, Artists, MusicalGroups, Productions, Albums, Agencies, Tags],
     db: postgresAdapter({
         pool: {
             connectionString: process.env.DATABASE_URL,

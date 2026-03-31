@@ -150,6 +150,13 @@ export const MusicalGroups: CollectionConfig = {
 
         // ── Relações ──────────────────────────────────────────────────────────
         {
+            name: 'agency',
+            type: 'relationship',
+            relationTo: 'agencies',
+            label: 'Agência',
+            admin: { position: 'sidebar' },
+        },
+        {
             name: 'members',
             type: 'relationship',
             relationTo: 'artists',
