@@ -1,5 +1,50 @@
-import type { CollectionConfig, CollectionBeforeChangeHook } from 'payload'
+import type { CollectionConfig, CollectionBeforeChangeHook, CollectionBeforeValidateHook } from 'payload'
 import { ALL_BLOG_BLOCKS } from '../blocks'
+
+// Auto-generate slug from title if not provided
+const autoSlug: CollectionBeforeValidateHook = ({ data, operation }) => {
+    if (operation === 'create' && data?.title && !data?.slug) {
+        data.slug = data.title
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+    }
+    return data
+}
+
+// Auto-calculate reading time from blocks
+const autoReadingTime: CollectionBeforeChangeHook = ({ data }) => {
+    const blocks = data?.blocks as Array<{ [key: string]: unknown }> | undefined
+    if (blocks?.length) {
+        let wordCount = 0
+        for (const block of blocks) {
+            for (const val of Object.values(block)) {
+                if (typeof val === 'string') wordCount += val.split(/\s+/).filter(Boolean).length
+            }
+        }
+        data.readingTimeMin = Math.max(1, Math.round(wordCount / 200))
+    }
+    return data
+}
+
+// Auto-fill coverImageUrl from uploaded cover media
+const autoCoverUrl: CollectionBeforeChangeHook = async ({ data, req }) => {
+    if (data?.cover && !data?.coverImageUrl) {
+        try {
+            const media = await req.payload.findByID({ collection: 'media', id: data.cover as string })
+            const siteUrl = process.env.PAYLOAD_SERVER_URL || 'http://localhost:3001'
+            if (media?.filename) {
+                data.coverImageUrl = `${siteUrl}/uploads/${media.filename}`
+            }
+        } catch {
+            // silently ignore if media not found
+        }
+    }
+    return data
+}
 
 // Auto-set publishedAt when status changes to PUBLISHED; clear scheduledAt
 const beforePublish: CollectionBeforeChangeHook = ({ data, originalDoc }) => {
@@ -8,7 +53,6 @@ const beforePublish: CollectionBeforeChangeHook = ({ data, originalDoc }) => {
     if (isPublishing && !wasPublished && !data.publishedAt) {
         data.publishedAt = new Date().toISOString()
     }
-    // Clear scheduledAt when manually publishing
     if (isPublishing && data.scheduledAt) {
         data.scheduledAt = null
     }
@@ -19,7 +63,8 @@ export const Posts: CollectionConfig = {
     slug: 'posts',
     labels: { singular: 'Post', plural: 'Posts' },
     hooks: {
-        beforeChange: [beforePublish],
+        beforeValidate: [autoSlug],
+        beforeChange: [autoReadingTime, autoCoverUrl, beforePublish],
     },
     admin: {
         useAsTitle: 'title',
@@ -27,7 +72,8 @@ export const Posts: CollectionConfig = {
         group: 'Blog',
         preview: (doc) => {
             const slug = doc?.slug as string | undefined
-            return slug ? `/blog/${slug}` : null
+            const siteUrl = process.env.SITE_URL || 'https://www.hallyuhub.com.br'
+            return slug ? `${siteUrl}/blog/${slug}` : null
         },
     },
     // Access: middleware already ensures only admins reach /cms
@@ -65,6 +111,14 @@ export const Posts: CollectionConfig = {
             name: 'coverImageUrl',
             type: 'text',
             label: 'URL da imagem de capa',
+            admin: { description: 'URL externa ou preenchido automaticamente pelo upload abaixo' },
+        },
+        {
+            name: 'cover',
+            type: 'upload',
+            relationTo: 'media',
+            label: 'Upload da capa',
+            admin: { description: 'Faça upload direto — a URL será usada automaticamente' },
         },
 
         // ── Conteúdo em blocos ────────────────────────────────────────────────
