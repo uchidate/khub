@@ -75,19 +75,38 @@ blog_stats_row, blog_curiosity, blog_highlight, blog_callout, blog_quote, blog_d
 }
 
 ## Diretrizes de conteúdo:
-- Mínimo 1300 palavras somadas nos blog_paragraph
-- Tom: admirativo mas factual, para fãs brasileiros
-- Estrutura sugerida:
-  1. blog_artist_card
-  2. Introdução impactante (2 blog_paragraph)
-  3. blog_highlight com frase/conquista icônica
-  4. Seção de origem/infância
-  5. blog_stats_row com dados biográficos
-  6. 4-6 seções H2 cobrindo carreira, projetos principais
-  7. blog_production_card para projetos principais
-  8. blog_curiosity (2-3 ao longo do artigo)
-  9. Conclusão/legado
-  10. blog_callout final
+- Mínimo 1800 palavras somadas nos blog_paragraph
+- Tom: admirativo mas factual, apaixonado, para fãs brasileiros
+- **Imagens são OBRIGATÓRIAS**: mínimo 4 blog_image ao longo do artigo
+  - Buscar URLs reais no TMDb: `https://image.tmdb.org/t/p/original/XXXXX.jpg`
+  - Colocar 1 imagem a cada 2-3 seções, nunca duas seguidas
+  - Sempre incluir caption descritiva e contextual
+- Variedade de blocos obrigatória — não usar só heading + paragraph em sequência
+- Estrutura obrigatória:
+  1. `blog_artist_card`
+  2. Introdução impactante (2 blog_paragraph) — NÃO começar com o nome da pessoa
+  3. `blog_image` com foto marcante (fullWidth: true)
+  4. `blog_highlight` com frase/conquista icônica
+  5. Seção de origem/infância (heading + 2 paragraph)
+  6. `blog_stats_row` com 5-6 dados biográficos
+  7. `blog_curiosity` — fato surpreendente da infância/início
+  8. `blog_image` de cena ou produção icônica
+  9. Seção carreira (heading + paragraphs + blog_production_card)
+  10. `blog_quote` com declaração real do artista (se disponível)
+  11. Mais 3-4 seções H2 com projetos/fases da carreira
+  12. `blog_production_card` para cada projeto principal mencionado
+  13. `blog_image` a cada 2 seções para quebrar o texto
+  14. `blog_curiosity` (mínimo 3 ao longo do artigo)
+  15. `blog_highlight` adicional com dado impressionante
+  16. `blog_divider` antes da conclusão
+  17. Seção de legado/impacto cultural
+  18. `blog_callout` final convidando o leitor a explorar
+
+## Imagens — como buscar URLs do TMDb:
+Buscar o artista/drama na API TMDb e pegar backdrops e profile images:
+- Backdrops (landscape): `https://api.themoviedb.org/3/person/{id}/tagged_images?api_key=411337d42a0431084f39266c265688aa`
+- Dramas associados: `https://api.themoviedb.org/3/tv/{id}/images?api_key=411337d42a0431084f39266c265688aa`
+- Base URL das imagens: `https://image.tmdb.org/t/p/original/CAMINHO.jpg`
 
 ## Retorne APENAS o JSON do artigo, sem texto antes ou depois.
 ```
@@ -125,16 +144,26 @@ Escreva um artigo completo em português brasileiro sobre o drama/série "{{NOME
   "blocks": [...]
 }
 
-## Estrutura sugerida:
-  1. blog_production_card
-  2. Introdução com hook (NÃO abrir com "X é um drama sobre...")
-  3. blog_stats_row (rede, episódios, plataforma, gênero)
-  4. blog_highlight com frase/cena icônica
-  5. 5-6 seções H2 temáticas
-  6. blog_artist_card para atores principais
-  7. blog_curiosity (2-3 ao longo)
-  8. Análise final/recomendação
-  9. blog_callout
+## Estrutura obrigatória:
+  1. `blog_production_card`
+  2. Introdução com hook — NÃO abrir com "X é um drama sobre..."
+  3. `blog_image` com backdrop do drama (fullWidth: true)
+  4. `blog_stats_row` (rede, episódios, plataforma, gênero, ano)
+  5. `blog_highlight` com frase/cena icônica
+  6. 5-6 seções H2 temáticas (enredo, personagens, trilha, impacto...)
+  7. `blog_image` a cada 2 seções — mínimo 4 imagens no total
+  8. `blog_artist_card` para atores principais
+  9. `blog_quote` com declaração do elenco/diretor (se disponível)
+  10. `blog_curiosity` (mínimo 3 ao longo)
+  11. `blog_highlight` com dado de audiência/premiação
+  12. `blog_divider` antes da conclusão
+  13. Análise final/recomendação (2 paragraphs)
+  14. `blog_callout` convidando o leitor
+
+## Imagens — como buscar URLs do TMDb:
+- Backdrops do drama: `https://api.themoviedb.org/3/tv/{id}/images?api_key=411337d42a0431084f39266c265688aa`
+- Base URL: `https://image.tmdb.org/t/p/original/CAMINHO.jpg`
+- Incluir caption descritiva para cada imagem
 
 ## Retorne APENAS o JSON do artigo, sem texto antes ou depois.
 ```
