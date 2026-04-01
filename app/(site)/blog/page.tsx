@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 300 // revalida a cada 5 minutos
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
