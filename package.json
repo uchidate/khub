@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "docker compose -f docker-compose.dev.yml up -d postgres",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
