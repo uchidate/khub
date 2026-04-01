@@ -29,6 +29,8 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_rating:          <Star className="w-3.5 h-3.5" />,
     blog_divider:         <Minus className="w-3.5 h-3.5" />,
     blog_callout:         <Zap className="w-3.5 h-3.5" />,
+    blog_curiosity:       <Zap className="w-3.5 h-3.5" />,
+    blog_highlight:       <Quote className="w-3.5 h-3.5" />,
 }
 
 const COLORS: Record<BlogBlockType, string> = {
@@ -48,12 +50,14 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_rating:          'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
     blog_divider:         'bg-surface text-muted border-border',
     blog_callout:         'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    blog_curiosity:       'bg-pink-500/20 text-pink-300 border-pink-500/30',
+    blog_highlight:       'bg-amber-500/20 text-amber-300 border-amber-500/30',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
 
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
-    { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_callout', 'blog_divider'] },
+    { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
     { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok'] },
     { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating'] },
 ]
@@ -78,6 +82,8 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_rating':          return { type, score: 8, label: '', summary: '' }
         case 'blog_divider':         return { type }
         case 'blog_callout':         return { type, variant: 'fact', title: '', text: '' }
+        case 'blog_curiosity':       return { type, text: '', emoji: '💡' }
+        case 'blog_highlight':       return { type, text: '', attribution: '' }
     }
 }
 
@@ -499,6 +505,24 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         rows={2} placeholder="Texto do destaque... (**negrito** suportado)" className={inputCls} />
                 </div>
             )
+        case 'blog_curiosity':
+            return (
+                <div className="space-y-2">
+                    <input value={block.emoji || ''} onChange={e => onChange({ ...block, emoji: e.target.value })}
+                        placeholder="Emoji (ex: 🎤)" className={inputCls} />
+                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
+                        rows={3} placeholder="Curiosidade... (**negrito** e [links](/url) suportados)" className={inputCls} />
+                </div>
+            )
+        case 'blog_highlight':
+            return (
+                <div className="space-y-2">
+                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
+                        rows={2} placeholder="Texto em destaque visual grande..." className={inputCls} />
+                    <input value={block.attribution || ''} onChange={e => onChange({ ...block, attribution: e.target.value })}
+                        placeholder="Atribuição (opcional)..." className={inputCls} />
+                </div>
+            )
     }
 }
 
@@ -522,6 +546,8 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_rating':          return `Nota: ${block.score}/10${block.label ? ` — ${block.label}` : ''}`
         case 'blog_divider':         return '───────'
         case 'blog_callout':         return block.title || block.text.slice(0, 60) || '(vazio)'
+        case 'blog_curiosity':       return block.text.slice(0, 60) || '(vazio)'
+        case 'blog_highlight':       return block.text.slice(0, 60) || '(vazio)'
     }
 }
 
