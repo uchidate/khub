@@ -11,6 +11,7 @@
  *   npx tsx scripts/insert-article.ts /tmp/artigo.json
  */
 
+import 'dotenv/config'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import prisma from '../lib/prisma'
