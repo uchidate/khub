@@ -19,6 +19,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
 import { BottomNav } from "@/components/ui/BottomNav"
+import { SiteFooter } from "@/components/ui/SiteFooter"
+import { AdSenseLoader } from "@/components/features/AdSenseLoader"
 
 const getTickerPosts = unstable_cache(
     async () => {
@@ -130,13 +132,8 @@ export default async function RootLayout({
                 {process.env.NEXT_PUBLIC_GA_ID && (
                     <PublicAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
                 )}
-                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-                    <Script
-                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
-                        crossOrigin="anonymous"
-                        strategy="lazyOnload"
-                    />
-                )}
+                {/* AdSense carregado somente após consentimento do usuário (LGPD) */}
+                <AdSenseLoader />
                 {process.env.UMAMI_WEBSITE_ID && (
                     <UmamiScript websiteId={process.env.UMAMI_WEBSITE_ID} />
                 )}
@@ -189,25 +186,7 @@ export default async function RootLayout({
                         <PWAInstaller />
                         <CookieBanner />
                         <BottomNav />
-                        <footer className="bg-featured pt-4 pb-[calc(62px+1rem+env(safe-area-inset-bottom,0px))] sm:py-5 px-4 sm:px-8 lg:px-12 font-sora">
-                            <div className="max-w-7xl mx-auto relative flex items-center">
-                                <span className="text-[13px] font-extrabold tracking-[-0.04em] text-white shrink-0 z-10">
-                                    Hallyu<span className="text-[#ff2d78]">Hub</span>
-                                </span>
-                                <div className="absolute inset-0 flex items-center justify-center gap-3 sm:gap-5 pointer-events-none">
-                                    {[
-                                        { label: "Sobre", href: "/about" },
-                                        { label: "Contato", href: "/contato" },
-                                        { label: "Privacidade", href: "/privacidade" },
-                                    ].map(({ label, href }) => (
-                                        <a key={href} href={href} className="text-[11px] text-[#555] hover:text-[#aaa] font-medium transition-colors whitespace-nowrap pointer-events-auto">{label}</a>
-                                    ))}
-                                </div>
-                                <span className="hidden sm:inline text-[10px] text-[#444] shrink-0 ml-auto z-10">
-                                    &copy; {new Date().getFullYear()} HallyuHub
-                                </span>
-                            </div>
-                        </footer>
+                        <SiteFooter />
                     </div>
                     </AnalyticsProvider>
                 </SessionProvider>

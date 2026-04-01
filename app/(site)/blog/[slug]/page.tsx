@@ -266,6 +266,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mt-10" />
+
         {/* Author bio */}
         {(post as unknown as { author?: { bio?: string } }).author?.bio && (
           <div className="mt-10 p-5 rounded-2xl border border-border bg-surface flex gap-4">
