@@ -75,8 +75,9 @@ const SECTION_COLORS: Record<string, { bar: string; text: string; bg: string; bo
     'Artistas':  { bar: 'bg-pink-500',   text: 'text-pink-400',   bg: 'bg-pink-400/10',   border: 'border-pink-400/20' },
     'Produções': { bar: 'bg-blue-500',   text: 'text-blue-400',   bg: 'bg-blue-400/10',   border: 'border-blue-400/20' },
     'Grupos':    { bar: 'bg-cyan-500',   text: 'text-cyan-400',   bg: 'bg-cyan-400/10',   border: 'border-cyan-400/20' },
-    'Home':      { bar: 'bg-green-500',  text: 'text-green-400',  bg: 'bg-green-400/10',  border: 'border-green-400/20' },
-    'Outros':    { bar: 'bg-border',   text: 'text-muted',   bg: 'bg-surface',   border: 'border-border' },
+    'Home':          { bar: 'bg-green-500',  text: 'text-green-400',  bg: 'bg-green-400/10',  border: 'border-green-400/20' },
+    'API/Analytics': { bar: 'bg-violet-500', text: 'text-violet-400', bg: 'bg-violet-400/10', border: 'border-violet-400/20' },
+    'Outros':        { bar: 'bg-border',     text: 'text-muted',      bg: 'bg-surface',        border: 'border-border' },
 }
 
 const SECTION_PATH_MAP: Record<string, string> = {
@@ -87,6 +88,24 @@ const DEFAULT_BOT_COLOR = 'text-muted bg-surface border-border'
 
 function botColor(bot: string) {
     return BOT_COLORS[bot] ?? DEFAULT_BOT_COLOR
+}
+
+// Known internal paths that bots hit as a side-effect of JS execution or crawling
+const INTERNAL_PATH_LABELS: Record<string, string> = {
+    '/um/api/send':    'Umami Analytics — chamada de coleta de dados (não é uma página)',
+    '/um/script.js':  'Umami Analytics — script de rastreamento',
+    '/api/':          'Endpoint de API interna',
+}
+
+function getInternalPathLabel(path: string): string | null {
+    for (const [prefix, label] of Object.entries(INTERNAL_PATH_LABELS)) {
+        if (path === prefix || path.startsWith(prefix)) return label
+    }
+    return null
+}
+
+function isInternalPath(path: string): boolean {
+    return path.startsWith('/um/') || path.startsWith('/api/')
 }
 
 function formatDate(iso: string) {
@@ -170,8 +189,13 @@ function LogCard({ log, expanded, onToggle }: { log: BotLog; expanded: boolean; 
                         <span className="text-[10px] text-muted">{getBotGroup(log.bot)}</span>
                         <span className="text-[10px] text-muted ml-auto">{timeAgo(log.createdAt)}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                         <span className="font-mono text-xs text-foreground truncate">{log.path}</span>
+                        {isInternalPath(log.path) && (
+                            <span className="shrink-0 inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold bg-violet-500/15 text-violet-400 border border-violet-500/25" title={getInternalPathLabel(log.path) ?? undefined}>
+                                API
+                            </span>
+                        )}
                         <a
                             href={`${BASE_URL}${log.path}`}
                             target="_blank"
@@ -670,7 +694,12 @@ export default function BotLogsPage() {
                                             </td>
                                             <td className="px-4 py-3 font-mono text-xs text-foreground max-w-[280px]">
                                                 <div className="flex items-center gap-1.5 group/path min-w-0">
-                                                    <span className="truncate" title={log.path}>{log.path}</span>
+                                                    <span className="truncate" title={getInternalPathLabel(log.path) ?? log.path}>{log.path}</span>
+                                                    {isInternalPath(log.path) && (
+                                                        <span className="shrink-0 inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold bg-violet-500/15 text-violet-400 border border-violet-500/25" title={getInternalPathLabel(log.path) ?? undefined}>
+                                                            API
+                                                        </span>
+                                                    )}
                                                     <a
                                                         href={`${BASE_URL}${log.path}`}
                                                         target="_blank"
@@ -682,6 +711,9 @@ export default function BotLogsPage() {
                                                         <ExternalLink className="w-3 h-3" />
                                                     </a>
                                                 </div>
+                                                {getInternalPathLabel(log.path) && (
+                                                    <p className="text-[10px] text-violet-400/70 mt-0.5 truncate">{getInternalPathLabel(log.path)}</p>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 font-mono text-xs text-muted">
                                                 {log.ip ?? '—'}
