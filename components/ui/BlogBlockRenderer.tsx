@@ -282,6 +282,31 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
             )
         }
 
+        case 'blog_curiosity':
+            return (
+                <div className="my-7 rounded-2xl px-5 py-4 flex gap-4 items-start"
+                    style={{ background: 'linear-gradient(135deg, rgba(255,45,120,0.07) 0%, rgba(255,180,50,0.07) 100%)', border: '1px solid rgba(255,45,120,0.15)' }}>
+                    <span className="text-2xl shrink-0 mt-0.5">{block.emoji ?? '💡'}</span>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-1.5">Você sabia?</p>
+                        <p className="text-sm leading-relaxed text-foreground">{renderInline(block.text)}</p>
+                    </div>
+                </div>
+            )
+
+        case 'blog_highlight':
+            return (
+                <div className="my-10 py-8 px-6 text-center border-y"
+                    style={{ borderColor: 'rgba(255,45,120,0.2)' }}>
+                    <p className="text-2xl md:text-3xl font-black leading-snug text-foreground" style={{ fontStyle: 'italic' }}>
+                        &ldquo;{block.text}&rdquo;
+                    </p>
+                    {block.attribution && (
+                        <p className="mt-3 text-sm text-muted font-medium tracking-wide">— {block.attribution}</p>
+                    )}
+                </div>
+            )
+
         case 'blog_divider':
             return <hr className="my-10 border-t border-border" />
 

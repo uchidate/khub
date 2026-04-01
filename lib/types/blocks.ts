@@ -189,6 +189,20 @@ export type BlogCalloutBlock = {
     text: string
 }
 
+// Card "Você sabia?" — curiosidade visual destacada
+export type BlogCuriosityBlock = {
+    type: 'blog_curiosity'
+    text: string
+    emoji?: string   // ex: "🎤", "🏆", "🎬"
+}
+
+// Pull quote estilo revista — texto grande centralizado para impacto visual
+export type BlogHighlightBlock = {
+    type: 'blog_highlight'
+    text: string
+    attribution?: string
+}
+
 export type BlogBlock =
     | BlogHeadingBlock
     | BlogParagraphBlock
@@ -206,6 +220,8 @@ export type BlogBlock =
     | BlogRatingBlock
     | BlogDividerBlock
     | BlogCalloutBlock
+    | BlogCuriosityBlock
+    | BlogHighlightBlock
 
 export type BlogBlockType = BlogBlock['type']
 
@@ -226,6 +242,8 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_rating:           'Avaliação',
     blog_divider:          'Divisor',
     blog_callout:          'Destaque',
+    blog_curiosity:        'Curiosidade',
+    blog_highlight:        'Destaque Visual',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'
