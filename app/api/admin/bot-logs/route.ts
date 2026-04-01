@@ -75,6 +75,7 @@ export async function GET(request: NextRequest) {
                             WHEN path LIKE '/productions/%' OR path = '/productions' THEN 'Produções'
                             WHEN path LIKE '/groups/%' OR path = '/groups' THEN 'Grupos'
                             WHEN path = '/' THEN 'Home'
+                            WHEN path LIKE '/um/%' OR path LIKE '/api/%' THEN 'API/Analytics'
                             ELSE 'Outros'
                         END AS section,
                         COUNT(*) AS count
