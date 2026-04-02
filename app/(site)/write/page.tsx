@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -404,7 +404,6 @@ function WritePageContent() {
               className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 transition-colors" />
             {coverImageUrl && (
               <div className="relative rounded-lg overflow-hidden border border-border h-28 bg-surface">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={coverImageUrl} alt="capa" className="w-full h-full object-cover"
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
               </div>

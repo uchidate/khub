@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Database, Table, BarChart3, HardDrive, ServerIcon, Activity } from 'lucide-react'
+import { Table, BarChart3, HardDrive, ServerIcon, Activity } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
 
