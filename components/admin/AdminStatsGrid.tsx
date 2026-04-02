@@ -33,6 +33,8 @@ const ICON_BY_KEY: Record<StatIconKey, React.ElementType> = {
 export function AdminStatsGrid({ stats }: AdminStatsGridProps) {
   const prevValuesRef = useRef<Map<StatIconKey, number>>(new Map())
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const flashEnabledRef = useRef(false)
+  const flashDisableTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [deltas, setDeltas] = useState<Record<StatIconKey, number>>({
     users: 0,
     artists: 0,
@@ -52,6 +54,22 @@ export function AdminStatsGrid({ stats }: AdminStatsGridProps) {
     () => stats.map(s => `${s.key}:${s.value}`).join('|'),
     [stats]
   )
+
+  useEffect(() => {
+    function onRefreshSignal() {
+      flashEnabledRef.current = true
+      if (flashDisableTimerRef.current) clearTimeout(flashDisableTimerRef.current)
+      flashDisableTimerRef.current = setTimeout(() => {
+        flashEnabledRef.current = false
+      }, 10_000)
+    }
+
+    window.addEventListener('admin-dashboard-refresh', onRefreshSignal)
+    return () => {
+      window.removeEventListener('admin-dashboard-refresh', onRefreshSignal)
+      if (flashDisableTimerRef.current) clearTimeout(flashDisableTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const nextDeltas: Record<StatIconKey, number> = {
@@ -82,7 +100,7 @@ export function AdminStatsGrid({ stats }: AdminStatsGridProps) {
 
     setDeltas(nextDeltas)
 
-    const hasFlash = Object.values(nextFlash).some(Boolean)
+    const hasFlash = flashEnabledRef.current && Object.values(nextFlash).some(Boolean)
     if (hasFlash) {
       setFlashByKey(nextFlash)
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current)

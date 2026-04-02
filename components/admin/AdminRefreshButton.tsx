@@ -11,6 +11,12 @@ export function AdminRefreshButton() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [autoRefreshSec, setAutoRefreshSec] = useState<number>(0)
 
+  function emitRefreshSignal() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('admin-dashboard-refresh'))
+    }
+  }
+
   useEffect(() => {
     const saved = localStorage.getItem('admin-auto-refresh-sec')
     const sec = Number(saved)
@@ -21,6 +27,7 @@ export function AdminRefreshButton() {
     localStorage.setItem('admin-auto-refresh-sec', String(autoRefreshSec))
     if (autoRefreshSec <= 0) return
     const timer = setInterval(() => {
+      emitRefreshSignal()
       router.refresh()
       setLastUpdated(new Date())
     }, autoRefreshSec * 1000)
@@ -30,6 +37,7 @@ export function AdminRefreshButton() {
   async function refresh() {
     if (loading) return
     setLoading(true)
+    emitRefreshSignal()
     router.refresh()
     setLastUpdated(new Date())
     setTimeout(() => setLoading(false), 700)
