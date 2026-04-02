@@ -257,6 +257,18 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                     Ativo
                                 </span>
                             )}
+                            {debutYear && (() => {
+                                const genLabel =
+                                    debutYear <= 2002 ? '1ª Geração' :
+                                    debutYear <= 2011 ? '2ª Geração' :
+                                    debutYear <= 2017 ? '3ª Geração' :
+                                    debutYear <= 2022 ? '4ª Geração' : '5ª Geração'
+                                return (
+                                    <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-white/70 rounded-full border border-white/10">
+                                        {genLabel}
+                                    </span>
+                                )
+                            })()}
                             {fanClubName && (
                                 <span className="text-xs font-black px-3 py-1 backdrop-blur-sm rounded-full border inline-flex items-center gap-1.5"
                                     style={{ background: toRgba(accent, 0.15), color: accent, borderColor: toRgba(accent, 0.3) }}>
@@ -475,8 +487,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Stats */}
                         <div className="grid grid-cols-2 gap-3">
-                            <StatCard icon={<Eye className="w-5 h-5" />} label="Visualizações" value={group.viewCount.toLocaleString('pt-BR')} color="text-cyan-400" />
-                            <StatCard icon={<Heart className="w-5 h-5" />} label="Fãs" value={group.favoriteCount.toLocaleString('pt-BR')} color="text-pink-400" />
+                            <StatCard icon={<Eye className="w-5 h-5" />} label="Visualizações" value={group.viewCount.toLocaleString('pt-BR')} color="text-cyan-400" accent={accent} />
+                            <StatCard icon={<Heart className="w-5 h-5" />} label="Fãs" value={group.favoriteCount.toLocaleString('pt-BR')} color="text-pink-400" accent={accent} />
                         </div>
 
                     </div>
@@ -632,6 +644,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
 /* ── Helpers ── */
 
+function nameToGradient(name: string) {
+    const hue = [...name].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360
+    return `linear-gradient(135deg, hsl(${hue}, 55%, 68%), hsl(${(hue + 50) % 360}, 50%, 55%))`
+}
+
 function extractYoutubeId(url: string): string | null {
     try {
         const u = new URL(url)
@@ -689,11 +706,11 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
     )
 }
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
+function StatCard({ icon, label, value, color, accent }: { icon: React.ReactNode; label: string; value: string; color: string; accent?: string }) {
     return (
         <div className="p-4 rounded-xl bg-surface border border-border text-center">
             <div className={`${color} mx-auto mb-1 flex justify-center`}>{icon}</div>
-            <div className={`text-2xl font-black ${color}`}>{value}</div>
+            <div className={`text-2xl font-black ${color}`} style={accent ? { color: accent } : undefined}>{value}</div>
             <p className="text-xs text-muted font-bold uppercase tracking-wider mt-0.5">{label}</p>
         </div>
     )
@@ -717,7 +734,7 @@ function SocialLink({ platform, url }: { platform: string; url: string }) {
     const key = platform.toLowerCase()
     return (
         <a href={url} target="_blank" rel="noopener noreferrer"
-            className={`flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-[#e8e8e8] border border-border hover:border-[#d0d0d0] transition-all ${colors[key] || 'text-muted hover:text-foreground'}`}>
+            className={`flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-surface-hover border border-border hover:border-border transition-all ${colors[key] || 'text-muted hover:text-foreground'}`}>
             <div className="flex items-center gap-2.5">
                 {icons[key] ?? <ExternalLink className="w-4 h-4" />}
                 <span className="text-sm font-bold capitalize">{platform}</span>
@@ -767,25 +784,25 @@ function MemberGrid({
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center"
-                                style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.15)}, #f5f5f7)` }}>
-                                <span className="text-3xl font-black text-muted group-hover:text-foreground transition-colors">
+                                style={{ background: nameToGradient(member.artist.nameRomanized) }}>
+                                <span className="text-4xl font-black text-white/80 drop-shadow select-none">
                                     {member.artist.nameRomanized[0]}
                                 </span>
                             </div>
                         )}
                         {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {/* Role badge */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
+                        {/* Role badge — always visible */}
                         {member.role && (
                             <div className="absolute bottom-2 left-2 right-2">
-                                <span className="text-[10px] font-black uppercase px-2 py-0.5 backdrop-blur-sm text-white rounded-full group-accent-badge">
+                                <span className="text-[10px] font-black uppercase px-2 py-0.5 backdrop-blur-sm text-white/80 group-hover:text-white rounded-full group-accent-badge transition-colors">
                                     {member.role}
                                 </span>
                             </div>
                         )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-foreground text-sm leading-tight group-hover:opacity-80 transition-opacity">
+                        <h3 className="font-bold text-foreground text-sm leading-tight group-hover:text-accent transition-colors">
                             {member.artist.nameRomanized}
                         </h3>
                         {member.artist.nameHangul && (
