@@ -85,7 +85,7 @@ function PostCard({ post, onRemove, label }: { post: PostSummary; onRemove: () =
 function SlotPicker({
     label, icon, description,
     selected, onSelect, onRemove,
-    blockedIds,
+    blockedBySlot,
     max = 1,
 }: {
     label: string
@@ -94,13 +94,14 @@ function SlotPicker({
     selected: PostSummary[]
     onSelect: (post: PostSummary) => void
     onRemove: (id: string) => void
-    blockedIds?: Set<string>
+    blockedBySlot?: Map<string, string>
     max?: number
 }) {
     const { query, setQuery, results, loading } = usePostSearch()
     const [open, setOpen] = useState(false)
     const selectedIds = new Set(selected.map(p => p.id))
     const dropdownRef = useRef<HTMLDivElement>(null)
+    const candidateResults = results.filter(r => !selectedIds.has(r.id))
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -152,32 +153,49 @@ function SlotPicker({
 
                         {open && (
                             <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-background shadow-xl overflow-hidden">
-                                {results.filter(r => !selectedIds.has(r.id) && !(blockedIds?.has(r.id))).map(post => (
-                                    <button
-                                        key={post.id}
-                                        onClick={() => {
-                                            onSelect(post)
-                                            setQuery('')
-                                            setOpen(false)
-                                        }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent-soft transition-colors text-left border-b border-border last:border-b-0"
-                                    >
-                                        <div className="w-10 h-7 rounded overflow-hidden bg-surface shrink-0">
-                                            {post.coverImageUrl ? (
-                                                <Image src={post.coverImageUrl} alt={post.title} width={40} height={28} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-muted">{post.title[0]}</div>
+                                {candidateResults.map(post => {
+                                    const blockedReason = blockedBySlot?.get(post.id)
+                                    const isBlocked = !!blockedReason
+                                    return (
+                                        <button
+                                            key={post.id}
+                                            type="button"
+                                            disabled={isBlocked}
+                                            onClick={() => {
+                                                if (isBlocked) return
+                                                onSelect(post)
+                                                setQuery('')
+                                                setOpen(false)
+                                            }}
+                                            className={[
+                                                'w-full flex items-center gap-2.5 px-3 py-2 text-left border-b border-border last:border-b-0 transition-colors',
+                                                isBlocked
+                                                    ? 'bg-surface/60 text-muted/70 cursor-not-allowed'
+                                                    : 'hover:bg-accent-soft'
+                                            ].join(' ')}
+                                        >
+                                            <div className="w-10 h-7 rounded overflow-hidden bg-surface shrink-0">
+                                                {post.coverImageUrl ? (
+                                                    <Image src={post.coverImageUrl} alt={post.title} width={40} height={28} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-muted">{post.title[0]}</div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[12px] font-semibold truncate">{post.title}</p>
+                                                {post.category && <p className="text-[10px] text-muted">{post.category.name}</p>}
+                                            </div>
+                                            {isBlocked && (
+                                                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded border border-yellow-500/30 bg-yellow-500/10 text-yellow-300 shrink-0">
+                                                    Em {blockedReason}
+                                                </span>
                                             )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[12px] font-semibold text-foreground truncate">{post.title}</p>
-                                            {post.category && <p className="text-[10px] text-muted">{post.category.name}</p>}
-                                        </div>
-                                    </button>
-                                ))}
-                                {results.filter(r => !selectedIds.has(r.id) && !(blockedIds?.has(r.id))).length === 0 && (
+                                        </button>
+                                    )
+                                })}
+                                {candidateResults.length === 0 && (
                                     <p className="px-3 py-2 text-[11px] text-muted">
-                                        Nenhum resultado disponivel (ja usado em outro slot ou ja selecionado).
+                                        Nenhum resultado para sua busca.
                                     </p>
                                 )}
                             </div>
@@ -206,10 +224,26 @@ export default function HomepageConfigPage() {
     const secondaryIds = secondaryPosts.map(p => p.id)
     const sidebarIds = sidebarPosts.map(p => p.id)
 
-    const blockedForCarousel = new Set([...(featuredId ? [featuredId] : []), ...secondaryIds, ...sidebarIds])
-    const blockedForFeatured = new Set([...carouselIds, ...secondaryIds, ...sidebarIds])
-    const blockedForSecondary = new Set([...(featuredId ? [featuredId] : []), ...carouselIds, ...sidebarIds])
-    const blockedForSidebar = new Set([...(featuredId ? [featuredId] : []), ...carouselIds, ...secondaryIds])
+    const blockedForCarousel = new Map<string, string>([
+        ...(featuredId ? [[featuredId, 'Card principal']] as [string, string][] : []),
+        ...secondaryIds.map(id => [id, 'Cards secundarios'] as [string, string]),
+        ...sidebarIds.map(id => [id, 'Artigos em destaque'] as [string, string]),
+    ])
+    const blockedForFeatured = new Map<string, string>([
+        ...carouselIds.map(id => [id, 'Carrossel'] as [string, string]),
+        ...secondaryIds.map(id => [id, 'Cards secundarios'] as [string, string]),
+        ...sidebarIds.map(id => [id, 'Artigos em destaque'] as [string, string]),
+    ])
+    const blockedForSecondary = new Map<string, string>([
+        ...(featuredId ? [[featuredId, 'Card principal']] as [string, string][] : []),
+        ...carouselIds.map(id => [id, 'Carrossel'] as [string, string]),
+        ...sidebarIds.map(id => [id, 'Artigos em destaque'] as [string, string]),
+    ])
+    const blockedForSidebar = new Map<string, string>([
+        ...(featuredId ? [[featuredId, 'Card principal']] as [string, string][] : []),
+        ...carouselIds.map(id => [id, 'Carrossel'] as [string, string]),
+        ...secondaryIds.map(id => [id, 'Cards secundarios'] as [string, string]),
+    ])
 
     // Load current config
     useEffect(() => {
@@ -298,7 +332,7 @@ export default function HomepageConfigPage() {
                     selected={carouselPosts}
                     onSelect={p => setCarouselPosts(prev => [...prev, p])}
                     onRemove={id => setCarouselPosts(prev => prev.filter(p => p.id !== id))}
-                    blockedIds={blockedForCarousel}
+                    blockedBySlot={blockedForCarousel}
                     max={5}
                 />
 
@@ -310,7 +344,7 @@ export default function HomepageConfigPage() {
                     selected={featuredPost ? [featuredPost] : []}
                     onSelect={p => setFeaturedPost(p)}
                     onRemove={() => setFeaturedPost(null)}
-                    blockedIds={blockedForFeatured}
+                    blockedBySlot={blockedForFeatured}
                     max={1}
                 />
 
@@ -322,7 +356,7 @@ export default function HomepageConfigPage() {
                     selected={secondaryPosts}
                     onSelect={p => setSecondaryPosts(prev => [...prev, p])}
                     onRemove={id => setSecondaryPosts(prev => prev.filter(p => p.id !== id))}
-                    blockedIds={blockedForSecondary}
+                    blockedBySlot={blockedForSecondary}
                     max={4}
                 />
 
@@ -334,7 +368,7 @@ export default function HomepageConfigPage() {
                     selected={sidebarPosts}
                     onSelect={p => setSidebarPosts(prev => [...prev, p])}
                     onRemove={id => setSidebarPosts(prev => prev.filter(p => p.id !== id))}
-                    blockedIds={blockedForSidebar}
+                    blockedBySlot={blockedForSidebar}
                     max={4}
                 />
 
