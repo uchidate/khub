@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireContributorOrAbove } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { syncBlogPostEntityLinks } from '@/lib/services/blog-entity-links'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +15,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (post.authorId !== session!.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   if (post.status !== 'DRAFT') return NextResponse.json({ error: 'Only drafts can be submitted' }, { status: 400 })
+
+  await syncBlogPostEntityLinks(id, post.blocks)
 
   const updated = await prisma.blogPost.update({ where: { id }, data: { status: 'PENDING_REVIEW' } })
   return NextResponse.json(updated)
