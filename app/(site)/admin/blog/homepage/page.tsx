@@ -85,6 +85,7 @@ function PostCard({ post, onRemove, label }: { post: PostSummary; onRemove: () =
 function SlotPicker({
     label, icon, description,
     selected, onSelect, onRemove,
+    blockedIds,
     max = 1,
 }: {
     label: string
@@ -93,6 +94,7 @@ function SlotPicker({
     selected: PostSummary[]
     onSelect: (post: PostSummary) => void
     onRemove: (id: string) => void
+    blockedIds?: Set<string>
     max?: number
 }) {
     const { query, setQuery, results, loading } = usePostSearch()
@@ -148,9 +150,9 @@ function SlotPicker({
                             {loading && <Loader2 size={12} className="text-muted animate-spin shrink-0" />}
                         </div>
 
-                        {open && results.length > 0 && (
+                        {open && (
                             <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-background shadow-xl overflow-hidden">
-                                {results.filter(r => !selectedIds.has(r.id)).map(post => (
+                                {results.filter(r => !selectedIds.has(r.id) && !(blockedIds?.has(r.id))).map(post => (
                                     <button
                                         key={post.id}
                                         onClick={() => {
@@ -173,6 +175,11 @@ function SlotPicker({
                                         </div>
                                     </button>
                                 ))}
+                                {results.filter(r => !selectedIds.has(r.id) && !(blockedIds?.has(r.id))).length === 0 && (
+                                    <p className="px-3 py-2 text-[11px] text-muted">
+                                        Nenhum resultado disponivel (ja usado em outro slot ou ja selecionado).
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>
@@ -194,6 +201,16 @@ export default function HomepageConfigPage() {
     const [secondaryPosts, setSecondaryPosts] = useState<PostSummary[]>([])
     const [sidebarPosts, setSidebarPosts] = useState<PostSummary[]>([])
 
+    const featuredId = featuredPost?.id ?? null
+    const carouselIds = carouselPosts.map(p => p.id)
+    const secondaryIds = secondaryPosts.map(p => p.id)
+    const sidebarIds = sidebarPosts.map(p => p.id)
+
+    const blockedForCarousel = new Set([...(featuredId ? [featuredId] : []), ...secondaryIds, ...sidebarIds])
+    const blockedForFeatured = new Set([...carouselIds, ...secondaryIds, ...sidebarIds])
+    const blockedForSecondary = new Set([...(featuredId ? [featuredId] : []), ...carouselIds, ...sidebarIds])
+    const blockedForSidebar = new Set([...(featuredId ? [featuredId] : []), ...carouselIds, ...secondaryIds])
+
     // Load current config
     useEffect(() => {
         fetch('/api/admin/settings/homepage')
@@ -209,6 +226,17 @@ export default function HomepageConfigPage() {
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSave = useCallback(async () => {
+        const allIds = [
+            ...(featuredPost?.id ? [featuredPost.id] : []),
+            ...carouselPosts.map(p => p.id),
+            ...secondaryPosts.map(p => p.id),
+            ...sidebarPosts.map(p => p.id),
+        ]
+        if (new Set(allIds).size !== allIds.length) {
+            toast.error('Um mesmo post nao pode aparecer em mais de um slot editorial.')
+            return
+        }
+
         setSaving(true)
         try {
             const res = await fetch('/api/admin/settings/homepage', {
@@ -221,7 +249,11 @@ export default function HomepageConfigPage() {
                     homeSidebarPostIds: sidebarPosts.map(p => p.id),
                 }),
             })
-            if (!res.ok) throw new Error()
+            const data = await res.json().catch(() => ({})) as { error?: string }
+            if (!res.ok) {
+                toast.error(data.error ?? 'Erro ao salvar configuracao')
+                return
+            }
             toast.success('Configuração salva! A home será atualizada em até 2 minutos.')
         } catch {
             toast.error('Erro ao salvar configuração')
@@ -266,6 +298,7 @@ export default function HomepageConfigPage() {
                     selected={carouselPosts}
                     onSelect={p => setCarouselPosts(prev => [...prev, p])}
                     onRemove={id => setCarouselPosts(prev => prev.filter(p => p.id !== id))}
+                    blockedIds={blockedForCarousel}
                     max={5}
                 />
 
@@ -277,6 +310,7 @@ export default function HomepageConfigPage() {
                     selected={featuredPost ? [featuredPost] : []}
                     onSelect={p => setFeaturedPost(p)}
                     onRemove={() => setFeaturedPost(null)}
+                    blockedIds={blockedForFeatured}
                     max={1}
                 />
 
@@ -288,6 +322,7 @@ export default function HomepageConfigPage() {
                     selected={secondaryPosts}
                     onSelect={p => setSecondaryPosts(prev => [...prev, p])}
                     onRemove={id => setSecondaryPosts(prev => prev.filter(p => p.id !== id))}
+                    blockedIds={blockedForSecondary}
                     max={4}
                 />
 
@@ -299,6 +334,7 @@ export default function HomepageConfigPage() {
                     selected={sidebarPosts}
                     onSelect={p => setSidebarPosts(prev => [...prev, p])}
                     onRemove={id => setSidebarPosts(prev => prev.filter(p => p.id !== id))}
+                    blockedIds={blockedForSidebar}
                     max={4}
                 />
 

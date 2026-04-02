@@ -5,6 +5,14 @@ import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
+function normalizeIds(value: unknown, max: number): string[] {
+    if (!Array.isArray(value)) return []
+    const ids = value
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+        .map(id => id.trim())
+    return Array.from(new Set(ids)).slice(0, max)
+}
+
 /**
  * GET /api/admin/settings/homepage
  * Retorna os slots editoriais da homepage
@@ -70,6 +78,46 @@ export async function PUT(req: NextRequest) {
             homeCarouselPostIds?: string[]
         }
 
+        const current = await prisma.systemSettings.findUnique({
+            where: { id: 'singleton' },
+            select: {
+                homeFeaturedPostId: true,
+                homeSecondaryPostIds: true,
+                homeSidebarPostIds: true,
+                homeCarouselPostIds: true,
+            },
+        })
+
+        const nextConfig = {
+            homeFeaturedPostId: current?.homeFeaturedPostId ?? null,
+            homeSecondaryPostIds: current?.homeSecondaryPostIds ?? [],
+            homeSidebarPostIds: current?.homeSidebarPostIds ?? [],
+            homeCarouselPostIds: current?.homeCarouselPostIds ?? [],
+        }
+
+        if ('homeFeaturedPostId' in body) {
+            nextConfig.homeFeaturedPostId = typeof body.homeFeaturedPostId === 'string' && body.homeFeaturedPostId.trim().length > 0
+                ? body.homeFeaturedPostId.trim()
+                : null
+        }
+        if ('homeSecondaryPostIds' in body) nextConfig.homeSecondaryPostIds = normalizeIds(body.homeSecondaryPostIds, 4)
+        if ('homeSidebarPostIds' in body) nextConfig.homeSidebarPostIds = normalizeIds(body.homeSidebarPostIds, 4)
+        if ('homeCarouselPostIds' in body) nextConfig.homeCarouselPostIds = normalizeIds(body.homeCarouselPostIds, 5)
+
+        const allIds = [
+            ...(nextConfig.homeFeaturedPostId ? [nextConfig.homeFeaturedPostId] : []),
+            ...nextConfig.homeSecondaryPostIds,
+            ...nextConfig.homeSidebarPostIds,
+            ...nextConfig.homeCarouselPostIds,
+        ]
+
+        if (new Set(allIds).size !== allIds.length) {
+            return NextResponse.json(
+                { error: 'Um mesmo post nao pode aparecer em mais de um slot editorial.' },
+                { status: 400 }
+            )
+        }
+
         const data: {
             homeFeaturedPostId?: string | null
             homeSecondaryPostIds?: string[]
@@ -77,10 +125,10 @@ export async function PUT(req: NextRequest) {
             homeCarouselPostIds?: string[]
         } = {}
 
-        if ('homeFeaturedPostId' in body) data.homeFeaturedPostId = body.homeFeaturedPostId ?? null
-        if (Array.isArray(body.homeSecondaryPostIds)) data.homeSecondaryPostIds = body.homeSecondaryPostIds.slice(0, 4)
-        if (Array.isArray(body.homeSidebarPostIds)) data.homeSidebarPostIds = body.homeSidebarPostIds.slice(0, 4)
-        if (Array.isArray(body.homeCarouselPostIds)) data.homeCarouselPostIds = body.homeCarouselPostIds.slice(0, 5)
+        data.homeFeaturedPostId = nextConfig.homeFeaturedPostId
+        data.homeSecondaryPostIds = nextConfig.homeSecondaryPostIds
+        data.homeSidebarPostIds = nextConfig.homeSidebarPostIds
+        data.homeCarouselPostIds = nextConfig.homeCarouselPostIds
 
         await prisma.systemSettings.upsert({
             where: { id: 'singleton' },
