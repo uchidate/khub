@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
@@ -857,6 +858,9 @@ function FeaturedButton({ post, onDone }: { post: BlogPost; onDone: () => void }
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AdminBlogPage() {
+    const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const addToast    = useToast(s => s.addToast)
     const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
     const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
@@ -871,8 +875,40 @@ export default function AdminBlogPage() {
     const [generatingAll, setGeneratingAll] = useState(false)
     const [statusFilter,  setStatusFilter] = useState<string>('')
     const [selectedIds,   setSelectedIds]  = useState<string[]>([])
+    const [urlReady,      setUrlReady]     = useState(false)
 
     const refreshStats = useCallback(() => setStatsKey(k => k + 1), [])
+
+    useEffect(() => {
+        const tabParam = searchParams.get('tab')
+        const statusParam = searchParams.get('status')
+
+        const validTab = (['suggestions', 'posts', 'top', 'calendar', 'categories'] as const).includes(tabParam as Tab)
+            ? (tabParam as Tab)
+            : 'posts'
+        const validStatus = ['', 'PUBLISHED', 'DRAFT', 'PENDING_REVIEW', 'ARCHIVED'].includes(statusParam ?? '')
+            ? (statusParam ?? '')
+            : ''
+
+        setActiveTab(validTab)
+        setStatusFilter(validStatus)
+        setUrlReady(true)
+    }, [searchParams])
+
+    useEffect(() => {
+        if (!urlReady) return
+        const params = new URLSearchParams(window.location.search)
+
+        if (activeTab === 'posts') params.delete('tab')
+        else params.set('tab', activeTab)
+
+        if (statusFilter) params.set('status', statusFilter)
+        else params.delete('status')
+
+        const next = params.toString() ? `${pathname}?${params.toString()}` : pathname
+        const current = `${pathname}${window.location.search}`
+        if (next !== current) router.replace(next, { scroll: false })
+    }, [activeTab, statusFilter, pathname, router, urlReady])
 
     const fetchSuggestions = useCallback(async () => {
         setLoading(true)
@@ -1252,11 +1288,11 @@ export default function AdminBlogPage() {
                         {/* Status filter chips */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {[
-                                { value: '',               label: 'Todos' },
-                                { value: 'PUBLISHED',      label: 'Publicado' },
-                                { value: 'DRAFT',          label: 'Rascunho' },
-                                { value: 'PENDING_REVIEW', label: 'Em revisão' },
-                                { value: 'ARCHIVED',       label: 'Arquivado' },
+                                { value: '',               label: 'Todos',      count: blogStats?.total },
+                                { value: 'PUBLISHED',      label: 'Publicado',  count: blogStats?.published },
+                                { value: 'DRAFT',          label: 'Rascunho',   count: blogStats?.draft },
+                                { value: 'PENDING_REVIEW', label: 'Em revisão', count: blogStats?.review },
+                                { value: 'ARCHIVED',       label: 'Arquivado',  count: undefined },
                             ].map(opt => (
                                 <button
                                     key={opt.value}
@@ -1268,6 +1304,9 @@ export default function AdminBlogPage() {
                                     }`}
                                 >
                                     {opt.label}
+                                    {opt.count != null && (
+                                        <span className="ml-1 opacity-70 font-normal">{opt.count}</span>
+                                    )}
                                 </button>
                             ))}
                             {selectedIds.length > 0 && (
