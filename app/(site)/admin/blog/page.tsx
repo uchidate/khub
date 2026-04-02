@@ -874,6 +874,7 @@ export default function AdminBlogPage() {
     const [hiddenIds,     setHiddenIds]    = useState<Set<string>>(new Set())
     const [generatingAll, setGeneratingAll] = useState(false)
     const [statusFilter,  setStatusFilter] = useState<string>('')
+    const [seoFilter,     setSeoFilter]    = useState<string>('')
     const [selectedIds,   setSelectedIds]  = useState<string[]>([])
     const [urlReady,      setUrlReady]     = useState(false)
 
@@ -882,6 +883,7 @@ export default function AdminBlogPage() {
     useEffect(() => {
         const tabParam = searchParams.get('tab')
         const statusParam = searchParams.get('status')
+        const seoParam = searchParams.get('seo')
 
         const validTab = (['suggestions', 'posts', 'top', 'calendar', 'categories'] as const).includes(tabParam as Tab)
             ? (tabParam as Tab)
@@ -889,9 +891,13 @@ export default function AdminBlogPage() {
         const validStatus = ['', 'PUBLISHED', 'DRAFT', 'PENDING_REVIEW', 'ARCHIVED'].includes(statusParam ?? '')
             ? (statusParam ?? '')
             : ''
+        const validSeo = ['', 'issues', 'healthy'].includes(seoParam ?? '')
+            ? (seoParam ?? '')
+            : ''
 
         setActiveTab(validTab)
         setStatusFilter(validStatus)
+        setSeoFilter(validSeo)
         setUrlReady(true)
     }, [searchParams])
 
@@ -905,10 +911,13 @@ export default function AdminBlogPage() {
         if (statusFilter) params.set('status', statusFilter)
         else params.delete('status')
 
+        if (seoFilter) params.set('seo', seoFilter)
+        else params.delete('seo')
+
         const next = params.toString() ? `${pathname}?${params.toString()}` : pathname
         const current = `${pathname}${window.location.search}`
         if (next !== current) router.replace(next, { scroll: false })
-    }, [activeTab, statusFilter, pathname, router, urlReady])
+    }, [activeTab, statusFilter, seoFilter, pathname, router, urlReady])
 
     const fetchSuggestions = useCallback(async () => {
         setLoading(true)
@@ -1320,6 +1329,27 @@ export default function AdminBlogPage() {
                             )}
                         </div>
 
+                        {/* SEO filter chips */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {[
+                                { value: '',        label: 'SEO: Todos' },
+                                { value: 'issues',  label: 'Com pendências SEO' },
+                                { value: 'healthy', label: 'SEO saudável' },
+                            ].map(opt => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => { setSeoFilter(opt.value); setSelectedIds([]) }}
+                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
+                                        seoFilter === opt.value
+                                            ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
+                                            : 'text-muted border-border hover:text-foreground hover:border-border'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* Bulk action bar */}
                         {selectedIds.length > 0 && (
                             <BulkActionBar
@@ -1334,7 +1364,10 @@ export default function AdminBlogPage() {
                             columns={columns}
                             apiUrl="/api/admin/blog"
                             searchPlaceholder="Buscar por título..."
-                            extraParams={statusFilter ? { status: statusFilter } : {}}
+                            extraParams={{
+                                ...(statusFilter ? { status: statusFilter } : {}),
+                                ...(seoFilter ? { seo: seoFilter } : {}),
+                            }}
                             actions={(post) => (
                                 <div className="flex items-center gap-1">
                                     <AdminIconLink href={`/admin/blog/${post.id}/edit`} onClick={(e) => e.stopPropagation()} title="Editar">
