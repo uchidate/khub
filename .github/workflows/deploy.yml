@@ -2,28 +2,34 @@
 # BUILD & DEPLOY — HallyuHub (Coolify)
 # ═══════════════════════════════════════════════════════════════════
 # Fluxo:
-#   push staging → validate → build image (GHA) → push ghcr.io:staging → trigger Coolify staging
-#   push main    → validate → promote staging→latest (sem rebuild!) → trigger Coolify production
+#   feat/* ou staging → validate → build image → push ghcr.io:staging → deploy Coolify staging
+#   main (PR merge)   → validate → promote staging→latest (sem rebuild!) → deploy Coolify production
 #
-# A mesma imagem testada no staging vai para production — sem segundo build.
-# Build acontece no GitHub Actions (máquina potente, gratuita).
-# Coolify recebe o trigger, faz pull da imagem pronta e sobe o container.
+# Desenvolvimento:
+#   1. git checkout -b feat/minha-feature
+#   2. Desenvolve e commita localmente
+#   3. git push origin feat/minha-feature   → CI valida + deploya em staging automaticamente
+#   4. Testa em staging.hallyuhub.com.br
+#   5. Abre PR feat/minha-feature → main no GitHub
+#   6. Merge do PR → CI deploya em produção (mesma imagem testada, sem rebuild)
 # ═══════════════════════════════════════════════════════════════════
 
 name: 🚀 Validate, Build and Deploy (Coolify)
 
 on:
   push:
-    branches: [main, staging]
+    branches:
+      - main
+      - staging
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch alvo (apenas staging permitido via dispatch)'
+        description: 'Branch para buildar e deployar em staging'
         required: true
         default: 'staging'
-        type: choice
-        options:
-          - staging
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -87,13 +93,13 @@ jobs:
         run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar"
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2a: Build da imagem Docker (apenas staging)
+  # FASE 2a: Build da imagem Docker (feat/*, fix/*, chore/*, staging — não main)
   # ════════════════════════════════════════════════════════════════
 
   build-image:
     name: 🐳 Build Docker Image
     needs: validate-code
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -215,7 +221,7 @@ jobs:
   deploy-staging:
     name: 🟡 Deploy to Staging (Coolify)
     needs: build-image
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
