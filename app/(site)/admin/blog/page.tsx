@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
@@ -868,7 +868,7 @@ function FeaturedButton({ post, onDone }: { post: BlogPost; onDone: () => void }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function AdminBlogPage() {
+function AdminBlogPageContent() {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -1429,5 +1429,19 @@ export default function AdminBlogPage() {
                 )}
             </div>
         </AdminLayout>
+    )
+}
+
+export default function AdminBlogPage() {
+    return (
+        <Suspense
+            fallback={
+                <AdminLayout title="Blog Pipeline">
+                    <div className="text-sm text-muted">Carregando painel do blog...</div>
+                </AdminLayout>
+            }
+        >
+            <AdminBlogPageContent />
+        </Suspense>
     )
 }
