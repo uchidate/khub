@@ -2,11 +2,28 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createLogger } from '@/lib/utils/logger';
 import { getErrorMessage } from '@/lib/utils/error';
+import { getPersistedBlogEntityLinkDiscardStats } from '@/lib/services/blog-entity-links';
 
 const log = createLogger('METRICS');
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+type DiscardCounter = { artists: number; groups: number; productions: number; total: number }
+
+function toDiscardCounter(value: unknown): DiscardCounter {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return { artists: 0, groups: 0, productions: 0, total: 0 }
+    }
+
+    const record = value as Record<string, unknown>
+    const artists = typeof record.artists === 'number' ? record.artists : 0
+    const groups = typeof record.groups === 'number' ? record.groups : 0
+    const productions = typeof record.productions === 'number' ? record.productions : 0
+    const total = typeof record.total === 'number' ? record.total : artists + groups + productions
+
+    return { artists, groups, productions, total }
+}
 
 // Metricas no formato Prometheus — protegido por bearer token (PROMETHEUS_TOKEN)
 export async function GET(request: Request) {
@@ -46,6 +63,10 @@ export async function GET(request: Request) {
         const uptime = process.uptime();
         const memUsage = process.memoryUsage();
         const { c5m, c15m, c1h } = activeUsersRaw[0];
+        const discardStats = await getPersistedBlogEntityLinkDiscardStats();
+        const discardToday = await getPersistedBlogEntityLinkDiscardStats(discardStats.today);
+        const discardTotals = toDiscardCounter((discardStats as { totals?: unknown }).totals)
+        const discardTodayStats = toDiscardCounter((discardToday as { stats?: unknown }).stats)
 
         // Formato Prometheus
         const metrics = `
@@ -89,6 +110,20 @@ hallyuhub_entities_total{type="agency"} ${agencyCount}
 hallyuhub_active_users{window="5m"} ${Number(c5m)}
 hallyuhub_active_users{window="15m"} ${Number(c15m)}
 hallyuhub_active_users{window="1h"} ${Number(c1h)}
+
+# HELP hallyuhub_blog_entity_invalid_discards_total Total invalid blog entity IDs discarded by type
+# TYPE hallyuhub_blog_entity_invalid_discards_total gauge
+hallyuhub_blog_entity_invalid_discards_total{type="artist",scope="process"} ${discardTotals.artists}
+hallyuhub_blog_entity_invalid_discards_total{type="group",scope="process"} ${discardTotals.groups}
+hallyuhub_blog_entity_invalid_discards_total{type="production",scope="process"} ${discardTotals.productions}
+hallyuhub_blog_entity_invalid_discards_total{type="all",scope="process"} ${discardTotals.total}
+
+# HELP hallyuhub_blog_entity_invalid_discards_today Total invalid blog entity IDs discarded today
+# TYPE hallyuhub_blog_entity_invalid_discards_today gauge
+hallyuhub_blog_entity_invalid_discards_today{type="artist"} ${discardTodayStats.artists}
+hallyuhub_blog_entity_invalid_discards_today{type="group"} ${discardTodayStats.groups}
+hallyuhub_blog_entity_invalid_discards_today{type="production"} ${discardTodayStats.productions}
+hallyuhub_blog_entity_invalid_discards_today{type="all"} ${discardTodayStats.total}
 `.trim();
 
         return new NextResponse(metrics, {

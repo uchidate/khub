@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireContributorOrAbove } from '@/lib/admin-helpers'
 import { calcReadingTime } from '@/lib/utils/slug'
 import prisma from '@/lib/prisma'
+import { syncBlogPostEntityLinks } from '@/lib/services/blog-entity-links'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -61,6 +62,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const validated = updateSchema.parse(body)
 
   const data: Record<string, unknown> = { ...validated }
+  const shouldSyncLinks = Object.prototype.hasOwnProperty.call(validated, 'blocks')
   // Prioridade: blocos > markdown (posts novos usam blocos)
   if (validated.blocks && validated.blocks.length > 0) {
     data.readingTimeMin = calcReadingTime(validated.blocks)
@@ -73,6 +75,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!isAdmin) delete data.featured
 
   const updated = await prisma.blogPost.update({ where: { id }, data })
+
+  if (shouldSyncLinks) {
+    await syncBlogPostEntityLinks(id, validated.blocks)
+  }
+
   return NextResponse.json(updated)
 }
 
