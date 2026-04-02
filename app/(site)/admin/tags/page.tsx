@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -343,8 +344,37 @@ export default function TagsAdminPage() {
     }
 
     return (
-        <AdminLayout title="Gestão de Tags">
+        <AdminLayout
+            title="Gestão de Tags"
+            subtitle="Taxonomia compartilhada entre notícias e produções, com foco em limpeza, deduplicação e consistência editorial."
+            actions={
+                <div className="flex flex-wrap gap-2">
+                    <Link
+                        href="/admin/blog/categories"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
+                        <Tag className="w-4 h-4" />
+                        Categorias do blog
+                    </Link>
+                    <button
+                        onClick={fetchTags}
+                        disabled={loading}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        Atualizar
+                    </button>
+                </div>
+            }
+        >
             <div className="space-y-5">
+                <div className="bg-surface border border-border rounded-xl p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Escopo</p>
+                    <p className="text-sm text-muted leading-relaxed">
+                        Tags ficam em Conteúdo porque afetam descoberta, curadoria e busca. Use esta tela para resolver duplicatas, padronizar nomes e reduzir ruído taxonômico.
+                    </p>
+                </div>
+
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <StatCard label="Tags únicas"  value={tags.length}          color="text-foreground" />

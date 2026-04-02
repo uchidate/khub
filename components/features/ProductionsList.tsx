@@ -8,6 +8,7 @@ import { Film, Star } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 
 interface Production {
     id: string
@@ -65,10 +66,6 @@ const AGE_BADGE_STYLE: Record<string, string> = {
     '18': 'bg-red-900 text-red-100',
 }
 
-function nameToGradient(name: string) {
-    const hue = [...name].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360
-    return `linear-gradient(160deg, hsl(${hue}, 50%, 30%), hsl(${(hue + 60) % 360}, 45%, 20%))`
-}
 
 function ProductionCard({ prod, priority }: { prod: Production; priority?: boolean }) {
     const typeLabel = prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null
@@ -337,10 +334,7 @@ export function ProductionsList() {
                     placeholder="Buscar filme, série ou drama"
                 />
 
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <p className="text-xs text-muted">
-                        {isLoading ? 'Carregando producoes...' : 'Filtros editoriais do catalogo'}
-                    </p>
+                <div className="flex items-center justify-end gap-2 flex-wrap">
                     {(hasActiveFilters || filters.sortBy !== 'popular') && (
                         <button onClick={clearAll} className="text-xs text-accent hover:text-accent/70 transition-colors">
                             Limpar filtros

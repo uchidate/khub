@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
     Plus, Trash2, GripVertical, ChevronUp, ChevronDown,
     Type, AlignLeft, Quote, Image as ImageIcon, Twitter, Instagram, Video, Music2,
     User, Film, BarChart2, Star, Minus, GalleryHorizontal, X,
     ChevronRight, Copy, Search, Loader2, Users, Zap, Clock, Headphones,
+    ChevronsUpDown,
 } from 'lucide-react'
 import type { BlogBlock, BlogBlockType } from '@/lib/types/blocks'
 import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
@@ -242,31 +243,58 @@ function TypeSelector({ onSelect, onClose }: {
     onSelect: (type: BlogBlockType) => void
     onClose: () => void
 }) {
+    const [query, setQuery] = useState('')
+    const q = query.toLowerCase()
+
+    const filteredGroups = useMemo(() => TYPE_GROUPS.map(group => ({
+        ...group,
+        types: group.types.filter(type =>
+            q === '' || BLOG_BLOCK_TYPE_LABELS[type].toLowerCase().includes(q)
+        ),
+    })).filter(g => g.types.length > 0), [q])
+
+    const firstResult = filteredGroups[0]?.types[0]
+
     return (
-        <div className="absolute z-20 mt-1 bg-surface border border-border rounded-xl shadow-2xl p-3 min-w-[220px] left-0">
-            <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold text-muted uppercase tracking-wider">Tipo de bloco</span>
-                <button onClick={onClose} className="text-muted hover:text-foreground">
-                    <X className="w-3.5 h-3.5" />
+        <div className="absolute z-20 mt-1 bg-surface border border-border rounded-xl shadow-2xl p-3 min-w-[240px] left-0">
+            <div className="flex items-center gap-2 mb-2 bg-background border border-border rounded-lg px-2.5 py-1.5">
+                <Search className="w-3.5 h-3.5 text-muted shrink-0" />
+                <input
+                    autoFocus
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter' && firstResult) { onSelect(firstResult); onClose() }
+                        if (e.key === 'Escape') onClose()
+                    }}
+                    placeholder="Filtrar tipo de bloco..."
+                    className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted focus:outline-none"
+                />
+                <button onClick={onClose} className="text-muted hover:text-foreground shrink-0">
+                    <X className="w-3 h-3" />
                 </button>
             </div>
-            {TYPE_GROUPS.map(group => (
-                <div key={group.label} className="mb-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted px-2 mb-1">{group.label}</p>
-                    {group.types.map(type => (
-                        <button
-                            key={type}
-                            onClick={() => { onSelect(type); onClose() }}
-                            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-surface-hover transition-colors text-left"
-                        >
-                            <span className={`flex items-center justify-center w-6 h-6 rounded border ${COLORS[type]}`}>
-                                {ICONS[type]}
-                            </span>
-                            {BLOG_BLOCK_TYPE_LABELS[type]}
-                        </button>
-                    ))}
-                </div>
-            ))}
+            <div className="max-h-64 overflow-y-auto">
+                {filteredGroups.length === 0 ? (
+                    <p className="text-xs text-muted text-center py-4">Nenhum tipo encontrado</p>
+                ) : filteredGroups.map(group => (
+                    <div key={group.label} className="mb-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted px-2 mb-1">{group.label}</p>
+                        {group.types.map(type => (
+                            <button
+                                key={type}
+                                onClick={() => { onSelect(type); onClose() }}
+                                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-surface-hover transition-colors text-left ${type === firstResult && query ? 'bg-surface-hover' : ''}`}
+                            >
+                                <span className={`flex items-center justify-center w-6 h-6 rounded border ${COLORS[type]}`}>
+                                    {ICONS[type]}
+                                </span>
+                                {BLOG_BLOCK_TYPE_LABELS[type]}
+                            </button>
+                        ))}
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }
@@ -662,7 +690,7 @@ function InsertStrip({ onInsert }: { onInsert: (type: BlogBlockType) => void }) 
 // ─── Block row ────────────────────────────────────────────────────────────────
 
 function BlockRow({
-    block, index, total, onChange, onDelete, onMoveUp, onMoveDown, onDuplicate,
+    block, index, total, onChange, onDelete, onMoveUp, onMoveDown, onDuplicate, forceCollapsed,
 }: {
     block: BlogBlock; index: number; total: number
     onChange: (b: BlogBlock) => void
@@ -670,8 +698,13 @@ function BlockRow({
     onMoveUp: () => void
     onMoveDown: () => void
     onDuplicate: () => void
+    forceCollapsed?: boolean
 }) {
     const [collapsed, setCollapsed] = useState(false)
+
+    useEffect(() => {
+        if (forceCollapsed !== undefined) setCollapsed(forceCollapsed)
+    }, [forceCollapsed])
 
     return (
         <div className={`group relative bg-surface border rounded-xl transition-colors ${collapsed ? 'border-border' : 'border-border hover:border-border/80'}`}>
@@ -736,6 +769,7 @@ interface BlogBlockEditorProps {
 
 export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
     const [showSelector, setShowSelector] = useState(false)
+    const [forceCollapsed, setForceCollapsed] = useState<boolean | undefined>(undefined)
 
     function updateBlock(i: number, updated: BlogBlock) {
         const next = [...blocks]; next[i] = updated; onChange(next)
@@ -760,6 +794,18 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
 
     return (
         <div className="space-y-0">
+            {blocks.length > 1 && (
+                <div className="flex justify-end mb-1">
+                    <button
+                        onClick={() => setForceCollapsed(v => v === true ? false : true)}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border text-[11px] text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                        title={forceCollapsed ? 'Expandir todos' : 'Colapsar todos'}
+                    >
+                        <ChevronsUpDown className="w-3 h-3" />
+                        {forceCollapsed ? 'Expandir todos' : 'Colapsar todos'}
+                    </button>
+                </div>
+            )}
             {blocks.length === 0 && (
                 <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl">
                     Nenhum bloco ainda. Clique em <span className="text-foreground font-medium">+ Bloco</span> para começar.
@@ -778,6 +824,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
                         onMoveUp={() => moveBlock(i, i - 1)}
                         onMoveDown={() => moveBlock(i, i + 1)}
                         onDuplicate={() => duplicateBlock(i)}
+                        forceCollapsed={forceCollapsed}
                     />
                     <InsertStrip onInsert={type => insertBlock(i, type)} />
                 </div>

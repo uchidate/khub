@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminLinkButton, AdminButton } from '@/components/admin'
@@ -93,8 +94,36 @@ export default function HiddenItemsPage() {
     const total = artists.length + productions.length + groups.length
 
     return (
-        <AdminLayout title="Itens Ocultos">
+        <AdminLayout
+            title="Itens Ocultos"
+            subtitle="Fila de curadoria para artistas, produções e grupos retirados do site público, com revisão e restauração rápida."
+            actions={
+                <div className="flex flex-wrap gap-2">
+                    <Link
+                        href="/admin/activity?tab=admin"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
+                        <Eye className="w-4 h-4" />
+                        Ver auditoria
+                    </Link>
+                    <Link
+                        href="/admin/settings"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
+                        <EyeOff className="w-4 h-4" />
+                        Voltar ao sistema
+                    </Link>
+                </div>
+            }
+        >
             <div className="space-y-6">
+                <div className="bg-surface border border-border rounded-xl p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Como usar</p>
+                    <p className="text-sm text-muted leading-relaxed">
+                        Esta área serve para revisão editorial de conteúdo oculto. Restaure aqui quando o item puder voltar ao público e use Editar para corrigir o cadastro antes de republicar.
+                    </p>
+                </div>
+
                 <p className="text-muted text-sm">
                     {total === 0 && !loading
                         ? 'Nenhum item oculto no momento.'

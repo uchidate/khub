@@ -6,16 +6,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArtistFilters, type ArtistFilterValues } from './ArtistFilters'
 import { getRoleLabels } from '@/lib/utils/role-labels'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 
 const PER_PAGE_OPTIONS = [50, 100, 150]
 const DEFAULT_PER_PAGE = 50
 
-function nameToGradient(name: string) {
-    const hue = [...name].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360
-    return `linear-gradient(135deg, hsl(${hue}, 60%, 72%), hsl(${(hue + 50) % 360}, 55%, 58%))`
-}
 
 function ArtistsSkeleton() {
     return (

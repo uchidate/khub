@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -232,6 +232,24 @@ function WritePageContent() {
 
   const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
 
+  const wordCount = useMemo(() => {
+    if (editorMode === 'markdown') return content.split(/\s+/).filter(Boolean).length
+    let count = 0
+    for (const block of blocks) {
+      if ('text' in block && typeof (block as { text?: unknown }).text === 'string')
+        count += ((block as { text: string }).text).split(/\s+/).filter(Boolean).length
+      if ('summary' in block && typeof (block as { summary?: unknown }).summary === 'string')
+        count += ((block as { summary: string }).summary).split(/\s+/).filter(Boolean).length
+      if ('items' in block && Array.isArray((block as { items?: unknown }).items)) {
+        for (const item of (block as { items: Record<string, unknown>[] }).items) {
+          if (typeof item.text === 'string') count += item.text.split(/\s+/).filter(Boolean).length
+          if (typeof item.title === 'string') count += item.title.split(/\s+/).filter(Boolean).length
+        }
+      }
+    }
+    return count
+  }, [editorMode, content, blocks])
+
   // Cmd+S / Ctrl+S to save
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -313,9 +331,14 @@ function WritePageContent() {
             </button>
             {editorMode === 'markdown' && (
               <button onClick={() => {}}
-                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors">
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors">
                 <Eye size={12} /> Preview
               </button>
+            )}
+            {wordCount > 0 && (
+              <span className="ml-auto text-[11px] text-muted pr-1 tabular-nums">
+                {wordCount.toLocaleString('pt-BR')} palavra{wordCount !== 1 ? 's' : ''}
+              </span>
             )}
           </div>
 
@@ -379,6 +402,13 @@ function WritePageContent() {
             <input value={coverImageUrl} onChange={e => setCoverImageUrl(e.target.value)}
               placeholder="https://..."
               className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 transition-colors" />
+            {coverImageUrl && (
+              <div className="relative rounded-lg overflow-hidden border border-border h-28 bg-surface">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={coverImageUrl} alt="capa" className="w-full h-full object-cover"
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+              </div>
+            )}
           </div>
 
           {/* Category */}

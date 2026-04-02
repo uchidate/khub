@@ -1016,6 +1016,7 @@ export default function AdminBlogPage() {
             key: 'title',
             label: 'Título',
             sortable: true,
+            className: 'min-w-[340px]',
             render: (post) => (
                 <div className="max-w-sm">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -1036,9 +1037,10 @@ export default function AdminBlogPage() {
         {
             key: 'status',
             label: 'Status',
+            className: 'min-w-[140px]',
             render: (post) => {
                 const s = STATUS_LABELS[post.status] ?? { label: post.status, color: 'bg-surface text-muted' }
-                return <AdminStatusBadge label={s.label} color={s.color} />
+                return <AdminStatusBadge label={s.label} color={s.color} variant="pill" />
             },
         },
         {

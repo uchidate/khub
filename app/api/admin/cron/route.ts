@@ -8,6 +8,17 @@ export const dynamic = 'force-dynamic'
 // Definição canônica de todos os cron jobs do GitHub Actions
 export const CRON_JOBS = [
   {
+    id: 'update-trending',
+    name: 'Update Trending Scores',
+    emoji: '📈',
+    schedule: 'manual',
+    frequencyLabel: 'Manual',
+    description: 'Recalcula scores e ranking de trending para artistas, grupos e notícias',
+    endpoint: '/api/cron/update-trending',
+    defaultLimit: null,
+    color: 'rose',
+  },
+  {
     id: 'update',
     name: 'Auto Update Content',
     emoji: '🔄',
@@ -78,6 +89,8 @@ export const CRON_JOBS = [
 type CronJobId = typeof CRON_JOBS[number]['id']
 
 function getNextRuns(schedule: string, count = 3): string[] {
+  if (schedule === 'manual') return []
+
   const now = new Date()
   const results: string[] = []
   const parts = schedule.split(' ')
@@ -171,7 +184,7 @@ export async function POST(req: NextRequest) {
     const secret = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET
     if (!secret) return NextResponse.json({ error: 'CRON_SECRET não configurado' }, { status: 500 })
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.hallyuhub.com.br'
+    const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin || 'https://www.hallyuhub.com.br'
     const params = limit != null ? `?limit=${limit}` : job.defaultLimit != null ? `?limit=${job.defaultLimit}` : ''
     const url = `${baseUrl}${job.endpoint}${params}`
 

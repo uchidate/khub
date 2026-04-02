@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Instagram, CheckCircle, XCircle, Clock, AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
+import { Instagram, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
 
 type Stats = {
   totalArtists: number
@@ -103,30 +104,29 @@ export default function InstagramStatusPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black p-6 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-      </div>
+      <AdminLayout title="Status do Instagram" subtitle="Diagnóstico do sync e cobertura dos feeds configurados.">
+        <div className="flex items-center justify-center py-20">
+          <RefreshCw className="w-8 h-8 text-pink-500 animate-spin" />
+        </div>
+      </AdminLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 transition-colors mb-4"
-          >
-            <ArrowLeft size={20} />
-            Voltar ao Admin
-          </Link>
-          <div className="flex items-center gap-3 mb-4">
-            <Instagram className="text-pink-500" size={40} />
-            <h1 className="text-4xl font-black text-foreground">Status Instagram</h1>
-          </div>
-          <p className="text-xl text-muted">Diagnóstico de sincronização de posts</p>
-        </div>
+    <AdminLayout
+      title="Status do Instagram"
+      subtitle="Diagnóstico de sincronização, cobertura dos feeds configurados e artistas sem retorno de posts."
+      actions={
+        <Link
+          href="/admin/instagram"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+        >
+          <Instagram className="w-4 h-4" />
+          Voltar para feeds
+        </Link>
+      }
+    >
+      <div className="max-w-7xl">
 
         {/* Stats Grid */}
         {stats && (
@@ -196,10 +196,10 @@ export default function InstagramStatusPage() {
                       <p className="font-bold text-foreground">{formatDate(artist.lastSync)}</p>
                     </div>
                     <Link
-                      href={`/admin/artists/${artist.id}/instagram-feed`}
+                      href="/admin/instagram"
                       className="text-purple-500 hover:text-purple-400 text-sm font-medium"
                     >
-                      Configurar →
+                      Gerenciar feeds →
                     </Link>
                   </div>
                 </div>
@@ -223,6 +223,6 @@ export default function InstagramStatusPage() {
           )}
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

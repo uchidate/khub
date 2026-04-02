@@ -1,9 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight, Activity } from 'lucide-react'
 import Image from 'next/image'
 
 interface Artist {
@@ -128,7 +129,19 @@ export default function InstagramAdminPage() {
     const to = Math.min(page * LIMIT, total)
 
     return (
-        <AdminLayout title="Instagram Feeds">
+        <AdminLayout
+            title="Instagram Feeds"
+            subtitle="Configuração dos feeds RSS.app por artista e sincronização manual dos posts."
+            actions={
+                <Link
+                    href="/admin/instagram/status"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                >
+                    <Activity className="w-4 h-4" />
+                    Ver status do sync
+                </Link>
+            }
+        >
             <div className="space-y-6">
 
                 {/* Stats + Sync */}

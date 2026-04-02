@@ -8,19 +8,17 @@ const prismaClientSingleton = () => {
         throw new Error('DATABASE_URL environment variable is not set')
     }
 
+    // 60s em produção (consultas mais pesadas), 30s em desenvolvimento
+    const statementTimeout = process.env.NODE_ENV === 'production' ? 60000 : 30000
+
     // Pool with explicit limits to prevent connection exhaustion
     const pool = new Pool({
         connectionString,
         max: 20,                        // Increased from 10 — more headroom under concurrent load
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 10000, // Increased from 5s — gives more time to acquire connection
-    })
-
-    // Kill stuck queries — prevents pool exhaustion from runaway queries
-    // 60s in production (complex pages have deep JOINs), 30s in development
-    const statementTimeout = process.env.NODE_ENV === 'production' ? 60000 : 30000
-    pool.on('connect', (client) => {
-        client.query(`SET statement_timeout = ${statementTimeout}`).catch(() => {})
+        // Configure timeout at connection level to avoid running SET via client.query on connect.
+        statement_timeout: statementTimeout,
     })
 
     const adapter = new PrismaPg(pool)

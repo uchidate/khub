@@ -31,6 +31,7 @@ interface HomeBlogFeedProps {
     sidebarPosts: BlogFeedItem[]
     productions: ProductionItem[]
     categoryCounts?: Record<string, number>
+    initialCategory?: string
 }
 
 const ALL_TAB = { label: "Todos", value: "all", color: '#6b7280', bg: '#f3f4f6' }
@@ -196,8 +197,9 @@ function NewspaperSection({ cat, posts }: { cat: typeof BLOG_CATEGORIES[0]; post
     )
 }
 
-export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: HomeBlogFeedProps) {
-    const [activeTab, setActiveTab] = useState("all")
+export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, initialCategory }: HomeBlogFeedProps) {
+    const validInitial = initialCategory && TABS.some(t => t.value === initialCategory) ? initialCategory : 'all'
+    const [activeTab, setActiveTab] = useState(validInitial)
     const [visibleCount, setVisibleCount] = useState(8)
 
     function handleTabChange(value: string) {

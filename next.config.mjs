@@ -143,6 +143,15 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'www.asianjunkie.com',
             },
+            // HelloKpop — imagens no próprio domínio (wp-content/uploads)
+            {
+                protocol: 'https',
+                hostname: 'hellokpop.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'www.hellokpop.com',
+            },
             // CDN comum usado por portais de notícias WordPress
             {
                 protocol: 'https',

@@ -43,6 +43,12 @@ export async function GET(request: NextRequest) {
     const isHiddenRaw = searchParams.get('isHidden')
     const isHidden    = isHiddenRaw === 'true' ? true : isHiddenRaw === 'false' ? false : undefined
     const statusFilter = searchParams.get('status') || undefined
+    const translationFilter = searchParams.get('translation') || undefined
+    const artistLinkFilter = searchParams.get('artistLinks') || undefined
+    const editorialFilter = searchParams.get('editorial') || undefined
+    const blogFilter = searchParams.get('blog') || undefined
+    const blogEligible = searchParams.get('blogEligible') === 'true'
+    const hasImageFilter = searchParams.get('hasImage') || undefined
     const dateFrom    = searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')!) : undefined
     const dateTo      = searchParams.get('dateTo')   ? new Date(searchParams.get('dateTo')! + 'T23:59:59Z') : undefined
 
@@ -57,6 +63,22 @@ export async function GET(request: NextRequest) {
       ...(contentType ? { contentType } : {}),
       ...(isHidden !== undefined ? { isHidden } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
+      ...(translationFilter === 'completed' ? { translationStatus: 'completed' } : {}),
+      ...(translationFilter === 'pending' ? { translationStatus: { not: 'completed' } } : {}),
+      ...(artistLinkFilter === 'with' ? { artists: { some: {} } } : {}),
+      ...(artistLinkFilter === 'without' ? { artists: { none: {} } } : {}),
+      ...(editorialFilter === 'with' ? { editorialNoteGeneratedAt: { not: null } } : {}),
+      ...(editorialFilter === 'without' ? { editorialNoteGeneratedAt: null } : {}),
+      ...(blogFilter === 'generated' ? { blogPostGeneratedAt: { not: null } } : {}),
+      ...(blogFilter === 'pending' ? { blogPostGeneratedAt: null } : {}),
+      ...(hasImageFilter === 'missing' ? { imageUrl: null } : {}),
+      ...(hasImageFilter === 'present' ? { imageUrl: { not: null } } : {}),
+      ...(blogEligible ? {
+        isHidden: false,
+        translationStatus: 'completed',
+        blogPostGeneratedAt: null,
+        artists: { some: {} },
+      } : {}),
       ...((dateFrom || dateTo) ? {
         publishedAt: {
           ...(dateFrom ? { gte: dateFrom } : {}),

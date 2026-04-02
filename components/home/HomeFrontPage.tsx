@@ -4,6 +4,7 @@ import { type ArtistForBadge } from "@/lib/trending/badges"
 import { getArtistBadgeDisplay } from "@/lib/trending/display"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel"
+import { nameToGradient } from "@/lib/utils/name-to-gradient"
 
 interface FeaturedStory {
     slug: string
@@ -50,6 +51,7 @@ interface HomeFrontPageProps {
     carouselPosts?: FeaturedStory[]
     secondaryStories: SecondaryStory[]
     trendingArtists: TrendingArtist[]
+    spotlightArtist: TrendingArtist | null
     spotlightProduction: SpotlightProduction | null
 }
 
@@ -63,13 +65,6 @@ const AVATAR_GRADIENTS = [
     "from-[#ff2d78] to-[#c084fc]",
     "from-[#38bdf8] to-[#34d399]",
 ]
-
-function nameToGradient(name: string) {
-    let hash = 0
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-    const h = Math.abs(hash) % 360
-    return `linear-gradient(135deg, hsl(${h},70%,55%), hsl(${(h + 40) % 360},80%,65%))`
-}
 
 function getCategoryStyle(slug: string | undefined): { color: string; bg: string } {
     if (!slug) return { color: '#9ca3af', bg: 'transparent' }
@@ -123,6 +118,7 @@ export function HomeFrontPage({
     carouselPosts,
     secondaryStories,
     trendingArtists,
+    spotlightArtist,
     spotlightProduction,
 }: HomeFrontPageProps) {
     const hasCarousel = carouselPosts && carouselPosts.length > 0
@@ -130,7 +126,6 @@ export function HomeFrontPage({
 
     const safeSecondary = secondaryStories.slice(0, 4)
     const safeArtists = trendingArtists.slice(0, 8)
-    const spotlightArtist = safeArtists[0]
 
     return (
         <section className="border-b border-border">

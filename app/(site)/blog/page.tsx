@@ -340,7 +340,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           {/* Filter bar */}
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-3">
             {/* Categories */}
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="relative">
+              <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-nowrap sm:flex-wrap">
               <Link
                 href="/blog"
                 scroll={false}
@@ -348,7 +351,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               >
                 Todos {total ? <span className="opacity-70">({total})</span> : null}
               </Link>
-              {categories.filter(c => c._count.posts > 0).map(c => {
+              {categories.filter(c => c._count.posts > 0).sort((a, b) => b._count.posts - a._count.posts).map(c => {
                 const isActive = activeCategory === c.slug
                 const config = BLOG_CATEGORY_BY_SLUG[c.slug]
                 return (
@@ -370,6 +373,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   </Link>
                 )
               })}
+            </div>
             </div>
             {/* Tags */}
             {popularTags.length > 0 && (

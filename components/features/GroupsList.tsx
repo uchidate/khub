@@ -8,6 +8,7 @@ import { Users, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 
 type Group = {
     id: string
@@ -38,10 +39,6 @@ const GEN_COLORS: Record<string, { bg: string; color: string }> = {
     '5ª Geração': { bg: '#ECFDF5', color: '#065F46' },
 }
 
-function nameToGradient(name: string) {
-    const hue = [...name].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360
-    return `linear-gradient(135deg, hsl(${hue}, 55%, 68%), hsl(${(hue + 50) % 360}, 50%, 55%))`
-}
 
 function getGeneration(debutDate: string | null): string | null {
     if (!debutDate) return null
@@ -72,7 +69,8 @@ export function GroupsList() {
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disbanded'>('all')
     const [generationFilter, setGenerationFilter] = useState<string>('all')
-    const [sortBy, setSortBy] = useState<'name' | 'debut' | 'members' | 'popular'>('popular')
+    const [agencyFilter, setAgencyFilter] = useState<string>('all')
+    const [sortBy, setSortBy] = useState<'name' | 'debut' | 'recent' | 'members' | 'popular'>('popular')
 
     useEffect(() => {
         fetch('/api/groups/list?full=true')
@@ -100,11 +98,20 @@ export function GroupsList() {
             result = result.filter(g => getGeneration(g.debutDate) === generationFilter)
         }
 
+        if (agencyFilter !== 'all') {
+            result = result.filter(g => g.agency?.name === agencyFilter)
+        }
+
         result = [...result].sort((a, b) => {
             if (sortBy === 'debut') {
                 const ya = a.debutDate ? new Date(a.debutDate).getUTCFullYear() : 9999
                 const yb = b.debutDate ? new Date(b.debutDate).getUTCFullYear() : 9999
                 return ya - yb
+            }
+            if (sortBy === 'recent') {
+                const ya = a.debutDate ? new Date(a.debutDate).getUTCFullYear() : 0
+                const yb = b.debutDate ? new Date(b.debutDate).getUTCFullYear() : 0
+                return yb - ya
             }
             if (sortBy === 'members') return b._count.members - a._count.members
             if (sortBy === 'popular') return b.trendingScore !== a.trendingScore
@@ -114,16 +121,51 @@ export function GroupsList() {
         })
 
         return result
-    }, [groups, search, statusFilter, generationFilter, sortBy])
+    }, [groups, search, statusFilter, generationFilter, agencyFilter, sortBy])
+
+    const agencies = useMemo(() => {
+        const counts = new Map<string, number>()
+        for (const g of groups) {
+            const name = g.agency?.name
+            if (!name) continue
+            counts.set(name, (counts.get(name) ?? 0) + 1)
+        }
+        return Array.from(counts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 12)
+    }, [groups])
 
     const totalActive = groups.filter(g => !g.disbandDate).length
     const totalDisbanded = groups.filter(g => !!g.disbandDate).length
-    const hasActiveFilters = search || statusFilter !== 'all' || generationFilter !== 'all' || sortBy !== 'popular'
+    const avgMembers = groups.length > 0
+        ? (groups.reduce((acc, g) => acc + (g._count.members ?? 0), 0) / groups.length).toFixed(1)
+        : '0.0'
+    const hasActiveFilters = search || statusFilter !== 'all' || generationFilter !== 'all' || agencyFilter !== 'all' || sortBy !== 'popular'
 
     if (groups.length === 0) return <GroupsSkeleton />
 
     return (
         <div>
+            {/* Micro insights */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                <div className="rounded-xl border border-border bg-surface px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Total</p>
+                    <p className="text-sm font-black text-foreground mt-0.5">{groups.length}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Ativos</p>
+                    <p className="text-sm font-black text-foreground mt-0.5">{totalActive}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Agências</p>
+                    <p className="text-sm font-black text-foreground mt-0.5">{agencies.length}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-surface px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Média membros</p>
+                    <p className="text-sm font-black text-foreground mt-0.5">{avgMembers}</p>
+                </div>
+            </div>
+
             {/* Contadores */}
             <p className="text-muted text-xs font-medium mb-6">
                 {totalActive} ativo{totalActive !== 1 ? 's' : ''}
@@ -183,6 +225,7 @@ export function GroupsList() {
                             { value: 'popular', label: 'Populares' },
                             { value: 'name', label: 'A–Z' },
                             { value: 'debut', label: 'Estreia' },
+                            { value: 'recent', label: 'Mais novos' },
                             { value: 'members', label: 'Membros' },
                         ] as const).map(opt => (
                             <button
@@ -200,13 +243,66 @@ export function GroupsList() {
                     </div>
                 </div>
 
+                {agencies.length > 0 && (
+                    <div className="relative">
+                        <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
+                        <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
+                        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap">
+                            <button
+                                onClick={() => setAgencyFilter('all')}
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                    agencyFilter === 'all'
+                                        ? 'bg-accent text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                }`}
+                            >
+                                Todas as agências
+                            </button>
+                            {agencies.map(([name, count]) => (
+                                <button
+                                    key={name}
+                                    onClick={() => setAgencyFilter(name)}
+                                    className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all inline-flex items-center gap-1.5 ${
+                                        agencyFilter === name
+                                            ? 'bg-accent text-white'
+                                            : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                    }`}
+                                >
+                                    <span>{name}</span>
+                                    <span className="text-[10px] opacity-70">{count}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {hasActiveFilters && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                         <p className="text-xs text-muted">
                             {filtered.length} grupo{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
                         </p>
+                        {search && (
+                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
+                                busca: {search}
+                            </span>
+                        )}
+                        {statusFilter !== 'all' && (
+                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
+                                status: {statusFilter === 'active' ? 'ativos' : 'disbandados'}
+                            </span>
+                        )}
+                        {generationFilter !== 'all' && (
+                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
+                                {generationFilter}
+                            </span>
+                        )}
+                        {agencyFilter !== 'all' && (
+                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
+                                agência: {agencyFilter}
+                            </span>
+                        )}
                         <button
-                            onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all') }}
+                            onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setAgencyFilter('all'); setSortBy('popular') }}
                             className="text-xs text-accent hover:text-accent/70 transition-colors"
                         >
                             Limpar filtros
@@ -219,7 +315,7 @@ export function GroupsList() {
             {filtered.length === 0 ? (
                 <EmptyState
                     title="Nenhum grupo encontrado"
-                    action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setSortBy('popular') } }}
+                    action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setAgencyFilter('all'); setSortBy('popular') } }}
                 />
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">

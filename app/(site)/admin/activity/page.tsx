@@ -269,8 +269,35 @@ export default async function AdminActivityPage({ searchParams }: Props) {
     ]
 
     return (
-        <AdminLayout title="Atividade">
+        <AdminLayout
+            title="Atividade"
+            subtitle="Observabilidade operacional do produto: uso dos usuários, auditoria administrativa e eventos técnicos em um único fluxo."
+            actions={
+                <div className="flex flex-wrap gap-2">
+                    <Link
+                        href="/admin/server-logs"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
+                        <Server size={14} />
+                        Server logs
+                    </Link>
+                    <Link
+                        href="/admin/bot-logs"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
+                        <Database size={14} />
+                        Robôs
+                    </Link>
+                </div>
+            }
+        >
             <div className="space-y-5">
+                <div className="bg-surface border border-border rounded-xl p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Leitura recomendada</p>
+                    <p className="text-sm text-muted leading-relaxed">
+                        Use Usuários para comportamento do produto, Admin para trilha de alterações e Sistema para incidentes e fontes técnicas. Quando precisar do detalhe bruto, avance para Server Logs ou Robôs.
+                    </p>
+                </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
