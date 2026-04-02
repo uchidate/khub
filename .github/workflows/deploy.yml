@@ -291,7 +291,7 @@ jobs:
           echo "Triggering Coolify deploy for production (uuid: $UUID)..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             --connect-timeout 10 --max-time 60 --retry 3 --retry-delay 10 \
-            "https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=false" \
+            "https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             -H "Content-Type: application/json")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
@@ -306,16 +306,16 @@ jobs:
       - name: 🔍 Smoke Test
         run: |
           echo "Aguardando container subir..."
-          for i in $(seq 1 12); do
+          for i in $(seq 1 18); do
             sleep 10
             HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 https://www.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
             if [ "$HTTP" = "200" ]; then
               echo "✅ Production health check OK após $((i * 10))s"
               exit 0
             fi
-            echo "⏳ Tentativa $i/12: HTTP $HTTP"
+            echo "⏳ Tentativa $i/18: HTTP $HTTP"
           done
-          echo "❌ Production não respondeu após 120s"
+          echo "❌ Production não respondeu após 180s"
           exit 1
 
       - name: 🔧 Atualizar container nas Scheduled Tasks
