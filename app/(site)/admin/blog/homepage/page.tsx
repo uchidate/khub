@@ -99,9 +99,18 @@ function SlotPicker({
 }) {
     const { query, setQuery, results, loading } = usePostSearch()
     const [open, setOpen] = useState(false)
+    const [filterMode, setFilterMode] = useState<'all' | 'available' | 'blocked'>('all')
     const selectedIds = new Set(selected.map(p => p.id))
     const dropdownRef = useRef<HTMLDivElement>(null)
     const candidateResults = results.filter(r => !selectedIds.has(r.id))
+    const availableCount = candidateResults.filter(r => !blockedBySlot?.has(r.id)).length
+    const blockedCount = candidateResults.length - availableCount
+    const visibleResults = candidateResults.filter(post => {
+        const isBlocked = !!blockedBySlot?.get(post.id)
+        if (filterMode === 'available') return !isBlocked
+        if (filterMode === 'blocked') return isBlocked
+        return true
+    })
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -153,7 +162,30 @@ function SlotPicker({
 
                         {open && (
                             <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-background shadow-xl overflow-hidden">
-                                {candidateResults.map(post => {
+                                {candidateResults.length > 0 && (
+                                    <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-surface/60">
+                                        {[
+                                            { key: 'all', label: `Tudo (${candidateResults.length})` },
+                                            { key: 'available', label: `Disponiveis (${availableCount})` },
+                                            { key: 'blocked', label: `Bloqueados (${blockedCount})` },
+                                        ].map(tab => (
+                                            <button
+                                                key={tab.key}
+                                                type="button"
+                                                onClick={() => setFilterMode(tab.key as 'all' | 'available' | 'blocked')}
+                                                className={`text-[10px] font-semibold px-2 py-1 rounded-md transition-colors ${
+                                                    filterMode === tab.key
+                                                        ? 'bg-accent-soft text-foreground'
+                                                        : 'text-muted hover:text-foreground hover:bg-surface'
+                                                }`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {visibleResults.map(post => {
                                     const blockedReason = blockedBySlot?.get(post.id)
                                     const isBlocked = !!blockedReason
                                     return (
@@ -196,6 +228,11 @@ function SlotPicker({
                                 {candidateResults.length === 0 && (
                                     <p className="px-3 py-2 text-[11px] text-muted">
                                         Nenhum resultado para sua busca.
+                                    </p>
+                                )}
+                                {candidateResults.length > 0 && visibleResults.length === 0 && (
+                                    <p className="px-3 py-2 text-[11px] text-muted">
+                                        Nenhum item no filtro selecionado.
                                     </p>
                                 )}
                             </div>
