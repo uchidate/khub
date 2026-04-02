@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
 import {
   Shield, Users, Building2, Film, Newspaper, Disc3, Tag, Activity,
@@ -572,6 +572,7 @@ export interface AdminLayoutProps {
 
 export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutProps) {
   const pathname  = usePathname()
+  const router = useRouter()
   const [mobileOpen,  setMobileOpen]  = useState(false)
   const [compact,     setCompact]     = useState(false)
   const [searchOpen,  setSearchOpen]  = useState(false)
@@ -605,6 +606,12 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
         return
       }
 
+      if (e.key === 'Escape') {
+        setSearchOpen(false)
+        setMobileOpen(false)
+        return
+      }
+
       if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
         gPressed = true
         if (gTimeout) clearTimeout(gTimeout)
@@ -622,15 +629,22 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
           b: '/admin/blog',
         }
         const route = routes[e.key]
-        if (route) { e.preventDefault(); window.location.href = route }
+        if (route) { e.preventDefault(); router.push(route) }
       }
     }
 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [router])
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = original }
+  }, [mobileOpen])
 
   const sidebarWidth = compact ? 'lg:w-16' : 'lg:w-56'
   const mainMargin   = compact ? 'lg:ml-16' : 'lg:ml-56'
@@ -651,6 +665,7 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
             <aside className="relative flex flex-col w-64 max-w-[85vw] bg-surface border-r border-border h-full overflow-y-auto">
               <button
                 onClick={() => setMobileOpen(false)}
+                aria-label="Fechar menu"
                 className="absolute top-3 right-3 p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 <X size={16} />
@@ -671,6 +686,7 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileOpen(true)}
+                aria-label="Abrir menu"
                 className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
               >
                 <Menu size={19} />

@@ -195,6 +195,7 @@ export default async function AdminPage() {
               {greet}, <span className="text-blue-300">{name}</span>
             </h2>
             <p className="text-xs text-muted capitalize">{dateStr}</p>
+            <p className="text-[10px] text-muted mt-0.5">Atualizado agora</p>
           </div>
           <Link
             href="/admin/pipeline"
@@ -231,6 +232,22 @@ export default async function AdminPage() {
                 </Link>
               ))}
             </div>
+          </div>
+        )}
+
+        {actionCards.length === 0 && (
+          <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted">Atenção agora</p>
+              <p className="text-sm text-foreground font-semibold mt-1">Tudo sob controle no momento</p>
+              <p className="text-[11px] text-muted mt-0.5">Sem pendências urgentes de moderação, tradução ou enriquecimento.</p>
+            </div>
+            <Link
+              href="/admin/activity"
+              className="text-xs text-muted hover:text-foreground border border-border px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+            >
+              Ver atividade
+            </Link>
           </div>
         )}
 
