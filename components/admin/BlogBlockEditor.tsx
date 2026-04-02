@@ -5,7 +5,7 @@ import {
     Plus, Trash2, GripVertical, ChevronUp, ChevronDown,
     Type, AlignLeft, Quote, Image as ImageIcon, Twitter, Instagram, Video, Music2,
     User, Film, BarChart2, Star, Minus, GalleryHorizontal, X,
-    ChevronRight, Copy, Search, Loader2, Users, Zap,
+    ChevronRight, Copy, Search, Loader2, Users, Zap, Clock, Headphones,
 } from 'lucide-react'
 import type { BlogBlock, BlogBlockType } from '@/lib/types/blocks'
 import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
@@ -22,6 +22,8 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_twitter:         <Twitter className="w-3.5 h-3.5" />,
     blog_instagram:       <Instagram className="w-3.5 h-3.5" />,
     blog_tiktok:          <Music2 className="w-3.5 h-3.5" />,
+    blog_spotify:         <Headphones className="w-3.5 h-3.5" />,
+    blog_timeline:        <Clock className="w-3.5 h-3.5" />,
     blog_artist_card:     <User className="w-3.5 h-3.5" />,
     blog_production_card: <Film className="w-3.5 h-3.5" />,
     blog_group_card:      <Users className="w-3.5 h-3.5" />,
@@ -43,6 +45,8 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_twitter:         'bg-sky-500/20 text-sky-300 border-sky-500/30',
     blog_instagram:       'bg-pink-500/20 text-pink-300 border-pink-500/30',
     blog_tiktok:          'bg-surface text-foreground border-border',
+    blog_spotify:         'bg-green-500/20 text-green-300 border-green-500/30',
+    blog_timeline:        'bg-violet-500/20 text-violet-300 border-violet-500/30',
     blog_artist_card:     'bg-violet-500/20 text-violet-300 border-violet-500/30',
     blog_production_card: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     blog_group_card:      'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
@@ -58,7 +62,8 @@ const COLORS: Record<BlogBlockType, string> = {
 
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
-    { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok'] },
+    { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok', 'blog_spotify'] },
+    { label: 'Layout',    types: ['blog_timeline'] },
     { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating'] },
 ]
 
@@ -75,6 +80,8 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_twitter':         return { type, url: '' }
         case 'blog_instagram':       return { type, url: '' }
         case 'blog_tiktok':          return { type, url: '' }
+        case 'blog_spotify':         return { type, url: '', compact: false }
+        case 'blog_timeline':        return { type, items: [{ year: '', title: '', text: '', emoji: '' }] }
         case 'blog_artist_card':     return { type, artistId: '', note: '' }
         case 'blog_production_card': return { type, productionId: '', note: '' }
         case 'blog_group_card':      return { type, groupId: '', note: '' }
@@ -324,6 +331,13 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.url} onChange={e => onChange({ ...block, url: e.target.value })}
                         placeholder="URL da imagem..." className={inputCls} />
+                    {block.url && (
+                        <div className="relative h-36 rounded-lg border border-border overflow-hidden bg-surface">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={block.url} alt="preview" className="w-full h-full object-cover"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                        </div>
+                    )}
                     <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
                         placeholder="Legenda (opcional)..." className={inputCls} />
                     <div className="flex items-center gap-3">
@@ -345,13 +359,20 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             return (
                 <div className="space-y-2">
                     {block.urls.map((url, i) => (
-                        <div key={i} className="flex gap-2">
+                        <div key={i} className="flex gap-2 items-start">
+                            {url && (
+                                <div className="w-16 h-12 rounded-lg border border-border overflow-hidden shrink-0 bg-surface">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={url} alt="" className="w-full h-full object-cover"
+                                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                </div>
+                            )}
                             <input value={url} onChange={e => {
                                 const urls = [...block.urls]; urls[i] = e.target.value
                                 onChange({ ...block, urls })
-                            }} placeholder={`URL da imagem ${i + 1}...`} className={inputCls} />
+                            }} placeholder={`URL da imagem ${i + 1}...`} className={`${inputCls} flex-1`} />
                             <button onClick={() => onChange({ ...block, urls: block.urls.filter((_, j) => j !== i) })}
-                                className="text-muted hover:text-red-400 shrink-0">
+                                className="text-muted hover:text-red-400 shrink-0 pt-2">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
@@ -373,10 +394,10 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.url} onChange={e => onChange({ ...block, url: e.target.value })}
                         placeholder={
-                            block.type === 'blog_video' ? 'URL do YouTube...' :
-                            block.type === 'blog_twitter' ? 'URL do tweet...' :
+                            block.type === 'blog_video' ? 'URL do YouTube (incluindo /shorts/...)' :
+                            block.type === 'blog_twitter' ? 'URL do tweet (x.com ou twitter.com)' :
                             block.type === 'blog_instagram' ? 'URL do post do Instagram...' :
-                            'URL do TikTok...'
+                            'URL do vídeo no TikTok...'
                         }
                         className={inputCls} />
                     {'caption' in block && (
@@ -384,6 +405,28 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             onChange={e => onChange({ ...block, caption: e.target.value } as BlogBlock)}
                             placeholder="Legenda (opcional)..." className={inputCls} />
                     )}
+                </div>
+            )
+
+        case 'blog_spotify':
+            return (
+                <div className="space-y-2">
+                    <input value={block.url} onChange={e => onChange({ ...block, url: e.target.value })}
+                        placeholder="URL do Spotify (track, álbum, playlist, artista)..."
+                        className={inputCls} />
+                    {block.url && !block.url.includes('open.spotify.com') && (
+                        <p className="text-[11px] text-orange-400">Use o link de compartilhamento do Spotify (open.spotify.com/...)</p>
+                    )}
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <button
+                            type="button"
+                            onClick={() => onChange({ ...block, compact: !block.compact })}
+                            className={`relative w-8 h-4 rounded-full transition-colors ${block.compact ? 'bg-green-600' : 'bg-surface-hover border border-border'}`}
+                        >
+                            <span className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${block.compact ? 'translate-x-4' : ''}`} />
+                        </button>
+                        <span className="text-xs text-muted">Player compacto (uma música)</span>
+                    </label>
                 </div>
             )
 
@@ -437,6 +480,11 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     {block.items.map((item, i) => (
                         <div key={i} className="flex gap-2 items-center">
+                            <input value={(item as { emoji?: string }).emoji || ''} onChange={e => {
+                                const items = [...block.items]
+                                items[i] = { ...item, emoji: e.target.value } as typeof item
+                                onChange({ ...block, items })
+                            }} placeholder="🌟" className={`${inputCls} w-14 text-center`} />
                             <input value={item.label} onChange={e => {
                                 const items = [...block.items]
                                 items[i] = { ...item, label: e.target.value }
@@ -523,6 +571,42 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Atribuição (opcional)..." className={inputCls} />
                 </div>
             )
+
+        case 'blog_timeline':
+            return (
+                <div className="space-y-3">
+                    {block.items.map((item, i) => (
+                        <div key={i} className="space-y-1.5 p-3 rounded-lg bg-background border border-border">
+                            <div className="flex gap-2 items-center">
+                                <input value={item.emoji || ''} onChange={e => {
+                                    const items = [...block.items]; items[i] = { ...item, emoji: e.target.value }
+                                    onChange({ ...block, items })
+                                }} placeholder="⭐" className={`${inputCls} w-14 text-center`} />
+                                <input value={item.year} onChange={e => {
+                                    const items = [...block.items]; items[i] = { ...item, year: e.target.value }
+                                    onChange({ ...block, items })
+                                }} placeholder="2020" className={`${inputCls} w-24`} />
+                                <input value={item.title} onChange={e => {
+                                    const items = [...block.items]; items[i] = { ...item, title: e.target.value }
+                                    onChange({ ...block, items })
+                                }} placeholder="Marco da carreira..." className={`${inputCls} flex-1`} />
+                                <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
+                                    className="text-muted hover:text-red-400 shrink-0">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <textarea value={item.text || ''} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, text: e.target.value }
+                                onChange({ ...block, items })
+                            }} rows={2} placeholder="Detalhes opcionais..." className={inputCls} />
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, items: [...block.items, { year: '', title: '', text: '', emoji: '' }] })}
+                        className="text-xs text-muted hover:text-purple-400 transition-colors flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar marco
+                    </button>
+                </div>
+            )
     }
 }
 
@@ -539,12 +623,14 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_twitter':         return block.url || '(sem URL)'
         case 'blog_instagram':       return block.url || '(sem URL)'
         case 'blog_tiktok':          return block.url || '(sem URL)'
+        case 'blog_spotify':         return block.url || '(sem URL)'
+        case 'blog_timeline':        return `${block.items.length} marco(s)${block.items[0]?.year ? ` — de ${block.items[0].year}` : ''}`
         case 'blog_artist_card':     return block.artistId ? block.artistId.slice(0, 24) + '…' : '(sem artista)'
         case 'blog_group_card':      return block.groupId ? block.groupId.slice(0, 24) + '…' : '(sem grupo)'
         case 'blog_production_card': return block.productionId ? block.productionId.slice(0, 24) + '…' : '(sem produção)'
         case 'blog_stats_row':       return `${block.items.length} campo(s)`
         case 'blog_rating':          return `Nota: ${block.score}/10${block.label ? ` — ${block.label}` : ''}`
-        case 'blog_divider':         return '───────'
+        case 'blog_divider':         return '───✦───'
         case 'blog_callout':         return block.title || block.text.slice(0, 60) || '(vazio)'
         case 'blog_curiosity':       return block.text.slice(0, 60) || '(vazio)'
         case 'blog_highlight':       return block.text.slice(0, 60) || '(vazio)'
