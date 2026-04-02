@@ -56,14 +56,6 @@ const SORT_OPTIONS = [
     { value: 'name', label: 'A-Z' },
 ]
 
-const SORT_LABEL: Record<string, string> = {
-    newest: 'Recentes',
-    popular: 'Populares',
-    rating: 'Avaliacao',
-    year: 'Ano',
-    name: 'A-Z',
-}
-
 const AGE_BADGE_STYLE: Record<string, string> = {
     'L':  'bg-green-600 text-white',
     '10': 'bg-blue-600 text-white',
@@ -318,16 +310,17 @@ export function ProductionsList() {
         updateUrl({ search: '', type: '', ageRating: '', sortBy: 'popular' }, 1)
     }
 
-    const removeSingleFilter = (key: 'search' | 'type' | 'ageRating') => {
-        const next = { ...filters, [key]: '' }
+    const removeSingleFilter = (key: 'search' | 'type' | 'ageRating' | 'sortBy') => {
+        const next = { ...filters, [key]: key === 'sortBy' ? 'popular' : '' }
         if (key === 'search') setSearchInput('')
         updateUrl(next, 1)
     }
 
-    const activeChips: Array<{ key: 'search' | 'type' | 'ageRating'; label: string }> = [
+    const activeChips: Array<{ key: 'search' | 'type' | 'ageRating' | 'sortBy'; label: string }> = [
         ...(filters.search ? [{ key: 'search' as const, label: `Busca: ${filters.search}` }] : []),
         ...(filters.type ? [{ key: 'type' as const, label: `Tipo: ${TYPE_OPTIONS.find(t => t.value === filters.type)?.label ?? filters.type}` }] : []),
         ...(filters.ageRating ? [{ key: 'ageRating' as const, label: `Classificacao: ${AGE_RATING_OPTIONS.find(a => a.value === filters.ageRating)?.label ?? filters.ageRating}` }] : []),
+        ...(filters.sortBy !== 'popular' ? [{ key: 'sortBy' as const, label: `Ordem: ${SORT_OPTIONS.find(s => s.value === filters.sortBy)?.label ?? filters.sortBy}` }] : []),
     ]
 
     const hasActiveFilters = filters.search || filters.type || filters.ageRating
@@ -346,11 +339,9 @@ export function ProductionsList() {
 
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                     <p className="text-xs text-muted">
-                        {isLoading
-                            ? 'Carregando producoes...'
-                            : `${pagination.total.toLocaleString('pt-BR')} resultados · ordenado por ${SORT_LABEL[filters.sortBy] ?? 'Populares'}`}
+                        {isLoading ? 'Carregando producoes...' : 'Filtros editoriais do catalogo'}
                     </p>
-                    {hasActiveFilters && (
+                    {(hasActiveFilters || filters.sortBy !== 'popular') && (
                         <button onClick={clearAll} className="text-xs text-accent hover:text-accent/70 transition-colors">
                             Limpar filtros
                         </button>
