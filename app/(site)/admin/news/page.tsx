@@ -168,7 +168,6 @@ function NewsThumbnail({ src, title, onBroken }: { src: string | null; title: st
     }
 
     return (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
             src={src}
             alt={title}
@@ -197,7 +196,6 @@ function ArtistAvatar({ url, name, onBroken }: { url: string | null; name: strin
     }
 
     return (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
             src={url}
             alt={name}

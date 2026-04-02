@@ -2,15 +2,14 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Users, Activity, Film, Newspaper, Mic2, AlertTriangle,
+  Activity, AlertTriangle,
   Settings, Flag, MessageSquare, Languages, Sparkles, Workflow,
-  ArrowRight, TrendingUp, ChevronRight, FileText,
+  ArrowRight, ChevronRight, FileText,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
 import { AdminRefreshButton } from '@/components/admin/AdminRefreshButton'
 import { AdminStatsGrid } from '@/components/admin/AdminStatsGrid'
-import { Sparkline } from '@/components/admin/Sparkline'
 import prisma from '@/lib/prisma'
 
 export default async function AdminPage() {
