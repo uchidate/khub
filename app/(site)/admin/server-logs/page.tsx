@@ -223,8 +223,35 @@ export default function ServerLogsPage() {
     }
 
     return (
-        <AdminLayout title="Server Logs">
+        <AdminLayout
+            title="Server Logs"
+            subtitle="Inspeção operacional de erros HTTP, latência e falhas de gateway, com filtros rápidos para incidentes recentes."
+            actions={
+                <div className="flex flex-wrap gap-2">
+                    <a
+                        href="/admin/activity?tab=system"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
+                        <Clock className="w-4 h-4" />
+                        Atividade do sistema
+                    </a>
+                    <a
+                        href="/admin/infrastructure"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
+                        <ShieldAlert className="w-4 h-4" />
+                        Infraestrutura
+                    </a>
+                </div>
+            }
+        >
             <div className="space-y-5">
+                <div className="bg-surface border border-border rounded-xl p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Leitura recomendada</p>
+                    <p className="text-sm text-muted leading-relaxed">
+                        Use App Logs para erros persistidos pela aplicação e Gateway para 502/504 vindos da borda. Quando o problema for recorrente, cruze com Atividade do sistema e Infraestrutura.
+                    </p>
+                </div>
 
                 {/* Tabs */}
                 <div className="flex bg-surface border border-border rounded-lg overflow-hidden w-fit">

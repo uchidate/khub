@@ -172,13 +172,6 @@ export default async function AdminPage() {
     { label: 'Grupos',    value: totalGroups,      new: 0,              icon: Users,    href: '/admin/groups',      sub: null,                         spark: sparks.groups,      sparkColor: '#a855f7' },
   ]
 
-  // Pipeline steps com % de progresso visual
-  const pipelineSteps = [
-    { label: 'Importadas', count: newsImportedToday, color: 'bg-border' },
-    { label: 'Em fila',    count: newsQueueToday,    color: 'bg-yellow-500' },
-    { label: 'Publicadas', count: newsPublishedToday, color: 'bg-emerald-500' },
-  ]
-
   // Greeting
   const hour   = now.getHours()
   const greet  = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
@@ -243,30 +236,43 @@ export default async function AdminPage() {
               Ver completo <ArrowRight size={10} />
             </Link>
           </div>
-          <div className="flex items-center gap-0 relative">
-            {pipelineSteps.map((step, i) => {
-              const isLast = i === pipelineSteps.length - 1
-              return (
-                <div key={step.label} className="flex items-center flex-1 min-w-0">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${step.color}`} />
-                      <span className="text-[10px] text-muted font-medium truncate">{step.label}</span>
-                    </div>
-                    <p className="text-xl font-black text-foreground tabular-nums pl-3.5">{step.count}</p>
-                  </div>
-                  {!isLast && <ArrowRight size={12} className="text-muted flex-shrink-0 mx-2" />}
+
+          {/* Métricas em linha */}
+          <div className="grid grid-cols-4 gap-3 mb-3">
+            {[
+              { label: 'Importadas', count: newsImportedToday, color: 'text-foreground',  dot: 'bg-border' },
+              { label: 'Em fila',    count: newsQueueToday,    color: 'text-yellow-400',  dot: 'bg-yellow-500' },
+              { label: 'Publicadas', count: newsPublishedToday, color: 'text-emerald-400', dot: 'bg-emerald-500' },
+              { label: 'Ocultas',    count: newsHidden,         color: 'text-muted',       dot: 'bg-red-500/50' },
+            ].map(step => (
+              <div key={step.label}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${step.dot}`} />
+                  <span className="text-[9px] text-muted font-medium uppercase tracking-wide truncate">{step.label}</span>
                 </div>
-              )
-            })}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-border" />
-                <span className="text-[10px] text-muted font-medium">Ocultas</span>
+                <p className={`text-2xl font-black tabular-nums leading-none ${step.color}`}>{step.count}</p>
               </div>
-              <p className="text-xl font-black text-muted tabular-nums pl-3.5">{newsHidden}</p>
-            </div>
+            ))}
           </div>
+
+          {/* Barra de progresso: publicadas / importadas */}
+          {newsImportedToday > 0 && (() => {
+            const pct = Math.min(100, Math.round((newsPublishedToday / newsImportedToday) * 100))
+            return (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9px] text-muted">Progresso de publicação</span>
+                  <span className="text-[10px] font-bold text-emerald-400">{pct}%</span>
+                </div>
+                <div className="h-1.5 bg-border rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Stats grid */}

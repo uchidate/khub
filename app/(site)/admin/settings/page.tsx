@@ -1,10 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
   Shield, AlertTriangle, CheckCircle, RefreshCw, Wrench,
-  Layers, Clock, RotateCcw, ChevronRight,
+  Layers, Clock, RotateCcw, ChevronRight, Disc3, Tag, Instagram,
+  Activity, EyeOff, Database, ServerIcon, Bot,
 } from 'lucide-react'
 
 type SystemSettings = {
@@ -26,6 +28,51 @@ const REVALIDATE_TARGETS: { target: RevalidateTarget; label: string; desc: strin
   { target: 'system-settings', label: 'Configurações', desc: 'Cache interno de settings' },
   { target: 'all', label: 'Tudo', desc: 'Revalidar todo o cache de uma vez' },
 ]
+
+const RELATED_AREAS = [
+  {
+    title: 'Catálogo musical',
+    description: 'Discografia e lançamentos vinculados aos artistas.',
+    href: '/admin/albums',
+    icon: Disc3,
+  },
+  {
+    title: 'Tags editoriais',
+    description: 'Taxonomia usada em notícias, blog e curadoria.',
+    href: '/admin/tags',
+    icon: Tag,
+  },
+  {
+    title: 'Feeds do Instagram',
+    description: 'Configuração e sync dos feeds sociais dos artistas.',
+    href: '/admin/instagram',
+    icon: Instagram,
+  },
+  {
+    title: 'Atividade e auditoria',
+    description: 'Uso do produto, ações admin e eventos de sistema.',
+    href: '/admin/activity',
+    icon: Activity,
+  },
+  {
+    title: 'Conteúdo oculto',
+    description: 'Curadoria de itens escondidos e revisão de visibilidade.',
+    href: '/admin/hidden',
+    icon: EyeOff,
+  },
+  {
+    title: 'Infra e logs',
+    description: 'Banco, infraestrutura e automações técnicas.',
+    href: '/admin/database',
+    icon: Database,
+  },
+] as const
+
+const SYSTEM_TOOLS = [
+  { href: '/admin/server-logs', label: 'Server Logs', icon: ServerIcon },
+  { href: '/admin/bot-logs', label: 'Robôs', icon: Bot },
+  { href: '/admin/infrastructure', label: 'Infraestrutura', icon: ServerIcon },
+] as const
 
 function Toggle({
   checked,
@@ -182,8 +229,70 @@ export default function AdminSettingsPage() {
     : null
 
   return (
-    <AdminLayout title="Configurações do Sistema">
-      <div className="space-y-5 max-w-2xl">
+    <AdminLayout
+      title="Sistema"
+      subtitle="Configurações globais da plataforma, manutenção e revalidação manual de cache."
+    >
+      <div className="space-y-5 max-w-4xl">
+
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="bg-surface border border-border rounded-xl p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <Wrench className="w-4 h-4 text-amber-400" />
+              <h2 className="text-sm font-bold text-foreground">Escopo desta área</h2>
+            </div>
+            <p className="text-sm text-muted leading-relaxed">
+              Sistema agora fica restrito ao que afeta o site inteiro: flags globais, manutenção e rotinas técnicas.
+              Cadastros operacionais como álbuns, tags, Instagram e atividade continuam nas mesmas rotas,
+              mas foram reposicionados na navegação para reduzir ruído e melhorar a previsibilidade do admin.
+            </p>
+          </div>
+
+          <div className="bg-surface border border-border rounded-xl p-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-3">
+              Atalhos técnicos
+            </p>
+            <div className="space-y-2">
+              {SYSTEM_TOOLS.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-border text-sm text-muted hover:text-foreground hover:bg-background transition-colors"
+                >
+                  <Icon className="w-4 h-4 text-muted" />
+                  <span className="flex-1">{label}</span>
+                  <ChevronRight className="w-4 h-4 text-muted" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface border border-border rounded-xl p-5">
+          <div className="flex items-center gap-2.5 mb-4">
+            <Layers className="w-4 h-4 text-blue-400" />
+            <h2 className="text-sm font-bold text-foreground">Áreas relacionadas</h2>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {RELATED_AREAS.map(({ title, description, href, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-xl border border-border bg-background px-4 py-3 hover:bg-surface hover:border-border transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-surface flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{title}</p>
+                    <p className="text-xs text-muted mt-1 leading-relaxed">{description}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
 
         {/* Status bar */}
         <div className="flex items-center justify-between">

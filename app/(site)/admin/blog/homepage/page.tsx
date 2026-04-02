@@ -23,6 +23,15 @@ interface HomepageConfig {
     homeSecondaryPostIds: string[]
     homeSidebarPostIds: string[]
     homeCarouselPostIds: string[]
+    homeSpotlightArtistId: string | null
+}
+
+interface ArtistSummary {
+    id: string
+    nameRomanized: string
+    nameHangul: string | null
+    primaryImageUrl: string | null
+    agency?: { name: string } | null
 }
 
 // ─── Post Search ──────────────────────────────────────────────────────────────
@@ -39,6 +48,28 @@ function usePostSearch() {
             try {
                 const res = await fetch(`/api/admin/blog?search=${encodeURIComponent(query)}&status=PUBLISHED&limit=8`)
                 const data = await res.json() as { data?: PostSummary[] }
+                setResults(data.data ?? [])
+            } catch { setResults([]) }
+            finally { setLoading(false) }
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [query])
+
+    return { query, setQuery, results, loading }
+}
+
+function useArtistSearch() {
+    const [query, setQuery] = useState('')
+    const [results, setResults] = useState<ArtistSummary[]>([])
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        if (query.trim().length < 2) { setResults([]); return }
+        const timer = setTimeout(async () => {
+            setLoading(true)
+            try {
+                const res = await fetch(`/api/admin/artists?search=${encodeURIComponent(query)}&limit=8&sortBy=trendingScore&sortOrder=desc`)
+                const data = await res.json() as { data?: ArtistSummary[] }
                 setResults(data.data ?? [])
             } catch { setResults([]) }
             finally { setLoading(false) }
@@ -76,6 +107,133 @@ function PostCard({ post, onRemove, label }: { post: PostSummary; onRemove: () =
             >
                 <X size={13} />
             </button>
+        </div>
+    )
+}
+
+function ArtistCard({ artist, onRemove }: { artist: ArtistSummary; onRemove: () => void }) {
+    return (
+        <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-surface group">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-background border border-border/60 shrink-0">
+                {artist.primaryImageUrl ? (
+                    <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={48} height={48} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[11px] font-bold text-muted">
+                        {artist.nameRomanized[0]}
+                    </div>
+                )}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-foreground truncate leading-tight">{artist.nameRomanized}</p>
+                {artist.nameHangul && (
+                    <p className="text-[10px] text-muted truncate">{artist.nameHangul}</p>
+                )}
+                {artist.agency?.name && (
+                    <p className="text-[10px] text-muted truncate">{artist.agency.name}</p>
+                )}
+            </div>
+            <button
+                onClick={onRemove}
+                className="shrink-0 p-1 rounded hover:bg-red-500/10 hover:text-red-400 text-muted transition-colors"
+            >
+                <X size={13} />
+            </button>
+        </div>
+    )
+}
+
+function ArtistSpotlightPicker({
+    selected,
+    onSelect,
+    onRemove,
+}: {
+    selected: ArtistSummary | null
+    onSelect: (artist: ArtistSummary) => void
+    onRemove: () => void
+}) {
+    const { query, setQuery, results, loading } = useArtistSearch()
+    const [open, setOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+    const visibleResults = results.filter(artist => artist.id !== selected?.id)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setOpen(false)
+            }
+        }
+        if (open) document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [open])
+
+    return (
+        <div className="rounded-xl border border-border bg-background">
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-surface rounded-t-xl">
+                <span className="text-accent"><Star size={15} /></span>
+                <div>
+                    <p className="text-[13px] font-bold text-foreground">Artista da semana</p>
+                    <p className="text-[11px] text-muted">Defina manualmente o destaque da semana ou deixe vazio para usar a rotação automática do trending</p>
+                </div>
+            </div>
+
+            <div className="p-3 space-y-2">
+                {selected ? (
+                    <ArtistCard artist={selected} onRemove={onRemove} />
+                ) : (
+                    <div className="rounded-lg border border-dashed border-border bg-surface/40 px-3 py-2 text-[11px] text-muted">
+                        Sem override manual. A home usa a rotação semanal automática entre artistas em alta.
+                    </div>
+                )}
+
+                <div className="relative" ref={dropdownRef}>
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-accent/50 transition-colors bg-surface/50">
+                        <Search size={13} className="text-muted shrink-0" />
+                        <input
+                            type="text"
+                            placeholder="Buscar artista..."
+                            value={query}
+                            onChange={e => { setQuery(e.target.value); setOpen(true) }}
+                            onFocus={() => setOpen(true)}
+                            className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted focus:outline-none"
+                        />
+                        {loading && <Loader2 size={12} className="text-muted animate-spin shrink-0" />}
+                    </div>
+
+                    {open && (
+                        <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-background shadow-xl overflow-hidden">
+                            {visibleResults.map(artist => (
+                                <button
+                                    key={artist.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onSelect(artist)
+                                        setQuery('')
+                                        setOpen(false)
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors"
+                                >
+                                    <div className="w-10 h-10 rounded-full overflow-hidden bg-surface shrink-0">
+                                        {artist.primaryImageUrl ? (
+                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} width={40} height={40} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-muted">{artist.nameRomanized[0]}</div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[12px] font-semibold truncate">{artist.nameRomanized}</p>
+                                        {artist.nameHangul && <p className="text-[10px] text-muted truncate">{artist.nameHangul}</p>}
+                                    </div>
+                                </button>
+                            ))}
+                            {visibleResults.length === 0 && (
+                                <p className="px-3 py-2 text-[11px] text-muted">
+                                    Nenhum artista encontrado para sua busca.
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }
@@ -183,17 +341,18 @@ export default function HomepageConfigPage() {
     const [carouselPosts, setCarouselPosts] = useState<PostSummary[]>([])
     const [secondaryPosts, setSecondaryPosts] = useState<PostSummary[]>([])
     const [sidebarPosts, setSidebarPosts] = useState<PostSummary[]>([])
+    const [spotlightArtist, setSpotlightArtist] = useState<ArtistSummary | null>(null)
 
     // Load current config
     useEffect(() => {
         fetch('/api/admin/settings/homepage')
-            .then(r => r.json() as Promise<{ config: HomepageConfig; postsById: Record<string, PostSummary> }>)
-            .then(({ config, postsById: pById }) => {
-                setPostsById(pById) // kept for potential future use
+            .then(r => r.json() as Promise<{ config: HomepageConfig; postsById: Record<string, PostSummary>; artistsById: Record<string, ArtistSummary> }>)
+            .then(({ config, postsById: pById, artistsById: aById }) => {
                 setFeaturedPost(config.homeFeaturedPostId ? (pById[config.homeFeaturedPostId] ?? null) : null)
                 setCarouselPosts((config.homeCarouselPostIds ?? []).map(id => pById[id]).filter(Boolean))
                 setSecondaryPosts(config.homeSecondaryPostIds.map(id => pById[id]).filter(Boolean))
                 setSidebarPosts(config.homeSidebarPostIds.map(id => pById[id]).filter(Boolean))
+                setSpotlightArtist(config.homeSpotlightArtistId ? (aById[config.homeSpotlightArtistId] ?? null) : null)
             })
             .catch(() => toast.error('Erro ao carregar configuração'))
             .finally(() => setLoading(false))
@@ -210,6 +369,7 @@ export default function HomepageConfigPage() {
                     homeCarouselPostIds: carouselPosts.map(p => p.id),
                     homeSecondaryPostIds: secondaryPosts.map(p => p.id),
                     homeSidebarPostIds: sidebarPosts.map(p => p.id),
+                    homeSpotlightArtistId: spotlightArtist?.id ?? null,
                 }),
             })
             if (!res.ok) throw new Error()
@@ -269,6 +429,12 @@ export default function HomepageConfigPage() {
                     onSelect={p => setFeaturedPost(p)}
                     onRemove={() => setFeaturedPost(null)}
                     max={1}
+                />
+
+                <ArtistSpotlightPicker
+                    selected={spotlightArtist}
+                    onSelect={setSpotlightArtist}
+                    onRemove={() => setSpotlightArtist(null)}
                 />
 
                 {/* 4 cards secundários */}

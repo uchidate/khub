@@ -75,6 +75,7 @@ const navSections: NavSection[] = [
           { href: '/admin/news/reprocess', label: 'Reprocessar', icon: RotateCcw },
         ],
       },
+      { href: '/admin/tags', label: 'Tags', icon: Tag },
     ],
   },
 
@@ -89,6 +90,8 @@ const navSections: NavSection[] = [
           { href: '/admin/artists/fix-names',    label: 'Enriq. TMDB',   icon: Sparkles },
           { href: '/admin/artists/duplicates',   label: 'Enriq. MB',     icon: GitMerge },
           { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
+          { href: '/admin/instagram',            label: 'Instagram',      icon: Instagram },
+          { href: '/admin/instagram/status',     label: 'Status do Sync', icon: Activity },
           { href: '/admin/artists/moderation',   label: 'Moderação',     icon: AlertTriangle },
           { href: '/admin/artists/visibility',   label: 'Visibilidade',  icon: EyeOff },
         ],
@@ -109,6 +112,8 @@ const navSections: NavSection[] = [
           { href: '/admin/productions/takedowns',   label: 'Takedowns',    icon: ShieldAlert },
         ],
       },
+      { href: '/admin/albums', label: 'Álbuns', icon: Disc3 },
+      { href: '/admin/hidden', label: 'Ocultos', icon: EyeOff },
       { href: '/admin/agencies',  label: 'Agências',  icon: Building2 },
       { href: '/admin/streaming', label: 'Streaming', icon: Tv },
     ],
@@ -136,6 +141,7 @@ const navSections: NavSection[] = [
     fixed: true,
     items: [
       { href: '/admin/users',    label: 'Usuários',    icon: Users },
+      { href: '/admin/activity', label: 'Atividade',   icon: Activity },
       { href: '/admin/reports',  label: 'Reportes',    icon: Flag,          badgeKey: 'reports' },
       { href: '/admin/comments', label: 'Comentários', icon: MessageSquare, badgeKey: 'comments' },
       {
@@ -147,11 +153,6 @@ const navSections: NavSection[] = [
       {
         href: '/admin/settings', label: 'Sistema', icon: Settings,
         subItems: [
-          { href: '/admin/albums',      label: 'Álbuns',      icon: Disc3 },
-          { href: '/admin/tags',        label: 'Tags',        icon: Tag },
-          { href: '/admin/hidden',      label: 'Ocultos',     icon: EyeOff },
-          { href: '/admin/instagram',   label: 'Instagram',   icon: Instagram },
-          { href: '/admin/activity',    label: 'Atividade',   icon: Activity },
           { href: '/admin/bot-logs',    label: 'Robôs',       icon: Bot },
           { href: '/admin/server-logs', label: 'Server Logs', icon: AlertTriangle },
           { href: '/admin/cron',           label: 'Cron Jobs',      icon: RefreshCw },
@@ -195,7 +196,7 @@ const SECTION_LABELS: Record<string, string> = {
   kpopping: 'Kpopping', filmography: 'Filmografias', blog: 'Blog', database: 'Database',
   analytics: 'Analytics', trending: 'Trending', 'fix-names': 'Enriq. TMDB', duplicates: 'Enriq. MB',
   'social-links': 'Redes Sociais', moderation: 'Moderação', import: 'Importar',
-  reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync TMDB',
+  reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync TMDB', status: 'Status',
   discography: 'Discografia', log: 'Log', pipeline: 'Pipeline', takedowns: 'Takedowns',
   streaming: 'Streaming', seo: 'SEO', categories: 'Categorias', homepage: 'Homepage Editorial',
   visibility: 'Visibilidade', 'mb-import': 'Import MB',
@@ -572,9 +573,12 @@ export interface AdminLayoutProps {
 
 export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutProps) {
   const pathname  = usePathname()
-  const [mobileOpen,  setMobileOpen]  = useState(false)
-  const [compact,     setCompact]     = useState(false)
-  const [searchOpen,  setSearchOpen]  = useState(false)
+  const router = useRouter()
+  const [mobileOpen,    setMobileOpen]    = useState(false)
+  const [compact,       setCompact]       = useState(false)
+  const [searchOpen,    setSearchOpen]    = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [expandedSubnav, setExpandedSubnav] = useState<Set<string>>(new Set())
   const counts = usePendingCounts()
 
   useEffect(() => {
@@ -602,6 +606,19 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setSearchOpen(o => !o)
+        return
+      }
+
+      if (e.key === 'Escape') {
+        setSearchOpen(false)
+        setMobileOpen(false)
+        setShortcutsOpen(false)
+        return
+      }
+
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setShortcutsOpen(o => !o)
         return
       }
 
@@ -702,6 +719,60 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
       </div>
 
       <AdminSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      {/* Keyboard shortcuts overlay */}
+      {shortcutsOpen && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShortcutsOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-background border border-border rounded-2xl shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+              <h2 className="text-sm font-black text-foreground">Atalhos de teclado</h2>
+              <button onClick={() => setShortcutsOpen(false)} className="text-muted hover:text-foreground transition-colors">
+                <X size={15} />
+              </button>
+            </div>
+            <div className="p-5 grid sm:grid-cols-2 gap-x-8 gap-y-1.5">
+              {[
+                { section: 'Global' },
+                { key: '⌘K', label: 'Abrir busca' },
+                { key: '?',  label: 'Atalhos' },
+                { key: 'Esc', label: 'Fechar modal' },
+                { section: 'Navegação (g → ...)' },
+                { key: 'g d', label: 'Dashboard' },
+                { key: 'g p', label: 'Pipeline' },
+                { key: 'g n', label: 'Notícias' },
+                { key: 'g b', label: 'Blog' },
+                { key: 'g a', label: 'Artistas' },
+                { key: 'g g', label: 'Grupos' },
+                { key: 'g r', label: 'Produções' },
+                { key: 'g u', label: 'Usuários' },
+                { key: 'g i', label: 'IA' },
+                { section: 'Busca' },
+                { key: '↑↓', label: 'Navegar resultados' },
+                { key: '↵',  label: 'Abrir selecionado' },
+                { key: '>',  label: 'Modo comandos' },
+              ].map((item, i) => (
+                'section' in item ? (
+                  <p key={i} className="col-span-full text-[9px] font-black uppercase tracking-widest text-muted pt-3 first:pt-0">{item.section}</p>
+                ) : (
+                  <div key={i} className="flex items-center justify-between gap-3 py-1">
+                    <span className="text-xs text-muted">{item.label}</span>
+                    <kbd className="text-[10px] font-mono bg-surface border border-border px-2 py-0.5 rounded text-foreground whitespace-nowrap">{item.key}</kbd>
+                  </div>
+                )
+              ))}
+            </div>
+            <div className="px-5 py-3 border-t border-border">
+              <p className="text-[10px] text-muted text-center">Pressione <kbd className="font-mono bg-surface border border-border px-1 rounded text-foreground">?</kbd> para fechar</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

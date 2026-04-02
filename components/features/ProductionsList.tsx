@@ -8,6 +8,7 @@ import { Film } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 
 interface Production {
     id: string
@@ -64,6 +65,7 @@ const AGE_BADGE_STYLE: Record<string, string> = {
     '16': 'bg-red-600 text-white',
     '18': 'bg-red-900 text-red-100',
 }
+
 
 function ProductionCard({ prod, priority }: { prod: Production; priority?: boolean }) {
     const subtitleParts = [prod.year?.toString(), prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null].filter(Boolean)
@@ -232,6 +234,28 @@ export function ProductionsList() {
                     onCommit={handleSearch}
                     placeholder="Buscar filme, série ou drama"
                 />
+
+                <div className="flex items-center justify-end gap-2 flex-wrap">
+                    {(hasActiveFilters || filters.sortBy !== 'popular') && (
+                        <button onClick={clearAll} className="text-xs text-accent hover:text-accent/70 transition-colors">
+                            Limpar filtros
+                        </button>
+                    )}
+                </div>
+
+                {activeChips.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {activeChips.map(chip => (
+                            <button
+                                key={chip.key}
+                                onClick={() => removeSingleFilter(chip.key)}
+                                className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-surface border border-border text-foreground hover:border-accent/40 hover:text-accent transition-colors"
+                            >
+                                {chip.label} ×
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Type + Sort */}
                 <div className="flex items-center justify-between gap-3 flex-wrap">

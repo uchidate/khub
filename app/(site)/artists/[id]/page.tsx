@@ -58,7 +58,11 @@ const getArtist = cache(async (id: string) => {
                     }
                 },
                 include: { production: true },
-                orderBy: { production: { year: { sort: 'desc', nulls: 'last' } } },
+                orderBy: [
+                    { production: { releaseDate: { sort: 'desc', nulls: 'last' } } },
+                    { production: { year: { sort: 'desc', nulls: 'last' } } },
+                    { production: { createdAt: 'desc' } },
+                ],
             },
             memberships: {
                 include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },

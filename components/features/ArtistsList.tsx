@@ -6,11 +6,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArtistFilters, type ArtistFilterValues } from './ArtistFilters'
 import { getRoleLabels } from '@/lib/utils/role-labels'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 
 const PER_PAGE_OPTIONS = [50, 100, 150]
 const DEFAULT_PER_PAGE = 50
+
 
 function ArtistsSkeleton() {
     return (

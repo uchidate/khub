@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 
 export interface TrendingGroup {
     id: string

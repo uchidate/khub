@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { getArtistBadge, getRankDelta } from '@/lib/trending/badges'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,6 +59,13 @@ export async function GET() {
         where: { trendingBadgeOverride: { not: null } },
     })
 
+    const rising = artists.filter((artist) => getArtistBadge(artist) === 'SUBINDO').length
+    const newInTop = artists.filter((artist) => getArtistBadge(artist) === 'NOVO').length
+    const falling = artists.filter((artist) => {
+        const delta = getRankDelta(artist)
+        return delta !== null && delta <= -3 && !getArtistBadge(artist)
+    }).length
+
     return NextResponse.json({
         artists,
         stats: {
@@ -65,6 +73,10 @@ export async function GET() {
             withSignals,
             withBadgeOverride,
             avgScore: statsRaw._avg.trendingScore ?? 0,
+            rising,
+            falling,
+            newInTop,
         },
+        generatedAt: new Date().toISOString(),
     })
 }

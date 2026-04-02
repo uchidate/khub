@@ -11,6 +11,8 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
+import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
+import { HomeRecommended } from "@/components/home/HomeRecommended"
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +22,14 @@ const POST_SELECT = {
     category: { select: { name: true, slug: true } },
     tags: true,
 } as const
+
+function getWeekOfYear(date: Date) {
+    const utcDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+    const day = utcDate.getUTCDay() || 7
+    utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day)
+    const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
+    return Math.ceil((((utcDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+}
 
 function serializePost<T extends { publishedAt: Date | null }>(p: T) {
     return { ...p, publishedAt: p.publishedAt?.toISOString() ?? null }
@@ -142,12 +152,30 @@ const getHomePublicData = unstable_cache(
             categoryCounts.map(c => [c.slug, c._count.posts])
         )
 
+        // spotlightArtist rotaciona semanalmente dentro do top 8 do trending
+        const spotlightCandidates = trendingArtists.slice(0, 8)
+        const rotatedSpotlightArtist = spotlightCandidates.length > 0
+            ? spotlightCandidates[(getWeekOfYear(new Date()) - 1) % spotlightCandidates.length]
+            : null
+        // Regra de negócio: o bloco "Destaque da semana" usa apenas o artista da rotação semanal.
+        const spotlightArtist = rotatedSpotlightArtist
+
         // spotlightProduction — query cached junto com os dados públicos
-        const spotlightArtistId = trendingArtists[0]?.id
+        const spotlightArtistId = spotlightArtist?.id
         const spotlightProduction = spotlightArtistId
             ? await prisma.production.findFirst({
-                where: { isHidden: false, year: { not: null }, artists: { some: { artistId: spotlightArtistId } } },
-                orderBy: { year: 'desc' },
+                where: {
+                    isHidden: false,
+                    isTakenDown: false,
+                    flaggedAsNonKorean: false,
+                    year: { not: null },
+                    artists: { some: { artistId: spotlightArtistId } },
+                },
+                orderBy: [
+                    { releaseDate: { sort: 'desc', nulls: 'last' } },
+                    { year: 'desc' },
+                    { createdAt: 'desc' },
+                ],
                 select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
             }).catch(() => null)
             : null
@@ -163,10 +191,11 @@ const getHomePublicData = unstable_cache(
             trendingGroups: trendingGroupsRaw,
             categoryCountMap,
             siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
+            spotlightArtist,
             spotlightProduction,
         }
     },
-    ['home-page-public-data-v10'],
+    ['home-page-public-data-v14'],
     { revalidate: 120 },
 )
 
@@ -199,15 +228,38 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams?: Promise<{ category?: string }> }) {
     const session = await getServerSession(authOptions)
+    const resolvedSearch = await searchParams
+    const activeCategory = resolvedSearch?.category
 
     const [publicData, ageRatingFilter] = await Promise.all([
         getHomePublicData(),
         applyAgeRatingFilter(),
     ])
 
-    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightProduction } = publicData
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction } = publicData
+
+    // ── Recomendações personalizadas para usuários logados ───────────────────
+    let recommendedArtists: typeof trendingArtists = []
+    let hasFavorites = false
+    if (session?.user?.id) {
+        try {
+            const favRows = await prisma.favorite.findMany({
+                where: { userId: (session.user as { id: string }).id, artistId: { not: null } },
+                select: { artistId: true },
+            })
+            hasFavorites = favRows.length > 0
+            const favSet = new Set(favRows.map(f => f.artistId!))
+            recommendedArtists = trendingArtists.filter(a => !favSet.has(a.id)).slice(0, 8)
+            if (recommendedArtists.length < 2) {
+                // fallback: artistas 8–11 (já buscados, ainda não exibidos)
+                recommendedArtists = trendingArtists.slice(8, 12)
+            }
+        } catch {
+            recommendedArtists = trendingArtists.slice(8, 12)
+        }
+    }
 
     // latestProductions depende do ageRatingFilter (por sessão) — roda em paralelo com session
     const latestProductions = await prisma.production.findMany({
@@ -238,6 +290,7 @@ export default async function Home() {
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
+            <HomeCategoriesBar categoryCounts={categoryCountMap} activeSlug={activeCategory} basePath="/" />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -259,13 +312,17 @@ export default async function Home() {
                 carouselPosts={carouselPosts}
                 secondaryStories={secondaryPosts}
                 trendingArtists={trendingArtists.slice(0, 8)}
+                spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
             />
+            <HomeRecommended artists={recommendedArtists} hasFavorites={hasFavorites} />
             <HomeBlogFeed
+                key={activeCategory ?? 'all'}
                 blogPosts={feedPosts}
                 sidebarPosts={sidebarPosts}
                 productions={latestProductions}
                 categoryCounts={categoryCountMap}
+                initialCategory={activeCategory}
             />
             {(hasStreaming || trendingGroups.length > 0) && (
                 <section className="border-b border-border bg-background">

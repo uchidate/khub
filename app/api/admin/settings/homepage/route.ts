@@ -20,6 +20,7 @@ export async function GET() {
             homeSecondaryPostIds: true,
             homeSidebarPostIds: true,
             homeCarouselPostIds: true,
+            homeSpotlightArtistId: true,
         },
     })
 
@@ -28,6 +29,7 @@ export async function GET() {
         homeSecondaryPostIds: [],
         homeSidebarPostIds: [],
         homeCarouselPostIds: [],
+        homeSpotlightArtistId: null,
     }
 
     // Busca os posts dos slots para exibir no admin
@@ -51,7 +53,22 @@ export async function GET() {
 
     const postsById = Object.fromEntries(posts.map(p => [p.id, p]))
 
-    return NextResponse.json({ config, postsById })
+    const artists = config.homeSpotlightArtistId
+        ? await prisma.artist.findMany({
+            where: { id: config.homeSpotlightArtistId },
+            select: {
+                id: true,
+                nameRomanized: true,
+                nameHangul: true,
+                primaryImageUrl: true,
+                agency: { select: { name: true } },
+            },
+        })
+        : []
+
+    const artistsById = Object.fromEntries(artists.map(a => [a.id, a]))
+
+    return NextResponse.json({ config, postsById, artistsById })
 }
 
 /**
@@ -68,6 +85,54 @@ export async function PUT(req: NextRequest) {
             homeSecondaryPostIds?: string[]
             homeSidebarPostIds?: string[]
             homeCarouselPostIds?: string[]
+            homeSpotlightArtistId?: string | null
+        }
+
+        const current = await prisma.systemSettings.findUnique({
+            where: { id: 'singleton' },
+            select: {
+                homeFeaturedPostId: true,
+                homeSecondaryPostIds: true,
+                homeSidebarPostIds: true,
+                homeCarouselPostIds: true,
+                homeSpotlightArtistId: true,
+            },
+        })
+
+        const nextConfig = {
+            homeFeaturedPostId: current?.homeFeaturedPostId ?? null,
+            homeSecondaryPostIds: current?.homeSecondaryPostIds ?? [],
+            homeSidebarPostIds: current?.homeSidebarPostIds ?? [],
+            homeCarouselPostIds: current?.homeCarouselPostIds ?? [],
+            homeSpotlightArtistId: current?.homeSpotlightArtistId ?? null,
+        }
+
+        if ('homeFeaturedPostId' in body) {
+            nextConfig.homeFeaturedPostId = typeof body.homeFeaturedPostId === 'string' && body.homeFeaturedPostId.trim().length > 0
+                ? body.homeFeaturedPostId.trim()
+                : null
+        }
+        if ('homeSecondaryPostIds' in body) nextConfig.homeSecondaryPostIds = normalizeIds(body.homeSecondaryPostIds, 4)
+        if ('homeSidebarPostIds' in body) nextConfig.homeSidebarPostIds = normalizeIds(body.homeSidebarPostIds, 4)
+        if ('homeCarouselPostIds' in body) nextConfig.homeCarouselPostIds = normalizeIds(body.homeCarouselPostIds, 5)
+        if ('homeSpotlightArtistId' in body) {
+            nextConfig.homeSpotlightArtistId = typeof body.homeSpotlightArtistId === 'string' && body.homeSpotlightArtistId.trim().length > 0
+                ? body.homeSpotlightArtistId.trim()
+                : null
+        }
+
+        const allIds = [
+            ...(nextConfig.homeFeaturedPostId ? [nextConfig.homeFeaturedPostId] : []),
+            ...nextConfig.homeSecondaryPostIds,
+            ...nextConfig.homeSidebarPostIds,
+            ...nextConfig.homeCarouselPostIds,
+        ]
+
+        if (new Set(allIds).size !== allIds.length) {
+            return NextResponse.json(
+                { error: 'Um mesmo post nao pode aparecer em mais de um slot editorial.' },
+                { status: 400 }
+            )
         }
 
         const data: {
@@ -75,12 +140,14 @@ export async function PUT(req: NextRequest) {
             homeSecondaryPostIds?: string[]
             homeSidebarPostIds?: string[]
             homeCarouselPostIds?: string[]
+            homeSpotlightArtistId?: string | null
         } = {}
 
-        if ('homeFeaturedPostId' in body) data.homeFeaturedPostId = body.homeFeaturedPostId ?? null
-        if (Array.isArray(body.homeSecondaryPostIds)) data.homeSecondaryPostIds = body.homeSecondaryPostIds.slice(0, 4)
-        if (Array.isArray(body.homeSidebarPostIds)) data.homeSidebarPostIds = body.homeSidebarPostIds.slice(0, 4)
-        if (Array.isArray(body.homeCarouselPostIds)) data.homeCarouselPostIds = body.homeCarouselPostIds.slice(0, 5)
+        data.homeFeaturedPostId = nextConfig.homeFeaturedPostId
+        data.homeSecondaryPostIds = nextConfig.homeSecondaryPostIds
+        data.homeSidebarPostIds = nextConfig.homeSidebarPostIds
+        data.homeCarouselPostIds = nextConfig.homeCarouselPostIds
+        data.homeSpotlightArtistId = nextConfig.homeSpotlightArtistId
 
         await prisma.systemSettings.upsert({
             where: { id: 'singleton' },
@@ -94,6 +161,7 @@ export async function PUT(req: NextRequest) {
                 homeSecondaryPostIds: [],
                 homeSidebarPostIds: [],
                 homeCarouselPostIds: [],
+                homeSpotlightArtistId: null,
                 ...data,
             },
         })
