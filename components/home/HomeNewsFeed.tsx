@@ -116,16 +116,16 @@ function CategoryCard({ post }: { post: BlogFeedItem }) {
 }
 
 // ── Card horizontal (featured) para o grid de categoria ────────────────────
-function FeaturedCategoryCard({ post }: { post: BlogFeedItem }) {
+function FeaturedCategoryCard({ post, fullWidth }: { post: BlogFeedItem; fullWidth?: boolean }) {
     const cs = getCategoryStyle(post.category?.slug)
     return (
         <Link
             href={`/blog/${post.slug}`}
-            className="group col-span-2 flex gap-3 p-3 hover:bg-accent-soft transition-colors border-b border-border/60 sm:border-b-0"
+            className="group flex gap-3 p-3 hover:bg-accent-soft transition-colors"
         >
             {/* Thumbnail — min-h garante renderização com next/image fill */}
             <div
-                className="relative w-[120px] sm:w-[140px] min-h-[90px] sm:min-h-[110px] rounded-md overflow-hidden flex-shrink-0 border border-border/50"
+                className={`relative ${fullWidth ? 'w-[160px] sm:w-[200px]' : 'w-[120px] sm:w-[140px]'} min-h-[90px] sm:min-h-[110px] rounded-md overflow-hidden flex-shrink-0 border border-border/50`}
                 style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
             >
                 {post.coverImageUrl ? (
@@ -283,29 +283,31 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                             </Link>
                                         </div>
 
-                                        {/* Grid: 1 featured (horizontal) + até 2 cards verticais ao lado */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-border">
-                                            {/* Featured (col-span-2 em sm) */}
-                                            <div className="col-span-2 sm:col-span-2 border-border">
+                                        {/* Grid adaptativo: depende da quantidade de posts */}
+                                        {posts.length === 1 && (
+                                            /* Apenas 1 post — full width */
+                                            <FeaturedCategoryCard post={posts[0]} fullWidth />
+                                        )}
+                                        {posts.length === 2 && (
+                                            /* 2 posts — featured 2/3 + 1 card ao lado */
+                                            <div className="grid sm:grid-cols-2 divide-border [&>*]:border-b [&>*]:border-border sm:[&>*]:border-b-0 sm:[&>*:first-child]:border-r sm:[&>*:first-child]:border-border">
                                                 <FeaturedCategoryCard post={posts[0]} />
+                                                <CategoryCard post={posts[1]} />
                                             </div>
-                                            {/* Cards menores empilhados, apenas no sm+ */}
-                                            <div className="hidden sm:flex flex-col divide-y divide-border">
-                                                {posts.slice(1, 3).map(post => (
-                                                    <CategoryCard key={post.id} post={post} />
-                                                ))}
-                                                {/* Filler se só tem 1 card pequeno */}
-                                                {posts.length === 2 && (
-                                                    <Link
-                                                        href={`/blog?category=${cat.slug}`}
-                                                        className="flex items-center justify-center gap-1.5 p-4 text-[11px] font-semibold transition-colors hover:bg-accent-soft"
-                                                        style={{ color: cat.color }}
-                                                    >
-                                                        Ver mais em {cat.name} →
-                                                    </Link>
-                                                )}
+                                        )}
+                                        {posts.length >= 3 && (
+                                            /* 3-4 posts — featured 2/3 + 2 cards empilhados */
+                                            <div className="grid sm:grid-cols-3 divide-border [&>*]:border-b [&>*]:border-border sm:[&>*]:border-b-0 sm:[&>*:first-child]:border-r sm:[&>*:first-child]:border-border">
+                                                <div className="sm:col-span-2">
+                                                    <FeaturedCategoryCard post={posts[0]} />
+                                                </div>
+                                                <div className="flex sm:flex-col divide-y divide-border">
+                                                    {posts.slice(1, 3).map(post => (
+                                                        <CategoryCard key={post.id} post={post} />
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
