@@ -115,17 +115,17 @@ function CategoryCard({ post }: { post: BlogFeedItem }) {
     )
 }
 
-// ── Card horizontal (featured) para o grid de categoria ────────────────────
-function FeaturedCategoryCard({ post, fullWidth }: { post: BlogFeedItem; fullWidth?: boolean }) {
+// ── Card vertical grande — ocupa bem a coluna 2/3 no grid de categoria ─────
+function FeaturedVerticalCard({ post }: { post: BlogFeedItem }) {
     const cs = getCategoryStyle(post.category?.slug)
     return (
         <Link
             href={`/blog/${post.slug}`}
-            className="group flex gap-3 p-3 hover:bg-accent-soft transition-colors"
+            className="group flex flex-col h-full hover:bg-accent-soft transition-colors"
         >
-            {/* Thumbnail — min-h garante renderização com next/image fill */}
+            {/* Imagem — aspect-video, ocupa toda a largura */}
             <div
-                className={`relative ${fullWidth ? 'w-[160px] sm:w-[200px]' : 'w-[120px] sm:w-[140px]'} min-h-[90px] sm:min-h-[110px] rounded-md overflow-hidden flex-shrink-0 border border-border/50`}
+                className="relative w-full aspect-video overflow-hidden flex-shrink-0 border-b border-border/50"
                 style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
             >
                 {post.coverImageUrl ? (
@@ -133,7 +133,61 @@ function FeaturedCategoryCard({ post, fullWidth }: { post: BlogFeedItem; fullWid
                         src={post.coverImageUrl}
                         alt={post.title}
                         fill
-                        sizes="(max-width: 640px) 120px, 140px"
+                        sizes="(max-width: 640px) 100vw, 50vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                ) : (
+                    <span
+                        className="absolute inset-0 flex items-center justify-center text-[13px] font-bold uppercase tracking-widest"
+                        style={{ color: cs.color + '80' }}
+                    >
+                        {post.category?.name?.slice(0, 2) ?? 'HH'}
+                    </span>
+                )}
+                {isNew(post.publishedAt) && (
+                    <span className="absolute top-2 right-2 text-[7px] font-extrabold bg-accent text-white px-[5px] py-[2px] rounded uppercase tracking-[0.1em]">
+                        Novo
+                    </span>
+                )}
+            </div>
+            {/* Texto */}
+            <div className="flex flex-col gap-1.5 p-3 flex-1">
+                <h3 className="text-[14px] sm:text-[15px] font-bold text-foreground leading-[1.35] group-hover:text-accent transition-colors line-clamp-3">
+                    {post.title}
+                </h3>
+                {post.excerpt && (
+                    <p className="text-[11.5px] text-muted leading-snug line-clamp-2 hidden sm:block">
+                        {post.excerpt}
+                    </p>
+                )}
+                <div className="flex items-center gap-1.5 text-[9px] text-muted mt-auto pt-1">
+                    <span>{formatDate(post.publishedAt)}</span>
+                    <span>·</span>
+                    <span>{post.readingTimeMin} min</span>
+                </div>
+            </div>
+        </Link>
+    )
+}
+
+// ── Card horizontal compacto — para listas e coluna 1 post ─────────────────
+function FeaturedHorizontalCard({ post }: { post: BlogFeedItem }) {
+    const cs = getCategoryStyle(post.category?.slug)
+    return (
+        <Link
+            href={`/blog/${post.slug}`}
+            className="group flex gap-3 p-3 hover:bg-accent-soft transition-colors"
+        >
+            <div
+                className="relative w-[140px] sm:w-[180px] min-h-[95px] rounded-md overflow-hidden flex-shrink-0 border border-border/50"
+                style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
+            >
+                {post.coverImageUrl ? (
+                    <Image
+                        src={post.coverImageUrl}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 640px) 140px, 180px"
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 ) : (
@@ -150,9 +204,8 @@ function FeaturedCategoryCard({ post, fullWidth }: { post: BlogFeedItem; fullWid
                     </span>
                 )}
             </div>
-            {/* Meta */}
             <div className="flex-1 min-w-0 flex flex-col gap-1.5 py-0.5">
-                <h3 className="text-[13.5px] font-bold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-3 sm:line-clamp-4">
+                <h3 className="text-[13.5px] font-bold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-3">
                     {post.title}
                 </h3>
                 {post.excerpt && (
@@ -285,23 +338,23 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
 
                                         {/* Grid adaptativo: depende da quantidade de posts */}
                                         {posts.length === 1 && (
-                                            /* Apenas 1 post — full width */
-                                            <FeaturedCategoryCard post={posts[0]} fullWidth />
+                                            /* 1 post — horizontal full width */
+                                            <FeaturedHorizontalCard post={posts[0]} />
                                         )}
                                         {posts.length === 2 && (
-                                            /* 2 posts — featured 2/3 + 1 card ao lado */
-                                            <div className="grid sm:grid-cols-2 divide-border [&>*]:border-b [&>*]:border-border sm:[&>*]:border-b-0 sm:[&>*:first-child]:border-r sm:[&>*:first-child]:border-border">
-                                                <FeaturedCategoryCard post={posts[0]} />
+                                            /* 2 posts — dois cards verticais lado a lado */
+                                            <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
+                                                <FeaturedVerticalCard post={posts[0]} />
                                                 <CategoryCard post={posts[1]} />
                                             </div>
                                         )}
                                         {posts.length >= 3 && (
-                                            /* 3-4 posts — featured 2/3 + 2 cards empilhados */
-                                            <div className="grid sm:grid-cols-3 divide-border [&>*]:border-b [&>*]:border-border sm:[&>*]:border-b-0 sm:[&>*:first-child]:border-r sm:[&>*:first-child]:border-border">
-                                                <div className="sm:col-span-2">
-                                                    <FeaturedCategoryCard post={posts[0]} />
+                                            /* 3-4 posts — card vertical grande (2/3) + 2 cards verticais empilhados (1/3) */
+                                            <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+                                                <div className="sm:col-span-2 border-b sm:border-b-0 border-border">
+                                                    <FeaturedVerticalCard post={posts[0]} />
                                                 </div>
-                                                <div className="flex sm:flex-col divide-y divide-border">
+                                                <div className="flex flex-col divide-y divide-border">
                                                     {posts.slice(1, 3).map(post => (
                                                         <CategoryCard key={post.id} post={post} />
                                                     ))}
