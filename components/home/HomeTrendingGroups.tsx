@@ -1,6 +1,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 
+function nameToGradient(name: string) {
+    let hash = 0
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    const h = Math.abs(hash) % 360
+    return `linear-gradient(135deg, hsl(${h},65%,52%), hsl(${(h + 40) % 360},75%,62%))`
+}
+
 export interface TrendingGroup {
     id: string
     name: string
@@ -39,7 +46,7 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
                                 {group.profileImageUrl ? (
                                     <Image src={group.profileImageUrl} alt={group.name} width={40} height={40} className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: color }}>
+                                    <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold" style={{ background: nameToGradient(group.name) }}>
                                         {group.name[0]}
                                     </div>
                                 )}

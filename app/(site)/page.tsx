@@ -11,6 +11,8 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
+import { HomeTicker } from "@/components/home/HomeTicker"
+import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
 
 export const dynamic = 'force-dynamic'
 
@@ -238,6 +240,8 @@ export default async function Home() {
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
+            <HomeTicker posts={feedPosts.slice(0, 12)} />
+            <HomeCategoriesBar />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
