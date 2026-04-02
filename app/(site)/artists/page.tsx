@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import Link from "next/link"
+import { Users } from 'lucide-react'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
@@ -51,20 +51,27 @@ export default async function ArtistsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-baseline gap-3">
-                        <h1 className="text-[1.75rem] md:text-[2rem] font-black text-foreground tracking-[-0.04em] leading-none">
-                            Artistas
-                        </h1>
-                        {total !== null && (
-                            <span className="text-[11px] font-bold text-muted px-2.5 py-1 bg-surface border border-border rounded-full">
-                                {total.toLocaleString('pt-BR')} perfis
-                            </span>
-                        )}
+                <div className="relative mb-8 overflow-hidden rounded-2xl border border-border bg-surface px-6 py-8 md:py-10">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#ff2d78]/5 via-transparent to-transparent" />
+                  <div className="pointer-events-none absolute -bottom-10 -right-10 w-60 h-60 rounded-full bg-[#ff2d78]/5 blur-3xl" />
+                  <div className="relative">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="flex items-center justify-center p-1.5 rounded-lg bg-[#ff2d78]/10">
+                        <Users size={15} className="text-[#ff2d78]" />
+                      </span>
+                      {total !== null && (
+                        <span className="text-[11px] font-bold text-muted px-2.5 py-1 bg-background border border-border rounded-full">
+                          {total.toLocaleString('pt-BR')} perfis
+                        </span>
+                      )}
                     </div>
-                    <Link href="/" className="text-[11px] font-semibold text-muted hover:text-[#ff2d78] transition-colors">
-                        ← Início
-                    </Link>
+                    <h1 className="text-[2rem] md:text-[2.5rem] font-black text-foreground tracking-[-0.04em] leading-none mb-2">
+                      Artistas
+                    </h1>
+                    <p className="text-sm text-muted max-w-lg leading-relaxed">
+                      Cantores, atores, modelos e grupos do universo K-Pop e K-Drama — perfis completos em português.
+                    </p>
+                  </div>
                 </div>
 
                 <Suspense>
