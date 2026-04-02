@@ -245,7 +245,14 @@ function CalendarView() {
 
 // ─── Blog stats ───────────────────────────────────────────────────────────────
 
-interface BlogStats { published: number; draft: number; review: number; total: number }
+interface BlogStats {
+    published: number
+    draft: number
+    review: number
+    total: number
+    seoIssues: number
+    seoHealthy: number
+}
 
 function useBlogStats(refreshKey: number) {
     const [stats, setStats] = useState<BlogStats | null>(null)
@@ -256,12 +263,16 @@ function useBlogStats(refreshKey: number) {
             fetch('/api/admin/blog?limit=1&status=PUBLISHED').then(r => r.json()),
             fetch('/api/admin/blog?limit=1&status=DRAFT').then(r => r.json()),
             fetch('/api/admin/blog?limit=1&status=PENDING_REVIEW').then(r => r.json()),
-        ]).then(([all, pub, draft, review]) => {
+            fetch('/api/admin/blog?limit=1&seo=issues').then(r => r.json()),
+            fetch('/api/admin/blog?limit=1&seo=healthy').then(r => r.json()),
+        ]).then(([all, pub, draft, review, seoIssues, seoHealthy]) => {
             setStats({
                 total:     all.pagination?.total     ?? 0,
                 published: pub.pagination?.total     ?? 0,
                 draft:     draft.pagination?.total   ?? 0,
                 review:    review.pagination?.total  ?? 0,
+                seoIssues: seoIssues.pagination?.total ?? 0,
+                seoHealthy: seoHealthy.pagination?.total ?? 0,
             })
         }).catch(() => {})
     }, [refreshKey])
@@ -1332,9 +1343,9 @@ export default function AdminBlogPage() {
                         {/* SEO filter chips */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {[
-                                { value: '',        label: 'SEO: Todos' },
-                                { value: 'issues',  label: 'Com pendências SEO' },
-                                { value: 'healthy', label: 'SEO saudável' },
+                                { value: '',        label: 'SEO: Todos',         count: blogStats?.total },
+                                { value: 'issues',  label: 'Com pendências SEO', count: blogStats?.seoIssues },
+                                { value: 'healthy', label: 'SEO saudável',       count: blogStats?.seoHealthy },
                             ].map(opt => (
                                 <button
                                     key={opt.value}
@@ -1346,6 +1357,9 @@ export default function AdminBlogPage() {
                                     }`}
                                 >
                                     {opt.label}
+                                    {opt.count != null && (
+                                        <span className="ml-1 opacity-70 font-normal">{opt.count}</span>
+                                    )}
                                 </button>
                             ))}
                         </div>
