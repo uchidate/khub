@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
@@ -79,6 +79,11 @@ function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function isRecent(date: Date | string | null | undefined) {
+  if (!date) return false
+  return Date.now() - new Date(date).getTime() < 7 * 24 * 60 * 60 * 1000
+}
+
 type PostWithCategory = Awaited<ReturnType<typeof getPosts>>['posts'][0]
 
 function PostCard({ post }: { post: PostWithCategory }) {
@@ -97,9 +102,15 @@ function PostCard({ post }: { post: PostWithCategory }) {
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-4xl opacity-10">✦</span>
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={post.category ? { background: `linear-gradient(135deg, ${BLOG_CATEGORY_BY_SLUG[post.category.slug]?.bg ?? '#f3f4f6'}, ${BLOG_CATEGORY_BY_SLUG[post.category.slug]?.color ?? '#e5e7eb'}33)` } : undefined}
+          >
+            <span className="text-5xl opacity-10">✦</span>
           </div>
+        )}
+        {isRecent(post.publishedAt) && (
+          <span className="absolute top-3 right-3 px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
         )}
         {post.category && (() => {
           const config = BLOG_CATEGORY_BY_SLUG[post.category.slug]
@@ -138,8 +149,82 @@ function PostCard({ post }: { post: PostWithCategory }) {
           </div>
           <span className="truncate">{BLOG_AUTHOR_DISPLAY_NAME}</span>
           <span className="ml-auto flex items-center gap-2 flex-shrink-0">
+            {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
             <span className="flex items-center gap-1"><Clock size={10} />{post.readingTimeMin} min</span>
-            <span className="flex items-center gap-1"><Eye size={10} />{post.viewCount}</span>
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function FeaturedPostCard({ post }: { post: PostWithCategory }) {
+  const config = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
+  return (
+    <Link
+      href={`/blog/${post.slug}`}
+      className="group sm:col-span-2 lg:col-span-3 flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/30 hover:shadow-xl transition-all duration-300"
+    >
+      <div className="relative aspect-video sm:aspect-auto sm:w-2/5 sm:min-h-[260px] overflow-hidden bg-surface-hover shrink-0">
+        {post.coverImageUrl ? (
+          <Image
+            src={post.coverImageUrl}
+            alt={post.title}
+            fill
+            sizes="(max-width: 640px) 100vw, 40vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={config ? { background: `linear-gradient(135deg, ${config.bg}, ${config.color}44)` } : undefined}
+          >
+            <span className="text-6xl opacity-10">✦</span>
+          </div>
+        )}
+        {isRecent(post.publishedAt) && (
+          <span className="absolute top-3 right-3 px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
+        )}
+        {post.category && config && (
+          <span
+            className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow"
+            style={{ backgroundColor: config.bg, color: config.color }}
+          >
+            {post.category.name}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-3 p-5 sm:p-8 flex-1">
+        {post.publishedAt && (
+          <span className="text-[11px] text-muted">{formatDate(post.publishedAt)}</span>
+        )}
+        <h2 className="font-black text-foreground text-xl sm:text-2xl leading-tight line-clamp-2 group-hover:text-accent transition-colors">
+          {post.title}
+        </h2>
+        {post.excerpt && (
+          <p className="text-sm text-muted line-clamp-3 leading-relaxed flex-1">{post.excerpt}</p>
+        )}
+        {post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {post.tags.slice(0, 4).map(tag => {
+              const ts = getTagStyle(tag)
+              return (
+                <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: ts.color, backgroundColor: ts.bg }}>
+                  {tag}
+                </span>
+              )
+            })}
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-[11px] text-muted mt-auto pt-4 border-t border-border">
+          <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center text-[9px] font-bold text-accent flex-shrink-0">
+            {BLOG_AUTHOR_AVATAR_INITIAL}
+          </div>
+          <span>{BLOG_AUTHOR_DISPLAY_NAME}</span>
+          <span className="ml-auto flex items-center gap-3 flex-shrink-0">
+            <span className="flex items-center gap-1"><Clock size={11} />{post.readingTimeMin} min</span>
+            <span className="flex items-center gap-1"><Eye size={11} />{post.viewCount} views</span>
+            <span className="flex items-center gap-1 text-accent font-semibold text-[11px]">Ler <ArrowRight size={11} /></span>
           </span>
         </div>
       </div>
@@ -252,7 +337,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* Filter bar */}
-          <div className="mb-8 space-y-3">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-3">
             {/* Categories */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
@@ -329,7 +414,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               )}
               {gridPosts.length > 0 ? (
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {gridPosts.map(p => <PostCard key={p.id} post={p} />)}
+                  {gridPosts.length > 0 && <FeaturedPostCard post={gridPosts[0]} />}
+                  {gridPosts.slice(1).map(p => <PostCard key={p.id} post={p} />)}
                 </div>
               ) : (
                 <div className="text-center py-20 text-muted">
@@ -358,7 +444,15 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors">
                           {p.title}
                         </p>
-                        <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted">
+                        <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted flex-wrap">
+                          {p.category && BLOG_CATEGORY_BY_SLUG[p.category.slug] && (
+                            <span
+                              className="px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                              style={{ color: BLOG_CATEGORY_BY_SLUG[p.category.slug]!.color, backgroundColor: BLOG_CATEGORY_BY_SLUG[p.category.slug]!.bg }}
+                            >
+                              {p.category.name}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1"><Eye size={9} />{p.viewCount}</span>
                           <span className="flex items-center gap-1"><Clock size={9} />{p.readingTimeMin} min</span>
                         </div>
