@@ -328,7 +328,7 @@ export function ProductionsList() {
     return (
         <div id="productions-list">
             {/* Filters */}
-            <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background/70 backdrop-blur-lg backdrop-saturate-150 py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border/70 shadow-[0_10px_24px_rgba(0,0,0,0.22)]">
+            <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
                 {/* Search */}
                 <SearchInput
                     value={searchInput}
