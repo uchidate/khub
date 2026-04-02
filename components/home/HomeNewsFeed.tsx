@@ -232,14 +232,14 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                 {/* ── Cabeçalho editorial ─────────────────────────────────── */}
                 <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-3 border-b border-border">
                     <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Últimas notícias</h2>
-                    <Link href="/blog" className="text-[11px] font-semibold text-muted hover:text-accent transition-colors">
+                    <Link href="/blog" className="text-[11px] font-semibold text-muted hover:text-foreground transition-colors">
                         Ver todos →
                     </Link>
                 </div>
 
                 {/* ── Barra de categorias editorial (sticky) ───────────────── */}
                 <div
-                    className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-10 flex items-center gap-2 px-4 sm:px-6 lg:px-12 py-3 border-b border-border overflow-x-auto bg-background/95 backdrop-blur-sm"
+                    className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-10 flex items-center gap-2 px-4 sm:px-6 lg:px-12 py-3 border-b border-border overflow-x-auto bg-background"
                     style={{ scrollbarWidth: 'none' }}
                 >
                     {TABS.map(tab => {
@@ -250,13 +250,9 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                 onClick={() => handleTabChange(tab.value)}
                                 className={`shrink-0 flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-all ${
                                     isActive
-                                        ? 'border-transparent'
+                                        ? 'border-foreground bg-foreground text-background'
                                         : 'border-border text-muted hover:text-foreground hover:border-foreground/20'
                                 }`}
-                                style={isActive
-                                    ? { backgroundColor: tab.bg, color: tab.color, borderColor: tab.color + '33' }
-                                    : undefined
-                                }
                             >
                                 {tab.value !== 'all' && (
                                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: tab.color }} />
@@ -320,7 +316,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                         <Link
                                             key={post.id}
                                             href={`/blog/${post.slug}`}
-                                            className="flex items-start gap-4 px-4 sm:px-6 lg:px-12 py-4 border-b border-border hover:bg-accent-soft transition-colors group"
+                                            className="flex items-start gap-4 px-4 sm:px-6 lg:px-12 py-4 border-b border-border hover:bg-surface transition-colors group"
                                         >
                                             <div
                                                 className="w-24 h-[68px] rounded-lg flex-shrink-0 self-center overflow-hidden flex items-center justify-center border border-border/60"

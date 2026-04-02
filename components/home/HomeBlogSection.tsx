@@ -28,13 +28,10 @@ export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps)
         <section className="bg-background py-4 pb-12 sm:pb-4 px-4 sm:px-6 lg:px-12">
             <div className="max-w-7xl mx-auto">
                 <div
-                    className="relative rounded-2xl overflow-hidden"
-                    style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)', backgroundColor: 'var(--color-featured-bg)' }}
+                    className="relative rounded-2xl overflow-hidden border border-border bg-surface"
+                    style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)' }}
                 >
-                    {/* Radial pink glow */}
-                    <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 75% 30%, rgba(255,45,120,0.30) 0%, transparent 60%)' }} />
-                    {/* Hangul decoration */}
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[6rem] lg:text-[9rem] font-extrabold select-none pointer-events-none leading-none" style={{ color: 'rgba(255,111,163,0.06)' }} aria-hidden>한</span>
+                    <div className="absolute inset-0 pointer-events-none opacity-[0.05]" style={{ background: 'radial-gradient(ellipse at 80% 25%, rgba(148,163,184,0.7) 0%, transparent 60%)' }} />
 
                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-12 items-center">
                         {/* Left */}
@@ -44,7 +41,7 @@ export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps)
                             </p>
                             <h2
                                 className="text-[1.5rem] sm:text-[1.875rem] lg:text-[2.2rem] font-extrabold tracking-[-0.05em] leading-[1.1] mb-2.5"
-                                style={{ color: 'var(--color-featured-fg)' }}
+                                style={{ color: 'var(--color-foreground)' }}
                             >
                                 {isLoggedIn ? (
                                     <>Obrigado por fazer parte<br />da comunidade <span className="text-accent">HallyuHub</span></>
@@ -62,8 +59,7 @@ export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps)
                                 {STATS(siteStats).map(({ label, value }) => (
                                     <span
                                         key={label}
-                                        className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full border border-accent/20 bg-accent/8"
-                                        style={{ color: 'var(--color-featured-fg)' }}
+                                        className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full border border-border bg-background text-foreground"
                                     >
                                         <span className="text-accent font-bold">{value}</span>
                                         {label}
@@ -77,7 +73,7 @@ export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps)
                             {!isLoggedIn && (
                                 <Link
                                     href="/auth/register"
-                                    className="w-full sm:w-auto lg:w-auto text-center bg-accent text-white font-bold text-[13.5px] rounded-full px-6 py-3.5 hover:brightness-110 transition-all min-h-[44px]"
+                                    className="w-full sm:w-auto lg:w-auto text-center bg-foreground text-background font-bold text-[13.5px] rounded-full px-6 py-3.5 hover:opacity-90 transition-all min-h-[44px]"
                                 >
                                     Criar conta grátis
                                 </Link>

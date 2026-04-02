@@ -44,32 +44,26 @@ export function HomeCategoriesBar({ categoryCounts, activeSlug, basePath = '/blo
                                 href={getHref(cat.slug)}
                                 className={`group inline-flex items-center gap-2 px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
                                     isActive
-                                        ? 'border-transparent'
+                                        ? 'border-foreground bg-foreground'
                                         : 'border-border bg-background hover:bg-surface hover:border-current/15'
                                 }`}
-                                style={isActive
-                                    ? { backgroundColor: cat.color + '1a', borderColor: cat.color + '60' }
-                                    : undefined
-                                }
                             >
                                 <span
                                     className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-transform ${isActive ? 'scale-125' : 'group-hover:scale-125'}`}
-                                    style={{ backgroundColor: cat.color }}
+                                    style={{ backgroundColor: isActive ? '#ffffff' : cat.color }}
                                 />
                                 <span
                                     className={`text-[10.5px] font-semibold uppercase tracking-[0.03em] transition-colors ${
-                                        isActive ? 'font-bold' : 'text-muted group-hover:text-foreground'
+                                        isActive ? 'font-bold text-background' : 'text-muted group-hover:text-foreground'
                                     }`}
-                                    style={isActive ? { color: cat.color } : undefined}
                                 >
                                     {cat.name}
                                 </span>
                                 {typeof count === 'number' && (
                                     <span
                                         className={`text-[10px] font-bold tabular-nums transition-colors ${
-                                            isActive ? '' : 'text-muted/80 group-hover:text-foreground'
+                                            isActive ? 'text-background/80' : 'text-muted/80 group-hover:text-foreground'
                                         }`}
-                                        style={isActive ? { color: cat.color + 'bb' } : undefined}
                                     >
                                         {count}
                                     </span>

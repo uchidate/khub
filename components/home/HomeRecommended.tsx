@@ -99,7 +99,7 @@ export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps)
                                 </div>
                                 {/* Name */}
                                 <div className="text-center min-w-0 w-full">
-                                    <p className="text-[11px] font-semibold text-foreground group-hover:text-accent transition-colors leading-tight line-clamp-2 text-center">
+                                    <p className="text-[11px] font-semibold text-foreground group-hover:text-foreground/80 transition-colors leading-tight line-clamp-2 text-center">
                                         {artist.nameRomanized || artist.nameHangul}
                                     </p>
                                     {artist.roles?.length > 0 && (
@@ -117,9 +117,9 @@ export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps)
                             className="group flex flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0"
                         >
                             <div className="w-14 h-14 rounded-full border-2 border-dashed border-border flex items-center justify-center group-hover:border-accent/50 transition-colors">
-                                <span className="text-muted group-hover:text-accent text-lg font-bold transition-colors">+</span>
+                                <span className="text-muted group-hover:text-foreground text-lg font-bold transition-colors">+</span>
                             </div>
-                            <p className="text-[10px] text-muted group-hover:text-accent transition-colors text-center leading-tight">
+                            <p className="text-[10px] text-muted group-hover:text-foreground transition-colors text-center leading-tight">
                                 Ver mais
                             </p>
                         </Link>

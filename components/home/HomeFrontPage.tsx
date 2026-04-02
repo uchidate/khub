@@ -128,7 +128,7 @@ export function HomeFrontPage({
     const safeArtists = trendingArtists.slice(0, 8)
 
     return (
-        <section className="border-b border-border">
+        <section className="border-b border-border bg-background">
             <div className="max-w-7xl mx-auto grid lg:grid-cols-[2fr_0.65fr]">
                 {/* LEFT COLUMN */}
                 <div className="flex flex-col">
@@ -137,7 +137,7 @@ export function HomeFrontPage({
                         {hasCarousel ? (
                             <FeaturedCarousel posts={carouselPosts} />
                         ) : featuredStory ? (
-                            <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[340px] md:h-[480px] overflow-hidden bg-accent-soft">
+                            <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[300px] md:h-[430px] overflow-hidden bg-surface">
                                 {featuredStory.coverImageUrl ? (
                                     <Image
                                         src={featuredStory.coverImageUrl}
@@ -148,18 +148,17 @@ export function HomeFrontPage({
                                         priority
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft">
+                                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(148,163,184,0.14),rgba(148,163,184,0.06))]">
                                         <span
-                                            className="absolute text-[7rem] font-black text-accent select-none pointer-events-none"
-                                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.05 }}
+                                            className="absolute text-[5rem] font-black text-foreground/10 select-none pointer-events-none"
+                                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
                                         >
-                                            블랙핑크
+                                            HallyuHub
                                         </span>
-                                        <OrbitalDecoration />
                                     </div>
                                 )}
                                 <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%)' }} />
-                                <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-10">
+                                <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 pt-10">
                                     <div className="flex items-center gap-1.5 mb-3">
                                         {(() => {
                                             const cs = getCategoryStyle(featuredStory.category?.slug ?? featuredStory.tags?.[0])
@@ -169,11 +168,11 @@ export function HomeFrontPage({
                                                 </span>
                                             )
                                         })()}
-                                        <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-white/20 text-white backdrop-blur-sm">
+                                        <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-white/20 text-white">
                                             Destaque
                                         </span>
                                     </div>
-                                    <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
+                                    <h1 className="text-[1.12rem] sm:text-[1.35rem] lg:text-[1.6rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
                                         {featuredStory.title}
                                     </h1>
                                     {featuredStory.excerpt && (
@@ -200,7 +199,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={story.slug}
                                     href={`/blog/${story.slug}`}
-                                    className={`group p-3 flex gap-3 hover:bg-accent-soft transition-colors border-b border-border
+                                    className={`group p-3 flex gap-3 hover:bg-surface transition-colors border-b border-border
                                         ${idx % 2 === 0 ? "sm:border-r sm:border-border" : ""}
                                         ${idx >= 2 ? "sm:border-b-0" : ""}
                                     `}
@@ -214,7 +213,7 @@ export function HomeFrontPage({
                                         <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded self-start" style={{ color: cs.color, backgroundColor: cs.bg }}>
                                             {story.category?.name ?? story.tags?.[0] ?? 'Blog'}
                                         </span>
-                                        <h3 className="text-[13.5px] font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-2">
+                                        <h3 className="text-[13.5px] font-bold text-foreground leading-snug group-hover:text-foreground/85 transition-colors line-clamp-2">
                                             {story.title}
                                         </h3>
                                         <span className="text-[9px] text-muted mt-auto">{formatDate(story.publishedAt)}</span>
@@ -231,23 +230,15 @@ export function HomeFrontPage({
                     {/* Trending Artists panel */}
                     <div className="border-b border-border flex-1">
                         <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
-                            <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" style={{ animation: 'live-pulse 1.5s ease-in-out infinite' }} />
+                                <div className="flex items-center gap-1.5">
                                 <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">
                                     Artistas em alta
                                 </span>
                             </div>
-                            <Link href="/artists" className="text-[9px] font-semibold text-muted hover:text-accent transition-colors">
+                            <Link href="/artists" className="text-[9px] font-semibold text-muted hover:text-foreground transition-colors">
                                 Ver todos →
                             </Link>
                         </div>
-
-                        <style>{`
-                            @keyframes live-pulse {
-                                0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}
-                                50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}
-                            }
-                        `}</style>
 
                         {/* Desktop: vertical list — 7 artistas para não ultrapassar altura da coluna esquerda */}
                         <div className="hidden sm:block">
@@ -255,7 +246,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[44px]"
+                                    className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors min-h-[44px]"
                                 >
                                     <div className="flex flex-col items-center gap-px w-4 flex-shrink-0">
                                         <span className="text-[8.5px] font-bold text-muted text-center leading-none">
@@ -277,7 +268,7 @@ export function HomeFrontPage({
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-bold text-foreground truncate leading-tight">
+                                        <p className="text-[12.5px] font-bold text-foreground truncate leading-tight">
                                             {artist.nameRomanized || artist.nameHangul || '—'}
                                             {artist.nameHangul && artist.nameRomanized && (
                                                 <span className="text-[9px] font-normal text-muted ml-1">({artist.nameHangul})</span>
@@ -306,7 +297,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-accent-soft transition-colors border-b border-r border-border last:border-r-0 [&:nth-child(4n)]:border-r-0"
+                                    className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-surface transition-colors border-b border-r border-border last:border-r-0 [&:nth-child(4n)]:border-r-0"
                                 >
                                     <div className="relative w-11 h-11 rounded-full overflow-hidden bg-surface border border-border flex-shrink-0">
                                         {artist.primaryImageUrl ? (
@@ -327,13 +318,13 @@ export function HomeFrontPage({
 
                     {/* Artist Spotlight */}
                     {spotlightArtist && (
-                        <div className="p-4 bg-gradient-to-b from-accent-soft to-background flex flex-col gap-3">
+                            <div className="p-4 bg-surface flex flex-col gap-3">
                             {/* Label */}
                             <div className="flex items-center justify-between">
                                 <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-muted">
                                     Destaque da semana
                                 </p>
-                                <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" style={{ animation: 'live-pulse 2s ease-in-out infinite' }} />
+                                <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 flex-shrink-0" />
                             </div>
 
                             {/* Foto + nome */}
@@ -392,7 +383,7 @@ export function HomeFrontPage({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted mb-0.5">Última produção</p>
-                                        <p className="text-[12px] font-bold text-foreground group-hover/prod:text-accent transition-colors line-clamp-2 leading-tight">
+                                        <p className="text-[12px] font-bold text-foreground group-hover/prod:text-foreground/80 transition-colors line-clamp-2 leading-tight">
                                             {spotlightProduction.titlePt}
                                         </p>
                                         <p className="text-[9px] text-muted mt-0.5">
@@ -405,7 +396,7 @@ export function HomeFrontPage({
 
                             <Link
                                 href={`/artists/${spotlightArtist.id}`}
-                                className="w-full text-center bg-accent text-white text-[12px] font-semibold rounded-full py-2 hover:brightness-110 transition-all"
+                                className="w-full text-center bg-foreground text-background text-[12px] font-semibold rounded-full py-2 hover:opacity-90 transition-all"
                             >
                                 Ver perfil →
                             </Link>
@@ -414,59 +405,5 @@ export function HomeFrontPage({
                 </div>
             </div>
         </section>
-    )
-}
-
-function OrbitalDecoration() {
-    return (
-        <>
-            <style>{`
-                @keyframes orbit-spin {
-                    0% { transform: translate(-50%, -50%) rotate(0deg); }
-                    100% { transform: translate(-50%, -50%) rotate(360deg); }
-                }
-                @keyframes orbit-spin-rev {
-                    0% { transform: translate(-50%, -50%) rotate(0deg); }
-                    100% { transform: translate(-50%, -50%) rotate(-360deg); }
-                }
-                .orbital-ring-1 { animation: orbit-spin 8s linear infinite; }
-                .orbital-ring-2 { animation: orbit-spin-rev 12s linear infinite; }
-                .orbital-ring-3 { animation: orbit-spin 20s linear infinite; }
-            `}</style>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {/* Ring 1 */}
-                <div
-                    className="orbital-ring-1 absolute border border-accent/20 rounded-full"
-                    style={{ width: 120, height: 120, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-                >
-                    <span
-                        className="absolute w-2.5 h-2.5 rounded-full bg-accent/60"
-                        style={{ top: -5, left: "50%", transform: "translateX(-50%)" }}
-                    />
-                </div>
-                {/* Ring 2 */}
-                <div
-                    className="orbital-ring-2 absolute border border-accent/15 rounded-full"
-                    style={{ width: 200, height: 200, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-                >
-                    <span
-                        className="absolute w-2 h-2 rounded-full bg-accent/40"
-                        style={{ bottom: -4, left: "50%", transform: "translateX(-50%)" }}
-                    />
-                </div>
-                {/* Ring 3 */}
-                <div
-                    className="orbital-ring-3 absolute border border-foreground/10 rounded-full"
-                    style={{ width: 280, height: 280, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-                >
-                    <span
-                        className="absolute w-1.5 h-1.5 rounded-full bg-foreground/20"
-                        style={{ top: -3, right: "25%", transform: "translateX(50%)" }}
-                    />
-                </div>
-                {/* Center glyph */}
-                <span className="text-4xl font-black text-accent opacity-20 select-none">한</span>
-            </div>
-        </>
     )
 }
