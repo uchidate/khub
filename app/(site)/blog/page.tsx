@@ -151,6 +151,7 @@ function PostCard({ post }: { post: PostWithCategory }) {
           <span className="ml-auto flex items-center gap-2 flex-shrink-0">
             {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
             <span className="flex items-center gap-1"><Clock size={10} />{post.readingTimeMin} min</span>
+            <span className="flex items-center gap-1"><Eye size={10} />{post.viewCount}</span>
           </span>
         </div>
       </div>
@@ -374,14 +375,14 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             {popularTags.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 <Tag size={11} className="text-muted shrink-0" />
-                {popularTags.map(({ tag }) => {
+                {popularTags.map(({ tag, count }) => {
                   const ts = getTagStyle(tag)
                   return (
                     <Link
                       key={tag}
                       href={activeTag === tag ? '/blog' : `/blog?tag=${encodeURIComponent(tag)}`}
                       scroll={false}
-                      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all hover:brightness-90"
+                      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all hover:brightness-90 flex items-center gap-1"
                       style={{
                         color: ts.color,
                         backgroundColor: activeTag === tag ? ts.color : ts.bg,
@@ -389,6 +390,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                       }}
                     >
                       {tag}
+                      <span className="opacity-50 text-[9px] font-bold">{String(count)}</span>
                     </Link>
                   )
                 })}
@@ -401,6 +403,29 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             <div className="flex items-center gap-2 mb-6">
               <p className="text-sm text-muted">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'} com a tag &ldquo;{activeTag}&rdquo;</p>
               <Link href="/blog" className="text-xs text-accent hover:underline">Limpar filtro</Link>
+            </div>
+          )}
+
+          {/* Category shortcuts — só quando sem filtro ativo */}
+          {!isFiltered && categories.filter(c => c._count.posts > 0).length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap mb-8 -mt-2">
+              {categories.filter(c => c._count.posts > 0).map(c => {
+                const config = BLOG_CATEGORY_BY_SLUG[c.slug]
+                if (!config) return null
+                return (
+                  <Link
+                    key={c.id}
+                    href={`/blog?category=${c.slug}`}
+                    scroll={false}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-all hover:shadow-sm hover:-translate-y-0.5 duration-200"
+                    style={{ backgroundColor: config.bg, borderColor: `${config.color}33` }}
+                  >
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: config.color }} />
+                    <span className="text-[12px] font-bold" style={{ color: config.color }}>{config.name}</span>
+                    <span className="text-[10px] font-semibold opacity-50" style={{ color: config.color }}>{c._count.posts}</span>
+                  </Link>
+                )
+              })}
             </div>
           )}
 
@@ -437,7 +462,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                       href={`/blog/${p.slug}`}
                       className="group flex items-start gap-3 p-3 rounded-xl border border-border bg-surface hover:border-accent/30 hover:bg-surface-hover transition-all"
                     >
-                      <span className="text-2xl font-black text-accent/20 leading-none w-6 shrink-0 group-hover:text-accent/40 transition-colors">
+                      <span className="text-2xl font-black leading-none w-7 shrink-0 transition-colors"
+                        style={{ color: `color-mix(in srgb, var(--accent) ${Math.max(15, 60 - i * 12)}%, transparent)` }}
+                      >
                         {i + 1}
                       </span>
                       <div className="flex-1 min-w-0">
