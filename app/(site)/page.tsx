@@ -11,7 +11,6 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
-import { HomeTicker } from "@/components/home/HomeTicker"
 import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
 
 export const dynamic = 'force-dynamic'
@@ -93,12 +92,13 @@ const getHomePublicData = unstable_cache(
                 }).catch(() => [])
                 : [],
             // Feed + fallback: exclui os que já estão nos slots
+            // take:30 garante posts suficientes por categoria nas seções do feed
             prisma.blogPost.findMany({
                 where: {
                     status: 'PUBLISHED',
                     ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
                 },
-                take: 12,
+                take: 30,
                 orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
                 select: POST_SELECT,
             }).catch(() => []),
@@ -240,7 +240,6 @@ export default async function Home() {
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
-            <HomeTicker posts={feedPosts.slice(0, 12)} />
             <HomeCategoriesBar />
             <JsonLd data={{
                 "@context": "https://schema.org",
