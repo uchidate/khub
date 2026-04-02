@@ -61,7 +61,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
     const hasActive = !!(search || role || memberType || sortBy !== 'trending')
 
     return (
-        <div className="mb-8 space-y-3">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 mb-8 space-y-3">
             {/* Search */}
             <SearchInput value={search} onChange={setSearch} placeholder="Buscar artistas..." />
 
@@ -76,7 +76,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                             className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                 role === opt.value
                                     ? 'bg-[#ff2d78] text-white'
-                                    : 'bg-surface text-muted hover:bg-[#e8e8e8] hover:text-foreground'
+                                    : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                             }`}
                         >
                             {opt.label}
@@ -92,8 +92,8 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                             onClick={() => setMemberType(memberType === opt.value ? '' : opt.value)}
                             className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                 memberType === opt.value
-                                    ? 'bg-[#080808] text-white'
-                                    : 'bg-surface text-muted hover:bg-[#e8e8e8] hover:text-foreground'
+                                    ? 'bg-foreground text-background'
+                                    : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                             }`}
                         >
                             {opt.label}
@@ -107,7 +107,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                             className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                 sortBy === opt.value
                                     ? 'bg-[#ff2d78] text-white'
-                                    : 'bg-surface text-muted hover:bg-[#e8e8e8] hover:text-foreground'
+                                    : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                             }`}
                         >
                             {opt.label}

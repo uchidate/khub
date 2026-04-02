@@ -101,12 +101,13 @@ const getHomePublicData = unstable_cache(
                 }).catch(() => [])
                 : [],
             // Feed + fallback: exclui os que já estão nos slots
+            // take:30 garante posts suficientes por categoria nas seções do feed
             prisma.blogPost.findMany({
                 where: {
                     status: 'PUBLISHED',
                     ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
                 },
-                take: 12,
+                take: 30,
                 orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
                 select: POST_SELECT,
             }).catch(() => []),

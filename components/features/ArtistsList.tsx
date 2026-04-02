@@ -49,12 +49,11 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
     const group = artist.memberships?.[0]?.group
     const roleLabels = getRoleLabels(artist.roles || [], artist.gender)
     const roleLabel = roleLabels[0] ?? ''
-    const agencyName = artist.agency?.name ?? group?.name ?? ''
 
     return (
         <Link href={`/artists/${artist.id}`} className="group block">
             {/* Photo */}
-            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border mb-2.5 group-hover:border-[#ff2d78]/30 transition-colors">
+            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border mb-2.5 group-hover:border-[#ff2d78]/40 transition-colors">
                 {artist.primaryImageUrl ? (
                     <Image
                         src={artist.primaryImageUrl}
@@ -65,12 +64,24 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
                         priority={priority}
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-muted opacity-40">
-                            {artist.nameRomanized.slice(0, 2).toUpperCase()}
+                    <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ background: nameToGradient(artist.nameRomanized) }}
+                    >
+                        <span className="text-3xl font-black text-white/80 drop-shadow select-none">
+                            {artist.nameRomanized[0]?.toUpperCase() ?? '?'}
                         </span>
                     </div>
                 )}
+                {/* Hover overlay: hangul + group */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 gap-0.5">
+                    {artist.nameHangul && (
+                        <p className="text-white text-[12px] font-bold truncate leading-tight">{artist.nameHangul}</p>
+                    )}
+                    {group && (
+                        <p className="text-white/65 text-[10px] truncate leading-tight">{group.name}</p>
+                    )}
+                </div>
             </div>
 
             {/* Info */}
@@ -88,9 +99,9 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
                         {artist.nameHangul}
                     </p>
                 )}
-                {agencyName && (
+                {artist.agency?.name && (
                     <p className="text-[11px] text-muted truncate leading-tight mt-0.5 opacity-70">
-                        {agencyName}
+                        {artist.agency.name}
                     </p>
                 )}
             </div>

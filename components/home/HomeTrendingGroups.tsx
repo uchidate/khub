@@ -40,7 +40,7 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
                                 {group.profileImageUrl ? (
                                     <Image src={group.profileImageUrl} alt={group.name} width={40} height={40} className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: color }}>
+                                    <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold" style={{ background: nameToGradient(group.name) }}>
                                         {group.name[0]}
                                     </div>
                                 )}

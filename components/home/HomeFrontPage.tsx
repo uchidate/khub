@@ -257,10 +257,19 @@ export function HomeFrontPage({
                                     href={`/artists/${artist.id}`}
                                     className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[44px]"
                                 >
-                                    <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 text-center">
-                                        {String(idx + 1).padStart(2, '0')}
-                                    </span>
-                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center flex-shrink-0 overflow-hidden`}>
+                                    <div className="flex flex-col items-center gap-px w-4 flex-shrink-0">
+                                        <span className="text-[8.5px] font-bold text-muted text-center leading-none">
+                                            {String(idx + 1).padStart(2, '0')}
+                                        </span>
+                                        {artist.trendingRank != null && artist.trendingRankPrev != null ? (
+                                            artist.trendingRank < artist.trendingRankPrev
+                                                ? <span className="text-[7px] font-bold leading-none text-green-500">↑</span>
+                                                : artist.trendingRank > artist.trendingRankPrev
+                                                    ? <span className="text-[7px] font-bold leading-none text-red-400">↓</span>
+                                                    : <span className="text-[7px] leading-none text-muted/30">—</span>
+                                        ) : null}
+                                    </div>
+                                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || String(idx)) }}>
                                         {artist.primaryImageUrl ? (
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} width={36} height={36} className="object-cover w-full h-full" priority={idx < 5} />
                                         ) : (
@@ -303,7 +312,7 @@ export function HomeFrontPage({
                                         {artist.primaryImageUrl ? (
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} fill sizes="44px" className="object-cover" />
                                         ) : (
-                                            <div className={`w-full h-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center`}>
+                                            <div className="w-full h-full flex items-center justify-center" style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || String(idx)) }}>
                                                 <span className="text-white text-[8px] font-bold">{getInitials(artist.nameRomanized || artist.nameHangul || '?')}</span>
                                             </div>
                                         )}
@@ -339,7 +348,7 @@ export function HomeFrontPage({
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <div className={`w-full h-full bg-gradient-to-br ${AVATAR_GRADIENTS[0]} flex items-center justify-center text-white text-lg font-bold`}>
+                                        <div className="w-full h-full flex items-center justify-center text-white text-lg font-bold" style={{ background: nameToGradient(spotlightArtist.nameRomanized) }}>
                                             {spotlightArtist.nameRomanized[0]}
                                         </div>
                                     )}
