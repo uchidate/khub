@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
 import {
   Shield, Users, Building2, Film, Newspaper, Disc3, Tag, Activity,
@@ -9,7 +9,7 @@ import {
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
   PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
-  TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen, ServerIcon,
+  TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen, ServerIcon, ChevronDown,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -244,13 +244,15 @@ function NewBadge() {
 // ─── NavLink (item principal) ──────────────────────────────────────────────────
 
 function NavLink({
-  item, pathname, onNav, badge = 0, compact = false,
+  item, pathname, onNav, badge = 0, compact = false, isSubOpen = false, onToggleSub,
 }: {
   item: NavItem
   pathname: string | null
   onNav?: () => void
   badge?: number
   compact?: boolean
+  isSubOpen?: boolean
+  onToggleSub?: () => void
 }) {
   const isActive = item.exact
     ? pathname === item.href
@@ -282,25 +284,37 @@ function NavLink({
   }
 
   return (
-    <Link
-      href={item.href}
-      onClick={onNav}
+    <div
       className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
         highlighted
           ? 'bg-blue-500/10 text-blue-700 dark:text-blue-100 font-semibold shadow-[0_0_0_1px_rgba(59,130,246,0.2)]'
           : 'text-muted hover:text-foreground hover:bg-surface-hover font-medium'
       }`}
     >
-      <item.icon size={14} className={highlighted ? 'text-blue-500 dark:text-blue-400' : 'text-muted'} />
-      <span className="truncate flex-1">{item.label}</span>
+      <Link href={item.href} onClick={onNav} className="flex items-center gap-2.5 flex-1 min-w-0">
+        <item.icon size={14} className={highlighted ? 'text-blue-500 dark:text-blue-400' : 'text-muted'} />
+        <span className="truncate">{item.label}</span>
+      </Link>
+
       {badge > 0 ? (
         <NavBadge count={badge} />
       ) : item.isNew ? (
         <NewBadge />
-      ) : highlighted && !hasActiveSub ? (
+      ) : highlighted && !hasActiveSub && !item.subItems ? (
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400 flex-shrink-0" />
       ) : null}
-    </Link>
+
+      {item.subItems && onToggleSub && (
+        <button
+          type="button"
+          onClick={onToggleSub}
+          title={isSubOpen ? 'Recolher submenu' : 'Expandir submenu'}
+          className="p-0.5 rounded text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+        >
+          <ChevronDown size={14} className={`transition-transform ${isSubOpen ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -336,23 +350,34 @@ function SubNavLink({
 // ─── NavItemBlock ─────────────────────────────────────────────────────────────
 
 function NavItemBlock({
-  item, pathname, onNav, counts, compact,
+  item, pathname, onNav, counts, compact, expandedSubnav, onToggleSubnav,
 }: {
   item: NavItem
   pathname: string | null
   onNav?: () => void
   counts: PendingCounts
   compact: boolean
+  expandedSubnav: Set<string>
+  onToggleSubnav: (href: string) => void
 }) {
   const isActive    = item.exact ? pathname === item.href : pathname?.startsWith(item.href) ?? false
   const hasActiveSub = item.subItems?.some(s => pathname?.startsWith(s.href)) ?? false
-  const showSubs    = !compact && item.subItems && (isActive || hasActiveSub)
+  const prefOpen = expandedSubnav.has(item.href)
+  const showSubs    = !compact && item.subItems && (isActive || hasActiveSub || prefOpen)
 
   const badge = item.badgeKey ? (counts[item.badgeKey] ?? 0) : 0
 
   return (
     <div>
-      <NavLink item={item} pathname={pathname} onNav={onNav} badge={badge} compact={compact} />
+      <NavLink
+        item={item}
+        pathname={pathname}
+        onNav={onNav}
+        badge={badge}
+        compact={compact}
+        isSubOpen={showSubs}
+        onToggleSub={item.subItems ? () => onToggleSubnav(item.href) : undefined}
+      />
       {showSubs && (
         <div className="mt-0.5 space-y-0.5">
           {item.subItems!.map(sub => (
@@ -373,20 +398,31 @@ function NavItemBlock({
 // ─── NavSectionBlock ──────────────────────────────────────────────────────────
 
 function NavSectionBlock({
-  section, pathname, onNav, counts, compact,
+  section, pathname, onNav, counts, compact, expandedSubnav, onToggleSubnav,
 }: {
   section: NavSection
   pathname: string | null
   onNav?: () => void
   counts: PendingCounts
   compact: boolean
+  expandedSubnav: Set<string>
+  onToggleSubnav: (href: string) => void
 }) {
   // Seção sem label (legado / inline)
   if (!section.label) {
     return (
       <div className="space-y-0.5">
         {section.items.map(item => (
-          <NavItemBlock key={item.href} item={item} pathname={pathname} onNav={onNav} counts={counts} compact={compact} />
+          <NavItemBlock
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            onNav={onNav}
+            counts={counts}
+            compact={compact}
+            expandedSubnav={expandedSubnav}
+            onToggleSubnav={onToggleSubnav}
+          />
         ))}
       </div>
     )
@@ -397,7 +433,16 @@ function NavSectionBlock({
     return (
       <div className="py-1.5 border-b border-border last:border-0 space-y-0.5">
         {section.items.map(item => (
-          <NavItemBlock key={item.href} item={item} pathname={pathname} onNav={onNav} counts={counts} compact />
+          <NavItemBlock
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            onNav={onNav}
+            counts={counts}
+            compact
+            expandedSubnav={expandedSubnav}
+            onToggleSubnav={onToggleSubnav}
+          />
         ))}
       </div>
     )
@@ -410,7 +455,16 @@ function NavSectionBlock({
         {section.label}
       </p>
       {section.items.map(item => (
-        <NavItemBlock key={item.href} item={item} pathname={pathname} onNav={onNav} counts={counts} compact={false} />
+        <NavItemBlock
+          key={item.href}
+          item={item}
+          pathname={pathname}
+          onNav={onNav}
+          counts={counts}
+          compact={false}
+          expandedSubnav={expandedSubnav}
+          onToggleSubnav={onToggleSubnav}
+        />
       ))}
     </div>
   )
@@ -419,13 +473,15 @@ function NavSectionBlock({
 // ─── SidebarContent ───────────────────────────────────────────────────────────
 
 function SidebarContent({
-  pathname, onNav, counts, compact, onToggleCompact,
+  pathname, onNav, counts, compact, onToggleCompact, expandedSubnav, onToggleSubnav,
 }: {
   pathname: string | null
   onNav?: () => void
   counts: PendingCounts
   compact: boolean
   onToggleCompact: () => void
+  expandedSubnav: Set<string>
+  onToggleSubnav: (href: string) => void
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -473,6 +529,8 @@ function SidebarContent({
             onNav={onNav}
             counts={counts}
             compact={compact}
+            expandedSubnav={expandedSubnav}
+            onToggleSubnav={onToggleSubnav}
           />
         ))}
       </nav>
@@ -503,6 +561,10 @@ function SidebarContent({
             >
               <PanelLeftClose size={15} /><span>Compactar</span>
             </button>
+            <div className="px-3 py-1.5 border border-border rounded-lg bg-surface/70">
+              <p className="text-[9px] font-black uppercase tracking-widest text-muted mb-1">Atalhos</p>
+              <p className="text-[10px] text-muted">`g d` Dashboard · `g n` Notícias · `g b` Blog</p>
+            </div>
           </>
         )}
       </div>
@@ -584,12 +646,29 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
   useEffect(() => {
     const saved = localStorage.getItem('admin-compact')
     if (saved === 'true') setCompact(true)
+    const savedSubnav = localStorage.getItem('admin-expanded-subnav')
+    if (savedSubnav) {
+      try {
+        const arr = JSON.parse(savedSubnav) as string[]
+        if (Array.isArray(arr)) setExpandedSubnav(new Set(arr))
+      } catch {}
+    }
   }, [])
 
   const toggleCompact = useCallback(() => {
     setCompact(c => {
       const next = !c
       localStorage.setItem('admin-compact', String(next))
+      return next
+    })
+  }, [])
+
+  const toggleSubnav = useCallback((href: string) => {
+    setExpandedSubnav(prev => {
+      const next = new Set(prev)
+      if (next.has(href)) next.delete(href)
+      else next.add(href)
+      localStorage.setItem('admin-expanded-subnav', JSON.stringify(Array.from(next)))
       return next
     })
   }, [])
@@ -639,15 +718,22 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
           b: '/admin/blog',
         }
         const route = routes[e.key]
-        if (route) { e.preventDefault(); window.location.href = route }
+        if (route) { e.preventDefault(); router.push(route) }
       }
     }
 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [router])
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = original }
+  }, [mobileOpen])
 
   const sidebarWidth = compact ? 'lg:w-16' : 'lg:w-56'
   const mainMargin   = compact ? 'lg:ml-16' : 'lg:ml-56'
@@ -658,7 +744,14 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
 
         {/* Sidebar desktop */}
         <aside className={`hidden lg:flex flex-col min-h-screen bg-surface border-r border-border fixed top-0 bottom-0 transition-all duration-200 ${sidebarWidth}`}>
-          <SidebarContent pathname={pathname} counts={counts} compact={compact} onToggleCompact={toggleCompact} />
+          <SidebarContent
+            pathname={pathname}
+            counts={counts}
+            compact={compact}
+            onToggleCompact={toggleCompact}
+            expandedSubnav={expandedSubnav}
+            onToggleSubnav={toggleSubnav}
+          />
         </aside>
 
         {/* Drawer mobile */}
@@ -668,11 +761,20 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
             <aside className="relative flex flex-col w-64 max-w-[85vw] bg-surface border-r border-border h-full overflow-y-auto">
               <button
                 onClick={() => setMobileOpen(false)}
+                aria-label="Fechar menu"
                 className="absolute top-3 right-3 p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 <X size={16} />
               </button>
-              <SidebarContent pathname={pathname} onNav={() => setMobileOpen(false)} counts={counts} compact={false} onToggleCompact={() => {}} />
+              <SidebarContent
+                pathname={pathname}
+                onNav={() => setMobileOpen(false)}
+                counts={counts}
+                compact={false}
+                onToggleCompact={() => {}}
+                expandedSubnav={expandedSubnav}
+                onToggleSubnav={toggleSubnav}
+              />
             </aside>
           </div>
         )}
@@ -688,6 +790,7 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileOpen(true)}
+                aria-label="Abrir menu"
                 className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
               >
                 <Menu size={19} />

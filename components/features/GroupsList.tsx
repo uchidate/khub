@@ -47,6 +47,21 @@ function getGeneration(debutDate: string | null): string | null {
     return GENERATIONS.find(g => year >= g.from && year <= g.to)?.label ?? null
 }
 
+function GroupsSkeleton() {
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {Array.from({ length: 15 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                    <div className="aspect-square rounded-xl bg-skeleton mb-3" />
+                    <div className="h-3.5 bg-skeleton rounded w-3/4 mb-1.5" />
+                    <div className="h-3 bg-skeleton rounded w-1/2 mb-1" />
+                    <div className="h-2.5 bg-skeleton rounded w-2/3" />
+                </div>
+            ))}
+        </div>
+    )
+}
+
 export function GroupsList() {
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -152,13 +167,13 @@ export function GroupsList() {
             </div>
 
             {/* Contadores */}
-            <p className="text-muted font-medium mb-8 -mt-6">
+            <p className="text-muted text-xs font-medium mb-6">
                 {totalActive} ativo{totalActive !== 1 ? 's' : ''}
                 {totalDisbanded > 0 && ` · ${totalDisbanded} disbandado${totalDisbanded !== 1 ? 's' : ''}`}
             </p>
 
             {/* Filtros */}
-            <div className="mb-8 space-y-3">
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 mb-8 space-y-3">
                 {/* Busca */}
                 <SearchInput
                     value={search}
@@ -297,11 +312,7 @@ export function GroupsList() {
             </div>
 
             {/* Grid */}
-            {groups.length === 0 ? (
-                <div className="flex items-center justify-center py-32">
-                    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                </div>
-            ) : filtered.length === 0 ? (
+            {filtered.length === 0 ? (
                 <EmptyState
                     title="Nenhum grupo encontrado"
                     action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setAgencyFilter('all'); setSortBy('popular') } }}
@@ -321,27 +332,41 @@ export function GroupsList() {
                                                 alt={group.name}
                                                 fill
                                                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                                                className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-90 group-hover:brightness-100"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
                                                 priority={index < 4}
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-[#f0f0f0]">
-                                                <span className="text-3xl font-black text-muted group-hover:text-accent transition-colors">
+                                            <div
+                                                className="w-full h-full flex items-center justify-center"
+                                                style={{ background: nameToGradient(group.name) }}
+                                            >
+                                                <span className="text-4xl font-black text-white/80 drop-shadow select-none">
                                                     {group.name[0]}
                                                 </span>
                                             </div>
                                         )}
                                         {group.disbandDate && (
-                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-muted uppercase tracking-wider">
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-white/70 uppercase tracking-wider">
                                                 Disbandado
                                             </div>
                                         )}
                                         {group._count.members > 0 && (
-                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[10px] font-bold text-[#e8e8e8]">
+                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[10px] font-bold text-white/80">
                                                 <Users className="w-3 h-3" />
                                                 {group._count.members}
                                             </div>
                                         )}
+                                        {/* Hover overlay */}
+                                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 gap-0.5">
+                                            {group.nameHangul && (
+                                                <p className="text-white text-[12px] font-bold truncate leading-tight">{group.nameHangul}</p>
+                                            )}
+                                            {group.debutDate && (
+                                                <p className="text-white/65 text-[10px] truncate leading-tight">
+                                                    Estreia: {new Date(group.debutDate).getUTCFullYear()}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                     <div>
                                         <h3 className="font-black text-foreground text-sm leading-tight group-hover:text-accent transition-colors">{group.name}</h3>
@@ -349,12 +374,14 @@ export function GroupsList() {
                                             <p className="text-xs text-muted font-medium mt-0.5">{group.nameHangul}</p>
                                         )}
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5">
-                                            {group.debutDate && (
-                                                <span className="text-[10px] font-bold text-[#444]">{new Date(group.debutDate).getUTCFullYear()}</span>
-                                            )}
-                                            {gen && (
-                                                <span className="text-[10px] font-bold text-[#2a2a2a]">{gen}</span>
-                                            )}
+                                            {gen && (() => {
+                                                const gc = GEN_COLORS[gen]
+                                                return gc ? (
+                                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: gc.bg, color: gc.color }}>{gen}</span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-muted">{gen}</span>
+                                                )
+                                            })()}
                                             {group.agency && (
                                                 <span className="text-[10px] font-bold text-accent/80 truncate max-w-[100px]">{group.agency.name}</span>
                                             )}

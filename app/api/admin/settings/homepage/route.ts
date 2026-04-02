@@ -5,6 +5,14 @@ import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
+function normalizeIds(value: unknown, max: number): string[] {
+    if (!Array.isArray(value)) return []
+    const ids = value
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+        .map(id => id.trim())
+    return Array.from(new Set(ids)).slice(0, max)
+}
+
 /**
  * GET /api/admin/settings/homepage
  * Retorna os slots editoriais da homepage

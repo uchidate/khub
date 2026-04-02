@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
+import { AdminRefreshButton } from '@/components/admin/AdminRefreshButton'
+import { AdminStatsGrid } from '@/components/admin/AdminStatsGrid'
 import prisma from '@/lib/prisma'
 
 export default async function AdminPage() {
@@ -27,7 +29,7 @@ export default async function AdminPage() {
     // Pipeline de notícias (hoje)
     newsImportedToday, newsPublishedToday, newsQueueToday, newsHidden,
     // Traduções pendentes
-    _artistBioTranslationsDup, pendingProductionTranslations,
+    pendingProductionTranslations,
     // Enriquecimento pendente
     artistsWithoutBio, artistsWithoutImage, groupsWithoutBio,
     // Alertas urgentes
@@ -53,7 +55,6 @@ export default async function AdminPage() {
     prisma.news.count({ where: { createdAt: { gte: today }, isHidden: false, publishedAt: { not: { gt: new Date(0) } } } }),
     prisma.news.count({ where: { isHidden: true } }),
     // Traduções
-    prisma.contentTranslation.count({ where: { entityType: 'artist', field: 'bio', locale: 'pt-BR' } }),
     prisma.production.count({ where: { isHidden: false, synopsis: { not: null }, translationStatus: 'pending' } }),
     // Enriquecimento
     prisma.artist.count({ where: { bio: null, isHidden: false } }),
@@ -164,11 +165,11 @@ export default async function AdminPage() {
   }
 
   const stats = [
-    { label: 'Usuários',  value: totalUsers,       new: newUsers,       icon: Users,    href: '/admin/users',       sub: `+${newUsers7d} esta semana`, spark: sparks.users,       sparkColor: '#3b82f6' },
-    { label: 'Artistas',  value: totalArtists,     new: newArtists,     icon: Mic2,     href: '/admin/artists',     sub: null,                         spark: sparks.artists,     sparkColor: '#ec4899' },
-    { label: 'Produções', value: totalProductions, new: newProductions,  icon: Film,    href: '/admin/productions', sub: null,                         spark: sparks.productions, sparkColor: '#f59e0b' },
-    { label: 'Notícias',  value: totalNews,        new: newNews,        icon: Newspaper, href: '/admin/news',       sub: null,                         spark: sparks.news,        sparkColor: '#06b6d4' },
-    { label: 'Grupos',    value: totalGroups,      new: 0,              icon: Users,    href: '/admin/groups',      sub: null,                         spark: sparks.groups,      sparkColor: '#a855f7' },
+    { key: 'users' as const, label: 'Usuários', value: totalUsers, new: newUsers, href: '/admin/users', sub: `+${newUsers7d} esta semana`, spark: sparks.users, sparkColor: '#3b82f6' },
+    { key: 'artists' as const, label: 'Artistas', value: totalArtists, new: newArtists, href: '/admin/artists', sub: null, spark: sparks.artists, sparkColor: '#ec4899' },
+    { key: 'productions' as const, label: 'Produções', value: totalProductions, new: newProductions, href: '/admin/productions', sub: null, spark: sparks.productions, sparkColor: '#f59e0b' },
+    { key: 'news' as const, label: 'Notícias', value: totalNews, new: newNews, href: '/admin/news', sub: null, spark: sparks.news, sparkColor: '#06b6d4' },
+    { key: 'groups' as const, label: 'Grupos', value: totalGroups, new: 0, href: '/admin/groups', sub: null, spark: sparks.groups, sparkColor: '#a855f7' },
   ]
 
   // Greeting
@@ -188,15 +189,19 @@ export default async function AdminPage() {
               {greet}, <span className="text-blue-300">{name}</span>
             </h2>
             <p className="text-xs text-muted capitalize">{dateStr}</p>
+            <p className="text-[10px] text-muted mt-0.5">Atualizado agora</p>
           </div>
-          <Link
-            href="/admin/pipeline"
-            className="hidden sm:flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-all"
-          >
-            <Workflow size={13} className="text-blue-400" />
-            Ver pipeline
-            <ArrowRight size={12} />
-          </Link>
+          <div className="hidden sm:flex items-center gap-2">
+            <AdminRefreshButton />
+            <Link
+              href="/admin/pipeline"
+              className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-all"
+            >
+              <Workflow size={13} className="text-blue-400" />
+              Ver pipeline
+              <ArrowRight size={12} />
+            </Link>
+          </div>
         </div>
 
         {/* Urgente live */}
@@ -224,6 +229,22 @@ export default async function AdminPage() {
                 </Link>
               ))}
             </div>
+          </div>
+        )}
+
+        {actionCards.length === 0 && (
+          <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted">Atenção agora</p>
+              <p className="text-sm text-foreground font-semibold mt-1">Tudo sob controle no momento</p>
+              <p className="text-[11px] text-muted mt-0.5">Sem pendências urgentes de moderação, tradução ou enriquecimento.</p>
+            </div>
+            <Link
+              href="/admin/activity"
+              className="text-xs text-muted hover:text-foreground border border-border px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+            >
+              Ver atividade
+            </Link>
           </div>
         )}
 
@@ -277,36 +298,7 @@ export default async function AdminPage() {
         {/* Stats grid */}
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Totais (30 dias)</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            {stats.map(stat => (
-              <Link
-                key={stat.label}
-                href={stat.href}
-                className="bg-surface border border-border rounded-xl p-3 hover:border-border hover:shadow-[0_0_0_1px_rgba(59,130,246,0.12)] transition-all group flex flex-col gap-1"
-              >
-                <div className="flex items-center justify-between">
-                  <stat.icon className="w-3.5 h-3.5 text-muted group-hover:text-muted transition-colors" />
-                  {stat.new > 0 && (
-                    <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded-full">
-                      +{stat.new}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xl font-black text-foreground tabular-nums mt-0.5">{stat.value.toLocaleString('pt-BR')}</p>
-                <div className="flex items-end justify-between mt-auto pt-1">
-                  <div>
-                    <p className="text-[11px] text-muted font-medium">{stat.label}</p>
-                    {stat.sub && (
-                      <p className="text-[9px] text-muted flex items-center gap-0.5 mt-0.5">
-                        <TrendingUp className="w-2.5 h-2.5" />{stat.sub}
-                      </p>
-                    )}
-                  </div>
-                  <Sparkline data={stat.spark} color={stat.sparkColor} width={44} height={18} className="opacity-80 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </Link>
-            ))}
-          </div>
+          <AdminStatsGrid stats={stats} />
         </div>
 
         {/* Atividade + acesso rápido */}
