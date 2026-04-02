@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminButton } from '@/components/admin/AdminButton'
@@ -98,6 +98,17 @@ function SlotPicker({
     const { query, setQuery, results, loading } = usePostSearch()
     const [open, setOpen] = useState(false)
     const selectedIds = new Set(selected.map(p => p.id))
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setOpen(false)
+            }
+        }
+        if (open) document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [open])
 
     return (
         <div className="rounded-xl border border-border bg-background">
@@ -123,7 +134,7 @@ function SlotPicker({
 
                 {/* Add slot if not full */}
                 {selected.length < max && (
-                    <div className="relative">
+                    <div className="relative" ref={dropdownRef}>
                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border hover:border-accent/50 transition-colors bg-surface/50">
                             <Search size={13} className="text-muted shrink-0" />
                             <input
@@ -177,7 +188,6 @@ export default function HomepageConfigPage() {
     const toast = useAdminToast()
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(true)
-    const [postsById, setPostsById] = useState<Record<string, PostSummary>>({})
 
     const [featuredPost, setFeaturedPost] = useState<PostSummary | null>(null)
     const [carouselPosts, setCarouselPosts] = useState<PostSummary[]>([])
@@ -189,7 +199,6 @@ export default function HomepageConfigPage() {
         fetch('/api/admin/settings/homepage')
             .then(r => r.json() as Promise<{ config: HomepageConfig; postsById: Record<string, PostSummary> }>)
             .then(({ config, postsById: pById }) => {
-                setPostsById(pById) // kept for potential future use
                 setFeaturedPost(config.homeFeaturedPostId ? (pById[config.homeFeaturedPostId] ?? null) : null)
                 setCarouselPosts((config.homeCarouselPostIds ?? []).map(id => pById[id]).filter(Boolean))
                 setSecondaryPosts(config.homeSecondaryPostIds.map(id => pById[id]).filter(Boolean))

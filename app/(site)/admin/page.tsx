@@ -28,7 +28,7 @@ export default async function AdminPage() {
     // Pipeline de notícias (hoje)
     newsImportedToday, newsPublishedToday, newsQueueToday, newsHidden,
     // Traduções pendentes
-    _artistBioTranslationsDup, pendingProductionTranslations,
+    pendingProductionTranslations,
     // Enriquecimento pendente
     artistsWithoutBio, artistsWithoutImage, groupsWithoutBio,
     // Alertas urgentes
@@ -54,7 +54,6 @@ export default async function AdminPage() {
     prisma.news.count({ where: { createdAt: { gte: today }, isHidden: false, publishedAt: { not: { gt: new Date(0) } } } }),
     prisma.news.count({ where: { isHidden: true } }),
     // Traduções
-    prisma.contentTranslation.count({ where: { entityType: 'artist', field: 'bio', locale: 'pt-BR' } }),
     prisma.production.count({ where: { isHidden: false, synopsis: { not: null }, translationStatus: 'pending' } }),
     // Enriquecimento
     prisma.artist.count({ where: { bio: null, isHidden: false } }),
