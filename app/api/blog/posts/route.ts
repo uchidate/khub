@@ -3,6 +3,7 @@ import { requireContributorOrAbove } from '@/lib/admin-helpers'
 import { slugify, uniquifySlug, calcReadingTime } from '@/lib/utils/slug'
 import prisma from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { syncBlogPostEntityLinks } from '@/lib/services/blog-entity-links'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -55,6 +56,10 @@ export async function POST(request: NextRequest) {
       scheduledAt: validated.scheduledAt ? new Date(validated.scheduledAt) : null,
     },
   })
+
+  if (Object.prototype.hasOwnProperty.call(validated, 'blocks')) {
+    await syncBlogPostEntityLinks(post.id, validated.blocks)
+  }
 
   return NextResponse.json(post, { status: 201 })
 }

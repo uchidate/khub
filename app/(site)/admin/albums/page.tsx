@@ -1,11 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
-import { Plus } from 'lucide-react'
+import { ArrowRight, Library, Plus } from 'lucide-react'
 import { adminApi } from '@/lib/admin-api'
 
 interface Album {
@@ -136,8 +137,36 @@ export default function AlbumsPage() {
   }
 
   return (
-    <AdminLayout title="Álbuns">
+    <AdminLayout
+      title="Álbuns"
+      subtitle="Discografia operacional do catálogo. Use esta área para manter lançamentos, capas e links musicais vinculados aos artistas."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/artists"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+          >
+            <Library className="w-4 h-4" />
+            Ver artistas
+          </Link>
+          <Link
+            href="/admin/productions"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+          >
+            <ArrowRight className="w-4 h-4" />
+            Ver produções
+          </Link>
+        </div>
+      }
+    >
       <div className="space-y-6">
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Onde isso fica no admin</p>
+          <p className="text-sm text-muted leading-relaxed">
+            Álbuns não ficam mais agrupados como configuração de sistema. Esta é uma área de catálogo, voltada para manutenção de discografia e vínculos editoriais.
+          </p>
+        </div>
+
         <div className="flex items-center justify-between">
           <p className="text-muted">Gerencie os álbuns, EPs e singles da plataforma</p>
           <button

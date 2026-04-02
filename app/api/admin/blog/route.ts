@@ -11,10 +11,31 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
   const status = searchParams.get('status') || undefined
+  const seo = searchParams.get('seo') || undefined
+
+  const seoIssuesWhere = {
+    OR: [
+      { coverImageUrl: null },
+      { excerpt: null },
+      { tags: { isEmpty: true } },
+      { category: { is: null } },
+    ],
+  }
+
+  const seoHealthyWhere = {
+    AND: [
+      { coverImageUrl: { not: null } },
+      { excerpt: { not: null } },
+      { tags: { isEmpty: false } },
+      { category: { isNot: null } },
+    ],
+  }
 
   const where = {
     ...(status ? { status: status as 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'ARCHIVED' } : {}),
     ...(search ? { OR: [{ title: { contains: search, mode: 'insensitive' as const } }] } : {}),
+    ...(seo === 'issues' ? seoIssuesWhere : {}),
+    ...(seo === 'healthy' ? seoHealthyWhere : {}),
   }
 
   const [posts, total] = await Promise.all([

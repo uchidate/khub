@@ -1,8 +1,8 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Database, ArrowLeft, Table, BarChart3, HardDrive } from 'lucide-react'
-import NavBar from '@/components/NavBar'
+import { Table, BarChart3, HardDrive, ServerIcon, Activity } from 'lucide-react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
 
 export default async function AdminDatabasePage() {
@@ -43,69 +43,71 @@ export default async function AdminDatabasePage() {
   ]
 
   return (
-    <>
-      <NavBar />
-      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black pt-24 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-12 animate-fade-in">
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors mb-6"
+    <AdminLayout
+      title="Database"
+      subtitle="Visão macro dos volumes do banco e ponto de partida para diagnóstico estrutural da plataforma."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/infrastructure"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+          >
+            <ServerIcon className="w-4 h-4" />
+            Infraestrutura
+          </Link>
+          <Link
+            href="/admin/activity?tab=system"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+          >
+            <Activity className="w-4 h-4" />
+            Atividade do sistema
+          </Link>
+        </div>
+      }
+    >
+      <div className="space-y-6 max-w-7xl">
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Escopo</p>
+          <p className="text-sm text-muted leading-relaxed">
+            Esta página resume o volume das entidades principais. Ela não substitui observabilidade, logs ou manutenção de infraestrutura, mas ajuda a identificar desequilíbrios e crescimento do catálogo.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-surface border border-border rounded-2xl p-6"
             >
-              <ArrowLeft size={20} />
-              Voltar ao Painel Admin
-            </Link>
-            <div className="flex items-center gap-3 mb-4">
-              <Database className="text-blue-500" size={40} />
-              <h1 className="text-4xl md:text-5xl font-black text-foreground">
-                Banco de Dados
-              </h1>
+              <div className="flex items-center justify-between mb-4">
+                <stat.icon className="text-blue-400" size={24} />
+                <BarChart3 className="text-muted" size={20} />
+              </div>
+              <p className="text-sm text-muted mb-2">{stat.label}</p>
+              <p className="text-3xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
             </div>
-            <p className="text-xl text-muted">
-              Estatísticas e visão geral do banco de dados
-            </p>
-          </div>
+          ))}
+        </div>
 
-          {/* Database Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <div
-                key={stat.label}
-                className="bg-surface border border-border rounded-2xl p-6 animate-slide-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <stat.icon className={`text-${stat.color}-500`} size={24} />
-                  <BarChart3 className="text-muted" size={20} />
-                </div>
-                <p className="text-sm text-muted mb-2">{stat.label}</p>
-                <p className="text-3xl font-bold text-foreground">{stat.value.toLocaleString()}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Info Card */}
-          <div className="bg-surface border border-border rounded-2xl p-8">
-            <div className="flex items-start gap-4">
-              <HardDrive className="text-blue-500 flex-shrink-0" size={32} />
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Visão Geral do Banco
-                </h2>
-                <p className="text-muted mb-4">
-                  Total de registros no banco de dados: <span className="text-foreground font-bold">
-                    {(usersCount + artistsCount + agenciesCount + productionsCount + newsCount + albumsCount).toLocaleString()}
-                  </span>
-                </p>
-                <p className="text-sm text-muted">
-                  Funcionalidades avançadas de gerenciamento de banco de dados estarão disponíveis em breve.
-                </p>
-              </div>
+        <div className="bg-surface border border-border rounded-2xl p-8">
+          <div className="flex items-start gap-4">
+            <HardDrive className="text-blue-500 flex-shrink-0" size={32} />
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Visão Geral do Banco
+              </h2>
+              <p className="text-muted mb-4">
+                Total de registros observados nesta leitura: <span className="text-foreground font-bold">
+                  {(usersCount + artistsCount + agenciesCount + productionsCount + newsCount + albumsCount).toLocaleString()}
+                </span>
+              </p>
+              <p className="text-sm text-muted">
+                Para incidentes ou comportamento anormal, combine esta leitura com Infrastructure, Server Logs e a aba Sistema em Atividade.
+              </p>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </AdminLayout>
   )
 }
