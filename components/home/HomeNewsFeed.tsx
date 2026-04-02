@@ -53,10 +53,20 @@ function getCategoryThumbBg(slug: string | undefined): string {
     return `linear-gradient(135deg, ${bg}, ${color}22)`
 }
 
-function formatDate(iso: string | null) {
+function formatRelativeDate(iso: string | null): string {
     if (!iso) return ''
     try {
-        return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+        const diff = Date.now() - new Date(iso).getTime()
+        const minutes = Math.floor(diff / 60_000)
+        const hours = Math.floor(diff / 3_600_000)
+        const days = Math.floor(diff / 86_400_000)
+        if (minutes < 2) return 'Agora'
+        if (minutes < 60) return `${minutes}min atrás`
+        if (hours < 24) return `${hours}h atrás`
+        if (days === 1) return 'Ontem'
+        if (days < 7) return `há ${days} dias`
+        if (days < 30) return `há ${Math.ceil(days / 7)} sem.`
+        return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
     } catch { return '' }
 }
 
@@ -65,173 +75,146 @@ function isNew(iso: string | null, days = 7): boolean {
     return Date.now() - new Date(iso).getTime() < days * 24 * 60 * 60 * 1000
 }
 
-// ── Card vertical para o grid de categoria ─────────────────────────────────
-function CategoryCard({ post }: { post: BlogFeedItem }) {
+// ── Hero block — post mais recente, destaque no topo ──────────────────────
+function HeroBlock({ post }: { post: BlogFeedItem }) {
     const cs = getCategoryStyle(post.category?.slug)
     return (
         <Link
             href={`/blog/${post.slug}`}
-            className="group flex flex-col p-3 hover:bg-accent-soft transition-colors h-full"
+            className="group relative block w-full overflow-hidden border-b border-border"
+            style={{ aspectRatio: '21/9' }}
         >
-            {/* Thumbnail */}
-            <div
-                className="relative w-full aspect-video rounded-md overflow-hidden mb-2.5 flex-shrink-0 border border-border/50"
-                style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
-            >
-                {post.coverImageUrl ? (
-                    <Image
-                        src={post.coverImageUrl}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 640px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                ) : (
+            {post.coverImageUrl ? (
+                <Image
+                    src={post.coverImageUrl}
+                    alt={post.title}
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 70vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+            ) : (
+                <div className="absolute inset-0" style={{ background: getCategoryThumbBg(post.category?.slug) }} />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                {post.category && (
                     <span
-                        className="absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase tracking-widest"
-                        style={{ color: cs.color + '80' }}
+                        className="inline-block text-[9px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded mb-2"
+                        style={{ backgroundColor: cs.color, color: 'white' }}
                     >
-                        {post.category?.name?.slice(0, 2) ?? 'HH'}
+                        {post.category.name}
                     </span>
                 )}
-                {isNew(post.publishedAt) && (
-                    <span className="absolute top-1 right-1 text-[7px] font-extrabold bg-accent text-white px-[5px] py-[2px] rounded uppercase tracking-[0.1em]">
-                        Novo
-                    </span>
-                )}
-            </div>
-            {/* Meta */}
-            <div className="flex flex-col gap-1 flex-1">
-                <h3 className="text-[12.5px] font-bold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-3">
+                <h3 className="text-[18px] sm:text-[22px] lg:text-[24px] font-bold text-white leading-[1.25] drop-shadow-sm line-clamp-2 group-hover:text-white/90 transition-colors">
                     {post.title}
                 </h3>
-                <div className="flex items-center gap-1.5 text-[9px] text-muted mt-auto pt-1">
-                    <span>{formatDate(post.publishedAt)}</span>
+                {post.excerpt && (
+                    <p className="text-[12px] text-white/70 mt-1.5 line-clamp-2 hidden sm:block">{post.excerpt}</p>
+                )}
+                <div className="flex items-center gap-2 mt-2 text-[10px] text-white/55">
+                    <span>{formatRelativeDate(post.publishedAt)}</span>
                     <span>·</span>
-                    <span>{post.readingTimeMin} min</span>
+                    <span>{post.readingTimeMin} min de leitura</span>
                 </div>
             </div>
         </Link>
     )
 }
 
-// ── Card vertical grande — ocupa bem a coluna 2/3 no grid de categoria ─────
-function FeaturedVerticalCard({ post }: { post: BlogFeedItem }) {
-    const cs = getCategoryStyle(post.category?.slug)
+// ── Seção de categoria estilo newspaper — imagem hero + lista ──────────────
+function NewspaperSection({ cat, posts }: { cat: typeof BLOG_CATEGORIES[0]; posts: BlogFeedItem[] }) {
+    const [featured, ...rest] = posts
     return (
-        <Link
-            href={`/blog/${post.slug}`}
-            className="group flex flex-col h-full hover:bg-accent-soft transition-colors"
-        >
-            {/* Imagem — aspect-video, ocupa toda a largura */}
+        <div className="flex flex-col h-full">
+            {/* Header */}
             <div
-                className="relative w-full aspect-video overflow-hidden flex-shrink-0 border-b border-border/50"
-                style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
+                className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-border"
+                style={{ backgroundColor: `${cat.bg}55`, borderBottom: `1px solid ${cat.color}25` }}
             >
-                {post.coverImageUrl ? (
-                    <Image
-                        src={post.coverImageUrl}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 50vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                ) : (
-                    <span
-                        className="absolute inset-0 flex items-center justify-center text-[13px] font-bold uppercase tracking-widest"
-                        style={{ color: cs.color + '80' }}
-                    >
-                        {post.category?.name?.slice(0, 2) ?? 'HH'}
+                <div className="flex items-center gap-1.5">
+                    <span className="inline-block w-[3px] h-4 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.15em]" style={{ color: cat.color }}>
+                        {cat.name}
                     </span>
-                )}
-                {isNew(post.publishedAt) && (
-                    <span className="absolute top-2 right-2 text-[7px] font-extrabold bg-accent text-white px-[5px] py-[2px] rounded uppercase tracking-[0.1em]">
-                        Novo
-                    </span>
-                )}
-            </div>
-            {/* Texto */}
-            <div className="flex flex-col gap-1.5 p-3 flex-1">
-                <h3 className="text-[14px] sm:text-[15px] font-bold text-foreground leading-[1.35] group-hover:text-accent transition-colors line-clamp-3">
-                    {post.title}
-                </h3>
-                {post.excerpt && (
-                    <p className="text-[11.5px] text-muted leading-snug line-clamp-2 hidden sm:block">
-                        {post.excerpt}
-                    </p>
-                )}
-                <div className="flex items-center gap-1.5 text-[9px] text-muted mt-auto pt-1">
-                    <span>{formatDate(post.publishedAt)}</span>
-                    <span>·</span>
-                    <span>{post.readingTimeMin} min</span>
                 </div>
+                <Link
+                    href={`/blog?category=${cat.slug}`}
+                    className="text-[10px] font-semibold hover:underline"
+                    style={{ color: cat.color }}
+                >
+                    Ver mais →
+                </Link>
             </div>
-        </Link>
-    )
-}
 
-// ── Card horizontal compacto — para listas e coluna 1 post ─────────────────
-function FeaturedHorizontalCard({ post }: { post: BlogFeedItem }) {
-    const cs = getCategoryStyle(post.category?.slug)
-    return (
-        <Link
-            href={`/blog/${post.slug}`}
-            className="group flex gap-3 p-3 hover:bg-accent-soft transition-colors"
-        >
-            <div
-                className="relative w-[140px] sm:w-[180px] min-h-[95px] rounded-md overflow-hidden flex-shrink-0 border border-border/50"
-                style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
-            >
-                {post.coverImageUrl ? (
-                    <Image
-                        src={post.coverImageUrl}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 640px) 140px, 180px"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                ) : (
-                    <span
-                        className="absolute inset-0 flex items-center justify-center text-[11px] font-bold uppercase tracking-widest"
-                        style={{ color: cs.color + '80' }}
+            {/* Post em destaque: imagem com overlay */}
+            {featured && (
+                <Link href={`/blog/${featured.slug}`} className="group relative block w-full aspect-video overflow-hidden border-b border-border flex-shrink-0">
+                    {featured.coverImageUrl ? (
+                        <Image
+                            src={featured.coverImageUrl}
+                            alt={featured.title}
+                            fill
+                            sizes="(max-width: 640px) 100vw, 40vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                    ) : (
+                        <div className="absolute inset-0" style={{ background: getCategoryThumbBg(cat.slug) }} />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    {isNew(featured.publishedAt) && (
+                        <span className="absolute top-2 right-2 text-[7px] font-extrabold bg-accent text-white px-[5px] py-[2px] rounded uppercase tracking-[0.1em]">Novo</span>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <h3 className="text-[13px] sm:text-[14px] font-bold text-white leading-[1.3] line-clamp-2 drop-shadow">
+                            {featured.title}
+                        </h3>
+                        <span className="text-[9px] text-white/60 mt-1 block">{formatRelativeDate(featured.publishedAt)}</span>
+                    </div>
+                </Link>
+            )}
+
+            {/* Lista de posts abaixo (até 3, totalizando 4 por seção) */}
+            <div className="flex flex-col divide-y divide-border">
+                {rest.slice(0, 3).map(post => (
+                    <Link
+                        key={post.id}
+                        href={`/blog/${post.slug}`}
+                        className="group flex items-start gap-2.5 px-3 sm:px-4 py-2.5 hover:bg-accent-soft transition-colors"
                     >
-                        {post.category?.name?.slice(0, 2) ?? 'HH'}
-                    </span>
-                )}
-                {isNew(post.publishedAt) && (
-                    <span className="absolute top-1 right-1 text-[7px] font-extrabold bg-accent text-white px-[5px] py-[2px] rounded uppercase tracking-[0.1em]">
-                        Novo
-                    </span>
-                )}
+                        <span className="text-[11px] text-muted/50 leading-none mt-[3px] flex-shrink-0">›</span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-semibold text-foreground group-hover:text-accent transition-colors leading-[1.4] line-clamp-2">
+                                {post.title}
+                            </p>
+                            <span className="text-[9px] text-muted">{formatRelativeDate(post.publishedAt)}</span>
+                        </div>
+                    </Link>
+                ))}
             </div>
-            <div className="flex-1 min-w-0 flex flex-col gap-1.5 py-0.5">
-                <h3 className="text-[13.5px] font-bold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-3">
-                    {post.title}
-                </h3>
-                {post.excerpt && (
-                    <p className="text-[11px] text-muted leading-snug line-clamp-2 hidden sm:block">
-                        {post.excerpt}
-                    </p>
-                )}
-                <div className="flex items-center gap-1.5 text-[9px] text-muted mt-auto">
-                    <span>{formatDate(post.publishedAt)}</span>
-                    <span>·</span>
-                    <span>{post.readingTimeMin} min</span>
-                </div>
-            </div>
-        </Link>
+        </div>
     )
 }
 
 export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: HomeBlogFeedProps) {
     const [activeTab, setActiveTab] = useState("all")
+    const [visibleCount, setVisibleCount] = useState(8)
+
+    function handleTabChange(value: string) {
+        setActiveTab(value)
+        setVisibleCount(8)
+    }
+
+    // Hero: post mais recente (modo "Todos" apenas)
+    const heroPost = blogPosts[0] ?? null
+    const postsForCategories = heroPost ? blogPosts.slice(1) : blogPosts
 
     // Para o modo "Todos": agrupar posts por categoria (na ordem de HOME_FEED_CATEGORIES)
     const postsByCategory = HOME_FEED_CATEGORIES
         .map(slug => {
             const cat = BLOG_CATEGORIES.find(c => c.slug === slug)
             if (!cat) return null
-            const posts = blogPosts.filter(p => p.category?.slug === slug).slice(0, 4)
+            const posts = postsForCategories.filter(p => p.category?.slug === slug).slice(0, 4)
             return posts.length > 0 ? { cat, posts } : null
         })
         .filter((g): g is { cat: typeof BLOG_CATEGORIES[0]; posts: BlogFeedItem[] } => g !== null)
@@ -262,7 +245,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                         return (
                             <button
                                 key={tab.value}
-                                onClick={() => setActiveTab(tab.value)}
+                                onClick={() => handleTabChange(tab.value)}
                                 className={`shrink-0 flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-all ${
                                     isActive
                                         ? 'border-transparent'
@@ -293,87 +276,45 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                     {/* Esquerda — conteúdo principal */}
                     <div className="border-b md:border-b-0 md:border-r border-border flex flex-col">
 
-                        {/* ── MODO TODOS: seções por categoria ──────────────── */}
+                        {/* ── MODO TODOS: hero + grade newspaper ────────────── */}
                         {activeTab === 'all' && (
                             <div>
+                                {/* Hero: post mais recente */}
+                                {heroPost && <HeroBlock post={heroPost} />}
+
                                 {postsByCategory.length === 0 && (
                                     <p className="text-sm text-muted p-5">Nenhum artigo encontrado.</p>
                                 )}
-                                {postsByCategory.map(({ cat, posts }) => (
-                                    <div key={cat.slug} className="border-b border-border last:border-b-0">
 
-                                        {/* Header da categoria */}
-                                        <div
-                                            className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-2"
-                                            style={{ backgroundColor: `${cat.bg}55`, borderBottom: `1px solid ${cat.color}25` }}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span
-                                                    className="inline-block w-[3px] h-4 rounded-full flex-shrink-0"
-                                                    style={{ backgroundColor: cat.color }}
-                                                />
-                                                <span
-                                                    className="text-[10px] font-extrabold uppercase tracking-[0.15em]"
-                                                    style={{ color: cat.color }}
-                                                >
-                                                    {cat.name}
-                                                </span>
-                                                {categoryCounts[cat.slug] != null && (
-                                                    <span
-                                                        className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-                                                        style={{ color: cat.color, backgroundColor: cat.bg }}
-                                                    >
-                                                        {categoryCounts[cat.slug]}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <Link
-                                                href={`/blog?category=${cat.slug}`}
-                                                className="text-[10px] font-semibold hover:underline transition-colors"
-                                                style={{ color: cat.color }}
+                                {/* Grade 2 colunas estilo newspaper */}
+                                <div className="grid sm:grid-cols-2">
+                                    {postsByCategory.map(({ cat, posts }, idx) => {
+                                        const isLastOdd = idx === postsByCategory.length - 1 && postsByCategory.length % 2 !== 0
+                                        return (
+                                            <div
+                                                key={cat.slug}
+                                                className={[
+                                                    'border-b border-border',
+                                                    idx % 2 === 0 && !isLastOdd ? 'sm:border-r sm:border-border' : '',
+                                                    isLastOdd ? 'sm:col-span-2 sm:border-r-0' : '',
+                                                ].filter(Boolean).join(' ')}
                                             >
-                                                Ver mais →
-                                            </Link>
-                                        </div>
-
-                                        {/* Grid adaptativo: depende da quantidade de posts */}
-                                        {posts.length === 1 && (
-                                            /* 1 post — horizontal full width */
-                                            <FeaturedHorizontalCard post={posts[0]} />
-                                        )}
-                                        {posts.length === 2 && (
-                                            /* 2 posts — dois cards verticais lado a lado */
-                                            <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
-                                                <FeaturedVerticalCard post={posts[0]} />
-                                                <CategoryCard post={posts[1]} />
+                                                <NewspaperSection cat={cat} posts={posts} />
                                             </div>
-                                        )}
-                                        {posts.length >= 3 && (
-                                            /* 3-4 posts — card vertical grande (2/3) + 2 cards verticais empilhados (1/3) */
-                                            <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
-                                                <div className="sm:col-span-2 border-b sm:border-b-0 border-border">
-                                                    <FeaturedVerticalCard post={posts[0]} />
-                                                </div>
-                                                <div className="flex flex-col divide-y divide-border">
-                                                    {posts.slice(1, 3).map(post => (
-                                                        <CategoryCard key={post.id} post={post} />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                        )
+                                    })}
+                                </div>
                             </div>
                         )}
 
-                        {/* ── MODO CATEGORIA ESPECÍFICA: lista plana ─────────── */}
+                        {/* ── MODO CATEGORIA ESPECÍFICA: lista com paginação ─── */}
                         {activeTab !== 'all' && (
                             <div className="flex flex-col flex-1">
                                 <div className="flex-1">
                                     {filteredPosts.length === 0 && (
                                         <p className="text-sm text-muted p-5">Nenhum artigo nessa categoria.</p>
                                     )}
-                                    {filteredPosts.map((post) => (
+                                    {filteredPosts.slice(0, visibleCount).map((post) => (
                                         <Link
                                             key={post.id}
                                             href={`/blog/${post.slug}`}
@@ -407,7 +348,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                                     </p>
                                                 )}
                                                 <div className="text-[9px] text-muted mt-auto flex items-center gap-[6px] flex-wrap pt-1">
-                                                    <span>{formatDate(post.publishedAt)}</span>
+                                                    <span>{formatRelativeDate(post.publishedAt)}</span>
                                                     <span>·</span>
                                                     <span>{post.readingTimeMin} min</span>
                                                 </div>
@@ -416,8 +357,19 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                     ))}
                                 </div>
 
+                                {/* Carregar mais */}
+                                {visibleCount < filteredPosts.length && (
+                                    <button
+                                        onClick={() => setVisibleCount(v => v + 8)}
+                                        className="flex items-center justify-center gap-2 w-full py-3 border-t border-border text-[11px] font-semibold text-muted hover:text-accent hover:bg-accent-soft transition-colors"
+                                    >
+                                        Carregar mais
+                                        <span className="text-[10px] opacity-60">({filteredPosts.length - visibleCount} restantes)</span>
+                                    </button>
+                                )}
+
                                 {/* CTA "Ver todos em [Categoria]" */}
-                                {activeTabMeta && (
+                                {activeTabMeta && visibleCount >= filteredPosts.length && (
                                     <Link
                                         href={`/blog?category=${activeTab}`}
                                         className="flex items-center gap-1.5 px-4 sm:px-6 lg:px-12 py-2.5 border-t border-border text-[11px] font-semibold transition-colors hover:bg-accent-soft"
@@ -439,30 +391,15 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                             Em destaque
                         </div>
                         <div>
-                            {sidebarPosts.slice(0, 4).map(post => (
+                            {sidebarPosts.slice(0, 4).map((post, idx) => (
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
                                     className="flex items-center gap-3 px-4 py-3 border-b border-border hover:bg-accent-soft transition-colors group"
                                 >
-                                    <div
-                                        className="w-[58px] h-11 rounded-lg flex-shrink-0 overflow-hidden border border-border/60 flex items-center justify-center"
-                                        style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
-                                    >
-                                        {post.coverImageUrl ? (
-                                            <Image
-                                                src={post.coverImageUrl}
-                                                alt={post.title}
-                                                width={58}
-                                                height={44}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <span className="text-[9px] font-bold" style={{ color: getCategoryStyle(post.category?.slug).color }}>
-                                                {post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}
-                                            </span>
-                                        )}
-                                    </div>
+                                    <span className="text-[22px] font-black text-muted/15 leading-none w-7 flex-shrink-0 text-right tabular-nums select-none">
+                                        {String(idx + 1).padStart(2, '0')}
+                                    </span>
                                     <div className="flex-1 min-w-0">
                                         {post.category && (() => {
                                             const cs = getCategoryStyle(post.category.slug)
@@ -478,7 +415,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {} }: H
                                         <p className="text-[12.5px] font-bold text-foreground group-hover:text-accent transition-colors leading-[1.35] line-clamp-2">
                                             {post.title}
                                         </p>
-                                        <span className="text-[8.5px] text-muted mt-1 block">{post.readingTimeMin} min</span>
+                                        <span className="text-[8.5px] text-muted mt-1 block">{post.readingTimeMin} min · {formatRelativeDate(post.publishedAt)}</span>
                                     </div>
                                 </Link>
                             ))}
