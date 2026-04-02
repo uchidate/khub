@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
 import Link from 'next/link'
-import { ArrowRight, Clapperboard } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
@@ -32,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProductionsPage() {
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
-    const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => null)
+  await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => null)
 
     return (
         <>
@@ -49,45 +49,18 @@ export default async function ProductionsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
                 {/* Hero header */}
-                <div className="relative mb-8 overflow-hidden rounded-2xl border border-border bg-surface px-6 py-8 md:py-10">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rose-500/10 via-transparent to-cyan-500/10" />
-                  <div className="pointer-events-none absolute -bottom-10 -right-10 w-60 h-60 rounded-full bg-rose-500/10 blur-3xl" />
+                <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(248,250,252,0.55)_100%)] dark:bg-[linear-gradient(180deg,rgba(23,23,23,0.62)_0%,rgba(14,14,14,0.46)_100%)] px-5 py-6 sm:px-7 md:py-7 shadow-[0_14px_34px_rgba(0,0,0,0.08)]">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(148,163,184,0.14),transparent_46%),radial-gradient(circle_at_88%_88%,rgba(148,163,184,0.08),transparent_42%)]" />
+                  <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background:linear-gradient(120deg,transparent_0%,#fff_35%,transparent_70%)]" />
                   <div className="relative">
-                    <div className="flex items-center gap-2 mb-4 flex-wrap">
-                      <span className="flex items-center justify-center p-1.5 rounded-lg bg-rose-500/15">
-                        <Clapperboard size={15} className="text-rose-500" />
-                      </span>
-                      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
-                        Catálogo de produções coreanas
-                      </span>
-                      {total !== null && (
-                        <span className="text-[11px] font-bold text-muted px-2.5 py-1 bg-background border border-border rounded-full">
-                          {total.toLocaleString('pt-BR')} títulos
-                        </span>
-                      )}
-                    </div>
-
-                    <h1 className="text-[2rem] md:text-[2.5rem] font-black text-foreground tracking-[-0.04em] leading-none mb-3">
+                    <h1 className="text-[1.9rem] sm:text-[2.1rem] md:text-[2.45rem] font-black text-foreground tracking-[-0.04em] leading-[0.96] mb-2 animate-[fadeIn_450ms_ease-out]">
                       Dramas & Filmes
                     </h1>
 
-                    <p className="text-sm text-muted max-w-2xl leading-relaxed">
-                      Explore títulos em português com filtros por tipo, classificação etária, avaliação e ano.
-                    </p>
-
-                    <div className="mt-5 flex items-center gap-2 flex-wrap">
-                      <Link href="#productions-list" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-accent text-white hover:opacity-90 transition-opacity">
+                    <div className="mt-3 flex items-center gap-2 flex-wrap animate-[fadeIn_750ms_ease-out]">
+                      <Link href="#productions-list" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition-opacity">
                         Explorar catálogo
                         <ArrowRight size={13} />
-                      </Link>
-                      <Link href="/productions?sortBy=rating" className="text-xs font-semibold px-3 py-1.5 rounded-full bg-background border border-border text-muted hover:text-foreground hover:border-foreground/20 transition-colors">
-                        Top avaliadas
-                      </Link>
-                      <Link href="/productions?type=MOVIE" className="text-xs font-semibold px-3 py-1.5 rounded-full bg-background border border-border text-muted hover:text-foreground hover:border-foreground/20 transition-colors">
-                        Filmes
-                      </Link>
-                      <Link href="/productions?type=SERIES" className="text-xs font-semibold px-3 py-1.5 rounded-full bg-background border border-border text-muted hover:text-foreground hover:border-foreground/20 transition-colors">
-                        Séries
                       </Link>
                     </div>
                   </div>

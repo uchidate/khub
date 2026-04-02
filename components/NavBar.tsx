@@ -59,13 +59,13 @@ const NavBar = () => {
                             </Link>
                         </div>
 
-                        {/* Center: desktop nav links */}
-                        <div className="hidden lg:flex items-center gap-1">
+                        {/* Center: desktop/tablet nav links */}
+                        <div className="hidden md:flex items-center justify-center gap-1 flex-1 min-w-0 px-2">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`text-[13px] font-semibold px-3.5 py-1.5 rounded-full border transition-all whitespace-nowrap ${
+                                    className={`text-[12.5px] lg:text-[13px] font-semibold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap ${
                                         pathname === link.href
                                             ? 'text-accent border-accent/30 bg-accent/8'
                                             : 'text-foreground border-border bg-background hover:border-border-strong hover:bg-surface'
@@ -79,7 +79,7 @@ const NavBar = () => {
                         {/* Right: search + theme toggle + auth */}
                         <div className="flex items-center gap-2 flex-shrink-0">
                             {/* Search bar (tablet+) */}
-                            <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[150px] lg:min-w-[200px]"
+                            <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[130px] lg:min-w-[200px]"
                                 onClick={() => openSearch()}
                             >
                                 <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 opacity-50">

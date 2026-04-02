@@ -61,7 +61,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
     const hasActive = !!(search || role || memberType || sortBy !== 'trending')
 
     return (
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 mb-8 space-y-3">
+        <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
             {/* Search */}
             <SearchInput value={search} onChange={setSearch} placeholder="Buscar artistas..." />
 
@@ -75,7 +75,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                             onClick={() => setRole(opt.value)}
                             className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                 role === opt.value
-                                    ? 'bg-[#ff2d78] text-white'
+                                    ? 'bg-foreground text-background'
                                     : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                             }`}
                         >
@@ -106,7 +106,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
                             onClick={() => setSortBy(opt.value)}
                             className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                 sortBy === opt.value
-                                    ? 'bg-[#ff2d78] text-white'
+                                    ? 'bg-foreground text-background'
                                     : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                             }`}
                         >
