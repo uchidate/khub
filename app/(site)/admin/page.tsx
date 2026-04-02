@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
+import { AdminRefreshButton } from '@/components/admin/AdminRefreshButton'
 import { Sparkline } from '@/components/admin/Sparkline'
 import prisma from '@/lib/prisma'
 
@@ -197,14 +198,17 @@ export default async function AdminPage() {
             <p className="text-xs text-muted capitalize">{dateStr}</p>
             <p className="text-[10px] text-muted mt-0.5">Atualizado agora</p>
           </div>
-          <Link
-            href="/admin/pipeline"
-            className="hidden sm:flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-all"
-          >
-            <Workflow size={13} className="text-blue-400" />
-            Ver pipeline
-            <ArrowRight size={12} />
-          </Link>
+          <div className="hidden sm:flex items-center gap-2">
+            <AdminRefreshButton />
+            <Link
+              href="/admin/pipeline"
+              className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-all"
+            >
+              <Workflow size={13} className="text-blue-400" />
+              Ver pipeline
+              <ArrowRight size={12} />
+            </Link>
+          </div>
         </div>
 
         {/* Urgente live */}
