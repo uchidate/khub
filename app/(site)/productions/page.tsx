@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
-import { SectionHeader } from "@/components/ui/SectionHeader"
+import { Clapperboard } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
@@ -46,13 +46,30 @@ export default async function ProductionsPage() {
         }} />
         <PageTransition className="py-8 md:py-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-            <SectionHeader
-                title="Produções"
-                count={total}
-                countLabel="produções"
-                backHref="/"
-            />
 
+                {/* Hero header */}
+                <div className="relative mb-8 overflow-hidden rounded-2xl border border-border bg-surface px-6 py-8 md:py-10">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-transparent" />
+                  <div className="pointer-events-none absolute -bottom-10 -right-10 w-60 h-60 rounded-full bg-violet-500/5 blur-3xl" />
+                  <div className="relative">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="flex items-center justify-center p-1.5 rounded-lg bg-violet-500/10">
+                        <Clapperboard size={15} className="text-violet-500" />
+                      </span>
+                      {total !== null && (
+                        <span className="text-[11px] font-bold text-muted px-2.5 py-1 bg-background border border-border rounded-full">
+                          {total.toLocaleString('pt-BR')} produções
+                        </span>
+                      )}
+                    </div>
+                    <h1 className="text-[2rem] md:text-[2.5rem] font-black text-foreground tracking-[-0.04em] leading-none mb-2">
+                      Dramas & Filmes
+                    </h1>
+                    <p className="text-sm text-muted max-w-lg leading-relaxed">
+                      De romances épicos a thrillers de tirar o fôlego — K-Dramas, filmes e séries coreanas com perfis completos em português.
+                    </p>
+                  </div>
+                </div>
 
             <Suspense>
                 <ProductionsList />
