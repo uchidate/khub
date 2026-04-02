@@ -56,6 +56,14 @@ const SORT_OPTIONS = [
     { value: 'name', label: 'A-Z' },
 ]
 
+const SORT_LABEL: Record<string, string> = {
+    newest: 'Recentes',
+    popular: 'Populares',
+    rating: 'Avaliacao',
+    year: 'Ano',
+    name: 'A-Z',
+}
+
 const AGE_BADGE_STYLE: Record<string, string> = {
     'L':  'bg-green-600 text-white',
     '10': 'bg-blue-600 text-white',
@@ -310,12 +318,24 @@ export function ProductionsList() {
         updateUrl({ search: '', type: '', ageRating: '', sortBy: 'popular' }, 1)
     }
 
+    const removeSingleFilter = (key: 'search' | 'type' | 'ageRating') => {
+        const next = { ...filters, [key]: '' }
+        if (key === 'search') setSearchInput('')
+        updateUrl(next, 1)
+    }
+
+    const activeChips: Array<{ key: 'search' | 'type' | 'ageRating'; label: string }> = [
+        ...(filters.search ? [{ key: 'search' as const, label: `Busca: ${filters.search}` }] : []),
+        ...(filters.type ? [{ key: 'type' as const, label: `Tipo: ${TYPE_OPTIONS.find(t => t.value === filters.type)?.label ?? filters.type}` }] : []),
+        ...(filters.ageRating ? [{ key: 'ageRating' as const, label: `Classificacao: ${AGE_RATING_OPTIONS.find(a => a.value === filters.ageRating)?.label ?? filters.ageRating}` }] : []),
+    ]
+
     const hasActiveFilters = filters.search || filters.type || filters.ageRating
 
     return (
-        <div>
+        <div id="productions-list">
             {/* Filters */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 mb-8 space-y-3">
+            <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-10 bg-background/95 backdrop-blur-sm py-3 mb-8 space-y-3 border-b border-border/70">
                 {/* Search */}
                 <SearchInput
                     value={searchInput}
@@ -323,6 +343,33 @@ export function ProductionsList() {
                     onCommit={handleSearch}
                     placeholder="Buscar filme, série ou drama"
                 />
+
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="text-xs text-muted">
+                        {isLoading
+                            ? 'Carregando producoes...'
+                            : `${pagination.total.toLocaleString('pt-BR')} resultados · ordenado por ${SORT_LABEL[filters.sortBy] ?? 'Populares'}`}
+                    </p>
+                    {hasActiveFilters && (
+                        <button onClick={clearAll} className="text-xs text-accent hover:text-accent/70 transition-colors">
+                            Limpar filtros
+                        </button>
+                    )}
+                </div>
+
+                {activeChips.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {activeChips.map(chip => (
+                            <button
+                                key={chip.key}
+                                onClick={() => removeSingleFilter(chip.key)}
+                                className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-surface border border-border text-foreground hover:border-accent/40 hover:text-accent transition-colors"
+                            >
+                                {chip.label} ×
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Type + Sort */}
                 <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -387,19 +434,6 @@ export function ProductionsList() {
                     )}
                 </div>
 
-                {/* Active filters summary */}
-                {hasActiveFilters && (
-                    <div className="flex items-center gap-3">
-                        {!isLoading && (
-                            <p className="text-xs text-muted">
-                                {pagination.total} {pagination.total !== 1 ? 'produções' : 'produção'} encontrada{pagination.total !== 1 ? 's' : ''}
-                            </p>
-                        )}
-                        <button onClick={clearAll} className="text-xs text-accent hover:text-accent/70 transition-colors">
-                            Limpar filtros
-                        </button>
-                    </div>
-                )}
             </div>
 
             {/* Loading */}
