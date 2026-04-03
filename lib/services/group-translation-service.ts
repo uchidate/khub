@@ -72,7 +72,7 @@ export class GroupTranslationService {
                 }
 
                 // TMDB sempre retorna bios em inglês; detectLanguage resolve casos de bio manual/coreana
-                const detectedLang = detectLanguage(group.bio || '')
+                const detectedLang = detectLanguage(group.bio || '');
                 // Se não reconhecível (texto muito curto), assume inglês
                 const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang;
 

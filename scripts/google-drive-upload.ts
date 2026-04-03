@@ -15,14 +15,6 @@ const ARTIST_IMAGES = {
     'cha-eun-woo': 'Cha Eun-woo'
 };
 
-// Mapeamento de arquivos para produções
-const PRODUCTION_IMAGES = {
-    'my-demon-poster': 'My Demon',
-    'gyeongseong-creature-poster': 'A Criatura de Gyeongseong',
-    'wonderful-world-poster': 'Wonderful World',
-    'my-name-poster': 'My Name'
-};
-
 async function getAuthClient() {
     if (!fs.existsSync(TOKEN_PATH)) {
         console.error('❌ Token não encontrado!');

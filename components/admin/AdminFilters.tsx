@@ -186,7 +186,7 @@ function ActiveChips({
 }: {
   labels: Record<string, (value: string) => string>
 }) {
-  const { setParam, getParam } = useAdminFilter()
+  const { setParam } = useAdminFilter()
   const searchParams = useSearchParams()
   const chips: Array<{ key: string; value: string; label: string }> = []
 

@@ -101,7 +101,7 @@ export class RSSNewsService {
         console.log(`  ✅ ${feed.name}: ${items.length} items`);
       } catch (error) {
         console.error(`  ❌ ${feed.name}: ${error}`);
-      }
+      };
     }
 
     allNews.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
@@ -467,7 +467,7 @@ export class RSSNewsService {
           const idx = cleaned.search(marker)
           if (idx > -1) { cleaned = cleaned.substring(0, idx); break }
         }
-        return cleaned
+          return cleaned;
       },
     }
 
