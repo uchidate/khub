@@ -1,0 +1,74 @@
+{
+  "title": "KHub - Conteudo & Audiencia",
+  "uid": "khub-content-audience",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1m",
+  "timezone": "browser",
+  "tags": ["khub", "content", "audience"],
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Users (5m)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_active_users{window=\"5m\"}" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 2,
+      "title": "Active Users (1h)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_active_users{window=\"1h\"}" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 3,
+      "title": "Invalid Discards Today",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_blog_entity_invalid_discards_today" }]
+    },
+    {
+      "id": 4,
+      "title": "Invalid Discards Total",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_blog_entity_invalid_discards_total" }]
+    },
+    {
+      "id": 5,
+      "title": "Usuarios Ativos ao Longo do Tempo",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "targets": [
+        { "refId": "A", "expr": "hallyuhub_active_users{window=\"5m\"}", "legendFormat": "5m" },
+        { "refId": "B", "expr": "hallyuhub_active_users{window=\"15m\"}", "legendFormat": "15m" },
+        { "refId": "C", "expr": "hallyuhub_active_users{window=\"1h\"}", "legendFormat": "1h" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Entities Total (series)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_entities_total", "legendFormat": "{{entity_type}}" }]
+    },
+    {
+      "id": 7,
+      "title": "Entities Growth (1h)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [{ "refId": "A", "expr": "increase(hallyuhub_entities_total[1h])", "legendFormat": "{{entity_type}}" }]
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "title": "KHub - Exec Overview",
+  "uid": "khub-exec-overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "browser",
+  "tags": ["khub", "exec", "overview"],
+  "time": { "from": "now-6h", "to": "now" },
+  "links": [
+    { "title": "Exec", "url": "/d/khub-exec-overview/khub-exec-overview", "type": "link" },
+    { "title": "SRE", "url": "/d/khub-sre-infra/khub-sre-infra", "type": "link" },
+    { "title": "Web/API", "url": "/d/khub-web-api/khub-web-and-api", "type": "link" },
+    { "title": "Conteudo", "url": "/d/khub-content-audience/khub-conteudo-and-audiencia", "type": "link" },
+    { "title": "Alerts", "url": "/d/khub-alerts-slo/khub-alerts-and-slo", "type": "link" }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "env",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "definition": "label_values(hallyuhub_up, environment)",
+        "query": "label_values(hallyuhub_up, environment)",
+        "includeAll": true,
+        "multi": false,
+        "current": { "selected": true, "text": "production", "value": "production" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "App Status",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_up{environment=~\"$env\"} or hallyuhub_up" }],
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }] } }
+    },
+    {
+      "id": 2,
+      "title": "External Uptime Prod",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "job:blackbox:availability_1h * 100" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 99.5 }, { "color": "green", "value": 99.9 }] } } }
+    },
+    {
+      "id": 3,
+      "title": "DB Latency (ms)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_db_latency_ms{environment=~\"$env\"} or hallyuhub_db_latency_ms" }],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 4,
+      "title": "Active Users (5m)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_active_users{window=\"5m\"}" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 5,
+      "title": "Active Users (1h)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_active_users{window=\"1h\"}" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 6,
+      "title": "Alertas Criticos Ativos",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "count(ALERTS{alertstate=\"firing\",severity=\"critical\"}) or vector(0)" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 7,
+      "title": "Users Trend",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        { "refId": "A", "expr": "hallyuhub_active_users{window=\"5m\"}", "legendFormat": "5m" },
+        { "refId": "B", "expr": "hallyuhub_active_users{window=\"15m\"}", "legendFormat": "15m" },
+        { "refId": "C", "expr": "hallyuhub_active_users{window=\"1h\"}", "legendFormat": "1h" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Service Availability",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "refId": "A", "expr": "probe_success{job=\"blackbox-hallyuhub-prod\"}", "legendFormat": "prod" },
+        { "refId": "B", "expr": "probe_success{job=\"blackbox-hallyuhub-staging\"}", "legendFormat": "staging" },
+        { "refId": "C", "expr": "hallyuhub_up{environment=~\"$env\"} or hallyuhub_up", "legendFormat": "app" }
+      ]
+    }
+  ]
+}
