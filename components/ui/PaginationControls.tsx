@@ -37,23 +37,23 @@ export function PaginationControls({
     if (totalPages === 0) return null
 
     return (
-        <div className={`mt-10 flex flex-col items-center gap-3 ${className}`}>
+        <div className={`mt-10 flex flex-col items-center gap-4 rounded-2xl border border-border bg-surface/55 px-4 py-5 sm:px-6 ${className}`}>
             {/* Per-page selector */}
-            <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted">Por página:</span>
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+                <span className="text-xs text-muted">Itens por página:</span>
                 {perPageOptions.map(n => (
                     <button
                         key={n}
                         onClick={() => onPerPageChange(n)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${
-                            perPage === n ? 'bg-accent text-white' : 'bg-surface text-muted hover:text-foreground'
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                            perPage === n ? 'bg-foreground text-background border-foreground' : 'bg-background text-muted border-border hover:text-foreground hover:border-foreground/30'
                         }`}
                     >
                         {n}
                     </button>
                 ))}
                 {total !== undefined && (
-                    <span className="text-xs text-muted ml-1">({total.toLocaleString('pt-BR')} total)</span>
+                    <span className="text-xs text-muted ml-1">{total.toLocaleString('pt-BR')} no total</span>
                 )}
             </div>
 
@@ -63,7 +63,7 @@ export function PaginationControls({
                     <button
                         onClick={() => onPageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-accent hover:text-accent transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-foreground/30 hover:text-foreground transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span className="hidden md:inline">Anterior</span>
@@ -83,12 +83,12 @@ export function PaginationControls({
                                     if (e.key === 'Escape') { setIsEditing(false); setJumpInput('') }
                                 }}
                                 onBlur={() => { setIsEditing(false); setJumpInput('') }}
-                                className="w-12 text-center px-2 py-1 bg-background border border-accent rounded text-sm text-foreground focus:outline-none"
+                                className="w-12 text-center px-2 py-1 bg-background border border-foreground/30 rounded text-sm text-foreground focus:outline-none"
                             />
                         ) : (
                             <button
                                 onClick={() => { setIsEditing(true); setJumpInput(String(currentPage)) }}
-                                className="px-2 py-1 rounded text-sm font-bold text-foreground bg-surface hover:bg-surface-hover hover:text-accent transition-colors min-w-[2rem] text-center"
+                                className="px-2.5 py-1 rounded-md text-sm font-bold text-foreground bg-background border border-border hover:border-foreground/30 transition-colors min-w-[2.2rem] text-center"
                                 title="Clique para ir a uma página específica"
                             >
                                 {currentPage}
@@ -100,7 +100,7 @@ export function PaginationControls({
                     <button
                         onClick={() => onPageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-accent hover:text-accent transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted hover:border-foreground/30 hover:text-foreground transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <span className="hidden md:inline">Próxima</span>
                         <ChevronRight className="w-4 h-4" />

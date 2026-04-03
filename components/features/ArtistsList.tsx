@@ -51,16 +51,16 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
     const roleLabel = roleLabels[0] ?? ''
 
     return (
-        <Link href={`/artists/${artist.id}`} className="group block">
+        <Link href={`/artists/${artist.id}`} className="group block rounded-2xl p-2 -m-2">
             {/* Photo */}
-            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border mb-2.5 group-hover:border-[#ff2d78]/40 transition-colors">
+            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm mb-2.5 group-hover:border-accent/30 group-hover:shadow-md transition-all">
                 {artist.primaryImageUrl ? (
                     <Image
                         src={artist.primaryImageUrl}
                         alt={artist.nameRomanized}
                         width={240}
                         height={320}
-                        className="w-full h-full object-cover object-top group-hover:scale-[1.04] transition-transform duration-300"
+                        className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-500"
                         priority={priority}
                     />
                 ) : (
@@ -74,7 +74,7 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
                     </div>
                 )}
                 {/* Hover overlay: hangul + group */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 gap-0.5">
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 gap-0.5">
                     {artist.nameHangul && (
                         <p className="text-white text-[12px] font-bold truncate leading-tight">{artist.nameHangul}</p>
                     )}
@@ -91,7 +91,7 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
                         {roleLabel}
                     </p>
                 )}
-                <p className="text-[13px] font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate leading-tight">
+                <p className="text-[13px] font-bold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
                     {artist.nameRomanized}
                 </p>
                 {artist.nameHangul && (
@@ -183,7 +183,7 @@ export function ArtistsList() {
     const totalPages = pagination.pages
 
     return (
-        <div>
+        <div id="artists-list">
             <ArtistFilters onFilterChange={handleFilterChange} initialFilters={getFiltersFromUrl()} />
 
             {isLoading && <ArtistsSkeleton />}

@@ -11,8 +11,8 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { HomeBlogSection } from "@/components/home/HomeBlogSection"
 import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
-import { HomeCategoriesBar } from "@/components/home/HomeCategoriesBar"
 import { HomeRecommended } from "@/components/home/HomeRecommended"
+import { HomeRandomDiscovery } from "@/components/home/HomeRandomDiscovery"
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +33,13 @@ function getWeekOfYear(date: Date) {
 
 function serializePost<T extends { publishedAt: Date | null }>(p: T) {
     return { ...p, publishedAt: p.publishedAt?.toISOString() ?? null }
+}
+
+function getDayOfYear(date: Date) {
+    const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0))
+    const diff = date.getTime() - start.getTime()
+    const oneDay = 1000 * 60 * 60 * 24
+    return Math.floor(diff / oneDay)
 }
 
 const getHomePublicData = unstable_cache(
@@ -229,10 +236,11 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function Home({ searchParams }: { searchParams?: Promise<{ category?: string }> }) {
+export default async function Home({ searchParams }: { searchParams?: Promise<{ category?: string; tag?: string }> }) {
     const session = await getServerSession(authOptions)
     const resolvedSearch = await searchParams
     const activeCategory = resolvedSearch?.category
+    const activeTag = resolvedSearch?.tag
 
     const [publicData, ageRatingFilter] = await Promise.all([
         getHomePublicData(),
@@ -288,10 +296,13 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
         })
     }
     const hasStreaming = Object.keys(showsByPlatform).length > 0
+    const dayIndex = getDayOfYear(new Date())
+    const randomArtist = trendingArtists.length > 0 ? trendingArtists[dayIndex % trendingArtists.length] : null
+    const randomGroup = trendingGroups.length > 0 ? trendingGroups[(dayIndex + 1) % trendingGroups.length] : null
+    const randomProduction = latestProductions.length > 0 ? latestProductions[(dayIndex + 2) % latestProductions.length] : null
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
-            <HomeCategoriesBar categoryCounts={categoryCountMap} activeSlug={activeCategory} basePath="/" />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -316,28 +327,36 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
             />
-            <HomeRecommended artists={recommendedArtists} hasFavorites={hasFavorites} />
-            <HomeBlogFeed
-                key={activeCategory ?? 'all'}
-                blogPosts={feedPosts}
-                sidebarPosts={sidebarPosts}
-                productions={latestProductions}
-                categoryCounts={categoryCountMap}
-                initialCategory={activeCategory}
-            />
-            {(hasStreaming || trendingGroups.length > 0) && (
-                <section className="border-b border-border bg-background">
-                    <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
-                        {hasStreaming && (
-                            <div className="border-b md:border-b-0 md:border-r border-border">
-                                <StreamingTopShows showsByPlatform={showsByPlatform} />
-                            </div>
-                        )}
-                        <HomeTrendingGroups groups={trendingGroups} />
-                    </div>
-                </section>
-            )}
-            <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
+            <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
+                <HomeRandomDiscovery
+                    artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized } : null}
+                    group={randomGroup ? { id: randomGroup.id, name: randomGroup.name } : null}
+                    production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt } : null}
+                />
+                <HomeRecommended artists={recommendedArtists} hasFavorites={hasFavorites} />
+                <HomeBlogFeed
+                    key={`${activeCategory ?? 'all'}:${activeTag ?? 'all'}`}
+                    blogPosts={feedPosts}
+                    sidebarPosts={sidebarPosts}
+                    productions={latestProductions}
+                    categoryCounts={categoryCountMap}
+                    initialCategory={activeCategory}
+                    initialTag={activeTag}
+                />
+                {(hasStreaming || trendingGroups.length > 0) && (
+                    <section className="border-b border-border bg-background">
+                        <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
+                            {hasStreaming && (
+                                <div className="border-b md:border-b-0 md:border-r border-border">
+                                    <StreamingTopShows showsByPlatform={showsByPlatform} />
+                                </div>
+                            )}
+                            <HomeTrendingGroups groups={trendingGroups} />
+                        </div>
+                    </section>
+                )}
+                <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
+            </div>
             <ScrollToTop />
         </div>
     )

@@ -145,26 +145,7 @@ export function GroupsList() {
     if (groups.length === 0) return <GroupsSkeleton />
 
     return (
-        <div>
-            {/* Micro insights */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Total</p>
-                    <p className="text-sm font-black text-foreground mt-0.5">{groups.length}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Ativos</p>
-                    <p className="text-sm font-black text-foreground mt-0.5">{totalActive}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Agências</p>
-                    <p className="text-sm font-black text-foreground mt-0.5">{agencies.length}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-surface px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Média membros</p>
-                    <p className="text-sm font-black text-foreground mt-0.5">{avgMembers}</p>
-                </div>
-            </div>
+        <div id="groups-list">
 
             {/* Contadores */}
             <p className="text-muted text-xs font-medium mb-6">
@@ -173,7 +154,7 @@ export function GroupsList() {
             </p>
 
             {/* Filtros */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 mb-8 space-y-3">
+            <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
                 {/* Busca */}
                 <SearchInput
                     value={search}
@@ -194,7 +175,7 @@ export function GroupsList() {
                                 onClick={() => setStatusFilter(opt.value)}
                                 className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                     statusFilter === opt.value
-                                        ? 'bg-accent text-white'
+                                        ? 'bg-foreground text-background'
                                         : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                 }`}
                             >
@@ -211,7 +192,7 @@ export function GroupsList() {
                                 onClick={() => setGenerationFilter(opt.value)}
                                 className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                     generationFilter === opt.value
-                                        ? 'bg-accent text-white'
+                                        ? 'bg-foreground text-background'
                                         : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                 }`}
                             >
@@ -233,7 +214,7 @@ export function GroupsList() {
                                 onClick={() => setSortBy(opt.value)}
                                 className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                     sortBy === opt.value
-                                        ? 'bg-accent text-white'
+                                        ? 'bg-foreground text-background'
                                         : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                 }`}
                             >
@@ -252,7 +233,7 @@ export function GroupsList() {
                                 onClick={() => setAgencyFilter('all')}
                                 className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
                                     agencyFilter === 'all'
-                                        ? 'bg-accent text-white'
+                                        ? 'bg-foreground text-background'
                                         : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                 }`}
                             >
@@ -264,7 +245,7 @@ export function GroupsList() {
                                     onClick={() => setAgencyFilter(name)}
                                     className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all inline-flex items-center gap-1.5 ${
                                         agencyFilter === name
-                                            ? 'bg-accent text-white'
+                                            ? 'bg-foreground text-background'
                                             : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                     }`}
                                 >
@@ -318,14 +299,14 @@ export function GroupsList() {
                     action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setAgencyFilter('all'); setSortBy('popular') } }}
                 />
             ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
                     {filtered.map((group, index) => {
                         const faded = !!group.disbandDate
                         const gen = getGeneration(group.debutDate)
                         return (
                             <div key={group.id} className={`group/card relative ${faded ? 'opacity-60 hover:opacity-100 transition-opacity duration-300' : ''}`}>
                                 <Link href={`/groups/${group.id}`} className="group block">
-                                    <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border card-hover mb-3">
+                                    <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm card-hover mb-3 group-hover:shadow-md transition-all">
                                         {group.profileImageUrl ? (
                                             <Image
                                                 src={group.profileImageUrl}
