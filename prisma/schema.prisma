@@ -450,6 +450,7 @@ model User {
   auditLogs              AuditLog[]
   lists                  UserList[]
   blogPosts              BlogPost[]             @relation("BlogPosts")
+  blogPostVersions       BlogPostVersion[]      @relation("BlogPostVersions")
   takedownsIssued        ProductionTakedown[]   @relation("TakedownHiddenBy")
   takedownsRestored      ProductionTakedown[]   @relation("TakedownRestoredBy")
 
@@ -1019,6 +1020,24 @@ model BlogCategory {
   @@index([slug])
 }
 
+model BlogPostVersion {
+  id         String    @id @default(cuid())
+  blogPostId String
+  blogPost   BlogPost  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  title      String
+  excerpt    String?   @db.VarChar(600)
+  contentMd  String    @db.Text
+  blocks     Json?
+  savedAt    DateTime  @default(now())
+  savedById  String
+  savedBy    User      @relation("BlogPostVersions", fields: [savedById], references: [id])
+  note       String?   @db.VarChar(300)
+  pinned     Boolean   @default(false)
+  label      String?   @db.VarChar(100)
+
+  @@index([blogPostId, savedAt])
+}
+
 model BlogPost {
   id             String         @id @default(cuid())
   slug           String         @unique
@@ -1047,6 +1066,7 @@ model BlogPost {
   relatedGroups      BlogPostGroup[]
   relatedProductions BlogPostProduction[]
   notifications      NotificationHistory[]
+  versions           BlogPostVersion[]
 
   @@index([status, publishedAt])
   @@index([status, scheduledAt])

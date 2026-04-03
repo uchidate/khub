@@ -16,7 +16,7 @@ import {
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
     CalendarDays, ChevronLeft, ChevronRight, Star, Clock, TrendingUp,
     AlertTriangle, Copy, SendHorizonal, Trash2, Globe, Tag,
-    Download, Plus, Pencil, X, Check, LayoutList,
+    Download, Plus, Pencil, X, Check, LayoutList, History,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -1289,6 +1289,9 @@ function AdminBlogPageContent() {
                                 <AdminIconLink href={`/admin/blog/${post.id}/edit`} onClick={(e) => e.stopPropagation()} title="Editar">
                                     <BookOpen size={14} />
                                 </AdminIconLink>
+                                <AdminIconLink href={`/admin/blog/${post.id}/history`} onClick={(e) => e.stopPropagation()} title="Histórico de versões">
+                                    <History size={14} />
+                                </AdminIconLink>
                                 <FeaturedButton post={post} onDone={refetchTable} />
                                 <Link
                                     href={`/blog/${post.slug}`}
@@ -1388,6 +1391,9 @@ function AdminBlogPageContent() {
                                 <div className="flex items-center gap-1">
                                     <AdminIconLink href={`/admin/blog/${post.id}/edit`} onClick={(e) => e.stopPropagation()} title="Editar">
                                         <BookOpen size={14} />
+                                    </AdminIconLink>
+                                    <AdminIconLink href={`/admin/blog/${post.id}/history`} onClick={(e) => e.stopPropagation()} title="Histórico de versões">
+                                        <History size={14} />
                                     </AdminIconLink>
                                     <FeaturedButton post={post} onDone={() => { refetchTable(); refreshStats() }} />
                                     <SubmitReviewButton post={post} onDone={() => { refetchTable(); refreshStats() }} />

@@ -19,6 +19,7 @@ const updateSchema = z.object({
   isPrivate: z.boolean().optional(),
   featured: z.boolean().optional(),
   scheduledAt: z.string().datetime().optional().nullable(),
+  versionNote: z.string().max(300).optional().nullable(), // nota editorial opcional
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -60,24 +61,53 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const body = await request.json()
   const validated = updateSchema.parse(body)
+  const { versionNote, ...postFields } = validated
 
-  const data: Record<string, unknown> = { ...validated }
-  const shouldSyncLinks = Object.prototype.hasOwnProperty.call(validated, 'blocks')
+  const data: Record<string, unknown> = { ...postFields }
+  const shouldSyncLinks = Object.prototype.hasOwnProperty.call(postFields, 'blocks')
   // Prioridade: blocos > markdown (posts novos usam blocos)
-  if (validated.blocks && validated.blocks.length > 0) {
-    data.readingTimeMin = calcReadingTime(validated.blocks)
-  } else if (validated.contentMd) {
-    data.readingTimeMin = calcReadingTime(validated.contentMd)
+  if (postFields.blocks && postFields.blocks.length > 0) {
+    data.readingTimeMin = calcReadingTime(postFields.blocks)
+  } else if (postFields.contentMd) {
+    data.readingTimeMin = calcReadingTime(postFields.contentMd)
   }
   // Reset to DRAFT when contributor edits a pending post
   if (post.status === 'PENDING_REVIEW' && !isAdmin) data.status = 'DRAFT'
   // Only admins/editors can set featured
   if (!isAdmin) delete data.featured
 
-  const updated = await prisma.blogPost.update({ where: { id }, data })
+  // Snapshot do estado atual antes de salvar (somente se há mudança de conteúdo)
+  const isContentChange = postFields.title || postFields.contentMd || postFields.blocks !== undefined || postFields.excerpt !== undefined
+  const [updated] = await prisma.$transaction([
+    prisma.blogPost.update({ where: { id }, data }),
+    ...(isContentChange ? [prisma.blogPostVersion.create({
+      data: {
+        blogPostId: id,
+        title: postFields.title ?? post.title,
+        excerpt: postFields.excerpt ?? post.excerpt,
+        contentMd: postFields.contentMd ?? post.contentMd,
+        blocks: postFields.blocks !== undefined ? (postFields.blocks as object) : (post.blocks as object ?? undefined),
+        savedById: session!.user.id,
+        note: versionNote ?? null,
+      },
+    })] : []),
+  ])
 
   if (shouldSyncLinks) {
-    await syncBlogPostEntityLinks(id, validated.blocks)
+    await syncBlogPostEntityLinks(id, postFields.blocks)
+  }
+
+  // Limite: manter no máximo 50 versões não-pinadas por post
+  if (isContentChange) {
+    const excess = await prisma.blogPostVersion.findMany({
+      where: { blogPostId: id, pinned: false },
+      orderBy: { savedAt: 'desc' },
+      skip: 50,
+      select: { id: true },
+    })
+    if (excess.length > 0) {
+      await prisma.blogPostVersion.deleteMany({ where: { id: { in: excess.map(v => v.id) } } })
+    }
   }
 
   return NextResponse.json(updated)

@@ -76,6 +76,7 @@ function WritePageContent() {
   const [submitting, setSubmitting] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [versionNote, setVersionNote] = useState('')
   const [postId, setPostId] = useState<string | null>(editId)
   const [postStatus, setPostStatus] = useState<string>('DRAFT')
   const [isPrivate, setIsPrivate] = useState(false)
@@ -167,6 +168,7 @@ function WritePageContent() {
         tags,
         isPrivate,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        ...(postId && versionNote.trim() ? { versionNote: versionNote.trim() } : {}),
       }
       if (editorMode === 'blocks') {
         body.blocks = blocks
@@ -186,6 +188,7 @@ function WritePageContent() {
       setPostStatus(data.status)
       setSaveState('saved')
       localStorage.removeItem(AUTOSAVE_KEY)
+      setVersionNote('')
     } catch {
       setSaveState('error')
     } finally {
@@ -486,6 +489,22 @@ function WritePageContent() {
               >
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background transition-transform shadow-sm ${isPrivate ? 'translate-x-4' : ''}`} />
               </button>
+            </div>
+          )}
+
+          {/* Nota da versão */}
+          {postId && (
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Nota da versão</label>
+              <textarea
+                value={versionNote}
+                onChange={e => setVersionNote(e.target.value)}
+                placeholder="Descreva o que mudou nesta versão (opcional)…"
+                maxLength={300}
+                rows={2}
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors"
+              />
+              <p className="text-xs text-muted text-right">{versionNote.length}/300</p>
             </div>
           )}
 
