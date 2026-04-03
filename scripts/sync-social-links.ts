@@ -103,12 +103,6 @@ async function findArtistSocialLinks(nameRomanized: string, nameHangul: string |
 async function main() {
     console.log('🔍 Buscando artistas sem redes sociais...\n')
 
-    const where = ALL ? {} : {
-        OR: [
-            { socialLinks: { equals: null } },
-        ]
-    }
-
     const artists = await prisma.artist.findMany({
         where: ALL ? {} : {
             socialLinksUpdatedAt: null,

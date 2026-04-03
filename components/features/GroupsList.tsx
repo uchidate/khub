@@ -4,11 +4,11 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Users, X } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { nameToGradient } from '@/lib/utils/name-to-gradient'
+import { nameToGradient } from '@/lib/utils'
 
 type Group = {
     id: string

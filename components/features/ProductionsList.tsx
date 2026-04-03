@@ -8,7 +8,7 @@ import { ChevronDown, Film, SlidersHorizontal, Star } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
-import { nameToGradient } from '@/lib/utils/name-to-gradient'
+import { nameToGradient } from '@/lib/utils'
 
 interface Production {
     id: string

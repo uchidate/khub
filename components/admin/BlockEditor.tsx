@@ -10,7 +10,7 @@ import type {
     HeadingBlock, ParagraphBlock, QuoteBlock,
     ImageBlock, TwitterEmbedBlock, InstagramEmbedBlock, TikTokEmbedBlock, VideoBlock
 } from '@/lib/types/blocks'
-import { BLOCK_TYPE_LABELS, TEXT_BLOCK_TYPES } from '@/lib/types/blocks'
+import { BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
 
 // ─── Block type icon map ───────────────────────────────────────────────────────
 

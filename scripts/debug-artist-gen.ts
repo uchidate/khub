@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { AIOrchestrator } from '../lib/ai/orchestrator';
 import { ArtistGenerator } from '../lib/ai/generators/artist-generator';
 import prisma from '../lib/prisma';
-import { SlackNotificationService } from '../lib/services/slack-notification-service';
 
 async function debugArtistGeneration() {
     console.log('--- Debugging Artist Generation ---');
@@ -15,7 +14,7 @@ async function debugArtistGeneration() {
     });
     console.log('Available providers:', orchestrator.getAvailableProviders());
 
-    const artistGenerator = new ArtistGenerator(orchestrator, prisma);
+    const artistGenerator = new ArtistGenerator(prisma);
     const existingArtists = await prisma.artist.findMany({
         select: { nameRomanized: true, tmdbId: true }
     });
@@ -33,9 +32,11 @@ async function debugArtistGeneration() {
         } else {
             console.log('❌ No artists generated.');
         }
-    } catch (error: any) {
-        console.error('❌ Error during generation:', error.message);
-        if (error.stack) console.error(error.stack);
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error('❌ Error during generation:', errorMessage);
+        if (errorStack) console.error(errorStack);
     }
 
     await prisma.$disconnect();

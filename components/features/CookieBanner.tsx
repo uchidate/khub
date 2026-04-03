@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Cookie, Shield, BarChart2, X } from 'lucide-react'
+import { Cookie, Shield, BarChart2 } from 'lucide-react'
 import { useCookieConsent } from '@/hooks/useCookieConsent'
 
 const categories = [

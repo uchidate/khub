@@ -120,7 +120,6 @@ export async function GET(req: NextRequest) {
             const prods = artist.productions.map(ap => ap.production)
             const hasAdultContent = prods.some(p => p.isAdultContent && p.adultContentType === 'sexual')
             const hasAnyProd = prods.length > 0
-            const hasVisibleProd = prods.some(p => !p.isHidden && p.ageRating !== '18' && !p.isAdultContent)
 
             type HideReason = 'adult_content' | 'hidden_productions' | 'no_productions'
             let hideReason: HideReason

@@ -11,11 +11,30 @@ import type { BlogBlock } from '@/lib/types/blocks'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function sanitizeHref(rawUrl: string): string | null {
+    if (rawUrl.startsWith('/')) return rawUrl
+    try {
+        const parsed = new URL(rawUrl)
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+        return parsed.toString()
+    } catch {
+        return null
+    }
+}
+
 /** Proxy Wikimedia images through our own route to avoid 429/hotlink issues */
 function proxied(url: string): string {
-    if (url.includes('upload.wikimedia.org') || url.includes('commons.wikimedia.org')) {
-        return `/api/image-proxy?url=${encodeURIComponent(url)}`
+    try {
+        const parsed = new URL(url)
+        const host = parsed.hostname.toLowerCase()
+        const isWikimedia = host === 'upload.wikimedia.org' || host === 'commons.wikimedia.org'
+        if (isWikimedia) {
+            return `/api/image-proxy?url=${encodeURIComponent(parsed.toString())}`
+        }
+    } catch {
+        return url
     }
+
     return url
 }
 
@@ -34,10 +53,15 @@ function renderInline(text: string): React.ReactNode {
         const linkCls = "text-[#ff2d78] underline underline-offset-4 hover:brightness-110 transition-all"
         if (match[1] && match[2]) {
             // **[bold link](url)**
-            parts.push(match[2].startsWith('/')
-                ? <Link key={key++} href={match[2]} className={`font-semibold ${linkCls}`}>{match[1]}</Link>
-                : <a key={key++} href={match[2]} target="_blank" rel="noopener noreferrer" className={`font-semibold ${linkCls}`}>{match[1]}</a>
-            )
+            const href = sanitizeHref(match[2])
+            if (href) {
+                parts.push(href.startsWith('/')
+                    ? <Link key={key++} href={href} className={`font-semibold ${linkCls}`}>{match[1]}</Link>
+                    : <a key={key++} href={href} target="_blank" rel="noopener noreferrer" className={`font-semibold ${linkCls}`}>{match[1]}</a>
+                )
+            } else {
+                parts.push(match[1])
+            }
         } else if (match[3]) {
             // **bold**
             parts.push(<strong key={key++} className="font-semibold text-foreground">{match[3]}</strong>)
@@ -46,10 +70,15 @@ function renderInline(text: string): React.ReactNode {
             parts.push(<em key={key++} className="italic">{match[4]}</em>)
         } else if (match[5] && match[6]) {
             // [link](url)
-            parts.push(match[6].startsWith('/')
-                ? <Link key={key++} href={match[6]} className={linkCls}>{match[5]}</Link>
-                : <a key={key++} href={match[6]} target="_blank" rel="noopener noreferrer" className={linkCls}>{match[5]}</a>
-            )
+            const href = sanitizeHref(match[6])
+            if (href) {
+                parts.push(href.startsWith('/')
+                    ? <Link key={key++} href={href} className={linkCls}>{match[5]}</Link>
+                    : <a key={key++} href={href} target="_blank" rel="noopener noreferrer" className={linkCls}>{match[5]}</a>
+                )
+            } else {
+                parts.push(match[5])
+            }
         }
         last = match.index + match[0].length
     }
