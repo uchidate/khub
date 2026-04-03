@@ -14,8 +14,6 @@
 import Database from 'better-sqlite3';
 import { Client } from 'pg';
 
-const BATCH_SIZE = 100;
-
 // Funções auxiliares para transformação de dados
 function parseCommaSeparated(value: string | null | undefined): string[] {
   if (!value || value.trim() === '') return [];

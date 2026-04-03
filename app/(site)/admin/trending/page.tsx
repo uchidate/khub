@@ -74,7 +74,7 @@ export default function AdminTrendingPage() {
             setArtists(data.artists)
             setStats(data.stats)
             setGeneratedAt(data.generatedAt ?? new Date().toISOString())
-        } catch (e) {
+        } catch (_e) {
             toast.error('Erro ao carregar ranking de trending')
         } finally {
             setIsLoading(false)

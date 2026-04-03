@@ -104,7 +104,7 @@ export async function POST(_request: NextRequest) {
         });
 
     } catch (error: unknown) {
-        log.error('Generate news error', { error: getErrorMessage(error) })
+        log.error('Generate news error', { error: getErrorMessage(error) });
         return NextResponse.json({
             success: false,
             error: 'Internal server error',

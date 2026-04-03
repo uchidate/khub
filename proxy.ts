@@ -33,7 +33,6 @@ export async function proxy(request: NextRequest) {
 
   const isAuthenticated = !!token
   const isAdmin = token?.role?.toUpperCase() === 'ADMIN'
-  const isEditor = token?.role?.toUpperCase() === 'EDITOR'
 
   // Check if route is protected
   const isProtectedRoute = protectedRoutes.some((route) =>

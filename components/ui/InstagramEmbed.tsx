@@ -9,12 +9,28 @@ declare global {
 }
 
 function isPostUrl(url: string) {
-    return /instagram\.com\/(p|reel|tv)\//.test(url)
+    try {
+        const parsed = new URL(url)
+        const host = parsed.hostname.toLowerCase()
+        if (host !== 'instagram.com' && host !== 'www.instagram.com') return false
+        return /^\/(p|reel|tv)\/[A-Za-z0-9_-]+\/?$/.test(parsed.pathname)
+    } catch {
+        return false
+    }
 }
 
 function extractHandle(url: string) {
-    const m = url.match(/instagram\.com\/([^/?#]+)/)
-    return m ? `@${m[1]}` : null
+    try {
+        const parsed = new URL(url)
+        const host = parsed.hostname.toLowerCase()
+        if (host !== 'instagram.com' && host !== 'www.instagram.com') return null
+        const firstSegment = parsed.pathname.split('/').filter(Boolean)[0]
+        if (!firstSegment) return null
+        if (firstSegment === 'p' || firstSegment === 'reel' || firstSegment === 'tv') return null
+        return `@${firstSegment}`
+    } catch {
+        return null
+    }
 }
 
 function InstagramProfileCard({ url }: { url: string }) {

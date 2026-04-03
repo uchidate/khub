@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { nameToGradient } from "@/lib/utils/name-to-gradient"
+import { nameToGradient } from "@/lib/utils"
 
 interface RecommendedArtist {
     id: string

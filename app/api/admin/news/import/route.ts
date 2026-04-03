@@ -27,6 +27,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
+import { createLogger } from '@/lib/utils/logger'
 import {
     WP_API_BASES,
     DiscoveredArticle,
@@ -50,6 +51,31 @@ const LISTING_URLS: Record<string, (page: number) => string> = {
 }
 
 type DiscoveryStrategy = 'api' | 'listing'
+
+const log = createLogger('api:admin-news-import')
+
+function sanitizeForLog(value: string): string {
+    return value.replace(/[\r\n\u2028\u2029]/g, ' ')
+}
+
+function listingPageUrl(source: string, page: number): string | null {
+    switch (source) {
+        case 'Soompi':
+            return page <= 1 ? 'https://www.soompi.com/' : `https://www.soompi.com/page/${page}/`
+        case 'Koreaboo':
+            return page <= 1 ? 'https://www.koreaboo.com/news/' : `https://www.koreaboo.com/news/page/${page}/`
+        case 'Dramabeans':
+            return page <= 1 ? 'https://dramabeans.com/' : `https://dramabeans.com/page/${page}/`
+        case 'Asian Junkie':
+            return page <= 1 ? 'https://www.asianjunkie.com/' : `https://www.asianjunkie.com/page/${page}/`
+        case 'HelloKpop':
+            return page <= 1 ? 'https://www.hellokpop.com/' : `https://www.hellokpop.com/page/${page}/`
+        case 'Kpopmap':
+            return page <= 1 ? 'https://kpopmap.com/' : `https://kpopmap.com/page/${page}/`
+        default:
+            return null
+    }
+}
 
 // ─── Strategy 2: Paginated listing scraper (fallback) ────────────────────────
 
@@ -97,8 +123,7 @@ async function discoverViaListing(
     limit: number,
     offset = 0,
 ): Promise<DiscoveredArticle[]> {
-    const pageUrl = Object.prototype.hasOwnProperty.call(LISTING_URLS, source) ? LISTING_URLS[source] : undefined
-    if (!pageUrl) throw new Error('Listing URL not configured for source')
+    if (!listingPageUrl(source, 1)) throw new Error('Listing URL not configured for source')
 
     // Collect offset + limit articles to support pagination
     const needed = offset + limit
@@ -107,7 +132,8 @@ async function discoverViaListing(
     const MAX_PAGES = 500  // safety cap (~10000 articles)
 
     while (collected.length < needed && page <= MAX_PAGES) {
-        const url = pageUrl(page)
+        const url = listingPageUrl(source, page)
+        if (!url) break
         const res = await fetch(url, {
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)' },
             signal: AbortSignal.timeout(12000),
@@ -148,9 +174,9 @@ async function discoverArticles(
         const articles = await discoverViaWPAPI(source, dateFrom, dateTo, limit, offset)
         return { articles, strategy: 'api' }
     } catch (err) {
-        const safeSrc = source.replace(/[\r\n]/g, ' ')
-        const safeErr = (err instanceof Error ? err.message : String(err)).replace(/[\r\n]/g, ' ')
-        console.warn(`[import] WP API falhou para ${safeSrc}, usando listing scraper: ${safeErr}`)
+        const safeSrc = sanitizeForLog(source)
+        const safeErr = sanitizeForLog(err instanceof Error ? err.message : String(err))
+        log.warn('WP API falhou, usando listing scraper', { source: safeSrc, error: safeErr })
     }
 
     const articles = await discoverViaListing(source, dateFrom, dateTo, limit, offset)
@@ -185,13 +211,14 @@ async function countAvailable(
     }
 
     // Fallback: listing scraper (escaneia até o máximo de 5 páginas para estimativa)
-    const pageUrl = Object.prototype.hasOwnProperty.call(LISTING_URLS, source) ? LISTING_URLS[source] : undefined
-    if (!pageUrl) return -1
+    if (!listingPageUrl(source, 1)) return -1
 
     let count = 0
     for (let page = 1; page <= 50; page++) {
         try {
-            const res = await fetch(pageUrl(page), {
+            const url = listingPageUrl(source, page)
+            if (!url) break
+            const res = await fetch(url, {
                 headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)' },
                 signal: AbortSignal.timeout(10000),
             })

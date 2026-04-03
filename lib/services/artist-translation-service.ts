@@ -81,7 +81,7 @@ export class ArtistTranslationService {
                 }
 
                 // TMDB sempre retorna bios em inglês; detectLanguage resolve casos de bio manual/coreana
-                const detectedLang = detectLanguage(artist.bio || '')
+                const detectedLang = detectLanguage(artist.bio || '');
                 // Se não reconhecível (texto muito curto, ex: nome apenas), assume inglês
                 const sourceLang = detectedLang === 'unknown' ? 'en' : detectedLang;
 

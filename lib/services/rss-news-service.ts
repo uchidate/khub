@@ -101,7 +101,7 @@ export class RSSNewsService {
         console.log(`  ✅ ${feed.name}: ${items.length} items`);
       } catch (error) {
         console.error(`  ❌ ${feed.name}: ${error}`);
-      }
+      };
     }
 
     allNews.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
@@ -467,7 +467,7 @@ export class RSSNewsService {
           const idx = cleaned.search(marker)
           if (idx > -1) { cleaned = cleaned.substring(0, idx); break }
         }
-        return cleaned
+          return cleaned;
       },
     }
 
@@ -571,6 +571,37 @@ export class RSSNewsService {
 
   // ── Private: HTML helpers ─────────────────────────────────────────────────
 
+  private preprocessHtml(html: string): string {
+    try {
+      const dom = new JSDOM(`<body>${html}</body>`)
+      const { document } = dom.window
+      document.querySelectorAll('script, style, noscript').forEach((node: Element) => node.remove())
+      return document.body.innerHTML
+    } catch {
+      return html
+    }
+  }
+
+  private stripHtmlTags(text: string): string {
+    let out = ''
+    let insideTag = false
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i]
+      if (ch === '<') {
+        insideTag = true
+        continue
+      }
+      if (ch === '>') {
+        insideTag = false
+        continue
+      }
+      if (!insideTag) out += ch
+    }
+
+    return out
+  }
+
   /**
    * Converte HTML para Markdown, preservando estrutura:
    * headings, negrito, itálico, links, listas, parágrafos, blockquotes,
@@ -580,11 +611,9 @@ export class RSSNewsService {
   private htmlToMarkdown(html: string): string {
     if (!html) return '';
 
-    return html
-      // Remover noise
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<!--[\s\S]*?-->/g, '')
+    const preparedHtml = this.preprocessHtml(html)
+
+    const markdown = preparedHtml
       // Figure com figcaption → imagem com caption (processar ANTES de <img>)
       .replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, (_, inner) => {
         // WordPress oEmbed — YouTube bare watch URL no inner (sem iframe)
@@ -683,9 +712,9 @@ export class RSSNewsService {
       .replace(/<\/p>/gi, '\n\n')
       .replace(/<p[^>]*>/gi, '')
       .replace(/<br\s*\/?>/gi, '\n')
-      // Remover tags restantes (completas e truncadas ao final do chunk)
-      .replace(/<[^>]+>/g, '')
-      .replace(/<[^>]*$/, '') // tag truncada sem '>' no final do chunk
+    const withoutTags = this.stripHtmlTags(markdown)
+
+    return withoutTags
       // Decodificar entidades HTML (&amp; por último para evitar double-decode)
       .replace(/&nbsp;/g, ' ')
       .replace(/&#0*38;/g, '&')   // &#038; = & (numeric entity)
@@ -703,6 +732,9 @@ export class RSSNewsService {
       .replace(/&#8212;|&mdash;/g, '—')
       .replace(/&#8211;|&ndash;/g, '–')
       .replace(/&amp;/g, '&')
+      // Defesa final contra fragmentos de iframe malformados (com/sem '>')
+      .replace(/<\s*\/?\s*iframe\b[^>]*>?/gi, '')
+      .replace(/<\s*\/?\s*iframe\b[^>]*$/gi, '')
       // Limpar markdown vazio: ****, **, []() sem link útil
       .replace(/\*{2,4}\s*\*{2,4}/g, '')
       .replace(/\[([^\]]*)\]\(\s*\)/g, '$1')
@@ -718,8 +750,9 @@ export class RSSNewsService {
   private cleanHtml(html: string): string {
     if (!html) return '';
 
-    return html
-      .replace(/<[^>]*>/g, '')
+    const withoutTags = this.stripHtmlTags(this.preprocessHtml(html))
+
+    return withoutTags
       .replace(/&nbsp;/g, ' ')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
@@ -733,6 +766,8 @@ export class RSSNewsService {
       .replace(/&#8221;|&rdquo;/g, '"')
       .replace(/&#8230;|&hellip;/g, '...')
       .replace(/&amp;/g, '&')
+      .replace(/<\s*\/?\s*iframe\b[^>]*>?/gi, '')
+      .replace(/<\s*\/?\s*iframe\b[^>]*$/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
   }

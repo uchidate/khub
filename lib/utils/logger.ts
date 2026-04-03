@@ -45,6 +45,23 @@ function shouldLog(level: LogLevel): boolean {
   return LOG_LEVELS[level] >= LOG_LEVELS[getMinLevel()]
 }
 
+function sanitizeLogString(value: string): string {
+  return value.replace(/[\r\n\u2028\u2029]/g, ' ')
+}
+
+function sanitizeLogValue(value: unknown): unknown {
+  if (typeof value === 'string') return sanitizeLogString(value)
+  if (Array.isArray(value)) return value.map((item) => sanitizeLogValue(item))
+  if (value && typeof value === 'object') {
+    const safeObject: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value)) {
+      safeObject[k] = sanitizeLogValue(v)
+    }
+    return safeObject
+  }
+  return value
+}
+
 function formatDev(entry: LogEntry): string {
   const levelIcons: Record<LogLevel, string> = {
     debug: '🔍',
@@ -56,10 +73,9 @@ function formatDev(entry: LogEntry): string {
   const icon = levelIcons[entry.level]
   const prefix = `[${entry.service}]`
   const contextStr = entry.context && Object.keys(entry.context).length > 0
-    ? ` ${JSON.stringify(entry.context)}`
+    ? ` ${JSON.stringify(sanitizeLogValue(entry.context))}`
     : ''
-  // Strip newlines to prevent log injection
-  const safeMessage = entry.message.replace(/[\r\n]/g, ' ')
+  const safeMessage = sanitizeLogString(entry.message)
 
   return `${icon} ${prefix} ${safeMessage}${contextStr}`
 }
@@ -90,12 +106,15 @@ export class Logger {
   private log(level: LogLevel, message: string, context?: LogContext): void {
     if (!shouldLog(level)) return
 
+    const safeMessage = sanitizeLogString(message)
+    const safeContext = context ? (sanitizeLogValue({ ...context }) as Record<string, unknown>) : undefined
+
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       service: this.service,
-      message,
-      context: context ? { ...context } : undefined,
+      message: safeMessage,
+      context: safeContext,
     }
 
     if (isProduction()) {
