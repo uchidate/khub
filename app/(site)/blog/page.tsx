@@ -10,9 +10,10 @@ import { Clock, Eye, TrendingUp, Tag, ArrowRight } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
+import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 
 import { SITE_URL } from '@/lib/constants/site'
-import { BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
+import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
@@ -240,6 +241,22 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const total = await prisma.blogPost.count({ where: PUBLIC_WHERE }).catch(() => null)
   const isFiltered = !!activeCategory || !!activeTag
 
+  const categoryOrder = new Map(BLOG_CATEGORIES.map((c, i) => [c.slug, i]))
+  const orderedCategories = categories
+    .filter(c => c._count.posts > 0)
+    .sort((a, b) => (categoryOrder.get(a.slug) ?? 999) - (categoryOrder.get(b.slug) ?? 999))
+
+  const tagCountMap = new Map<string, number>()
+  for (const { tag, count } of popularTags) {
+    const normalized = tag.trim().toLowerCase()
+    if (!normalized || !ALL_BLOG_TAGS.includes(normalized)) continue
+    tagCountMap.set(normalized, (tagCountMap.get(normalized) ?? 0) + Number(count))
+  }
+  const normalizedPopularTags = Array.from(tagCountMap.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([tag, count]) => ({ tag, count }))
+    .slice(0, 12)
+
   // Não duplicar o post que aparece no hero/banner
   const heroId = isFiltered ? posts[0]?.id : hero?.id
   const gridPosts = posts.filter(p => p.id !== heroId)
@@ -351,13 +368,16 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               >
                 Todos {total ? <span className="opacity-70">({total})</span> : null}
               </Link>
-              {categories.filter(c => c._count.posts > 0).sort((a, b) => b._count.posts - a._count.posts).map(c => {
+              {orderedCategories.map(c => {
                 const isActive = activeCategory === c.slug
                 const config = BLOG_CATEGORY_BY_SLUG[c.slug]
+                const href = activeTag
+                  ? `/blog?category=${c.slug}&tag=${encodeURIComponent(activeTag)}`
+                  : `/blog?category=${c.slug}`
                 return (
                   <Link
                     key={c.id}
-                    href={`/blog?category=${c.slug}`}
+                    href={href}
                     scroll={false}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                     style={isActive
@@ -376,15 +396,18 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             </div>
             </div>
             {/* Tags */}
-            {popularTags.length > 0 && (
+            {normalizedPopularTags.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 <Tag size={11} className="text-muted shrink-0" />
-                {popularTags.map(({ tag, count }) => {
+                {normalizedPopularTags.map(({ tag, count }) => {
                   const ts = getTagStyle(tag)
+                  const href = activeTag === tag
+                    ? (activeCategory ? `/blog?category=${activeCategory}` : '/blog')
+                    : (activeCategory ? `/blog?category=${activeCategory}&tag=${encodeURIComponent(tag)}` : `/blog?tag=${encodeURIComponent(tag)}`)
                   return (
                     <Link
                       key={tag}
-                      href={activeTag === tag ? '/blog' : `/blog?tag=${encodeURIComponent(tag)}`}
+                      href={href}
                       scroll={false}
                       className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all hover:brightness-90 flex items-center gap-1"
                       style={{
@@ -411,9 +434,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           )}
 
           {/* Category shortcuts — só quando sem filtro ativo */}
-          {!isFiltered && categories.filter(c => c._count.posts > 0).length > 0 && (
+          {!isFiltered && orderedCategories.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap mb-8 -mt-2">
-              {categories.filter(c => c._count.posts > 0).map(c => {
+              {orderedCategories.map(c => {
                 const config = BLOG_CATEGORY_BY_SLUG[c.slug]
                 if (!config) return null
                 return (

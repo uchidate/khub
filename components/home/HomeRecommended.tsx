@@ -39,11 +39,38 @@ function getInitials(name: string): string {
 }
 
 export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps) {
-    if (artists.length < 2) return null
+    if (artists.length < 2) {
+        return (
+            <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+                        <div className="px-4 sm:px-6 lg:px-12 py-4 sm:py-5">
+                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Para voce</p>
+                            <h3 className="text-[15px] sm:text-[17px] font-bold text-foreground mt-1">Ainda estamos montando suas recomendacoes</h3>
+                            <p className="text-[12px] text-muted mt-1.5">Enquanto isso, estes caminhos ajudam voce a descobrir mais rapido.</p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 mt-4">
+                                <Link href="/artists" className="rounded-xl border border-border bg-surface px-3 py-3 hover:bg-background transition-colors text-[12.5px] font-semibold text-foreground">
+                                    Explore artistas
+                                </Link>
+                                <Link href="/productions" className="rounded-xl border border-border bg-surface px-3 py-3 hover:bg-background transition-colors text-[12.5px] font-semibold text-foreground">
+                                    Veja producoes populares
+                                </Link>
+                                <Link href="/profile" className="rounded-xl border border-border bg-surface px-3 py-3 hover:bg-background transition-colors text-[12.5px] font-semibold text-foreground">
+                                    Complete seu perfil de interesses
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        )
+    }
 
     return (
-        <section className="border-b border-border bg-background">
-            <div className="max-w-7xl mx-auto">
+        <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-3 border-b border-border">
                     <div>
@@ -76,7 +103,7 @@ export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps)
                             <Link
                                 key={artist.id}
                                 href={`/artists/${artist.id}`}
-                                className="group flex flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0"
+                                className={`group flex flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0 ${idx >= 6 ? 'hidden sm:flex' : ''}`}
                             >
                                 {/* Avatar */}
                                 <div
@@ -114,7 +141,7 @@ export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps)
                         {/* CTA card */}
                         <Link
                             href="/artists"
-                            className="group flex flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0"
+                            className="hidden sm:flex group flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0"
                         >
                             <div className="w-14 h-14 rounded-full border-2 border-dashed border-border flex items-center justify-center group-hover:border-accent/50 transition-colors">
                                 <span className="text-muted group-hover:text-foreground text-lg font-bold transition-colors">+</span>
@@ -124,6 +151,7 @@ export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps)
                             </p>
                         </Link>
                     </div>
+                </div>
                 </div>
             </div>
         </section>

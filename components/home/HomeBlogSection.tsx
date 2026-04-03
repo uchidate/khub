@@ -36,7 +36,7 @@ export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps)
                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-12 items-center">
                         {/* Left */}
                         <div>
-                            <p className="text-[8.5px] font-bold uppercase tracking-[0.16em] text-accent mb-2.5">
+                            <p className="text-[8.5px] font-bold uppercase tracking-[0.16em] text-muted mb-2.5">
                                 Comunidade HallyuHub
                             </p>
                             <h2
@@ -44,9 +44,9 @@ export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps)
                                 style={{ color: 'var(--color-foreground)' }}
                             >
                                 {isLoggedIn ? (
-                                    <>Obrigado por fazer parte<br />da comunidade <span className="text-accent">HallyuHub</span></>
+                                    <>Obrigado por fazer parte<br />da comunidade <span className="text-foreground">HallyuHub</span></>
                                 ) : (
-                                    <>Junte-se ao site<br />de <span className="text-accent">cultura coreana</span> no Brasil</>
+                                    <>Junte-se ao site<br />de <span className="text-foreground">cultura coreana</span> no Brasil</>
                                 )}
                             </h2>
                             <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: 'var(--color-featured-muted)' }}>
@@ -61,7 +61,7 @@ export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps)
                                         key={label}
                                         className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full border border-border bg-background text-foreground"
                                     >
-                                        <span className="text-accent font-bold">{value}</span>
+                                        <span className="text-foreground font-bold">{value}</span>
                                         {label}
                                     </span>
                                 ))}

@@ -32,6 +32,7 @@ interface HomeBlogFeedProps {
     productions: ProductionItem[]
     categoryCounts?: Record<string, number>
     initialCategory?: string
+    initialTag?: string
 }
 
 const ALL_TAB = { label: "Todos", value: "all", color: '#6b7280', bg: '#f3f4f6' }
@@ -83,7 +84,7 @@ function HeroBlock({ post }: { post: BlogFeedItem }) {
         <Link
             href={`/blog/${post.slug}`}
             className="group relative block w-full overflow-hidden border-b border-border"
-            style={{ aspectRatio: '21/9' }}
+            style={{ aspectRatio: '16/9' }}
         >
             {post.coverImageUrl ? (
                 <Image
@@ -197,9 +198,23 @@ function NewspaperSection({ cat, posts }: { cat: typeof BLOG_CATEGORIES[0]; post
     )
 }
 
-export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, initialCategory }: HomeBlogFeedProps) {
+export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, initialCategory, initialTag }: HomeBlogFeedProps) {
     const validInitial = initialCategory && TABS.some(t => t.value === initialCategory) ? initialCategory : 'all'
     const [activeTab, setActiveTab] = useState(validInitial)
+    const availableTags = Object.entries(
+        blogPosts.reduce<Record<string, number>>((acc, post) => {
+            for (const t of post.tags ?? []) {
+                const tag = t.trim().toLowerCase()
+                if (!tag) continue
+                acc[tag] = (acc[tag] ?? 0) + 1
+            }
+            return acc
+        }, {})
+    )
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, 10)
+    const validInitialTag = initialTag && availableTags.some(([t]) => t === initialTag) ? initialTag : 'all'
+    const [activeTag, setActiveTag] = useState(validInitialTag)
     const [visibleCount, setVisibleCount] = useState(8)
 
     function handleTabChange(value: string) {
@@ -207,9 +222,22 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
         setVisibleCount(8)
     }
 
-    // Hero: post mais recente (modo "Todos" apenas)
-    const heroPost = blogPosts[0] ?? null
-    const postsForCategories = heroPost ? blogPosts.slice(1) : blogPosts
+    function handleTagChange(value: string) {
+        setActiveTag(value)
+        setVisibleCount(8)
+    }
+
+    const basePosts = activeTab === 'all'
+        ? blogPosts
+        : blogPosts.filter(p => p.category?.slug === activeTab)
+
+    const scopedPosts = activeTag === 'all'
+        ? basePosts
+        : basePosts.filter(p => (p.tags ?? []).map(t => t.toLowerCase()).includes(activeTag))
+
+    // Hero: post mais recente apenas no modo Todos sem filtro de tag
+    const heroPost = activeTab === 'all' && activeTag === 'all' ? (scopedPosts[0] ?? null) : null
+    const postsForCategories = heroPost ? scopedPosts.slice(1) : scopedPosts
 
     // Para o modo "Todos": agrupar posts por categoria (na ordem de HOME_FEED_CATEGORIES)
     const postsByCategory = HOME_FEED_CATEGORIES
@@ -222,12 +250,13 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
         .filter((g): g is { cat: typeof BLOG_CATEGORIES[0]; posts: BlogFeedItem[] } => g !== null)
 
     // Para aba específica: lista simples filtrada
-    const filteredPosts = blogPosts.filter(p => p.category?.slug === activeTab)
+    const filteredPosts = scopedPosts
     const activeTabMeta = TABS.find(t => t.value === activeTab)
 
     return (
-        <section className="border-b border-border">
-            <div className="max-w-7xl mx-auto">
+        <section className="bg-background pt-3 pb-4 sm:pt-5 sm:pb-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
 
                 {/* ── Cabeçalho editorial ─────────────────────────────────── */}
                 <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-3 border-b border-border">
@@ -268,8 +297,38 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                     })}
                 </div>
 
+                {/* ── Tags populares ─────────────────────────────────────────── */}
+                {availableTags.length > 0 && (
+                    <div className="sticky top-[96px] sm:top-[104px] lg:top-[108px] z-10 flex items-center gap-2 px-4 sm:px-6 lg:px-12 py-2.5 border-b border-border overflow-x-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85" style={{ scrollbarWidth: 'none' }}>
+                        <button
+                            onClick={() => handleTagChange('all')}
+                            className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+                                activeTag === 'all'
+                                    ? 'bg-foreground text-background border-foreground'
+                                    : 'bg-surface text-muted border-border hover:text-foreground'
+                            }`}
+                        >
+                            Todas as tags
+                        </button>
+                        {availableTags.map(([tag, count]) => (
+                            <button
+                                key={tag}
+                                onClick={() => handleTagChange(tag)}
+                                className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors inline-flex items-center gap-1 ${
+                                    activeTag === tag
+                                        ? 'bg-foreground text-background border-foreground'
+                                        : 'bg-surface text-muted border-border hover:text-foreground'
+                                }`}
+                            >
+                                <span>#{tag}</span>
+                                <span className="text-[10px] opacity-60">{count}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* ── Conteúdo: feed + sidebar ─────────────────────────────── */}
-                <div className="grid md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px]">
+                <div className="grid md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_360px] rounded-b-2xl">
 
                     {/* Esquerda — conteúdo principal */}
                     <div className="border-b md:border-b-0 md:border-r border-border flex flex-col">
@@ -310,24 +369,24 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                             <div className="flex flex-col flex-1">
                                 <div className="flex-1">
                                     {filteredPosts.length === 0 && (
-                                        <p className="text-sm text-muted p-5">Nenhum artigo nessa categoria.</p>
+                                        <p className="text-sm text-muted p-5">Nenhum artigo nessa combinação de tema e tag.</p>
                                     )}
                                     {filteredPosts.slice(0, visibleCount).map((post) => (
                                         <Link
                                             key={post.id}
                                             href={`/blog/${post.slug}`}
-                                            className="flex items-start gap-4 px-4 sm:px-6 lg:px-12 py-4 border-b border-border hover:bg-surface transition-colors group"
+                                            className="flex items-start gap-3 sm:gap-4 px-4 sm:px-6 lg:px-12 py-3 sm:py-4 border-b border-border hover:bg-surface transition-colors group"
                                         >
                                             <div
-                                                className="w-24 h-[68px] rounded-lg flex-shrink-0 self-center overflow-hidden flex items-center justify-center border border-border/60"
+                                                className="w-20 h-[58px] sm:w-24 sm:h-[68px] rounded-lg flex-shrink-0 self-center overflow-hidden flex items-center justify-center border border-border/60"
                                                 style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
                                             >
                                                 {post.coverImageUrl ? (
                                                     <Image
                                                         src={post.coverImageUrl}
                                                         alt={post.title}
-                                                        width={96}
-                                                        height={68}
+                                                        width={80}
+                                                        height={58}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                     />
                                                 ) : (
@@ -337,7 +396,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0 flex flex-col gap-1">
-                                                <h3 className="text-[13.5px] font-semibold text-foreground leading-[1.4] group-hover:text-accent transition-colors line-clamp-2">
+                                                <h3 className="text-[13px] sm:text-[13.5px] font-semibold text-foreground leading-[1.35] sm:leading-[1.4] group-hover:text-accent transition-colors line-clamp-2">
                                                     {post.title}
                                                 </h3>
                                                 {post.excerpt && (
@@ -385,7 +444,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                     <div className="flex flex-col">
 
                         {/* Artigos em destaque */}
-                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-b border-border">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-b border-border bg-surface/35">
                             Em destaque
                         </div>
                         <div>
@@ -393,7 +452,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="flex items-center gap-3 px-4 py-3 border-b border-border hover:bg-accent-soft transition-colors group"
+                                    className="flex items-center gap-3 px-4 py-3 border-b border-border hover:bg-surface transition-colors group"
                                 >
                                     <span className="text-[22px] font-black text-muted/15 leading-none w-7 flex-shrink-0 text-right tabular-nums select-none">
                                         {String(idx + 1).padStart(2, '0')}
@@ -410,7 +469,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                                 </span>
                                             )
                                         })()}
-                                        <p className="text-[12.5px] font-bold text-foreground group-hover:text-accent transition-colors leading-[1.35] line-clamp-2">
+                                        <p className="text-[12.5px] font-bold text-foreground group-hover:text-foreground/80 transition-colors leading-[1.35] line-clamp-2">
                                             {post.title}
                                         </p>
                                         <span className="text-[8.5px] text-muted mt-1 block">{post.readingTimeMin} min · {formatRelativeDate(post.publishedAt)}</span>
@@ -420,7 +479,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                         </div>
 
                         {/* Explorar categorias */}
-                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-t border-b border-border mt-auto">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-t border-b border-border mt-auto bg-surface/35">
                             Explorar categorias
                         </div>
                         <div className="flex flex-col">
@@ -428,14 +487,14 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                 <Link
                                     key={cat.slug}
                                     href={`/blog?category=${cat.slug}`}
-                                    className="group flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors"
+                                    className="group flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors"
                                 >
                                     <div className="flex items-center gap-2.5 min-w-0">
                                         <span
                                             className="w-2 h-2 rounded-full flex-shrink-0"
                                             style={{ backgroundColor: cat.color }}
                                         />
-                                        <span className="text-[12.5px] font-semibold text-foreground group-hover:text-accent transition-colors truncate">
+                                        <span className="text-[12.5px] font-semibold text-foreground group-hover:text-foreground/80 transition-colors truncate">
                                             {cat.name}
                                         </span>
                                     </div>
@@ -454,6 +513,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                         </div>
 
                     </div>
+                </div>
                 </div>
             </div>
         </section>

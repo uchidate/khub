@@ -26,19 +26,6 @@ function getCategoryStyle(slug: string | undefined): { color: string; bg: string
     return cat ? { color: cat.color, bg: cat.bg } : { color: '#9ca3af', bg: '#f3f4f6' }
 }
 
-function formatDate(iso: string | null) {
-    if (!iso) return ''
-    try {
-        return new Date(iso).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-        })
-    } catch {
-        return iso
-    }
-}
-
 const INTERVAL_MS = 6000
 const TRANSITION_MS = 500
 
@@ -114,9 +101,6 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
                                 >
                                     {story.category?.name ?? story.tags?.[0] ?? 'Blog'}
                                 </span>
-                                <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-white/20 text-white backdrop-blur-sm">
-                                    Destaque
-                                </span>
                             </div>
                             <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
                                 {story.title}
@@ -126,11 +110,6 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
                                     {story.excerpt}
                                 </p>
                             )}
-                            <div className="flex items-center gap-2 text-[9.5px] text-white/50 flex-wrap">
-                                <span>HallyuHub Redação</span>
-                                <span className="w-[3px] h-[3px] rounded-full bg-white/40" />
-                                <span>{formatDate(story.publishedAt)}</span>
-                            </div>
                         </div>
                     </Link>
                 )

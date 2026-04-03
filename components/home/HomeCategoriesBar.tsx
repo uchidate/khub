@@ -4,22 +4,25 @@ import { BLOG_CATEGORIES, HOME_FEED_CATEGORIES } from '@/lib/config/categories'
 interface HomeCategoriesBarProps {
     categoryCounts?: Record<string, number>
     activeSlug?: string
+    activeTag?: string
     basePath?: string // '/' para home, '/blog' (padrão) para blog
 }
 
-export function HomeCategoriesBar({ categoryCounts, activeSlug, basePath = '/blog' }: HomeCategoriesBarProps) {
+export function HomeCategoriesBar({ categoryCounts, activeSlug, activeTag, basePath = '/blog' }: HomeCategoriesBarProps) {
     const categories = BLOG_CATEGORIES
         .filter((cat) => (categoryCounts?.[cat.slug] ?? 1) > 0)
-        .sort((a, b) => (categoryCounts?.[b.slug] ?? 0) - (categoryCounts?.[a.slug] ?? 0))
+        // Mantém ordem editorial canônica da taxonomia, evitando reordenação instável por volume.
+        .sort((a, b) => BLOG_CATEGORIES.findIndex(c => c.slug === a.slug) - BLOG_CATEGORIES.findIndex(c => c.slug === b.slug))
 
     function getHref(slug: string): string {
+        const tagPart = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : ''
         if (basePath === '/') {
             // Categorias disponíveis nos tabs da home ficam na home
             return HOME_FEED_CATEGORIES.includes(slug)
-                ? `/?category=${slug}`
-                : `/blog?category=${slug}`
+                ? `/?category=${slug}${tagPart}`
+                : `/blog?category=${slug}${tagPart}`
         }
-        return `${basePath}?category=${slug}`
+        return `${basePath}?category=${slug}${tagPart}`
     }
 
     return (
