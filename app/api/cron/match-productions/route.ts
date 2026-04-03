@@ -110,11 +110,13 @@ async function runMatchProductions(
         const duration = Math.round((Date.now() - startTime) / 1000);
 
         log.info('Production match job completed', { result, duration_s: duration });
-    } catch (error: any) {
+    } catch (error: unknown) {
         const duration = Math.round((Date.now() - startTime) / 1000);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
         log.error('Production match job failed', {
-            error: error.message,
-            stack: error.stack,
+            error: errorMessage,
+            stack: errorStack,
             duration_s: duration,
         });
     } finally {
@@ -133,11 +135,13 @@ async function runBackfillTvSeries(
         const result = await service.backfillTvSeriesFields(limit);
         const duration = Math.round((Date.now() - startTime) / 1000);
         log.info('TV series backfill completed', { result, duration_s: duration });
-    } catch (error: any) {
+    } catch (error: unknown) {
         const duration = Math.round((Date.now() - startTime) / 1000);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
         log.error('TV series backfill failed', {
-            error: error.message,
-            stack: error.stack,
+            error: errorMessage,
+            stack: errorStack,
             duration_s: duration,
         });
     } finally {
