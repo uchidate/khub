@@ -51,6 +51,8 @@ service-account-*.json
 .env.local
 # Secrets folder
 .secrets/
+docker/monitoring/prometheus/secrets/prometheus_token
+docker/monitoring/prometheus/secrets/prometheus_token.local
 # NPM auth tokens
 .npmrc
 # SSH private keys

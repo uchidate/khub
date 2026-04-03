@@ -1,0 +1,102 @@
+{
+  "title": "KHub - Web & API",
+  "uid": "khub-web-api",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "browser",
+  "tags": ["khub", "web", "api"],
+  "time": { "from": "now-6h", "to": "now" },
+  "links": [
+    { "title": "Exec", "url": "/d/khub-exec-overview/khub-exec-overview", "type": "link" },
+    { "title": "SRE", "url": "/d/khub-sre-infra/khub-sre-infra", "type": "link" },
+    { "title": "Web/API", "url": "/d/khub-web-api/khub-web-and-api", "type": "link" },
+    { "title": "Conteudo", "url": "/d/khub-content-audience/khub-conteudo-and-audiencia", "type": "link" },
+    { "title": "Alerts", "url": "/d/khub-alerts-slo/khub-alerts-and-slo", "type": "link" }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "App Up",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_up{environment=\"production\"}" }],
+      "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN" }, "1": { "text": "UP" } } }] } }
+    },
+    {
+      "id": 2,
+      "title": "Uptime (seconds)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_uptime_seconds{environment=\"production\"}" }],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 3,
+      "title": "DB Latency",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_db_latency_ms{environment=\"production\"}" }],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 4,
+      "title": "Heap Used",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_memory_heap_used_bytes{environment=\"production\"} / 1024 / 1024" }],
+      "fieldConfig": { "defaults": { "unit": "MB" } }
+    },
+    {
+      "id": 5,
+      "title": "RSS Memory",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_memory_rss_bytes{environment=\"production\"} / 1024 / 1024" }],
+      "fieldConfig": { "defaults": { "unit": "MB" } }
+    },
+    {
+      "id": 6,
+      "title": "Entity Discards Today",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_blog_entity_invalid_discards_today" }]
+    },
+    {
+      "id": 7,
+      "title": "DB Latency Trend",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_db_latency_ms{environment=\"production\"}", "legendFormat": "db-latency" }],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 8,
+      "title": "Heap vs Total",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "refId": "A", "expr": "hallyuhub_memory_heap_used_bytes{environment=\"production\"}", "legendFormat": "heap-used" },
+        { "refId": "B", "expr": "hallyuhub_memory_heap_total_bytes{environment=\"production\"}", "legendFormat": "heap-total" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 9,
+      "title": "Entities Total by Type",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "targets": [{ "refId": "A", "expr": "hallyuhub_entities_total", "legendFormat": "{{entity_type}}" }]
+    }
+  ]
+}
