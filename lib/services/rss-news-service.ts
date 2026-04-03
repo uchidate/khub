@@ -732,6 +732,9 @@ export class RSSNewsService {
       .replace(/&#8212;|&mdash;/g, '—')
       .replace(/&#8211;|&ndash;/g, '–')
       .replace(/&amp;/g, '&')
+      // Defesa final contra fragmentos de iframe malformados (com/sem '>')
+      .replace(/<\s*\/?\s*iframe\b[^>]*>?/gi, '')
+      .replace(/<\s*\/?\s*iframe\b[^>]*$/gi, '')
       // Limpar markdown vazio: ****, **, []() sem link útil
       .replace(/\*{2,4}\s*\*{2,4}/g, '')
       .replace(/\[([^\]]*)\]\(\s*\)/g, '$1')
@@ -763,6 +766,8 @@ export class RSSNewsService {
       .replace(/&#8221;|&rdquo;/g, '"')
       .replace(/&#8230;|&hellip;/g, '...')
       .replace(/&amp;/g, '&')
+      .replace(/<\s*\/?\s*iframe\b[^>]*>?/gi, '')
+      .replace(/<\s*\/?\s*iframe\b[^>]*$/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
