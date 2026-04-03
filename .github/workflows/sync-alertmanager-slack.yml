@@ -1,0 +1,128 @@
+name: 🔔 Sync Alertmanager Slack Webhook
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync-slack-webhook:
+    name: Sync Slack Webhook to Alertmanager
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Validate required secrets
+        env:
+          WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          set -euo pipefail
+          [[ -n "$WEBHOOK" ]] || { echo "Missing secret: SLACK_WEBHOOK_DEPLOYS"; exit 1; }
+          [[ -n "$HOST" ]] || { echo "Missing secret: HOST"; exit 1; }
+          [[ -n "$USER" ]] || { echo "Missing secret: USER"; exit 1; }
+          [[ -n "$SSH_PASSWORD" ]] || { echo "Missing secret: SSH_PASSWORD"; exit 1; }
+
+          # Block placeholder values to avoid deploying invalid configs.
+          if [[ "$WEBHOOK" =~ ^\{\{.*\}\}$ ]]; then
+            echo "SLACK_WEBHOOK_DEPLOYS is still a placeholder. Update the secret value first."
+            exit 1
+          fi
+
+          if [[ "$WEBHOOK" != https://hooks.slack.com/services/* ]]; then
+            echo "SLACK_WEBHOOK_DEPLOYS does not look like a Slack Incoming Webhook URL."
+            exit 1
+          fi
+
+          echo "::add-mask::$WEBHOOK"
+
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
+      - name: Update Alertmanager config on server
+        env:
+          WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$USER@$HOST" "mkdir -p /opt/monitoring/docker/alertmanager"
+
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$USER@$HOST" "cat > /opt/monitoring/docker/alertmanager/alertmanager.yml <<'EOF'
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: slack-default
+  group_by: [alertname, service, environment]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 2h
+  routes:
+    - receiver: slack-critical
+      matchers:
+        - severity=\"critical\"
+      continue: true
+
+receivers:
+  - name: slack-default
+    slack_configs:
+      - api_url: \"$WEBHOOK\"
+        channel: \"#alerts\"
+        send_resolved: true
+        title: \"[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}\"
+        text: >-
+          *Service:* {{ .CommonLabels.service }}\n
+          *Environment:* {{ .CommonLabels.environment }}\n
+          *Severity:* {{ .CommonLabels.severity }}\n
+          {{ range .Alerts }}*Summary:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}{{ end }}
+
+  - name: slack-critical
+    slack_configs:
+      - api_url: \"$WEBHOOK\"
+        channel: \"#alerts\"
+        send_resolved: true
+        title: \":rotating_light: [CRITICAL] {{ .CommonLabels.alertname }}\"
+        text: >-
+          *Service:* {{ .CommonLabels.service }}\n
+          *Environment:* {{ .CommonLabels.environment }}\n
+          {{ range .Alerts }}*Summary:* {{ .Annotations.summary }}\n*Description:* {{ .Annotations.description }}{{ end }}
+EOF"
+
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$USER@$HOST" "cd /opt/monitoring && docker compose up -d --force-recreate alertmanager"
+
+      - name: Send test alert
+        env:
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$USER@$HOST" "cat > /tmp/test-alert-slack.json <<'EOF'
+[
+  {
+    \"labels\": {
+      \"alertname\": \"TestSlackDelivery\",
+      \"severity\": \"warning\",
+      \"service\": \"monitoring\",
+      \"environment\": \"production\"
+    },
+    \"annotations\": {
+      \"summary\": \"Teste de entrega Slack\",
+      \"description\": \"Mensagem de teste do Alertmanager para Slack\"
+    }
+  }
+]
+EOF
+curl -s -H 'Content-Type: application/json' -X POST http://127.0.0.1:9093/api/v2/alerts -d @/tmp/test-alert-slack.json -o /dev/null -w 'POST /alerts => %{http_code}\n'"
+
+      - name: Summary
+        run: |
+          echo "### Slack Sync Finalizado" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Alertmanager atualizado com webhook do secret do GitHub" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Alerta de teste enviado (TestSlackDelivery)" >> "$GITHUB_STEP_SUMMARY"
