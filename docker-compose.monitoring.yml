@@ -77,7 +77,7 @@ services:
       - .env.monitoring
     environment:
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://localhost:3002
+      - GF_SERVER_ROOT_URL=http://31.97.255.107:3002
     volumes:
       - grafana-data:/var/lib/grafana
       - ./docker/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro

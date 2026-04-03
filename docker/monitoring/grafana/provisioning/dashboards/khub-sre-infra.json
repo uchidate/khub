@@ -1,0 +1,88 @@
+{
+  "title": "KHub - SRE Infra",
+  "uid": "khub-sre-infra",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "browser",
+  "tags": ["khub", "sre", "infra"],
+  "time": { "from": "now-6h", "to": "now" },
+  "links": [
+    { "title": "Exec", "url": "/d/khub-exec-overview/khub-exec-overview", "type": "link" },
+    { "title": "SRE", "url": "/d/khub-sre-infra/khub-sre-infra", "type": "link" },
+    { "title": "Web/API", "url": "/d/khub-web-api/khub-web-and-api", "type": "link" },
+    { "title": "Conteudo", "url": "/d/khub-content-audience/khub-conteudo-and-audiencia", "type": "link" },
+    { "title": "Alerts", "url": "/d/khub-alerts-slo/khub-alerts-and-slo", "type": "link" }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU %",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)" }],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 2,
+      "title": "Memory %",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100" }],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 3,
+      "title": "Disk % (/)",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100" }],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 4,
+      "title": "Load 1m",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "node_load1" }]
+    },
+    {
+      "id": 5,
+      "title": "Node CPU Trend",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [{ "refId": "A", "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "cpu" }]
+    },
+    {
+      "id": 6,
+      "title": "Node Memory Trend",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [{ "refId": "A", "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "legendFormat": "mem" }]
+    },
+    {
+      "id": 7,
+      "title": "Container Memory Top 10",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [{ "refId": "A", "expr": "topk(10, container_memory_usage_bytes)", "legendFormat": "{{name}}" }],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 8,
+      "title": "Container CPU Top 10",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [{ "refId": "A", "expr": "topk(10, rate(container_cpu_usage_seconds_total[5m]) * 100)", "legendFormat": "{{name}}" }],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    }
+  ]
+}
