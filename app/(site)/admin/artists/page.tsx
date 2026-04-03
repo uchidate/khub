@@ -115,7 +115,7 @@ function WikidataSyncButton({ artist, onSynced, onFailed }: {
       }
     } catch { setState('err') }
     finally { setTimeout(() => setState('idle'), 3000) }
-  }, [artist.id, artist.socialLinks, onSynced, onFailed])
+  }, [artist.id, onSynced, onFailed])
 
   const display = tried && state === 'idle' ? 'warn' : state
 
@@ -169,7 +169,7 @@ function PhotoSyncButton({ artist, onSynced, onFailed }: {
       }
     } catch { setState('err') }
     finally { setTimeout(() => setState('idle'), 4000) }
-  }, [artist.id, artist.primaryImageUrl, canSync, onSynced, onFailed])
+  }, [artist.id, canSync, onSynced, onFailed])
 
   if (!canSync) return null
 

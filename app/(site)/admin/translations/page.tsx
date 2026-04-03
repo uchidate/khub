@@ -74,14 +74,6 @@ const FILTERS_BY_TAB: Record<EntityType, [StatusFilter, string][]> = {
   news:       [['', 'Todos'], ['pending', 'Sem tradução'], ['draft', 'Traduzido (IA)'], ['approved', 'Revisados']],
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  bio: 'bio',
-  synopsis: 'sinopse',
-  tagline: 'tagline',
-  title: 'título',
-  contentMd: 'conteúdo',
-}
-
 // Tipos que suportam tradução automática via IA
 const TRANSLATABLE_TYPES: EntityType[] = ['artist', 'group', 'production']
 

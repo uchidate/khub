@@ -492,7 +492,7 @@ export default function HomepageConfigPage() {
         } finally {
             setSaving(false)
         }
-    }, [featuredPost, carouselPosts, secondaryPosts, sidebarPosts, toast])
+    }, [featuredPost, carouselPosts, secondaryPosts, sidebarPosts, spotlightArtist?.id, toast])
 
     if (loading) {
         return (

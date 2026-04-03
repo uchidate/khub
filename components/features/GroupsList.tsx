@@ -8,7 +8,7 @@ import { Users, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { nameToGradient } from '@/lib/utils/name-to-gradient'
+import { nameToGradient } from '@/lib/utils'
 
 type Group = {
     id: string

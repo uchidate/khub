@@ -4,7 +4,7 @@ import { type ArtistForBadge } from "@/lib/trending/badges"
 import { getArtistBadgeDisplay } from "@/lib/trending/display"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel"
-import { nameToGradient } from "@/lib/utils/name-to-gradient"
+import { nameToGradient } from "@/lib/utils"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 
 interface FeaturedStory {
