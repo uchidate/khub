@@ -4,8 +4,11 @@ import { type ArtistForBadge } from "@/lib/trending/badges"
 import { getArtistBadgeDisplay } from "@/lib/trending/display"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel"
+import { nameToGradient } from "@/lib/utils/name-to-gradient"
+import { FavoriteButton } from "@/components/ui/FavoriteButton"
 
 interface FeaturedStory {
+    id: string
     slug: string
     title: string
     coverImageUrl: string | null
@@ -16,6 +19,7 @@ interface FeaturedStory {
 }
 
 interface SecondaryStory {
+    id: string
     slug: string
     title: string
     coverImageUrl: string | null
@@ -50,6 +54,7 @@ interface HomeFrontPageProps {
     carouselPosts?: FeaturedStory[]
     secondaryStories: SecondaryStory[]
     trendingArtists: TrendingArtist[]
+    spotlightArtist: TrendingArtist | null
     spotlightProduction: SpotlightProduction | null
 }
 
@@ -95,6 +100,12 @@ const ROLE_LABELS: Record<string, [string, string]> = {
     'Ator/Atriz': ['Ator',       'Atriz'],
 }
 
+const EMPTY_SECONDARY_CTAS = [
+    { label: "Explore artistas", href: "/artists" },
+    { label: "Veja producoes populares", href: "/productions" },
+    { label: "Complete seu perfil de interesses", href: "/profile" },
+]
+
 function formatRole(role: string, gender?: string | number | null): string {
     const entry = ROLE_LABELS[role.toUpperCase()] ?? ROLE_LABELS[role]
     if (!entry) return role
@@ -116,18 +127,20 @@ export function HomeFrontPage({
     carouselPosts,
     secondaryStories,
     trendingArtists,
+    spotlightArtist,
     spotlightProduction,
 }: HomeFrontPageProps) {
     const hasCarousel = carouselPosts && carouselPosts.length > 0
     if (!hasCarousel && !featuredStory) return null
 
     const safeSecondary = secondaryStories.slice(0, 4)
+    const missingSecondary = Math.max(0, 4 - safeSecondary.length)
     const safeArtists = trendingArtists.slice(0, 8)
-    const spotlightArtist = safeArtists[0]
 
     return (
-        <section className="border-b border-border">
-            <div className="max-w-7xl mx-auto grid lg:grid-cols-[2fr_0.65fr]">
+        <section className="bg-background py-4 sm:py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid lg:grid-cols-[2fr_0.65fr] rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
                 {/* LEFT COLUMN */}
                 <div className="flex flex-col">
                     {/* Hero: carousel or static featured */}
@@ -135,7 +148,7 @@ export function HomeFrontPage({
                         {hasCarousel ? (
                             <FeaturedCarousel posts={carouselPosts} />
                         ) : featuredStory ? (
-                            <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[340px] md:h-[480px] overflow-hidden bg-accent-soft">
+                            <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[320px] md:h-[460px] overflow-hidden bg-surface">
                                 {featuredStory.coverImageUrl ? (
                                     <Image
                                         src={featuredStory.coverImageUrl}
@@ -146,18 +159,24 @@ export function HomeFrontPage({
                                         priority
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft">
+                                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(148,163,184,0.14),rgba(148,163,184,0.06))]">
                                         <span
-                                            className="absolute text-[7rem] font-black text-accent select-none pointer-events-none"
-                                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", opacity: 0.05 }}
+                                            className="absolute text-[5rem] font-black text-foreground/10 select-none pointer-events-none"
+                                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
                                         >
-                                            블랙핑크
+                                            HallyuHub
                                         </span>
-                                        <OrbitalDecoration />
                                     </div>
                                 )}
                                 <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%)' }} />
-                                <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-10">
+                                <div className="absolute top-3 right-3 z-20">
+                                    <FavoriteButton
+                                        id={featuredStory.id}
+                                        itemName={featuredStory.title}
+                                        className="bg-black/45 backdrop-blur-sm border border-white/30 text-white hover:bg-black/60"
+                                    />
+                                </div>
+                                <div className="absolute bottom-0 left-0 right-0 px-5 sm:px-6 pb-5 pt-12">
                                     <div className="flex items-center gap-1.5 mb-3">
                                         {(() => {
                                             const cs = getCategoryStyle(featuredStory.category?.slug ?? featuredStory.tags?.[0])
@@ -167,22 +186,22 @@ export function HomeFrontPage({
                                                 </span>
                                             )
                                         })()}
-                                        <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-white/20 text-white backdrop-blur-sm">
-                                            Destaque
-                                        </span>
                                     </div>
-                                    <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
+                                    <h1 className="max-w-[22ch] text-[1.2rem] sm:text-[1.55rem] lg:text-[1.9rem] font-extrabold tracking-[-0.035em] text-white leading-[1.12] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
                                         {featuredStory.title}
                                     </h1>
                                     {featuredStory.excerpt && (
-                                        <p className="text-[12.5px] text-white/70 leading-relaxed line-clamp-2 mb-2">
+                                        <p className="max-w-[62ch] text-[12.5px] sm:text-[13px] text-white/72 leading-relaxed line-clamp-2 mb-2">
                                             {featuredStory.excerpt}
                                         </p>
                                     )}
-                                    <div className="flex items-center gap-2 text-[9.5px] text-white/50 flex-wrap">
-                                        <span>HallyuHub Redação</span>
-                                        <span className="w-[3px] h-[3px] rounded-full bg-white/40" />
-                                        <span>{formatDate(featuredStory.publishedAt)}</span>
+                                    <div className="mt-3.5 flex items-center gap-2.5">
+                                        <span className="inline-flex items-center rounded-full bg-white text-black text-[10px] sm:text-[10.5px] font-semibold px-3 py-1.5">
+                                            Ler agora
+                                        </span>
+                                        <span className="hidden sm:inline-flex items-center rounded-full border border-white/35 text-white/85 text-[10px] sm:text-[10.5px] font-semibold px-3 py-1.5">
+                                            Explorar notícias
+                                        </span>
                                     </div>
                                 </div>
                             </Link>
@@ -191,20 +210,26 @@ export function HomeFrontPage({
 
                     {/* Secondary stories 2×2 grid */}
                     {safeSecondary.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 border-t border-border">
+                        <div className="border-t border-border">
+                            <div className="flex items-center justify-between px-3.5 sm:px-5 py-2 border-b border-border bg-surface/45">
+                                <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Principais agora</span>
+                                <Link href="/blog" className="text-[9px] font-semibold text-muted hover:text-foreground transition-colors">Ver mais</Link>
+                            </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2">
                             {safeSecondary.map((story, idx) => {
                                 const cs = getCategoryStyle(story.category?.slug ?? story.tags?.[0])
                                 return (
                                 <Link
                                     key={story.slug}
                                     href={`/blog/${story.slug}`}
-                                    className={`group p-3 flex gap-3 hover:bg-accent-soft transition-colors border-b border-border
+                                    className={`group p-3.5 sm:p-4 flex gap-3 hover:bg-surface/80 transition-all duration-200 border-b border-border
                                         ${idx % 2 === 0 ? "sm:border-r sm:border-border" : ""}
                                         ${idx >= 2 ? "sm:border-b-0" : ""}
                                     `}
                                 >
+                                    <span className="text-[9px] font-bold text-muted/55 leading-none mt-1 w-4 shrink-0">{String(idx + 1).padStart(2, '0')}</span>
                                     {story.coverImageUrl && (
-                                        <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0">
+                                        <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0 border border-border/60">
                                             <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" priority={idx < 2} />
                                         </div>
                                     )}
@@ -212,7 +237,7 @@ export function HomeFrontPage({
                                         <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded self-start" style={{ color: cs.color, backgroundColor: cs.bg }}>
                                             {story.category?.name ?? story.tags?.[0] ?? 'Blog'}
                                         </span>
-                                        <h3 className="text-[13.5px] font-bold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-2">
+                                        <h3 className="text-[13.5px] font-bold text-foreground leading-snug group-hover:text-foreground/85 transition-colors line-clamp-2">
                                             {story.title}
                                         </h3>
                                         <span className="text-[9px] text-muted mt-auto">{formatDate(story.publishedAt)}</span>
@@ -220,6 +245,20 @@ export function HomeFrontPage({
                                 </Link>
                                 )
                             })}
+                            {missingSecondary > 0 && EMPTY_SECONDARY_CTAS.slice(0, missingSecondary).map((cta) => (
+                                <Link
+                                    key={cta.label}
+                                    href={cta.href}
+                                    className="group p-4 flex items-center justify-between border-b border-border sm:border-b-0 sm:odd:border-r sm:border-border hover:bg-surface/70 transition-colors"
+                                >
+                                    <div>
+                                        <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted mb-1">Sugestao</p>
+                                        <p className="text-[13px] font-semibold text-foreground group-hover:text-foreground/80">{cta.label}</p>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-muted">Abrir</span>
+                                </Link>
+                            ))}
+                        </div>
                         </div>
                     )}
                 </div>
@@ -228,37 +267,39 @@ export function HomeFrontPage({
                 <div className="border-t lg:border-t-0 lg:border-l border-border flex flex-col">
                     {/* Trending Artists panel */}
                     <div className="border-b border-border flex-1">
-                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
-                            <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" style={{ animation: 'live-pulse 1.5s ease-in-out infinite' }} />
+                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border bg-surface/40">
+                            <div className="flex flex-col gap-0.5">
                                 <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">
                                     Artistas em alta
                                 </span>
+                                <span className="text-[10px] text-muted/70 hidden sm:block">Ranking semanal da comunidade</span>
                             </div>
-                            <Link href="/artists" className="text-[9px] font-semibold text-muted hover:text-accent transition-colors">
+                            <Link href="/artists" className="text-[9px] font-semibold text-muted hover:text-foreground transition-colors">
                                 Ver todos →
                             </Link>
                         </div>
 
-                        <style>{`
-                            @keyframes live-pulse {
-                                0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}
-                                50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}
-                            }
-                        `}</style>
-
                         {/* Desktop: vertical list — 7 artistas para não ultrapassar altura da coluna esquerda */}
                         <div className="hidden sm:block">
-                            {safeArtists.slice(0, 7).map((artist, idx) => (
+                            {safeArtists.length > 0 ? safeArtists.slice(0, 7).map((artist, idx) => (
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-accent-soft transition-colors min-h-[44px]"
+                                    className="group flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors min-h-[44px]"
                                 >
-                                    <span className="text-[8.5px] font-bold text-muted w-3.5 flex-shrink-0 text-center">
-                                        {String(idx + 1).padStart(2, '0')}
-                                    </span>
-                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center flex-shrink-0 overflow-hidden`}>
+                                    <div className="flex flex-col items-center gap-px w-4 flex-shrink-0">
+                                        <span className="text-[8.5px] font-bold text-muted/70 text-center leading-none">
+                                            {String(idx + 1).padStart(2, '0')}
+                                        </span>
+                                        {artist.trendingRank != null && artist.trendingRankPrev != null ? (
+                                            artist.trendingRank < artist.trendingRankPrev
+                                                ? <span className="text-[7px] font-bold leading-none text-green-500">↑</span>
+                                                : artist.trendingRank > artist.trendingRankPrev
+                                                    ? <span className="text-[7px] font-bold leading-none text-red-400">↓</span>
+                                                    : <span className="text-[7px] leading-none text-muted/30">—</span>
+                                        ) : null}
+                                    </div>
+                                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || String(idx)) }}>
                                         {artist.primaryImageUrl ? (
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} width={36} height={36} className="object-cover w-full h-full" priority={idx < 5} />
                                         ) : (
@@ -266,7 +307,7 @@ export function HomeFrontPage({
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-bold text-foreground truncate leading-tight">
+                                        <p className="text-[12.5px] font-bold text-foreground truncate leading-tight">
                                             {artist.nameRomanized || artist.nameHangul || '—'}
                                             {artist.nameHangul && artist.nameRomanized && (
                                                 <span className="text-[9px] font-normal text-muted ml-1">({artist.nameHangul})</span>
@@ -287,7 +328,12 @@ export function HomeFrontPage({
                                         )
                                     })()}
                                 </Link>
-                            ))}
+                            )) : (
+                                <div className="px-4 py-4 text-center">
+                                    <p className="text-[12px] text-muted">Ainda sem artistas em destaque.</p>
+                                    <Link href="/artists" className="inline-flex mt-2 text-[11px] font-semibold text-foreground hover:underline">Explore artistas</Link>
+                                </div>
+                            )}
                         </div>
                         {/* Mobile: compact 2-col avatar grid */}
                         <div className="sm:hidden grid grid-cols-4 gap-0">
@@ -295,13 +341,14 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.id}`}
-                                    className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-accent-soft transition-colors border-b border-r border-border last:border-r-0 [&:nth-child(4n)]:border-r-0"
+                                    className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-surface transition-colors border-b border-r border-border last:border-r-0 [&:nth-child(4n)]:border-r-0"
                                 >
+                                    <span className="text-[8px] font-bold text-muted/55 leading-none">{String(idx + 1).padStart(2, '0')}</span>
                                     <div className="relative w-11 h-11 rounded-full overflow-hidden bg-surface border border-border flex-shrink-0">
                                         {artist.primaryImageUrl ? (
                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} fill sizes="44px" className="object-cover" />
                                         ) : (
-                                            <div className={`w-full h-full bg-gradient-to-br ${AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]} flex items-center justify-center`}>
+                                            <div className="w-full h-full flex items-center justify-center" style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || String(idx)) }}>
                                                 <span className="text-white text-[8px] font-bold">{getInitials(artist.nameRomanized || artist.nameHangul || '?')}</span>
                                             </div>
                                         )}
@@ -315,19 +362,19 @@ export function HomeFrontPage({
                     </div>
 
                     {/* Artist Spotlight */}
-                    {spotlightArtist && (
-                        <div className="p-4 bg-gradient-to-b from-accent-soft to-background flex flex-col gap-3">
+                        {spotlightArtist ? (
+                            <div className="p-4 bg-gradient-to-b from-surface/70 to-background flex flex-col gap-3">
                             {/* Label */}
                             <div className="flex items-center justify-between">
                                 <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-muted">
                                     Destaque da semana
                                 </p>
-                                <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" style={{ animation: 'live-pulse 2s ease-in-out infinite' }} />
+                                <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 flex-shrink-0" />
                             </div>
 
                             {/* Foto + nome */}
                             <div className="flex items-center gap-3">
-                                <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-surface border-2 border-accent/20">
+                                <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-surface border border-border">
                                     {spotlightArtist.primaryImageUrl ? (
                                         <Image
                                             src={spotlightArtist.primaryImageUrl}
@@ -337,13 +384,13 @@ export function HomeFrontPage({
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <div className={`w-full h-full bg-gradient-to-br ${AVATAR_GRADIENTS[0]} flex items-center justify-center text-white text-lg font-bold`}>
+                                        <div className="w-full h-full flex items-center justify-center text-white text-lg font-bold" style={{ background: nameToGradient(spotlightArtist.nameRomanized) }}>
                                             {spotlightArtist.nameRomanized[0]}
                                         </div>
                                     )}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[18px] font-black tracking-[-0.05em] text-foreground leading-none truncate">
+                                    <p className="text-[18px] font-black tracking-[-0.04em] text-foreground leading-none truncate">
                                         {spotlightArtist.nameRomanized}
                                     </p>
                                     {spotlightArtist.nameHangul && (
@@ -352,7 +399,7 @@ export function HomeFrontPage({
                                     {spotlightArtist.roles && spotlightArtist.roles.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1.5">
                                             {spotlightArtist.roles.slice(0, 3).map((role) => (
-                                                <span key={role} className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent border border-accent/15">
+                                                <span key={role} className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-background text-foreground border border-border">
                                                     {formatRole(role, spotlightArtist.gender)}
                                                 </span>
                                             ))}
@@ -381,7 +428,7 @@ export function HomeFrontPage({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted mb-0.5">Última produção</p>
-                                        <p className="text-[12px] font-bold text-foreground group-hover/prod:text-accent transition-colors line-clamp-2 leading-tight">
+                                        <p className="text-[12px] font-bold text-foreground group-hover/prod:text-foreground/80 transition-colors line-clamp-2 leading-tight">
                                             {spotlightProduction.titlePt}
                                         </p>
                                         <p className="text-[9px] text-muted mt-0.5">
@@ -394,68 +441,21 @@ export function HomeFrontPage({
 
                             <Link
                                 href={`/artists/${spotlightArtist.id}`}
-                                className="w-full text-center bg-accent text-white text-[12px] font-semibold rounded-full py-2 hover:brightness-110 transition-all"
+                                className="w-full text-center bg-foreground text-background text-[12px] font-semibold rounded-full py-2.5 hover:opacity-90 transition-all"
                             >
                                 Ver perfil →
                             </Link>
                         </div>
+                    ) : (
+                        <div className="p-4 bg-gradient-to-b from-surface/70 to-background flex flex-col gap-2.5">
+                            <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-muted">Destaque da semana</p>
+                            <p className="text-[12px] text-muted">Sem destaque definido no momento.</p>
+                            <Link href="/artists" className="inline-flex text-[11px] font-semibold text-foreground hover:underline">Explore artistas</Link>
+                        </div>
                     )}
+                </div>
                 </div>
             </div>
         </section>
-    )
-}
-
-function OrbitalDecoration() {
-    return (
-        <>
-            <style>{`
-                @keyframes orbit-spin {
-                    0% { transform: translate(-50%, -50%) rotate(0deg); }
-                    100% { transform: translate(-50%, -50%) rotate(360deg); }
-                }
-                @keyframes orbit-spin-rev {
-                    0% { transform: translate(-50%, -50%) rotate(0deg); }
-                    100% { transform: translate(-50%, -50%) rotate(-360deg); }
-                }
-                .orbital-ring-1 { animation: orbit-spin 8s linear infinite; }
-                .orbital-ring-2 { animation: orbit-spin-rev 12s linear infinite; }
-                .orbital-ring-3 { animation: orbit-spin 20s linear infinite; }
-            `}</style>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {/* Ring 1 */}
-                <div
-                    className="orbital-ring-1 absolute border border-accent/20 rounded-full"
-                    style={{ width: 120, height: 120, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-                >
-                    <span
-                        className="absolute w-2.5 h-2.5 rounded-full bg-accent/60"
-                        style={{ top: -5, left: "50%", transform: "translateX(-50%)" }}
-                    />
-                </div>
-                {/* Ring 2 */}
-                <div
-                    className="orbital-ring-2 absolute border border-accent/15 rounded-full"
-                    style={{ width: 200, height: 200, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-                >
-                    <span
-                        className="absolute w-2 h-2 rounded-full bg-accent/40"
-                        style={{ bottom: -4, left: "50%", transform: "translateX(-50%)" }}
-                    />
-                </div>
-                {/* Ring 3 */}
-                <div
-                    className="orbital-ring-3 absolute border border-foreground/10 rounded-full"
-                    style={{ width: 280, height: 280, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-                >
-                    <span
-                        className="absolute w-1.5 h-1.5 rounded-full bg-foreground/20"
-                        style={{ top: -3, right: "25%", transform: "translateX(50%)" }}
-                    />
-                </div>
-                {/* Center glyph */}
-                <span className="text-4xl font-black text-accent opacity-20 select-none">한</span>
-            </div>
-        </>
     )
 }

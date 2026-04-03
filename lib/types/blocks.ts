@@ -165,7 +165,7 @@ export type BlogGroupCardBlock = {
 // Linha de stats biográficos (ex: data de nascimento, altura, grupo)
 export type BlogStatsRowBlock = {
     type: 'blog_stats_row'
-    items: { label: string; value: string }[]
+    items: { label: string; value: string; emoji?: string }[]
 }
 
 // Avaliação editorial (estrelas + texto)
@@ -179,6 +179,27 @@ export type BlogRatingBlock = {
 // Divisor visual
 export type BlogDividerBlock = {
     type: 'blog_divider'
+}
+
+// Embed do Spotify (track, álbum, playlist, artista)
+export type BlogSpotifyBlock = {
+    type: 'blog_spotify'
+    url: string
+    compact?: boolean
+}
+
+// Item de linha do tempo
+export type BlogTimelineItem = {
+    year: string
+    title: string
+    text?: string
+    emoji?: string
+}
+
+// Linha do tempo / marcos da carreira
+export type BlogTimelineBlock = {
+    type: 'blog_timeline'
+    items: BlogTimelineItem[]
 }
 
 // Caixa de destaque (fato, dado, alerta, info)
@@ -218,6 +239,8 @@ export type BlogBlock =
     | BlogGroupCardBlock
     | BlogStatsRowBlock
     | BlogRatingBlock
+    | BlogSpotifyBlock
+    | BlogTimelineBlock
     | BlogDividerBlock
     | BlogCalloutBlock
     | BlogCuriosityBlock
@@ -244,6 +267,8 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_callout:          'Destaque',
     blog_curiosity:        'Curiosidade',
     blog_highlight:        'Destaque Visual',
+    blog_spotify:          'Spotify',
+    blog_timeline:         'Linha do Tempo',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'

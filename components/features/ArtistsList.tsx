@@ -6,11 +6,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArtistFilters, type ArtistFilterValues } from './ArtistFilters'
 import { getRoleLabels } from '@/lib/utils/role-labels'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 
 const PER_PAGE_OPTIONS = [50, 100, 150]
 const DEFAULT_PER_PAGE = 50
+
 
 function ArtistsSkeleton() {
     return (
@@ -47,28 +49,39 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
     const group = artist.memberships?.[0]?.group
     const roleLabels = getRoleLabels(artist.roles || [], artist.gender)
     const roleLabel = roleLabels[0] ?? ''
-    const agencyName = artist.agency?.name ?? group?.name ?? ''
 
     return (
-        <Link href={`/artists/${artist.id}`} className="group block">
+        <Link href={`/artists/${artist.id}`} className="group block rounded-2xl p-2 -m-2">
             {/* Photo */}
-            <div className="aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border mb-2.5 group-hover:border-[#ff2d78]/30 transition-colors">
+            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm mb-2.5 group-hover:border-accent/30 group-hover:shadow-md transition-all">
                 {artist.primaryImageUrl ? (
                     <Image
                         src={artist.primaryImageUrl}
                         alt={artist.nameRomanized}
                         width={240}
                         height={320}
-                        className="w-full h-full object-cover object-top group-hover:scale-[1.04] transition-transform duration-300"
+                        className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-500"
                         priority={priority}
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-muted opacity-40">
-                            {artist.nameRomanized.slice(0, 2).toUpperCase()}
+                    <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ background: nameToGradient(artist.nameRomanized) }}
+                    >
+                        <span className="text-3xl font-black text-white/80 drop-shadow select-none">
+                            {artist.nameRomanized[0]?.toUpperCase() ?? '?'}
                         </span>
                     </div>
                 )}
+                {/* Hover overlay: hangul + group */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 gap-0.5">
+                    {artist.nameHangul && (
+                        <p className="text-white text-[12px] font-bold truncate leading-tight">{artist.nameHangul}</p>
+                    )}
+                    {group && (
+                        <p className="text-white/65 text-[10px] truncate leading-tight">{group.name}</p>
+                    )}
+                </div>
             </div>
 
             {/* Info */}
@@ -78,7 +91,7 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
                         {roleLabel}
                     </p>
                 )}
-                <p className="text-[13px] font-bold text-foreground group-hover:text-[#ff2d78] transition-colors truncate leading-tight">
+                <p className="text-[13px] font-bold text-foreground group-hover:text-accent transition-colors truncate leading-tight">
                     {artist.nameRomanized}
                 </p>
                 {artist.nameHangul && (
@@ -86,9 +99,9 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
                         {artist.nameHangul}
                     </p>
                 )}
-                {agencyName && (
+                {artist.agency?.name && (
                     <p className="text-[11px] text-muted truncate leading-tight mt-0.5 opacity-70">
-                        {agencyName}
+                        {artist.agency.name}
                     </p>
                 )}
             </div>
@@ -170,7 +183,7 @@ export function ArtistsList() {
     const totalPages = pagination.pages
 
     return (
-        <div>
+        <div id="artists-list">
             <ArtistFilters onFilterChange={handleFilterChange} initialFilters={getFiltersFromUrl()} />
 
             {isLoading && <ArtistsSkeleton />}

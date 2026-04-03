@@ -93,6 +93,9 @@ export function StreamingTopShows({ showsByPlatform }: StreamingTopShowsProps) {
                                 <span className="absolute top-1 left-1 text-[8px] font-bold leading-none bg-black/60 text-white rounded px-1 py-0.5">
                                     {show.rank}
                                 </span>
+                                {show.isKorean && (
+                                    <span className="absolute top-1 right-1 text-[8px] leading-none bg-black/50 rounded px-[3px] py-[1px]">🇰🇷</span>
+                                )}
                                 {show.voteAverage != null && show.voteAverage > 0 && (
                                     <span className="absolute bottom-1 right-1 text-[8px] font-bold leading-none bg-black/70 text-yellow-400 rounded px-1 py-0.5">
                                         ★ {show.voteAverage.toFixed(1)}

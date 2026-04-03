@@ -12,7 +12,9 @@ Use estes templates para gerar artigos. Preencha os campos `{{}}` e cole no Agen
 | `blog_curiosity` | `text`, sem `title` | ~~`content`~~, ~~`title`~~ |
 | `blog_highlight` | `text` | ~~`content`~~ |
 | `blog_callout` | `text` | ~~`content`~~ |
-| `blog_stats_row` | `items: [{label, value}]` | ~~`stats`~~, ~~`sublabel`~~ |
+| `blog_stats_row` | `items: [{label, value, emoji?}]` | ~~`stats`~~, ~~`sublabel`~~ |
+| `blog_spotify` | `url` (open.spotify.com/...) | ~~`trackId`~~, ~~`embedUrl`~~ |
+| `blog_timeline` | `items: [{year, title, text?, emoji?}]` | ~~`events`~~, ~~`milestones`~~ |
 
 ---
 
@@ -21,14 +23,22 @@ Use estes templates para gerar artigos. Preencha os campos `{{}}` e cole no Agen
 ```typescript
 blog_heading:        { type: 'blog_heading'; text: string; level?: 2|3 }
 blog_paragraph:      { type: 'blog_paragraph'; text: string }
-blog_image:          { type: 'blog_image'; url: string; caption?: string; alt?: string }
+blog_image:          { type: 'blog_image'; url: string; caption?: string; fullWidth?: boolean; size?: 'small'|'medium'|'full' }
+blog_gallery:        { type: 'blog_gallery'; urls: string[]; caption?: string }
+blog_video:          { type: 'blog_video'; url: string; caption?: string }  // YouTube (incl. /shorts/) ou link
+blog_twitter:        { type: 'blog_twitter'; url: string }
+blog_instagram:      { type: 'blog_instagram'; url: string }
+blog_tiktok:         { type: 'blog_tiktok'; url: string }
+blog_spotify:        { type: 'blog_spotify'; url: string; compact?: boolean }  // URL open.spotify.com/track|album|playlist|artist
 blog_artist_card:    { type: 'blog_artist_card'; artistId: string }
 blog_production_card:{ type: 'blog_production_card'; productionId: string }
-blog_stats_row:      { type: 'blog_stats_row'; items: Array<{label: string; value: string}> }
+blog_stats_row:      { type: 'blog_stats_row'; items: Array<{label: string; value: string; emoji?: string}> }
 blog_curiosity:      { type: 'blog_curiosity'; text: string; emoji?: string }
 blog_highlight:      { type: 'blog_highlight'; text: string; attribution?: string }
-blog_callout:        { type: 'blog_callout'; text: string; emoji?: string }
+blog_callout:        { type: 'blog_callout'; variant: 'fact'|'stat'|'info'|'warning'; title?: string; text: string }
 blog_quote:          { type: 'blog_quote'; text: string; author?: string }
+blog_rating:         { type: 'blog_rating'; score: number; label?: string; summary?: string }  // score 0–10
+blog_timeline:       { type: 'blog_timeline'; items: Array<{year: string; title: string; text?: string; emoji?: string}> }
 blog_divider:        { type: 'blog_divider' }
 ```
 
@@ -218,13 +228,14 @@ python3 scripts/find-cover-image.py "Nome do Artista"
 ### 5. Inserir no banco
 
 ```bash
-# Copiar JSON para o servidor e inserir
+# Local (recomendado — acessa o DB de dev)
+npx tsx scripts/insert-article.ts /tmp/artigo.json
+
+# Ou no servidor de produção:
 scp -P 22 -i ~/.ssh/id_ed25519 /tmp/artigo.json root@31.97.255.107:/tmp/artigo.json
 ssh -p 22 -i ~/.ssh/id_ed25519 root@31.97.255.107 \
-  "python3 /app/scripts/insert-blog-post.py /tmp/artigo.json"
-
-# OU rodar localmente (se o script tiver acesso ao Docker):
-python3 scripts/insert-blog-post.py /tmp/artigo.json
+  "docker exec \$(docker ps --format '{{.Names}}' | grep '^e6h2') \
+   npx tsx scripts/insert-article.ts /tmp/artigo.json"
 ```
 
 ### 6. Verificar em produção
@@ -254,9 +265,9 @@ curl -s -o /dev/null -w "%{http_code}" https://www.hallyuhub.com.br/blog/{{slug}
 
 ## Referências
 
-- Script de inserção: `scripts/insert-blog-post.py`
-- Script de busca de imagem: `scripts/find-cover-image.py`
+- Script de inserção: `scripts/insert-article.ts`
 - Script de busca de IDs: `scripts/search.ts`
 - Tipos de blocos: `lib/types/blocks.ts`
+- Renderer público: `components/ui/BlogBlockRenderer.tsx`
 - TMDB API key: `411337d42a0431084f39266c265688aa`
 - Author ID padrão: `f6c14838-660b-4c77-9d06-32c30e4de7d5` (Fabio Uchidate)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireEditorOrAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { notifyUsersAboutBlogPost } from '@/lib/services/blog-notification-service'
+import { syncBlogPostEntityLinks } from '@/lib/services/blog-entity-links'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,9 +25,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     },
   })
 
+  let artistIdsForNotification: string[] = []
+  if (publish) {
+    const synced = await syncBlogPostEntityLinks(updated.id, post.blocks)
+    artistIdsForNotification = synced.artistIds
+  }
+
   // Vincula artistas e dispara notificações apenas na primeira publicação
   if (publish && !post.publishedAt) {
-    await linkArtistsAndNotify(updated.id, post.blocks as { type: string; artistId?: string }[] | null)
+    await notifyFavoriteUsersForArtists(updated.id, artistIdsForNotification)
     // Email para assinantes (fire-and-forget)
     notifyUsersAboutBlogPost(updated.id).catch(err =>
       console.error('[publish] blog notification error:', err)
@@ -36,26 +43,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   return NextResponse.json(updated)
 }
 
-async function linkArtistsAndNotify(
+async function notifyFavoriteUsersForArtists(
   postId: string,
-  blocks: { type: string; artistId?: string }[] | null,
+  artistIds: string[],
 ) {
-  if (!Array.isArray(blocks) || blocks.length === 0) return
-
-  // Coleta IDs únicos de artistas mencionados via blog_artist_card
-  const artistIds = Array.from(new Set(
-    blocks
-      .filter(b => b.type === 'blog_artist_card' && b.artistId)
-      .map(b => b.artistId as string)
-  ))
-
   if (artistIds.length === 0) return
-
-  // Cria vínculos BlogPostArtist (ignora duplicatas)
-  await prisma.blogPostArtist.createMany({
-    data: artistIds.map(artistId => ({ blogPostId: postId, artistId })),
-    skipDuplicates: true,
-  })
 
   // Usuários que favoritaram pelo menos um dos artistas mencionados
   const favorites = await prisma.favorite.findMany({

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
@@ -244,7 +245,14 @@ function CalendarView() {
 
 // ─── Blog stats ───────────────────────────────────────────────────────────────
 
-interface BlogStats { published: number; draft: number; review: number; total: number }
+interface BlogStats {
+    published: number
+    draft: number
+    review: number
+    total: number
+    seoIssues: number
+    seoHealthy: number
+}
 
 function useBlogStats(refreshKey: number) {
     const [stats, setStats] = useState<BlogStats | null>(null)
@@ -255,12 +263,16 @@ function useBlogStats(refreshKey: number) {
             fetch('/api/admin/blog?limit=1&status=PUBLISHED').then(r => r.json()),
             fetch('/api/admin/blog?limit=1&status=DRAFT').then(r => r.json()),
             fetch('/api/admin/blog?limit=1&status=PENDING_REVIEW').then(r => r.json()),
-        ]).then(([all, pub, draft, review]) => {
+            fetch('/api/admin/blog?limit=1&seo=issues').then(r => r.json()),
+            fetch('/api/admin/blog?limit=1&seo=healthy').then(r => r.json()),
+        ]).then(([all, pub, draft, review, seoIssues, seoHealthy]) => {
             setStats({
                 total:     all.pagination?.total     ?? 0,
                 published: pub.pagination?.total     ?? 0,
                 draft:     draft.pagination?.total   ?? 0,
                 review:    review.pagination?.total  ?? 0,
+                seoIssues: seoIssues.pagination?.total ?? 0,
+                seoHealthy: seoHealthy.pagination?.total ?? 0,
             })
         }).catch(() => {})
     }, [refreshKey])
@@ -856,7 +868,10 @@ function FeaturedButton({ post, onDone }: { post: BlogPost; onDone: () => void }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function AdminBlogPage() {
+function AdminBlogPageContent() {
+    const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const addToast    = useToast(s => s.addToast)
     const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
     const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
@@ -870,9 +885,50 @@ export default function AdminBlogPage() {
     const [hiddenIds,     setHiddenIds]    = useState<Set<string>>(new Set())
     const [generatingAll, setGeneratingAll] = useState(false)
     const [statusFilter,  setStatusFilter] = useState<string>('')
+    const [seoFilter,     setSeoFilter]    = useState<string>('')
     const [selectedIds,   setSelectedIds]  = useState<string[]>([])
+    const [urlReady,      setUrlReady]     = useState(false)
 
     const refreshStats = useCallback(() => setStatsKey(k => k + 1), [])
+
+    useEffect(() => {
+        const tabParam = searchParams.get('tab')
+        const statusParam = searchParams.get('status')
+        const seoParam = searchParams.get('seo')
+
+        const validTab = (['suggestions', 'posts', 'top', 'calendar', 'categories'] as const).includes(tabParam as Tab)
+            ? (tabParam as Tab)
+            : 'posts'
+        const validStatus = ['', 'PUBLISHED', 'DRAFT', 'PENDING_REVIEW', 'ARCHIVED'].includes(statusParam ?? '')
+            ? (statusParam ?? '')
+            : ''
+        const validSeo = ['', 'issues', 'healthy'].includes(seoParam ?? '')
+            ? (seoParam ?? '')
+            : ''
+
+        setActiveTab(validTab)
+        setStatusFilter(validStatus)
+        setSeoFilter(validSeo)
+        setUrlReady(true)
+    }, [searchParams])
+
+    useEffect(() => {
+        if (!urlReady) return
+        const params = new URLSearchParams(window.location.search)
+
+        if (activeTab === 'posts') params.delete('tab')
+        else params.set('tab', activeTab)
+
+        if (statusFilter) params.set('status', statusFilter)
+        else params.delete('status')
+
+        if (seoFilter) params.set('seo', seoFilter)
+        else params.delete('seo')
+
+        const next = params.toString() ? `${pathname}?${params.toString()}` : pathname
+        const current = `${pathname}${window.location.search}`
+        if (next !== current) router.replace(next, { scroll: false })
+    }, [activeTab, statusFilter, seoFilter, pathname, router, urlReady])
 
     const fetchSuggestions = useCallback(async () => {
         setLoading(true)
@@ -960,6 +1016,7 @@ export default function AdminBlogPage() {
             key: 'title',
             label: 'Título',
             sortable: true,
+            className: 'min-w-[340px]',
             render: (post) => (
                 <div className="max-w-sm">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -980,9 +1037,10 @@ export default function AdminBlogPage() {
         {
             key: 'status',
             label: 'Status',
+            className: 'min-w-[140px]',
             render: (post) => {
                 const s = STATUS_LABELS[post.status] ?? { label: post.status, color: 'bg-surface text-muted' }
-                return <AdminStatusBadge label={s.label} color={s.color} />
+                return <AdminStatusBadge label={s.label} color={s.color} variant="pill" />
             },
         },
         {
@@ -1252,11 +1310,11 @@ export default function AdminBlogPage() {
                         {/* Status filter chips */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {[
-                                { value: '',               label: 'Todos' },
-                                { value: 'PUBLISHED',      label: 'Publicado' },
-                                { value: 'DRAFT',          label: 'Rascunho' },
-                                { value: 'PENDING_REVIEW', label: 'Em revisão' },
-                                { value: 'ARCHIVED',       label: 'Arquivado' },
+                                { value: '',               label: 'Todos',      count: blogStats?.total },
+                                { value: 'PUBLISHED',      label: 'Publicado',  count: blogStats?.published },
+                                { value: 'DRAFT',          label: 'Rascunho',   count: blogStats?.draft },
+                                { value: 'PENDING_REVIEW', label: 'Em revisão', count: blogStats?.review },
+                                { value: 'ARCHIVED',       label: 'Arquivado',  count: undefined },
                             ].map(opt => (
                                 <button
                                     key={opt.value}
@@ -1268,6 +1326,9 @@ export default function AdminBlogPage() {
                                     }`}
                                 >
                                     {opt.label}
+                                    {opt.count != null && (
+                                        <span className="ml-1 opacity-70 font-normal">{opt.count}</span>
+                                    )}
                                 </button>
                             ))}
                             {selectedIds.length > 0 && (
@@ -1279,6 +1340,30 @@ export default function AdminBlogPage() {
                                     Limpar seleção ({selectedIds.length})
                                 </button>
                             )}
+                        </div>
+
+                        {/* SEO filter chips */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {[
+                                { value: '',        label: 'SEO: Todos',         count: blogStats?.total },
+                                { value: 'issues',  label: 'Com pendências SEO', count: blogStats?.seoIssues },
+                                { value: 'healthy', label: 'SEO saudável',       count: blogStats?.seoHealthy },
+                            ].map(opt => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => { setSeoFilter(opt.value); setSelectedIds([]) }}
+                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
+                                        seoFilter === opt.value
+                                            ? 'bg-orange-500/15 text-orange-300 border-orange-500/30'
+                                            : 'text-muted border-border hover:text-foreground hover:border-border'
+                                    }`}
+                                >
+                                    {opt.label}
+                                    {opt.count != null && (
+                                        <span className="ml-1 opacity-70 font-normal">{opt.count}</span>
+                                    )}
+                                </button>
+                            ))}
                         </div>
 
                         {/* Bulk action bar */}
@@ -1295,7 +1380,10 @@ export default function AdminBlogPage() {
                             columns={columns}
                             apiUrl="/api/admin/blog"
                             searchPlaceholder="Buscar por título..."
-                            extraParams={statusFilter ? { status: statusFilter } : {}}
+                            extraParams={{
+                                ...(statusFilter ? { status: statusFilter } : {}),
+                                ...(seoFilter ? { seo: seoFilter } : {}),
+                            }}
                             actions={(post) => (
                                 <div className="flex items-center gap-1">
                                     <AdminIconLink href={`/admin/blog/${post.id}/edit`} onClick={(e) => e.stopPropagation()} title="Editar">
@@ -1341,5 +1429,19 @@ export default function AdminBlogPage() {
                 )}
             </div>
         </AdminLayout>
+    )
+}
+
+export default function AdminBlogPage() {
+    return (
+        <Suspense
+            fallback={
+                <AdminLayout title="Blog Pipeline">
+                    <div className="text-sm text-muted">Carregando painel do blog...</div>
+                </AdminLayout>
+            }
+        >
+            <AdminBlogPageContent />
+        </Suspense>
     )
 }

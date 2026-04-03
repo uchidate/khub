@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Trash2, ArrowUpDown, SearchX } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, ArrowUpDown, SearchX, Pencil, AlignJustify, AlignCenter } from 'lucide-react'
 import { AdminSearchInput } from '@/components/admin/AdminSearchInput'
 
 export interface Column<T> {
@@ -29,6 +29,10 @@ interface DataTableProps<T> {
   extraParams?: Record<string, string>
   /** If provided, renders a mobile-friendly card (md:hidden) instead of the horizontal-scroll table */
   renderMobileCard?: (item: T) => React.ReactNode
+  /** Optional client-side filter applied after fetch. */
+  clientFilter?: (item: T) => boolean
+  /** Optional custom skeleton renderer for desktop table rows. */
+  renderSkeletonRow?: (index: number, columns: Column<T>[], hasActions: boolean, hasDelete: boolean) => React.ReactNode
 }
 
 interface PaginatedResponse<T> {
@@ -98,6 +102,8 @@ export function DataTable<T extends { id: string }>({
   filters,
   extraParams,
   renderMobileCard,
+  clientFilter,
+  renderSkeletonRow,
 }: DataTableProps<T>) {
   const [data, setData] = useState<T[]>([])
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
@@ -112,6 +118,20 @@ export function DataTable<T extends { id: string }>({
   extraParamsRef.current = extraParams
   // Serialize for stable dependency comparison (avoids infinite loop when parent passes inline objects)
   const extraParamsKey = JSON.stringify(extraParams ?? null)
+
+  // Row density
+  const [compact, setCompact] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('admin-table-density') === 'compact'
+  })
+  const toggleDensity = () => {
+    setCompact(c => {
+      const next = !c
+      localStorage.setItem('admin-table-density', next ? 'compact' : 'default')
+      return next
+    })
+  }
+  const cellPad = compact ? 'px-3 py-2' : 'px-4 py-3.5'
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -158,9 +178,11 @@ export function DataTable<T extends { id: string }>({
     setSelected(next)
   }
 
+  const visibleData = clientFilter ? data.filter(clientFilter) : data
+
   const toggleSelectAll = () => {
-    if (selected.size === data.length) setSelected(new Set())
-    else setSelected(new Set(data.map((d) => d.id)))
+    if (selected.size === visibleData.length) setSelected(new Set())
+    else setSelected(new Set(visibleData.map((d) => d.id)))
   }
 
   const clearSelection = () => setSelected(new Set())
@@ -206,6 +228,14 @@ export function DataTable<T extends { id: string }>({
               Excluir {selected.size}
             </button>
           )}
+          {/* Density toggle */}
+          <button
+            onClick={toggleDensity}
+            title={compact ? 'Mudar para visualização normal' : 'Mudar para visualização compacta'}
+            className="flex items-center justify-center w-8 h-8 rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+          >
+            {compact ? <AlignCenter size={14} /> : <AlignJustify size={14} />}
+          </button>
         </div>
       </div>
 
@@ -241,15 +271,15 @@ export function DataTable<T extends { id: string }>({
       )}
 
       {/* Table — overflow-x-auto + min-w-max ensures horizontal scroll instead of column squishing */}
-      <div className={`overflow-x-auto rounded-xl border border-border bg-surface ${renderMobileCard ? 'hidden md:block' : ''}`}>
-        <table className="min-w-max w-full text-sm">
+      <div className={`overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-[0_10px_30px_rgba(0,0,0,0.18)] ${renderMobileCard ? 'hidden md:block' : ''}`}>
+        <table className="min-w-max w-full text-sm border-separate border-spacing-0">
           <thead>
-            <tr className="border-b border-border">
+            <tr className="border-b border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]">
               {onDelete && (
-                <th className="w-10 px-4 py-3">
+                <th className={`w-10 ${cellPad}`}>
                   <input
                     type="checkbox"
-                    checked={data.length > 0 && selected.size === data.length}
+                    checked={visibleData.length > 0 && selected.size === visibleData.length}
                     onChange={toggleSelectAll}
                     className="rounded border-border bg-surface accent-purple-500"
                   />
@@ -258,7 +288,7 @@ export function DataTable<T extends { id: string }>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-muted whitespace-nowrap ${
+                  className={`${cellPad} text-left text-[10px] font-bold uppercase tracking-[0.14em] text-muted whitespace-nowrap ${
                     col.sortable ? 'cursor-pointer hover:text-foreground select-none' : ''
                   } ${col.className ?? ''}`}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
@@ -275,37 +305,43 @@ export function DataTable<T extends { id: string }>({
                 </th>
               ))}
               {hasActions && (
-                <th className="sticky right-0 bg-background border-l border-border px-4 py-3 text-right text-[11px] font-bold uppercase tracking-widest text-muted shadow-[-8px_0_16px_rgba(0,0,0,0.5)]">
+                <th className={`sticky right-0 z-10 bg-surface border-l border-border/80 ${cellPad} text-right text-[10px] font-bold uppercase tracking-[0.14em] text-muted shadow-[-10px_0_16px_rgba(0,0,0,0.18)]`}>
                   Ações
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody>
             {loading ? (
               Array.from({ length: skeletonRows }).map((_, i) => (
-                <tr key={i} className="animate-pulse">
-                  {onDelete && (
-                    <td className="px-4 py-3">
-                      <div className="w-4 h-4 bg-skeleton rounded" />
-                    </td>
-                  )}
-                  {columns.map((col) => (
-                    <td key={col.key} className={`px-4 py-3 ${col.className ?? ''}`}>
-                      <div
-                        className="h-4 bg-skeleton rounded-md"
-                        style={{ width: `${55 + ((i * 37 + col.key.length * 13) % 40)}%` }}
-                      />
-                    </td>
-                  ))}
-                  {hasActions && (
-                    <td className="sticky right-0 bg-background border-l border-border px-4 py-3">
-                      <div className="w-16 h-6 bg-skeleton rounded-lg ml-auto" />
-                    </td>
+                <tr key={i} className="animate-pulse border-b border-border/70 last:border-0">
+                  {renderSkeletonRow ? (
+                    renderSkeletonRow(i, columns, !!hasActions, !!onDelete)
+                  ) : (
+                    <>
+                      {onDelete && (
+                        <td className={cellPad}>
+                          <div className="w-4 h-4 bg-skeleton rounded" />
+                        </td>
+                      )}
+                      {columns.map((col) => (
+                        <td key={col.key} className={`${cellPad} ${col.className ?? ''}`}>
+                          <div
+                            className="h-4 bg-skeleton rounded-md"
+                            style={{ width: `${55 + ((i * 37 + col.key.length * 13) % 40)}%` }}
+                          />
+                        </td>
+                      ))}
+                      {hasActions && (
+                        <td className={`sticky right-0 bg-surface border-l border-border/80 ${cellPad}`}>
+                          <div className="w-16 h-6 bg-skeleton rounded-lg ml-auto" />
+                        </td>
+                      )}
+                    </>
                   )}
                 </tr>
               ))
-            ) : data.length === 0 ? (
+            ) : visibleData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length + (onDelete ? 1 : 0) + (hasActions ? 1 : 0)}>
                   <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted">
@@ -315,10 +351,10 @@ export function DataTable<T extends { id: string }>({
                 </td>
               </tr>
             ) : (
-              data.map((item) => (
-                <tr key={item.id} className={`hover:bg-surface-hover transition-colors ${selected.has(item.id) ? 'bg-purple-500/5' : ''}`}>
+              visibleData.map((item) => (
+                <tr key={item.id} className={`group border-b border-border/70 last:border-0 transition-colors ${selected.has(item.id) ? 'bg-blue-500/10' : 'odd:bg-white/[0.01] hover:bg-surface-hover/90'}`}>
                   {onDelete && (
-                    <td className="px-4 py-3">
+                    <td className={cellPad}>
                       <input
                         type="checkbox"
                         checked={selected.has(item.id)}
@@ -328,28 +364,32 @@ export function DataTable<T extends { id: string }>({
                     </td>
                   )}
                   {columns.map((col) => (
-                    <td key={col.key} className={`px-4 py-3 text-foreground ${col.className ?? ''}`}>
+                    <td key={col.key} className={`${cellPad} text-foreground align-middle ${col.className ?? ''}`}>
                       {col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}
                   {hasActions && (
-                    <td className="sticky right-0 bg-background border-l border-border px-4 py-3 text-right shadow-[-8px_0_16px_rgba(0,0,0,0.5)]">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className={`sticky right-0 bg-surface border-l border-border/80 ${cellPad} text-right shadow-[-10px_0_16px_rgba(0,0,0,0.12)]`}>
+                      <div className="inline-flex items-center justify-end gap-0.5">
                         {actions?.(item)}
                         {editHref && (
                           <Link
                             href={editHref(item)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:text-foreground hover:bg-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
+                            title="Editar"
+                            aria-label="Editar"
+                            className="inline-flex items-center justify-center rounded p-1.5 text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
                           >
-                            Editar
+                            <Pencil size={14} />
                           </Link>
                         )}
                         {onEdit && !editHref && (
                           <button
                             onClick={() => onEdit(item)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-purple-500/30 text-purple-400 hover:text-foreground hover:bg-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
+                            title="Editar"
+                            aria-label="Editar"
+                            className="inline-flex items-center justify-center rounded p-1.5 text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
                           >
-                            Editar
+                            <Pencil size={14} />
                           </button>
                         )}
                       </div>

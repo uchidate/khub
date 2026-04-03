@@ -13,6 +13,7 @@ import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
+import { nameToGradient } from '@/lib/utils/name-to-gradient'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { getTranslation } from '@/lib/translations'
@@ -120,9 +121,31 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
     const officialColorRaw = group.officialColor ?? null
     const videos = (group.videos as Array<{ title: string; url: string }>) || []
     const websiteUrl = socialLinks.website ?? socialLinks.Website ?? socialLinks.official ?? null
+    const roleBreakdown = Array.from(
+        activeMembers.reduce((map, member) => {
+            const role = member.role?.trim() || 'Membro'
+            map.set(role, (map.get(role) ?? 0) + 1)
+            return map
+        }, new Map<string, number>())
+    )
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+
+    const postSelect = {
+        id: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        coverImageUrl: true,
+        publishedAt: true,
+        readingTimeMin: true,
+        category: { select: { name: true } },
+    } as const
+
+    const relevanceTerms = [group.name, group.nameHangul].filter(Boolean) as string[]
 
     // Step 2: queries secundárias todas em paralelo
-    const [bioPt, themeColorFetched, relatedGroups, recentAlbums] = await Promise.all([
+    const [bioPt, themeColorFetched, relatedGroups, recentAlbums, linkedPosts, fallbackPosts] = await Promise.all([
         getTranslation('group', params.id, 'bio', 'pt-BR').catch(() => null),
         !officialColorRaw && websiteUrl ? fetchGroupThemeColor(websiteUrl) : Promise.resolve(null),
         prisma.musicalGroup.findMany({
@@ -148,7 +171,42 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                 select: { id: true, title: true, type: true, coverUrl: true, releaseDate: true, spotifyUrl: true, artist: { select: { nameRomanized: true } } },
             }).catch(() => [])
             : Promise.resolve([]),
+        prisma.blogPost.findMany({
+            where: {
+                status: 'PUBLISHED',
+                isPrivate: false,
+                relatedGroups: { some: { groupId: group.id } },
+            },
+            take: 6,
+            orderBy: { publishedAt: 'desc' },
+            select: postSelect,
+        }).catch(() => []),
+        relevanceTerms.length > 0
+            ? prisma.blogPost.findMany({
+                where: {
+                    status: 'PUBLISHED',
+                    isPrivate: false,
+                    OR: relevanceTerms.flatMap((term) => [
+                        { title: { contains: term, mode: 'insensitive' } },
+                        { excerpt: { contains: term, mode: 'insensitive' } },
+                        { contentMd: { contains: term, mode: 'insensitive' } },
+                        { tags: { has: term } },
+                    ]),
+                },
+                take: 10,
+                orderBy: { publishedAt: 'desc' },
+                select: postSelect,
+            }).catch(() => [])
+            : Promise.resolve([]),
     ])
+
+    const linkedPostIds = new Set(linkedPosts.map((p) => p.id))
+    const relatedPosts = [
+        ...linkedPosts.map((p) => ({ ...p, source: 'linked' as const })),
+        ...fallbackPosts
+            .filter((p) => !linkedPostIds.has(p.id))
+            .map((p) => ({ ...p, source: 'recommended' as const })),
+    ].slice(0, 6)
 
     const themeColor = officialColorRaw ?? themeColorFetched
     const accent = themeColor ?? '#9333ea'
@@ -257,6 +315,18 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                     Ativo
                                 </span>
                             )}
+                            {debutYear && (() => {
+                                const genLabel =
+                                    debutYear <= 2002 ? '1ª Geração' :
+                                    debutYear <= 2011 ? '2ª Geração' :
+                                    debutYear <= 2017 ? '3ª Geração' :
+                                    debutYear <= 2022 ? '4ª Geração' : '5ª Geração'
+                                return (
+                                    <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-white/70 rounded-full border border-white/10">
+                                        {genLabel}
+                                    </span>
+                                )
+                            })()}
                             {fanClubName && (
                                 <span className="text-xs font-black px-3 py-1 backdrop-blur-sm rounded-full border inline-flex items-center gap-1.5"
                                     style={{ background: toRgba(accent, 0.15), color: accent, borderColor: toRgba(accent, 0.3) }}>
@@ -344,6 +414,31 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
             </div>
             {/* ── CONTEÚDO ── */}
             <div className="px-4 sm:px-12 md:px-20 py-12">
+                <div className="max-w-[1600px] mx-auto mb-8">
+                    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted mb-3">Navegação rápida</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {activeMembers.length > 0 && (
+                                <a href="#membros" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Membros</a>
+                            )}
+                            {relatedGroups.length > 0 && (
+                                <a href="#relacionados" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Relacionados</a>
+                            )}
+                            {recentAlbums.length > 0 && (
+                                <a href="#discografia" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Discografia</a>
+                            )}
+                            {relatedPosts.length > 0 && (
+                                <a href="#artigos" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Artigos</a>
+                            )}
+                            {videos.length > 0 && (
+                                <a href="#mvs" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">MVs</a>
+                            )}
+                            {formerMembers.length > 0 && (
+                                <a href="#ex-membros" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Ex-membros</a>
+                            )}
+                        </div>
+                    </div>
+                </div>
                 <div className="grid lg:grid-cols-3 gap-12 max-w-[1600px] mx-auto">
 
                     {/* ── SIDEBAR ── */}
@@ -431,6 +526,28 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                             </div>
                         </div>
 
+                        {roleBreakdown.length > 0 && (
+                            <div className="p-6 rounded-2xl bg-background border border-border">
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Formação atual</h3>
+                                <div className="space-y-2.5">
+                                    {roleBreakdown.map(([role, count]) => {
+                                        const pct = Math.max(8, Math.round((count / activeMembers.length) * 100))
+                                        return (
+                                            <div key={role}>
+                                                <div className="flex items-center justify-between text-xs mb-1">
+                                                    <span className="font-semibold text-foreground">{role}</span>
+                                                    <span className="text-muted font-bold">{count}</span>
+                                                </div>
+                                                <div className="h-1.5 rounded-full bg-surface overflow-hidden">
+                                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: accent }} />
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Site Oficial — card destacado com cor do tema */}
                         {websiteUrl && (
                             <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
@@ -475,8 +592,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Stats */}
                         <div className="grid grid-cols-2 gap-3">
-                            <StatCard icon={<Eye className="w-5 h-5" />} label="Visualizações" value={group.viewCount.toLocaleString('pt-BR')} color="text-cyan-400" />
-                            <StatCard icon={<Heart className="w-5 h-5" />} label="Fãs" value={group.favoriteCount.toLocaleString('pt-BR')} color="text-pink-400" />
+                            <StatCard icon={<Eye className="w-5 h-5" />} label="Visualizações" value={group.viewCount.toLocaleString('pt-BR')} color="text-cyan-400" accent={accent} />
+                            <StatCard icon={<Heart className="w-5 h-5" />} label="Fãs" value={group.favoriteCount.toLocaleString('pt-BR')} color="text-pink-400" accent={accent} />
                         </div>
 
                     </div>
@@ -486,9 +603,98 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Membros atuais */}
                         {activeMembers.length > 0 && (
-                            <section>
+                            <section id="membros">
                                 <SectionHeader icon={<Users className="w-5 h-5" />} title="Membros" count={activeMembers.length} accent={accent} />
                                 <MemberGrid members={activeMembers} accent={accent} />
+                            </section>
+                        )}
+
+                        {relatedPosts.length > 0 && (
+                            <section id="artigos">
+                                <SectionHeader icon={<Music className="w-5 h-5" />} title="Artigos Relacionados" count={relatedPosts.length} accent={accent} />
+                                <p className="text-[11px] text-muted mb-3">
+                                    Artigos com vínculo editorial aparecem primeiro, seguidos por descobertas por relevância.
+                                </p>
+
+                                {(() => {
+                                    const linked = relatedPosts.filter((post) => post.source === 'linked')
+                                    const recommended = relatedPosts.filter((post) => post.source === 'recommended')
+
+                                    const renderPostCard = (post: (typeof relatedPosts)[number]) => (
+                                        <Link
+                                            key={post.id}
+                                            href={`/blog/${post.slug}`}
+                                            className="group block rounded-xl border border-border bg-background overflow-hidden hover:border-border transition-colors"
+                                        >
+                                            <div className="relative aspect-[16/9] bg-surface">
+                                                {post.coverImageUrl ? (
+                                                    <Image
+                                                        src={post.coverImageUrl}
+                                                        alt={post.title}
+                                                        fill
+                                                        sizes="(max-width: 640px) 100vw, 50vw"
+                                                        className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center" style={{ background: toRgba(accent, 0.12) }}>
+                                                        <Music className="w-7 h-7" style={{ color: toRgba(accent, 0.7) }} />
+                                                    </div>
+                                                )}
+                                                {post.category?.name && (
+                                                    <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-1 rounded-full bg-black/60 text-white/90 backdrop-blur-sm">
+                                                        {post.category.name}
+                                                    </span>
+                                                )}
+                                                <span
+                                                    className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-sm border ${
+                                                        post.source === 'linked'
+                                                            ? 'bg-emerald-500/20 text-emerald-100 border-emerald-400/35'
+                                                            : 'bg-sky-500/20 text-sky-100 border-sky-400/35'
+                                                    }`}
+                                                >
+                                                    {post.source === 'linked' ? 'Vinculado' : 'Recomendado'}
+                                                </span>
+                                            </div>
+                                            <div className="p-3.5">
+                                                <h3 className="text-sm font-bold text-foreground line-clamp-2 group-hover:text-accent transition-colors">
+                                                    {post.title}
+                                                </h3>
+                                                {post.excerpt && (
+                                                    <p className="text-xs text-muted line-clamp-2 mt-1.5">{post.excerpt}</p>
+                                                )}
+                                                <div className="flex items-center gap-2 text-[10px] text-muted mt-2.5">
+                                                    {post.publishedAt && (
+                                                        <span>{new Date(post.publishedAt).toLocaleDateString('pt-BR')}</span>
+                                                    )}
+                                                    <span>·</span>
+                                                    <span>{post.readingTimeMin} min</span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    )
+
+                                    return (
+                                        <div className="space-y-5">
+                                            {linked.length > 0 && (
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Relacionados no CMS</p>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        {linked.map(renderPostCard)}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {recommended.length > 0 && (
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Descobertas por relevância</p>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        {recommended.map(renderPostCard)}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })()}
                             </section>
                         )}
 
@@ -496,7 +702,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Grupos Relacionados */}
                         {relatedGroups.length > 0 && (
-                            <section>
+                            <section id="relacionados">
                                 <SectionHeader icon={<Users className="w-5 h-5" />} title={group.agencyId ? 'Mesma Agência' : 'Mesma Geração'} count={relatedGroups.length} accent={accent} />
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {relatedGroups.map(rg => (
@@ -525,7 +731,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Discografia recente */}
                         {recentAlbums.length > 0 && (
-                            <section>
+                            <section id="discografia">
                                 <SectionHeader icon={<Music className="w-5 h-5" />} title="Discografia Recente" accent={accent} />
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {recentAlbums.map(album => (
@@ -571,7 +777,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* MVs principais */}
                         {videos.length > 0 && (
-                            <section>
+                            <section id="mvs">
                                 <SectionHeader icon={<Play className="w-5 h-5" />} title="MVs Principais" count={videos.length} accent={accent} />
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {videos.map((mv, i) => {
@@ -608,7 +814,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
                         {/* Ex-membros */}
                         {formerMembers.length > 0 && (
-                            <section>
+                            <section id="ex-membros">
                                 <SectionHeader icon={<Users className="w-5 h-5" />} title="Ex-Membros" count={formerMembers.length} muted accent={accent} />
                                 <MemberGrid members={formerMembers} faded accent={accent} />
                             </section>
@@ -631,6 +837,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 }
 
 /* ── Helpers ── */
+
 
 function extractYoutubeId(url: string): string | null {
     try {
@@ -689,11 +896,11 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
     )
 }
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
+function StatCard({ icon, label, value, color, accent }: { icon: React.ReactNode; label: string; value: string; color: string; accent?: string }) {
     return (
         <div className="p-4 rounded-xl bg-surface border border-border text-center">
             <div className={`${color} mx-auto mb-1 flex justify-center`}>{icon}</div>
-            <div className={`text-2xl font-black ${color}`}>{value}</div>
+            <div className={`text-2xl font-black ${color}`} style={accent ? { color: accent } : undefined}>{value}</div>
             <p className="text-xs text-muted font-bold uppercase tracking-wider mt-0.5">{label}</p>
         </div>
     )
@@ -717,7 +924,7 @@ function SocialLink({ platform, url }: { platform: string; url: string }) {
     const key = platform.toLowerCase()
     return (
         <a href={url} target="_blank" rel="noopener noreferrer"
-            className={`flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-[#e8e8e8] border border-border hover:border-[#d0d0d0] transition-all ${colors[key] || 'text-muted hover:text-foreground'}`}>
+            className={`flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-surface-hover border border-border hover:border-border transition-all ${colors[key] || 'text-muted hover:text-foreground'}`}>
             <div className="flex items-center gap-2.5">
                 {icons[key] ?? <ExternalLink className="w-4 h-4" />}
                 <span className="text-sm font-bold capitalize">{platform}</span>
@@ -767,25 +974,25 @@ function MemberGrid({
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center"
-                                style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.15)}, #f5f5f7)` }}>
-                                <span className="text-3xl font-black text-muted group-hover:text-foreground transition-colors">
+                                style={{ background: nameToGradient(member.artist.nameRomanized) }}>
+                                <span className="text-4xl font-black text-white/80 drop-shadow select-none">
                                     {member.artist.nameRomanized[0]}
                                 </span>
                             </div>
                         )}
                         {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {/* Role badge */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
+                        {/* Role badge — always visible */}
                         {member.role && (
                             <div className="absolute bottom-2 left-2 right-2">
-                                <span className="text-[10px] font-black uppercase px-2 py-0.5 backdrop-blur-sm text-white rounded-full group-accent-badge">
+                                <span className="text-[10px] font-black uppercase px-2 py-0.5 backdrop-blur-sm text-white/80 group-hover:text-white rounded-full group-accent-badge transition-colors">
                                     {member.role}
                                 </span>
                             </div>
                         )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-foreground text-sm leading-tight group-hover:opacity-80 transition-opacity">
+                        <h3 className="font-bold text-foreground text-sm leading-tight group-hover:text-accent transition-colors">
                             {member.artist.nameRomanized}
                         </h3>
                         {member.artist.nameHangul && (
@@ -797,6 +1004,9 @@ function MemberGrid({
                                 {member.leaveDate ? ` – ${new Date(member.leaveDate).getUTCFullYear()}` : ''}
                             </p>
                         )}
+                        <p className="text-[10px] font-semibold mt-1.5" style={{ color: accent }}>
+                            Ver perfil do artista
+                        </p>
                     </div>
                 </Link>
             ))}

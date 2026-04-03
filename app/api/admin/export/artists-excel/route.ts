@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,28 +44,27 @@ export async function GET() {
         Curiosidades:   (a.curiosidades ?? []).join('\n'),
     }))
 
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = new ExcelJS.Workbook()
+    const ws = wb.addWorksheet('Artistas')
 
-    // Column widths
-    ws['!cols'] = [
-        { wch: 30 },  // ID
-        { wch: 30 },  // Nome
-        { wch: 25 },  // Nome Hangul
-        { wch: 12 },  // Data Nasc.
-        { wch: 60 },  // Bio
-        { wch: 70 },  // Projetos
-        { wch: 70 },  // Reconhecimentos
-        { wch: 80 },  // Análise Editorial completo
-        { wch: 80 },  // Curiosidades
+    ws.columns = [
+        { header: 'ID',                           key: 'ID',                           width: 30 },
+        { header: 'Nome',                         key: 'Nome',                         width: 30 },
+        { header: 'Nome Hangul',                  key: 'Nome Hangul',                  width: 25 },
+        { header: 'Data Nasc.',                   key: 'Data Nasc.',                   width: 12 },
+        { header: 'Bio',                          key: 'Bio',                          width: 60 },
+        { header: 'Projetos',                     key: 'Projetos',                     width: 70 },
+        { header: 'Reconhecimentos',              key: 'Reconhecimentos',              width: 70 },
+        { header: 'Análise Editorial (completo)', key: 'Análise Editorial (completo)', width: 80 },
+        { header: 'Curiosidades',                 key: 'Curiosidades',                 width: 80 },
     ]
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Artistas')
+    ws.addRows(rows)
 
-    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    const buf = await wb.xlsx.writeBuffer()
 
     const today = new Date().toISOString().slice(0, 10)
-    return new NextResponse(buf, {
+    return new NextResponse(buf as ArrayBuffer, {
         headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition': `attachment; filename="artistas-${today}.xlsx"`,
