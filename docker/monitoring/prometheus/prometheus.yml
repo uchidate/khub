@@ -7,15 +7,13 @@ global:
   external_labels:
     monitor: 'hallyuhub'
 
-# Alertmanager (opcional - para alertas)
-# alerting:
-#   alertmanagers:
-#     - static_configs:
-#         - targets: ['alertmanager:9093']
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
 
-# Regras de alerta (opcional)
-# rule_files:
-#   - "alert_rules.yml"
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
 
 scrape_configs:
   # ============================================
@@ -46,35 +44,66 @@ scrape_configs:
           environment: 'docker'
 
   # ============================================
-  # HallyuHub - Aplicacao (Production)
+  # HallyuHub - Metricas da Aplicacao (Production)
   # ============================================
   - job_name: 'hallyuhub-production'
     metrics_path: '/api/metrics'
+    scheme: https
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/prometheus_token
     static_configs:
-      - targets: ['hallyuhub:3000']
+      - targets: ['www.hallyuhub.com.br']
         labels:
           environment: 'production'
           app: 'hallyuhub'
-    # Fallback para health check se metrics nao existir
+          service: 'web'
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
         replacement: 'production'
 
   # ============================================
-  # HallyuHub - Aplicacao (Staging)
+  # Blackbox - Disponibilidade externa (Production)
   # ============================================
-  - job_name: 'hallyuhub-staging'
-    metrics_path: '/api/metrics'
+  - job_name: 'blackbox-hallyuhub-prod'
+    metrics_path: /probe
+    params:
+      module: [https_2xx]
     static_configs:
-      - targets: ['hallyuhub-staging:3000']
+      - targets:
+          - https://www.hallyuhub.com.br/api/health
         labels:
-          environment: 'staging'
-          app: 'hallyuhub'
+          environment: 'production'
+          service: 'web'
     relabel_configs:
       - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
         target_label: instance
-        replacement: 'staging'
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ============================================
+  # Blackbox - Disponibilidade externa (Staging)
+  # ============================================
+  - job_name: 'blackbox-hallyuhub-staging'
+    metrics_path: /probe
+    params:
+      module: [https_2xx]
+    static_configs:
+      - targets:
+          - https://staging.hallyuhub.com.br/api/health
+        labels:
+          environment: 'staging'
+          service: 'web'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
 
   # ============================================
   # PostgreSQL (se usar postgres_exporter)

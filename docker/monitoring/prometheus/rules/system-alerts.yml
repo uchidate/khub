@@ -1,0 +1,36 @@
+groups:
+  - name: system-alerts
+    interval: 30s
+    rules:
+      - alert: NodeHighCPU
+        expr: 100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: infra
+          environment: production
+        annotations:
+          summary: "CPU alta no servidor"
+          description: "Uso de CPU acima de 85% por mais de 5 minutos."
+
+      - alert: NodeHighMemory
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: infra
+          environment: production
+        annotations:
+          summary: "Memoria alta no servidor"
+          description: "Uso de memoria acima de 90% por mais de 5 minutos."
+
+      - alert: NodeHighDisk
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: infra
+          environment: production
+        annotations:
+          summary: "Disco alto no servidor"
+          description: "Uso de disco acima de 85% em / por mais de 10 minutos."
