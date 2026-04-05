@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
             prisma.artist.findMany({
                 where: {
                     flaggedAsNonKorean: false,
+                    isHidden: false,
+                    autoHidden: false,
                     OR: [
                         { nameRomanized: { contains: searchTerm, mode: 'insensitive' } },
                         { nameHangul: { contains: searchTerm, mode: 'insensitive' } },
@@ -68,6 +70,8 @@ export async function GET(request: NextRequest) {
             prisma.production.findMany({
                 where: {
                     flaggedAsNonKorean: false,
+                    isHidden: false,
+                    isTakenDown: false,
                     OR: [
                         { titlePt: { contains: searchTerm, mode: 'insensitive' } },
                         { titleKr: { contains: searchTerm, mode: 'insensitive' } },
