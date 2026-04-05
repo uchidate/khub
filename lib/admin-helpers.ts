@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import crypto from 'crypto'
 
 /**
  * Check admin authentication. Returns session or error response.
@@ -107,4 +108,45 @@ export async function getDashboardStats() {
   ])
 
   return { users, artists, productions, news, agencies, albums }
+}
+
+/**
+ * Autenticação por API key para acesso programático (agentes, scripts, Copilot Chat).
+ * Valida o header Authorization: Bearer <INTERNAL_API_KEY> usando timingSafeEqual.
+ * Retorna o primeiro usuário com role ADMIN para usar como autor.
+ */
+export async function requireApiKeyAuth(request: NextRequest): Promise<
+  | { error: NextResponse; adminUser: null }
+  | { error: null; adminUser: { id: string; name: string | null; email: string } }
+> {
+  const envKey = process.env.INTERNAL_API_KEY
+  if (!envKey) {
+    return { error: NextResponse.json({ error: 'Internal API key not configured' }, { status: 500 }), adminUser: null }
+  }
+
+  const authHeader = request.headers.get('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+
+  // Timing-safe comparison to prevent timing attacks
+  const keyBuf   = Buffer.from(envKey, 'utf8')
+  const tokenBuf = Buffer.from(token.padEnd(envKey.length, '\0'), 'utf8')
+  const valid = keyBuf.length === tokenBuf.length &&
+    crypto.timingSafeEqual(keyBuf, tokenBuf) &&
+    token.length === envKey.length
+
+  if (!valid) {
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), adminUser: null }
+  }
+
+  const adminUser = await prisma.user.findFirst({
+    where: { role: 'ADMIN' },
+    select: { id: true, name: true, email: true },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  if (!adminUser) {
+    return { error: NextResponse.json({ error: 'No admin user found' }, { status: 500 }), adminUser: null }
+  }
+
+  return { error: null, adminUser }
 }

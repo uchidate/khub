@@ -16,6 +16,7 @@ import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
+import { BlogReadingProgress } from '@/components/blog/BlogReadingProgress'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 const BASE_URL = SITE_URL
 
@@ -158,6 +159,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <PageTransition className="pt-6 pb-20 px-4 sm:px-6">
+      <BlogReadingProgress />
       <BlogViewTracker slug={slug} />
       <JsonLd data={{
         "@context": "https://schema.org",
@@ -212,7 +214,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <h1 className="text-3xl md:text-4xl font-black text-foreground leading-tight">{post.title}</h1>
 
           {post.excerpt && (
-            <p className="text-xl text-muted leading-relaxed">{post.excerpt}</p>
+            <p className="text-xl text-muted leading-relaxed italic border-l-2 border-[#ff2d78]/30 pl-4">{post.excerpt}</p>
           )}
 
           <div className="flex items-center gap-4 flex-wrap text-sm text-muted pt-2 border-t border-border">

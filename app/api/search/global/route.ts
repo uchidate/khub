@@ -42,6 +42,8 @@ export const GET = withLogging(async function GET(request: NextRequest) {
             types.includes('artists') ? prisma.artist.findMany({
                 where: {
                     flaggedAsNonKorean: false,
+                    isHidden: false,
+                    autoHidden: false,
                     OR: [
                         { nameRomanized: { contains: searchTerm, mode: 'insensitive' } },
                         { nameHangul: { contains: searchTerm, mode: 'insensitive' } },
@@ -65,6 +67,8 @@ export const GET = withLogging(async function GET(request: NextRequest) {
             types.includes('productions') ? prisma.production.findMany({
                 where: {
                     flaggedAsNonKorean: false,
+                    isHidden: false,
+                    isTakenDown: false,
                     OR: [
                         { titlePt: { contains: searchTerm, mode: 'insensitive' } },
                         { titleKr: { contains: searchTerm, mode: 'insensitive' } },
@@ -91,6 +95,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
             // Buscar grupos
             types.includes('groups') ? prisma.musicalGroup.findMany({
                 where: {
+                    isHidden: false,
                     OR: [
                         { name: { contains: searchTerm, mode: 'insensitive' } },
                         { nameHangul: { contains: searchTerm, mode: 'insensitive' } },
