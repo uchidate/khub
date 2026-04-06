@@ -123,21 +123,17 @@ export default async function RootLayout({
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}
-                {process.env.NEXT_PUBLIC_GA_ID && (
-                    <>
-                        <Script
-                            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-                            strategy="afterInteractive"
-                        />
-                        <Script id="ga-init" strategy="afterInteractive">{`
-                            window.dataLayer = window.dataLayer || [];
-                            function gtag(){dataLayer.push(arguments);}
-                            gtag('js', new Date());
-                            gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
-                            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
-                        `}</Script>
-                    </>
-                )}
+                <Script
+                    src="https://www.googletagmanager.com/gtag/js?id=G-KHWW1EGSK3"
+                    strategy="afterInteractive"
+                />
+                <Script id="ga-init" strategy="afterInteractive">{`
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
+                    gtag('config', 'G-KHWW1EGSK3');
+                `}</Script>
                 {/* AdSense carregado somente após consentimento do usuário (LGPD) */}
                 <AdSenseLoader />
                 {process.env.UMAMI_WEBSITE_ID && (
