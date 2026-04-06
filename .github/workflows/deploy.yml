@@ -274,7 +274,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 31.97.255.107 >> ~/.ssh/known_hosts
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: 🚀 Trigger Coolify Deploy
         run: |
@@ -338,7 +339,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 31.97.255.107 >> ~/.ssh/known_hosts
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
       - name: 🚀 Trigger Coolify Deploy
         run: |
@@ -379,15 +381,17 @@ jobs:
         run: |
           # Após deploy, o container recebe um novo nome — atualizar todas as tasks
           APP_UUID="e6h2xvvpu8i2jmzcb3tpzmxo"
-          CONTAINER=$(curl -s "http://31.97.255.107:8000/api/v1/applications/${APP_UUID}/containers" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" | jq -r '.[0].Names // .[0].name // empty' | head -1 | tr -d '/')
+          TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+          CONTAINER=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
+            "curl -s 'http://localhost:8000/api/v1/applications/${APP_UUID}/containers' \
+              -H 'Authorization: Bearer ${TOKEN}' | jq -r '.[0].Names // .[0].name // empty' | head -1 | tr -d '/'" 2>/dev/null)
           if [ -z "$CONTAINER" ]; then
             echo "⚠️ Não foi possível detectar o container name — tasks não atualizadas"
             exit 0
           fi
           echo "Container detectado: $CONTAINER"
-          SSH_CMD="docker exec coolify-db psql -U coolify coolify -c \"UPDATE scheduled_tasks SET container = '${CONTAINER}' WHERE application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');\""
-          ssh -i ~/.ssh/id_rsa root@31.97.255.107 "$SSH_CMD" 2>/dev/null \
+          ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
+            "docker exec coolify-db psql -U coolify coolify -c \"UPDATE scheduled_tasks SET container = '${CONTAINER}' WHERE application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');\"" 2>/dev/null \
             && echo "✅ Scheduled tasks atualizadas com container: $CONTAINER" \
             || echo "⚠️ Falha ao atualizar scheduled tasks (não crítico)"
 
