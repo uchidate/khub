@@ -22,7 +22,7 @@ export function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [error, setError] = useState<string | null>(null)
   const debouncedQuery = useDebounce(query, 300)
-  const { trackSearch, trackArtistClick, trackGroupClick, trackProductionClick } = useUmami()
+  const { trackSearch, trackArtistClick, trackProductionClick } = useUmami()
 
   useEffect(() => {
     if (debouncedQuery.length >= 2) {
