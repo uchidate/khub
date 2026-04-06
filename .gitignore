@@ -104,3 +104,7 @@ public/instagram/
 
 # Payload CMS local app (não faz parte do deploy)
 /cms-app/
+
+# Playwright
+playwright-report/
+test-results/
