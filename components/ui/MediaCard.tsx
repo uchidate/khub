@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { getStreamingConfig } from '@/lib/config/streaming-platforms'
+import { useUmami } from '@/hooks/useUmami'
 
 interface MediaCardProps {
     id: string
@@ -38,6 +39,13 @@ export function MediaCard({
 }: MediaCardProps) {
     const aspectClass = aspectRatio === 'poster' ? 'aspect-[2/3]' : aspectRatio === 'video' ? 'aspect-video' : 'aspect-square'
     const [imgError, setImgError] = useState(false)
+    const { trackArtistClick, trackGroupClick, trackProductionClick } = useUmami()
+
+    const handleCardClick = () => {
+        if (type === 'artist') trackArtistClick(title, id)
+        else if (type === 'group') trackGroupClick(title, id)
+        else if (type === 'production') trackProductionClick(title, id, 'production')
+    }
 
     // Placeholder blur data URL (low-quality gradient)
     const blurDataURL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 600'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2318181b;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='600' fill='url(%23g)' /%3E%3C/svg%3E"
@@ -80,7 +88,7 @@ export function MediaCard({
             }}
             className="relative"
         >
-            <Link href={href}>
+            <Link href={href} onClick={handleCardClick}>
                 <div
                     style={{
                         transform: "translateZ(75px)",
