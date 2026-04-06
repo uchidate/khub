@@ -136,8 +136,8 @@ export default async function RootLayout({
                 `}</Script>
                 {/* AdSense carregado somente após consentimento do usuário (LGPD) */}
                 <AdSenseLoader />
-                {process.env.UMAMI_WEBSITE_ID && (
-                    <UmamiScript websiteId={process.env.UMAMI_WEBSITE_ID} />
+                {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+                    <UmamiScript websiteId={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
                 )}
                 <JsonLd data={{
                     "@context": "https://schema.org",
