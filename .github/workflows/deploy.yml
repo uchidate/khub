@@ -272,12 +272,14 @@ jobs:
       - name: 🚀 Trigger Coolify Deploy
         run: |
           UUID=$(echo "${{ vars.COOLIFY_STAGING_UUID }}" | tr -d '[:space:]')
-          echo "Triggering Coolify deploy for staging (uuid: $UUID)..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            --connect-timeout 10 --max-time 60 --retry 3 --retry-delay 10 \
-            "https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json")
+          TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+          echo "Triggering Coolify deploy for staging via server SSH (uuid: $UUID)..."
+          RESPONSE=$(sshpass -p '${{ secrets.SSH_PASSWORD }}' ssh -o StrictHostKeyChecking=no root@31.97.255.107 \
+            "curl -s -w '\n%{http_code}' -X GET \
+              --connect-timeout 10 --max-time 60 \
+              'https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true' \
+              -H 'Authorization: Bearer ${TOKEN}' \
+              -H 'Content-Type: application/json'")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -1)
           echo "Response: $BODY"
@@ -327,12 +329,14 @@ jobs:
       - name: 🚀 Trigger Coolify Deploy
         run: |
           UUID=$(echo "${{ vars.COOLIFY_PRODUCTION_UUID }}" | tr -d '[:space:]')
-          echo "Triggering Coolify deploy for production (uuid: $UUID)..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            --connect-timeout 10 --max-time 60 --retry 3 --retry-delay 10 \
-            "https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json")
+          TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+          echo "Triggering Coolify deploy for production via server SSH (uuid: $UUID)..."
+          RESPONSE=$(sshpass -p '${{ secrets.SSH_PASSWORD }}' ssh -o StrictHostKeyChecking=no root@31.97.255.107 \
+            "curl -s -w '\n%{http_code}' -X GET \
+              --connect-timeout 10 --max-time 60 \
+              'https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true' \
+              -H 'Authorization: Bearer ${TOKEN}' \
+              -H 'Content-Type: application/json'")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -1)
           echo "Response: $BODY"
