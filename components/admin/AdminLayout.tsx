@@ -63,6 +63,7 @@ const navSections: NavSection[] = [
       {
         href: '/admin/blog', label: 'Blog', icon: FileText, exact: true,
         subItems: [
+          { href: '/admin/blog/inspiration', label: 'Inspiração', icon: Sparkles },
           { href: '/admin/blog/homepage',   label: 'Homepage Editorial', icon: Layers },
           { href: '/admin/blog/categories', label: 'Categorias',         icon: Tag },
           { href: '/admin/seo',             label: 'SEO',                icon: Globe },
