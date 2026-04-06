@@ -121,7 +121,7 @@ export async function PUT(req: NextRequest) {
                 : null
         }
         if ('homeSecondaryPostIds' in body) nextConfig.homeSecondaryPostIds = normalizeIds(body.homeSecondaryPostIds, 4)
-        if ('homeSidebarPostIds' in body) nextConfig.homeSidebarPostIds = normalizeIds(body.homeSidebarPostIds, 4)
+        if ('homeSidebarPostIds' in body) nextConfig.homeSidebarPostIds = normalizeIds(body.homeSidebarPostIds, 8)
         if ('homeCarouselPostIds' in body) nextConfig.homeCarouselPostIds = normalizeIds(body.homeCarouselPostIds, 5)
         if ('homeSpotlightArtistId' in body) {
             nextConfig.homeSpotlightArtistId = typeof body.homeSpotlightArtistId === 'string' && body.homeSpotlightArtistId.trim().length > 0

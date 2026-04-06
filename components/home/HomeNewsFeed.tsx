@@ -448,7 +448,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                             Em destaque
                         </div>
                         <div>
-                            {sidebarPosts.slice(0, 4).map((post, idx) => (
+                            {sidebarPosts.slice(0, 8).map((post, idx) => (
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}

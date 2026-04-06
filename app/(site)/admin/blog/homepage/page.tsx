@@ -552,16 +552,16 @@ export default function HomepageConfigPage() {
                     onRemove={() => setSpotlightArtist(null)}
                 />
 
-                {/* 8 cards secundários */}
+                {/* 4 cards secundários */}
                 <SlotPicker
                     label="Cards secundários"
                     icon={<LayoutGrid size={15} />}
-                    description="Os 8 cards menores abaixo do card principal"
+                    description="Os 4 cards menores abaixo do card principal"
                     selected={secondaryPosts}
                     onSelect={p => setSecondaryPosts(prev => [...prev, p])}
                     onRemove={id => setSecondaryPosts(prev => prev.filter(p => p.id !== id))}
                     blockedBySlot={blockedForSecondary}
-                    max={8}
+                    max={4}
                 />
 
                 {/* Sidebar artigos em destaque */}
@@ -573,7 +573,7 @@ export default function HomepageConfigPage() {
                     onSelect={p => setSidebarPosts(prev => [...prev, p])}
                     onRemove={id => setSidebarPosts(prev => prev.filter(p => p.id !== id))}
                     blockedBySlot={blockedForSidebar}
-                    max={4}
+                    max={8}
                 />
 
                 {/* Info */}
