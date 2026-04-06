@@ -27,6 +27,11 @@ const nextConfig = {
     },
     images: {
         remotePatterns: [
+            // Placeholder images (fallback para imagens sem URL)
+            {
+                protocol: 'https',
+                hostname: 'via.placeholder.com',
+            },
             // Unsplash - Images API & CDN (placeholders, artist photos, news images)
             {
                 protocol: 'https',

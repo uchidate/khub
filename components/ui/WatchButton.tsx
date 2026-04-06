@@ -8,6 +8,7 @@ import { useWatchlist, WatchStatus, WATCH_STATUS_LABELS, WATCH_STATUS_ICONS } fr
 import { useAuthGate } from '@/lib/hooks/useAuthGate'
 import { useToast } from '@/lib/hooks/useToast'
 import { StarRating } from '@/components/ui/StarRating'
+import { useUmami } from '@/hooks/useUmami'
 
 const STATUS_COLORS: Record<WatchStatus, string> = {
     WANT_TO_WATCH: 'bg-blue-600 hover:bg-blue-500 text-white',
@@ -30,6 +31,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
 
     const [open, setOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const { trackProductionClick } = useUmami()
     const [localRating, setLocalRating] = useState<number | null>(null)
     const [localNotes, setLocalNotes] = useState('')
     const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
@@ -101,6 +103,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
         const data = { status: newStatus, rating: localRating, notes: localNotes || null }
         setEntry(productionId, data)
         addToast({ type: 'success', message: `${WATCH_STATUS_LABELS[newStatus]}!`, duration: 2000 })
+        trackProductionClick(productionName ?? productionId, productionId, newStatus)
         setOpen(false)
     }
 

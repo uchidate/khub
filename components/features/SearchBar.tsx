@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Search, X, Loader2 } from 'lucide-react'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useUmami } from '@/hooks/useUmami'
 import Link from 'next/link'
 
 interface SearchResult {
@@ -21,6 +22,7 @@ export function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [error, setError] = useState<string | null>(null)
   const debouncedQuery = useDebounce(query, 300)
+  const { trackSearch, trackArtistClick, trackProductionClick } = useUmami()
 
   useEffect(() => {
     if (debouncedQuery.length >= 2) {
@@ -29,8 +31,10 @@ export function SearchBar() {
       fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`)
         .then(res => res.json())
         .then(data => {
-          setResults(data.results || [])
+          const r = data.results || []
+          setResults(r)
           setIsLoading(false)
+          trackSearch(debouncedQuery, r.length)
         })
         .catch(err => {
           console.error('Search error:', err)
@@ -150,7 +154,11 @@ export function SearchBar() {
             <Link
               key={`${result.type}-${result.id}`}
               href={getResultUrl(result)}
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false)
+                if (result.type === 'artist') trackArtistClick(result.name, result.id)
+                else if (result.type === 'production') trackProductionClick(result.name, result.id, 'production')
+              }}
               role="option"
               aria-selected={selectedIndex === index}
               className={`
