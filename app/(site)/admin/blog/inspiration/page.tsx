@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, Column } from "@/components/admin/DataTable";
 import { AdminBadge } from "@/components/admin/AdminBadge";
