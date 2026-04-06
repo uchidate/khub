@@ -12,6 +12,7 @@ export function UmamiScript({ websiteId }: { websiteId: string }) {
       src="/um/script.js"
       data-website-id={websiteId}
       data-host-url="/um"
+      data-domains="hallyuhub.com.br,www.hallyuhub.com.br"
       strategy="lazyOnload"
     />
   )
