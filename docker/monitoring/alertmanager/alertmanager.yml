@@ -43,6 +43,7 @@ receivers:
           {{ if eq $.Status "resolved" }}_O problema foi resolvido automaticamente._{{ else }}
           *O que aconteceu:* {{ .Annotations.description }}
           *Serviço:* {{ $.CommonLabels.service }} | *Ambiente:* {{ $.CommonLabels.environment }} | *Severidade:* {{ $.CommonLabels.severity }}
+          :bar_chart: <http://31.97.255.107:3002|Ver no Grafana>
           {{ end }}
           {{ end }}
         color: '{{ if eq .Status "resolved" }}good{{ else if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
@@ -60,7 +61,7 @@ receivers:
           {{ if eq $.Status "resolved" }}_Problema crítico resolvido automaticamente._{{ else }}
           *O que aconteceu:* {{ .Annotations.description }}
           *Serviço:* {{ $.CommonLabels.service }} | *Ambiente:* {{ $.CommonLabels.environment }}
-          *Ação recomendada:* Verifique os logs em https://www.hallyuhub.com.br
+          :bar_chart: <http://31.97.255.107:3002|Ver no Grafana> | :globe_with_meridians: <https://www.hallyuhub.com.br|Ver site>
           {{ end }}
           {{ end }}
         color: '{{ if eq .Status "resolved" }}good{{ else }}danger{{ end }}'
