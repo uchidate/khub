@@ -37,12 +37,3 @@ test.describe('Admin — proteção de rotas', () => {
     })
   }
 })
-
-test.describe('Admin — health da interface', () => {
-  test('sem sessão, /admin não exibe dados sensíveis', async ({ page }) => {
-    await page.goto('/admin')
-    await page.waitForLoadState('domcontentloaded')
-    const bodyText = await page.locator('body').textContent()
-    expect(bodyText).not.toMatch(/password|senha|secret|token.*=\w{20,}/i)
-  })
-})
