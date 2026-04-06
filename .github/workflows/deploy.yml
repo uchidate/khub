@@ -160,6 +160,45 @@ jobs:
           echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════════
+  # FASE 2c: E2E Tests — roda contra staging após deploy
+  # ════════════════════════════════════════════════════════════════
+
+  e2e-staging:
+    name: 🎭 E2E Tests (Staging)
+    needs: deploy-staging
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: 🎭 Run E2E Tests
+        run: npx playwright test
+        env:
+          BASE_URL: https://staging.hallyuhub.com.br
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ════════════════════════════════════════════════════════════════
   # FASE 2b: Promote staging → production (apenas main, sem rebuild)
   # ════════════════════════════════════════════════════════════════
 
@@ -230,15 +269,24 @@ jobs:
       url: https://staging.hallyuhub.com.br
 
     steps:
+      - name: 🔑 Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 31.97.255.107 >> ~/.ssh/known_hosts
+
       - name: 🚀 Trigger Coolify Deploy
         run: |
-          UUID=$(echo "${{ vars.COOLIFY_STAGING_UUID }}" | tr -d '[:space:]')
-          echo "Triggering Coolify deploy for staging (uuid: $UUID)..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            --connect-timeout 10 --max-time 60 --retry 3 --retry-delay 10 \
-            "https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json")
+          UUID="${{ vars.COOLIFY_STAGING_UUID }}"
+          TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+          echo "Triggering Coolify deploy for staging via server SSH (uuid: $UUID)..."
+          RESPONSE=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
+            "curl -s -w '\n%{http_code}' -X GET \
+              --connect-timeout 10 --max-time 60 \
+              \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
+              -H \"Authorization: Bearer ${TOKEN}\" \
+              -H 'Content-Type: application/json'")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -1)
           echo "Response: $BODY"
@@ -285,15 +333,24 @@ jobs:
       url: https://www.hallyuhub.com.br
 
     steps:
+      - name: 🔑 Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 31.97.255.107 >> ~/.ssh/known_hosts
+
       - name: 🚀 Trigger Coolify Deploy
         run: |
-          UUID=$(echo "${{ vars.COOLIFY_PRODUCTION_UUID }}" | tr -d '[:space:]')
-          echo "Triggering Coolify deploy for production (uuid: $UUID)..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            --connect-timeout 10 --max-time 60 --retry 3 --retry-delay 10 \
-            "https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json")
+          UUID="${{ vars.COOLIFY_PRODUCTION_UUID }}"
+          TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+          echo "Triggering Coolify deploy for production via server SSH (uuid: $UUID)..."
+          RESPONSE=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
+            "curl -s -w '\n%{http_code}' -X GET \
+              --connect-timeout 10 --max-time 60 \
+              \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
+              -H \"Authorization: Bearer ${TOKEN}\" \
+              -H 'Content-Type: application/json'")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -1)
           echo "Response: $BODY"
@@ -330,7 +387,7 @@ jobs:
           fi
           echo "Container detectado: $CONTAINER"
           SSH_CMD="docker exec coolify-db psql -U coolify coolify -c \"UPDATE scheduled_tasks SET container = '${CONTAINER}' WHERE application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');\""
-          sshpass -p '${{ secrets.SSH_PASSWORD }}' ssh -o StrictHostKeyChecking=no root@31.97.255.107 "$SSH_CMD" 2>/dev/null \
+          ssh -i ~/.ssh/id_rsa root@31.97.255.107 "$SSH_CMD" 2>/dev/null \
             && echo "✅ Scheduled tasks atualizadas com container: $CONTAINER" \
             || echo "⚠️ Falha ao atualizar scheduled tasks (não crítico)"
 

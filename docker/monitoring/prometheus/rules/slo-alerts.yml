@@ -33,6 +33,28 @@ groups:
           summary: "Healthcheck externo indisponivel"
           description: "Blackbox probe para https://www.hallyuhub.com.br/api/health falhou por mais de 2 minutos."
 
+      - alert: SSLCertExpiringWarning
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox-hallyuhub-prod"} - time() < 86400 * 21
+        for: 1h
+        labels:
+          severity: warning
+          service: web
+          environment: production
+        annotations:
+          summary: "Certificado SSL expira em menos de 21 dias"
+          description: "O certificado SSL de www.hallyuhub.com.br expira em menos de 21 dias. Renove em breve."
+
+      - alert: SSLCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox-hallyuhub-prod"} - time() < 86400 * 7
+        for: 1h
+        labels:
+          severity: critical
+          service: web
+          environment: production
+        annotations:
+          summary: "Certificado SSL expira em menos de 7 dias"
+          description: "URGENTE: O certificado SSL de www.hallyuhub.com.br expira em menos de 7 dias."
+
       - alert: Watchdog
         expr: vector(1)
         labels:

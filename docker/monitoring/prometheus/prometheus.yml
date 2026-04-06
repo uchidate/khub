@@ -106,10 +106,11 @@ scrape_configs:
         replacement: blackbox-exporter:9115
 
   # ============================================
-  # PostgreSQL (se usar postgres_exporter)
+  # PostgreSQL Exporter
   # ============================================
-  # - job_name: 'postgresql'
-  #   static_configs:
-  #     - targets: ['postgres-exporter:9187']
-  #       labels:
-  #         environment: 'database'
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          environment: 'production'
+          service: 'database'
