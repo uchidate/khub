@@ -5,7 +5,6 @@ import { UmamiScript } from "@/components/features/UmamiScript"
 import "../../styles/globals.css"
 import { unstable_cache } from "next/cache"
 import prisma from "@/lib/prisma"
-import { PublicAnalytics } from "@/components/features/PublicAnalytics"
 import { SessionProvider } from "@/components/features/SessionProvider"
 import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
@@ -123,14 +122,21 @@ export default async function RootLayout({
                 <link key="dns-wikimedia" rel="dns-prefetch" href="https://upload.wikimedia.org" />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
-                {/* GA4 Consent Mode — bloqueia coleta até o usuário aceitar */}
-                <Script id="ga-consent-defaults" strategy="beforeInteractive">{`
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag(){dataLayer.push(arguments);}
-                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
-                `}</Script>
+                {/* GA4 — tag injetada diretamente para detecção pelo Google */}
                 {process.env.NEXT_PUBLIC_GA_ID && (
-                    <PublicAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+                    <>
+                        <Script
+                            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+                            strategy="afterInteractive"
+                        />
+                        <Script id="ga-init" strategy="afterInteractive">{`
+                            window.dataLayer = window.dataLayer || [];
+                            function gtag(){dataLayer.push(arguments);}
+                            gtag('js', new Date());
+                            gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
+                            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+                        `}</Script>
+                    </>
                 )}
                 {/* AdSense carregado somente após consentimento do usuário (LGPD) */}
                 <AdSenseLoader />
