@@ -573,7 +573,7 @@ export default function HomepageConfigPage() {
                     onSelect={p => setSidebarPosts(prev => [...prev, p])}
                     onRemove={id => setSidebarPosts(prev => prev.filter(p => p.id !== id))}
                     blockedBySlot={blockedForSidebar}
-                    max={4}
+                    max={8}
                 />
 
                 {/* Info */}

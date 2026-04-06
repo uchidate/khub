@@ -133,8 +133,8 @@ export function HomeFrontPage({
     const hasCarousel = carouselPosts && carouselPosts.length > 0
     if (!hasCarousel && !featuredStory) return null
 
-    const safeSecondary = secondaryStories.slice(0, 4)
-    const missingSecondary = Math.max(0, 4 - safeSecondary.length)
+    const safeSecondary = secondaryStories.slice(0, 8)
+    const missingSecondary = Math.max(0, 8 - safeSecondary.length)
     const safeArtists = trendingArtists.slice(0, 8)
 
     return (
@@ -224,7 +224,7 @@ export function HomeFrontPage({
                                     href={`/blog/${story.slug}`}
                                     className={`group p-3.5 sm:p-4 flex gap-3 hover:bg-surface/80 transition-all duration-200 border-b border-border
                                         ${idx % 2 === 0 ? "sm:border-r sm:border-border" : ""}
-                                        ${idx >= 2 ? "sm:border-b-0" : ""}
+                                        ${idx >= safeSecondary.length - (safeSecondary.length % 2 === 0 ? 2 : 1) ? "sm:border-b-0" : ""}
                                     `}
                                 >
                                     <span className="text-[9px] font-bold text-muted/55 leading-none mt-1 w-4 shrink-0">{String(idx + 1).padStart(2, '0')}</span>

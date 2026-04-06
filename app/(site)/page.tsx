@@ -139,8 +139,8 @@ const getHomePublicData = unstable_cache(
             ? settings.homeSidebarPostIds
                 .map(id => slottedById[id])
                 .filter(Boolean)
-                .slice(0, 4)
-            : fallback.slice(0, 4)
+                .slice(0, 8)
+            : fallback.slice(0, 8)
 
         const carouselPosts = settings?.homeCarouselPostIds?.length
             ? settings.homeCarouselPostIds
