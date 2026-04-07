@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
@@ -8,11 +7,12 @@ import { ArtistsList } from "@/components/features/ArtistsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
-
-export const revalidate = 3600
-
 import { SITE_URL } from '@/lib/constants/site'
+
+export const dynamic = 'force-dynamic'
+
 const BASE_URL = SITE_URL
+const DEFAULT_PER_PAGE = 50
 
 export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
@@ -32,10 +32,72 @@ export async function generateMetadata(): Promise<Metadata> {
     }
 }
 
-export default async function ArtistsPage() {
-  if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) {
-    await prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => null)
-  }
+export default async function ArtistsPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+    const sp = await searchParams
+    const page = Math.max(1, parseInt(sp.page || '1'))
+    const limit = DEFAULT_PER_PAGE
+    const skip = (page - 1) * limit
+    const search = sp.search || undefined
+    const role = sp.role || undefined
+    const groupId = sp.groupId || undefined
+    const agencyId = sp.agencyId || undefined
+    const memberType = sp.memberType || undefined
+    const sortBy = sp.sortBy || 'trending'
+
+    const where: Record<string, unknown> = { flaggedAsNonKorean: false, isHidden: false }
+
+    if (search) {
+        where.OR = [
+            { nameRomanized: { contains: search, mode: 'insensitive' } },
+            { nameHangul: { contains: search, mode: 'insensitive' } },
+            { stageNames: { has: search } },
+        ]
+    }
+
+    if (role) {
+        const ROLE_VARIANTS: Record<string, string[]> = {
+            ATOR:       ['ATOR', 'Ator', 'Ator/Atriz', 'ACTOR'],
+            CANTOR:     ['CANTOR', 'Cantor', 'Cantor/Cantora', 'SINGER'],
+            MODELO:     ['MODELO', 'Modelo', 'MODEL'],
+            RAPPER:     ['RAPPER', 'Rapper'],
+            DANÇARINO:  ['DANÇARINO', 'Dançarino', 'DANCER', 'Dancer'],
+        }
+        where.roles = { hasSome: ROLE_VARIANTS[role] ?? [role] }
+    }
+
+    if (groupId) where.memberships = { some: { groupId, isActive: true } }
+    if (agencyId) where.agencyId = agencyId
+    if (memberType === 'group') where.memberships = { some: { isActive: true } }
+    else if (memberType === 'solo') where.memberships = { none: { isActive: true } }
+
+    const orderBy =
+        sortBy === 'name' ? { nameRomanized: 'asc' as const } :
+        sortBy === 'newest' ? { createdAt: 'desc' as const } :
+        { trendingScore: 'desc' as const }
+
+    const [artists, total] = await Promise.all([
+        prisma.artist.findMany({
+            where,
+            take: limit,
+            skip,
+            orderBy,
+            select: {
+                id: true,
+                nameRomanized: true,
+                nameHangul: true,
+                primaryImageUrl: true,
+                roles: true,
+                gender: true,
+                memberships: {
+                    where: { isActive: true },
+                    select: { group: { select: { id: true, name: true } } },
+                    take: 1,
+                },
+                agency: { select: { name: true } },
+            },
+        }),
+        prisma.artist.count({ where }),
+    ])
 
     return (
         <>
@@ -59,7 +121,6 @@ export default async function ArtistsPage() {
                     <h1 className="text-[1.9rem] sm:text-[2.1rem] md:text-[2.45rem] font-black text-foreground tracking-[-0.04em] leading-[0.96] mb-2 animate-[fadeIn_450ms_ease-out]">
                       Artistas
                     </h1>
-
                     <div className="mt-3 flex items-center gap-2 flex-wrap animate-[fadeIn_750ms_ease-out]">
                       <Link href="#artists-list" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition-opacity">
                         Explorar artistas
@@ -69,9 +130,11 @@ export default async function ArtistsPage() {
                   </div>
                 </div>
 
-                <Suspense>
-                    <ArtistsList />
-                </Suspense>
+                <ArtistsList
+                    artists={artists}
+                    pagination={{ page, total, pages: Math.ceil(total / limit) }}
+                    initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }}
+                />
                 <ScrollToTop />
             </div>
         </PageTransition>

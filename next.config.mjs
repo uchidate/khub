@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
+    experimental: {
+        staleTimes: {
+            dynamic: 0,
+        },
+    },
     async rewrites() {
         // Proxy Umami via Next.js para evitar mixed content (HTTPS → HTTP interno)
         // Container gerenciado pelo Coolify: umami-xkcma2bp6ww04w0ydx1m0qwf

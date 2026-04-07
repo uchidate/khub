@@ -44,7 +44,13 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
     const [memberType, setMemberType] = useState(initialFilters.memberType || '')
     const [sortBy, setSortBy] = useState(initialFilters.sortBy || 'trending')
 
+    const initialSearch = initialFilters.search || ''
+    const initialRole = initialFilters.role || ''
+    const initialMemberType = initialFilters.memberType || ''
+    const initialSortBy = initialFilters.sortBy || 'trending'
+
     useEffect(() => {
+        if (search === initialSearch) return
         const timer = setTimeout(() => {
             onFilterChange({ search: search || undefined, role: role || undefined, memberType: memberType || undefined, sortBy })
         }, 400)
@@ -53,6 +59,7 @@ export function ArtistFilters({ onFilterChange, initialFilters = {} }: ArtistFil
     }, [search])
 
     useEffect(() => {
+        if (role === initialRole && memberType === initialMemberType && sortBy === initialSortBy) return
         onFilterChange({ search: search || undefined, role: role || undefined, memberType: memberType || undefined, sortBy })
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, memberType, sortBy])
