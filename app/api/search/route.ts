@@ -4,6 +4,7 @@ import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
+import { searchProductionsUnaccent, searchGroupsUnaccent } from '@/lib/utils/search-unaccent'
 
 const log = createLogger('SEARCH')
 
@@ -24,69 +25,30 @@ export async function GET(request: NextRequest) {
     // Aplicar filtro de classificação etária
     const ageRatingFilter = await applyAgeRatingFilter()
 
-    // Search artists
-    const artists = await prisma.artist.findMany({
-      where: {
-        flaggedAsNonKorean: false,
-        isHidden: false,
-        autoHidden: false,
-        OR: [
-          { nameRomanized: { contains: query, mode: 'insensitive' } },
-          { nameHangul: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      select: {
-        id: true,
-        nameRomanized: true,
-        nameHangul: true,
-        primaryImageUrl: true,
-        agency: {
-          select: { name: true },
+    // Search artists, productions e groups com unaccent (accent-insensitive)
+    const [artists, productions, groups] = await Promise.all([
+      prisma.artist.findMany({
+        where: {
+          flaggedAsNonKorean: false,
+          isHidden: false,
+          autoHidden: false,
+          OR: [
+            { nameRomanized: { contains: query, mode: 'insensitive' } },
+            { nameHangul: { contains: query, mode: 'insensitive' } },
+          ],
         },
-      },
-      take: 5,
-    })
-
-    // Search productions
-    const productions = await prisma.production.findMany({
-      where: {
-        flaggedAsNonKorean: false,
-        isHidden: false,
-        isTakenDown: false,
-        OR: [
-          { titlePt: { contains: query, mode: 'insensitive' } },
-          { titleKr: { contains: query, mode: 'insensitive' } },
-        ],
-        ...ageRatingFilter,
-      },
-      select: {
-        id: true,
-        titlePt: true,
-        titleKr: true,
-        type: true,
-        year: true,
-        imageUrl: true,
-      },
-      take: 5,
-    })
-
-    // Search groups
-    const groups = await prisma.musicalGroup.findMany({
-      where: {
-        isHidden: false,
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { nameHangul: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        nameHangul: true,
-        profileImageUrl: true,
-      },
-      take: 3,
-    })
+        select: {
+          id: true,
+          nameRomanized: true,
+          nameHangul: true,
+          primaryImageUrl: true,
+          agency: { select: { name: true } },
+        },
+        take: 5,
+      }),
+      searchProductionsUnaccent(query, { limit: 5, ageRatingFilter }),
+      searchGroupsUnaccent(query, 3),
+    ])
 
     // Format results
     const results = [
