@@ -5,6 +5,7 @@ import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
 import { withLogging } from '@/lib/server/withLogging'
+import { searchProductionsUnaccent, searchArtistsUnaccent, searchGroupsUnaccent } from '@/lib/utils/search-unaccent'
 
 const log = createLogger('SEARCH')
 
@@ -36,81 +37,17 @@ export const GET = withLogging(async function GET(request: NextRequest) {
         // Aplicar filtro de classificação etária
         const ageRatingFilter = await applyAgeRatingFilter()
 
-        // Buscar em paralelo nos 4 modelos
+        // Buscar em paralelo com suporte a unaccent (accent-insensitive)
         const [artists, productions, groups] = await Promise.all([
-            // Buscar artistas
-            types.includes('artists') ? prisma.artist.findMany({
-                where: {
-                    flaggedAsNonKorean: false,
-                    isHidden: false,
-                    autoHidden: false,
-                    OR: [
-                        { nameRomanized: { contains: searchTerm, mode: 'insensitive' } },
-                        { nameHangul: { contains: searchTerm, mode: 'insensitive' } },
-                        { stageNames: { has: searchTerm } }
-                    ]
-                },
-                take: limit,
-                select: {
-                    id: true,
-                    nameRomanized: true,
-                    nameHangul: true,
-                    primaryImageUrl: true,
-                    roles: true,
-                    gender: true,
-                    trendingScore: true
-                },
-                orderBy: { trendingScore: 'desc' }
-            }) : [],
-
-            // Buscar produções
-            types.includes('productions') ? prisma.production.findMany({
-                where: {
-                    flaggedAsNonKorean: false,
-                    isHidden: false,
-                    isTakenDown: false,
-                    OR: [
-                        { titlePt: { contains: searchTerm, mode: 'insensitive' } },
-                        { titleKr: { contains: searchTerm, mode: 'insensitive' } },
-                        { synopsis: { contains: searchTerm, mode: 'insensitive' } }
-                    ],
-                    ...ageRatingFilter,
-                },
-                take: limit,
-                select: {
-                    id: true,
-                    titlePt: true,
-                    titleKr: true,
-                    type: true,
-                    year: true,
-                    imageUrl: true,
-                    voteAverage: true
-                },
-                orderBy: [
-                    { voteAverage: 'desc' },
-                    { year: 'desc' }
-                ]
-            }) : [],
-
-            // Buscar grupos
-            types.includes('groups') ? prisma.musicalGroup.findMany({
-                where: {
-                    isHidden: false,
-                    OR: [
-                        { name: { contains: searchTerm, mode: 'insensitive' } },
-                        { nameHangul: { contains: searchTerm, mode: 'insensitive' } },
-                    ]
-                },
-                take: limit,
-                select: {
-                    id: true,
-                    name: true,
-                    nameHangul: true,
-                    profileImageUrl: true,
-                    debutDate: true,
-                },
-                orderBy: { name: 'asc' }
-            }) : []
+            types.includes('artists')
+                ? searchArtistsUnaccent(searchTerm, limit)
+                : [],
+            types.includes('productions')
+                ? searchProductionsUnaccent(searchTerm, { limit, ageRatingFilter })
+                : [],
+            types.includes('groups')
+                ? searchGroupsUnaccent(searchTerm, limit)
+                : [],
         ])
 
         const total = artists.length + productions.length + groups.length
