@@ -149,6 +149,15 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_ADSENSE_CLIENT=${{ vars.NEXT_PUBLIC_ADSENSE_CLIENT }}
+            NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE }}
+            NEXT_PUBLIC_ADSENSE_SLOT_ARTIST=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST }}
+            NEXT_PUBLIC_ADSENSE_SLOT_GROUP=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_GROUP }}
+            NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION }}
+            NEXT_PUBLIC_ADSENSE_SLOT_AGENCY=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_AGENCY }}
+            NEXT_PUBLIC_ADSENSE_SLOT_CONTACT=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_CONTACT }}
+            NEXT_PUBLIC_ADSENSE_SLOT_NEWS_LIST=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_LIST }}
           cache-from: |
             type=gha
             type=registry,ref=ghcr.io/uchidate/khub:staging
