@@ -461,12 +461,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     {/* ── MAIN ── */}
                     <div className="lg:col-span-2 space-y-10 lg:space-y-16">
 
-                        {/* Ad: topo do conteúdo principal */}
-                        <AdBanner
-                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''}
-                            format="horizontal"
-                        />
-
                         {/* Perfil Biográfico */}
                         {profileSections.length >= 1 && (() => {
                             const sectionIcons = [User, Film, Sparkles]
@@ -512,6 +506,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 </ul>
                             </section>
                         )}
+
+                        {/* Ad: após bio, antes da filmografia */}
+                        <AdBanner
+                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''}
+                            format="horizontal"
+                        />
 
                         {/* Filmography */}
                         <section>
