@@ -33,16 +33,17 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
           echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
-          echo "ServerAliveInterval 30" >> ~/.ssh/config
-          echo "ServerAliveCountMax 20" >> ~/.ssh/config
 
-      - name: 🔄 Dump Production → Restore Staging
+      - name: 📤 Upload sync script
         run: |
-          ssh -i ~/.ssh/id_rsa -o ServerAliveInterval=30 -o ServerAliveCountMax=20 root@31.97.255.107 bash << 'REMOTE'
+          cat > /tmp/sync-script.sh << 'SCRIPT'
+          #!/bin/bash
           set -e
+          LOG="/tmp/sync_run.log"
+          exec > "$LOG" 2>&1
+
           DUMP_FILE="/tmp/prod_sync_$(date +%Y%m%d_%H%M%S).dump"
 
-          # Descobre containers postgres dinamicamente pelo banco que hospedam
           echo "Descobrindo containers postgres..."
           PROD_PG=""
           STAGING_PG=""
@@ -91,7 +92,36 @@ jobs:
 
           rm -f "$DUMP_FILE"
           echo "✅ Sync concluído — staging atualizado com dados de production (sanitizados)"
-          REMOTE
+          SCRIPT
+          scp -i ~/.ssh/id_rsa /tmp/sync-script.sh root@31.97.255.107:/tmp/sync-script.sh
+
+      - name: 🔄 Run sync on server (fire & poll)
+        run: |
+          # Executa em background no servidor — sem SSH de longa duração
+          ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
+            "chmod +x /tmp/sync-script.sh && nohup bash /tmp/sync-script.sh &"
+
+          # Aguarda conclusão: poll do log a cada 10s por até 10 min
+          echo "Aguardando sync concluir no servidor..."
+          for i in $(seq 1 60); do
+            sleep 10
+            STATUS=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
+              "tail -1 /tmp/sync_run.log 2>/dev/null || echo 'running...'" 2>/dev/null || echo 'ssh error')
+            echo "[$i/60] $STATUS"
+            if echo "$STATUS" | grep -q "✅ Sync concluído"; then
+              echo "Sync completo!"
+              ssh -i ~/.ssh/id_rsa root@31.97.255.107 "cat /tmp/sync_run.log"
+              exit 0
+            fi
+            if echo "$STATUS" | grep -q "❌"; then
+              echo "Sync falhou:"
+              ssh -i ~/.ssh/id_rsa root@31.97.255.107 "cat /tmp/sync_run.log"
+              exit 1
+            fi
+          done
+          echo "❌ Timeout após 10 min"
+          ssh -i ~/.ssh/id_rsa root@31.97.255.107 "cat /tmp/sync_run.log 2>/dev/null"
+          exit 1
 
       - name: 📊 Summary
         if: always()
