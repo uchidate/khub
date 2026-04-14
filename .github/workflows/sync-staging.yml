@@ -64,13 +64,13 @@ jobs:
           echo "      Dump: $(du -sh $DUMP_FILE | cut -f1)"
 
           echo "[2/4] Recriando banco staging..."
-          docker exec "$STAGING_PG" psql -U hallyuhub -d postgres \
+          docker exec "$STAGING_PG" psql -U postgres -d postgres \
             -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='hallyuhub_staging' AND pid <> pg_backend_pid();" \
             > /dev/null 2>&1 || true
-          docker exec "$STAGING_PG" psql -U hallyuhub -d postgres \
+          docker exec "$STAGING_PG" psql -U postgres -d postgres \
             -c "DROP DATABASE IF EXISTS hallyuhub_staging;" > /dev/null
-          docker exec "$STAGING_PG" psql -U hallyuhub -d postgres \
-            -c "CREATE DATABASE hallyuhub_staging;" > /dev/null
+          docker exec "$STAGING_PG" psql -U postgres -d postgres \
+            -c "CREATE DATABASE hallyuhub_staging OWNER hallyuhub;" > /dev/null
 
           echo "[3/4] Restaurando dump em staging..."
           docker cp "$DUMP_FILE" "$STAGING_PG":/tmp/restore.dump
