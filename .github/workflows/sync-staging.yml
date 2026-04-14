@@ -33,10 +33,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
           echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          echo "ServerAliveInterval 30" >> ~/.ssh/config
+          echo "ServerAliveCountMax 20" >> ~/.ssh/config
 
       - name: 🔄 Dump Production → Restore Staging
         run: |
-          ssh -i ~/.ssh/id_rsa root@31.97.255.107 bash << 'REMOTE'
+          ssh -i ~/.ssh/id_rsa -o ServerAliveInterval=30 -o ServerAliveCountMax=20 root@31.97.255.107 bash << 'REMOTE'
           set -e
           DUMP_FILE="/tmp/prod_sync_$(date +%Y%m%d_%H%M%S).dump"
 
