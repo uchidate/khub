@@ -5,6 +5,7 @@ import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { SITE_URL } from '@/lib/constants/site'
@@ -129,6 +130,8 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                     </div>
                   </div>
                 </div>
+
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="horizontal" className="mb-6" />
 
                 <ArtistsList
                     artists={artists}
