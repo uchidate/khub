@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
@@ -65,6 +66,8 @@ export default async function ProductionsPage() {
                     </div>
                   </div>
                 </div>
+
+            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="mb-6" />
 
             <Suspense>
                 <ProductionsList />

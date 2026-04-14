@@ -238,8 +238,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mb-10" />
-
         {/* Content — blocks take precedence over markdown */}
         <article>
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
@@ -247,6 +245,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             : <MarkdownRenderer content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
           }
         </article>
+
+        {/* Ad: mid-content, após o artigo */}
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mt-10" />
 
         {/* Tags */}
         {post.tags.length > 0 && (
