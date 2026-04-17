@@ -10,7 +10,6 @@ import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { BlogEditButton } from '@/components/blog/BlogEditButton'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { AdBanner } from '@/components/ui/AdBanner'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
@@ -246,8 +245,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           }
         </article>
 
-        {/* Ad: mid-content, após o artigo */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="fluid" layout="in-article" className="my-8" />
 
         {/* Tags */}
         {post.tags.length > 0 && (
@@ -268,8 +265,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             })}
           </div>
         )}
-
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="fluid" layout="in-article" className="my-8" />
 
         {/* Author bio */}
         {(post as unknown as { author?: { bio?: string } }).author?.bio && (
