@@ -14,6 +14,7 @@ import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
+import { AdBanner } from '@/components/ui/AdBanner'
 const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
@@ -354,7 +355,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           })()}
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6">
+          <AdBanner slot="1740970038" format="auto" className="mb-6" />
 
           {/* Filter bar */}
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-3">
@@ -521,9 +523,11 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     </Link>
                   ))}
                 </div>
+                <AdBanner slot="1740970038" format="auto" className="mt-6" />
               </aside>
             )}
           </div>
+          <AdBanner slot="1740970038" format="auto" className="mt-10" />
         </div>
 
         <ScrollToTop />
