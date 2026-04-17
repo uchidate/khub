@@ -1,0 +1,66 @@
+groups:
+  - name: slo-recording-rules
+    interval: 30s
+    rules:
+      - record: job:blackbox:availability_5m
+        expr: avg_over_time(probe_success{job="blackbox-hallyuhub-prod"}[5m])
+
+      - record: job:blackbox:availability_1h
+        expr: avg_over_time(probe_success{job="blackbox-hallyuhub-prod"}[1h])
+
+  - name: slo-alerts
+    interval: 30s
+    rules:
+      - alert: HallyuHubExternalAvailabilityLow
+        expr: job:blackbox:availability_1h < 0.995
+        for: 10m
+        labels:
+          severity: warning
+          service: web
+          environment: production
+        annotations:
+          summary: "Disponibilidade externa abaixo da meta"
+          description: "Disponibilidade externa da producao abaixo de 99.5% na ultima hora."
+
+      - alert: HallyuHubExternalDown
+        expr: probe_success{job="blackbox-hallyuhub-prod"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: web
+          environment: production
+        annotations:
+          summary: "Healthcheck externo indisponivel"
+          description: "Blackbox probe para https://www.hallyuhub.com.br/api/health falhou por mais de 2 minutos."
+
+      - alert: SSLCertExpiringWarning
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox-hallyuhub-prod"} - time() < 86400 * 21
+        for: 1h
+        labels:
+          severity: warning
+          service: web
+          environment: production
+        annotations:
+          summary: "Certificado SSL expira em menos de 21 dias"
+          description: "O certificado SSL de www.hallyuhub.com.br expira em menos de 21 dias. Renove em breve."
+
+      - alert: SSLCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox-hallyuhub-prod"} - time() < 86400 * 7
+        for: 1h
+        labels:
+          severity: critical
+          service: web
+          environment: production
+        annotations:
+          summary: "Certificado SSL expira em menos de 7 dias"
+          description: "URGENTE: O certificado SSL de www.hallyuhub.com.br expira em menos de 7 dias."
+
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+          service: monitoring
+          environment: production
+        annotations:
+          summary: "Watchdog"
+          description: "Alerta de heartbeat para validar pipeline de alertas."

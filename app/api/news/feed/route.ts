@@ -1,0 +1,214 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { withLogging } from '@/lib/server/withLogging';
+
+const newsInclude = {
+    artists: {
+        include: {
+            artist: {
+                select: {
+                    id: true,
+                    nameRomanized: true,
+                    primaryImageUrl: true,
+                }
+            }
+        }
+    }
+} as const;
+
+function buildWhereClause(filters: {
+    search?: string;
+    artistId?: string;
+    groupArtistIds?: string[];
+    source?: string;
+    from?: string;
+    to?: string;
+    favoriteArtistIds?: string[];
+}) {
+    const where: any = { isHidden: false, status: 'published' };
+
+    // Feed personalizado: filtrar por artistas favoritos
+    if (filters.favoriteArtistIds && filters.favoriteArtistIds.length > 0) {
+        where.artists = {
+            some: {
+                artistId: { in: filters.favoriteArtistIds }
+            }
+        };
+    }
+
+    // Filtro por grupo (todos os artistas do grupo)
+    if (filters.groupArtistIds && filters.groupArtistIds.length > 0) {
+        where.artists = {
+            some: {
+                artistId: { in: filters.groupArtistIds }
+            }
+        };
+    }
+
+    // Filtro por artista específico (sobrescreve personalização e grupo)
+    if (filters.artistId) {
+        where.artists = {
+            some: {
+                artistId: filters.artistId
+            }
+        };
+    }
+
+    // Busca por texto (título ou conteúdo)
+    if (filters.search) {
+        where.OR = [
+            { title: { contains: filters.search, mode: 'insensitive' } },
+            { contentMd: { contains: filters.search, mode: 'insensitive' } },
+        ];
+    }
+
+    // Filtro por fonte
+    if (filters.source) {
+        where.sourceUrl = { contains: filters.source, mode: 'insensitive' };
+    }
+
+    // Filtro por data
+    if (filters.from || filters.to) {
+        where.publishedAt = {};
+        if (filters.from) {
+            where.publishedAt.gte = new Date(filters.from);
+        }
+        if (filters.to) {
+            const toDate = new Date(filters.to);
+            toDate.setHours(23, 59, 59, 999); // Incluir o dia inteiro
+            where.publishedAt.lte = toDate;
+        }
+    }
+
+    return where;
+}
+
+async function handler(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20')));
+    const skip = (page - 1) * limit;
+
+    // Modo de feed: 'all' ignora personalização por favoritos
+    const feedParam = searchParams.get('feed') || 'personalized';
+
+    // Filtros
+    const search = searchParams.get('search') || undefined;
+    const artistId = searchParams.get('artistId') || undefined;
+    const groupId = searchParams.get('groupId') || undefined;
+    const source = searchParams.get('source') || undefined;
+    const from = searchParams.get('from') || undefined;
+    const to = searchParams.get('to') || undefined;
+
+    // Se groupId fornecido, buscar artistIds do grupo
+    let groupArtistIds: string[] | undefined;
+    if (groupId) {
+        const memberships = await prisma.artistGroupMembership.findMany({
+            where: { groupId },
+            select: { artistId: true },
+        });
+        groupArtistIds = memberships.map(m => m.artistId);
+    }
+
+    const session = await getServerSession(authOptions);
+
+    // Feed sem autenticação: retorna tudo ordenado por data (com filtros)
+    if (!session?.user?.email) {
+        const where = buildWhereClause({ search, artistId, groupArtistIds, source, from, to });
+
+        const [news, total] = await Promise.all([
+            prisma.news.findMany({
+                where,
+                take: limit,
+                skip,
+                orderBy: { publishedAt: 'desc' },
+                include: newsInclude,
+            }),
+            prisma.news.count({ where }),
+        ]);
+
+        return NextResponse.json({
+            news,
+            isPersonalized: false,
+            followingCount: 0,
+            pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+            filters: { search, artistId, source, from, to },
+        });
+    }
+
+    // Buscar artistas favoritos do usuário
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: {
+            favorites: {
+                where: { artistId: { not: null } },
+                select: { artistId: true },
+            }
+        }
+    });
+
+    const favoriteArtistIds = (user?.favorites ?? [])
+        .map((f: { artistId: string | null }) => f.artistId)
+        .filter((id: string | null): id is string => id !== null);
+
+    // Sem favoritos: feed padrão com mensagem (com filtros)
+    if (favoriteArtistIds.length === 0) {
+        const where = buildWhereClause({ search, artistId, groupArtistIds, source, from, to });
+
+        const [news, total] = await Promise.all([
+            prisma.news.findMany({
+                where,
+                take: limit,
+                skip,
+                orderBy: { publishedAt: 'desc' },
+                include: newsInclude,
+            }),
+            prisma.news.count({ where }),
+        ]);
+
+        return NextResponse.json({
+            news,
+            isPersonalized: false,
+            followingCount: 0,
+            message: 'Siga artistas para ter um feed personalizado!',
+            pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+            filters: { search, artistId, source, from, to },
+        });
+    }
+
+    // Aplicar personalização apenas quando feed='personalized' e sem filtro explícito de artista/grupo
+    const applyPersonalization = feedParam !== 'all' && !artistId && !groupArtistIds;
+
+    const where = buildWhereClause({
+        search,
+        artistId,
+        groupArtistIds: artistId ? undefined : groupArtistIds,
+        source,
+        from,
+        to,
+        favoriteArtistIds: applyPersonalization ? favoriteArtistIds : undefined,
+    });
+
+    const [news, total] = await Promise.all([
+        prisma.news.findMany({
+            where,
+            take: limit,
+            skip,
+            orderBy: { publishedAt: 'desc' },
+            include: newsInclude,
+        }),
+        prisma.news.count({ where }),
+    ]);
+
+    return NextResponse.json({
+        news,
+        isPersonalized: applyPersonalization,
+        followingCount: favoriteArtistIds.length,
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+        filters: { search, artistId, source, from, to },
+    });
+}
+
+export const GET = withLogging(handler)

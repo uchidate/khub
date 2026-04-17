@@ -1,0 +1,1 @@
+ALTER TABLE "BlogPost" ADD COLUMN "isPrivate" BOOLEAN NOT NULL DEFAULT false;

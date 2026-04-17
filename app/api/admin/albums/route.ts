@@ -1,211 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
+import { AlbumRepository } from '@/lib/repositories/AlbumRepository'
+import { toHttpError } from '@/lib/repositories/base'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses auth/headers)
+const log = createLogger('ADMIN-ALBUMS')
+
 export const dynamic = 'force-dynamic'
 
+function getIp(req: NextRequest) {
+    return req.headers.get('x-forwarded-for') ?? undefined
+}
 
-const albumSchema = z.object({
-  title: z.string().min(1),
-  type: z.enum(['ALBUM', 'EP', 'SINGLE']),
-  releaseDate: z.string().optional().nullable(),
-  coverUrl: z.string().url().optional().nullable(),
-  spotifyUrl: z.string().url().optional().nullable(),
-  appleMusicUrl: z.string().url().optional().nullable(),
-  youtubeUrl: z.string().url().optional().nullable(),
-  artistId: z.string().min(1),
-})
-
-/**
- * GET /api/admin/albums
- * List albums with pagination, search, and sorting
- */
+/** GET /api/admin/albums */
 export async function GET(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+        const { searchParams } = new URL(request.url)
 
-    const where = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' as const } },
-          ],
+        const idLookup = searchParams.get('id')
+        if (idLookup) {
+            const album = await AlbumRepository.findById(idLookup)
+            return NextResponse.json(album)
         }
-      : {}
 
-    const [albums, total] = await Promise.all([
-      prisma.album.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        include: {
-          artist: {
-            select: {
-              id: true,
-              nameRomanized: true,
-            },
-          },
-        },
-      }),
-      prisma.album.count({ where }),
-    ])
+        const { page, limit, search, sortBy, sortOrder } = buildQueryOptions(searchParams)
+        const result = await AlbumRepository.findMany({
+            search,
+            artistId: searchParams.get('artistId') ?? undefined,
+            page, limit, sortBy, sortOrder,
+        })
 
-    const formattedAlbums = albums.map((album) => ({
-      ...album,
-      artistName: album.artist.nameRomanized,
-    }))
-
-    return paginatedResponse(
-      formattedAlbums,
-      total,
-      parseInt(searchParams.get('page') || '1'),
-      parseInt(searchParams.get('limit') || '20')
-    )
-  } catch (error) {
-    console.error('Get albums error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+        return paginatedResponse(result.data, result.total, result.page, result.limit)
+    } catch (error) {
+        log.error('GET albums error', { error: getErrorMessage(error) })
+        return toHttpError(error)
+    }
 }
 
-/**
- * POST /api/admin/albums
- * Create a new album
- */
+/** POST /api/admin/albums */
 export async function POST(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const validated = albumSchema.parse(body)
-
-    // Convert releaseDate string to Date if provided
-    const data: Record<string, unknown> = { ...validated }
-    if (validated.releaseDate) {
-      data.releaseDate = new Date(validated.releaseDate)
+        const album = await AlbumRepository.create(
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(album, { status: 201 })
+    } catch (error) {
+        log.error('POST album error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    // Verify artist exists
-    const artist = await prisma.artist.findUnique({
-      where: { id: validated.artistId },
-    })
-
-    if (!artist) {
-      return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
-    }
-
-    const album = await prisma.album.create({
-      data: data as Parameters<typeof prisma.album.create>[0]['data'],
-      include: {
-        artist: {
-          select: {
-            id: true,
-            nameRomanized: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json(album, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    console.error('Create album error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * PATCH /api/admin/albums?id=<albumId>
- * Update an album
- */
+/** PATCH /api/admin/albums?id=<id> */
 export async function PATCH(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const albumId = searchParams.get('id')
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: 'Album ID required' }, { status: 400 })
 
-    if (!albumId) {
-      return NextResponse.json({ error: 'Album ID required' }, { status: 400 })
+        const album = await AlbumRepository.update(
+            id,
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(album)
+    } catch (error) {
+        log.error('PATCH album error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const body = await request.json()
-    const validated = albumSchema.partial().parse(body)
-
-    // Convert releaseDate string to Date if provided
-    const data: Record<string, unknown> = { ...validated }
-    if (validated.releaseDate) {
-      data.releaseDate = new Date(validated.releaseDate)
-    }
-
-    // If artistId is being updated, verify the new artist exists
-    if (validated.artistId) {
-      const artist = await prisma.artist.findUnique({
-        where: { id: validated.artistId },
-      })
-
-      if (!artist) {
-        return NextResponse.json({ error: 'Artista não encontrado' }, { status: 404 })
-      }
-    }
-
-    const album = await prisma.album.update({
-      where: { id: albumId },
-      data: data as Parameters<typeof prisma.album.update>[0]['data'],
-      include: {
-        artist: {
-          select: {
-            id: true,
-            nameRomanized: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json(album)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    console.error('Update album error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * DELETE /api/admin/albums
- * Delete albums
- */
+/** DELETE /api/admin/albums */
 export async function DELETE(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(body)
+        const { ids } = z.object({ ids: z.array(z.string()) }).parse(await request.json())
+        const result = await AlbumRepository.delete(ids, { adminId: session!.user.id, ip: getIp(request) })
 
-    const result = await prisma.album.deleteMany({
-      where: { id: { in: ids } },
-    })
-
-    return NextResponse.json({ message: `${result.count} álbum(ns) deletado(s)` })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
+        return NextResponse.json({ message: `${result.count} álbum(ns) deletado(s)` })
+    } catch (error) {
+        log.error('DELETE albums error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    console.error('Delete albums error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }

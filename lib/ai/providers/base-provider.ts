@@ -12,6 +12,37 @@ export abstract class BaseAIProvider {
     protected totalCost: number = 0;
     protected lastRequestTime: number = 0;
 
+    // Circuit breaker: evita tentativas repetidas em providers que estão falhando
+    private consecutiveFailures: number = 0;
+    private circuitOpenedAt: number | null = null;
+    private readonly CIRCUIT_FAILURE_THRESHOLD = 3;     // Abre após 3 falhas consecutivas
+    private readonly CIRCUIT_COOLDOWN_MS = 10 * 60 * 1000; // Fecha após 10 minutos
+
+    /**
+     * Verifica se o circuit breaker está aberto (provider bloqueado temporariamente)
+     */
+    isCircuitOpen(): boolean {
+        if (this.circuitOpenedAt === null) return false;
+        const elapsed = Date.now() - this.circuitOpenedAt;
+        if (elapsed >= this.CIRCUIT_COOLDOWN_MS) {
+            // Cooldown expirou — fechar o circuito e deixar tentar de novo
+            this.circuitOpenedAt = null;
+            this.consecutiveFailures = 0;
+            console.log(`🔄 Circuit breaker [${this.name}]: resetado após cooldown`);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Retorna quanto tempo falta para o circuit fechar (em segundos), ou 0 se fechado
+     */
+    getCircuitCooldownRemaining(): number {
+        if (this.circuitOpenedAt === null) return 0;
+        const elapsed = Date.now() - this.circuitOpenedAt;
+        return Math.max(0, Math.ceil((this.CIRCUIT_COOLDOWN_MS - elapsed) / 1000));
+    }
+
     constructor(name: AIProviderType, apiKey: string) {
         this.name = name;
         this.apiKey = apiKey;
@@ -34,25 +65,22 @@ export abstract class BaseAIProvider {
      */
     async generateStructured<T>(
         prompt: string,
-        schema: string,
+        _schema: string,
         options?: GenerateOptions
-    ): Promise<T> {
-        const structuredPrompt = `${prompt}\n\nResponda APENAS com um JSON válido seguindo este schema:\n${schema}\n\nNão inclua nenhum texto adicional, apenas o JSON.`;
-
-        const result = await this.generate(structuredPrompt, options);
+    ): Promise<GenerationResult & { parsed: T }> {
+        const result = await this.generate(prompt, { ...options, json_mode: true })
 
         try {
-            // Remove markdown code blocks se existirem
-            let content = result.content.trim();
+            let content = result.content.trim()
             if (content.startsWith('```json')) {
-                content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '')
             } else if (content.startsWith('```')) {
-                content = content.replace(/```\n?/g, '');
+                content = content.replace(/```\n?/g, '')
             }
 
-            return JSON.parse(content) as T;
+            return { ...result, parsed: JSON.parse(content) as T }
         } catch (error) {
-            throw new Error(`Failed to parse JSON response from ${this.name}: ${error}`);
+            throw new Error(`Failed to parse JSON response from ${this.name}: ${error}`)
         }
     }
 
@@ -73,19 +101,26 @@ export abstract class BaseAIProvider {
     }
 
     /**
-     * Registra uma requisição bem-sucedida
+     * Registra uma requisição bem-sucedida (reseta circuit breaker)
      */
     protected recordSuccess(tokensUsed: number, cost: number): void {
         this.requestCount++;
         this.totalTokensUsed += tokensUsed;
         this.totalCost += cost;
+        this.consecutiveFailures = 0;
+        this.circuitOpenedAt = null;
     }
 
     /**
-     * Registra uma falha
+     * Registra uma falha (pode abrir o circuit breaker)
      */
     protected recordFailure(): void {
         this.failureCount++;
+        this.consecutiveFailures++;
+        if (this.consecutiveFailures >= this.CIRCUIT_FAILURE_THRESHOLD) {
+            this.circuitOpenedAt = Date.now();
+            console.warn(`⚡ Circuit breaker [${this.name}]: ABERTO após ${this.consecutiveFailures} falhas. Bloqueado por ${this.CIRCUIT_COOLDOWN_MS / 60000}min`);
+        }
     }
 
     /**
@@ -97,6 +132,9 @@ export abstract class BaseAIProvider {
             failures: this.failureCount,
             tokensUsed: this.totalTokensUsed,
             cost: this.totalCost,
+            circuitOpen: this.isCircuitOpen(),
+            circuitCooldownRemaining: this.getCircuitCooldownRemaining(),
+            consecutiveFailures: this.consecutiveFailures,
         };
     }
 
@@ -108,6 +146,8 @@ export abstract class BaseAIProvider {
         this.failureCount = 0;
         this.totalTokensUsed = 0;
         this.totalCost = 0;
+        this.consecutiveFailures = 0;
+        this.circuitOpenedAt = null;
     }
 
     /**

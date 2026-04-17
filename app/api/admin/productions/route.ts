@@ -1,194 +1,111 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
+import { ProductionRepository } from '@/lib/repositories/ProductionRepository'
+import { toHttpError } from '@/lib/repositories/base'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+import { revalidatePath } from 'next/cache'
+import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses auth/headers)
+const log = createLogger('ADMIN-PRODUCTIONS')
+
 export const dynamic = 'force-dynamic'
 
+function getIp(req: NextRequest) {
+    return req.headers.get('x-forwarded-for') ?? undefined
+}
 
-const productionSchema = z.object({
-  titlePt: z.string().min(1),
-  titleKr: z.string().optional().nullable(),
-  type: z.string().min(1),
-  year: z.number().int().min(1900).max(2100).optional().nullable(),
-  synopsis: z.string().optional().nullable(),
-  imageUrl: z.string().url().optional().nullable(),
-  streamingPlatforms: z.array(z.string()).optional().default([]),
-  sourceUrls: z.array(z.string()).optional().default([]),
-  tags: z.array(z.string()).optional().default([]),
-  trailerUrl: z.string().url().optional().nullable(),
-})
-
-/**
- * GET /api/admin/productions
- * List productions with pagination, search, and sorting
- */
+/** GET /api/admin/productions */
 export async function GET(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+        const { searchParams } = new URL(request.url)
 
-    const where = search
-      ? {
-          OR: [
-            { titlePt: { contains: search, mode: 'insensitive' as const } },
-            { titleKr: { contains: search, mode: 'insensitive' as const } },
-          ],
+        const idLookup = searchParams.get('id')
+        if (idLookup) {
+            const production = await ProductionRepository.findById(idLookup)
+            return NextResponse.json(production)
         }
-      : {}
 
-    const [productions, total] = await Promise.all([
-      prisma.production.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        include: {
-          _count: {
-            select: {
-              artists: true,
-            },
-          },
-        },
-      }),
-      prisma.production.count({ where }),
-    ])
+        const { page, limit, search, sortBy, sortOrder } = buildQueryOptions(searchParams)
+        const result = await ProductionRepository.findMany({
+            search,
+            filter: searchParams.get('filter') ?? undefined,
+            page, limit, sortBy, sortOrder,
+        })
 
-    const formattedProductions = productions.map((production) => ({
-      ...production,
-      artistsCount: production._count.artists,
-    }))
-
-    return paginatedResponse(
-      formattedProductions,
-      total,
-      parseInt(searchParams.get('page') || '1'),
-      parseInt(searchParams.get('limit') || '20')
-    )
-  } catch (error) {
-    console.error('Get productions error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+        return paginatedResponse(result.data, result.total, result.page, result.limit)
+    } catch (error) {
+        log.error('GET productions error', { error: getErrorMessage(error) })
+        return toHttpError(error)
+    }
 }
 
-/**
- * POST /api/admin/productions
- * Create a new production
- */
+/** POST /api/admin/productions */
 export async function POST(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const validated = productionSchema.parse(body)
-
-    // Check if titlePt already exists
-    const existing = await prisma.production.findUnique({
-      where: { titlePt: validated.titlePt },
-    })
-
-    if (existing) {
-      return NextResponse.json({ error: 'Título já cadastrado' }, { status: 400 })
+        const production = await ProductionRepository.create(
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(production, { status: 201 })
+    } catch (error) {
+        log.error('POST production error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const production = await prisma.production.create({
-      data: validated,
-    })
-
-    return NextResponse.json(production, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    console.error('Create production error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * PATCH /api/admin/productions?id=<productionId>
- * Update a production
- */
+/** PATCH /api/admin/productions?id=<id> */
 export async function PATCH(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const productionId = searchParams.get('id')
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: 'Production ID required' }, { status: 400 })
 
-    if (!productionId) {
-      return NextResponse.json({ error: 'Production ID required' }, { status: 400 })
+        const { production, visibilityChanged, linkedArtistIds } = await ProductionRepository.update(
+            id,
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+
+        revalidatePath(`/productions/${id}`)
+        if (visibilityChanged) {
+            revalidatePath('/productions', 'layout')
+            if (linkedArtistIds.length > 0) {
+                void getArtistVisibilityService()
+                    .evaluateMany(linkedArtistIds)
+                    .catch(() => {})
+            }
+        }
+
+        return NextResponse.json(production)
+    } catch (error) {
+        log.error('PATCH production error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const body = await request.json()
-    const validated = productionSchema.partial().parse(body)
-
-    // Check if production exists
-    const existing = await prisma.production.findUnique({
-      where: { id: productionId },
-    })
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Produção não encontrada' }, { status: 404 })
-    }
-
-    // If titlePt is being updated, check for duplicates
-    if (validated.titlePt && validated.titlePt !== existing.titlePt) {
-      const titleExists = await prisma.production.findUnique({
-        where: { titlePt: validated.titlePt },
-      })
-
-      if (titleExists) {
-        return NextResponse.json({ error: 'Título já cadastrado' }, { status: 400 })
-      }
-    }
-
-    const production = await prisma.production.update({
-      where: { id: productionId },
-      data: validated,
-    })
-
-    return NextResponse.json(production)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    console.error('Update production error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * DELETE /api/admin/productions
- * Delete productions
- */
+/** DELETE /api/admin/productions */
 export async function DELETE(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(body)
+        const { ids } = z.object({ ids: z.array(z.string()) }).parse(await request.json())
+        const result = await ProductionRepository.delete(ids, { adminId: session!.user.id, ip: getIp(request) })
 
-    const result = await prisma.production.deleteMany({
-      where: { id: { in: ids } },
-    })
-
-    return NextResponse.json({ message: `${result.count} produção(ões) deletada(s)` })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
+        return NextResponse.json({ message: `${result.count} produção(ões) deletada(s)` })
+    } catch (error) {
+        log.error('DELETE productions error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    console.error('Delete productions error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }

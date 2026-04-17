@@ -1,28 +1,37 @@
 'use client'
 
 import { Heart } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useToast } from '@/lib/hooks/useToast'
+import { useAuthGate } from '@/lib/hooks/useAuthGate'
 
 interface FavoriteButtonProps {
   id: string
   className?: string
   itemName?: string
-  itemType?: 'artista' | 'agência' | 'produção' | 'notícia'
+  itemType?: 'artista' | 'agência' | 'produção' | 'notícia' | 'grupo'
 }
 
 export function FavoriteButton({ id, className = '', itemName, itemType }: FavoriteButtonProps) {
+  const { status } = useSession()
   const { isFavorite, toggle, isLoaded } = useFavorites()
   const { addToast } = useToast()
+  const openAuthGate = useAuthGate(s => s.open)
 
   const favorited = isLoaded ? isFavorite(id) : false
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    toggle(id)
 
-    // Only show toast if itemType is provided
+    if (status === 'unauthenticated') {
+      openAuthGate('adicionar aos favoritos')
+      return
+    }
+
+    toggle(id, itemType)
+
     if (itemType) {
       const action = favorited ? 'removido' : 'adicionado'
       const preposition = favorited ? 'dos' : 'aos'
@@ -42,9 +51,8 @@ export function FavoriteButton({ id, className = '', itemName, itemType }: Favor
       disabled={!isLoaded}
       className={`
         p-2 rounded-full
-        transition-all duration-200
-        hover:scale-110 active:scale-95
-        ${favorited ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}
+        transition-colors duration-200
+        ${favorited ? 'text-red-500' : 'text-foreground/60 hover:text-red-400'}
         ${!isLoaded ? 'opacity-50 cursor-wait' : ''}
         ${className}
       `}

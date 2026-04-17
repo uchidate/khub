@@ -275,7 +275,9 @@ export class SlackNotificationService {
             trending: { updated: number; errors: string[] };
         };
     }): Promise<boolean> {
-        if (!this.webhookContent) return false;
+        // Use webhookContent if available, fallback to webhookDeploys
+        const webhook = this.webhookContent || this.webhookDeploys;
+        if (!webhook) return false;
 
         // Don't notify if nothing happened
         if (job.updates === 0 && job.errors === 0) return false;
@@ -359,7 +361,7 @@ export class SlackNotificationService {
             blocks.push(contextBlock);
         }
 
-        return this.sendMessage(this.webhookContent, { blocks });
+        return this.sendMessage(webhook, { blocks });
     }
 
     /**
@@ -627,9 +629,47 @@ export class SlackNotificationService {
     }
 
     /**
+     * Notify when a new user registers
+     */
+    async notifyNewUserRegistered(email: string, name?: string, totalUsers?: number): Promise<boolean> {
+        const webhook = this.webhookContent || this.webhookAlerts;
+        if (!webhook) return false;
+
+        const blocks: SlackBlock[] = [
+            {
+                type: 'header',
+                text: { type: 'plain_text', text: '👤 Novo Usuário Cadastrado', emoji: true },
+            },
+            {
+                type: 'section',
+                fields: [
+                    { type: 'mrkdwn', text: `*Nome:*\n${name || 'Não informado'}` },
+                    { type: 'mrkdwn', text: `*Email:*\n${email}` },
+                ],
+            },
+        ];
+
+        if (totalUsers !== undefined) {
+            blocks.push({
+                type: 'section',
+                text: { type: 'mrkdwn', text: `*Total de usuários:* ${totalUsers}` },
+            });
+        }
+
+        blocks.push({ type: 'divider' });
+        const contextBlock = this.buildContextBlock({ source: 'api', timestamp: new Date() });
+        if (contextBlock) blocks.push(contextBlock);
+
+        return this.sendMessage(webhook, { blocks });
+    }
+
+    /**
      * Send raw message to a webhook
      */
     private async sendMessage(webhookUrl: string, payload: { blocks: SlackBlock[]; text?: string }): Promise<boolean> {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5_000);
+
         try {
             const response = await fetch(webhookUrl, {
                 method: 'POST',
@@ -638,6 +678,7 @@ export class SlackNotificationService {
                     ...payload,
                     text: payload.text || 'HallyuHub Notification',
                 }),
+                signal: controller.signal,
             });
 
             if (!response.ok) {
@@ -646,9 +687,12 @@ export class SlackNotificationService {
             }
 
             return true;
-        } catch (error) {
-            console.error('[SlackNotificationService] Error sending message:', error);
+        } catch (error: unknown) {
+            const isTimeout = error instanceof Error && error.name === 'AbortError';
+            console.error(`[SlackNotificationService] ${isTimeout ? 'Timeout' : 'Error'} sending message:`, error);
             return false;
+        } finally {
+            clearTimeout(timeout);
         }
     }
 

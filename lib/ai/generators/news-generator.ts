@@ -72,7 +72,7 @@ IMPORTANTE: A notícia deve ser baseada em eventos REAIS que aconteceram recente
         // Buscar imagem
         let imageUrl: string | undefined;
         try {
-            const imageResult = await this.imageService.findNewsImage(result.title);
+            const imageResult = await this.imageService.findNewsImage(result.parsed.title);
             if (imageResult) {
                 imageUrl = imageResult.url;
             }
@@ -81,8 +81,8 @@ IMPORTANTE: A notícia deve ser baseada em eventos REAIS que aconteceram recente
         }
 
         return {
-            ...result,
-            publishedAt: new Date(result.publishedAt),
+            ...result.parsed,
+            publishedAt: new Date(result.parsed.publishedAt),
             imageUrl,
         };
     }

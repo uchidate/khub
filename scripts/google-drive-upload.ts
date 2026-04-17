@@ -1,9 +1,8 @@
+import 'dotenv/config';
 const { google } = require('googleapis');
-import { PrismaClient } from '@prisma/client'
+import prisma from '../lib/prisma';
 const fs = require('fs');
 const path = require('path');
-
-const prisma = new PrismaClient();
 const TOKEN_PATH = path.join(__dirname, '..', 'google-drive-tokens.json');
 const IMAGES_DIR = path.join(__dirname, '..', 'temp-images');
 
@@ -14,14 +13,6 @@ const ARTIST_IMAGES = {
     'song-kang': 'Song Kang',
     'han-so-hee': 'Han So-hee',
     'cha-eun-woo': 'Cha Eun-woo'
-};
-
-// Mapeamento de arquivos para produções
-const PRODUCTION_IMAGES = {
-    'my-demon-poster': 'My Demon',
-    'gyeongseong-creature-poster': 'A Criatura de Gyeongseong',
-    'wonderful-world-poster': 'Wonderful World',
-    'my-name-poster': 'My Name'
 };
 
 async function getAuthClient() {

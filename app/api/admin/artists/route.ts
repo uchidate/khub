@@ -1,216 +1,109 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, buildQueryOptions, paginatedResponse } from '@/lib/admin-helpers'
-import prisma from '@/lib/prisma'
+import { ArtistRepository } from '@/lib/repositories/ArtistRepository'
+import { toHttpError } from '@/lib/repositories/base'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-// Force dynamic rendering (uses auth/headers)
+const log = createLogger('ADMIN-ARTISTS')
+
 export const dynamic = 'force-dynamic'
 
+function getIp(req: NextRequest) {
+    return req.headers.get('x-forwarded-for') ?? undefined
+}
 
-const artistSchema = z.object({
-  nameRomanized: z.string().min(1),
-  nameHangul: z.string().optional(),
-  nameKanji: z.string().optional(),
-  nameHiragana: z.string().optional(),
-  stageName: z.string().optional(),
-  bio: z.string().optional(),
-  birthdate: z.string().optional(), // ISO date string
-  deathdate: z.string().optional(), // ISO date string
-  country: z.string().optional(),
-  imageUrl: z.string().url().optional(),
-  gender: z.enum(['male', 'female', 'non_binary', 'other']).optional(),
-  tmdbId: z.string().optional(),
-  agencyId: z.string().optional(),
-})
-
-/**
- * GET /api/admin/artists
- * List artists with pagination, search, and sorting
- */
+/** GET /api/admin/artists */
 export async function GET(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const { skip, take, search, orderBy } = buildQueryOptions(searchParams)
+        const { searchParams } = new URL(request.url)
 
-    const where = search
-      ? {
-          OR: [
-            { nameRomanized: { contains: search, mode: 'insensitive' as const } },
-            { nameHangul: { contains: search, mode: 'insensitive' as const } },
-            { stageName: { contains: search, mode: 'insensitive' as const } },
-          ],
+        const idLookup = searchParams.get('id')
+        if (idLookup) {
+            const artist = await ArtistRepository.findById(idLookup)
+            return NextResponse.json(artist)
         }
-      : {}
 
-    const [artists, total] = await Promise.all([
-      prisma.artist.findMany({
-        where,
-        skip,
-        take,
-        orderBy,
-        include: {
-          agency: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          _count: {
-            select: {
-              productions: true,
-              albums: true,
-            },
-          },
-        },
-      }),
-      prisma.artist.count({ where }),
-    ])
+        const { page, limit, search, sortBy, sortOrder } = buildQueryOptions(searchParams)
+        const result = await ArtistRepository.findMany({
+            search,
+            filter: searchParams.get('filter') ?? undefined,
+            page, limit, sortBy, sortOrder,
+        })
 
-    const formattedArtists = artists.map((artist: {
-      _count: { productions: number; albums: number }
-      agency: { id: string; name: string } | null
-      [key: string]: unknown
-    }) => ({
-      ...artist,
-      productionsCount: artist._count.productions,
-      albumsCount: artist._count.albums,
-      agencyName: artist.agency?.name,
-    }))
-
-    return paginatedResponse(
-      formattedArtists,
-      total,
-      parseInt(searchParams.get('page') || '1'),
-      parseInt(searchParams.get('limit') || '20')
-    )
-  } catch (error) {
-    console.error('Get artists error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+        return paginatedResponse(result.data, result.total, result.page, result.limit)
+    } catch (error) {
+        log.error('GET artists error', { error: getErrorMessage(error) })
+        return toHttpError(error)
+    }
 }
 
-/**
- * POST /api/admin/artists
- * Create a new artist
- */
+/** POST /api/admin/artists */
 export async function POST(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const validated = artistSchema.parse(body)
-
-    // Convert date strings to Date objects
-    const data: Record<string, unknown> = { ...validated }
-    if (validated.birthdate) {
-      data.birthdate = new Date(validated.birthdate)
+        const artist = await ArtistRepository.create(
+            await request.json(),
+            { adminId: session!.user.id, ip: getIp(request) }
+        )
+        return NextResponse.json(artist, { status: 201 })
+    } catch (error) {
+        log.error('POST artist error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-    if (validated.deathdate) {
-      data.deathdate = new Date(validated.deathdate)
-    }
-
-    const artist = await prisma.artist.create({
-      data: data as any,
-      include: {
-        agency: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json(artist, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    console.error('Create artist error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * PATCH /api/admin/artists?id=<artistId>
- * Update an artist
- */
+/** PATCH /api/admin/artists?id=<id> | ?bulk=hide|show */
 export async function PATCH(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const { searchParams } = new URL(request.url)
-    const artistId = searchParams.get('id')
+        const { searchParams } = new URL(request.url)
+        const ctx = { adminId: session!.user.id, ip: getIp(request) }
 
-    if (!artistId) {
-      return NextResponse.json({ error: 'Artist ID required' }, { status: 400 })
+        const bulk = searchParams.get('bulk')
+        if (bulk === 'hide' || bulk === 'show') {
+            const { ids } = await request.json()
+            const result = await ArtistRepository.bulkHide(ids, bulk === 'hide', ctx)
+            revalidatePath('/artists')
+            return NextResponse.json(result)
+        }
+
+        const id = searchParams.get('id')
+        if (!id) return NextResponse.json({ error: 'Artist ID required' }, { status: 400 })
+
+        const { artist, clearedAlbumsCount } = await ArtistRepository.update(id, await request.json(), ctx)
+
+        revalidatePath(`/artists/${id}`)
+        revalidatePath('/artists')
+        return NextResponse.json({ ...artist, clearedAlbumsCount: clearedAlbumsCount || undefined })
+    } catch (error) {
+        log.error('PATCH artist error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    const body = await request.json()
-    const validated = artistSchema.partial().parse(body)
-
-    // Convert date strings to Date objects
-    const data: Record<string, unknown> = { ...validated }
-    if (validated.birthdate) {
-      data.birthdate = new Date(validated.birthdate)
-    }
-    if (validated.deathdate) {
-      data.deathdate = new Date(validated.deathdate)
-    }
-
-    const artist = await prisma.artist.update({
-      where: { id: artistId },
-      data: data as any,
-      include: {
-        agency: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json(artist)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
-    }
-
-    console.error('Update artist error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }
 
-/**
- * DELETE /api/admin/artists
- * Delete artists
- */
+/** DELETE /api/admin/artists */
 export async function DELETE(request: NextRequest) {
-  try {
-    const { error } = await requireAdmin()
-    if (error) return error
+    try {
+        const { error, session } = await requireAdmin()
+        if (error) return error
 
-    const body = await request.json()
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(body)
+        const { ids } = z.object({ ids: z.array(z.string()) }).parse(await request.json())
+        const result = await ArtistRepository.delete(ids, { adminId: session!.user.id, ip: getIp(request) })
 
-    const result = await prisma.artist.deleteMany({
-      where: { id: { in: ids } },
-    })
-
-    return NextResponse.json({ message: `${result.count} artista(s) deletado(s)` })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Dados inválidos', details: error.issues }, { status: 400 })
+        revalidatePath('/artists')
+        return NextResponse.json({ message: `${result.count} artista(s) deletado(s)` })
+    } catch (error) {
+        log.error('DELETE artist error', { error: getErrorMessage(error) })
+        return toHttpError(error)
     }
-
-    console.error('Delete artists error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
 }

@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/kpopping-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Idol {
+  id            String    @id @default(cuid())
+  slug          String    @unique // slug da URL: kpopping.com/profiles/idol/{slug}
+  nameRomanized String    // stageName
+  nameHangul    String?   // nativeName
+  fullName      String?   // fullName
+  birthday      DateTime?
+  height        Int?      // cm (ex: 162)
+  weight        Int?      // kg (ex: 44)
+  bloodType     String?   // ex: "A"
+  mbti          String?   // ex: "ISTP"
+  debutDate     DateTime?
+  education     String?
+  hometown      String?
+  country       String?   // ISO 3166-1 alpha-2 (ex: "KR")
+  gender        String?   // "female" | "male"
+  status        String?   // "active" | "inactive" | "solo"
+  fandomName    String?   // ex: "BLINK"
+  fandomColors  Json?     // ex: [{"hex":"#000000","name":"Black"}]
+  bio           String?   // biografia em texto
+  imageUrl      String?   // URL da foto de perfil
+  profileUrl    String    // URL completa do perfil kpopping
+
+  groups        IdolInGroup[]
+
+  scrapedAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([nameRomanized])
+  @@index([nameHangul])
+  @@index([debutDate])
+  @@index([country])
+  @@index([gender])
+}
+
+model Group {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  nameHangul   String?   // koreanName / nativeName
+  groupType    String?   // "girl_group" | "boy_group" | "co-ed" | "solo"
+  status       String?   // "active" | "disbanded" | "hiatus"
+  agency       String?   // company name
+  debutDate    DateTime?
+  disbandDate  DateTime?
+  fandomName   String?
+  fandomColors Json?     // [{hex: "#000000", name: "Black"}, ...]
+  memberCount  Int?
+  bio          String?
+  imageUrl     String?
+
+  members      IdolInGroup[]
+
+  scrapedAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([name])
+  @@index([status])
+  @@index([groupType])
+}
+
+model IdolInGroup {
+  idol      Idol    @relation(fields: [idolId], references: [id])
+  idolId    String
+  group     Group   @relation(fields: [groupId], references: [id])
+  groupId   String
+  isActive  Boolean @default(true)
+  position  String? // ex: "Main Vocalist", "Leader"
+
+  @@id([idolId, groupId])
+}

@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
+import { searchProductionsUnaccent, searchGroupsUnaccent } from '@/lib/utils/search-unaccent'
+
+const log = createLogger('SEARCH')
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  const limited = checkRateLimit(request, RateLimitPresets.SEARCH)
+  if (limited) return limited
+
   const searchParams = request.nextUrl.searchParams
   const query = searchParams.get('q')
 
@@ -12,59 +22,33 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Aplicar filtro de classificação etária
+    const ageRatingFilter = await applyAgeRatingFilter()
 
-    // Search artists
-    const artists = await prisma.artist.findMany({
-      where: {
-        OR: [
-          { nameRomanized: { contains: query, mode: 'insensitive' } },
-          { nameHangul: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      select: {
-        id: true,
-        nameRomanized: true,
-        nameHangul: true,
-        primaryImageUrl: true,
-        agency: {
-          select: { name: true },
+    // Search artists, productions e groups com unaccent (accent-insensitive)
+    const [artists, productions, groups] = await Promise.all([
+      prisma.artist.findMany({
+        where: {
+          flaggedAsNonKorean: false,
+          isHidden: false,
+          autoHidden: false,
+          OR: [
+            { nameRomanized: { contains: query, mode: 'insensitive' } },
+            { nameHangul: { contains: query, mode: 'insensitive' } },
+          ],
         },
-      },
-      take: 5,
-    })
-
-    // Search productions
-    const productions = await prisma.production.findMany({
-      where: {
-        OR: [
-          { titlePt: { contains: query, mode: 'insensitive' } },
-          { titleKr: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      select: {
-        id: true,
-        titlePt: true,
-        titleKr: true,
-        type: true,
-        year: true,
-        imageUrl: true,
-      },
-      take: 5,
-    })
-
-    // Search news
-    const news = await prisma.news.findMany({
-      where: {
-        title: { contains: query, mode: 'insensitive' },
-      },
-      select: {
-        id: true,
-        title: true,
-        imageUrl: true,
-        publishedAt: true,
-      },
-      take: 5,
-    })
+        select: {
+          id: true,
+          nameRomanized: true,
+          nameHangul: true,
+          primaryImageUrl: true,
+          agency: { select: { name: true } },
+        },
+        take: 5,
+      }),
+      searchProductionsUnaccent(query, { limit: 5, ageRatingFilter }),
+      searchGroupsUnaccent(query, 3),
+    ])
 
     // Format results
     const results = [
@@ -75,6 +59,13 @@ export async function GET(request: NextRequest) {
         subtitle: a.agency?.name || a.nameHangul,
         imageUrl: a.primaryImageUrl,
       })),
+      ...groups.map(g => ({
+        id: g.id,
+        type: 'group' as const,
+        title: g.name,
+        subtitle: g.nameHangul,
+        imageUrl: g.profileImageUrl,
+      })),
       ...productions.map(p => ({
         id: p.id,
         type: 'production' as const,
@@ -82,18 +73,11 @@ export async function GET(request: NextRequest) {
         subtitle: `${p.type} • ${p.year}`,
         imageUrl: p.imageUrl,
       })),
-      ...news.map(n => ({
-        id: n.id,
-        type: 'news' as const,
-        title: n.title,
-        subtitle: new Date(n.publishedAt).toLocaleDateString('pt-BR'),
-        imageUrl: n.imageUrl,
-      })),
     ]
 
     return NextResponse.json(results)
   } catch (error) {
-    console.error('Search error:', error)
+    log.error('Search error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Search failed' },
       { status: 500 }

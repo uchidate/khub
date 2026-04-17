@@ -1,0 +1,265 @@
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-helpers'
+import prisma from '@/lib/prisma'
+import { EDITORIAL_COST_ESTIMATES } from '@/lib/ai/generators/editorial-generator'
+
+export const dynamic = 'force-dynamic'
+
+export type QueueTab = 'artists' | 'productions' | 'news'
+
+export interface QueueItem {
+    id:               string
+    name:             string
+    imageUrl?:        string
+    subtitle?:        string
+    missingFields:    string[]
+    presentFields:    string[]
+    totalFields:      number
+    completenessScore: number   // 0-100
+    priority:         number
+    estimatedCost:    number
+}
+
+export interface QueueResponse {
+    items:             QueueItem[]
+    total:             number
+    totalCostEstimate: number
+}
+
+export async function GET(req: Request) {
+    const { error } = await requireAdmin()
+    if (error) return error
+
+    const url    = new URL(req.url)
+    const tab    = (url.searchParams.get('tab') ?? 'artists') as QueueTab
+    const limit  = Math.min(parseInt(url.searchParams.get('limit') ?? '30'), 500)
+    const offset = parseInt(url.searchParams.get('offset') ?? '0')
+    const q      = url.searchParams.get('q')?.trim() ?? ''
+    const field  = url.searchParams.get('field')?.trim() ?? ''
+
+    let items: QueueItem[] = []
+    let total = 0
+    let totalCostEstimate = 0
+
+    if (tab === 'artists') {
+        // Field-specific missing clause
+        const fieldMissingClause = (() => {
+            if (field === 'bio')          return [{ bio: null }]
+            if (field === 'editorial')    return [{ analiseEditorial: null }]
+            if (field === 'curiosidades') return [{ curiosidades: { isEmpty: true } }, { curiosidades: { equals: null } }]
+            return [
+                { bio: null },
+                { analiseEditorial: null },
+                { curiosidades: { isEmpty: true } },
+                { curiosidades: { equals: null } },
+            ]
+        })()
+
+        // When searching by name, show all artists (including hidden/flagged) so admin can
+        // enrich any artist explicitly. Visibility filter only applies in browse/queue mode.
+        const baseWhere = q
+            ? {
+                OR: [
+                    { nameRomanized: { contains: q, mode: 'insensitive' as const } },
+                    { nameHangul:    { contains: q, mode: 'insensitive' as const } },
+                ],
+            }
+            : {
+                isHidden:           false,
+                flaggedAsNonKorean: false,
+                OR: fieldMissingClause,
+            }
+
+        const artists = await prisma.artist.findMany({
+            where: baseWhere,
+            select: {
+                id:              true,
+                nameRomanized:   true,
+                nameHangul:      true,
+                primaryImageUrl: true,
+                roles:           true,
+                bio:             true,
+                analiseEditorial: true,
+                curiosidades:    true,
+                trendingScore:   true,
+            },
+            orderBy: { trendingScore: 'desc' },
+            take: limit,
+            skip: offset,
+        })
+
+        total = await prisma.artist.count({ where: baseWhere })
+
+        items = artists.map(a => {
+            const missingFields: string[] = []
+            const presentFields: string[] = []
+
+            if (!a.bio)             missingFields.push('bio')
+            else                    presentFields.push('bio')
+            if (!a.analiseEditorial) missingFields.push('editorial')
+            else                    presentFields.push('editorial')
+            if (!a.curiosidades?.length) missingFields.push('curiosidades')
+            else                    presentFields.push('curiosidades')
+
+            const totalFields = 3
+            const completenessScore = Math.round((presentFields.length / totalFields) * 100)
+
+            const costMap: Record<string, number> = {
+                bio:          EDITORIAL_COST_ESTIMATES.artist_bio_enrichment,
+                editorial:    EDITORIAL_COST_ESTIMATES.artist_editorial,
+                curiosidades: EDITORIAL_COST_ESTIMATES.artist_curiosidades,
+            }
+            const estimatedCost = missingFields.reduce((sum, f) => sum + (costMap[f] ?? 0), 0)
+
+            return {
+                id:               a.id,
+                name:             a.nameRomanized,
+                imageUrl:         a.primaryImageUrl ?? undefined,
+                subtitle:         [a.roles?.[0], a.nameHangul].filter(Boolean).join(' · '),
+                missingFields,
+                presentFields,
+                totalFields,
+                completenessScore,
+                priority:         a.trendingScore,
+                estimatedCost,
+            }
+        })
+
+        totalCostEstimate = items.reduce((sum, i) => sum + i.estimatedCost, 0)
+    }
+
+    if (tab === 'productions') {
+        // Search by name: show all productions regardless of visibility so admin can enrich any item.
+        const prodWhere = q
+            ? {
+                OR: [
+                    { titlePt: { contains: q, mode: 'insensitive' as const } },
+                    { titleKr: { contains: q, mode: 'insensitive' as const } },
+                ],
+            }
+            : {
+                isHidden:           false,
+                flaggedAsNonKorean: false,
+                editorialReview:    null,
+            }
+
+        const productions = await prisma.production.findMany({
+            where: prodWhere,
+            select: {
+                id:           true,
+                titlePt:      true,
+                titleKr:      true,
+                type:         true,
+                year:         true,
+                imageUrl:     true,
+                voteAverage:  true,
+                editorialReview: true,
+            },
+            orderBy: { voteAverage: 'desc' },
+            take: limit,
+            skip: offset,
+        })
+
+        total = await prisma.production.count({ where: prodWhere })
+
+        items = productions.map(p => {
+            const missing  = p.editorialReview ? [] : ['review']
+            const present  = p.editorialReview ? ['review'] : []
+            const score    = Math.round((present.length / 1) * 100)
+            return {
+                id:               p.id,
+                name:             p.titlePt,
+                imageUrl:         p.imageUrl ?? undefined,
+                subtitle:         [p.type, p.year?.toString()].filter(Boolean).join(' · '),
+                missingFields:    missing,
+                presentFields:    present,
+                totalFields:      1,
+                completenessScore: score,
+                priority:         p.voteAverage ?? 0,
+                estimatedCost:    missing.length ? EDITORIAL_COST_ESTIMATES.production_review : 0,
+            }
+        })
+
+        totalCostEstimate = items.reduce((sum, i) => sum + i.estimatedCost, 0)
+    }
+
+    if (tab === 'news') {
+        const newsFieldClause = (() => {
+            if (field === 'nota') return [{ editorialNote: null }]
+            if (field === 'blog') return [{ blogPostGeneratedAt: null }]
+            return [{ editorialNote: null }, { blogPostGeneratedAt: null }]
+        })()
+
+        const newsWhere = q
+            ? {
+                isHidden: false,
+                status:   'published',
+                title:    { contains: q, mode: 'insensitive' as const },
+            }
+            : {
+                isHidden: false,
+                status:   'published',
+                OR: newsFieldClause,
+            }
+
+        const newsList = await prisma.news.findMany({
+            where: newsWhere,
+            select: {
+                id:                  true,
+                title:               true,
+                imageUrl:            true,
+                source:              true,
+                contentType:         true,
+                publishedAt:         true,
+                editorialNote:       true,
+                blogPostGeneratedAt: true,
+            },
+            orderBy: { publishedAt: 'desc' },
+            take: limit,
+            skip: offset,
+        })
+
+        total = await prisma.news.count({ where: newsWhere })
+
+        items = newsList.map(n => {
+            const missingFields: string[] = []
+            const presentFields: string[] = []
+
+            if (!n.editorialNote)      missingFields.push('nota')
+            else                       presentFields.push('nota')
+            if (!n.blogPostGeneratedAt) missingFields.push('blog')
+            else                       presentFields.push('blog')
+
+            const totalFields = 2
+            const completenessScore = Math.round((presentFields.length / totalFields) * 100)
+
+            const costMap: Record<string, number> = {
+                nota: EDITORIAL_COST_ESTIMATES.news_editorial_note,
+                blog: EDITORIAL_COST_ESTIMATES.blog_post_generation,
+            }
+            const estimatedCost = missingFields.reduce((sum, f) => sum + (costMap[f] ?? 0), 0)
+
+            const pubDate = new Date(n.publishedAt)
+            const now     = new Date()
+            const ageHours = (now.getTime() - pubDate.getTime()) / (1000 * 60 * 60)
+            const recencyScore = Math.max(0, 100 - ageHours / 24) // more recent = higher priority
+
+            return {
+                id:               n.id,
+                name:             n.title,
+                imageUrl:         n.imageUrl ?? undefined,
+                subtitle:         [n.source, n.contentType].filter(Boolean).join(' · '),
+                missingFields,
+                presentFields,
+                totalFields,
+                completenessScore,
+                priority:         recencyScore,
+                estimatedCost,
+            }
+        })
+
+        totalCostEstimate = items.reduce((sum, i) => sum + i.estimatedCost, 0)
+    }
+
+    return NextResponse.json({ items, total, totalCostEstimate } satisfies QueueResponse)
+}

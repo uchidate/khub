@@ -2,8 +2,11 @@ import { BaseAIProvider } from './base-provider';
 import type { GenerateOptions, GenerationResult } from '../ai-config';
 import { PROVIDER_CONFIGS } from '../ai-config';
 
-// Timeout alto para inferência em CPU (phi3 no CPU leva ~4 min por resposta)
-const OLLAMA_TIMEOUT_MS = 300_000;
+// Timeout para inferência local com phi3:mini no CPU.
+// phi3:mini (2.2GB): ~60-240s dependendo do hardware/carga.
+// Baseado em dados reais de produção: timeouts ocorrendo em 240s com carga de 2 notícias.
+// Aumentado para 20min com margem de segurança para evitar falhas durante picos de uso.
+const OLLAMA_TIMEOUT_MS = 1_200_000; // 20 minutos
 
 /**
  * Provider para Ollama (modelo local)
@@ -58,11 +61,14 @@ export class OllamaProvider extends BaseAIProvider {
 
             const data = await response.json();
             const content = data.response;
-            const tokensUsed = Math.ceil((prompt.length + content.length) / 4);
+            // Ollama não reporta tokens de forma confiável — estimativa por caracteres
+            const tokensIn  = Math.ceil(prompt.length / 4);
+            const tokensOut = Math.ceil(content.length / 4);
+            const tokensUsed = tokensIn + tokensOut;
 
             this.recordSuccess(tokensUsed, 0);
 
-            return { content, provider: 'ollama', model: modelName, tokensUsed, cost: 0 };
+            return { content, provider: 'ollama', model: modelName, tokensUsed, tokensIn, tokensOut, cost: 0 };
         } catch (error: any) {
             this.recordFailure();
             if (error.name === 'AbortError') {
@@ -117,13 +123,16 @@ export class OllamaProvider extends BaseAIProvider {
     /**
      * Correções agressivas para JSON muito mal formatado.
      * Usa estratégias mais drásticas que podem alterar conteúdo, mas melhoram parsing.
+     * IMPORTANTE: Preserva caracteres acentuados (Latin-1) essenciais para português.
      */
     private aggressiveJsonFix(text: string): string {
         let content = this.extractAndSanitizeJson(text);
 
-        // 1. Remove TODOS os caracteres não-ASCII problemáticos
+        // 1. Remove APENAS caracteres de controle (0x00-0x1f, 0x7f)
+        // PRESERVA acentos Latin-1 (áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ etc.)
+        // Bug anterior: /[^\x20-\x7E\n\r]/g destruía todos os acentos!
         // eslint-disable-next-line no-control-regex
-        content = content.replace(/[^\x20-\x7E\n\r]/g, ' ');
+        content = content.replace(/[\x00-\x1f\x7f]/g, ' ');
 
         // 2. Fix para aspas duplas dentro de strings (escape incorreto)
         // Padrão: "text "word" more" → "text \"word\" more"

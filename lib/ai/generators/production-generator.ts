@@ -62,7 +62,7 @@ A produção deve estar disponível em alguma plataforma de streaming.`;
             }
         );
 
-        return result;
+        return result.parsed;
     }
 
     /**

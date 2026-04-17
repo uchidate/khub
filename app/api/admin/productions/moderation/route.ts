@@ -1,0 +1,373 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-helpers'
+import prisma from '@/lib/prisma'
+import { z } from 'zod'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+import { ADULT_KEYWORDS } from '@/lib/constants/moderation'
+
+export { ADULT_KEYWORDS }
+
+const log = createLogger('PRODUCTION_MODERATION')
+
+export const dynamic = 'force-dynamic'
+
+function buildAdultCondition() {
+  return {
+    OR: [
+      ...ADULT_KEYWORDS.map(kw => ({
+        titlePt: { contains: kw, mode: 'insensitive' as const },
+      })),
+      ...ADULT_KEYWORDS.map(kw => ({
+        synopsis: { contains: kw, mode: 'insensitive' as const },
+      })),
+    ],
+  }
+}
+
+function buildWhere(filter: string, search?: string) {
+  const titleFilter = search
+    ? {
+        OR: [
+          { titlePt: { contains: search, mode: 'insensitive' as const } },
+          { titleKr: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+    : {}
+
+  switch (filter) {
+    case 'suspicious':
+      return {
+        AND: [
+          { flaggedAsNonKorean: false },
+          { OR: [{ titleKr: null }, { tmdbId: null }] },
+          ...(search ? [titleFilter] : []),
+        ],
+      }
+    case 'recent': {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      return {
+        createdAt: { gte: sevenDaysAgo },
+        flaggedAsNonKorean: false,
+        ...titleFilter,
+      }
+    }
+    case 'flagged':
+      return { flaggedAsNonKorean: true, ...titleFilter }
+    case 'adult': {
+      // Combina: verificado como adulto pelo DeepSeek OU detectado por palavras-chave
+      const adultCondition = {
+        OR: [
+          { isAdultContent: true },
+          ...buildAdultCondition().OR,
+        ],
+      }
+      if (search) return { AND: [adultCondition, titleFilter] }
+      return adultCondition
+    }
+    case 'hidden':
+      return { isHidden: true, ...titleFilter }
+    case 'all':
+    default:
+      return { flaggedAsNonKorean: false, ...titleFilter }
+  }
+}
+
+function calcSuspicion(production: {
+  titlePt: string | null
+  titleKr: string | null
+  tmdbId: string | null
+  streamingPlatforms: string[]
+  _count: { artists: number }
+}) {
+  let suspicionScore = 0
+  const reasons: string[] = []
+
+  if (!production.titleKr) {
+    suspicionScore += 3
+    reasons.push('Sem título em coreano')
+  }
+  if (!production.tmdbId) {
+    suspicionScore += 2
+    reasons.push('Sem TMDB ID')
+  }
+  if (production.titlePt) {
+    const hasCoreano = /[\uAC00-\uD7AF]/.test(production.titlePt)
+    const hasCommonKoreanWords = /(king|queen|princess|prince|doctor|mr\.|mrs\.|love|heart|secret|moon|sun|sky|flower|spring|summer|autumn|winter|school|hospital|palace)/i.test(production.titlePt)
+    if (!hasCoreano && !hasCommonKoreanWords) {
+      suspicionScore += 2
+      reasons.push('Título não parece coreano')
+    }
+  }
+  if (production._count.artists === 0) {
+    suspicionScore += 3
+    reasons.push('Sem artistas vinculados')
+  }
+  if (production.streamingPlatforms.length === 0) {
+    suspicionScore += 1
+    reasons.push('Sem plataformas de streaming')
+  }
+
+  return { suspicionScore, suspicionReasons: reasons }
+}
+
+/**
+ * GET /api/admin/productions/moderation
+ * - ?stats=1 → contagens por categoria
+ * - ?filter=suspicious|recent|flagged|adult|hidden|all
+ * - ?search=texto
+ * - ?page=1&limit=20
+ * - ?sort=createdAt_desc|titlePt_asc
+ */
+export async function GET(request: NextRequest) {
+  const { error } = await requireAdmin()
+  if (error) return error
+
+  const searchParams = request.nextUrl.searchParams
+
+  // Stats endpoint
+  if (searchParams.get('stats') === '1') {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const [suspicious, recent, flagged, adult, hidden, all] = await Promise.all([
+      prisma.production.count({
+        where: {
+          flaggedAsNonKorean: false,
+          OR: [{ titleKr: null }, { tmdbId: null }],
+        },
+      }),
+      prisma.production.count({
+        where: { createdAt: { gte: sevenDaysAgo }, flaggedAsNonKorean: false },
+      }),
+      prisma.production.count({ where: { flaggedAsNonKorean: true } }),
+      prisma.production.count({ where: { OR: [{ isAdultContent: true }, ...buildAdultCondition().OR] } }),
+      prisma.production.count({ where: { isHidden: true } }),
+      prisma.production.count({ where: { flaggedAsNonKorean: false } }),
+    ])
+    return NextResponse.json({ suspicious, recent, flagged, adult, hidden, all })
+  }
+
+  const filter = searchParams.get('filter') || 'suspicious'
+  const search = searchParams.get('search')?.trim() || undefined
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+  const skip = (page - 1) * limit
+  const sort = searchParams.get('sort') || 'createdAt_desc'
+  const excludeHidden = searchParams.get('excludeHidden') === '1'
+
+  // Build orderBy
+  let orderBy: Record<string, string> = { createdAt: 'desc' }
+  if (sort === 'titlePt_asc') {
+    orderBy = { titlePt: 'asc' }
+  }
+  // score_desc is handled client-side after fetch (like suspicious sort)
+
+  try {
+    const baseWhere = buildWhere(filter, search)
+    const where = excludeHidden
+      ? { AND: [baseWhere, { isHidden: false }] }
+      : baseWhere
+
+    const [productions, total] = await Promise.all([
+      prisma.production.findMany({
+        where,
+        select: {
+          id: true,
+          titlePt: true,
+          titleKr: true,
+          type: true,
+          year: true,
+          synopsis: true,
+          imageUrl: true,
+          tmdbId: true,
+          tmdbType: true,
+          streamingPlatforms: true,
+          createdAt: true,
+          flaggedAsNonKorean: true,
+          flaggedAt: true,
+          isAdultContent: true,
+          adultCheckedAt: true,
+          isHidden: true,
+          ageRating: true,
+          _count: { select: { artists: true, userFavorites: true } },
+        },
+        skip,
+        take: limit,
+        orderBy,
+      }),
+      prisma.production.count({ where }),
+    ])
+
+    const productionsWithScore = productions.map(p => ({
+      ...p,
+      ...calcSuspicion(p),
+    }))
+
+    if (filter === 'suspicious' || sort === 'score_desc') {
+      productionsWithScore.sort((a, b) => b.suspicionScore - a.suspicionScore)
+    }
+
+    return NextResponse.json({
+      productions: productionsWithScore,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      filter,
+    })
+  } catch (err) {
+    log.error('Failed to fetch productions for moderation', { error: getErrorMessage(err) })
+    return NextResponse.json({ error: 'Failed to fetch productions' }, { status: 500 })
+  }
+}
+
+const flagSchema = z.object({
+  productionId: z.string().optional(),
+  ids: z.array(z.string()).optional(),
+  flaggedAsNonKorean: z.boolean().optional(),
+  isHidden: z.boolean().optional(),
+})
+
+/**
+ * PUT /api/admin/productions/moderation
+ * Marcar/desmarcar / ocultar — single (productionId) ou bulk (ids[])
+ */
+export async function PUT(request: NextRequest) {
+  const { error } = await requireAdmin()
+  if (error) return error
+
+  try {
+    const body = await request.json()
+    const parsed = flagSchema.parse(body)
+
+    const ids = parsed.ids ?? (parsed.productionId ? [parsed.productionId] : [])
+    if (ids.length === 0) {
+      return NextResponse.json({ error: 'productionId or ids[] required' }, { status: 400 })
+    }
+
+    const data: Record<string, unknown> = {}
+    if (parsed.flaggedAsNonKorean !== undefined) {
+      data.flaggedAsNonKorean = parsed.flaggedAsNonKorean
+      data.flaggedAt = parsed.flaggedAsNonKorean ? new Date() : null
+      // Non-Korean productions are automatically hidden
+      if (parsed.flaggedAsNonKorean === true) data.isHidden = true
+    }
+    if (parsed.isHidden !== undefined) {
+      data.isHidden = parsed.isHidden
+    }
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'Nenhum campo para atualizar' }, { status: 400 })
+    }
+
+    await prisma.production.updateMany({ where: { id: { in: ids } }, data })
+
+    log.info(`${ids.length} production(s) updated`, { ids, data })
+
+    return NextResponse.json({ success: true, updated: ids.length })
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
+    }
+    log.error('Failed to update production', { error: getErrorMessage(err) })
+    return NextResponse.json({ error: 'Failed to update production' }, { status: 500 })
+  }
+}
+
+const patchSchema = z.object({
+  action: z.enum(['hideByKeywords']),
+})
+
+/**
+ * PATCH /api/admin/productions/moderation
+ * Bulk actions — ex: hideByKeywords
+ */
+export async function PATCH(request: NextRequest) {
+  const { error } = await requireAdmin()
+  if (error) return error
+  try {
+    const { action } = patchSchema.parse(await request.json())
+    if (action === 'hideByKeywords') {
+      const result = await prisma.production.updateMany({
+        where: { isHidden: false, OR: buildAdultCondition().OR },
+        data: { isHidden: true },
+      })
+      log.info(`hideByKeywords: ${result.count} productions hidden`)
+      return NextResponse.json({ success: true, hidden: result.count })
+    }
+  } catch (err) {
+    if (err instanceof z.ZodError) return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+    log.error('PATCH failed', { error: getErrorMessage(err) })
+    return NextResponse.json({ error: 'Erro' }, { status: 500 })
+  }
+}
+
+const deleteSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+  withArtists: z.boolean().optional().default(false),
+})
+
+/**
+ * DELETE /api/admin/productions/moderation
+ * Remover permanentemente — single (?productionId=) ou bulk (body.ids[])
+ * body.withArtists=true → também exclui artistas vinculados APENAS a essas produções
+ */
+export async function DELETE(request: NextRequest) {
+  const { error } = await requireAdmin()
+  if (error) return error
+
+  try {
+    // Support both query param (single) and body (bulk)
+    const productionIdParam = request.nextUrl.searchParams.get('productionId')
+    let ids: string[]
+    let withArtists = false
+
+    if (productionIdParam) {
+      ids = [productionIdParam]
+    } else {
+      const body = await request.json()
+      const parsed = deleteSchema.parse(body)
+      ids = parsed.ids
+      withArtists = parsed.withArtists ?? false
+    }
+
+    let deletedArtists = 0
+
+    if (withArtists) {
+      // Artistas vinculados a essas produções
+      const linked = await prisma.artistProduction.findMany({
+        where: { productionId: { in: ids } },
+        select: { artistId: true },
+        distinct: ['artistId'],
+      })
+      const linkedArtistIds = linked.map(r => r.artistId)
+
+      if (linkedArtistIds.length > 0) {
+        // Desses, quais têm produções fora da lista (não podem ser excluídos)
+        const withOther = await prisma.artistProduction.findMany({
+          where: { artistId: { in: linkedArtistIds }, productionId: { notIn: ids } },
+          select: { artistId: true },
+          distinct: ['artistId'],
+        })
+        const withOtherSet = new Set(withOther.map(r => r.artistId))
+        const artistIdsToDelete = linkedArtistIds.filter(id => !withOtherSet.has(id))
+
+        if (artistIdsToDelete.length > 0) {
+          const r = await prisma.artist.deleteMany({ where: { id: { in: artistIdsToDelete } } })
+          deletedArtists = r.count
+          log.info(`${deletedArtists} artist(s) deleted alongside productions`, { artistIds: artistIdsToDelete })
+        }
+      }
+    }
+
+    const result = await prisma.production.deleteMany({
+      where: { id: { in: ids } },
+    })
+
+    log.info(`${result.count} production(s) permanently deleted`, { ids, withArtists, deletedArtists })
+
+    return NextResponse.json({ success: true, deleted: result.count, deletedArtists })
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Dados inválidos', details: err.issues }, { status: 400 })
+    }
+    log.error('Failed to delete production', { error: getErrorMessage(err) })
+    return NextResponse.json({ error: 'Failed to delete production' }, { status: 500 })
+  }
+}

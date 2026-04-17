@@ -1,0 +1,363 @@
+import prisma from "@/lib/prisma"
+import type { Metadata } from "next"
+import { unstable_cache } from "next/cache"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
+import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { HomeFrontPage } from "@/components/home/HomeFrontPage"
+import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
+import { JsonLd } from "@/components/seo/JsonLd"
+import { HomeBlogSection } from "@/components/home/HomeBlogSection"
+import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
+import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
+import { HomeRecommended } from "@/components/home/HomeRecommended"
+import { HomeRandomDiscovery } from "@/components/home/HomeRandomDiscovery"
+
+export const dynamic = 'force-dynamic'
+
+const POST_SELECT = {
+    id: true, slug: true, title: true, excerpt: true,
+    coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+    category: { select: { name: true, slug: true } },
+    tags: true,
+} as const
+
+function getWeekOfYear(date: Date) {
+    const utcDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+    const day = utcDate.getUTCDay() || 7
+    utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day)
+    const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
+    return Math.ceil((((utcDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+}
+
+function serializePost<T extends { publishedAt: Date | null }>(p: T) {
+    return { ...p, publishedAt: p.publishedAt?.toISOString() ?? null }
+}
+
+function getDayOfYear(date: Date) {
+    const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0))
+    const diff = date.getTime() - start.getTime()
+    const oneDay = 1000 * 60 * 60 * 24
+    return Math.floor(diff / oneDay)
+}
+
+const getHomePublicData = unstable_cache(
+    async () => {
+        const [
+            trendingArtists,
+            streamingShowsRaw,
+            trendingGroupsRaw,
+            settings,
+            categoryCounts,
+            artistCount,
+            groupCount,
+            productionCount,
+        ] = await Promise.all([
+            prisma.artist.findMany({
+                where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
+                take: 12,
+                orderBy: { trendingScore: 'desc' },
+                select: {
+                    id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
+                    roles: true, gender: true, trendingScore: true, viewCount: true,
+                    trendingRank: true, trendingRankPrev: true, trendingBadgeOverride: true,
+                    createdAt: true,
+                    agency: { select: { name: true } },
+                },
+            }),
+            prisma.streamingShow.findMany({
+                where: { expiresAt: { gt: new Date() } },
+                take: 100,
+                select: {
+                    source: true, rank: true, showTitle: true, tmdbId: true,
+                    posterUrl: true, year: true, voteAverage: true, isKorean: true,
+                    productionId: true,
+                    production: { select: { titlePt: true } },
+                },
+                orderBy: [{ source: 'asc' }, { rank: 'asc' }],
+            }).catch(() => []),
+            prisma.musicalGroup.findMany({
+                where: { isHidden: false, trendingScore: { gt: 0 } },
+                take: 16,
+                orderBy: { trendingScore: 'desc' },
+                select: { id: true, name: true, nameHangul: true, profileImageUrl: true, officialColor: true, fanClubName: true, trendingScore: true, agency: { select: { name: true } } },
+            }).catch(() => []),
+            prisma.systemSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null),
+            prisma.blogCategory.findMany({
+                include: { _count: { select: { posts: { where: { status: 'PUBLISHED', isPrivate: false } } } } },
+            }).catch(() => []),
+            prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0),
+            prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
+            prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }).catch(() => 0),
+        ])
+
+        // ── Slots editoriais ──────────────────────────────────────────────────
+        const slottedIds = new Set<string>()
+        if (settings?.homeFeaturedPostId) slottedIds.add(settings.homeFeaturedPostId)
+        settings?.homeSecondaryPostIds?.forEach(id => slottedIds.add(id))
+        settings?.homeSidebarPostIds?.forEach(id => slottedIds.add(id))
+        settings?.homeCarouselPostIds?.forEach(id => slottedIds.add(id))
+
+        // Busca posts dos slots configurados
+        const [slottedPostsRaw, fallbackPostsRaw] = await Promise.all([
+            slottedIds.size > 0
+                ? prisma.blogPost.findMany({
+                    where: { id: { in: Array.from(slottedIds) }, status: 'PUBLISHED' },
+                    select: POST_SELECT,
+                }).catch(() => [])
+                : [],
+            // Feed + fallback: exclui os que já estão nos slots
+            // take:30 garante posts suficientes por categoria nas seções do feed
+            prisma.blogPost.findMany({
+                where: {
+                    status: 'PUBLISHED',
+                    ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
+                },
+                take: 30,
+                orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
+                select: POST_SELECT,
+            }).catch(() => []),
+        ])
+
+        const slottedById = Object.fromEntries(slottedPostsRaw.map(p => [p.id, p]))
+
+        // Resolve slots — fallback para os mais recentes se slot vazio
+        const fallback = fallbackPostsRaw
+        const featuredPost = settings?.homeFeaturedPostId
+            ? (slottedById[settings.homeFeaturedPostId] ?? fallback[0])
+            : fallback[0]
+
+        const secondaryPosts = settings?.homeSecondaryPostIds?.length
+            ? settings.homeSecondaryPostIds
+                .map(id => slottedById[id])
+                .filter(Boolean)
+                .slice(0, 4)
+            : fallback.slice(1, 5)
+
+        const sidebarPosts = settings?.homeSidebarPostIds?.length
+            ? settings.homeSidebarPostIds
+                .map(id => slottedById[id])
+                .filter(Boolean)
+                .slice(0, 8)
+            : fallback.slice(0, 8)
+
+        const carouselPosts = settings?.homeCarouselPostIds?.length
+            ? settings.homeCarouselPostIds
+                .map(id => slottedById[id])
+                .filter(Boolean)
+                .slice(0, 5)
+            : []
+
+        // Feed exclui tudo que aparece nos slots e no featured
+        const featuredId = featuredPost?.id
+        const secondaryIds = new Set(secondaryPosts.map(p => p.id))
+        const feedPosts = fallbackPostsRaw.filter(
+            p => p.id !== featuredId && !secondaryIds.has(p.id)
+        )
+
+        const categoryCountMap = Object.fromEntries(
+            categoryCounts.map(c => [c.slug, c._count.posts])
+        )
+
+        // spotlightArtist rotaciona semanalmente dentro do top 8 do trending
+        const spotlightCandidates = trendingArtists.slice(0, 8)
+        const rotatedSpotlightArtist = spotlightCandidates.length > 0
+            ? spotlightCandidates[(getWeekOfYear(new Date()) - 1) % spotlightCandidates.length]
+            : null
+        // Regra de negócio: o bloco "Destaque da semana" usa apenas o artista da rotação semanal.
+        const spotlightArtist = rotatedSpotlightArtist
+
+        // spotlightProduction — query cached junto com os dados públicos
+        const spotlightArtistId = spotlightArtist?.id
+        const spotlightProduction = spotlightArtistId
+            ? await prisma.production.findFirst({
+                where: {
+                    isHidden: false,
+                    isTakenDown: false,
+                    flaggedAsNonKorean: false,
+                    year: { not: null },
+                    artists: { some: { artistId: spotlightArtistId } },
+                },
+                orderBy: [
+                    { releaseDate: { sort: 'desc', nulls: 'last' } },
+                    { year: 'desc' },
+                    { createdAt: 'desc' },
+                ],
+                select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+            }).catch(() => null)
+            : null
+
+        return {
+            trendingArtists,
+            featuredPost: featuredPost ? serializePost(featuredPost) : null,
+            carouselPosts: carouselPosts.map(serializePost),
+            secondaryPosts: secondaryPosts.map(serializePost),
+            sidebarPosts: sidebarPosts.map(serializePost),
+            feedPosts: feedPosts.map(serializePost),
+            streamingShowsRaw,
+            trendingGroups: trendingGroupsRaw,
+            categoryCountMap,
+            siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
+            spotlightArtist,
+            spotlightProduction,
+        }
+    },
+    ['home-page-public-data-v14'],
+    { revalidate: 120 },
+)
+
+const SITE_URL = 'https://www.hallyuhub.com.br'
+
+const OG_IMAGE = `${SITE_URL}/opengraph-image`
+
+export const metadata: Metadata = {
+    title: {
+        absolute: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+    },
+    description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
+    alternates: {
+        canonical: SITE_URL,
+    },
+    openGraph: {
+        title: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+        description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
+        url: SITE_URL,
+        siteName: 'HallyuHub',
+        locale: 'pt_BR',
+        type: 'website',
+        images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana',
+        description: 'Descubra artistas K-Pop, grupos, dramas e filmes coreanos com perfis completos em português. Notícias, tendências e muito mais sobre o universo Hallyu.',
+        images: [OG_IMAGE],
+    },
+}
+
+export default async function Home({ searchParams }: { searchParams?: Promise<{ category?: string; tag?: string }> }) {
+    const session = await getServerSession(authOptions)
+    const resolvedSearch = await searchParams
+    const activeCategory = resolvedSearch?.category
+    const activeTag = resolvedSearch?.tag
+
+    const [publicData, ageRatingFilter] = await Promise.all([
+        getHomePublicData(),
+        applyAgeRatingFilter(),
+    ])
+
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction } = publicData
+
+    // ── Recomendações personalizadas para usuários logados ───────────────────
+    let recommendedArtists: typeof trendingArtists = []
+    let hasFavorites = false
+    if (session?.user?.id) {
+        try {
+            const favRows = await prisma.favorite.findMany({
+                where: { userId: (session.user as { id: string }).id, artistId: { not: null } },
+                select: { artistId: true },
+            })
+            hasFavorites = favRows.length > 0
+            const favSet = new Set(favRows.map(f => f.artistId!))
+            recommendedArtists = trendingArtists.filter(a => !favSet.has(a.id)).slice(0, 8)
+            if (recommendedArtists.length < 2) {
+                // fallback: artistas 8–11 (já buscados, ainda não exibidos)
+                recommendedArtists = trendingArtists.slice(8, 12)
+            }
+        } catch {
+            recommendedArtists = trendingArtists.slice(8, 12)
+        }
+    }
+
+    // latestProductions depende do ageRatingFilter (por sessão) — roda em paralelo com session
+    const latestProductions = await prisma.production.findMany({
+        where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+    })
+
+    // Agrupa streaming shows por plataforma
+    const showsByPlatform: ShowsByPlatform = {}
+    for (const show of streamingShowsRaw) {
+        if (!showsByPlatform[show.source]) showsByPlatform[show.source] = []
+        showsByPlatform[show.source].push({
+            rank: show.rank,
+            showTitle: show.showTitle,
+            tmdbId: show.tmdbId,
+            source: show.source,
+            productionId: show.productionId ?? undefined,
+            productionTitle: show.production?.titlePt ?? undefined,
+            posterUrl: show.posterUrl,
+            year: show.year,
+            voteAverage: show.voteAverage,
+            isKorean: show.isKorean,
+        })
+    }
+    const hasStreaming = Object.keys(showsByPlatform).length > 0
+    const dayIndex = getDayOfYear(new Date())
+    const randomArtist = trendingArtists.length > 0 ? trendingArtists[dayIndex % trendingArtists.length] : null
+    const randomGroup = trendingGroups.length > 0 ? trendingGroups[(dayIndex + 1) % trendingGroups.length] : null
+    const randomProduction = latestProductions.length > 0 ? latestProductions[(dayIndex + 2) % latestProductions.length] : null
+
+    return (
+        <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": "HallyuHub",
+                "url": SITE_URL,
+                "description": "Portal de cultura coreana — artistas K-Pop, grupos, dramas e filmes em português.",
+                "inLanguage": "pt-BR",
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": {
+                        "@type": "EntryPoint",
+                        "urlTemplate": `${SITE_URL}/search?q={search_term_string}`,
+                    },
+                    "query-input": "required name=search_term_string",
+                },
+            }} />
+            <HomeFrontPage
+                featuredStory={featuredPost ?? undefined}
+                carouselPosts={carouselPosts}
+                secondaryStories={secondaryPosts}
+                trendingArtists={trendingArtists.slice(0, 8)}
+                spotlightArtist={spotlightArtist}
+                spotlightProduction={spotlightProduction}
+            />
+            <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
+                <HomeRandomDiscovery
+                    artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized } : null}
+                    group={randomGroup ? { id: randomGroup.id, name: randomGroup.name } : null}
+                    production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt } : null}
+                />
+                <HomeRecommended artists={recommendedArtists} hasFavorites={hasFavorites} />
+                <HomeBlogFeed
+                    key={`${activeCategory ?? 'all'}:${activeTag ?? 'all'}`}
+                    blogPosts={feedPosts}
+                    sidebarPosts={sidebarPosts}
+                    productions={latestProductions}
+                    categoryCounts={categoryCountMap}
+                    initialCategory={activeCategory}
+                    initialTag={activeTag}
+                />
+                {(hasStreaming || trendingGroups.length > 0) && (
+                    <section className="border-b border-border bg-background">
+                        <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
+                            {hasStreaming && (
+                                <div className="border-b md:border-b-0 md:border-r border-border">
+                                    <StreamingTopShows showsByPlatform={showsByPlatform} />
+                                </div>
+                            )}
+                            <HomeTrendingGroups groups={trendingGroups} />
+                        </div>
+                    </section>
+                )}
+                <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
+            </div>
+            <ScrollToTop />
+        </div>
+    )
+}

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
+
+const log = createLogger('ARTISTS')
 
 /**
  * GET /api/artists/[id]/filmography
@@ -11,21 +16,25 @@ import prisma from '@/lib/prisma'
  *
  * Public endpoint
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const { id } = params
     const { searchParams } = new URL(request.url)
     const sortBy = searchParams.get('sortBy') || 'year'
     const order = searchParams.get('order') || 'desc'
 
-    // Get artist with filmography
+    // Aplicar filtro de classificação etária
+    const ageRatingFilter = await applyAgeRatingFilter()
+
+    // Get artist with filmography (filtrada por classificação)
     const artist = await prisma.artist.findUnique({
       where: { id },
       include: {
         productions: {
+          where: {
+            production: ageRatingFilter,
+          },
           include: {
             production: true,
           },
@@ -90,7 +99,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Get filmography error:', error)
+    log.error('Get filmography error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

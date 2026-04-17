@@ -1,0 +1,920 @@
+'use client'
+
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminEmptyState, AdminModalOverlay, StatCard } from '@/components/admin'
+import { Instagram, Twitter, Youtube, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
+import Image from 'next/image'
+
+interface SocialLinks {
+    instagram?: string
+    twitter?: string
+    youtube?: string
+    tiktok?: string
+    weverse?: string
+    fancafe?: string
+    naverBlog?: string
+}
+
+interface Artist {
+    id: string
+    nameRomanized: string
+    nameHangul: string | null
+    primaryImageUrl: string | null
+    socialLinks: SocialLinks | null
+    socialLinksUpdatedAt: string | null
+    instagramFeedUrl: string | null
+    instagramLastSync: string | null
+}
+
+const PLATFORMS: { key: keyof SocialLinks; label: string; placeholder: string; icon?: React.ReactNode; color: string }[] = [
+    { key: 'instagram', label: 'Instagram', placeholder: 'https://www.instagram.com/username', color: 'text-pink-400', icon: <Instagram className="w-4 h-4" /> },
+    { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username', color: 'text-sky-400', icon: <Twitter className="w-4 h-4" /> },
+    { key: 'youtube', label: 'YouTube', placeholder: 'https://www.youtube.com/@channel', color: 'text-red-400', icon: <Youtube className="w-4 h-4" /> },
+    { key: 'tiktok', label: 'TikTok', placeholder: 'https://www.tiktok.com/@username', color: 'text-foreground', icon: <span className="text-sm font-black">TK</span> },
+    { key: 'weverse', label: 'Weverse', placeholder: 'https://weverse.io/artist-name', color: 'text-green-400', icon: <span className="text-sm font-black">W</span> },
+    { key: 'fancafe', label: 'Fancafe (Daum)', placeholder: 'https://cafe.daum.net/cafename', color: 'text-yellow-400', icon: <span className="text-sm font-black">FC</span> },
+    { key: 'naverBlog', label: 'Naver Blog', placeholder: 'https://blog.naver.com/username', color: 'text-emerald-400', icon: <span className="text-sm font-black">N</span> },
+]
+
+function countLinks(links: SocialLinks | null): number {
+    if (!links) return 0
+    return Object.values(links).filter(Boolean).length
+}
+
+function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
+// ─── Batch sync types ─────────────────────────────────────────────────────────
+
+const SYNC_BATCH_SIZE = 50  // 50 × ~1.2s = ~60s por lote (dentro do timeout de 300s)
+const STORAGE_KEY = 'khub-sync-social-links-progress'
+
+interface SavedProgress {
+    offset: number
+    totalGlobal: number
+    grandFound: number
+    grandNotFound: number
+    grandErrors: number
+    mode: string
+}
+
+type LogLine = {
+    text: string
+    type: 'info' | 'success' | 'warning' | 'error' | 'done' | 'progress'
+}
+
+function parseSyncLine(line: string): LogLine | null {
+    const [type, ...rest] = line.split(':')
+    const payload = rest.join(':')
+    switch (type) {
+        case 'TOTAL_GLOBAL':
+            return { text: `🌍 Total elegível: ${Number(payload).toLocaleString('pt-BR')} artistas`, type: 'info' }
+        case 'TOTAL':
+            return { text: `📋 ${payload} artistas neste lote`, type: 'info' }
+        case 'PROGRESS': {
+            const parts = payload.split(':')
+            return { text: `⏳ [${parts[0]}] ${parts.slice(1).join(':')}...`, type: 'progress' }
+        }
+        case 'FOUND': {
+            const colonIdx = payload.indexOf(':')
+            const name = colonIdx > -1 ? payload.slice(0, colonIdx) : payload
+            const platforms = colonIdx > -1 ? payload.slice(colonIdx + 1) : ''
+            return { text: `✅ ${name} → ${platforms}`, type: 'success' }
+        }
+        case 'NOT_FOUND':
+            return { text: `➖ Não encontrado: ${payload}`, type: 'warning' }
+        case 'SAVED':
+            return null  // só atualiza estado local; não exibe no log
+        case 'ERROR':
+            return { text: `❌ Erro: ${payload}`, type: 'error' }
+        case 'DONE': {
+            const fmt = payload
+                .replace('found=', 'encontrados: ')
+                .replace(',notFound=', ' | não encontrados: ')
+                .replace(',errors=', ' | erros: ')
+            return { text: `🎉 Concluído! ${fmt}`, type: 'done' }
+        }
+        default:
+            return { text: line, type: 'info' }
+    }
+}
+
+const lineColor = (type: LogLine['type']) => {
+    if (type === 'success') return 'text-green-400'
+    if (type === 'error') return 'text-red-400'
+    if (type === 'warning') return 'text-yellow-400'
+    if (type === 'done') return 'text-accent font-bold'
+    if (type === 'progress') return 'text-muted'
+    return 'text-foreground'
+}
+
+// ─── Per-artist Wiki Sync button ─────────────────────────────────────────────
+
+type BtnState = 'idle' | 'loading' | 'ok' | 'warn' | 'err'
+
+function WikiSyncButton({ artist, onSynced, onFailed }: {
+    artist: Artist
+    onSynced: (id: string, links: SocialLinks) => void
+    onFailed?: (id: string) => void
+}) {
+    const [state, setState] = useState<BtnState>('idle')
+    const [tried, setTried] = useState(() => {
+        const noLinks = !artist.socialLinks || Object.keys(artist.socialLinks).length === 0
+        return !!(artist.socialLinksUpdatedAt && noLinks)
+    })
+
+    const handleSync = useCallback(async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setState('loading')
+        try {
+            const res = await fetch('/api/admin/artists/wikidata-sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ artistId: artist.id }),
+            })
+            const data = await res.json()
+            if (!res.ok) { setState('err'); return }
+            if (data.updated) {
+                onSynced(artist.id, data.links)
+                setState('ok')
+            } else {
+                setState('warn')
+                setTried(true)
+                onFailed?.(artist.id)
+            }
+        } catch { setState('err') }
+        finally { setTimeout(() => setState('idle'), 3000) }
+    }, [artist.id, onSynced, onFailed])
+
+    const display = tried && state === 'idle' ? 'warn' : state
+
+    const colorClass =
+        display === 'ok'   ? 'bg-green-500/10 text-green-400 border-green-500/30'
+        : display === 'warn' ? 'bg-surface text-muted border-border'
+        : display === 'err'  ? 'bg-red-500/10 text-red-400 border-red-500/30'
+        : 'bg-surface text-foreground hover:bg-surface hover:text-foreground border-border'
+
+    return (
+        <button
+            onClick={handleSync}
+            disabled={state === 'loading'}
+            title={display === 'warn' && tried ? 'Wikidata não encontrou redes' : 'Buscar redes no Wikidata'}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border disabled:cursor-wait ${colorClass}`}
+        >
+            <RefreshCw size={12} className={state === 'loading' ? 'animate-spin' : ''} />
+            {display === 'ok' ? 'Encontrado' : display === 'warn' ? 'Não encontrado' : display === 'err' ? 'Erro' : 'Wiki'}
+        </button>
+    )
+}
+
+// ─── Edit modal ───────────────────────────────────────────────────────────────
+
+function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
+    artist: Artist
+    onClose: () => void
+    onSave: (links: SocialLinks) => Promise<void>
+    onFeedSave: (artistId: string, feedUrl: string) => Promise<void>
+}) {
+    const [links, setLinks] = useState<SocialLinks>(artist.socialLinks || {})
+    const [saving, setSaving] = useState(false)
+    const [error, setError] = useState('')
+    const [feedUrl, setFeedUrl] = useState(artist.instagramFeedUrl || '')
+    const [feedSaving, setFeedSaving] = useState(false)
+    const [feedSaved, setFeedSaved] = useState(false)
+
+    const handleFeedSave = async () => {
+        setFeedSaving(true)
+        try {
+            await onFeedSave(artist.id, feedUrl)
+            setFeedSaved(true)
+            setTimeout(() => setFeedSaved(false), 2000)
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Erro ao salvar feed')
+        } finally {
+            setFeedSaving(false)
+        }
+    }
+
+    const handleSave = async () => {
+        setSaving(true)
+        setError('')
+        try {
+            const cleaned: SocialLinks = Object.fromEntries(
+                Object.entries(links).filter(([, v]) => v && v.trim())
+            ) as SocialLinks
+            await onSave(cleaned)
+            onClose()
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Erro ao salvar')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    return (
+        <AdminModalOverlay
+            open
+            onClose={onClose}
+            title={artist.nameRomanized}
+            subtitle={artist.nameHangul ?? undefined}
+            icon={
+                artist.primaryImageUrl ? (
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                        <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="32px" className="object-cover" />
+                    </div>
+                ) : (
+                    <span className="text-sm font-black text-muted">{artist.nameRomanized[0]}</span>
+                )
+            }
+            maxWidth="lg"
+            zIndex={200}
+        >
+            <div className="max-h-[65vh] overflow-y-auto -mx-5 px-5 space-y-4">
+                {error && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{error}</div>
+                )}
+                {PLATFORMS.map(({ key, label, placeholder, icon, color }) => (
+                    <div key={key}>
+                        <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-2">
+                            <span className={color}>{icon}</span>
+                            <span className="text-muted">{label}</span>
+                        </label>
+                        <input
+                            type="url"
+                            value={links[key] || ''}
+                            onChange={(e) => setLinks(prev => ({ ...prev, [key]: e.target.value }))}
+                            placeholder={placeholder}
+                            className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 text-sm"
+                        />
+                    </div>
+                ))}
+
+                <div className="p-4 bg-pink-500/5 border border-pink-500/20 rounded-xl">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Instagram className="w-4 h-4 text-pink-400" />
+                        <span className="text-xs font-black text-pink-400 uppercase tracking-widest">Instagram RSS.app</span>
+                        {artist.instagramLastSync && (
+                            <span className="text-[10px] text-muted ml-auto">
+                                Sync: {new Date(artist.instagramLastSync).toLocaleDateString('pt-BR')}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-[11px] text-muted mb-3">
+                        Cole a URL do feed JSON gerado no <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">RSS.app</a> para este artista.
+                    </p>
+                    <div className="flex gap-2">
+                        <input
+                            type="url"
+                            value={feedUrl}
+                            onChange={(e) => setFeedUrl(e.target.value)}
+                            placeholder="https://rss.app/feeds/XXXXXXXX.json"
+                            className="flex-1 px-3 py-2 bg-background/50 border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 text-xs"
+                        />
+                        <button
+                            onClick={handleFeedSave}
+                            disabled={feedSaving}
+                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${feedSaved ? 'bg-green-600 text-foreground' : 'bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-foreground'}`}
+                        >
+                            {feedSaved ? <><Check className="w-3 h-3" /> OK</> : feedSaving ? '...' : 'Salvar'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-border mt-4">
+                <button onClick={onClose} className="flex-1 py-2.5 bg-surface text-foreground rounded-xl hover:bg-surface transition-colors font-medium text-sm">
+                    Cancelar
+                </button>
+                <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 transition-colors font-bold text-sm">
+                    {saving ? 'Salvando...' : 'Salvar'}
+                </button>
+            </div>
+        </AdminModalOverlay>
+    )
+}
+
+// ─── ModeCard ─────────────────────────────────────────────────────────────────
+
+function ModeCard({
+    title, description, color, disabled, onClick, icon,
+}: {
+    title: string
+    description: string
+    color: 'purple' | 'teal' | 'amber'
+    disabled: boolean
+    onClick: () => void
+    icon: React.ReactNode
+}) {
+    const colors = {
+        purple: 'border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400',
+        teal:   'border-teal-500/30 bg-teal-500/5 hover:bg-teal-500/10 text-teal-400',
+        amber:  'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400',
+    }
+    const btnColors = {
+        purple: 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500',
+        teal:   'bg-teal-600 hover:bg-teal-500',
+        amber:  'bg-amber-600 hover:bg-amber-500',
+    }
+    return (
+        <div className={`rounded-xl border p-4 space-y-3 transition-colors ${colors[color]}`}>
+            <div>
+                <p className="text-sm font-black text-foreground">{title}</p>
+                <p className="text-[11px] text-muted mt-1 leading-relaxed">{description}</p>
+            </div>
+            <button
+                onClick={onClick}
+                disabled={disabled}
+                className={`w-full flex items-center justify-center gap-2 py-2 ${btnColors[color]} disabled:opacity-40 text-foreground rounded-lg text-sm font-bold transition-colors`}
+            >
+                {disabled ? <RefreshCw className="w-4 h-4 animate-spin" /> : icon}
+                {disabled ? 'Processando...' : title}
+            </button>
+        </div>
+    )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+type FilterType = 'all' | 'pending' | 'attempted' | 'complete'
+
+interface GlobalStats { total: number; pending: number; attempted: number; complete: number }
+
+export default function SocialLinksAdminPage() {
+    const [artists, setArtists] = useState<Artist[]>([])
+    const [search, setSearch] = useState('')
+    const [filter, setFilter] = useState<FilterType>('all')
+    const [page, setPage] = useState(1)
+    const [pages, setPages] = useState(1)
+    const [totalFiltered, setTotalFiltered] = useState(0)
+    const [globalStats, setGlobalStats] = useState<GlobalStats>({ total: 0, pending: 0, attempted: 0, complete: 0 })
+    const [editing, setEditing] = useState<Artist | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [savedId, setSavedId] = useState<string | null>(null)
+
+    // Fetch state kept in refs so batch sync callbacks can refresh with current params
+    const filterRef  = useRef<FilterType>('all')
+    const searchRef  = useRef('')
+    const pageRef    = useRef(1)
+    const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+    const doFetch = useCallback(async (f: FilterType, s: string, p: number) => {
+        filterRef.current = f
+        searchRef.current = s
+        pageRef.current   = p
+        setLoading(true)
+        try {
+            const params = new URLSearchParams({ filter: f, page: String(p), limit: '50' })
+            if (s) params.set('search', s)
+            const res  = await fetch(`/api/admin/artists/social-links?${params}`)
+            const data = await res.json()
+            setArtists(data.artists || [])
+            setTotalFiltered(data.total || 0)
+            setPages(data.pages || 1)
+            setGlobalStats(data.globalStats || { total: 0, pending: 0, attempted: 0, complete: 0 })
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    // Refresh current page (used after batch sync)
+    const fetchArtists = useCallback(() => {
+        return doFetch(filterRef.current, searchRef.current, pageRef.current)
+    }, [doFetch])
+
+    useEffect(() => { doFetch('all', '', 1) }, [doFetch])
+
+    const handleFilterChange = (f: FilterType) => {
+        setFilter(f)
+        setPage(1)
+        doFetch(f, searchRef.current, 1)
+    }
+
+    const handleSearch = (s: string) => {
+        setSearch(s)
+        clearTimeout(searchTimer.current)
+        searchTimer.current = setTimeout(() => {
+            setPage(1)
+            doFetch(filterRef.current, s, 1)
+        }, 400)
+    }
+
+    const handlePage = (p: number) => {
+        setPage(p)
+        doFetch(filterRef.current, searchRef.current, p)
+    }
+
+    const handleSave = async (artistId: string, links: SocialLinks) => {
+        const res = await fetch(`/api/admin/artists?id=${artistId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ socialLinks: links }),
+        })
+        if (!res.ok) {
+            const err = await res.json()
+            throw new Error(err.error || 'Erro ao salvar')
+        }
+        setArtists(prev => prev.map(a =>
+            a.id === artistId ? { ...a, socialLinks: links } : a
+        ))
+        setSavedId(artistId)
+        setTimeout(() => setSavedId(null), 2000)
+    }
+
+    const handleFeedSave = async (artistId: string, feedUrl: string) => {
+        const res = await fetch(`/api/admin/artists/${artistId}/instagram-feed`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ feedUrl }),
+        })
+        if (!res.ok) throw new Error('Erro ao salvar feed')
+        setArtists(prev => prev.map(a =>
+            a.id === artistId ? { ...a, instagramFeedUrl: feedUrl || null } : a
+        ))
+    }
+
+    const handleWikiSynced = useCallback((artistId: string, links: SocialLinks) => {
+        setArtists(prev => prev.map(a =>
+            a.id === artistId
+                ? { ...a, socialLinks: links, socialLinksUpdatedAt: new Date().toISOString() }
+                : a
+        ))
+    }, [])
+
+    const handleWikiFailed = useCallback((artistId: string) => {
+        setArtists(prev => prev.map(a =>
+            a.id === artistId
+                ? { ...a, socialLinksUpdatedAt: new Date().toISOString() }
+                : a
+        ))
+    }, [])
+
+    // ── Bulk sync via Wikidata ─────────────────────────────────────────────────
+    const [savedProgress, setSavedProgress] = useState<SavedProgress | null>(null)
+    const [running, setRunning] = useState(false)
+    const [log, setLog] = useState<LogLine[]>([])
+    const [totalGlobal, setTotalGlobal] = useState(0)
+    const [processed, setProcessed] = useState(0)
+    const [syncStats, setSyncStats] = useState<{ found: number; notFound: number; errors: number } | null>(null)
+    const abortRef = useRef(false)
+    const logEndRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY)
+            if (saved) setSavedProgress(JSON.parse(saved))
+        } catch { /* ignore */ }
+    }, [])
+
+    useEffect(() => {
+        logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [log])
+
+    const runBatches = useCallback(async (mode: 'empty_only' | 'smart' | 'all', resume?: SavedProgress) => {
+        abortRef.current = false
+        setRunning(true)
+        setSavedProgress(null)
+        setSyncStats(null)
+
+        let offset = resume?.offset ?? 0
+        let total = resume?.totalGlobal ?? 0
+        let grandFound = resume?.grandFound ?? 0
+        let grandNotFound = resume?.grandNotFound ?? 0
+        let grandErrors = resume?.grandErrors ?? 0
+
+        if (resume) {
+            setTotalGlobal(total)
+            setProcessed(offset)
+            setLog([{
+                text: `▶️ Retomando do offset ${offset.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} (${grandFound} encontrados até agora)`,
+                type: 'info',
+            }])
+            setSyncStats({ found: grandFound, notFound: grandNotFound, errors: grandErrors })
+        } else {
+            setLog([{ text: `🚀 Iniciando busca Wikidata (modo: ${mode}) em lotes de ${SYNC_BATCH_SIZE}...`, type: 'info' }])
+            setTotalGlobal(0)
+            setProcessed(0)
+        }
+
+        try {
+            while (!abortRef.current) {
+                const res = await fetch('/api/admin/sync-social-links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode, limit: SYNC_BATCH_SIZE, offset }),
+                })
+
+                if (!res.ok || !res.body) {
+                    setLog(prev => [...prev, { text: `❌ Erro HTTP ${res.status}`, type: 'error' }])
+                    break
+                }
+
+                const reader = res.body.getReader()
+                const decoder = new TextDecoder()
+                let buffer = ''
+                let batchSize = 0
+
+                for (;;) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    buffer += decoder.decode(value, { stream: true })
+                    const lines = buffer.split('\n')
+                    buffer = lines.pop() || ''
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue
+
+                        if (line.startsWith('TOTAL_GLOBAL:')) {
+                            total = parseInt(line.replace('TOTAL_GLOBAL:', ''))
+                            setTotalGlobal(total)
+                            continue
+                        }
+                        if (line.startsWith('TOTAL:')) {
+                            batchSize = parseInt(line.replace('TOTAL:', ''))
+                            const batchNum = Math.floor(offset / SYNC_BATCH_SIZE) + 1
+                            const totalBatches = total > 0 ? Math.ceil(total / SYNC_BATCH_SIZE) : '?'
+                            setLog(prev => [...prev, {
+                                text: `📦 Lote ${batchNum}/${totalBatches} — ${batchSize} artistas`,
+                                type: 'info',
+                            }])
+                            continue
+                        }
+                        if (line.startsWith('PROGRESS:')) {
+                            setProcessed(offset + parseInt(line.split(':')[1].split('/')[0]))
+                        }
+                        if (line.startsWith('SAVED:')) {
+                            // Atualiza estado local sem re-fetch
+                            const artistId = line.replace('SAVED:', '').trim()
+                            setArtists(prev => prev.map(a =>
+                                a.id === artistId
+                                    ? { ...a, socialLinksUpdatedAt: new Date().toISOString() }
+                                    : a
+                            ))
+                            continue
+                        }
+                        if (line.startsWith('DONE:')) {
+                            const m = line.match(/found=(\d+),notFound=(\d+),errors=(\d+)/)
+                            if (m) {
+                                grandFound += parseInt(m[1])
+                                grandNotFound += parseInt(m[2])
+                                grandErrors += parseInt(m[3])
+                                setSyncStats({ found: grandFound, notFound: grandNotFound, errors: grandErrors })
+                            }
+                            continue
+                        }
+
+                        const parsed = parseSyncLine(line)
+                        if (parsed) setLog(prev => [...prev, parsed])
+                    }
+                }
+
+                offset += SYNC_BATCH_SIZE
+
+                const progress: SavedProgress = { offset, totalGlobal: total, grandFound, grandNotFound, grandErrors, mode }
+                try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progress)) } catch { /* ignore */ }
+
+                if (batchSize < SYNC_BATCH_SIZE || offset >= total) {
+                    setLog(prev => [...prev, {
+                        text: `🎉 Todos os lotes concluídos! Encontrados: ${grandFound} | Não encontrados: ${grandNotFound} | Erros: ${grandErrors}`,
+                        type: 'done',
+                    }])
+                    setProcessed(total)
+                    try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+                    await fetchArtists()
+                    break
+                }
+
+                await new Promise(r => setTimeout(r, 2000))
+                setLog(prev => [...prev, {
+                    text: `⏭️ Próximo lote — offset ${offset.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')}...`,
+                    type: 'info',
+                }])
+            }
+
+            if (abortRef.current) {
+                const progress: SavedProgress = { offset, totalGlobal: total, grandFound, grandNotFound, grandErrors, mode }
+                try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); setSavedProgress(progress) } catch { /* ignore */ }
+                setLog(prev => [...prev, {
+                    text: `⏸️ Pausado no offset ${offset.toLocaleString('pt-BR')}. Clique "Retomar" para continuar.`,
+                    type: 'info',
+                }])
+            }
+        } catch (e) {
+            setLog(prev => [...prev, { text: `❌ Erro inesperado: ${e}`, type: 'error' }])
+            const progress: SavedProgress = { offset, totalGlobal: total, grandFound, grandNotFound, grandErrors, mode }
+            try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); setSavedProgress(progress) } catch { /* ignore */ }
+            setLog(prev => [...prev, {
+                text: `💾 Progresso salvo. Use "Retomar" para continuar do offset ${offset.toLocaleString('pt-BR')}.`,
+                type: 'info',
+            }])
+        } finally {
+            setRunning(false)
+        }
+    }, [fetchArtists])
+
+    const pct = totalGlobal > 0 ? Math.round((processed / totalGlobal) * 100) : 0
+
+    const filterTabs: { value: FilterType; label: string; count: number; color: string; activeColor: string }[] = [
+        { value: 'all',      label: 'Todos',       count: globalStats.total,    color: 'border-border text-muted hover:border-border',                         activeColor: 'border-accent/40 bg-accent/20 text-accent' },
+        { value: 'pending',  label: 'Pendentes',   count: globalStats.pending,  color: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10', activeColor: 'border-orange-400/50 bg-orange-500/20 text-orange-300' },
+        { value: 'attempted',label: 'Já tentados', count: globalStats.attempted,color: 'border-border bg-surface text-muted hover:bg-surface',           activeColor: 'border-border bg-surface text-foreground' },
+        { value: 'complete', label: 'Com links',   count: globalStats.complete, color: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',     activeColor: 'border-green-400/50 bg-green-500/20 text-green-300' },
+    ]
+
+    return (
+        <AdminLayout title="Redes Sociais dos Artistas">
+            <div className="space-y-5">
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-foreground">{globalStats.total.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Total</p>
+                    </div>
+                    <div className="bg-surface border border-orange-500/20 rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-orange-400">{globalStats.pending.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Pendentes</p>
+                    </div>
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-muted">{globalStats.attempted.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Já tentados</p>
+                    </div>
+                    <div className="bg-surface border border-green-500/20 rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-green-400">{globalStats.complete.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Com links</p>
+                    </div>
+                </div>
+
+                {/* Bulk sync via Wikidata */}
+                <div className="bg-surface border border-accent/20 rounded-xl p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <Sparkles className="w-5 h-5 text-accent flex-shrink-0" />
+                        <div>
+                            <p className="text-sm font-black text-foreground">Busca automática em lote via Wikidata</p>
+                            <p className="text-xs text-muted mt-0.5">
+                                Lotes de {SYNC_BATCH_SIZE} artistas · progresso salvo automaticamente
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Retomar progresso salvo */}
+                    {savedProgress && !running && (
+                        <div className="flex items-center justify-between p-3 rounded-xl border border-amber-500/30 bg-amber-500/5">
+                            <div>
+                                <p className="text-sm font-bold text-amber-400">Sync pausado — progresso salvo</p>
+                                <p className="text-xs text-muted mt-0.5">
+                                    Offset {savedProgress.offset.toLocaleString('pt-BR')} de {savedProgress.totalGlobal.toLocaleString('pt-BR')} ·
+                                    modo: {savedProgress.mode} · {savedProgress.grandFound} encontrados
+                                </p>
+                            </div>
+                            <div className="flex gap-2 flex-shrink-0">
+                                <button
+                                    onClick={() => runBatches((savedProgress.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedProgress)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-foreground rounded-lg text-sm font-bold transition-colors"
+                                >
+                                    ▶️ Retomar
+                                </button>
+                                <button
+                                    onClick={() => { try { sessionStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ } setSavedProgress(null) }}
+                                    className="px-3 py-2 bg-surface hover:bg-surface-hover text-foreground rounded-lg text-sm transition-colors"
+                                >
+                                    Descartar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Mode cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <ModeCard
+                            title="Pendentes"
+                            description="Busca apenas artistas que nunca foram sincronizados."
+                            color="purple"
+                            disabled={running}
+                            onClick={() => runBatches('empty_only')}
+                            icon={<Wand2 className="w-4 h-4" />}
+                        />
+                        <ModeCard
+                            title="Re-tentar não encontrados"
+                            description="Inclui artistas já tentados que não tiveram links encontrados."
+                            color="teal"
+                            disabled={running}
+                            onClick={() => runBatches('smart')}
+                            icon={<RefreshCw className="w-4 h-4" />}
+                        />
+                        <ModeCard
+                            title="Forçar todos"
+                            description="Processa todos os artistas. Wikidata sobrescreve links existentes."
+                            color="amber"
+                            disabled={running}
+                            onClick={() => runBatches('all')}
+                            icon={<RefreshCw className="w-4 h-4" />}
+                        />
+                    </div>
+
+                    {/* Progresso geral */}
+                    {(running || processed > 0) && (
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs text-muted">
+                                <span>{processed.toLocaleString('pt-BR')} / {totalGlobal.toLocaleString('pt-BR')} artistas</span>
+                                <span>{pct}%</span>
+                            </div>
+                            <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-accent rounded-full transition-all duration-500"
+                                    style={{ width: `${pct}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stats acumuladas */}
+                    {syncStats && (
+                        <div className="grid grid-cols-3 gap-2">
+                            <StatCard label="Encontrados" value={syncStats.found} color="text-green-400" />
+                            <StatCard label="Não encontrados" value={syncStats.notFound} color="text-yellow-400" />
+                            <StatCard label="Erros" value={syncStats.errors} color="text-red-400" />
+                        </div>
+                    )}
+
+                    {/* Parar */}
+                    {running && (
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => { abortRef.current = true }}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-foreground rounded-lg text-sm font-bold transition-colors"
+                            >
+                                <Square className="w-4 h-4" />
+                                Parar (salva progresso)
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Log */}
+                    {log.length > 0 && (
+                        <div className="bg-background rounded-xl p-4 max-h-64 overflow-y-auto font-mono text-xs space-y-1 border border-border">
+                            {log.map((line, i) => (
+                                <div key={i} className={lineColor(line.type)}>{line.text}</div>
+                            ))}
+                            <div ref={logEndRef} />
+                        </div>
+                    )}
+                </div>
+
+                {/* Filters + Search */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex gap-1.5 flex-wrap">
+                        {filterTabs.map(tab => (
+                            <button
+                                key={tab.value}
+                                onClick={() => handleFilterChange(tab.value)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${filter === tab.value ? tab.activeColor : tab.color}`}
+                            >
+                                {tab.label}
+                                <span className="font-mono tabular-nums opacity-80">{tab.count.toLocaleString('pt-BR')}</span>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="relative flex-1 sm:ml-auto sm:max-w-xs">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            placeholder="Buscar artista..."
+                            className="w-full px-4 pr-10 py-2 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
+                        />
+                    </div>
+                </div>
+
+                {/* Artists list */}
+                {loading ? (
+                    <div className="space-y-2">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <div key={i} className="h-16 bg-surface border border-border rounded-xl animate-pulse" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {artists.length === 0 && (
+                            <AdminEmptyState title="Nenhum artista encontrado" size="md" />
+                        )}
+                        {artists.map((artist) => {
+                            const linkCount = countLinks(artist.socialLinks)
+                            const isSaved = savedId === artist.id
+                            const wasTried = !!artist.socialLinksUpdatedAt && linkCount === 0
+                            return (
+                                <div
+                                    key={artist.id}
+                                    className="flex items-center gap-3 p-4 bg-surface border border-border rounded-xl hover:border-border transition-colors"
+                                >
+                                    {/* Avatar */}
+                                    {artist.primaryImageUrl ? (
+                                        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-muted flex-shrink-0">
+                                            {artist.nameRomanized[0]}
+                                        </div>
+                                    )}
+
+                                    {/* Name */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-foreground text-sm truncate">{artist.nameRomanized}</p>
+                                        {artist.nameHangul && <p className="text-xs text-muted truncate">{artist.nameHangul}</p>}
+                                        {wasTried && artist.socialLinksUpdatedAt && (
+                                            <p className="text-[10px] text-muted mt-0.5">
+                                                tentado {formatDate(artist.socialLinksUpdatedAt)}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Platform icons */}
+                                    <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                                        {PLATFORMS.map(({ key, color, icon }) => {
+                                            const url = artist.socialLinks?.[key]
+                                            return (
+                                                <span key={key} className={`transition-opacity ${url ? color : 'text-muted'}`} title={key}>
+                                                    {url ? (
+                                                        <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="hover:opacity-80">
+                                                            {icon}
+                                                        </a>
+                                                    ) : icon}
+                                                </span>
+                                            )
+                                        })}
+                                    </div>
+
+                                    {/* Instagram feed badge */}
+                                    {artist.instagramFeedUrl && (
+                                        <span className="hidden sm:flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 flex-shrink-0">
+                                            <Instagram className="w-2.5 h-2.5" /> RSS
+                                        </span>
+                                    )}
+
+                                    {/* Link count badge */}
+                                    <span className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 ${linkCount > 0 ? 'bg-green-500/10 text-green-400' : wasTried ? 'bg-surface text-muted' : 'bg-orange-500/10 text-orange-400'}`}>
+                                        {linkCount}/{PLATFORMS.length}
+                                    </span>
+
+                                    {/* Per-artist Wiki sync (only for artists without links) */}
+                                    {linkCount === 0 && (
+                                        <WikiSyncButton
+                                            artist={artist}
+                                            onSynced={handleWikiSynced}
+                                            onFailed={handleWikiFailed}
+                                        />
+                                    )}
+
+                                    {/* Edit button */}
+                                    <button
+                                        onClick={() => setEditing(artist)}
+                                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${isSaved ? 'bg-green-600 text-foreground' : 'bg-surface text-foreground hover:bg-surface hover:text-foreground'}`}
+                                    >
+                                        {isSaved ? <><Check className="w-3 h-3" /> Salvo</> : <><ExternalLink className="w-3 h-3" /> Editar</>}
+                                    </button>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {pages > 1 && (
+                    <div className="flex items-center justify-between py-2">
+                        <span className="text-xs text-muted">
+                            {totalFiltered.toLocaleString('pt-BR')} artistas · página {page} de {pages}
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => handlePage(page - 1)}
+                                disabled={page === 1 || loading}
+                                className="p-2 rounded hover:bg-surface disabled:opacity-30 text-muted transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => handlePage(page + 1)}
+                                disabled={page === pages || loading}
+                                className="p-2 rounded hover:bg-surface disabled:opacity-30 text-muted transition-colors"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {editing && (
+                <SocialLinksModal
+                    artist={editing}
+                    onClose={() => setEditing(null)}
+                    onSave={(links) => handleSave(editing.id, links)}
+                    onFeedSave={handleFeedSave}
+                />
+            )}
+        </AdminLayout>
+    )
+}

@@ -3,56 +3,71 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Light theme (default) ── */
   :root {
-    /* Light Mode Defaults */
-    --foreground-rgb: 23, 23, 23;
-    /* Zinc 900 */
-    --background-start-rgb: 255, 255, 255;
-    --background-end-rgb: 240, 240, 240;
-
-    /* Vibrant Palette (Light Mode - slightly darker for contrast) */
-    --cyber-purple: 168, 85, 247;
-    /* Purple 500 */
-    --neon-pink: 236, 72, 153;
-    /* Pink 500 */
-    --electric-cyan: 6, 182, 212;
-    /* Cyan 500 */
-    --matrix-green: 21, 128, 61;
-    /* Green 700 */
-
-    /* Semantic */
-    --accent-primary: var(--cyber-purple);
-    --accent-secondary: var(--neon-pink);
+    --color-bg:           #ffffff;
+    --color-surface:      #f5f5f7;
+    --color-surface-hover:#efefef;
+    --color-border:       #e8e8e8;
+    --color-border-strong:#d0d0d0;
+    --color-fg:           #080808;
+    --color-fg-subtle:    #3a3a3a;
+    --color-muted:        #6b6b6b;
+    --color-accent:       #ff2d78;
+    --color-accent-soft:  rgba(255, 45, 120, 0.08);
+    --color-shimmer:      rgba(0, 0, 0, 0.04);
+    --color-overlay:      rgba(0, 0, 0, 0.4);
+    --color-skeleton:     #e8e8e8;
+    /* Featured panels: sempre alto contraste independente do tema */
+    --color-featured-bg:     #0c0c0c;
+    --color-featured-fg:     #f5f5f5;
+    --color-featured-muted:  rgba(245, 245, 245, 0.55);
+    --color-featured-border: rgba(245, 245, 245, 0.12);
+    /* Ticker de notícias */
+    --color-ticker-bg:       #0c0c0c;
+    --color-ticker-fg:       rgba(255, 255, 255, 0.65);
+    --color-ticker-fg-hover: rgba(255, 255, 255, 0.95);
+    --color-ticker-divider:  rgba(255, 255, 255, 0.08);
+    /* Navbar translucida */
+    --color-navbar-scrolled: rgba(255, 255, 255, 0.85);
   }
 
-  /* Dark Mode Overrides */
+  /* ── Dark theme ── */
   .dark {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 10, 10, 12;
-
-    --cyber-purple: 188, 19, 254;
-    /* #bc13fe */
-    --neon-pink: 255, 0, 255;
-    /* #ff00ff */
-    --electric-cyan: 0, 243, 255;
-    /* #00f3ff */
-    --matrix-green: 57, 255, 20;
-    /* #39ff14 */
+    --color-bg:           #0d0d0d;
+    --color-surface:      #1a1a1a;
+    --color-surface-hover:#222222;
+    --color-border:       #2e2e2e;
+    --color-border-strong:#404040;
+    --color-fg:           #f2f2f2;
+    --color-fg-subtle:    #c8c8c8;
+    --color-muted:        #999999;
+    --color-accent:       #ff2d78;
+    --color-accent-soft:  rgba(255, 45, 120, 0.15);
+    --color-shimmer:      rgba(255, 255, 255, 0.04);
+    --color-overlay:      rgba(0, 0, 0, 0.6);
+    --color-skeleton:     #2a2a2a;
+    /* Featured panels: ligeiramente mais claro que o fundo dark */
+    --color-featured-bg:     #181818;
+    --color-featured-fg:     #f0f0f0;
+    --color-featured-muted:  rgba(240, 240, 240, 0.55);
+    --color-featured-border: rgba(240, 240, 240, 0.10);
+    /* Ticker de notícias */
+    --color-ticker-bg:       #111111;
+    --color-ticker-fg:       rgba(200, 200, 200, 0.70);
+    --color-ticker-fg-hover: #f0f0f0;
+    --color-ticker-divider:  rgba(255, 255, 255, 0.06);
+    /* Navbar translucida */
+    --color-navbar-scrolled: rgba(13, 13, 13, 0.85);
   }
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: white;
-  /* Fallback */
+  color: var(--color-fg);
+  background-color: var(--color-bg);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.dark body {
-  background: radial-gradient(circle at top center, #1a0b2e 0%, #000000 40%);
 }
 
 /* Focus states for accessibility */
@@ -69,35 +84,81 @@ body {
 
 @layer components {
   .glass-nav {
-    @apply bg-black/60 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50 transition-all duration-300;
+    background-color: color-mix(in srgb, var(--color-bg) 90%, transparent);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition: all 0.3s;
   }
 
   .glass-card {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl hover:border-white/20 transition-all duration-500 shadow-glass;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    transition: all 0.5s;
+  }
+  .glass-card:hover {
+    border-color: var(--color-border-strong);
   }
 
   .glass-card-hover {
-    @apply hover:shadow-neon-hover hover:border-purple-500/50 hover:-translate-y-1;
+    @apply hover:-translate-y-1;
   }
 
   .btn-primary {
-    @apply relative overflow-hidden px-8 py-3.5 bg-white text-black font-black tracking-wide rounded-full transition-all active:scale-95 hover:bg-zinc-200 hover:shadow-glow-white disabled:opacity-50 disabled:pointer-events-none;
+    background-color: var(--color-fg);
+    color: var(--color-bg);
+    @apply relative overflow-hidden px-5 py-2.5 text-sm md:px-8 md:py-3.5 md:text-base font-black tracking-wide rounded-full transition-all duration-300 active:scale-95 hover:-translate-y-0.5 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-accent);
+    color: #ffffff;
   }
 
   .btn-secondary {
-    @apply px-8 py-3.5 bg-white/5 text-white font-bold tracking-wide rounded-full hover:bg-white/10 transition-all active:scale-95 backdrop-blur-md border border-white/10 hover:border-white/20 disabled:opacity-50;
+    background-color: var(--color-surface);
+    color: var(--color-fg);
+    border: 1px solid var(--color-border);
+    @apply px-5 py-2.5 text-sm md:px-8 md:py-3.5 md:text-base font-bold tracking-wide rounded-full transition-all duration-300 active:scale-95 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50;
+  }
+  .btn-secondary:hover {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-surface-hover);
+  }
+
+  /* Ticker links */
+  .ticker-link {
+    color: var(--color-ticker-fg);
+    border-right: 1px solid var(--color-ticker-divider);
+  }
+  .ticker-link:hover {
+    color: var(--color-ticker-fg-hover);
+  }
+
+  /* Botão secundário dentro de painéis featured (fundo sempre escuro) */
+  .cta-secondary {
+    background-color: var(--color-featured-border);
+    border: 1px solid var(--color-featured-border);
+    color: var(--color-featured-fg);
+  }
+  .cta-secondary:hover {
+    background-color: rgba(245, 245, 245, 0.14);
+    border-color: rgba(245, 245, 245, 0.20);
+  }
+
+  .link-hover {
+    @apply transition-all duration-200 hover:underline hover:underline-offset-4;
+    color: var(--color-accent);
   }
 
   .hero-gradient {
-    background: linear-gradient(to top, #000 0%, transparent 100%);
+    background: linear-gradient(to top, var(--color-overlay) 0%, transparent 100%);
   }
 
   .card-hover {
     @apply transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 cursor-pointer;
-  }
-
-  .hallyu-gradient-text {
-    @apply bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient;
   }
 
   /* Input focus states */
@@ -107,7 +168,28 @@ body {
   input[type="search"],
   textarea,
   select {
-    @apply bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-transparent transition-all placeholder:text-zinc-600;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-fg);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.15s ease;
+  }
+  input[type="text"]::placeholder,
+  input[type="email"]::placeholder,
+  input[type="password"]::placeholder,
+  input[type="search"]::placeholder,
+  textarea::placeholder {
+    color: var(--color-muted);
+  }
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="search"]:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--color-accent);
   }
 }
 
@@ -135,16 +217,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #000;
+  background: var(--color-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--color-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #444;
+  background: var(--color-muted);
 }
 
 /* Animations */
@@ -156,6 +238,11 @@ body {
   to {
     opacity: 1;
   }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @keyframes slideUp {
@@ -224,24 +311,117 @@ body {
   animation: shimmer 2s infinite;
   background: linear-gradient(to right,
       transparent 0%,
-      rgba(255, 255, 255, 0.05) 50%,
+      var(--color-shimmer) 50%,
       transparent 100%);
   background-size: 1000px 100%;
 }
 
-/* Mobile menu slide-in animation */
+/* Mobile menu slide-in animations */
 @keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
 
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
 .animate-slide-in-right {
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Skeleton Loader */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton {
+  background-color: var(--color-skeleton);
+  @apply animate-pulse rounded;
+}
+
+.skeleton-text {
+  background-color: var(--color-skeleton);
+  @apply h-4 rounded animate-pulse;
+}
+
+.skeleton-card {
+  background-color: var(--color-skeleton);
+  border: 1px solid var(--color-border);
+  @apply aspect-[2/3] rounded-xl animate-pulse;
+}
+
+/* Ripple Effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  width: 20px;
+  height: 20px;
+  animation: ripple 0.6s ease-out;
+  pointer-events: none;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+  @apply transition-colors duration-200;
+}
+
+/* Focus ring improvements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent);
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Skeleton loaders — cor via variável, sem hardcode */
+.skeleton,
+.skeleton-text,
+.skeleton-card {
+  background-color: var(--color-skeleton);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl;
+}
+

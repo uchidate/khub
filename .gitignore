@@ -51,6 +51,8 @@ service-account-*.json
 .env.local
 # Secrets folder
 .secrets/
+docker/monitoring/prometheus/secrets/prometheus_token
+docker/monitoring/prometheus/secrets/prometheus_token.local
 # NPM auth tokens
 .npmrc
 # SSH private keys
@@ -78,8 +80,31 @@ v1/.env
 
 # Local files
 .env.postgres
+.env.production
 prisma/migrations.sqlite.backup/
 
 # Server secrets documentation (DO NOT COMMIT)
 docs/SETUP_SERVIDOR_SECRETS.md
 *_SECRETS.md
+
+# Database backups (contain production data - NEVER commit)
+*.sql
+!prisma/migrations/**/*.sql
+backup-*.sql
+pre-upgrade-state.md
+
+# IDE configs
+.idea/
+
+# Claude Code local files
+.claude/
+
+# Instagram downloaded images (runtime, persisted via Docker volume)
+public/instagram/
+
+# Payload CMS local app (não faz parte do deploy)
+/cms-app/
+
+# Playwright
+playwright-report/
+test-results/

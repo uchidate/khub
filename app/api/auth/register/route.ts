@@ -3,6 +3,13 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { getEmailService } from '@/lib/services/email-service'
+import { getSlackService } from '@/lib/services/slack-notification-service'
+import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+import { withLogging } from '@/lib/server/withLogging'
+
+const log = createLogger('AUTH')
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -10,7 +17,10 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 })
 
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async function POST(request: NextRequest) {
+  const limited = checkRateLimit(request, RateLimitPresets.AUTH_REGISTER)
+  if (limited) return limited
+
   try {
     const body = await request.json()
 
@@ -56,11 +66,19 @@ export async function POST(request: NextRequest) {
       const emailService = getEmailService()
       if (emailService.isEnabled()) {
         await emailService.sendWelcomeEmail(user.email, user.name || 'Usuário')
-        console.log(`✅ Welcome email sent to: ${user.email}`)
+        log.info('Welcome email sent', { email: user.email })
       }
     } catch (emailError) {
       // Log error but don't fail registration
-      console.error('⚠️  Failed to send welcome email:', emailError)
+      log.warn('Failed to send welcome email', { error: getErrorMessage(emailError) })
+    }
+
+    // Slack admin notification (non-blocking)
+    try {
+      const totalUsers = await prisma.user.count()
+      await getSlackService().notifyNewUserRegistered(user.email, user.name || undefined, totalUsers)
+    } catch {
+      // Non-blocking — never fail registration due to Slack
     }
 
     return NextResponse.json(
@@ -79,10 +97,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error('Registration error:', error)
+    log.error('Registration error', { error: getErrorMessage(error) })
     return NextResponse.json(
       { error: 'Erro ao criar usuário. Tente novamente.' },
       { status: 500 }
     )
   }
-}
+})

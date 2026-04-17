@@ -1,10 +1,9 @@
 import { BaseAIProvider } from './providers/base-provider';
-import { GeminiProvider } from './providers/gemini-provider';
-import { OpenAIProvider } from './providers/openai-provider';
-import { ClaudeProvider } from './providers/claude-provider';
+import { DeepSeekProvider } from './providers/deepseek-provider';
 import { OllamaProvider } from './providers/ollama-provider';
 import { PROVIDER_CONFIGS } from './ai-config';
 import type { AIProviderType, GenerateOptions, GenerationResult, OrchestratorStats } from './ai-config';
+import { logAiUsage } from './ai-usage-logger';
 
 /**
  * Orquestrador de múltiplos providers de IA
@@ -20,21 +19,13 @@ export class AIOrchestrator {
     private maxRetries: number = 3;
 
     constructor(config: {
-        geminiApiKey?: string;
-        openaiApiKey?: string;
-        claudeApiKey?: string;
+        deepseekApiKey?: string;
         ollamaBaseUrl?: string;
         maxRetries?: number;
     }) {
         // Inicializar providers disponíveis
-        if (config.geminiApiKey) {
-            this.providers.set('gemini', new GeminiProvider(config.geminiApiKey));
-        }
-        if (config.openaiApiKey) {
-            this.providers.set('openai', new OpenAIProvider(config.openaiApiKey));
-        }
-        if (config.claudeApiKey) {
-            this.providers.set('claude', new ClaudeProvider(config.claudeApiKey));
+        if (config.deepseekApiKey) {
+            this.providers.set('deepseek', new DeepSeekProvider(config.deepseekApiKey));
         }
         // Ollama só ativado se a URL for explicitamente configurada
         const ollamaUrl = config.ollamaBaseUrl || process.env.OLLAMA_BASE_URL;
@@ -89,13 +80,39 @@ export class AIOrchestrator {
             const provider = this.providers.get(providerName);
             if (!provider) continue;
 
+            // Circuit breaker: pular provider temporariamente bloqueado
+            if (provider.isCircuitOpen()) {
+                const remaining = provider.getCircuitCooldownRemaining();
+                console.warn(`⚡ Skipping ${providerName} (circuit open, ${remaining}s remaining)`);
+                continue;
+            }
+
+            const t0 = Date.now()
             try {
                 console.log(`🔄 Attempting generation with ${providerName}...`);
                 const result = await provider.generate(prompt, options);
                 this.successfulRequests++;
                 console.log(`✅ Successfully generated with ${providerName}`);
+                logAiUsage({
+                    provider:   result.provider,
+                    model:      result.model,
+                    feature:    options?.feature ?? 'unknown',
+                    tokensIn:   result.tokensIn,
+                    tokensOut:  result.tokensOut,
+                    cost:       result.cost ?? 0,
+                    durationMs: Date.now() - t0,
+                    status:     'success',
+                })
                 return result;
             } catch (error: any) {
+                logAiUsage({
+                    provider:   providerName,
+                    model:      PROVIDER_CONFIGS[providerName]?.models?.default ?? 'unknown',
+                    feature:    options?.feature ?? 'unknown',
+                    durationMs: Date.now() - t0,
+                    status:     'error',
+                    errorMsg:   error.message,
+                })
                 lastError = error;
                 attempts++;
                 console.warn(`⚠️  ${providerName} failed (attempt ${attempts}): ${error.message}`);
@@ -115,7 +132,7 @@ export class AIOrchestrator {
         prompt: string,
         schema: string,
         options?: GenerateOptions
-    ): Promise<T> {
+    ): Promise<GenerationResult & { parsed: T }> {
         const preferredProvider = options?.preferredProvider;
         let providersToTry: AIProviderType[];
 
@@ -139,12 +156,38 @@ export class AIOrchestrator {
             const provider = this.providers.get(providerName);
             if (!provider) continue;
 
+            // Circuit breaker: pular provider temporariamente bloqueado
+            if (provider.isCircuitOpen()) {
+                const remaining = provider.getCircuitCooldownRemaining();
+                console.warn(`⚡ Skipping ${providerName} (circuit open, ${remaining}s remaining)`);
+                continue;
+            }
+
+            const t0 = Date.now()
             try {
                 console.log(`🔄 Attempting structured generation with ${providerName}...`);
                 const result = await provider.generateStructured<T>(prompt, schema, options);
                 console.log(`✅ Successfully generated structured data with ${providerName}`);
+                logAiUsage({
+                    provider:   result.provider,
+                    model:      result.model,
+                    feature:    options?.feature ?? 'unknown',
+                    tokensIn:   result.tokensIn,
+                    tokensOut:  result.tokensOut,
+                    cost:       result.cost ?? 0,
+                    durationMs: Date.now() - t0,
+                    status:     'success',
+                })
                 return result;
             } catch (error: any) {
+                logAiUsage({
+                    provider:   providerName,
+                    model:      PROVIDER_CONFIGS[providerName]?.models?.default ?? 'unknown',
+                    feature:    options?.feature ?? 'unknown',
+                    durationMs: Date.now() - t0,
+                    status:     'error',
+                    errorMsg:   error.message,
+                })
                 lastError = error;
                 attempts++;
                 console.warn(`⚠️  ${providerName} failed (attempt ${attempts}): ${error.message}`);

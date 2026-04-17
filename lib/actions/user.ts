@@ -60,45 +60,257 @@ export async function getDashboardData() {
 
     const userId = session.user.id
 
-    const [favorites, activities, news, user] = await Promise.all([
-        (prisma as any).favorite.findMany({
-            where: { userId },
-            include: {
-                artist: true,
-                production: true,
-                news: true
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 5
-        }),
+    // Fetch favorite artist IDs for personalized news
+    const favoriteArtistRows = await prisma.favorite.findMany({
+        where: { userId, artistId: { not: null } },
+        select: { artistId: true },
+    })
+    const favoriteArtistIds = favoriteArtistRows.map(f => f.artistId!).filter(Boolean)
+    const hasFollowing = favoriteArtistIds.length > 0
+
+    const [
+        activities,
+        latestBlogPosts,
+        personalizedBlogPosts,
+        trendingArtists,
+        user,
+        artistCount,
+        productionCount,
+        groupCount,
+        commentsCount,
+        watchlistCount,
+        watchingEntries,
+    ] = await Promise.all([
+        // Atividades recentes (com entityId para resolver nomes)
         (prisma as any).activity.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
-            take: 10
+            take: 12,
         }),
-        prisma.news.findMany({
+        // Últimos artigos do blog (fallback)
+        prisma.blogPost.findMany({
+            where: { status: 'PUBLISHED' },
             orderBy: { publishedAt: 'desc' },
-            take: 2
+            take: 4,
+            select: {
+                id: true, slug: true, title: true, excerpt: true,
+                coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+                category: { select: { name: true, slug: true } },
+                tags: true,
+            },
+        }),
+        // Artigos personalizados (artistas favoritos via tags)
+        hasFollowing
+            ? (async () => {
+                const artistNames = await prisma.artist.findMany({
+                    where: { id: { in: favoriteArtistIds } },
+                    select: { nameRomanized: true },
+                })
+                const nameTags = artistNames.map(a => a.nameRomanized.toLowerCase())
+                return prisma.blogPost.findMany({
+                    where: {
+                        status: 'PUBLISHED',
+                        tags: { hasSome: nameTags },
+                    },
+                    orderBy: { publishedAt: 'desc' },
+                    take: 4,
+                    select: {
+                        id: true, slug: true, title: true, excerpt: true,
+                        coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+                        category: { select: { name: true, slug: true } },
+                        tags: true,
+                    },
+                })
+            })()
+            : Promise.resolve([]),
+        // Trending artists (por trendingScore)
+        prisma.artist.findMany({
+            orderBy: { trendingScore: 'desc' },
+            take: 6,
+            select: { id: true, nameRomanized: true, primaryImageUrl: true },
         }),
         prisma.user.findUnique({
             where: { id: userId },
-            select: { createdAt: true }
-        })
+            select: { createdAt: true },
+        }),
+        // Stats por tipo
+        prisma.favorite.count({ where: { userId, artistId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, productionId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, groupId: { not: null } } }),
+        prisma.comment.count({ where: { userId } }),
+        prisma.watchEntry.count({ where: { userId } }),
+        prisma.watchEntry.findMany({
+            where: { userId, status: 'WATCHING' },
+            orderBy: { updatedAt: 'desc' },
+            take: 6,
+            select: {
+                productionId: true,
+                production: { select: { id: true, titlePt: true, imageUrl: true, type: true, year: true } },
+            },
+        }),
     ])
 
-    const stats = {
-        favoritesCount: await (prisma as any).favorite.count({ where: { userId } }),
-        activityScore: activities.length * 10,
-        joinDate: user?.createdAt
+    // Resolver nomes das entidades nas atividades
+    const uniqueIds = (type: string) =>
+        Array.from(new Set<string>(
+            activities.filter((a: any) => a.entityType === type && a.entityId).map((a: any) => a.entityId as string)
+        ))
+    const entityIds = {
+        ARTIST:     uniqueIds('ARTIST'),
+        PRODUCTION: uniqueIds('PRODUCTION'),
     }
 
-    return { favorites, activities, news, stats }
+    const [artistNames, productionNames] = await Promise.all([
+        entityIds.ARTIST.length > 0
+            ? prisma.artist.findMany({ where: { id: { in: entityIds.ARTIST as string[] } }, select: { id: true, nameRomanized: true } })
+            : Promise.resolve([]),
+        entityIds.PRODUCTION.length > 0
+            ? prisma.production.findMany({ where: { id: { in: entityIds.PRODUCTION as string[] } }, select: { id: true, titlePt: true } })
+            : Promise.resolve([]),
+    ])
+
+    const nameMap: Record<string, string> = {}
+    artistNames.forEach((a: any) => { nameMap[a.id] = a.nameRomanized })
+    productionNames.forEach((p: any) => { nameMap[p.id] = p.titlePt })
+
+    const activitiesWithNames = activities.map((a: any) => ({
+        ...a,
+        entityName: a.entityId ? nameMap[a.entityId] : undefined,
+    }))
+
+    const stats = {
+        favoritesCount: artistCount + productionCount + groupCount,
+        artistCount,
+        productionCount,
+        groupCount,
+        commentsCount,
+        watchlistCount,
+        joinDate: user?.createdAt,
+    }
+
+    return {
+        activities: activitiesWithNames,
+        latestBlogPosts,
+        personalizedBlogPosts,
+        hasFollowing,
+        trendingArtists,
+        watchingEntries,
+        stats,
+    }
+}
+
+export async function getProfileData() {
+    const session = await auth()
+    if (!session?.user?.id) return null
+
+    const userId = session.user.id
+
+    const [
+        favoriteArtists,
+        favoriteProductions,
+        favoriteNews,
+        totalComments,
+        recentComments,
+        recentFavoriteArtistsRaw,
+        recentFavoriteProductionsRaw,
+        user,
+        heroFavorite,
+        trendingArtists,
+    ] = await Promise.all([
+        prisma.favorite.count({ where: { userId, artistId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, productionId: { not: null } } }),
+        prisma.favorite.count({ where: { userId, newsId: { not: null } } }),
+        prisma.comment.count({ where: { userId } }),
+        prisma.comment.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+            select: {
+                id: true, content: true, createdAt: true,
+                news: { select: { id: true, title: true, imageUrl: true } },
+            },
+        }),
+        prisma.favorite.findMany({
+            where: { userId, artistId: { not: null } },
+            orderBy: { createdAt: 'desc' },
+            take: 6,
+            select: {
+                createdAt: true,
+                artist: { select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true } },
+            },
+        }),
+        prisma.favorite.findMany({
+            where: { userId, productionId: { not: null } },
+            orderBy: { createdAt: 'desc' },
+            take: 4,
+            select: {
+                createdAt: true,
+                production: { select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true } },
+            },
+        }),
+        prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, bio: true } }),
+        // Primeira artista favoritada (mais antiga) para o hero banner
+        prisma.favorite.findFirst({
+            where: { userId, artistId: { not: null } },
+            orderBy: { createdAt: 'asc' },
+            select: { artist: { select: { primaryImageUrl: true } } },
+        }),
+        // Trending artists para o fallback da FavoritesGallery
+        prisma.artist.findMany({
+            orderBy: { trendingScore: 'desc' },
+            take: 6,
+            select: { id: true, nameRomanized: true, primaryImageUrl: true },
+        }),
+    ])
+
+    return {
+        stats: { favoriteArtists, favoriteProductions, favoriteNews, totalComments },
+        recentComments: recentComments
+            .filter(c => c.news)
+            .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), news: c.news! })),
+        recentFavoriteArtists: recentFavoriteArtistsRaw
+            .filter(f => f.artist)
+            .map(f => ({ ...f.artist!, favoritedAt: f.createdAt.toISOString() })),
+        recentFavoriteProductions: recentFavoriteProductionsRaw
+            .filter(f => f.production)
+            .map(f => ({ ...f.production!, favoritedAt: f.createdAt.toISOString() })),
+        memberSince: user?.createdAt.toISOString() ?? null,
+        bio: user?.bio ?? null,
+        heroImageUrl: heroFavorite?.artist?.primaryImageUrl ?? null,
+        trendingArtists,
+    }
+}
+
+export async function getAllComments() {
+    const session = await auth()
+    if (!session?.user?.id) return null
+
+    const comments = await prisma.comment.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: 'desc' },
+        select: {
+            id: true, content: true, createdAt: true,
+            news: { select: { id: true, title: true, imageUrl: true } },
+        },
+    })
+
+    return comments
+        .filter(c => c.news)
+        .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), news: c.news! }))
 }
 
 export async function registerInterest(tierName: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Não autorizado")
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            console.warn('[registerInterest] No session found for tierName:', tierName)
+            return { success: false, error: 'unauthorized' as const }
+        }
 
-    await trackActivity(session.user.id, 'PREMIUM_INTEREST', undefined, undefined, { tier: tierName })
-    return { success: true }
+        await trackActivity(session.user.id, 'PREMIUM_INTEREST', undefined, undefined, { tier: tierName })
+        return { success: true, error: null }
+    } catch (e) {
+        console.error('[registerInterest] Unexpected error:', e)
+        return { success: false, error: 'internal' as const }
+    }
 }

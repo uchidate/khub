@@ -12,22 +12,28 @@ export interface Breadcrumb {
 interface BreadcrumbsProps {
   items?: Breadcrumb[]
   homeLabel?: string
+  /** Use em seções hero com fundo escuro/imagem. Usa cores brancas com opacidade. */
+  onDark?: boolean
+  className?: string
 }
 
-export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, homeLabel = 'Início', onDark = false, className = 'mb-6' }: BreadcrumbsProps) {
   const pathname = usePathname()
 
-  // Auto-generate breadcrumbs from pathname if not provided
   const breadcrumbs = items || generateBreadcrumbs(pathname)
 
+  const chevronColor = onDark ? 'text-white/25' : 'text-border'
+  const linkColor    = onDark ? 'text-white/60 hover:text-white' : 'text-muted hover:text-foreground'
+  const currentColor = onDark ? 'text-white'   : 'text-foreground'
+
   return (
-    <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex items-center gap-2 text-sm flex-wrap">
+    <nav aria-label="Breadcrumb" className={`min-w-0 ${className}`}>
+      <ol className="flex items-center gap-2 text-sm overflow-hidden">
         {/* Home */}
-        <li>
+        <li className="flex-shrink-0">
           <Link
-            href=""
-            className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
+            href="/"
+            className={`flex items-center gap-1 transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 ${linkColor}`}
           >
             <Home size={16} />
             <span className="sr-only sm:not-sr-only">{homeLabel}</span>
@@ -39,17 +45,17 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
           const isLast = index === breadcrumbs.length - 1
 
           return (
-            <li key={index} className="flex items-center gap-2">
-              <ChevronRight size={16} className="text-zinc-600" aria-hidden="true" />
+            <li key={index} className={`flex items-center gap-2 ${isLast ? 'min-w-0' : 'flex-shrink-0'}`}>
+              <ChevronRight size={16} className={`flex-shrink-0 ${chevronColor}`} aria-hidden="true" />
 
               {isLast || !crumb.href ? (
-                <span className="text-white font-medium" aria-current="page">
+                <span className={`font-medium truncate ${currentColor}`} aria-current="page">
                   {crumb.label}
                 </span>
               ) : (
                 <Link
                   href={crumb.href}
-                  className="text-zinc-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4"
+                  className={`transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 ${linkColor}`}
                 >
                   {crumb.label}
                 </Link>
@@ -62,42 +68,31 @@ export function Breadcrumbs({ items, homeLabel = 'Início' }: BreadcrumbsProps) 
   )
 }
 
-// Helper function to generate breadcrumbs from pathname
 function generateBreadcrumbs(pathname: string): Breadcrumb[] {
   const segments = pathname.split('/').filter(Boolean)
   const breadcrumbs: Breadcrumb[] = []
 
-  // Skip v1 prefix
-  const startIndex = 0
-
-  for (let i = startIndex; i < segments.length; i++) {
+  for (let i = 0; i < segments.length; i++) {
     const segment = segments[i]
     const href = '/' + segments.slice(0, i + 1).join('/')
 
-    // Skip if it's an ID (uuid pattern or just numbers)
-    if (isId(segment)) {
-      continue
-    }
+    if (isId(segment)) continue
 
     breadcrumbs.push({
       label: formatLabel(segment),
-      href: i < segments.length - 1 ? href : undefined, // Last item has no href
+      href: i < segments.length - 1 ? href : undefined,
     })
   }
 
   return breadcrumbs
 }
 
-// Check if segment is likely an ID
 function isId(segment: string): boolean {
-  // UUID pattern or numeric ID
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment) ||
     /^\d+$/.test(segment)
 }
 
-// Format segment into readable label
 function formatLabel(segment: string): string {
-  // Replace hyphens with spaces and capitalize
   return segment
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
