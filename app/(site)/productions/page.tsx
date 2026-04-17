@@ -72,6 +72,7 @@ export default async function ProductionsPage() {
             <Suspense>
                 <ProductionsList />
             </Suspense>
+            <AdBanner slot="1740970038" format="auto" className="mt-8 mb-4" />
             <ScrollToTop />
             </div>
         </PageTransition>

@@ -75,6 +75,7 @@ export default async function GroupsPage() {
                 <Suspense>
                 <GroupsList />
             </Suspense>
+            <AdBanner slot="1740970038" format="auto" className="mt-8 mb-4" />
             <ScrollToTop />
             </div>
         </PageTransition>

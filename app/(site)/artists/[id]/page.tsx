@@ -632,6 +632,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             )}
                         </section>
 
+                        {/* Ad: após filmografia, antes da discografia */}
+                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+
                         {/* Discography */}
                         {artist.albums.length > 0 && (
                             <DiscographySection albums={artist.albums} />
@@ -709,6 +712,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                     ))}
                                 </div>
                             </section>
+                        )}
+
+                        {/* Ad: após artigos de blog */}
+                        {blogArticles.length > 0 && (
+                            <AdBanner slot="1740970038" format="auto" className="my-8" />
                         )}
 
                         {/* Instagram Feed — temporariamente oculto */}
