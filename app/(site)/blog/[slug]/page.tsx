@@ -13,6 +13,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
 import { BlogReadingProgress } from '@/components/blog/BlogReadingProgress'
@@ -278,6 +279,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </div>
           </div>
         )}
+
+        {/* Ad before related posts */}
+        <AdBanner slot="1740970038" format="auto" className="mt-10" />
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (
