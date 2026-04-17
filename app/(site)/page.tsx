@@ -329,7 +329,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                 spotlightProduction={spotlightProduction}
             />
             <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''} format="horizontal" />
+                <AdBanner slot="1740970038" format="auto" />
             </div>
             <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
                 <HomeRandomDiscovery
@@ -360,7 +360,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                     </section>
                 )}
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''} format="horizontal" />
+                    <AdBanner slot="1740970038" format="auto" />
                 </div>
                 <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
             </div>
