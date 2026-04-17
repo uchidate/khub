@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -361,6 +361,35 @@ function isPortraitGroup(item: unknown): item is PortraitGroupMarker {
     return typeof item === 'object' && item !== null && '_portraitGroup' in item
 }
 
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
+const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE
+
+function InArticleAd() {
+    const pushed = useRef(false)
+    useEffect(() => {
+        if (pushed.current) return
+        pushed.current = true
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+        } catch {}
+    }, [])
+
+    if (!ADSENSE_CLIENT || !ADSENSE_SLOT) return null
+    return (
+        <div className="my-8 text-center overflow-hidden">
+            <ins
+                className="adsbygoogle"
+                style={{ display: 'block', textAlign: 'center' }}
+                data-ad-layout="in-article"
+                data-ad-format="fluid"
+                data-ad-client={ADSENSE_CLIENT}
+                data-ad-slot={ADSENSE_SLOT}
+            />
+        </div>
+    )
+}
+
 export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogBlockRendererProps) {
     // Group consecutive compact cards into a 2-col desktop grid
     // Group consecutive non-compact artist cards into a portrait editorial grid
@@ -409,7 +438,12 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                             </div>
                         )
                         : <BlogBlockItem key={idx} block={item as BlogBlock} resolvedEntities={resolvedEntities} />
-            )}
+            ).reduce<React.ReactNode[]>((acc, node, idx) => {
+                acc.push(node)
+                // Inject in-article ad after the 4th block
+                if (idx === 3) acc.push(<InArticleAd key="ad-mid" />)
+                return acc
+            }, [])}
         </div>
     )
 }
