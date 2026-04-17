@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
@@ -70,6 +71,7 @@ export default async function GroupsPage() {
                   </div>
                 </div>
 
+                <AdBanner slot="1740970038" format="auto" className="mb-6" />
                 <Suspense>
                 <GroupsList />
             </Suspense>

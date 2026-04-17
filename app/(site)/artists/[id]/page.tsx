@@ -637,6 +637,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             <DiscographySection albums={artist.albums} />
                         )}
 
+                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
                             <section>
