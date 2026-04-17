@@ -13,6 +13,7 @@ import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/S
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
 import { HomeRecommended } from "@/components/home/HomeRecommended"
 import { HomeRandomDiscovery } from "@/components/home/HomeRandomDiscovery"
+import { AdBanner } from "@/components/ui/AdBanner"
 
 export const dynamic = 'force-dynamic'
 
@@ -327,6 +328,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
             />
+            <div className="max-w-7xl mx-auto px-4 py-4">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''} format="horizontal" />
+            </div>
             <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
                 <HomeRandomDiscovery
                     artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized } : null}
@@ -355,6 +359,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                         </div>
                     </section>
                 )}
+                <div className="max-w-7xl mx-auto px-4 py-4">
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''} format="horizontal" />
+                </div>
                 <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
             </div>
             <ScrollToTop />
