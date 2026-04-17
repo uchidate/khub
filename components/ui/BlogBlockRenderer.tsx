@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -8,6 +8,29 @@ import { TwitterEmbed } from '@/components/ui/TwitterEmbed'
 import { InstagramEmbed } from '@/components/ui/InstagramEmbed'
 import { TikTokEmbed } from '@/components/ui/TikTokEmbed'
 import type { BlogBlock } from '@/lib/types/blocks'
+
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
+const ADSENSE_SLOT = '1740970038'
+
+function InArticleAd({ id }: { id: string }) {
+    const pushed = useRef(false)
+    useEffect(() => {
+        if (pushed.current) return
+        pushed.current = true
+        try { ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({}) } catch {}
+    }, [])
+    if (!ADSENSE_CLIENT) return null
+    return (
+        <div className="my-8 overflow-hidden text-center">
+            <ins className="adsbygoogle" style={{ display: 'block', textAlign: 'center' }}
+                data-ad-layout="in-article" data-ad-format="fluid"
+                data-ad-client={ADSENSE_CLIENT} data-ad-slot={ADSENSE_SLOT}
+                key={id} />
+        </div>
+    )
+}
+
+const AD_POSITIONS = new Set([4, 10, 18])
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -390,8 +413,8 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
 
     return (
         <div className={className}>
-            {rows.map((item, idx) =>
-                isPortraitGroup(item)
+            {rows.map((item, idx) => {
+                const el = isPortraitGroup(item)
                     ? (
                         <div key={idx} className="grid grid-cols-2 md:grid-cols-4 gap-3 my-8">
                             {item.items.map((block, j) => {
@@ -409,7 +432,13 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                             </div>
                         )
                         : <BlogBlockItem key={idx} block={item as BlogBlock} resolvedEntities={resolvedEntities} />
-            )}
+                return (
+                    <>
+                        {el}
+                        {AD_POSITIONS.has(idx + 1) && <InArticleAd key={`ad-${idx}`} id={`ad-${idx}`} />}
+                    </>
+                )
+            })}
         </div>
     )
 }
