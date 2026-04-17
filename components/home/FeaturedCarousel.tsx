@@ -82,6 +82,7 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
                                 src={story.coverImageUrl}
                                 alt={story.title}
                                 fill
+                                unoptimized
                                 sizes="(max-width: 1024px) 100vw, 62vw"
                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                                 priority

@@ -4,14 +4,15 @@ import { useEffect, useRef } from 'react'
 
 interface AdBannerProps {
     slot: string
-    format?: 'auto' | 'horizontal' | 'rectangle' | 'vertical'
+    format?: 'auto' | 'horizontal' | 'rectangle' | 'vertical' | 'fluid'
+    layout?: 'in-article'
     className?: string
     style?: React.CSSProperties
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 
-export function AdBanner({ slot, format = 'auto', className = '', style }: AdBannerProps) {
+export function AdBanner({ slot, format = 'auto', layout, className = '', style }: AdBannerProps) {
     const pushed = useRef(false)
 
     useEffect(() => {
@@ -21,7 +22,7 @@ export function AdBanner({ slot, format = 'auto', className = '', style }: AdBan
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
         } catch {
-            // AdSense not loaded yet — will retry on next mount
+            // AdSense not loaded yet
         }
     }, [slot])
 
@@ -31,11 +32,12 @@ export function AdBanner({ slot, format = 'auto', className = '', style }: AdBan
         <div className={`overflow-hidden text-center ${className}`}>
             <ins
                 className="adsbygoogle"
-                style={{ display: 'block', ...style }}
+                style={{ display: 'block', textAlign: 'center', ...style }}
                 data-ad-client={CLIENT}
                 data-ad-slot={slot}
                 data-ad-format={format}
-                data-full-width-responsive="true"
+                {...(layout ? { 'data-ad-layout': layout } : {})}
+                {...(format !== 'fluid' ? { 'data-full-width-responsive': 'true' } : {})}
             />
         </div>
     )

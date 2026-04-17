@@ -7,11 +7,10 @@ const nextConfig = {
         },
     },
     async rewrites() {
-        // Proxy Umami via Next.js para evitar mixed content (HTTPS → HTTP interno)
-        // Container gerenciado pelo Coolify: umami-xkcma2bp6ww04w0ydx1m0qwf
+        // Proxy Umami via URL pública — independente de rede Docker
         return [
-            { source: '/um/script.js', destination: 'http://umami-xkcma2bp6ww04w0ydx1m0qwf:3000/script.js' },
-            { source: '/um/api/send',  destination: 'http://umami-xkcma2bp6ww04w0ydx1m0qwf:3000/api/send'  },
+            { source: '/um/script.js', destination: 'https://umami.hallyuhub.com.br/script.js' },
+            { source: '/um/api/send',  destination: 'https://umami.hallyuhub.com.br/api/send'  },
         ]
     },
     async headers() {

@@ -820,6 +820,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                             </section>
                         )}
 
+                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+
                         {/* Estado vazio */}
                         {group.members.length === 0 && (
                             <div className="bg-surface rounded-2xl border border-border p-12 text-center">

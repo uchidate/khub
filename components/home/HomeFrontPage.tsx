@@ -154,6 +154,7 @@ export function HomeFrontPage({
                                         src={featuredStory.coverImageUrl}
                                         alt={featuredStory.title}
                                         fill
+                                        unoptimized
                                         sizes="(max-width: 1024px) 100vw, 62vw"
                                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                                         priority
@@ -230,7 +231,7 @@ export function HomeFrontPage({
                                     <span className="text-[9px] font-bold text-muted/55 leading-none mt-1 w-4 shrink-0">{String(idx + 1).padStart(2, '0')}</span>
                                     {story.coverImageUrl && (
                                         <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0 border border-border/60">
-                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" priority={idx < 2} />
+                                            <Image src={story.coverImageUrl} alt={story.title} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" priority={idx < 2} />
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">

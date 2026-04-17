@@ -10,10 +10,10 @@ import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { BlogEditButton } from '@/components/blog/BlogEditButton'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { AdBanner } from '@/components/ui/AdBanner'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
 import { BlogReadingProgress } from '@/components/blog/BlogReadingProgress'
@@ -103,7 +103,7 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
     <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface hover:border-[#ff2d78]/30 transition-all">
       {post.coverImageUrl ? (
         <div className="relative aspect-video rounded-t-2xl overflow-hidden">
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+          <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
         </div>
       ) : (
         <div className="aspect-video rounded-t-2xl bg-[#ff2d78]/5 flex items-center justify-center">
@@ -234,7 +234,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Cover image */}
         {post.coverImageUrl && (
           <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border">
-            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
+            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority unoptimized />
           </div>
         )}
 
@@ -246,8 +246,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           }
         </article>
 
-        {/* Ad: mid-content, após o artigo */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mt-10" />
 
         {/* Tags */}
         {post.tags.length > 0 && (
@@ -269,8 +267,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mt-10" />
-
         {/* Author bio */}
         {(post as unknown as { author?: { bio?: string } }).author?.bio && (
           <div className="mt-10 p-5 rounded-2xl border border-border bg-surface flex gap-4">
@@ -283,6 +279,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </div>
           </div>
         )}
+
+        {/* Ad before related posts */}
+        <AdBanner slot="1740970038" format="auto" className="mt-10" />
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (
