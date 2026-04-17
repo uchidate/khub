@@ -103,7 +103,8 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
     <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface hover:border-[#ff2d78]/30 transition-all">
       {post.coverImageUrl ? (
         <div className="relative aspect-video rounded-t-2xl overflow-hidden">
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={post.coverImageUrl} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
         </div>
       ) : (
         <div className="aspect-video rounded-t-2xl bg-[#ff2d78]/5 flex items-center justify-center">
@@ -234,7 +235,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Cover image */}
         {post.coverImageUrl && (
           <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border">
-            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={post.coverImageUrl} alt={post.title} className="w-full h-full object-cover" loading="eager" />
           </div>
         )}
 
